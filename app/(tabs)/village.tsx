@@ -23,23 +23,84 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { useGarden } from '../../hooks/useGarden';
 import { TileMapRenderer } from '../../components/mascot/TileMapRenderer';
 import { LiquidXPBar } from '../../components/ui/LiquidXPBar';
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
 import { ReactiveAvatar } from '../../components/ui/ReactiveAvatar';
 import { getCurrentSeason } from '../../lib/mascot/seasons';
+import { pickSeasonalActivity } from '../../lib/village/activities';
+import { addPoints } from '../../lib/gamification/engine';
+import { parseGamification, serializeGamification } from '../../lib/parser';
 import { Spacing, Radius } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
+import type { VaultManager } from '../../lib/vault';
+import type { Profile } from '../../lib/types';
 import type { VillageContribution } from '../../lib/village/types';
 
 // ── Constantes module ──────────────────────────────────────────────────────
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+
+// ── Helpers hors composant ────────────────────────────────────────────────
+
+/**
+ * Applique un bonus XP + 1 loot box à un profil via son fichier gami-{id}.md.
+ * Pattern identique à addCoins dans useFarm.ts — lecture/écriture directe vault.
+ * Per D-07 : réutilise le système loot existant (lootBoxesAvailable) pour l'item cosmetique.
+ */
+async function addVillageBonus(
+  vaultMgr: VaultManager,
+  profile: Profile,
+  xpAmount: number,
+  note: string,
+): Promise<void> {
+  const gamiPath = `gami-${profile.id}.md`;
+  const raw = await vaultMgr.readFile(gamiPath).catch(() => '');
+  if (!raw) return;
+  const gami = parseGamification(raw);
+  const gamiProfile = gami.profiles.find(
+    (p: Profile) => p.id === profile.id || p.name === profile.name,
+  );
+  if (!gamiProfile) return;
+
+  const { profile: updated } = addPoints(gamiProfile, xpAmount, note);
+  // Appliquer les points mis à jour et ajouter 1 loot box (item cosmetique OBJ-03)
+  gamiProfile.points = updated.points;
+  gamiProfile.coins = updated.coins;
+  gamiProfile.level = updated.level;
+  gamiProfile.lootBoxesAvailable = (gamiProfile.lootBoxesAvailable ?? 0) + 1;
+
+  const newEntry = {
+    profileId: profile.id,
+    action: `+${xpAmount}`,
+    points: xpAmount,
+    note,
+    timestamp: new Date().toISOString(),
+  };
+  const singleData = {
+    profiles: [gamiProfile],
+    history: [
+      ...gami.history.filter((e: any) => e.profileId === profile.id),
+      newEntry,
+    ],
+    activeRewards: (gami.activeRewards ?? []).filter((r: any) => r.profileId === profile.id),
+    usedLoots: (gami.usedLoots ?? []).filter((u: any) => u.profileId === profile.id),
+  };
+
+  await vaultMgr.writeFile(gamiPath, serializeGamification(singleData));
+}
 const MAP_HEIGHT = Math.round(SCREEN_H * 0.75);
 const GOLD = '#FFD700';
 const SPRING_FEED = { damping: 20, stiffness: 200 } as const;
@@ -73,9 +134,125 @@ function formatDateFR(isoDate: string): string {
   return `${d}/${m}/${y}`;
 }
 
-// ── FeedItem — mémoïsé (per CLAUDE.md — React.memo sur list items) ────────
+// ── RewardCard — carte de récompense collective (OBJ-03, OBJ-04) ─────────
 
 type ColorsType = ReturnType<typeof useThemeColors>['colors'];
+
+function RewardCard({
+  canClaim,
+  alreadyClaimed,
+  activity,
+  onClaim,
+  colors,
+}: {
+  canClaim: boolean;
+  alreadyClaimed: boolean;
+  activity: string;
+  onClaim: () => void;
+  colors: ColorsType;
+}) {
+  const [dismissed, setDismissed] = useState(false);
+  const opacity = useSharedValue(1);
+  const cardStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  const handleDismiss = useCallback(() => {
+    opacity.value = withTiming(0, { duration: 200 }, () => {
+      runOnJS(setDismissed)(true);
+    });
+  }, [opacity]);
+
+  if (dismissed) return null;
+
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(150).duration(350)}
+      style={[
+        {
+          backgroundColor: colors.card,
+          borderRadius: Radius.xl,
+          padding: Spacing.xl,
+          marginTop: Spacing['2xl'],
+        },
+        cardStyle,
+      ]}
+    >
+      <Text style={{
+        fontSize: FontSize.heading,
+        fontWeight: FontWeight.semibold,
+        lineHeight: LineHeight.title,
+        color: colors.text,
+        marginBottom: Spacing.md,
+      }}>
+        Objectif atteint !
+      </Text>
+
+      <Text style={{
+        fontSize: FontSize.body,
+        fontWeight: FontWeight.normal,
+        lineHeight: LineHeight.body,
+        color: colors.textMuted,
+        marginBottom: Spacing.md,
+      }}>
+        Activité famille cette semaine
+      </Text>
+      <Text style={{
+        fontSize: FontSize.title,
+        fontWeight: FontWeight.semibold,
+        lineHeight: LineHeight.title,
+        color: colors.text,
+        marginBottom: Spacing['2xl'],
+      }}>
+        {activity}
+      </Text>
+
+      {canClaim && (
+        <TouchableOpacity
+          onPress={onClaim}
+          style={{
+            backgroundColor: colors.success,
+            borderRadius: Radius.lg,
+            paddingVertical: Spacing.xl,
+            alignItems: 'center',
+            marginBottom: Spacing.md,
+          }}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Récupérer la récompense"
+        >
+          <Text style={{
+            color: colors.bg,
+            fontSize: FontSize.body,
+            fontWeight: FontWeight.semibold,
+          }}>
+            Récupérer la récompense (+25 XP + 1 loot box)
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {alreadyClaimed && (
+        <Text style={{
+          color: colors.textMuted,
+          fontSize: FontSize.sm,
+          textAlign: 'center',
+          marginBottom: Spacing.md,
+        }}>
+          Récompense réclamée
+        </Text>
+      )}
+
+      <TouchableOpacity onPress={handleDismiss} style={{ alignItems: 'center' }}>
+        <Text style={{
+          color: colors.textSub,
+          fontSize: FontSize.sm,
+        }}>
+          Fermer la carte
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+// ── FeedItem — mémoïsé (per CLAUDE.md — React.memo sur list items) ────────
 
 const FeedItem = React.memo(function FeedItem({
   contribution,
@@ -115,7 +292,8 @@ export default function VillageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useThemeColors();
-  const { activeProfile, profiles } = useVault();
+  const { showToast } = useToast();
+  const { activeProfile, profiles, vault, refreshGamification } = useVault();
   const {
     gardenData,
     progress,
@@ -162,6 +340,15 @@ export default function VillageScreen() {
     [profiles],
   );
 
+  /** Activité IRL saisonnière — déterministe par semaine */
+  const activity = useMemo(
+    () =>
+      gardenData?.currentWeekStart
+        ? pickSeasonalActivity(season, gardenData.currentWeekStart)
+        : '',
+    [season, gardenData?.currentWeekStart],
+  );
+
   // ── Couleurs et états barre de progression ────────────────────────────
 
   const barColor = isGoalReached ? colors.warning : colors.success;
@@ -174,11 +361,22 @@ export default function VillageScreen() {
   // ── Handlers ──────────────────────────────────────────────────────────
 
   const handleClaim = useCallback(async () => {
-    if (!activeProfile) return;
+    if (!activeProfile || !vault) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const success = await claimReward(activeProfile.id);
-    if (success) setClaimedThisSession(true);
-  }, [activeProfile, claimReward]);
+    if (success) {
+      setClaimedThisSession(true);
+      // Bonus XP + loot box pour TOUS les profils actifs (D-07 — équitable, pas proportionnel)
+      // OBJ-03 : +25 XP + 1 loot box (item cosmetique via systeme loot existant per D-07)
+      for (const p of activeProfiles) {
+        try {
+          await addVillageBonus(vault, p, 25, 'Objectif village atteint');
+        } catch { /* Gamification — non-critical */ }
+      }
+      refreshGamification();
+      showToast('+25 XP et 1 loot box pour toute la famille !', 'success');
+    }
+  }, [activeProfile, vault, claimReward, activeProfiles, refreshGamification, showToast]);
 
   const handleMapLayout = useCallback(
     (e: any) => {
@@ -265,29 +463,15 @@ export default function VillageScreen() {
                 />
               </View>
 
-              {/* Bouton claim — apparaît avec animation quand objectif atteint */}
-              {canClaim && (
-                <Animated.View entering={FadeInDown.duration(400)}>
-                  <TouchableOpacity
-                    style={[styles.claimBtn, { backgroundColor: colors.warning }]}
-                    onPress={handleClaim}
-                    activeOpacity={0.8}
-                    accessibilityRole="button"
-                    accessibilityLabel="Réclamer la récompense collective"
-                  >
-                    <Text style={[styles.claimBtnText, { color: '#FFFFFF' }]}>
-                      Réclamer la récompense
-                    </Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              )}
-
-              {alreadyClaimed && (
-                <View style={[styles.claimBtn, styles.claimBtnDisabled]}>
-                  <Text style={[styles.claimBtnText, { color: colors.textMuted }]}>
-                    Récompense réclamée
-                  </Text>
-                </View>
+              {/* Carte récompense collective (OBJ-03, OBJ-04) */}
+              {isGoalReached && (
+                <RewardCard
+                  canClaim={canClaim}
+                  alreadyClaimed={alreadyClaimed ?? false}
+                  activity={activity}
+                  onClaim={handleClaim}
+                  colors={colors}
+                />
               )}
             </View>
 
