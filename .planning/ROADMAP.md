@@ -103,10 +103,10 @@ Plans:
   2. User retrouve l'ensemble des bâtiments accumulés après un restart complet de l'app (persistance append-only dans `jardin-familial.md` section `## Constructions`)
   3. User peut ouvrir un catalogue listant les 8 bâtiments débloquables et voit clairement le palier associé (100, 300, 700, 1500, 3000, 6000, 12000, 25000 feuilles)
   4. User voit dans le catalogue quelles bâtiments sont déjà débloqués versus verrouillés (silhouette sombre), avec la progression actuelle vers le prochain palier
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 - [x] 30-01-PLAN.md — Data layer : types + parser ## Constructions + catalogue statique + slots VILLAGE_GRID (VILL-05, VILL-06)
-- [ ] 30-02-PLAN.md — Unlock engine : useGarden familyLifetimeLeaves + effet append-on-threshold idempotent (VILL-04, VILL-05)
+- [x] 30-02-PLAN.md — Unlock engine : useGarden familyLifetimeLeaves + effet append-on-threshold idempotent (VILL-04, VILL-05)
 - [ ] 30-03-PLAN.md — UI : BuildingSprite + BuildingTooltip + BuildingsCatalog modal + wiring village.tsx (VILL-04, VILL-06)
 **UI hint**: yes
 
@@ -139,7 +139,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 29. Avatars vivants + portail retour | 2/2 | Completed | 2026-04-11 |
-| 30. Décorations persistantes | 1/3 | In Progress|  |
+| 30. Décorations persistantes | 2/3 | In Progress|  |
 | 31. Ambiance dynamique | 0/TBD | Not started | - |
 | 32. Arbre familial commun | 0/TBD | Not started | - |
 

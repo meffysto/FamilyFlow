@@ -16,7 +16,7 @@
 
 ### Catégorie DÉCORATIONS — Progression visuelle persistante
 
-- [ ] **VILL-04**: User voit une nouvelle décoration ajoutée au village chaque semaine où l'objectif collectif est atteint (guirlande, fanion, lanterne, banc, etc.)
+- [x] **VILL-04**: User voit une nouvelle décoration ajoutée au village chaque semaine où l'objectif collectif est atteint (guirlande, fanion, lanterne, banc, etc.)
 - [x] **VILL-05**: User retrouve toutes les décorations accumulées après un restart de l'app (persistance append-only dans `jardin-familial.md`)
 - [x] **VILL-06**: User voit un catalogue (écran ou modal) listant les ~8 décorations débloquables par palier de streak collectif (1, 3, 5, 10, 15, 20, 25, 30 semaines réussies)
 

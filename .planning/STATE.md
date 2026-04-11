@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
 status: executing
-last_updated: "2026-04-11T12:55:24.479Z"
+last_updated: "2026-04-11T13:01:33.439Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 3
+  completed_plans: 4
   percent: 25
 ---
 
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 30 (decorations-persistantes) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
 Last activity: 2026-04-11
@@ -126,6 +126,7 @@ Status: Ready to execute
 | Phase 29-avatars-vivants-portail-retour P01 | 7min | 3 tasks | 7 files |
 | Phase 29-avatars-vivants-portail-retour P02 | 4min | 3 tasks | 4 files |
 | Phase 30-decorations-persistantes P01 | 12min | 2 tasks | 6 files |
+| Phase 30-decorations-persistantes P02 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -231,6 +232,9 @@ Recent decisions affecting current work:
 - [Phase 30-decorations-persistantes]: [Phase 30-01]: unlockedBuildings champ requis (non optionnel) dans VillageData — force tous les consommateurs à être explicites, spread ...gardenData suffit
 - [Phase 30-decorations-persistantes]: [Phase 30-01]: appendBuilding reprend EXACTEMENT le pattern appendContribution — zero duplication logique, Pitfall 3/4 (jamais append fin de fichier)
 - [Phase 30-decorations-persistantes]: [Phase 30-01]: Test sprites toBeDefined au lieu de toBeTruthy — mock file-asset Jest retourne 0 (falsy) pour tous les PNG
+- [Phase 30-02]: Import statique appendBuilding (pas dynamic) — hook critique, pas de lazy loading
+- [Phase 30-02]: Cascade appendBuilding locale + 1 writeFile final — évite N readFile/writeFile si multi-paliers simultanés
+- [Phase 30-02]: Early return avant I/O sur toUnlock.length === 0 — idempotence stricte, pas de write spurieux au mount/re-render
 
 ### Todos
 
@@ -242,5 +246,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-11T12:55:24.476Z
+Last session: 2026-04-11T13:01:33.436Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)
