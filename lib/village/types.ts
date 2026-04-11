@@ -2,8 +2,9 @@
 // Interfaces du module Village — Jardin Familial (Phase 25, v1.4).
 // Module pur TypeScript — zéro import hook/context.
 
+// Phase 29 : ajout role 'avatar' (VILL-01)
 /** Role d'un element interactif sur la place du village */
-export type VillageRole = 'fountain' | 'stall' | 'board' | 'portal';
+export type VillageRole = 'fountain' | 'stall' | 'board' | 'portal' | 'avatar';
 
 /** Position d'un element interactif dans la grille village (per D-02 — type dedie, pas WorldCell) */
 export interface VillageCell {
