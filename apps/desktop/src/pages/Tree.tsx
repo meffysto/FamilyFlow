@@ -615,7 +615,7 @@ const FarmCrops = memo(function FarmCrops({ crops, plotCount, onCropClick, wearE
               }}>
                 <span style={{ fontSize: 14 }}>🚧</span>
                 <button className="wear-repair-btn" type="button">
-                  Reparer ({REPAIR_COSTS.broken_fence} 🍃)
+                  Réparer ({REPAIR_COSTS.broken_fence} 🍃)
                 </button>
               </div>
             )}
@@ -704,7 +704,7 @@ const BuildingLayer = memo(function BuildingLayer({ buildings, onBuildingClick, 
               }}>
                 <span style={{ fontSize: 14 }}>🔨</span>
                 <button className="wear-repair-btn" type="button">
-                  Reparer ({REPAIR_COSTS.damaged_roof} 🍃)
+                  Réparer ({REPAIR_COSTS.damaged_roof} 🍃)
                 </button>
               </div>
             )}

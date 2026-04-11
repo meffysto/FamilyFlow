@@ -26,7 +26,7 @@ import { DashboardCard } from '../DashboardCard';
 import { parseCrops, getMainPlotIndex } from '../../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
-import { getPendingResources } from '../../lib/mascot/building-engine';
+import { getPendingResources, getMinutesUntilNext, MAX_PENDING } from '../../lib/mascot/building-engine';
 import { getActiveWearEffects } from '../../lib/mascot/wear-engine';
 import { getDailyAdventure, getTodayStr } from '../../lib/mascot/adventures';
 import { hapticsTreeTap } from '../../lib/mascot/haptics';
@@ -466,7 +466,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
             {buildings.length > 0 && (
               <>
                 <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: Spacing.xs }]}>
-                  BATIMENTS
+                  BÂTIMENTS
                 </Text>
                 <ScrollView
                   horizontal
@@ -476,7 +476,14 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
                   {buildings.map((b, i) => {
                     const def = BUILDING_CATALOG.find(bd => bd.id === b.buildingId);
                     if (!def) return null;
-                    const pending = getPendingResources(b, new Date());
+                    const now = new Date();
+                    const pending = getPendingResources(b, now);
+                    const minutesLeft = pending < MAX_PENDING ? getMinutesUntilNext(b, now) : 0;
+                    const timeLeft = minutesLeft > 0
+                      ? minutesLeft >= 60
+                        ? `${Math.floor(minutesLeft / 60)}h${minutesLeft % 60 > 0 ? String(minutesLeft % 60).padStart(2, '0') : ''}`
+                        : `${minutesLeft}min`
+                      : null;
                     const isDamaged = wearEffects.damagedBuildings.includes(b.cellId);
                     const hasPests = wearEffects.pestBuildings.includes(b.cellId);
                     const tier = def.tiers.find(t2 => t2.level === b.level) ?? def.tiers[0];
@@ -507,15 +514,17 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
                               <Text style={[styles.levelBadgeText, { color: colors.textMuted }]}>Nv{b.level}</Text>
                             </View>
                             <Text style={styles.resourceEmoji}>{resEmoji}</Text>
-                            <Text
-                              style={[
-                                styles.productionRate,
-                                { color: colors.textMuted },
-                                isDamaged && styles.strikethrough,
-                              ]}
-                            >
-                              {tier?.productionRateHours ?? '?'}h
-                            </Text>
+                            {timeLeft !== null && (
+                              <Text
+                                style={[
+                                  styles.productionRate,
+                                  { color: colors.textMuted },
+                                  isDamaged && styles.strikethrough,
+                                ]}
+                              >
+                                {timeLeft}
+                              </Text>
+                            )}
                           </View>
                         </View>
                         {/* Pending count */}
@@ -560,14 +569,14 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
               <View style={styles.wearBanner}>
                 <Text style={styles.wearBannerIcon}>⚠️</Text>
                 <Text style={styles.wearBannerText}>
-                  {activeWearCount} reparation{activeWearCount > 1 ? 's' : ''} necessaire{activeWearCount > 1 ? 's' : ''}
+                  {activeWearCount} réparation{activeWearCount > 1 ? 's' : ''} nécessaire{activeWearCount > 1 ? 's' : ''}
                 </Text>
                 <TouchableOpacity
                   style={styles.wearBannerAction}
                   onPress={() => router.push('/(tabs)/tree' as any)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.wearBannerActionText}>Reparer</Text>
+                  <Text style={styles.wearBannerActionText}>Réparer</Text>
                 </TouchableOpacity>
               </View>
             )}

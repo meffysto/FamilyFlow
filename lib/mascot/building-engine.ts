@@ -151,7 +151,7 @@ export function getPendingResources(
   // questSpeedMultiplier > 1 simule une production plus rapide (ex: production_boost = 2x)
   const elapsedMs = (now.getTime() - lastCollect.getTime()) * questSpeedMultiplier;
   const rateMs = effectiveRate * 3600 * 1000;
-  const produced = Math.floor(elapsedMs / rateMs);
+  const produced = Math.max(0, Math.floor(elapsedMs / rateMs));
   return Math.min(produced, effectiveMaxPending);
 }
 
