@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
 status: verifying
-last_updated: "2026-04-11T13:18:57.841Z"
-last_activity: 2026-04-11
+last_updated: "2026-04-11T21:54:36.065Z"
+last_activity: "2026-04-11 - Completed quick task 260411-wq8: Fondation IVC — types Profile + parser famille.md + services voix ElevenLabs/iOS"
 progress:
   total_phases: 4
   completed_phases: 1
@@ -253,5 +253,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-11T13:18:57.838Z
+Last session: 2026-04-11T21:54:36.061Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)
