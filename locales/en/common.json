@@ -2129,7 +2129,8 @@
       "decreaseQty": "Decrease quantity",
       "increaseQty": "Increase quantity",
       "addToCourses": "Add {{name}} to shopping list",
-      "addProduct": "Add a product"
+      "addProduct": "Add a product",
+      "filterLowStock": "Filter low stock items"
     },
     "title": "Stock"
   },

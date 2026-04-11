@@ -160,6 +160,7 @@ export default function StockScreen() {
   const stockListRef = useRef<View>(null);
   const [selectedEmplacement, setSelectedEmplacement] = useState<EmplacementId>('tous');
   const [search, setSearch] = useState('');
+  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
 
@@ -172,9 +173,12 @@ export default function StockScreen() {
     return counts;
   }, [stock]);
 
-  // ─── Items filtrés par emplacement + recherche ───────────────────────
+  // ─── Items filtrés par emplacement + recherche + stocks bas ─────────
   const filteredItems = useMemo(() => {
     let items = selectedEmplacement === 'tous' ? [...stock] : stock.filter((s) => s.emplacement === selectedEmplacement);
+    if (showLowStockOnly) {
+      items = items.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       items = items.filter(
@@ -185,7 +189,7 @@ export default function StockScreen() {
       );
     }
     return items;
-  }, [stock, selectedEmplacement, search]);
+  }, [stock, selectedEmplacement, search, showLowStockOnly]);
 
   // ─── Groupement par section/sous-catégorie ───────────────────────────
   const subcategories = SUBCATEGORIES[selectedEmplacement];
@@ -388,11 +392,24 @@ export default function StockScreen() {
         <View style={styles.headerLeft}>
           <Text style={[styles.title, { color: colors.text }]}>{t('stock.title')}</Text>
           {lowStockCount > 0 && (
-            <View style={[styles.lowBadge, { backgroundColor: colors.errorBg }]}>
-              <Text style={[styles.lowBadgeText, { color: colors.error }]}>
-                {lowStockCount} {t('stock.low')}
+            <TouchableOpacity
+              style={[
+                styles.lowBadge,
+                { backgroundColor: showLowStockOnly ? colors.error : colors.errorBg },
+              ]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setShowLowStockOnly((v) => !v);
+              }}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('stock.a11y.filterLowStock')}
+              accessibilityState={{ selected: showLowStockOnly }}
+            >
+              <Text style={[styles.lowBadgeText, { color: showLowStockOnly ? colors.onPrimary : colors.error }]}>
+                {lowStockCount} {t('stock.low')}{showLowStockOnly ? ' ✕' : ''}
               </Text>
-            </View>
+            </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity
