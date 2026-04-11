@@ -156,7 +156,7 @@ Plans:
 - [x] **Phase 25: Fondation données village** — Schéma `jardin-familial.md`, parseur bidirectionnel, grille village namespacée, templates d'objectif (completed 2026-04-10)
 - [x] **Phase 26: Hook domaine jardin** — `useGarden.ts` isolé, génération objectif hebdo, anti-double-claim, câblage VaultContext (completed 2026-04-10)
 - [x] **Phase 27: Écran Village + composants** — Carte tilemap village, feed contributions, barre progression, panneau historique (completed 2026-04-10)
-- [ ] **Phase 28: Portail + câblage contributions** — Portail ferme → village, auto-contribution récoltes + tâches, récompense collective
+- [x] **Phase 28: Portail + câblage contributions** — Portail ferme → village, auto-contribution récoltes + tâches, récompense collective (completed 2026-04-11)
 
 ## Phase Details
 
@@ -219,7 +219,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 28-01-PLAN.md — Portail animé ferme + câblage contributions (useFarm + useGamification)
+- [x] 28-01-PLAN.md — Portail animé ferme + câblage contributions (useFarm + useGamification)
 - [x] 28-02-PLAN.md — Récompense collective + activités IRL saisonnières
 
 ## Progress
@@ -239,7 +239,7 @@ Plans:
 | 25. Fondation données village | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 26. Hook domaine jardin | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 27. Écran Village + composants | v1.4 | 2/2 | Complete    | 2026-04-10 |
-| 28. Portail + câblage contributions | v1.4 | 1/2 | In Progress|  |
+| 28. Portail + câblage contributions | v1.4 | 2/2 | Complete   | 2026-04-11 |
 
 ## Archived Milestones
 

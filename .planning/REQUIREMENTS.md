@@ -20,12 +20,12 @@ Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe �
 
 - [x] **MAP-01**: Une carte "Place du Village" avec son propre terrain tilemap (cobblestone dominant, fontaine, étals) est rendue via le TileMapRenderer existant
 - [x] **MAP-02**: Une grille village (`village-grid.ts`) définit les positions des éléments interactifs sur la place
-- [ ] **MAP-03**: Un portail interactif dans la scène ferme perso permet de naviguer vers le village avec une transition visuelle
+- [x] **MAP-03**: Un portail interactif dans la scène ferme perso permet de naviguer vers le village avec une transition visuelle
 
 ### Coopération & Contributions
 
-- [ ] **COOP-01**: Quand un membre récolte dans sa ferme perso, une contribution est automatiquement ajoutée à l'objectif village
-- [ ] **COOP-02**: Quand un membre complète une tâche IRL (via semantic coupling v1.3), une contribution est ajoutée à l'objectif village
+- [x] **COOP-01**: Quand un membre récolte dans sa ferme perso, une contribution est automatiquement ajoutée à l'objectif village
+- [x] **COOP-02**: Quand un membre complète une tâche IRL (via semantic coupling v1.3), une contribution est ajoutée à l'objectif village
 - [x] **COOP-03**: Un feed de contributions affiche qui a fait quoi cette semaine sur l'écran village
 - [x] **COOP-04**: Un indicateur per-membre montre la contribution de chaque profil cette semaine
 
@@ -33,8 +33,8 @@ Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe �
 
 - [x] **OBJ-01**: Un objectif hebdomadaire est auto-généré chaque lundi, avec cible adaptée au nombre de profils actifs et à l'historique
 - [x] **OBJ-02**: Une barre de progression affiche l'avancement collectif vers l'objectif de la semaine
-- [ ] **OBJ-03**: Quand l'objectif est atteint, tous les profils reçoivent un bonus in-game (XP + item cosmétique)
-- [ ] **OBJ-04**: La récompense inclut une suggestion d'activité familiale IRL (liste curatée, pondérée par saison)
+- [x] **OBJ-03**: Quand l'objectif est atteint, tous les profils reçoivent un bonus in-game (XP + item cosmétique)
+- [x] **OBJ-04**: La récompense inclut une suggestion d'activité familiale IRL (liste curatée, pondérée par saison)
 - [x] **OBJ-05**: Un flag partagé + flag per-profil empêchent le double-claim de récompense
 
 ### Historique
@@ -75,15 +75,15 @@ Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 | DATA-04 | Phase 25 | Complete |
 | MAP-01 | Phase 27 | Complete |
 | MAP-02 | Phase 25 | Complete |
-| MAP-03 | Phase 28 | Pending |
-| COOP-01 | Phase 28 | Pending |
-| COOP-02 | Phase 28 | Pending |
+| MAP-03 | Phase 28 | Complete |
+| COOP-01 | Phase 28 | Complete |
+| COOP-02 | Phase 28 | Complete |
 | COOP-03 | Phase 27 | Complete |
 | COOP-04 | Phase 27 | Complete |
 | OBJ-01 | Phase 26 | Complete |
 | OBJ-02 | Phase 27 | Complete |
-| OBJ-03 | Phase 28 | Pending |
-| OBJ-04 | Phase 28 | Pending |
+| OBJ-03 | Phase 28 | Complete |
+| OBJ-04 | Phase 28 | Complete |
 | OBJ-05 | Phase 26 | Complete |
 | HIST-01 | Phase 27 | Complete |
 | HIST-02 | Phase 27 | Complete |
