@@ -4,7 +4,7 @@ milestone: v1.5
 milestone_name: Village Vivant
 status: verifying
 last_updated: "2026-04-11T21:54:36.065Z"
-last_activity: "2026-04-11 - Completed quick task 260411-wyx: VoiceRecorder composant + sélecteur voix parent StoryPlayer"
+last_activity: "2026-04-12 - Completed quick task 260412-0bj: iOS Personal Voice branché + fallback ElevenLabs par genre"
 progress:
   total_phases: 4
   completed_phases: 1
@@ -45,6 +45,7 @@ Status: Phase complete — ready for verification
 | 260411-te0 | Ajouter descriptions médicales/développementales dans l'onglet Compétences | 2026-04-11 | a6dd0c6 | [260411-te0-ajouter-descriptions-m-dicales-d-veloppe](./quick/260411-te0-ajouter-descriptions-m-dicales-d-veloppe/) |
 | 260411-wq8 | Fondation IVC — types Profile + parser famille.md + services voix ElevenLabs/iOS | 2026-04-11 | cf5f11c | [260411-wq8-elevenlabs-ivc-types-profile-voice-parse](./quick/260411-wq8-elevenlabs-ivc-types-profile-voice-parse/) |
 | 260411-wyx | VoiceRecorder composant + sélecteur voix parent StoryPlayer ElevenLabs IVC | 2026-04-11 | 53855c4 | [260411-wyx-voicerecorder-composant-s-lecteur-voix-p](./quick/260411-wyx-voicerecorder-composant-s-lecteur-voix-p/) |
+| 260412-0bj | iOS Personal Voice branché + fallback ElevenLabs par genre dans StoryPlayer | 2026-04-12 | 42d702a | [260412-0bj-ios-personal-voice-branch-fallback-eleve](./quick/260412-0bj-ios-personal-voice-branch-fallback-eleve/) |
 
 ## Performance Metrics
 
