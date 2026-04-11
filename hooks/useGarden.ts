@@ -14,8 +14,10 @@ import {
   parseGardenFile,
   serializeGardenFile,
   appendContributionToVault,
+  appendBuilding,
   VILLAGE_FILE,
   computeWeekTarget,
+  computeBuildingsToUnlock,
   OBJECTIVE_TEMPLATES,
 } from '../lib/village';
 import { parseFarmProfile, serializeFarmProfile } from '../lib/parser';
@@ -24,6 +26,7 @@ import type {
   VillageWeekRecord,
   ContributionType,
   ObjectiveTemplate,
+  UnlockedBuilding,
 } from '../lib/village';
 
 // ---------------------------------------------------------------------------
@@ -60,6 +63,9 @@ export interface UseGardenReturn {
   claimReward: (profileId: string) => Promise<boolean>;
   weekHistory: VillageWeekRecord[];
   isLoading: boolean;
+  // Phase 30 — bâtiments persistants (VILL-04, VILL-05)
+  familyLifetimeLeaves: number;
+  unlockedBuildings: UnlockedBuilding[];
 }
 
 /**
@@ -90,6 +96,16 @@ export function useGarden(): UseGardenReturn {
     [profiles],
   );
 
+  /**
+   * Somme des profile.points sur tous les profils (feuilles lifetime famille).
+   * Per D-05 CONTEXT.md. Monotone croissant — `points` est XP lifetime, jamais déduit.
+   * `p.points ?? 0` pour profils grossesse / nouvellement créés (Pitfall 7).
+   */
+  const familyLifetimeLeaves = useMemo(
+    () => profiles.reduce((sum, p) => sum + (p.points ?? 0), 0),
+    [profiles],
+  );
+
   /** Cible hebdomadaire — calculée dynamiquement selon le nombre de profils */
   const currentTarget = useMemo(
     () => computeWeekTarget(activeProfileCount),
@@ -117,6 +133,12 @@ export function useGarden(): UseGardenReturn {
   /** Historique des semaines passées */
   const weekHistory = useMemo(
     () => gardenData.pastWeeks ?? [],
+    [gardenData],
+  );
+
+  /** Bâtiments déjà débloqués (parsés depuis jardin-familial.md) — Phase 30 */
+  const unlockedBuildings = useMemo<UnlockedBuilding[]>(
+    () => gardenData.unlockedBuildings ?? [],
     [gardenData],
   );
 
@@ -180,6 +202,46 @@ export function useGarden(): UseGardenReturn {
       }
     })();
   }, [vault, gardenRaw, activeProfileCount]);
+
+  // ---------------------------------------------------------------------------
+  // Phase 30 — Effet unlock-on-threshold (VILL-04, VILL-05)
+  // ---------------------------------------------------------------------------
+  // Détecte quand familyLifetimeLeaves franchit un palier catalogue et
+  // append le bâtiment correspondant dans jardin-familial.md (append-only).
+  //
+  // Idempotence stricte : computeBuildingsToUnlock retourne [] si tout est déjà
+  // débloqué → early return, pas d'écriture, pas de boucle infinie (Pitfall 1).
+  //
+  // Multi-paliers simultanés : cascade d'appels appendBuilding sur currentContent
+  // local (pur) puis UN SEUL writeFile + setGardenRaw à la fin.
+  useEffect(() => {
+    if (!vault) return;
+    const toUnlock = computeBuildingsToUnlock(familyLifetimeLeaves, unlockedBuildings);
+    if (toUnlock.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        let currentContent = await vault.readFile(VILLAGE_FILE).catch(() => '');
+        const now = new Date().toISOString();
+        for (const entry of toUnlock) {
+          const building: UnlockedBuilding = {
+            timestamp: now,
+            buildingId: entry.id,
+            palier: entry.palier,
+          };
+          currentContent = appendBuilding(currentContent, building);
+        }
+        if (cancelled) return;
+        await vault.writeFile(VILLAGE_FILE, currentContent);
+        setGardenRaw(currentContent);
+      } catch {
+        /* Constructions — non-critical */
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [vault, familyLifetimeLeaves, unlockedBuildings, setGardenRaw]);
 
   // ---------------------------------------------------------------------------
   // addContribution (per D-09)
@@ -253,5 +315,8 @@ export function useGarden(): UseGardenReturn {
     claimReward,
     weekHistory,
     isLoading,
+    // Phase 30
+    familyLifetimeLeaves,
+    unlockedBuildings,
   };
 }
