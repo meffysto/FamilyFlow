@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: defining-requirements
-last_updated: "2026-04-11T09:00:00.000Z"
-last_activity: 2026-04-11 — Milestone v1.5 started
+status: roadmap-ready
+last_updated: "2026-04-11T10:00:00.000Z"
+last_activity: 2026-04-11 — v1.5 roadmap created (Phases 29-32)
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** v1.5 Village Vivant — defining requirements
+**Current focus:** v1.5 Village Vivant — roadmap ready, ready to plan Phase 29
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Not started (roadmap ready — next: plan Phase 29)
 Plan: —
-Milestone: v1.5 Village Vivant
+Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: v1.4 Jardin Familial (2026-04-11)
-Last activity: 2026-04-11 — Milestone v1.5 started
+Last activity: 2026-04-11 — v1.5 roadmap created (Phases 29-32)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Defining requirements
+Status: Roadmap ready
 
 ### Quick Tasks Completed
 
@@ -46,7 +46,7 @@ Status: Defining requirements
 
 **Velocity:**
 
-- Total plans completed: 0 (milestone v1.4)
+- Total plans completed: 0 (milestone v1.5)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -58,7 +58,7 @@ Status: Defining requirements
 
 *Updated after each plan completion*
 
---- v1.1 history preserved below ---
+--- v1.1-v1.4 history preserved below ---
 
 | Phase 05-visuels-ferme P01 | 2 | 1 tasks | 1 files |
 | Phase 05-visuels-ferme P05-02 | 3 | 2 tasks | 103 files |
@@ -132,12 +132,18 @@ Status: Defining requirements
 - Phase 12 added: Templates onboarding vivants — contenu personnalisé et complet
 - v1.2 roadmap created 2026-04-07: Phases 15-18 (préférences alimentaires, codex contenu, codex UI, tutoriel ferme)
 - v1.4 roadmap created 2026-04-10: Phases 25-28 (fondation données village, hook domaine jardin, écran village, portail + contributions)
+- v1.5 roadmap created 2026-04-11: Phases 29-32 (avatars + portail retour, décorations persistantes, ambiance dynamique, arbre familial commun)
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Init v1.5]: Phase 29 regroupe avatars + portail retour — livre une première boucle UX complète (présence dynamique + navigation bouclée) avant d'attaquer la persistance
+- [Init v1.5]: Décorations (Phase 30) avant ambiance (Phase 31) — les lanternes doivent exister comme décorations placées avant de pouvoir s'allumer la nuit
+- [Init v1.5]: Arbre familial commun (Phase 32) en dernier — dépend de l'ambiance pour recevoir la lumière jour/nuit, stade évolutif réutilise le pattern TREE_STAGES existant
+- [Init v1.5]: ARCH-05 reconduit — zéro nouvelle dépendance npm, réutilisation stricte de ReactiveAvatar, TileMapRenderer, useGarden, FarmProfileData
+- [Init v1.5]: Append-only pattern v1.4 reconduit — nouvelles décorations persistées via la même mécanique de lignes ajoutées dans jardin-familial.md, jamais de mutation en place
 - [Init v1.4]: Format append-only pour les contributions village — total dérivé à la lecture, jamais de mutable total écrit
 - [Init v1.4]: useGarden.ts comme hook domaine isolé — useVault.ts ne doit croître que de ~20 lignes max
 - [Init v1.4]: Double-flag anti-claim — flag partagé dans jardin-familial.md + flag per-profil dans gami-{id}.md
@@ -215,7 +221,7 @@ Recent decisions affecting current work:
 
 ### Todos
 
-- Plan Phase 25 next: `/gsd:plan-phase 25`
+- Plan Phase 29 next: `/gsd:plan-phase 29`
 
 ### Blockers
 
@@ -223,5 +229,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-11T06:07:23.654Z
-Next: Plan and execute Phase 25 (Fondation données village)
+Last session: 2026-04-11T10:00:00.000Z
+Next: Plan Phase 29 (Avatars vivants + portail retour)
