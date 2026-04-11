@@ -35,8 +35,7 @@ Tokens définis dans `constants/spacing.ts` — base 4px. Utiliser les clés `Sp
 |-------|--------|----------------|
 | `Spacing.xs` | 4px | Gap icône-texte inline dans `AvatarTooltip` |
 | `Spacing.md` | 8px | Padding interne du tooltip, gap badge halo |
-| `Spacing.xl` | 12px | Padding label tooltip, espacement header titre |
-| `Spacing['2xl']` | 16px | Padding horizontal écran, margin sections |
+| `Spacing['2xl']` | 16px | Padding label tooltip, espacement header titre, padding horizontal écran, margin sections |
 | `Spacing['4xl']` | 24px | Safe area padding |
 | `Spacing['5xl']` | 32px | Espacement bas scroll |
 | `Spacing['6xl']` | 48px | Hauteur header |
@@ -45,7 +44,7 @@ Exceptions Phase 29 :
 - **Sprite compagnon** : taille fixe 28–32px (ajustable post-test device, CD-05). Pas un Spacing token — c'est une dimension sprite pixel art.
 - **Sprite portail** : taille fixe 48–56px (ajustable post-test device, CD-05).
 - **Halo glow actif** : rayon = sprite + 6px (soit ~38px pour un sprite 32px). Calculé en fonction de la taille sprite.
-- **Hit slop touch targets** : `{ top: 10, bottom: 10, left: 10, right: 10 }` sur `Pressable` avatar et portail — conforme au minimum 44px d'accessibilité iOS.
+- **Hit slop touch targets** : `{ top: 8, bottom: 8, left: 8, right: 8 }` (`Spacing.md`) sur `Pressable` avatar et portail — sprite ~32px + 8px slop chaque côté = ~48px total, conforme au minimum 44px d'accessibilité iOS.
 
 Source: `constants/spacing.ts` (existant, pré-populé)
 
@@ -155,7 +154,7 @@ Source: `29-CONTEXT.md` D-11 à D-15
 | Glow couleur | `colors.catJeux` (pattern identique PortalSprite ferme) |
 | Scale spring tap | `withSpring(0.92)` → `withSpring(1)`, config `{ damping: 12, stiffness: 200 }` |
 | Haptic | `Haptics.selectionAsync()` |
-| hitSlop | `{ top: 10, bottom: 10, left: 10, right: 10 }` |
+| hitSlop | `{ top: 8, bottom: 8, left: 8, right: 8 }` |
 
 Source: `29-CONTEXT.md` D-16 à D-20
 
