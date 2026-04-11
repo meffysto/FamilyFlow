@@ -32,8 +32,8 @@
 
 ### Catégorie NAVIGATION — Portail bidirectionnel
 
-- [ ] **VILL-11**: User peut revenir à la ferme perso depuis le village via un portail de retour visuel (symétrique au portail ferme → village de la phase 28)
-- [ ] **VILL-12**: User voit une transition fade cross-dissolve Reanimated (~400ms) lors du retour village → ferme, cohérente avec l'aller
+- [x] **VILL-11**: User peut revenir à la ferme perso depuis le village via un portail de retour visuel (symétrique au portail ferme → village de la phase 28)
+- [x] **VILL-12**: User voit une transition fade cross-dissolve Reanimated (~400ms) lors du retour village → ferme, cohérente avec l'aller
 
 ---
 

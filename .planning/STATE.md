@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: executing
-last_updated: "2026-04-11T11:08:11.690Z"
+status: verifying
+last_updated: "2026-04-11T11:16:53.348Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 0
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -32,7 +32,7 @@ Last activity: 2026-04-11
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ### Quick Tasks Completed
 
@@ -124,6 +124,7 @@ Status: Ready to execute
 | Phase 28 P02 | 2min | 2 tasks | 3 files |
 | Phase 28-portail-c-blage-contributions P01 | 12min | 2 tasks | 6 files |
 | Phase 29-avatars-vivants-portail-retour P01 | 7min | 3 tasks | 7 files |
+| Phase 29-avatars-vivants-portail-retour P02 | 4min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -223,6 +224,8 @@ Recent decisions affecting current work:
 - [Phase 29-01]: Filtrage contributions hebdo via comparaison string ISO lexicographique (c.timestamp >= weekStart) — zero parsing Date
 - [Phase 29-01]: Assignation profil->slot par tri alphabetique profile.id.localeCompare — deterministe sans persistance vault
 - [Phase 29-01]: Avatars rendus comme siblings du TileMapRenderer (pointerEvents none) dans mapContainer — pas children
+- [Phase 29-avatars-vivants-portail-retour]: [Phase 29-02]: PortalSprite extrait en composant partagé avec fallback bottom/right pour préserver layout tree.tsx sans modification de l'usage
+- [Phase 29-avatars-vivants-portail-retour]: [Phase 29-02]: router.replace côté retour village → ferme (pas push) pour stack propre ping-pong
 
 ### Todos
 
@@ -234,5 +237,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-11T11:08:11.687Z
+Last session: 2026-04-11T11:16:53.345Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)

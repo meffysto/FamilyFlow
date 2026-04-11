@@ -91,7 +91,7 @@ Détails : `.planning/milestones/v1.4-ROADMAP.md`.
 **Plans:** 2 plans
 Plans:
 - [x] 29-PLAN-01-avatars-vivants.md — Avatars pixel art + halo actif hebdo + tooltip tap (VILL-01, 02, 03) — completed 2026-04-11
-- [ ] 29-PLAN-02-portail-retour.md — Portail partagé + fade 400ms retour village → ferme (VILL-11, 12)
+- [x] 29-PLAN-02-portail-retour.md — Portail partagé + fade 400ms retour village → ferme (VILL-11, 12) — completed 2026-04-11
 **UI hint**: yes
 
 ### Phase 30: Décorations persistantes
@@ -134,7 +134,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 29. Avatars vivants + portail retour | 1/2 | In progress | - |
+| 29. Avatars vivants + portail retour | 2/2 | Completed | 2026-04-11 |
 | 30. Décorations persistantes | 0/TBD | Not started | - |
 | 31. Ambiance dynamique | 0/TBD | Not started | - |
 | 32. Arbre familial commun | 0/TBD | Not started | - |
