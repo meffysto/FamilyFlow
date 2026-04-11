@@ -680,7 +680,7 @@ export default function VillageScreen() {
           {portalSlot && (
             <PortalSprite
               onPress={handleReturnPortalPress}
-              x={portalSlot.x * mapSize.width}
+              x={portalSlot.x * mapSize.width + 10}
               y={portalSlot.y * mapSize.height}
               accessibilityLabel="Retour à la ferme"
             />

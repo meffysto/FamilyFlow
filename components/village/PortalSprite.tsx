@@ -5,7 +5,7 @@
 // Couvre VILL-11 (portail retour visuel symétrique), CD-04 (mutualisation).
 
 import React, { useCallback } from 'react';
-import { Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { Dimensions, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,6 +13,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Radius } from '../../constants/spacing';
+
+const { width: SCREEN_W } = Dimensions.get('window');
+// Même calcul que tree.tsx pour aligner le portail au-dessus du sommet de l'arbre
+const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
 
 // Spring config constante module (convention CLAUDE.md)
 const SPRING_PORTAL = { damping: 12, stiffness: 200 } as const;
@@ -64,9 +68,9 @@ export function PortalSprite({
           top: y - CONTAINER_SIZE / 2,
         }
       : {
-          // Mode ferme diorama : bottom-right (reproduit styles.portalContainer original)
-          bottom: Spacing['4xl'],
-          right: Spacing['2xl'],
+          // Mode ferme diorama : gauche, au-dessus du sommet de l'arbre
+          bottom: TREE_SIZE + Spacing['3xl'] + 16,
+          right: Spacing['6xl'] + 16,
         };
 
   return (
