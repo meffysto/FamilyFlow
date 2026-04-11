@@ -1,19 +1,16 @@
 /**
  * VoiceRecorder.tsx — Composant d'enregistrement vocal (1-2 min) + upload ElevenLabs IVC.
- * Affiche 5 barres animées Reanimated pendant l'enregistrement, gère les états
- * idle → recording → uploading → done, et appelle onVoiceReady avec le voice_id cloné.
+ * Waveform réelle pilotée par le metering dB d'Audio.Recording (expo-av),
+ * avec 40 barres qui défilent de droite à gauche au rythme du son.
  */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withRepeat,
-  withSequence,
   withTiming,
-  withSpring,
-  cancelAnimation,
 } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import { Audio } from 'expo-av';
@@ -24,42 +21,41 @@ import { FontSize, FontWeight } from '../../constants/typography';
 
 // ─── Constantes module-level ──────────────────────────────────────────────────
 
-const SPRING_WAVE = { damping: 8, stiffness: 200 };
-const BAR_HEIGHT = { min: 6, max: 28 };
+const BAR_COUNT = 40;
+const BAR_WIDTH = 5;
+const BAR_GAP = 3;
+const BAR_MIN_H = 4;
+const BAR_MAX_H = 48;
+// Plage dB exploitable : -60 dB (quasi-silence) → 0 dB (saturation)
+const METERING_FLOOR = -60;
+const METERING_CEIL = 0;
 
-// ─── RecordBar ────────────────────────────────────────────────────────────────
+// ─── LiveBar ──────────────────────────────────────────────────────────────────
+// Lit sa hauteur dans un sharedValue tableau partagé par position.
 
-interface RecordBarProps {
-  isActive: boolean;
-  delay: number;
+interface LiveBarProps {
+  index: number;
+  amplitudes: SharedValue<number[]>;
   color: string;
 }
 
-const RecordBar = React.memo(function RecordBar({ isActive, delay, color }: RecordBarProps) {
-  const height = useSharedValue(BAR_HEIGHT.min);
-
-  useEffect(() => {
-    if (isActive) {
-      height.value = withRepeat(
-        withSequence(
-          withTiming(BAR_HEIGHT.max, { duration: 400 + delay }),
-          withTiming(BAR_HEIGHT.min, { duration: 400 + delay }),
-        ),
-        -1,
-        false,
-      );
-    } else {
-      cancelAnimation(height);
-      height.value = withSpring(BAR_HEIGHT.min, SPRING_WAVE);
-    }
-  }, [isActive, delay, height]);
-
-  const animStyle = useAnimatedStyle(() => ({ height: height.value }));
+const LiveBar = React.memo(function LiveBar({ index, amplitudes, color }: LiveBarProps) {
+  const animStyle = useAnimatedStyle(() => {
+    const v = amplitudes.value[index] ?? 0;
+    return {
+      height: BAR_MIN_H + (BAR_MAX_H - BAR_MIN_H) * v,
+    };
+  });
 
   return (
     <Animated.View
       style={[
-        { width: 4, borderRadius: Radius.xxs, marginHorizontal: Spacing.xs, backgroundColor: color },
+        {
+          width: BAR_WIDTH,
+          marginHorizontal: BAR_GAP / 2,
+          borderRadius: BAR_WIDTH / 2,
+          backgroundColor: color,
+        },
         animStyle,
       ]}
     />
@@ -79,6 +75,13 @@ export interface VoiceRecorderProps {
   apiKey: string;
 }
 
+// ─── Options d'enregistrement avec metering activé ───────────────────────────
+
+const RECORDING_OPTIONS: Audio.RecordingOptions = {
+  ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+  isMeteringEnabled: true,
+};
+
 // ─── VoiceRecorder ───────────────────────────────────────────────────────────
 
 function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKey }: VoiceRecorderProps) {
@@ -89,6 +92,26 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // SharedValue d'un tableau de BAR_COUNT valeurs normalisées (0-1)
+  const amplitudes = useSharedValue<number[]>(new Array(BAR_COUNT).fill(0));
+
+  // Réinitialise la waveform à l'état de repos
+  const resetAmplitudes = useCallback(() => {
+    amplitudes.value = new Array(BAR_COUNT).fill(0);
+  }, [amplitudes]);
+
+  // Callback appelé par Audio.Recording à chaque tick de metering.
+  // On convertit les dB (-160..0) en valeur normalisée (0..1) et on shift
+  // le tableau d'amplitudes à gauche en insérant la nouvelle valeur à droite.
+  const onRecordingStatus = useCallback((s: Audio.RecordingStatus) => {
+    if (!s.isRecording || s.metering == null) return;
+    const clamped = Math.max(METERING_FLOOR, Math.min(METERING_CEIL, s.metering));
+    const normalized = (clamped - METERING_FLOOR) / (METERING_CEIL - METERING_FLOOR);
+    // Petit boost visuel — le metering ElevenLabs reste souvent bas
+    const boosted = Math.min(1, Math.pow(normalized, 0.5) * 1.1);
+    amplitudes.value = [...amplitudes.value.slice(1), boosted];
+  }, [amplitudes]);
 
   // Nettoyage au démontage
   useEffect(() => {
@@ -112,6 +135,8 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
     }
 
     const uri = recordingRef.current?.getURI();
+    resetAmplitudes();
+
     if (!uri) {
       Alert.alert('Erreur', 'Enregistrement introuvable.');
       setStatus('idle');
@@ -135,7 +160,7 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
       Alert.alert('Erreur upload', msg);
       setStatus('idle');
     }
-  }, [profileName, apiKey, onVoiceReady]);
+  }, [profileName, apiKey, onVoiceReady, resetAmplitudes]);
 
   const startRecording = useCallback(async () => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
@@ -148,10 +173,17 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
 
     try {
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync(RECORDING_OPTIONS);
+      // Tick metering ~16/s — fréquence confortable pour la waveform
+      recording.setProgressUpdateInterval(60);
+      recording.setOnRecordingStatusUpdate(onRecordingStatus);
+      await recording.startAsync();
+
       recordingRef.current = recording;
       setStatus('recording');
       setElapsed(0);
+      resetAmplitudes();
       timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
       autoStopRef.current = setTimeout(() => stopRecording(), 120_000);
     } catch (e: unknown) {
@@ -159,7 +191,7 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
       Alert.alert('Erreur micro', msg);
       setStatus('idle');
     }
-  }, [stopRecording]);
+  }, [stopRecording, onRecordingStatus, resetAmplitudes]);
 
   const handlePress = useCallback(() => {
     if (status === 'idle') startRecording();
@@ -181,15 +213,10 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
         Lisez à voix haute pendant 1 à 2 minutes pour créer votre voix personnalisée.
       </Text>
 
-      {/* Waveform : 5 barres animées */}
+      {/* Waveform : BAR_COUNT barres pilotées par le metering */}
       <View style={styles.waveformRow}>
-        {[0, 1, 2, 3, 4].map(i => (
-          <RecordBar
-            key={i}
-            isActive={status === 'recording'}
-            delay={i * 60}
-            color={barColor}
-          />
+        {Array.from({ length: BAR_COUNT }, (_, i) => (
+          <LiveBar key={i} index={i} amplitudes={amplitudes} color={barColor} />
         ))}
       </View>
 
@@ -253,7 +280,8 @@ const styles = StyleSheet.create({
   waveformRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: BAR_HEIGHT.max + Spacing.md,
+    justifyContent: 'center',
+    height: BAR_MAX_H + Spacing.md,
   },
   timer: {
     fontSize: FontSize.subtitle,
