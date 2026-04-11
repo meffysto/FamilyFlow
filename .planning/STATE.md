@@ -28,7 +28,7 @@ Phase: 30 (decorations-persistantes) — EXECUTING
 Plan: 3 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
-Last activity: 2026-04-11
+Last activity: 2026-04-11 - Completed quick task 260411-tey: Enrichir CalendarImporter ical birthYear notes affichage
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
@@ -41,6 +41,7 @@ Status: Phase complete — ready for verification
 | 260410-qnr | Dictaphone import texte + multi-photos recettes | 2026-04-10 | f1c7909 | [260410-qnr-ajouter-dictaphone-dans-import-texte-rec](./quick/260410-qnr-ajouter-dictaphone-dans-import-texte-rec/) |
 | 260410-qv2 | Fix journal adulte grossesse: bug texte coupé + sections sommeil/symptômes/humeur | 2026-04-10 | 6bf22da | [260410-qv2-fix-journal-adulte-grossesse-bug-texte-c](./quick/260410-qv2-fix-journal-adulte-grossesse-bug-texte-c/) |
 | 260410-rie | Améliorer import photo recettes — prompt OCR Sonnet + preview éditable | 2026-04-10 | 5b3a39b | [260410-rie-ameliorer-import-photo-recettes-prompt-v](./quick/260410-rie-ameliorer-import-photo-recettes-prompt-v/) |
+| 260411-tey | Enrichir CalendarImporter ical birthYear notes affichage | 2026-04-11 | bcf979b | [260411-tey-enrichir-calendarimporter-ical-birthyear](./quick/260411-tey-enrichir-calendarimporter-ical-birthyear/) |
 
 ## Performance Metrics
 
