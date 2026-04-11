@@ -21,7 +21,7 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeInDown,
@@ -29,6 +29,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   runOnJS,
+  Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
@@ -48,9 +49,10 @@ import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import type { VaultManager } from '../../lib/vault';
 import type { Profile } from '../../lib/types';
 import type { VillageContribution } from '../../lib/village/types';
-// Phase 29 — overlay avatars + tooltip (VILL-01/02/03)
+// Phase 29 — overlay avatars + tooltip (VILL-01/02/03) + portail retour (VILL-11/12)
 import { VillageAvatar } from '../../components/village/VillageAvatar';
 import { AvatarTooltip } from '../../components/village/AvatarTooltip';
+import { PortalSprite } from '../../components/village/PortalSprite';
 import { VILLAGE_GRID } from '../../lib/village/grid';
 
 // ── Constantes module ──────────────────────────────────────────────────────
@@ -373,6 +375,37 @@ export default function VillageScreen() {
     [],
   );
 
+  /** Slot du portail retour depuis la grille (per D-18 — VILL-11) */
+  const portalSlot = useMemo(
+    () => VILLAGE_GRID.find(c => c.id === 'village_portal_home'),
+    [],
+  );
+
+  // ── Phase 29 — Fade cross-dissolve retour village → ferme (VILL-12) ───
+
+  /** sharedValue d'opacité pour la transition de sortie (per D-21) */
+  const screenOpacity = useSharedValue(1);
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: screenOpacity.value }));
+
+  /** Handler portail retour — withTiming 400ms + runOnJS(router.replace) (per D-21, D-23) */
+  const handleReturnPortalPress = useCallback(() => {
+    screenOpacity.value = withTiming(
+      0,
+      { duration: 400, easing: Easing.out(Easing.ease) },
+      (finished) => {
+        if (finished) runOnJS(router.replace)('/(tabs)/tree' as any);
+      },
+    );
+  }, [screenOpacity, router]);
+
+  // Reset opacity quand l'écran regagne le focus — per D-22, Pitfall P3.
+  // Évite que l'écran reste invisible après un ping-pong ferme ↔ village.
+  useFocusEffect(
+    useCallback(() => {
+      screenOpacity.value = 1;
+    }, [screenOpacity]),
+  );
+
   /** State tooltip + timer ref — per D-13, Pitfall 4 cleanup */
   const [tooltip, setTooltip] = useState<{
     profileName: string;
@@ -459,8 +492,8 @@ export default function VillageScreen() {
   // ── Render ────────────────────────────────────────────────────────────
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      {/* ── Header flottant par-dessus la carte (comme HUD ferme dans tree.tsx) ── */}
+    <Animated.View style={[styles.root, { backgroundColor: colors.bg }, fadeStyle]}>
+      {/* ── Header flottant sans bouton retour — le portail est le seul point de sortie (per D-19) ── */}
       <View
         style={[
           styles.header,
@@ -470,17 +503,7 @@ export default function VillageScreen() {
           },
         ]}
       >
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.replace('/(tabs)/tree' as any)}
-          accessibilityLabel="Retour"
-          accessibilityRole="button"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={[styles.backArrow, { color: colors.text }]}>‹</Text>
-        </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Place du Village</Text>
-        <View style={styles.headerSpacer} />
       </View>
 
       {/* ── Scroll unique (pattern tree.tsx) : carte + sections dans le même flux ── */}
@@ -531,6 +554,16 @@ export default function VillageScreen() {
               y={tooltip.y}
               containerWidth={mapSize.width}
               onDismiss={() => setTooltip(null)}
+            />
+          )}
+
+          {/* Portail retour vers la ferme — seul point de sortie (per VILL-11, D-18, D-19) */}
+          {portalSlot && (
+            <PortalSprite
+              onPress={handleReturnPortalPress}
+              x={portalSlot.x * mapSize.width}
+              y={portalSlot.y * mapSize.height}
+              accessibilityLabel="Retour à la ferme"
             />
           )}
         </View>
@@ -703,7 +736,7 @@ export default function VillageScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -727,24 +760,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xs,
     minHeight: 32,
   },
-  backBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backArrow: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-  },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-  },
-  headerSpacer: {
-    width: 32,
   },
 
   // Carte tilemap (dans le flux scroll, comme tree.tsx)
