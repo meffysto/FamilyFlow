@@ -57,9 +57,9 @@
 
 | REQ-ID | Category | Phase | Status |
 |--------|----------|-------|--------|
-| VILL-01 | AVATARS | Phase 29 | Pending |
-| VILL-02 | AVATARS | Phase 29 | Pending |
-| VILL-03 | AVATARS | Phase 29 | Pending |
+| VILL-01 | AVATARS | Phase 29 | Done |
+| VILL-02 | AVATARS | Phase 29 | Done |
+| VILL-03 | AVATARS | Phase 29 | Done |
 | VILL-04 | DÉCORATIONS | Phase 30 | Pending |
 | VILL-05 | DÉCORATIONS | Phase 30 | Pending |
 | VILL-06 | DÉCORATIONS | Phase 30 | Pending |
@@ -67,8 +67,8 @@
 | VILL-08 | AMBIANCE | Phase 31 | Pending |
 | VILL-09 | ARBRE FAMILIAL | Phase 32 | Pending |
 | VILL-10 | ARBRE FAMILIAL | Phase 32 | Pending |
-| VILL-11 | NAVIGATION | Phase 29 | Pending |
-| VILL-12 | NAVIGATION | Phase 29 | Pending |
+| VILL-11 | NAVIGATION | Phase 29 | Done |
+| VILL-12 | NAVIGATION | Phase 29 | Done |
 
 **Coverage:** 12/12 requirements mapped ✓
 

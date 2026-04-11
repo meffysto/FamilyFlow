@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: verifying
-last_updated: "2026-04-11T11:16:53.348Z"
+status: ready
+last_updated: "2026-04-11T12:00:00.000Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
+  completed_phases: 1
+  total_plans: 2
   completed_plans: 2
-  percent: 0
+  percent: 25
 ---
 
 # Project State
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 29 — avatars-vivants-portail-retour
+**Current focus:** Phase 30 — décorations persistantes (à discuter)
 
 ## Current Position
 
-Phase: 29 (avatars-vivants-portail-retour) — EXECUTING
-Plan: 2 of 2
+Phase: 30 (décorations-persistantes) — NOT STARTED
+Plan: 0 of TBD
 Milestone: v1.5 Village Vivant (Phases 29-32)
-Last shipped: v1.4 Jardin Familial (2026-04-11)
+Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
 Last activity: 2026-04-11
 
-Progress: [░░░░░░░░░░] 0% (0/4 phases)
+Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
-Status: Phase complete — ready for verification
+Status: Phase 29 clôturée — prêt pour discuss-phase 30
 
 ### Quick Tasks Completed
 

@@ -71,7 +71,7 @@ Détails : `.planning/milestones/v1.4-ROADMAP.md`.
 
 **Milestone Goal :** Transformer la Place du Village statique en espace vivant et personnalisé — les avatars de la famille y apparaissent, les semaines réussies laissent des traces visuelles durables, l'ambiance change selon l'heure et la saison, et l'arbre familial commun devient le cœur symbolique du village. Polish milestone, aucune nouvelle dépendance npm, réutilisation stricte de l'infra existante (`ReactiveAvatar`, `TileMapRenderer`, `useGarden`, `FarmProfileData`).
 
-- [ ] **Phase 29: Avatars vivants + portail retour** — Avatars par profil sur la carte village avec état d'activité hebdo + portail bidirectionnel village → ferme
+- [x] **Phase 29: Avatars vivants + portail retour** — Avatars par profil sur la carte village avec état d'activité hebdo + portail bidirectionnel village → ferme — completed 2026-04-11
 - [ ] **Phase 30: Décorations persistantes** — Schéma append-only, déblocage par palier de streak collectif, catalogue des ~8 décorations
 - [ ] **Phase 31: Ambiance dynamique** — Cycle jour/nuit selon l'heure réelle + effets saisonniers superposés à la carte
 - [ ] **Phase 32: Arbre familial commun** — Sprite central au cœur du village, évolution visuelle selon le streak collectif
