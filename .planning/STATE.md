@@ -28,7 +28,7 @@ Phase: 30 (decorations-persistantes) — EXECUTING
 Plan: 3 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
-Last activity: 2026-04-11 - Completed quick task 260411-te0: Ajouter descriptions médicales/développementales dans l'onglet Compétences
+Last activity: 2026-04-11 - Completed quick task 260411-wq8: Fondation IVC — types Profile + parser famille.md + services voix ElevenLabs/iOS
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
