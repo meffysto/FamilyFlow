@@ -11,7 +11,7 @@
  * Câblé sur useGarden() et useVault() — données depuis jardin-familial.md
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -48,6 +48,10 @@ import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import type { VaultManager } from '../../lib/vault';
 import type { Profile } from '../../lib/types';
 import type { VillageContribution } from '../../lib/village/types';
+// Phase 29 — overlay avatars + tooltip (VILL-01/02/03)
+import { VillageAvatar } from '../../components/village/VillageAvatar';
+import { AvatarTooltip } from '../../components/village/AvatarTooltip';
+import { VILLAGE_GRID } from '../../lib/village/grid';
 
 // ── Constantes module ──────────────────────────────────────────────────────
 
@@ -340,6 +344,68 @@ export default function VillageScreen() {
     [profiles],
   );
 
+  // ── Phase 29 — Overlay avatars (VILL-01/02/03) ────────────────────────
+
+  /** Contributions de la SEMAINE COURANTE par profil — per D-09, Pitfall 5 week-start ISO */
+  const weeklyContribs = useMemo(() => {
+    const weekStart = gardenData?.currentWeekStart;
+    if (!weekStart) return {} as Record<string, number>;
+    const map: Record<string, number> = {};
+    for (const c of gardenData?.contributions ?? []) {
+      // Comparaison string ISO — un timestamp 'YYYY-MM-DDTHH:mm:ss' de la semaine
+      // courante est toujours >= weekStart ('YYYY-MM-DD') lexicographiquement.
+      if (c.timestamp >= weekStart) {
+        map[c.profileId] = (map[c.profileId] ?? 0) + c.amount;
+      }
+    }
+    return map;
+  }, [gardenData?.contributions, gardenData?.currentWeekStart]);
+
+  /** Profils actifs triés par id pour assignation déterministe slot (per D-07) */
+  const sortedActiveProfiles = useMemo(
+    () => [...activeProfiles].sort((a, b) => a.id.localeCompare(b.id)),
+    [activeProfiles],
+  );
+
+  /** Slots avatar issus de la grille village (Phase 29) */
+  const avatarSlots = useMemo(
+    () => VILLAGE_GRID.filter(c => c.role === 'avatar'),
+    [],
+  );
+
+  /** State tooltip + timer ref — per D-13, Pitfall 4 cleanup */
+  const [tooltip, setTooltip] = useState<{
+    profileName: string;
+    count: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleAvatarPress = useCallback(
+    (profile: Profile, slotX: number, slotY: number) => {
+      if (dismissTimerRef.current) {
+        clearTimeout(dismissTimerRef.current);
+      }
+      const count = weeklyContribs[profile.id] ?? 0;
+      setTooltip({ profileName: profile.name, count, x: slotX, y: slotY });
+      dismissTimerRef.current = setTimeout(() => {
+        setTooltip(null);
+        dismissTimerRef.current = null;
+      }, 2500);
+    },
+    [weeklyContribs],
+  );
+
+  // Cleanup timer au unmount (Pitfall 4)
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) {
+        clearTimeout(dismissTimerRef.current);
+      }
+    };
+  }, []);
+
   /** Activité IRL saisonnière — déterministe par semaine */
   const activity = useMemo(
     () =>
@@ -425,7 +491,7 @@ export default function VillageScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Carte TileMap village ── */}
+        {/* ── Carte TileMap village + overlay avatars ── */}
         <View
           style={[styles.mapContainer, { height: MAP_HEIGHT, marginHorizontal: -Spacing['2xl'] }]}
           onLayout={handleMapLayout}
@@ -437,6 +503,36 @@ export default function VillageScreen() {
             season={season}
             mode="village"
           />
+
+          {/* Overlay avatars — siblings du renderer (pointerEvents none) — per VILL-01/02, Pitfall 1 */}
+          {sortedActiveProfiles.slice(0, 6).map((profile, idx) => {
+            const slot = avatarSlots[idx];
+            if (!slot || !profile.companion) return null;
+            const slotX = slot.x * mapSize.width;
+            const slotY = slot.y * mapSize.height;
+            return (
+              <VillageAvatar
+                key={profile.id}
+                profile={profile}
+                slotX={slotX}
+                slotY={slotY}
+                isActive={(weeklyContribs[profile.id] ?? 0) > 0}
+                onPress={() => handleAvatarPress(profile, slotX, slotY)}
+              />
+            );
+          })}
+
+          {/* Tooltip conditionnel — per VILL-03 */}
+          {tooltip && (
+            <AvatarTooltip
+              profileName={tooltip.profileName}
+              count={tooltip.count}
+              x={tooltip.x}
+              y={tooltip.y}
+              containerWidth={mapSize.width}
+              onDismiss={() => setTooltip(null)}
+            />
+          )}
         </View>
 
         {isLoading || !gardenData ? (
