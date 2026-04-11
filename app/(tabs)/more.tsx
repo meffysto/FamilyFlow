@@ -173,15 +173,17 @@ export default function MoreScreen() {
           }]}
           scaleValue={0.93}
         >
-          <Text style={[
-            styles.viewToggleIcon,
-            { color: viewMode === 'list' ? primary : colors.textFaint },
-          ]}>☰</Text>
-          <View style={[styles.viewToggleSep, { backgroundColor: colors.border }]} />
-          <Text style={[
-            styles.viewToggleIcon,
-            { color: viewMode === 'grid' ? primary : colors.textFaint },
-          ]}>⊞</Text>
+          <View style={styles.viewToggleRow}>
+            <Text style={[
+              styles.viewToggleIcon,
+              { color: viewMode === 'list' ? primary : colors.textFaint },
+            ]}>☰</Text>
+            <View style={[styles.viewToggleSep, { backgroundColor: colors.border }]} />
+            <Text style={[
+              styles.viewToggleIcon,
+              { color: viewMode === 'grid' ? primary : colors.textFaint },
+            ]}>⊞</Text>
+          </View>
         </PressableScale>
       </View>
 
@@ -318,13 +320,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   viewToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderRadius: Radius.base,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     ...Shadows.xs,
+  },
+  viewToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   viewToggleIcon: {
     fontSize: FontSize.lg,
