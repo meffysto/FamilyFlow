@@ -25,6 +25,11 @@ import type { VaultManager } from '../vault';
 /** Chemin du fichier village dans le vault Obsidian */
 export const VILLAGE_FILE = '04 - Gamification/jardin-familial.md';
 
+/** Helper module-prive : echappe les caracteres speciaux regex. */
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // ---------------------------------------------------------------------------
 // parseGardenFile
 // ---------------------------------------------------------------------------
@@ -166,6 +171,18 @@ export function parseGardenFile(content: string): VillageData {
     }
   }
 
+  // Dedup defensif : protege contre les fichiers deja pollues par d'anciens
+  // bugs d'idempotence (double-fire useEffect). Garde la premiere occurrence
+  // par buildingId (timestamp le plus ancien gagne, ordre de lecture).
+  const seenBuildings = new Set<string>();
+  const dedupedBuildings: UnlockedBuilding[] = [];
+  for (const b of unlockedBuildings) {
+    if (!seenBuildings.has(b.buildingId)) {
+      seenBuildings.add(b.buildingId);
+      dedupedBuildings.push(b);
+    }
+  }
+
   return {
     version,
     createdAt,
@@ -174,7 +191,7 @@ export function parseGardenFile(content: string): VillageData {
     rewardClaimed,
     contributions,
     pastWeeks,
-    unlockedBuildings,
+    unlockedBuildings: dedupedBuildings,
   };
 }
 
@@ -328,6 +345,21 @@ export async function appendContributionToVault(
  * - Si section absente, la creer avant `## Historique` ou en fin de fichier
  */
 export function appendBuilding(content: string, entry: UnlockedBuilding): string {
+  // Idempotence stricte : si une ligne pour ce buildingId existe deja dans la
+  // section ## Constructions, retourner le contenu inchange. Double-couche
+  // defensive (hook computeBuildingsToUnlock + parser ici) pour survivre aux
+  // double-fires StrictMode et aux re-renders serres avant propagation du state.
+  const constrMatch = /## Constructions\s*\n([\s\S]*?)(?=\n## |\n*$)/.exec(content);
+  if (constrMatch) {
+    const existingLineRegex = new RegExp(
+      `^-\\s+\\S+\\s+\\|\\s+${escapeRegex(entry.buildingId)}\\s+\\|`,
+      'm',
+    );
+    if (existingLineRegex.test(constrMatch[1])) {
+      return content;
+    }
+  }
+
   const newLine = `- ${entry.timestamp} | ${entry.buildingId} | ${entry.palier}`;
 
   const lines = content.split('\n');

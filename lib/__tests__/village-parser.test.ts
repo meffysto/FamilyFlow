@@ -555,3 +555,73 @@ describe('appendBuilding (Phase 30)', () => {
     expect(out).toContain('- 2026-04-15T00:00:00 | boulangerie | 300');
   });
 });
+
+// ── appendBuilding — idempotence stricte (Phase 30-03 hotfix) ────────────────
+
+describe('appendBuilding — idempotence', () => {
+  it('retourne le contenu inchange si le buildingId est deja dans Constructions', () => {
+    const content = `---
+version: 1
+---
+## Contributions
+
+## Constructions
+- 2026-04-10T10:00:00.000Z | puits | 100
+
+## Historique
+`;
+    const entry: UnlockedBuilding = {
+      timestamp: '2026-04-11T15:00:00.000Z',
+      buildingId: 'puits',
+      palier: 100,
+    };
+    expect(appendBuilding(content, entry)).toBe(content);
+  });
+
+  it('ajoute un nouveau buildingId meme si un autre existe deja', () => {
+    const content = [
+      '## Constructions',
+      '- 2026-04-10T10:00:00.000Z | puits | 100',
+      '',
+      '## Historique',
+      '',
+    ].join('\n');
+    const entry: UnlockedBuilding = {
+      timestamp: '2026-04-11T15:00:00.000Z',
+      buildingId: 'boulangerie',
+      palier: 300,
+    };
+    const result = appendBuilding(content, entry);
+    expect(result).toContain('| puits | 100');
+    expect(result).toContain('| boulangerie | 300');
+  });
+});
+
+// ── parseGardenFile — dedup defensif Constructions (Phase 30-03 hotfix) ──────
+
+describe('parseGardenFile — dedup defensif constructions', () => {
+  it('supprime les doublons par buildingId (garde le plus ancien)', () => {
+    const content = `---
+version: 1
+created: 2026-04-10
+current_week_start: 2026-04-07
+current_theme_index: 0
+reward_claimed: false
+---
+
+## Contributions
+
+## Constructions
+- 2026-04-10T10:00:00.000Z | puits | 100
+- 2026-04-11T15:00:00.000Z | puits | 100
+- 2026-04-11T16:00:00.000Z | boulangerie | 300
+
+## Historique
+`;
+    const parsed = parseGardenFile(content);
+    expect(parsed.unlockedBuildings).toHaveLength(2);
+    expect(parsed.unlockedBuildings[0].buildingId).toBe('puits');
+    expect(parsed.unlockedBuildings[0].timestamp).toBe('2026-04-10T10:00:00.000Z');
+    expect(parsed.unlockedBuildings[1].buildingId).toBe('boulangerie');
+  });
+});
