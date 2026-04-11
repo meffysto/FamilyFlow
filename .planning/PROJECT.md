@@ -47,12 +47,16 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - ✓ Compagnon étendu — 4 event types activés (weekly_recap, morning_greeting, gentle_nudge, comeback) + persistance messages SecureStore + bulle dashboard — v1.3
 - ✓ Fondation données village — module lib/village/ isolé (types, grille 4 éléments, 7 templates thématisés, parseur bidirectionnel append-only), 24 tests Jest — v1.4
 - ✓ Hook domaine jardin — useGarden.ts isolé (génération objectif hebdomadaire, contributions, claim anti-double-abus), câblage useVault.ts +13 lignes — v1.4
-- ✓ Écran Village — carte tilemap cobblestone 75%, barre progression LiquidXPBar, feed contributions, indicateurs membres, historique avec détail par membre — v1.4
+- ✓ Écran Village — carte tilemap cobblestone plein écran, barre progression LiquidXPBar, feed contributions, indicateurs membres, historique avec détail par membre — v1.4
 - ✓ Portail animé ferme → village (sprite pierre pixel art + glow Reanimated loop + fade cross-dissolve 400ms) remplaçant le FAB temporaire — v1.4
 - ✓ Auto-contribution village — récoltes ferme (useFarm) et tâches IRL complétées (useGamification) ajoutent automatiquement une contribution, toast discret "+1 Village 🏡" — v1.4
 - ✓ Récompense collective — bonus +25 XP + 1 loot box cosmétique équitable pour tous les profils actifs + suggestion d'activité IRL saisonnière (20 activités curatées × 4 saisons) — v1.4
 
 ### Active
+
+v1.5 à définir via `/gsd:new-milestone`. Candidats naturels issus de v1.4 deferred :
+- [ ] (v1.5) Enrichissement interactif du village — avatars, ambiance dynamique, arbre familial (VILL-01 à VILL-05)
+- [ ] (v1.5) Décoration persistante du village par semaine réussie (guirlande, fanion, etc.)
 
 - [ ] (Backlog) Nettoyage code mort et fonctions dépréciées
 - [ ] (Backlog) Refacto progressive du god hook useVault (3400 lignes → hooks domaine)
@@ -70,26 +74,17 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current Milestone: v1.4 Jardin Familial (MVP)
+## Current State
 
-**Goal:** Créer un espace coopératif partagé entre tous les profils — une "Place du Village" avec sa propre carte — où la famille contribue ensemble (récoltes + tâches) vers un objectif hebdomadaire commun.
+**Last shipped:** v1.4 Jardin Familial (2026-04-11) — 4 phases, 8 plans, tous verified.
 
-**Target features:**
-- Nouvelle carte "Place du Village" (pavés, fontaine, étals, ambiance communautaire)
-- Portail dans la ferme perso (transition visuelle vers le jardin)
-- Contributions : récoltes de la ferme perso + tâches IRL complétées
-- Objectif hebdomadaire auto-généré (recette/projet collectif adapté au niveau)
-- Récompense à l'atteinte : bonus in-game + suggestion d'activité familiale IRL
-- Panneau historique interactif sur la place (log des semaines accomplies)
+L'app FamilyFlow dispose désormais d'un espace coopératif "Place du Village" avec sa propre carte tilemap, un portail animé depuis la ferme perso, des contributions automatiques (récoltes + tâches IRL), un objectif hebdomadaire auto-généré, et une récompense collective (+25 XP + loot box + suggestion d'activité IRL saisonnière) quand l'objectif est atteint.
 
-**Key context:**
-- Scope MVP — le Livre de Famille enrichi, le vote famille, le polish viendront dans un v1.5
-- Infra tilemap/world-grid existante réutilisable (deuxième instance)
-- Données dans le vault Obsidian (fichier partagé entre profils)
-- L'arbre familial commun est hors scope MVP (v1.5)
+**Next milestone:** v1.5 — à définir via `/gsd:new-milestone`. Candidats probables issus des deferred v1.4 : enrichissement interactif du village (avatars, ambiance, décorations persistantes, arbre familial commun).
 
 ## Previous Milestones
 
+- ✅ **v1.4 Jardin Familial** — Shipped 2026-04-11. Place du Village coopérative (carte tilemap, contributions auto, objectif hebdo, récompense collective IRL). Phases 25-28. Voir `.planning/milestones/v1.4-ROADMAP.md`.
 - ✅ **v1.3 Seed** — Shipped 2026-04-10. Couplage sémantique tâches↔ferme (10 catégories, effets wow, anti-abus, musée des effets, compagnon étendu 4 event types). Phases 19-24.
 - ✅ **v1.2 Confort & Découverte** — Shipped 2026-04-08. Préférences alimentaires famille/invités + détection conflits recettes, codex ferme 111 entrées sur 11 catégories, tutoriel immersif 5 étapes. Voir `.planning/milestones/v1.2-ROADMAP.md`.
 - ✅ **v1.1 Ferme Enrichie** — Shipped 2026-04-07. Voir `.planning/milestones/v1.1-ROADMAP.md`.
@@ -145,4 +140,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-11 — Phase 27 complete (écran village + composants)*
+*Last updated: 2026-04-11 — v1.4 Jardin Familial milestone shipped*

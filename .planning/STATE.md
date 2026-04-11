@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
 status: verifying
-last_updated: "2026-04-11T06:12:51.790Z"
+last_updated: "2026-04-11T06:39:44.272Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 4

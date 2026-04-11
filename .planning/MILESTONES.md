@@ -1,5 +1,21 @@
 # Milestones
 
+## v1.4 Jardin Familial (Shipped: 2026-04-11)
+
+**Phases completed:** 4 phases, 8 plans, 6 tasks
+
+**Key accomplishments:**
+
+- 1. [Rule 1 - Bug] Fix gray-matter dates YAML parsees comme objets Date
+- gardenRaw/setGardenRaw exposés dans VaultState + village_claimed_week dans FarmProfileData avec parseur/sérialiseur backward-compatible
+- useGarden() — hook domaine village complet avec génération hebdomadaire, anti-double-claim et contributions, isolé de useVault via pattern D-01
+- One-liner:
+- Écran Place du Village complet — carte cobblestone TileMapRenderer mode='village', barre LiquidXPBar collective, feed contributions avec heure relative, indicateurs ReactiveAvatar par membre, historique CollapsibleSection — câblé sur useGarden() et useVault()
+- PortalSprite Reanimated (glow loop 1200ms + spring tap) remplace le FAB dans tree.tsx, avec câblage auto-contribution village dans useFarm (récoltes) et useGamification (tâches) via callback onContribution + toast '+1 Village 🏡' décalé 300ms
+- 1. [Rule 1 - Bug] Mauvaise fonction de parse pour gami-{id}.md
+
+---
+
 ## v1.2 Confort & Découverte (Shipped: 2026-04-08)
 
 **Phases completed:** 4 phases (15-18), 19 plans, 14 tasks
