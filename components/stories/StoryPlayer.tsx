@@ -14,6 +14,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig, Profile } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { generateSpeech } from '../../lib/elevenlabs';
+import { ELEVENLABS_FRENCH_VOICES } from '../../lib/stories';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -134,13 +135,41 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
     if (!selectedParentId) return voiceConfig;
     const parent = adultProfiles.find((p: Profile) => p.id === selectedParentId);
     if (!parent) return voiceConfig;
-    if (parent.voiceElevenLabsId) {
-      return { engine: 'elevenlabs', language: 'fr', elevenLabsVoiceId: parent.voiceElevenLabsId };
-    }
+
+    // 1. iOS Personal Voice — prioritaire si configurée
     if (parent.voiceSource === 'ios-personal' && parent.voicePersonalId) {
-      // Le support iOS Personal Voice via identifier explicite sera finalisé ultérieurement
-      return { engine: 'expo-speech', language: 'fr' };
+      return {
+        engine: 'expo-speech',
+        language: voiceConfig.language,
+        voiceIdentifier: parent.voicePersonalId,
+      };
     }
+
+    // 2. Clone ElevenLabs si disponible
+    if (parent.voiceElevenLabsId) {
+      return {
+        engine: 'elevenlabs',
+        language: voiceConfig.language,
+        elevenLabsVoiceId: parent.voiceElevenLabsId,
+      };
+    }
+
+    // 3. Fallback ElevenLabs preset par genre — uniquement si engine initial est elevenlabs
+    //    (session-only, aucune persistance, bouton + reste visible)
+    if (voiceConfig.engine === 'elevenlabs') {
+      const BELLA_ID = 'EXAVITQu4vr4xnSDxMaL';
+      const ADAM_ID = 'pNInz6obpgDQGcFmaJgB';
+      const targetId = parent.gender === 'fille' ? BELLA_ID : ADAM_ID;
+      const preset = ELEVENLABS_FRENCH_VOICES.find(v => v.id === targetId);
+      if (preset) {
+        return {
+          engine: 'elevenlabs',
+          language: voiceConfig.language,
+          elevenLabsVoiceId: preset.id,
+        };
+      }
+    }
+
     return voiceConfig;
   }, [selectedParentId, adultProfiles, voiceConfig]);
 
@@ -175,18 +204,21 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
     if (effectiveVoiceConfig.engine === 'expo-speech') {
       const targetLang = effectiveVoiceConfig.language === 'en' ? 'en-US' : 'fr-FR';
 
-      // iOS 17+ / iOS 26 : sans voix explicite, AVSpeechSynthesizer peut silencieusement
-      // ne rien jouer si la voix par défaut n'est pas chargée. On sélectionne la première
-      // voix disponible pour la langue cible.
-      let voiceId: string | undefined;
-      try {
-        const voices = await Speech.getAvailableVoicesAsync();
-        if (__DEV__) console.log('Voix disponibles:', voices.map(v => `${v.identifier} (${v.language})`));
-        const match = voices.find(v => v.language.startsWith(effectiveVoiceConfig.language === 'en' ? 'en' : 'fr'));
-        voiceId = match?.identifier;
-        if (__DEV__) console.log('Voix choisie:', voiceId ?? 'aucune');
-      } catch (e) {
-        if (__DEV__) console.warn('getAvailableVoicesAsync failed:', e);
+      let voiceId: string | undefined = effectiveVoiceConfig.voiceIdentifier;
+
+      // Si pas d'identifier explicite (voix iOS Personal), résoudre par langue
+      if (!voiceId) {
+        try {
+          const voices = await Speech.getAvailableVoicesAsync();
+          if (__DEV__) console.log('Voix disponibles:', voices.map(v => `${v.identifier} (${v.language})`));
+          const match = voices.find(v => v.language.startsWith(effectiveVoiceConfig.language === 'en' ? 'en' : 'fr'));
+          voiceId = match?.identifier;
+          if (__DEV__) console.log('Voix choisie:', voiceId ?? 'aucune');
+        } catch (e) {
+          if (__DEV__) console.warn('getAvailableVoicesAsync failed:', e);
+        }
+      } else if (__DEV__) {
+        console.log('Voix iOS Personal Voice explicite:', voiceId);
       }
 
       Speech.speak(histoire.texte, {
