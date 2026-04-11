@@ -612,6 +612,7 @@ export interface StoryVoiceConfig {
   engine: StoryVoiceEngine;
   language: 'fr' | 'en';
   elevenLabsVoiceId?: string;
+  voiceIdentifier?: string; // identifier iOS Personal Voice (expo-speech) — session-only
 }
 
 export interface BedtimeStory {
