@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, Alert, StyleSheet } from 'react-native';
+import { Modal, View, Text, Alert, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { ModalHeader } from './ui/ModalHeader';
@@ -23,6 +23,7 @@ interface SkillDetailModalProps {
   unlockedAt?: string;
   unlockedBy?: string;
   onUnlock?: () => void;
+  description?: string;
 }
 
 export function SkillDetailModal({
@@ -33,6 +34,7 @@ export function SkillDetailModal({
   unlockedAt,
   unlockedBy,
   onUnlock,
+  description,
 }: SkillDetailModalProps) {
   const { primary, colors } = useThemeColors();
   const { t } = useTranslation();
@@ -60,7 +62,10 @@ export function SkillDetailModal({
       <View style={[styles.container, { backgroundColor: colors.bg }]}>
         <ModalHeader title={skill.categoryLabel} onClose={onClose} />
 
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Grande icône emoji */}
           <Text style={styles.emoji}>{skill.categoryEmoji}</Text>
 
@@ -76,6 +81,15 @@ export function SkillDetailModal({
           <Text style={[styles.xp, { color: primary }]}>
             +{skill.xp} XP
           </Text>
+
+          {/* Description médicale/développementale */}
+          {description ? (
+            <View style={styles.descriptionSection}>
+              <Text style={[styles.description, { color: colors.textSub }]}>
+                {description}
+              </Text>
+            </View>
+          ) : null}
 
           {/* État : débloqué */}
           {state === 'unlocked' && (
@@ -110,7 +124,7 @@ export function SkillDetailModal({
             </View>
           )}
 
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -124,7 +138,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing['3xl'],
     paddingTop: Spacing['5xl'],
+    paddingBottom: Spacing['5xl'],
     gap: Spacing['2xl'],
+  },
+  descriptionSection: {
+    width: '100%',
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  description: {
+    fontSize: FontSize.sm,
+    lineHeight: FontSize.sm * 1.5,
+    textAlign: 'center',
   },
   emoji: {
     fontSize: 64,

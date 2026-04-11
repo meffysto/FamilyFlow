@@ -45,7 +45,11 @@ function useSkillt() {
   const bracketLabel = (id: string) => t(`ageBrackets.${id}.label`, { defaultValue: id });
   const bracketSubtitle = (id: string) => t(`ageBrackets.${id}.subtitle`, { defaultValue: '' });
   const skillLabel = (id: string) => t(`tree.${id}`, { defaultValue: id });
-  return { catLabel, bracketLabel, bracketSubtitle, skillLabel };
+  const skillDescription = (id: string): string | undefined => {
+    const val = t(`descriptions.${id}`, { defaultValue: '' });
+    return val || undefined;
+  };
+  return { catLabel, bracketLabel, bracketSubtitle, skillLabel, skillDescription };
 }
 
 export default function SkillsScreen() {
@@ -337,6 +341,7 @@ export default function SkillsScreen() {
         unlockedAt={selectedSkillUnlock?.unlockedAt}
         unlockedBy={selectedSkillUnlock ? profiles.find((p) => p.id === selectedSkillUnlock.unlockedBy)?.name ?? selectedSkillUnlock.unlockedBy : undefined}
         onUnlock={isParent && selectedSkillState === 'unlockable' ? handleUnlock : undefined}
+        description={selectedSkill ? sk.skillDescription(selectedSkill.id) : undefined}
       />
 
       <ScreenGuide
