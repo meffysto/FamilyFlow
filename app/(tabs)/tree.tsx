@@ -29,9 +29,7 @@ import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
-  withRepeat,
   runOnJS,
   Easing,
   FadeIn,
@@ -75,6 +73,7 @@ import { SunriseReport, type SunriseResource } from '../../components/mascot/Sun
 import { BadgesSheet } from '../../components/mascot/BadgesSheet';
 import { CompanionPicker } from '../../components/mascot/CompanionPicker';
 import { CompanionSlot } from '../../components/mascot/CompanionSlot';
+import { PortalSprite } from '../../components/village/PortalSprite';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
 import { getPendingResources } from '../../lib/mascot/building-engine';
 import {
@@ -299,66 +298,9 @@ function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// PortalSprite — Portail animé vers le village (Phase 28, MAP-03)
-// Glow loop idle + scale spring tap + accessibilité.
-// ---------------------------------------------------------------------------
-
-const SPRING_PORTAL = { damping: 12, stiffness: 200 } as const;
-
-function PortalSprite({ onPress }: { onPress: () => void }) {
-  const { colors } = useThemeColors();
-  const glowOpacity = useSharedValue(0.4);
-  const scaleAnim = useSharedValue(1);
-
-  // Démarrer le glow loop au montage
-  useEffect(() => {
-    glowOpacity.value = withRepeat(withTiming(0.8, { duration: 1200 }), -1, true);
-  }, [glowOpacity]);
-
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
-
-  const containerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleAnim.value }],
-  }));
-
-  const handlePress = useCallback(() => {
-    Haptics.selectionAsync();
-    scaleAnim.value = withSpring(0.92, SPRING_PORTAL, () => {
-      scaleAnim.value = withSpring(1, SPRING_PORTAL);
-    });
-    onPress();
-  }, [scaleAnim, onPress]);
-
-  return (
-    <Animated.View
-      style={[styles.portalContainer, containerStyle]}
-      accessibilityLabel="Portail vers le village"
-      accessibilityRole="button"
-    >
-      {/* Glow overlay */}
-      <Animated.View
-        style={[
-          StyleSheet.absoluteFillObject,
-          styles.portalGlow,
-          { backgroundColor: colors.catJeux },
-          glowStyle,
-        ]}
-        pointerEvents="none"
-      />
-      <TouchableOpacity
-        onPress={handlePress}
-        activeOpacity={1}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        accessibilityLabel="Portail vers le village"
-      >
-        <Text style={styles.portalEmoji}>{'🏛️'}</Text>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-}
+// Phase 29 — PortalSprite extrait dans components/village/PortalSprite.tsx (CD-04)
+// Le composant partagé est consommé ici (ferme → village) et dans village.tsx (village → ferme)
+// avec le même sprite portail.png (symétrie visuelle per D-17).
 
 export default function TreeScreen() {
   const { profileId } = useLocalSearchParams<{ profileId?: string }>();
@@ -3014,22 +2956,5 @@ const styles = StyleSheet.create({
     fontSize: FontSize.micro,
     fontWeight: FontWeight.medium,
     marginTop: 2,
-  },
-  portalContainer: {
-    position: 'absolute',
-    bottom: Spacing['4xl'],
-    right: Spacing['2xl'],
-    width: 56,
-    height: 56,
-    borderRadius: Radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  portalGlow: {
-    borderRadius: Radius.xl,
-  },
-  portalEmoji: {
-    fontSize: 28,
   },
 });
