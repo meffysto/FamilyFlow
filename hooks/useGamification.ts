@@ -321,12 +321,6 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         if (onContribution) {
           try { await onContribution('task', profile.id); } catch { /* Village -- non-critical */ }
         }
-        // Toast village (D-04) -- delai 300ms pour eviter doublon avec toast semantique (Pitfall 1)
-        if (onContribution) {
-          setTimeout(() => {
-            try { showToast('+1 Village 🏡', 'success'); } catch {}
-          }, 300);
-        }
 
         // 3. Ecrire farm-{id}.md UNE SEULE FOIS (crops + effets combines)
         await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));

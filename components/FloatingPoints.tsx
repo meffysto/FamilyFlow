@@ -47,11 +47,11 @@ export function FloatingPoints({ points, visible, onDone }: FloatingPointsProps)
     scale.value = 1;
 
     // Animate
-    translateY.value = withTiming(-60, { duration: 800, easing: Easing.out(Easing.quad) });
-    scale.value = withTiming(1.2, { duration: 800, easing: Easing.out(Easing.quad) });
+    translateY.value = withTiming(-50, { duration: 420, easing: Easing.out(Easing.quad) });
+    scale.value = withTiming(1.15, { duration: 420, easing: Easing.out(Easing.quad) });
     opacity.value = withDelay(
-      400,
-      withTiming(0, { duration: 400 }, (finished) => {
+      180,
+      withTiming(0, { duration: 240 }, (finished) => {
         if (finished) runOnJS(onDone)();
       }),
     );

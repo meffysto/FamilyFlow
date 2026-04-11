@@ -62,7 +62,7 @@ export const VARIANT_CONFIG: Record<HarvestBurstVariant, {
     travelMin: 25,
     travelMax: 45,
     labelTravelY: -45,
-    labelDuration: 800,
+    labelDuration: 480,
     labelColor: '#A7F3D0',
     particleColor: '#34D399',
   },
@@ -72,7 +72,7 @@ export const VARIANT_CONFIG: Record<HarvestBurstVariant, {
     travelMin: 30,
     travelMax: 50,
     labelTravelY: -50,
-    labelDuration: 900,
+    labelDuration: 530,
     labelColor: '#C4B5FD',
     particleColor: '#A78BFA',
   },
@@ -82,7 +82,7 @@ export const VARIANT_CONFIG: Record<HarvestBurstVariant, {
     travelMin: 35,
     travelMax: 60,
     labelTravelY: -60,
-    labelDuration: 1000,
+    labelDuration: 580,
     labelColor: '#FFD700',
     particleColor: '#FFD700',
   },
@@ -131,10 +131,10 @@ function Particle({
   const scale = useSharedValue(1);
 
   useEffect(() => {
-    translateX.value = withSpring(targetX, { damping: 8, stiffness: 80 });
-    translateY.value = withSpring(targetY, { damping: 8, stiffness: 80 });
-    opacity.value = withDelay(200, withTiming(0, { duration: 400 }));
-    scale.value = withDelay(100, withTiming(0.3, { duration: 400 }));
+    translateX.value = withSpring(targetX, { damping: 10, stiffness: 160 });
+    translateY.value = withSpring(targetY, { damping: 10, stiffness: 160 });
+    opacity.value = withDelay(100, withTiming(0, { duration: 260 }));
+    scale.value = withDelay(60, withTiming(0.3, { duration: 260 }));
   }, []);
 
   const style = useAnimatedStyle(() => ({
@@ -200,7 +200,7 @@ export function HarvestBurst({ x, y, reward, cropColor, onComplete, variant }: H
 
     // Label float up
     labelY.value = withTiming(effectiveLabelTravelY, { duration: effectiveLabelDuration, easing: Easing.out(Easing.quad) });
-    labelOpacity.value = withDelay(400, withTiming(0, { duration: 400 }));
+    labelOpacity.value = withDelay(200, withTiming(0, { duration: 260 }));
 
     // Success haptic after burst
     setTimeout(() => {
@@ -210,7 +210,7 @@ export function HarvestBurst({ x, y, reward, cropColor, onComplete, variant }: H
     }, 300);
 
     // Callback after animation
-    setTimeout(() => runOnJS(triggerComplete)(), (cfg?.labelDuration ?? 800) + 100);
+    setTimeout(() => runOnJS(triggerComplete)(), (cfg?.labelDuration ?? 480) + 60);
   }, []);
 
   const shakeStyle = useAnimatedStyle(() => ({

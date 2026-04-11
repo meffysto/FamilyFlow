@@ -6,6 +6,7 @@
  *   showToast('Tâche ajoutée !');
  *   showToast('Erreur réseau', 'error');
  *   showToast('Article retiré', 'success', { label: 'Annuler', onPress: undo });
+ *   showToast('Récolte !', 'success', undefined, { icon: '🌾', subtitle: '+40 🍂' });
  */
 
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
@@ -13,9 +14,9 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
   useReducedMotion,
+  Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from './ThemeContext';
@@ -30,9 +31,9 @@ interface ToastAction {
 }
 
 interface ToastOptions {
-  /** Grand emoji affiché à gauche (layout riche) — ex. '🌾' pour une récolte */
+  /** Emoji affiché à gauche — si absent, utilise l'emoji du type */
   icon?: string;
-  /** Sous-titre affiché sous le message (layout riche) — ex. '+40 🍂' */
+  /** Sous-titre affiché sous le message */
   subtitle?: string;
 }
 
@@ -42,7 +43,7 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue>({ showToast: () => {} });
 
-const TOAST_EMOJI: Record<ToastType, string> = {
+const TYPE_ICON: Record<ToastType, string> = {
   success: '✅',
   error: '❌',
   info: 'ℹ️',
@@ -73,40 +74,33 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       translateY.value = withTiming(-120, { duration: 250 });
       opacity.value = withTiming(0, { duration: 250 });
       scale.value = withTiming(0.9, { duration: 250 });
-      // Nettoyer le state après l'animation de sortie
       setTimeout(() => setToast(null), 300);
     }
   }, [translateY, opacity, scale, reduceMotion]);
 
   const showToast = useCallback(
     (message: string, type: ToastType = 'success', action?: ToastAction, options?: ToastOptions) => {
-      // Annuler le timer précédent si un toast est déjà visible
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
 
-      // Remplacer immédiatement le toast courant
       setToast({ message, type, action, options });
 
-      // Réinitialiser la position avant d'animer l'entrée
       translateY.value = -120;
       opacity.value = 0;
       scale.value = 0.9;
 
-      // Animer l'entrée (instantané si reduceMotion)
       if (reduceMotion) {
         translateY.value = 0;
         opacity.value = 1;
         scale.value = 1;
       } else {
-        translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
+        translateY.value = withTiming(0, { duration: 280, easing: Easing.out(Easing.cubic) });
         opacity.value = withTiming(1, { duration: 200 });
-        // Rebond plus marqué pour les toasts riches (récoltes, etc.)
-        scale.value = withSpring(1, { damping: 10, stiffness: 180 });
+        scale.value = withTiming(1, { duration: 260, easing: Easing.out(Easing.cubic) });
       }
 
-      // Auto-dismiss (plus long si action undo)
       const delay = action ? UNDO_DISMISS_MS : AUTO_DISMISS_MS;
       timerRef.current = setTimeout(() => {
         hide();
@@ -120,7 +114,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     if (toast?.action) {
       toast.action.onPress();
     }
-    // Fermer le toast immédiatement
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -135,17 +128,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const getToastColors = (type: ToastType) => {
     switch (type) {
-      case 'success':
-        return { bg: colors.successBg, text: colors.successText };
-      case 'error':
-        return { bg: colors.errorBg, text: colors.errorText };
-      case 'info':
-        return { bg: colors.infoBg, text: primary };
+      case 'success': return { bg: colors.successBg, text: colors.successText };
+      case 'error':   return { bg: colors.errorBg,   text: colors.errorText };
+      case 'info':    return { bg: colors.infoBg,     text: primary };
     }
   };
 
   const toastColors = toast ? getToastColors(toast.type) : null;
-  const isRich = !!toast?.options?.icon;
+  const icon = toast?.options?.icon ?? (toast ? TYPE_ICON[toast.type] : '');
 
   return (
     <ToastContext.Provider value={{ showToast }}>
@@ -159,49 +149,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             animatedStyle,
           ]}
         >
-          <Animated.View
+          <View
             style={[
               styles.toast,
-              { backgroundColor: toastColors.bg },
-              toast.action && styles.toastWithAction,
-              isRich && styles.toastRich,
-              isRich && { borderColor: toastColors.text },
+              { backgroundColor: toastColors.bg, borderColor: toastColors.text + '33' },
             ]}
           >
-            {isRich ? (
-              <>
-                <Text style={styles.richIcon} numberOfLines={1}>
-                  {toast.options!.icon}
-                </Text>
-                <View style={styles.richTextCol}>
-                  <Text
-                    style={[styles.richTitle, { color: toastColors.text }]}
-                    numberOfLines={1}
-                  >
-                    {toast.message}
-                  </Text>
-                  {toast.options?.subtitle && (
-                    <Text
-                      style={[styles.richSubtitle, { color: toastColors.text }]}
-                      numberOfLines={1}
-                    >
-                      {toast.options.subtitle}
-                    </Text>
-                  )}
-                </View>
-              </>
-            ) : (
-              <Text
-                style={[
-                  styles.message,
-                  { color: toastColors.text },
-                  toast.action && styles.messageWithAction,
-                ]}
-                numberOfLines={2}
-              >
-                {TOAST_EMOJI[toast.type]} {toast.message}
+            <Text style={styles.icon} numberOfLines={1}>{icon}</Text>
+            <View style={styles.textCol}>
+              <Text style={[styles.message, { color: toastColors.text }]} numberOfLines={2}>
+                {toast.message}
               </Text>
-            )}
+              {toast.options?.subtitle && (
+                <Text style={[styles.subtitle, { color: toastColors.text }]} numberOfLines={1}>
+                  {toast.options.subtitle}
+                </Text>
+              )}
+            </View>
             {toast.action && (
               <TouchableOpacity
                 style={[styles.actionBtn, { borderColor: toastColors.text }]}
@@ -214,7 +178,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 </Text>
               </TouchableOpacity>
             )}
-          </Animated.View>
+          </View>
         </Animated.View>
       )}
     </ToastContext.Provider>
@@ -235,63 +199,39 @@ const styles = StyleSheet.create({
   },
   toast: {
     width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.lg,
     borderRadius: Radius.lg,
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing['2xl'],
-    // Shadow iOS
+    borderWidth: 1,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.14,
     shadowRadius: 8,
-    // Shadow Android
     elevation: 6,
   },
-  toastWithAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.xl,
+  icon: {
+    fontSize: 22,
+    lineHeight: 26,
   },
-  toastRich: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xl,
-    borderWidth: 1.5,
-    // Ombre plus marquée pour effet "célébration"
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 10,
-  },
-  richIcon: {
-    fontSize: 36,
-    lineHeight: 40,
-  },
-  richTextCol: {
+  textCol: {
     flex: 1,
-    gap: 2,
-  },
-  richTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-  },
-  richSubtitle: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
-    opacity: 0.85,
+    gap: 1,
   },
   message: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    textAlign: 'center',
   },
-  messageWithAction: {
-    textAlign: 'left',
-    flex: 1,
+  subtitle: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
+    opacity: 0.8,
   },
   actionBtn: {
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
     borderRadius: Radius.md,
     borderWidth: 1.5,
   },
