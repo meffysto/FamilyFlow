@@ -1803,7 +1803,8 @@ export default function TreeScreen() {
         </Modal>
 
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
-        <Animated.View entering={FadeIn.duration(600)} style={[styles.treeContainer, fadeStyle]}>
+        <Animated.View entering={FadeIn.duration(600)}>
+        <Animated.View style={[styles.treeContainer, fadeStyle]}>
           <View
             style={[
               styles.treeBg,
@@ -2072,6 +2073,7 @@ export default function TreeScreen() {
             <PortalSprite onPress={handlePortalPress} />
 
           </View>
+        </Animated.View>
         </Animated.View>
 
 

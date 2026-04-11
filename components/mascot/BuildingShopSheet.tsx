@@ -95,7 +95,6 @@ export function BuildingShopSheet({
       visible={visible}
       transparent
       animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
