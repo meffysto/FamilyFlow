@@ -44,6 +44,8 @@ Project token system (base-4 with project-specific naming). Mapping from `consta
 | `Spacing['4xl']` | 24px | Modal content top padding, catalog row gap |
 | `Spacing['5xl']` | 32px | Modal section breaks |
 
+Note: `Spacing.xl` (12px) and `Spacing['3xl']` (20px) are not in the canonical {4, 8, 16, 24, 32, 48, 64} set but are both multiples of 4 and are established tokens in `constants/spacing.ts`. They are project-specific extensions of the base-4 grid — not deviations from it.
+
 Exceptions:
 - Building sprite render size: **72×72** (D-12) — not a spacing token, fixed pixel dimension for TileMapRenderer
 - Building sprite in catalog: **96×96** (D-17) — fixed pixel dimension for catalog tile display
@@ -55,15 +57,19 @@ Exceptions:
 ## Typography
 
 All roles use project tokens from `constants/typography.ts` and `FontWeight`.
+Maximum 4 sizes, 2 weights declared for this phase.
 
 | Role | Size token | px | Weight token | px weight | Line Height token | Usage |
 |------|-----------|-----|-------------|-----------|------------------|-------|
-| Body | `FontSize.body` | 15 | `FontWeight.normal` | 400 | `LineHeight.body` (22) | Catalog progression text `{current}/{target} feuilles` |
-| Label | `FontSize.sm` | 14 | `FontWeight.normal` | 400 | `LineHeight.normal` (20) | Tooltip text, catalog status badge text |
 | Heading | `FontSize.heading` | 18 | `FontWeight.semibold` | 600 | `LineHeight.title` (28) | Modal header title "Bâtiments du village" |
-| Caption | `FontSize.caption` | 12 | `FontWeight.normal` | 400 | `LineHeight.tight` (18) | Catalog tile label FR under sprite, locked palier hint |
+| Body | `FontSize.body` | 15 | `FontWeight.normal` | 400 | `LineHeight.body` (22) | Catalog progression text `{current}/{target} feuilles` |
+| Label | `FontSize.sm` | 14 | `FontWeight.semibold` | 600 | `LineHeight.normal` (20) | Building name under sprite in catalog, tooltip text |
+| Caption | `FontSize.caption` | 12 | `FontWeight.normal` | 400 | `LineHeight.tight` (18) | Catalog tile status (locked palier hint), "Nouveau" badge text, catalog tile label FR under sprite (locked state) |
 
-Building name under sprite in catalog: `FontSize.label` (13px) at `FontWeight.semibold` (600) — consistent with tile label pattern from Phase 27 `VillageAvatar` labels.
+Consolidation rationale (checker revision):
+- `FontSize.micro` (10px) removed — "Nouveau" badge text uses `FontSize.caption` (12px) instead.
+- `FontSize.label` (13px) removed — building names use `FontSize.sm` (14px) `FontWeight.semibold` instead (consistent with Phase 27 VillageAvatar label weight).
+- Final scale: 12 / 14 / 15 / 18.
 
 ---
 
@@ -141,9 +147,9 @@ const BADGE_GOLD = '#FFD700'; // badge "Nouveau" star accent
 - Modal: `presentation: 'pageSheet'` + `enableDismissOnClose` (drag-to-dismiss, CLAUDE.md standard)
 - 2-column grid, 8 tiles (4 rows)
 - Each tile:
-  - **Unlocked**: sprite 96×96 full color, label FR (`FontSize.label` 13px semibold), "Débloqué" text in `colors.success`
-  - **Locked**: sprite 96×96 with `tintColor: colors.textMuted` + `opacity: 0.4` (silhouette), label FR visible, `"À {palier} feuilles"` in `colors.textMuted` (`FontSize.caption` 12px), progression `"{current}/{target}"` in `colors.textFaint` (`FontSize.caption`)
-  - **"Nouveau" badge**: absolute-positioned top-right of tile, shown when building is newly unlocked and not yet seen. Badge: `colors.successBg` background, gold star `#FFD700`, text `"Nouveau"` at `FontSize.micro` (10px) `FontWeight.semibold`.
+  - **Unlocked**: sprite 96×96 full color, building name in `FontSize.sm` (14px) `FontWeight.semibold`, "Débloqué" text in `colors.success`
+  - **Locked**: sprite 96×96 with `tintColor: colors.textMuted` + `opacity: 0.4` (silhouette), building name visible at `FontSize.sm` (14px) `FontWeight.semibold`, `"À {palier} feuilles"` in `colors.textMuted` (`FontSize.caption` 12px), progression `"{current}/{target}"` in `colors.textFaint` (`FontSize.caption` 12px)
+  - **"Nouveau" badge**: absolute-positioned top-right of tile, shown when building is newly unlocked and not yet seen. Badge: `colors.successBg` background, gold star `#FFD700`, text `"Nouveau"` at `FontSize.caption` (12px) `FontWeight.semibold`.
   
 - Tile tap behavior:
   - **Unlocked tile**: subtle spring scale pulse (`withSpring` damping 12 stiffness 180, scale 1→1.05→1), no navigation (D-20)
