@@ -37,6 +37,8 @@ import { SettingsAuth } from '../../components/settings/SettingsAuth';
 import { SettingsAutomations } from '../../components/settings/SettingsAutomations';
 import { SettingsGamiAdmin } from '../../components/settings/SettingsGamiAdmin';
 import { SettingsCoupling } from '../../components/settings/SettingsCoupling';
+import { SettingsElevenLabs } from '../../components/settings/SettingsElevenLabs';
+import { useStoryVoice } from '../../contexts/StoryVoiceContext';
 import { useTranslation } from 'react-i18next';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
@@ -46,7 +48,7 @@ const ZEN_CONFIG_KEY = 'zen_config_v1';
 type SectionId =
   | 'profiles' | 'appearance'
   | 'notifications' | 'zen' | 'vacation' | 'gamification' | 'coupling' | 'automations'
-  | 'ai' | 'telegram' | 'grandparents'
+  | 'ai' | 'elevenlabs' | 'telegram' | 'grandparents'
   | 'auth' | 'parental' | 'vault' | 'help'
   | 'gami-admin';
 
@@ -104,6 +106,7 @@ export default function SettingsScreen() {
   const telegramStatus = telegramToken ? t('settingsScreen.labels.connected') : t('settingsScreen.labels.notConfigured');
 
   const { isConfigured: aiConfigured, model: aiModel } = useAI();
+  const { isElevenLabsConfigured } = useStoryVoice();
   const { isAuthEnabled: authEnabled, biometryType } = useAuth();
   const authSubtitle = authEnabled
     ? (biometryType === 'face' ? t('settingsScreen.rows.authEnabledFace') : biometryType === 'fingerprint' ? t('settingsScreen.rows.authEnabledTouch') : t('settingsScreen.rows.authEnabled'))
@@ -120,6 +123,7 @@ export default function SettingsScreen() {
     coupling: t('settingsScreen.modalTitles.coupling'),
     automations: t('settingsScreen.modalTitles.automations'),
     ai: t('settingsScreen.modalTitles.ai'),
+    elevenlabs: 'ElevenLabs',
     telegram: t('settingsScreen.modalTitles.telegram'),
     grandparents: t('settingsScreen.modalTitles.grandparents'),
     auth: t('settingsScreen.modalTitles.auth'),
@@ -211,6 +215,12 @@ export default function SettingsScreen() {
               subtitle={aiConfigured ? t('settingsScreen.rows.aiConfigured', { model: aiModel }) : t('settingsScreen.rows.aiNotConfigured')}
               onPress={() => setActiveSection('ai')}
               isFirst
+            />
+            <SettingsRow
+              emoji="🎙️"
+              title="ElevenLabs"
+              subtitle={isElevenLabsConfigured ? 'Voix premium configurée ✓' : 'Voix premium pour les histoires'}
+              onPress={() => setActiveSection('elevenlabs')}
             />
             <SettingsRow
               emoji="📲"
@@ -368,6 +378,7 @@ export default function SettingsScreen() {
             {activeSection === 'coupling' && <SettingsCoupling />}
             {activeSection === 'automations' && <SettingsAutomations />}
             {activeSection === 'ai' && <SettingsAI />}
+            {activeSection === 'elevenlabs' && <SettingsElevenLabs />}
             {activeSection === 'telegram' && (
               <SettingsTelegram
                 telegramToken={telegramToken} telegramChatId={telegramChatId}
