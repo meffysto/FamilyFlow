@@ -239,7 +239,7 @@ Plans:
 | 25. Fondation données village | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 26. Hook domaine jardin | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 27. Écran Village + composants | v1.4 | 2/2 | Complete    | 2026-04-10 |
-| 28. Portail + câblage contributions | v1.4 | 2/2 | Complete   | 2026-04-11 |
+| 28. Portail + câblage contributions | v1.4 | 2/2 | Complete    | 2026-04-11 |
 
 ## Archived Milestones
 
