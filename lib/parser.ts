@@ -46,6 +46,9 @@ import {
   UsedLoot,
   isValidGender,
   FarmProfileData,
+  BedtimeStory,
+  StoryUniverseId,
+  StoryVoiceConfig,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
@@ -55,8 +58,8 @@ import { parseWearEvents, serializeWearEvents } from './mascot/wear-engine';
 import type { CompanionData, CompanionSpecies } from './mascot/companion-types';
 import { calculateLevel } from './gamification';
 import type { TreeSpecies } from './mascot/types';
-import type { FamilyQuest } from './quest-engine';
-import { parseReward, serializeReward } from './quest-engine';
+import type { FamilyQuest } from './quest-types';
+import { parseReward, serializeReward } from './quest-types';
 import type { GuestProfile } from './dietary/types';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
@@ -2911,4 +2914,63 @@ export function serializeInvites(guests: GuestProfile[]): string {
   }
 
   return parts.join('\n');
+}
+
+// ─── Histoires du soir ──────────────────────────────────────────────────────
+
+export function serializeBedtimeStory(story: BedtimeStory): string {
+  const lines: string[] = [
+    '---',
+    `title: ${story.titre}`,
+    `enfant: ${story.enfant}`,
+    `enfant_id: ${story.enfantId}`,
+    `univers: ${story.univers}`,
+  ];
+  if (story.detail) lines.push(`detail: "${story.detail.replace(/"/g, "'")}"`);
+  lines.push(
+    `date: ${story.date}`,
+    `duree_lecture: ${story.duree_lecture}`,
+    `voice_engine: ${story.voice.engine}`,
+    `voice_language: ${story.voice.language}`,
+  );
+  if (story.voice.elevenLabsVoiceId) lines.push(`voice_id: ${story.voice.elevenLabsVoiceId}`);
+  lines.push(
+    `version: ${story.version}`,
+    '---',
+    '',
+    `# ${story.titre}`,
+    '',
+    story.texte,
+    '',
+  );
+  return lines.join('\n');
+}
+
+export function parseBedtimeStory(sourceFile: string, content: string): BedtimeStory | null {
+  try {
+    const parsed = matter(content);
+    const d = parsed.data;
+    if (!d.title || !d.enfant || !d.univers || !d.date) return null;
+    const voiceConfig: StoryVoiceConfig = {
+      engine: (d.voice_engine === 'elevenlabs' ? 'elevenlabs' : 'expo-speech') as 'expo-speech' | 'elevenlabs',
+      language: (d.voice_language === 'en' ? 'en' : 'fr') as 'fr' | 'en',
+      elevenLabsVoiceId: d.voice_id ?? undefined,
+    };
+    return {
+      id: `${d.date}-${d.univers}`,
+      titre: String(d.title),
+      enfant: String(d.enfant),
+      enfantId: String(d.enfant_id ?? d.enfant.toLowerCase().replace(/\s+/g, '_')),
+      univers: d.univers as StoryUniverseId,
+      detail: d.detail ? String(d.detail) : undefined,
+      texte: parsed.content.replace(/^#[^\n]*\n+/, '').trim(),
+      date: String(d.date),
+      duree_lecture: Number(d.duree_lecture ?? 0),
+      voice: voiceConfig,
+      version: Number(d.version ?? 1),
+      sourceFile,
+    };
+  } catch {
+    return null;
+  }
 }
