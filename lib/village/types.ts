@@ -3,8 +3,9 @@
 // Module pur TypeScript — zéro import hook/context.
 
 // Phase 29 : ajout role 'avatar' (VILL-01)
+// Phase 30 : ajout role 'building' (VILL-05)
 /** Role d'un element interactif sur la place du village */
-export type VillageRole = 'fountain' | 'stall' | 'board' | 'portal' | 'avatar';
+export type VillageRole = 'fountain' | 'stall' | 'board' | 'portal' | 'avatar' | 'building';
 
 /** Position d'un element interactif dans la grille village (per D-02 — type dedie, pas WorldCell) */
 export interface VillageCell {
@@ -34,6 +35,13 @@ export interface VillageWeekRecord {
   contributionsByMember?: Record<string, number>; // profileId → total contributions (HIST-02)
 }
 
+/** Un bâtiment débloqué — ligne append-only dans ## Constructions (Phase 30, VILL-05) */
+export interface UnlockedBuilding {
+  timestamp: string;   // ISO 8601 sans Z — ex: 2026-04-12T14:32:00
+  buildingId: string;  // 'puits' | 'boulangerie' | 'marche' | 'cafe' | 'forge' | 'moulin' | 'port' | 'bibliotheque'
+  palier: number;      // palier franchi au déblocage (100, 300, 700, 1500, 3000, 6000, 12000, 25000)
+}
+
 /** Donnees completes du village parsees depuis jardin-familial.md */
 export interface VillageData {
   version: number;
@@ -43,6 +51,7 @@ export interface VillageData {
   rewardClaimed: boolean;
   contributions: VillageContribution[];
   pastWeeks: VillageWeekRecord[];
+  unlockedBuildings: UnlockedBuilding[]; // Phase 30 — bâtiments débloqués par paliers (VILL-05)
 }
 
 /** Template d'objectif hebdomadaire thematise (per D-06) */

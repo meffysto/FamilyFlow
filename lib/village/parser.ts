@@ -19,7 +19,7 @@
 //
 // Module pur : zéro import hook/context (per D-03c).
 
-import type { VillageData, VillageContribution, VillageWeekRecord } from './types';
+import type { VillageData, VillageContribution, VillageWeekRecord, UnlockedBuilding } from './types';
 import type { VaultManager } from '../vault';
 
 /** Chemin du fichier village dans le vault Obsidian */
@@ -44,6 +44,7 @@ export function parseGardenFile(content: string): VillageData {
       rewardClaimed: false,
       contributions: [],
       pastWeeks: [],
+      unlockedBuildings: [],
     };
   }
 
@@ -72,9 +73,10 @@ export function parseGardenFile(content: string): VillageData {
 
   const contributions: VillageContribution[] = [];
   const pastWeeks: VillageWeekRecord[] = [];
+  const unlockedBuildings: UnlockedBuilding[] = [];
 
   const lines = body.split('\n');
-  let section: 'none' | 'contributions' | 'historique' = 'none';
+  let section: 'none' | 'contributions' | 'historique' | 'constructions' = 'none';
 
   for (const line of lines) {
     if (line.startsWith('## ')) {
@@ -157,6 +159,7 @@ export function parseGardenFile(content: string): VillageData {
     rewardClaimed,
     contributions,
     pastWeeks,
+    unlockedBuildings,
   };
 }
 

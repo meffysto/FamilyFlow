@@ -29,4 +29,14 @@ export const VILLAGE_GRID: VillageCell[] = [
 
   // Phase 29 — portail retour vers la ferme (per D-18 — VILL-11)
   { id: 'village_portal_home', x: 0.85, y: 0.85, role: 'portal' },
+
+  // Phase 30 — slots batiments village debloquables par palier (per D-09, D-11 — VILL-04)
+  { id: 'village_building_puits',        x: 0.08, y: 0.15, role: 'building' },
+  { id: 'village_building_boulangerie',  x: 0.22, y: 0.10, role: 'building' },
+  { id: 'village_building_marche',       x: 0.45, y: 0.08, role: 'building' },
+  { id: 'village_building_cafe',         x: 0.68, y: 0.10, role: 'building' },
+  { id: 'village_building_forge',        x: 0.90, y: 0.20, role: 'building' },
+  { id: 'village_building_moulin',       x: 0.08, y: 0.50, role: 'building' },
+  { id: 'village_building_port',         x: 0.45, y: 0.92, role: 'building' },
+  { id: 'village_building_bibliotheque', x: 0.92, y: 0.55, role: 'building' },
 ];

@@ -14,6 +14,8 @@ import {
   OBJECTIVE_TEMPLATES,
   BASE_TARGET,
   computeWeekTarget,
+  BUILDINGS_CATALOG,
+  computeBuildingsToUnlock,
 } from '../village';
 import type { VillageData, VillageContribution } from '../village';
 
@@ -50,6 +52,7 @@ const FULL_GARDEN_DATA: VillageData = {
   pastWeeks: [
     { weekStart: '2026-03-31', target: 45, total: 52, claimed: true },
   ],
+  unlockedBuildings: [],
 };
 
 /** Contribution de test */
@@ -73,6 +76,7 @@ describe('parseGardenFile', () => {
       rewardClaimed: false,
       contributions: [],
       pastWeeks: [],
+      unlockedBuildings: [],
     });
   });
 
@@ -164,6 +168,7 @@ describe('serializeGardenFile', () => {
       rewardClaimed: false,
       contributions: [],
       pastWeeks: [],
+      unlockedBuildings: [],
     };
     const result = serializeGardenFile(emptyData);
     expect(result).toContain('## Contributions');
@@ -235,8 +240,8 @@ reward_claimed: false
 // ── VILLAGE_GRID ──────────────────────────────────────────────────────────────
 
 describe('VILLAGE_GRID', () => {
-  it('a exactement 4 elements', () => {
-    expect(VILLAGE_GRID).toHaveLength(4);
+  it('a exactement 19 elements (4 Phase 25 + 7 Phase 29 + 8 Phase 30)', () => {
+    expect(VILLAGE_GRID).toHaveLength(19);
   });
 
   it("tous les IDs commencent par 'village_'", () => {
@@ -295,5 +300,72 @@ describe('templates', () => {
   it('VILLAGE_FILE est une string non-vide', () => {
     expect(typeof VILLAGE_FILE).toBe('string');
     expect(VILLAGE_FILE.length).toBeGreaterThan(0);
+  });
+});
+
+// ── BUILDINGS_CATALOG (Phase 30) ──────────────────────────────────────────────
+
+describe('BUILDINGS_CATALOG (Phase 30)', () => {
+  it('contient exactement 8 entrées', () => {
+    expect(BUILDINGS_CATALOG).toHaveLength(8);
+  });
+
+  it('contient les ids attendus dans l ordre narratif', () => {
+    expect(BUILDINGS_CATALOG.map(b => b.id)).toEqual([
+      'puits', 'boulangerie', 'marche', 'cafe', 'forge', 'moulin', 'port', 'bibliotheque'
+    ]);
+  });
+
+  it('contient les paliers exacts 100/300/700/1500/3000/6000/12000/25000', () => {
+    expect(BUILDINGS_CATALOG.map(b => b.palier)).toEqual([
+      100, 300, 700, 1500, 3000, 6000, 12000, 25000
+    ]);
+  });
+
+  it('chaque entrée a un sprite défini (require résolu)', () => {
+    // Note: en Jest le mock file-asset retourne 0 (falsy), donc on vérifie seulement
+    // que la propriété existe et que le require n'a pas planté à l'import.
+    for (const entry of BUILDINGS_CATALOG) {
+      expect(entry).toHaveProperty('sprite');
+      expect(entry.sprite).toBeDefined();
+    }
+  });
+});
+
+describe('computeBuildingsToUnlock (Phase 30)', () => {
+  it('retourne [] si familyLifetimeLeaves < 100', () => {
+    expect(computeBuildingsToUnlock(0, [])).toEqual([]);
+    expect(computeBuildingsToUnlock(99, [])).toEqual([]);
+  });
+
+  it('retourne puits seul à 100 feuilles', () => {
+    const result = computeBuildingsToUnlock(100, []);
+    expect(result.map(r => r.id)).toEqual(['puits']);
+  });
+
+  it('retourne les 4 premiers à 1500 feuilles', () => {
+    const result = computeBuildingsToUnlock(1500, []);
+    expect(result.map(r => r.id)).toEqual(['puits', 'boulangerie', 'marche', 'cafe']);
+  });
+
+  it('retourne tous les 8 à 25000+ feuilles', () => {
+    const result = computeBuildingsToUnlock(25000, []);
+    expect(result).toHaveLength(8);
+  });
+
+  it('idempotence — skip les ids déjà débloqués', () => {
+    const already = [
+      { timestamp: '2026-04-12T00:00:00', buildingId: 'puits', palier: 100 },
+      { timestamp: '2026-04-12T00:00:00', buildingId: 'boulangerie', palier: 300 },
+    ];
+    const result = computeBuildingsToUnlock(1500, already);
+    expect(result.map(r => r.id)).toEqual(['marche', 'cafe']);
+  });
+
+  it('idempotence complète — tout débloqué → []', () => {
+    const all = BUILDINGS_CATALOG.map(e => ({
+      timestamp: '2026-04-12T00:00:00', buildingId: e.id, palier: e.palier
+    }));
+    expect(computeBuildingsToUnlock(99999, all)).toEqual([]);
   });
 });

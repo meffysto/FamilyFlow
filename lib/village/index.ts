@@ -7,3 +7,4 @@ export * from './grid';
 export * from './templates';
 export * from './parser';
 export * from './activities';
+export * from './catalog';
