@@ -30,6 +30,10 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
+  withRepeat,
+  runOnJS,
+  Easing,
   FadeIn,
   FadeInDown,
   FadeInUp,
@@ -66,6 +70,7 @@ import { FamilyQuestDetailSheet } from '../../components/mascot/FamilyQuestDetai
 import { FamilyQuestPickerSheet } from '../../components/mascot/FamilyQuestPickerSheet';
 import * as Haptics from 'expo-haptics';
 import { useFarm } from '../../hooks/useFarm';
+import { useGarden } from '../../hooks/useGarden';
 import { SunriseReport, type SunriseResource } from '../../components/mascot/SunriseReport';
 import { BadgesSheet } from '../../components/mascot/BadgesSheet';
 import { CompanionPicker } from '../../components/mascot/CompanionPicker';
@@ -294,6 +299,67 @@ function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// PortalSprite — Portail animé vers le village (Phase 28, MAP-03)
+// Glow loop idle + scale spring tap + accessibilité.
+// ---------------------------------------------------------------------------
+
+const SPRING_PORTAL = { damping: 12, stiffness: 200 } as const;
+
+function PortalSprite({ onPress }: { onPress: () => void }) {
+  const { colors } = useThemeColors();
+  const glowOpacity = useSharedValue(0.4);
+  const scaleAnim = useSharedValue(1);
+
+  // Démarrer le glow loop au montage
+  useEffect(() => {
+    glowOpacity.value = withRepeat(withTiming(0.8, { duration: 1200 }), -1, true);
+  }, [glowOpacity]);
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnim.value }],
+  }));
+
+  const handlePress = useCallback(() => {
+    Haptics.selectionAsync();
+    scaleAnim.value = withSpring(0.92, SPRING_PORTAL, () => {
+      scaleAnim.value = withSpring(1, SPRING_PORTAL);
+    });
+    onPress();
+  }, [scaleAnim, onPress]);
+
+  return (
+    <Animated.View
+      style={[styles.portalContainer, containerStyle]}
+      accessibilityLabel="Portail vers le village"
+      accessibilityRole="button"
+    >
+      {/* Glow overlay */}
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFillObject,
+          styles.portalGlow,
+          { backgroundColor: colors.catJeux },
+          glowStyle,
+        ]}
+        pointerEvents="none"
+      />
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={1}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        accessibilityLabel="Portail vers le village"
+      >
+        <Text style={styles.portalEmoji}>{'🏛️'}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 export default function TreeScreen() {
   const { profileId } = useLocalSearchParams<{ profileId?: string }>();
   const router = useRouter();
@@ -335,8 +401,31 @@ export default function TreeScreen() {
   const [placingItem, setPlacingItem] = useState<string | null>(null);
   const [showItemPicker, setShowItemPicker] = useState(false);
 
+  // Village / Portail (Phase 28 — MAP-03)
+  const { addContribution } = useGarden();
+
+  // Fade cross-dissolve pour la navigation portail → village
+  const screenOpacity = useSharedValue(1);
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: screenOpacity.value }));
+
+  // Handler de navigation portail avec fade 400ms
+  const handlePortalPress = useCallback(() => {
+    screenOpacity.value = withTiming(
+      0,
+      { duration: 400, easing: Easing.out(Easing.ease) },
+      (finished) => {
+        if (finished) runOnJS(router.push)('/(tabs)/village' as any);
+      },
+    );
+  }, [screenOpacity, router]);
+
+  // Reset opacity quand l'écran regagne le focus (retour depuis le village)
+  useFocusEffect(useCallback(() => {
+    screenOpacity.value = 1;
+  }, [screenOpacity]));
+
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts } = useFarm(contributeFamilyQuest);
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts } = useFarm(contributeFamilyQuest, addContribution);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
@@ -1772,7 +1861,7 @@ export default function TreeScreen() {
         </Modal>
 
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
-        <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
+        <Animated.View entering={FadeIn.duration(600)} style={[styles.treeContainer, fadeStyle]}>
           <View
             style={[
               styles.treeBg,
@@ -2037,18 +2126,8 @@ export default function TreeScreen() {
               <FarmHintBanner onDismiss={() => markScreenSeen('farm')} />
             )}
 
-            {/* Couche 7 : FAB village — navigation vers la Place du Village (D-03, temporaire — portail anime en Phase 28) */}
-            <TouchableOpacity
-              style={[styles.villageFAB, { backgroundColor: colors.catJeux }]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                router.push('/(tabs)/village' as any);
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.villageFABText}>{'🏘️'}</Text>
-            </TouchableOpacity>
+            {/* Couche 7 : Portail village (MAP-03 — remplace FAB temporaire per D-08) */}
+            <PortalSprite onPress={handlePortalPress} />
 
           </View>
         </Animated.View>
@@ -2936,23 +3015,21 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
     marginTop: 2,
   },
-  villageFAB: {
+  portalContainer: {
     position: 'absolute',
-    bottom: 24,  // Spacing['4xl']
-    right: 16,   // Spacing['2xl']
+    bottom: Spacing['4xl'],
+    right: Spacing['2xl'],
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: Radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
   },
-  villageFABText: {
-    fontSize: 24,
+  portalGlow: {
+    borderRadius: Radius.xl,
+  },
+  portalEmoji: {
+    fontSize: 28,
   },
 });

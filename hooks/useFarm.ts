@@ -7,6 +7,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useVault } from '../contexts/VaultContext';
+import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { PlacedBuilding, FarmInventory, CraftedItem } from '../lib/mascot/types';
@@ -135,7 +136,10 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
   }
 }
 
-export function useFarm(onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>) {
+export function useFarm(
+  onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>,
+  onContribution?: (type: ContributionType, profileId: string) => Promise<void>,
+) {
   const { vault, profiles, refreshFarm, refreshGamification } = useVault();
 
   /** Deduire des feuilles dans gami-{profileId}.md */
@@ -325,6 +329,10 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
       if (onQuestProgress) {
         try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
       }
+      // Contribution village (COOP-01) -- fire-and-forget non-critical
+      if (onContribution) {
+        try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
+      }
       return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
     }
 
@@ -350,9 +358,13 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
     if (onQuestProgress) {
       try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
     }
+    // Contribution village (COOP-01) -- fire-and-forget non-critical
+    if (onContribution) {
+      try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
+    }
 
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
-  }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress]);
+  }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress, onContribution]);
 
   /** Vendre une recolte brute depuis l'inventaire */
   const sellHarvest = useCallback(async (profileId: string, cropId: string): Promise<number> => {
