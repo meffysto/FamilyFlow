@@ -2094,12 +2094,22 @@ export default function TreeScreen() {
               </TouchableOpacity>
               {__DEV__ && (
                 <TouchableOpacity
-                  style={[styles.actionItem, devEventOverride ? { opacity: 0.5 } : null]}
-                  onPress={() => setDevEventOverride(prev => prev ? null : 'poisson-avril')}
+                  style={styles.actionItem}
+                  onPress={() => {
+                    const toasts: Array<() => void> = [
+                      () => showToast('Tâche validée !', 'success'),
+                      () => showToast('Récolte terminée !', 'success', undefined, { icon: '🌾', subtitle: '+40 🍂' }),
+                      () => showToast('Croissance rapide activée', 'info', undefined, { icon: '⚡', subtitle: 'Toutes les cultures' }),
+                      () => showToast('Erreur de sauvegarde', 'error'),
+                      () => showToast('Nouvelle graine rare trouvée !', 'success', undefined, { icon: '🌟', subtitle: 'Carotte dorée débloquée' }),
+                      () => showToast('Action annulée', 'info', { label: 'Rétablir', onPress: () => {} }),
+                    ];
+                    toasts[Math.floor(Math.random() * toasts.length)]();
+                  }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.actionItemIcon}>{'🐟'}</Text>
-                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'DEV'}</Text>
+                  <Text style={styles.actionItemIcon}>{'🔔'}</Text>
+                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Toast'}</Text>
                 </TouchableOpacity>
               )}
               {__DEV__ && (
