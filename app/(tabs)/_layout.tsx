@@ -283,6 +283,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="tree" options={{ href: null }} />
         <Tabs.Screen name="village" options={{ href: null }} />
         <Tabs.Screen name="night-mode" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+        <Tabs.Screen name="stories" options={{ href: null }} />
       </Tabs>
 
       {showFAB && <FAB actions={fabActions} />}

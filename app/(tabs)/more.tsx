@@ -134,6 +134,7 @@ export default function MoreScreen() {
       { emoji: '📸', label: t('menu.items.photos'), route: '/(tabs)/photos', color: colors.catSouvenirs, category: 'souvenirs' as const },
       { emoji: '💬', label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: colors.catSouvenirs, category: 'souvenirs' as const },
       { emoji: '🙏', label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { emoji: '📖', label: 'Histoires du soir', route: '/(tabs)/stories', color: colors.catSouvenirs, category: 'souvenirs' as const },
       // Jeux & Progrès — vert
       { emoji: '🌱', label: t('menu.items.skills'), route: '/(tabs)/skills', color: colors.catJeux, category: 'jeux' as const },
       { emoji: '🌳', label: t('menu.items.tree'), route: '/(tabs)/tree' as any, color: colors.catJeux, category: 'jeux' as const },

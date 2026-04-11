@@ -29,6 +29,7 @@ import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { AIProvider } from '../contexts/AIContext';
+import { StoryVoiceProvider } from '../contexts/StoryVoiceContext';
 import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -145,6 +146,7 @@ function RootLayout() {
             <AuthProvider>
             <ThemeProvider>
               <AIProvider>
+              <StoryVoiceProvider>
               <HelpProvider>
               <ParentalControlsProvider>
               <ToastProvider>
@@ -164,6 +166,7 @@ function RootLayout() {
               </ToastProvider>
               </ParentalControlsProvider>
               </HelpProvider>
+              </StoryVoiceProvider>
               </AIProvider>
             </ThemeProvider>
             </AuthProvider>

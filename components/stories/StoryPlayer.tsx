@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator, Alert } from 'rea
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, withSpring, cancelAnimation, Easing,
+  type SharedValue,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -115,7 +116,7 @@ const SPARKLE_GLOW = 14;
 
 interface PlaybackSparkleProps {
   isPlaying: boolean;
-  progress: Animated.SharedValue<number>;
+  progress: SharedValue<number>;
   width: number;
   color: string;
 }

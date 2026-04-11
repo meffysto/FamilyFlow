@@ -971,3 +971,96 @@ Règles :
     typeof e.profileName === 'string',
   );
 }
+
+// ─── Histoires du soir ──────────────────────────────────────────────────────
+
+export interface StoryPersonalizationContext {
+  recentMoods: Array<{ level: number; note?: string; date: string }>;
+  recentQuotes: Array<{ citation: string; contexte?: string; date: string }>;
+  recentMemories: Array<{ titre: string; description?: string; date: string }>;
+  allergies: string[];
+  gender?: 'garçon' | 'fille';
+}
+
+export interface StoryGenerationConfig {
+  enfantAnon: string;
+  enfantAge: string;
+  universId: string;
+  universTitre: string;
+  detail?: string;
+  language: 'fr' | 'en';
+  context: StoryPersonalizationContext;
+}
+
+export async function generateBedtimeStory(
+  config: AIConfig,
+  story: StoryGenerationConfig,
+): Promise<AIResponse> {
+  const langInstr = story.language === 'en'
+    ? 'Write the story in English.'
+    : 'Écris l\'histoire en français.';
+
+  const moodContext = story.context.recentMoods.length > 0
+    ? `Humeurs récentes de l'enfant (du plus récent): ${story.context.recentMoods.map(m => `niveau ${m.level}/5${m.note ? ` ("${m.note}")` : ''}`).join(', ')}.`
+    : '';
+
+  const quotesContext = story.context.recentQuotes.length > 0
+    ? `Mots d'enfants récents: ${story.context.recentQuotes.map(q => `"${q.citation}"${q.contexte ? ` (${q.contexte})` : ''}`).join('; ')}.`
+    : '';
+
+  const memoriesContext = story.context.recentMemories.length > 0
+    ? `Souvenirs récents: ${story.context.recentMemories.map(m => m.description ? `"${m.titre}" — ${m.description}` : `"${m.titre}"`).join('; ')}.`
+    : '';
+
+  const systemPrompt = `Tu es un conteur d'histoires pour enfants expert. Tu crées des histoires du soir courtes, douces et apaisantes, parfaites pour endormir un enfant de ${story.enfantAge}.
+
+RÈGLES STRICTES :
+- ${langInstr}
+- Vocabulaire adapté à ${story.enfantAge}
+- Longueur : exactement 3 paragraphes bien distincts (~150 mots total)
+- Ton : doux, rassurant, poétique, jamais effrayant
+- Fin : paisible — le héros rentre chez lui ou s'endort après l'aventure
+- Le héros s'appelle "${story.enfantAnon}"
+- Univers imposé : "${story.universTitre}"
+${moodContext ? `- Adapte le ton selon l'humeur : ${moodContext}` : ''}
+${quotesContext ? `- Intègre subtilement une expression de l'enfant : ${quotesContext}` : ''}
+${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesContext}` : ''}
+- Répondre UNIQUEMENT en JSON valide : { "titre": "...", "texte": "paragraphe1\\n\\nparagraphe2\\n\\nparagraphe3" }
+- Aucun texte en dehors du JSON`;
+
+  const userMessage = `Crée une histoire du soir pour ${story.enfantAnon} (${story.enfantAge}) dans l'univers "${story.universTitre}"${story.detail ? `. Détail du jour à intégrer : ${story.detail}` : ''}.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 700,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+    });
+
+    if (!response.ok) {
+      return { text: '', error: `Erreur API (${response.status})` };
+    }
+
+    const data = await response.json();
+    const rawText: string = data.content?.[0]?.text ?? '';
+
+    // Extraire le JSON de la réponse
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { text: JSON.stringify({ titre: 'Histoire du soir', texte: rawText }), error: undefined };
+    }
+
+    return { text: jsonMatch[0], error: undefined };
+  } catch (e) {
+    return { text: '', error: e instanceof Error ? e.message : 'Erreur inconnue' };
+  }
+}
