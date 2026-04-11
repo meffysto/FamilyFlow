@@ -99,7 +99,8 @@ export function SettingsProfiles({
         name: editName.trim(),
         avatar: editAvatar.trim() || '👤',
         birthdate: editBirthdate || undefined,
-        ...(editingProfile.role === 'enfant' ? { propre: editPropre, gender: editGender } : {}),
+        gender: editGender,
+        ...(editingProfile.role === 'enfant' ? { propre: editPropre } : {}),
       });
       setEditingProfile(null);
     } catch (e) { Alert.alert(t('settings.profiles.error'), String(e)); }
@@ -335,13 +336,27 @@ export function SettingsProfiles({
                 />
               </View>
             )}
-            {editingProfile?.role === 'enfant' && (
+            {editingProfile && (
               <View>
-                <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.genderLabel')}</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSub }]}>
+                  {t(editingProfile.role === 'adulte' ? 'settings.profiles.genderLabelAdult' : 'settings.profiles.genderLabel')}
+                </Text>
                 <View style={styles.genderRow}>
-                  <Chip label={t('settings.profiles.genderBoy')} selected={editGender === 'garçon'} onPress={() => setEditGender('garçon')} />
-                  <Chip label={t('settings.profiles.genderGirl')} selected={editGender === 'fille'} onPress={() => setEditGender('fille')} />
-                  <Chip label={t('settings.profiles.genderUnspecified')} selected={editGender === undefined} onPress={() => setEditGender(undefined)} />
+                  <Chip
+                    label={t(editingProfile.role === 'adulte' ? 'settings.profiles.genderMan' : 'settings.profiles.genderBoy')}
+                    selected={editGender === 'garçon'}
+                    onPress={() => setEditGender('garçon')}
+                  />
+                  <Chip
+                    label={t(editingProfile.role === 'adulte' ? 'settings.profiles.genderWoman' : 'settings.profiles.genderGirl')}
+                    selected={editGender === 'fille'}
+                    onPress={() => setEditGender('fille')}
+                  />
+                  <Chip
+                    label={t('settings.profiles.genderUnspecified')}
+                    selected={editGender === undefined}
+                    onPress={() => setEditGender(undefined)}
+                  />
                 </View>
               </View>
             )}
