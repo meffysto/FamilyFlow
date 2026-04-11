@@ -9,6 +9,11 @@ import { ImpactFeedbackStyle } from 'expo-haptics';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
+import {
+  Waveform,
+  type IWaveformRef,
+  PlayerState,
+} from '@simform_solutions/react-native-audio-waveform';
 import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { generateSpeech } from '../../lib/elevenlabs';
@@ -51,7 +56,7 @@ async function primeAudioSession(): Promise<void> {
   }
 }
 
-// ─── WaveBar ────────────────────────────────────────────────────────────────
+// ─── WaveBar (fallback décoratif pour expo-speech) ────────────────────────────
 
 const MIN_H = 4;
 const MAX_H = 32;
@@ -101,6 +106,104 @@ const PEAKS = Array.from({ length: BAR_COUNT }, (_, i) =>
   Math.round(MIN_H + (MAX_H - MIN_H) * (0.3 + 0.7 * Math.abs(Math.sin(i * 0.75 + 0.5))))
 );
 
+// ─── PlaybackSparkle — point lumineux qui suit la position de lecture ──────
+// Suit un sharedValue `progress` (0-1) piloté par onCurrentProgressChange.
+// Deux couches : point solide + halo pulsant. Position animée sur UI thread.
+
+const SPARKLE_SIZE = 10;
+const SPARKLE_GLOW = 14;
+
+interface PlaybackSparkleProps {
+  isPlaying: boolean;
+  progress: Animated.SharedValue<number>;
+  width: number;
+  color: string;
+}
+
+const PlaybackSparkle = React.memo(function PlaybackSparkle({ isPlaying, progress, width, color }: PlaybackSparkleProps) {
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (isPlaying) {
+      pulseOpacity.value = withTiming(1, { duration: 250 });
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.35, { duration: 700, easing: Easing.inOut(Easing.quad) }),
+          withTiming(1.0, { duration: 700, easing: Easing.inOut(Easing.quad) }),
+        ),
+        -1,
+        false,
+      );
+    } else {
+      cancelAnimation(pulseScale);
+      pulseScale.value = withTiming(1, { duration: 300 });
+      pulseOpacity.value = withTiming(0, { duration: 400 });
+    }
+  }, [isPlaying, pulseScale, pulseOpacity]);
+
+  const dotStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: progress.value * width - SPARKLE_SIZE / 2 }],
+    opacity: pulseOpacity.value,
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: progress.value * width - SPARKLE_GLOW / 2 },
+      { scale: pulseScale.value },
+    ],
+    opacity: pulseOpacity.value * 0.5,
+  }));
+
+  if (width === 0) return null;
+
+  return (
+    <>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          sparkleStyles.glow,
+          { width: SPARKLE_GLOW, height: SPARKLE_GLOW, backgroundColor: color },
+          glowStyle,
+        ]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          sparkleStyles.dot,
+          { width: SPARKLE_SIZE, height: SPARKLE_SIZE, backgroundColor: color },
+          dotStyle,
+        ]}
+      />
+    </>
+  );
+});
+
+const sparkleStyles = StyleSheet.create({
+  dot: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    marginTop: -SPARKLE_SIZE / 2,
+    borderRadius: SPARKLE_SIZE / 2,
+  },
+  glow: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    marginTop: -SPARKLE_GLOW / 2,
+    borderRadius: SPARKLE_GLOW / 2,
+  },
+});
+
+// ─── Vitesses selon le moteur ────────────────────────────────────────────────
+// expo-speech: vitesses natives fines (0.8 / 1.0 / 1.2)
+// ElevenLabs Waveform: lib limitée à 1.0 / 1.5 / 2.0 (type PlaybackSpeedType)
+
+const SPEEDS_EXPO: StoryReadingSpeed[] = [0.8, 1.0, 1.2];
+const SPEEDS_ELEVEN = [1.0, 1.5, 2.0] as const;
+type ElevenSpeed = typeof SPEEDS_ELEVEN[number];
+
 // ─── StoryPlayer ─────────────────────────────────────────────────────────────
 
 interface Props {
@@ -110,16 +213,28 @@ interface Props {
   onFinish: () => void;
 }
 
-
 function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) {
   const { primary, colors } = useThemeColors();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState<StoryReadingSpeed>(1.0);
-  const [isLoading, setIsLoading] = useState(false);
-  const soundRef = useRef<any>(null);
+  const isElevenLabs = voiceConfig.engine === 'elevenlabs';
 
+  // État commun
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // État expo-speech
+  const [expoSpeed, setExpoSpeed] = useState<StoryReadingSpeed>(1.0);
+
+  // État ElevenLabs
+  const [audioPath, setAudioPath] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [waveformReady, setWaveformReady] = useState(false);
+  const [elevenSpeed, setElevenSpeed] = useState<ElevenSpeed>(1.0);
+  const [waveformWidth, setWaveformWidth] = useState(0);
+  const waveformRef = useRef<IWaveformRef>(null);
+  const playProgress = useSharedValue(0); // 0-1 pour le sparkle
+
+  // ─── Montage : session audio + pré-génération ElevenLabs si besoin ─────────
   useEffect(() => {
-    // Configurer ET activer AVAudioSession dès le montage (iOS 26 fix)
     Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       allowsRecordingIOS: false,
@@ -130,139 +245,269 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
 
     return () => {
       Speech.stop();
-      if (soundRef.current?.unloadAsync) soundRef.current.unloadAsync();
     };
   }, []);
 
-  const stopPlayback = useCallback(async () => {
-    if (voiceConfig.engine === 'expo-speech') {
-      Speech.stop();
-    } else {
-      await soundRef.current?.stopAsync?.();
-      await soundRef.current?.unloadAsync?.();
-      soundRef.current = null;
-    }
-    setIsPlaying(false);
-  }, [voiceConfig.engine]);
+  // Pré-génération ElevenLabs au montage (une fois)
+  useEffect(() => {
+    if (!isElevenLabs) return;
 
-  const startPlayback = useCallback(async () => {
-    if (voiceConfig.engine === 'expo-speech') {
-      const targetLang = voiceConfig.language === 'en' ? 'en-US' : 'fr-FR';
+    let cancelled = false;
 
-      let voiceId: string | undefined = voiceConfig.voiceIdentifier;
-
-      // Si pas d'identifier explicite (voix iOS Personal), résoudre par langue
-      if (!voiceId) {
+    const run = async () => {
+      // Dev bypass : réutiliser un MP3 déjà caché pour éviter de consommer des credits
+      if (__DEV__) {
         try {
-          const voices = await Speech.getAvailableVoicesAsync();
-          if (__DEV__) console.log('Voix disponibles:', voices.map(v => `${v.identifier} (${v.language})`));
-          const match = voices.find(v => v.language.startsWith(voiceConfig.language === 'en' ? 'en' : 'fr'));
-          voiceId = match?.identifier;
-          if (__DEV__) console.log('Voix choisie:', voiceId ?? 'aucune');
+          const cacheDir = FileSystem.cacheDirectory;
+          if (cacheDir) {
+            const files = await FileSystem.readDirectoryAsync(cacheDir);
+            const cachedStory = files.find(
+              f => f.startsWith('story_') && f.endsWith('.mp3'),
+            );
+            if (cachedStory) {
+              if (__DEV__) console.log('[StoryPlayer] Dev: réutilisation MP3 caché', cachedStory);
+              if (!cancelled) {
+                setAudioPath(`${cacheDir}${cachedStory}`);
+                setIsLoading(false);
+              }
+              return;
+            }
+          }
         } catch (e) {
-          if (__DEV__) console.warn('getAvailableVoicesAsync failed:', e);
+          if (__DEV__) console.warn('[StoryPlayer] Dev cache scan failed:', e);
         }
-      } else if (__DEV__) {
-        console.log('Voix iOS Personal Voice explicite:', voiceId);
       }
 
-      Speech.speak(histoire.texte, {
-        language: targetLang,
-        voice: voiceId,
-        rate: speed,
-        onStart: () => { if (__DEV__) console.log('Speech démarré'); },
-        onDone: () => setIsPlaying(false),
-        onStopped: () => setIsPlaying(false),
-        onError: (err) => {
-          if (__DEV__) console.error('Speech error:', err);
-          Alert.alert('Erreur de lecture', "La voix système n'a pas pu lire l'histoire. Essayez ElevenLabs ou redémarrez l'app.");
-          setIsPlaying(false);
-        },
-      });
-      setIsPlaying(true);
-    } else {
-      // ElevenLabs
       if (!elevenLabsKey) {
-        Alert.alert('Clé ElevenLabs manquante', 'Configurez votre clé API ElevenLabs dans les paramètres.');
+        if (!cancelled) setGenError('Clé ElevenLabs manquante. Configurez votre clé API dans les paramètres.');
         return;
       }
-      setIsLoading(true);
-      const result = await generateSpeech(elevenLabsKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '');
-      setIsLoading(false);
-      if ('error' in result) {
-        Alert.alert('Erreur ElevenLabs', result.error);
-        return;
+
+      if (!cancelled) {
+        setIsLoading(true);
+        setGenError(null);
       }
+
       try {
-        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: result.audioUri },
-          { shouldPlay: true, rate: speed },
+        const result = await generateSpeech(
+          elevenLabsKey,
+          histoire.texte,
+          voiceConfig.elevenLabsVoiceId ?? '',
         );
-        soundRef.current = sound;
-        setIsPlaying(true);
-        sound.setOnPlaybackStatusUpdate((status: any) => {
-          if (status.didJustFinish) {
-            setIsPlaying(false);
-            sound.unloadAsync();
-            soundRef.current = null;
-          }
-        });
-      } catch {
-        Alert.alert('Erreur audio', "Impossible de lire l'histoire.");
+        if (cancelled) return;
+        if ('error' in result) {
+          setGenError(result.error);
+        } else {
+          setAudioPath(result.audioUri);
+        }
+      } catch (e) {
+        if (!cancelled) setGenError(e instanceof Error ? e.message : 'Erreur inconnue');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    run();
+    return () => { cancelled = true; };
+  }, [isElevenLabs, elevenLabsKey, histoire.texte, voiceConfig.elevenLabsVoiceId]);
+
+  // ─── Playback expo-speech ────────────────────────────────────────────────
+  const startExpoSpeech = useCallback(async () => {
+    const targetLang = voiceConfig.language === 'en' ? 'en-US' : 'fr-FR';
+    let voiceId: string | undefined = voiceConfig.voiceIdentifier;
+
+    if (!voiceId) {
+      try {
+        const voices = await Speech.getAvailableVoicesAsync();
+        const match = voices.find(v => v.language.startsWith(voiceConfig.language === 'en' ? 'en' : 'fr'));
+        voiceId = match?.identifier;
+      } catch (e) {
+        if (__DEV__) console.warn('getAvailableVoicesAsync failed:', e);
       }
     }
-  }, [voiceConfig, histoire.texte, speed, elevenLabsKey]);
 
+    Speech.speak(histoire.texte, {
+      language: targetLang,
+      voice: voiceId,
+      rate: expoSpeed,
+      onDone: () => setIsPlaying(false),
+      onStopped: () => setIsPlaying(false),
+      onError: (err) => {
+        if (__DEV__) console.error('Speech error:', err);
+        Alert.alert('Erreur de lecture', "La voix système n'a pas pu lire l'histoire.");
+        setIsPlaying(false);
+      },
+    });
+    setIsPlaying(true);
+  }, [voiceConfig, histoire.texte, expoSpeed]);
+
+  const stopExpoSpeech = useCallback(() => {
+    Speech.stop();
+    setIsPlaying(false);
+  }, []);
+
+  // ─── Playback ElevenLabs via Waveform ─────────────────────────────────────
+  const startElevenLabs = useCallback(async () => {
+    if (!waveformRef.current || !audioPath) return;
+    try {
+      await waveformRef.current.startPlayer();
+    } catch (e) {
+      if (__DEV__) console.error('Waveform start error:', e);
+      Alert.alert('Erreur audio', "Impossible de lire l'histoire.");
+    }
+  }, [audioPath]);
+
+  const pauseElevenLabs = useCallback(async () => {
+    if (!waveformRef.current) return;
+    try {
+      await waveformRef.current.pausePlayer();
+    } catch (e) {
+      if (__DEV__) console.error('Waveform pause error:', e);
+    }
+  }, []);
+
+  // ─── Toggle play/pause unifié ─────────────────────────────────────────────
   const togglePlay = useCallback(async () => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
-    if (isPlaying) {
-      await stopPlayback();
+    if (isElevenLabs) {
+      if (!audioPath) return;
+      if (isPlaying) {
+        await pauseElevenLabs();
+      } else {
+        await startElevenLabs();
+      }
     } else {
-      await startPlayback();
+      if (isPlaying) {
+        stopExpoSpeech();
+      } else {
+        await startExpoSpeech();
+      }
     }
-  }, [isPlaying, stopPlayback, startPlayback]);
+  }, [isElevenLabs, isPlaying, audioPath, startElevenLabs, pauseElevenLabs, startExpoSpeech, stopExpoSpeech]);
 
-  const changeSpeed = useCallback(async (newSpeed: StoryReadingSpeed) => {
+  // ─── Changement de vitesse ────────────────────────────────────────────────
+  const changeExpoSpeed = useCallback(async (newSpeed: StoryReadingSpeed) => {
     Haptics.selectionAsync();
     if (isPlaying) {
-      await stopPlayback();
-      setSpeed(newSpeed);
-      setTimeout(() => startPlayback(), 50);
+      stopExpoSpeech();
+      setExpoSpeed(newSpeed);
+      setTimeout(() => {
+        const targetLang = voiceConfig.language === 'en' ? 'en-US' : 'fr-FR';
+        Speech.speak(histoire.texte, {
+          language: targetLang,
+          voice: voiceConfig.voiceIdentifier,
+          rate: newSpeed,
+          onDone: () => setIsPlaying(false),
+          onStopped: () => setIsPlaying(false),
+          onError: () => setIsPlaying(false),
+        });
+        setIsPlaying(true);
+      }, 50);
     } else {
-      setSpeed(newSpeed);
+      setExpoSpeed(newSpeed);
     }
-  }, [isPlaying, stopPlayback, startPlayback]);
+  }, [isPlaying, stopExpoSpeech, voiceConfig, histoire.texte]);
 
-  const SPEEDS: StoryReadingSpeed[] = [0.8, 1.0, 1.2];
+  const changeElevenSpeed = useCallback((newSpeed: ElevenSpeed) => {
+    Haptics.selectionAsync();
+    setElevenSpeed(newSpeed);
+    // Le prop playbackSpeed s'applique automatiquement au player Waveform
+  }, []);
 
+  // ─── Sync PlayerState Waveform → isPlaying local ──────────────────────────
+  const onWaveformStateChange = useCallback((state: PlayerState) => {
+    setIsPlaying(state === PlayerState.playing);
+    if (state === PlayerState.stopped) {
+      playProgress.value = 0;
+    }
+  }, [playProgress]);
+
+  // ─── Progression lecture → sharedValue pour le sparkle ────────────────────
+  const onWaveformProgress = useCallback((current: number, duration: number) => {
+    if (duration > 0) {
+      playProgress.value = current / duration;
+    }
+  }, [playProgress]);
+
+  // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
-      {/* Titre */}
       <Text style={[styles.title, { color: colors.text }]}>{histoire.titre}</Text>
 
-      {/* Waveform */}
-      <View style={styles.waveform}>
-        {PEAKS.map((peak, i) => (
-          <WaveBar
-            key={i}
-            isPlaying={isPlaying}
-            peak={peak}
-            delay={i * 20}
-            color={isPlaying ? primary : colors.border}
-          />
-        ))}
-      </View>
+      {/* Waveform : vraie pour ElevenLabs, décorative pour expo-speech */}
+      {isElevenLabs ? (
+        <View style={styles.waveformEleven}>
+          {audioPath ? (
+            <View
+              style={styles.waveformInner}
+              onLayout={(e) => setWaveformWidth(e.nativeEvent.layout.width)}
+            >
+              <Waveform
+                mode="static"
+                ref={waveformRef}
+                path={audioPath}
+                playbackSpeed={elevenSpeed}
+                candleSpace={2}
+                candleWidth={3}
+                candleHeightScale={4}
+                waveColor={colors.border}
+                scrubColor={primary}
+                containerStyle={styles.waveformContainer}
+                onPlayerStateChange={onWaveformStateChange}
+                onCurrentProgressChange={onWaveformProgress}
+                onChangeWaveformLoadState={(loading) => setWaveformReady(!loading)}
+                onError={(err) => {
+                  if (__DEV__) console.error('Waveform error:', err);
+                  setGenError('Erreur de chargement de la forme d\'onde');
+                }}
+              />
+              <PlaybackSparkle
+                isPlaying={isPlaying}
+                progress={playProgress}
+                width={waveformWidth}
+                color={primary}
+              />
+            </View>
+          ) : (
+            <View style={styles.placeholderCenter}>
+              {isLoading ? (
+                <>
+                  <ActivityIndicator color={primary} />
+                  <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
+                    Génération de l'audio…
+                  </Text>
+                </>
+              ) : genError ? (
+                <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
+                  {genError}
+                </Text>
+              ) : null}
+            </View>
+          )}
+        </View>
+      ) : (
+        <View style={styles.waveform}>
+          {PEAKS.map((peak, i) => (
+            <WaveBar
+              key={i}
+              isPlaying={isPlaying}
+              peak={peak}
+              delay={i * 20}
+              color={isPlaying ? primary : colors.border}
+            />
+          ))}
+        </View>
+      )}
 
       {/* Bouton Play/Pause */}
       <Pressable
         style={[styles.playButton, { backgroundColor: primary }]}
         onPress={togglePlay}
-        disabled={isLoading}
+        disabled={isElevenLabs && (!audioPath || !waveformReady || isLoading)}
         accessibilityRole="button"
         accessibilityLabel={isPlaying ? 'Pause' : 'Lire'}
       >
-        {isLoading ? (
+        {isLoading || (isElevenLabs && audioPath && !waveformReady) ? (
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
@@ -271,23 +516,37 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
 
       {/* Contrôles vitesse */}
       <View style={styles.speedRow}>
-        {SPEEDS.map(s => (
-          <Pressable
-            key={s}
-            style={[
-              styles.speedChip,
-              { backgroundColor: speed === s ? primary : colors.card, borderColor: colors.border },
-            ]}
-            onPress={() => changeSpeed(s)}
-          >
-            <Text style={[styles.speedText, { color: speed === s ? '#fff' : colors.text }]}>
-              {s}x
-            </Text>
-          </Pressable>
-        ))}
+        {isElevenLabs
+          ? SPEEDS_ELEVEN.map(s => (
+              <Pressable
+                key={s}
+                style={[
+                  styles.speedChip,
+                  { backgroundColor: elevenSpeed === s ? primary : colors.card, borderColor: colors.border },
+                ]}
+                onPress={() => changeElevenSpeed(s)}
+              >
+                <Text style={[styles.speedText, { color: elevenSpeed === s ? '#fff' : colors.text }]}>
+                  {s}x
+                </Text>
+              </Pressable>
+            ))
+          : SPEEDS_EXPO.map(s => (
+              <Pressable
+                key={s}
+                style={[
+                  styles.speedChip,
+                  { backgroundColor: expoSpeed === s ? primary : colors.card, borderColor: colors.border },
+                ]}
+                onPress={() => changeExpoSpeed(s)}
+              >
+                <Text style={[styles.speedText, { color: expoSpeed === s ? '#fff' : colors.text }]}>
+                  {s}x
+                </Text>
+              </Pressable>
+            ))}
       </View>
 
-      {/* Bouton Terminer */}
       <Pressable style={styles.finishButton} onPress={onFinish}>
         <Text style={[styles.finishText, { color: colors.textMuted }]}>
           Terminer l'histoire →
@@ -303,6 +562,11 @@ const styles = StyleSheet.create({
   container: { alignItems: 'center', paddingVertical: Spacing['4xl'] },
   title: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold, textAlign: 'center', marginBottom: Spacing['4xl'], paddingHorizontal: Spacing['4xl'] },
   waveform: { flexDirection: 'row', alignItems: 'center', height: MAX_H + 8, marginBottom: Spacing['4xl'] },
+  waveformEleven: { width: '90%', height: 80, marginBottom: Spacing['4xl'], justifyContent: 'center' },
+  waveformInner: { position: 'relative', width: '100%', height: 80, justifyContent: 'center' },
+  waveformContainer: { height: 80, width: '100%' },
+  placeholderCenter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.md, height: 80 },
+  placeholderText: { fontSize: FontSize.sm },
   playButton: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing['2xl'] },
   playIcon: { fontSize: 28, color: '#fff' },
   speedRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing['4xl'] },
