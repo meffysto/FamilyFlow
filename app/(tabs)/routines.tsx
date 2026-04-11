@@ -31,6 +31,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
+import { useGarden } from '../../hooks/useGarden';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -343,7 +344,8 @@ function RoutinePlayer({
 export default function RoutinesScreen() {
   const { t } = useTranslation();
   const { routines, saveRoutines, activeProfile, vault, notifPrefs, refresh } = useVault();
-  const { completeTask } = useGamification({ vault, notifPrefs });
+  const { addContribution } = useGarden();
+  const { completeTask } = useGamification({ vault, notifPrefs, onContribution: addContribution });
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
 

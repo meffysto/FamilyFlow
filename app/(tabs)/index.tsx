@@ -23,6 +23,7 @@ import { getDateLocale } from '../../lib/date-locale';
 import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
+import { useGarden } from '../../hooks/useGarden';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -217,7 +218,8 @@ export default function DashboardScreen() {
   // Active rewards (filtered for non-expired)
   const activeRewards = processActiveRewards(gamiData?.activeRewards ?? []);
 
-  const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest });
+  const { addContribution } = useGarden();
+  const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest, onContribution: addContribution });
   const auth = useAuth();
 
   const [refreshing, setRefreshing] = useState(false);

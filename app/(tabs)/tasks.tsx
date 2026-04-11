@@ -28,6 +28,7 @@ import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
+import { useGarden } from '../../hooks/useGarden';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { TaskCard } from '../../components/TaskCard';
@@ -195,7 +196,8 @@ function buildTargetFiles(profiles: Profile[], t: (key: string) => string) {
 
 export default function TasksScreen() {
   const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission, contributeFamilyQuest } = useVault();
-  const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest });
+  const { addContribution } = useGarden();
+  const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest, onContribution: addContribution });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();

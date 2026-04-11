@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { VaultManager } from '../lib/vault';
+import type { ContributionType } from '../lib/village';
 import {
   parseGamification,
   serializeGamification,
@@ -60,6 +61,7 @@ interface UseGamificationArgs {
   notifPrefs: NotificationPreferences;
   onDataChange?: (profiles: Profile[]) => void;
   onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>;
+  onContribution?: (type: ContributionType, profileId: string) => Promise<void>;
 }
 
 interface UseGamificationResult {
@@ -89,7 +91,7 @@ function farmFile(profileId: string): string {
   return `farm-${profileId}.md`;
 }
 
-export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgress }: UseGamificationArgs): UseGamificationResult {
+export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgress, onContribution }: UseGamificationArgs): UseGamificationResult {
   const [isProcessing, setIsProcessing] = useState(false);
   const { showToast } = useToast();
 
@@ -315,6 +317,17 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           } catch { /* Musée — non-critical */ }
         }
 
+        // Contribution village (COOP-02) -- fire-and-forget non-critical
+        if (onContribution) {
+          try { await onContribution('task', profile.id); } catch { /* Village -- non-critical */ }
+        }
+        // Toast village (D-04) -- delai 300ms pour eviter doublon avec toast semantique (Pitfall 1)
+        if (onContribution) {
+          setTimeout(() => {
+            try { showToast('+1 Village 🏡', 'success'); } catch {}
+          }, 300);
+        }
+
         // 3. Ecrire farm-{id}.md UNE SEULE FOIS (crops + effets combines)
         await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
 
@@ -345,7 +358,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         setIsProcessing(false);
       }
     },
-    [vault, notifPrefs, onDataChange, onQuestProgress, showToast]
+    [vault, notifPrefs, onDataChange, onQuestProgress, onContribution, showToast]
   );
 
   const openLootBox = useCallback(
