@@ -9,6 +9,7 @@ import {
   parseGardenFile,
   serializeGardenFile,
   appendContribution,
+  appendBuilding,
   VILLAGE_FILE,
   VILLAGE_GRID,
   OBJECTIVE_TEMPLATES,
@@ -367,5 +368,136 @@ describe('computeBuildingsToUnlock (Phase 30)', () => {
       timestamp: '2026-04-12T00:00:00', buildingId: e.id, palier: e.palier
     }));
     expect(computeBuildingsToUnlock(99999, all)).toEqual([]);
+  });
+});
+
+// ── parseGardenFile + serializeGardenFile — section Constructions (Phase 30) ──
+
+describe('parseGardenFile + serializeGardenFile — section Constructions (Phase 30)', () => {
+  it('retourne unlockedBuildings: [] pour contenu vide (backward compat)', () => {
+    const data = parseGardenFile('');
+    expect(data.unlockedBuildings).toEqual([]);
+  });
+
+  it('retourne unlockedBuildings: [] si section absente (vault legacy Phase 25)', () => {
+    const content = [
+      '---', 'version: 1', 'created: 2026-04-01', 'current_week_start: 2026-04-07',
+      'current_theme_index: 0', 'reward_claimed: false', '---', '',
+      '## Contributions',
+      '- 2026-04-10T14:32:00 | profile-abc | harvest | 1',
+      '',
+      '## Historique',
+      '- 2026-03-31 | cible:45 | total:52 | claimed:true',
+      '',
+    ].join('\n');
+    const data = parseGardenFile(content);
+    expect(data.unlockedBuildings).toEqual([]);
+  });
+
+  it('parse les lignes ## Constructions format timestamp | id | palier', () => {
+    const content = [
+      '---', 'version: 1', 'created: 2026-04-01', 'current_week_start: 2026-04-07',
+      'current_theme_index: 0', 'reward_claimed: false', '---', '',
+      '## Contributions', '',
+      '## Constructions',
+      '- 2026-04-12T14:32:00 | puits | 100',
+      '- 2026-04-15T09:15:00 | boulangerie | 300',
+      '',
+      '## Historique', '',
+    ].join('\n');
+    const data = parseGardenFile(content);
+    expect(data.unlockedBuildings).toEqual([
+      { timestamp: '2026-04-12T14:32:00', buildingId: 'puits', palier: 100 },
+      { timestamp: '2026-04-15T09:15:00', buildingId: 'boulangerie', palier: 300 },
+    ]);
+  });
+
+  it('ignore silencieusement les lignes malformées', () => {
+    const content = [
+      '## Constructions',
+      '- malformed',
+      '- 2026-04-12T14:32:00 | puits | 100',
+      '- too | few',
+      '- 2026-04-13T00:00:00 | cafe | notanumber',
+    ].join('\n');
+    const data = parseGardenFile(content);
+    expect(data.unlockedBuildings).toHaveLength(1);
+    expect(data.unlockedBuildings[0].buildingId).toBe('puits');
+  });
+
+  it('serializeGardenFile émet section ## Constructions même vide', () => {
+    const data: VillageData = {
+      version: 1, createdAt: '2026-04-01', currentWeekStart: '2026-04-07',
+      currentThemeIndex: 0, rewardClaimed: false,
+      contributions: [], pastWeeks: [], unlockedBuildings: [],
+    };
+    const out = serializeGardenFile(data);
+    expect(out).toContain('## Constructions');
+    // Ordre : Contributions avant Constructions avant Historique
+    expect(out.indexOf('## Contributions')).toBeLessThan(out.indexOf('## Constructions'));
+    expect(out.indexOf('## Constructions')).toBeLessThan(out.indexOf('## Historique'));
+  });
+
+  it('round-trip fidelity pour unlockedBuildings', () => {
+    const data: VillageData = {
+      version: 1, createdAt: '2026-04-01', currentWeekStart: '2026-04-07',
+      currentThemeIndex: 0, rewardClaimed: false,
+      contributions: [], pastWeeks: [],
+      unlockedBuildings: [
+        { timestamp: '2026-04-12T14:32:00', buildingId: 'puits', palier: 100 },
+        { timestamp: '2026-04-15T09:15:00', buildingId: 'boulangerie', palier: 300 },
+      ],
+    };
+    const serialized = serializeGardenFile(data);
+    const reparsed = parseGardenFile(serialized);
+    expect(reparsed.unlockedBuildings).toEqual(data.unlockedBuildings);
+  });
+});
+
+describe('appendBuilding (Phase 30)', () => {
+  it('crée la section ## Constructions avant ## Historique si absente', () => {
+    const content = [
+      '## Contributions', '',
+      '## Historique',
+      '- 2026-03-31 | cible:45 | total:52 | claimed:true',
+      '',
+    ].join('\n');
+    const out = appendBuilding(content, {
+      timestamp: '2026-04-12T14:32:00', buildingId: 'puits', palier: 100,
+    });
+    expect(out).toContain('## Constructions');
+    expect(out).toContain('- 2026-04-12T14:32:00 | puits | 100');
+    expect(out.indexOf('## Constructions')).toBeLessThan(out.indexOf('## Historique'));
+  });
+
+  it('insère AVANT la prochaine section ## (jamais fin de fichier — Pitfall 3/4)', () => {
+    const content = [
+      '## Constructions',
+      '- 2026-04-12T14:32:00 | puits | 100',
+      '',
+      '## Historique',
+      '- 2026-03-31 | cible:45 | total:52 | claimed:true',
+    ].join('\n');
+    const out = appendBuilding(content, {
+      timestamp: '2026-04-15T09:15:00', buildingId: 'boulangerie', palier: 300,
+    });
+    // La nouvelle ligne doit être APRÈS puits mais AVANT ## Historique
+    const idxNew = out.indexOf('boulangerie');
+    const idxHist = out.indexOf('## Historique');
+    expect(idxNew).toBeGreaterThan(-1);
+    expect(idxNew).toBeLessThan(idxHist);
+  });
+
+  it('préserve les lignes existantes', () => {
+    const content = [
+      '## Constructions',
+      '- 2026-04-12T14:32:00 | puits | 100',
+      '## Historique',
+    ].join('\n');
+    const out = appendBuilding(content, {
+      timestamp: '2026-04-15T00:00:00', buildingId: 'boulangerie', palier: 300,
+    });
+    expect(out).toContain('- 2026-04-12T14:32:00 | puits | 100');
+    expect(out).toContain('- 2026-04-15T00:00:00 | boulangerie | 300');
   });
 });

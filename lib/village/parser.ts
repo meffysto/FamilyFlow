@@ -85,6 +85,8 @@ export function parseGardenFile(content: string): VillageData {
         section = 'contributions';
       } else if (header === '## historique') {
         section = 'historique';
+      } else if (header === '## constructions') {
+        section = 'constructions';
       } else {
         section = 'none';
       }
@@ -148,6 +150,19 @@ export function parseGardenFile(content: string): VillageData {
         claimed: claimedMatch[1] === 'true',
         contributionsByMember,
       });
+    } else if (section === 'constructions') {
+      // Format : timestamp | buildingId | palier (Phase 30 — VILL-05)
+      const parts = raw.split(' | ');
+      if (parts.length < 3) continue;
+      const [timestamp, buildingId, rawPalier] = parts;
+      if (!timestamp || !buildingId || !rawPalier) continue;
+      const palier = parseInt(rawPalier.trim(), 10);
+      if (isNaN(palier)) continue;
+      unlockedBuildings.push({
+        timestamp: timestamp.trim(),
+        buildingId: buildingId.trim(),
+        palier,
+      });
     }
   }
 
@@ -189,6 +204,13 @@ export function serializeGardenFile(data: VillageData): string {
   lines.push('## Contributions');
   for (const c of data.contributions) {
     lines.push(`- ${c.timestamp} | ${c.profileId} | ${c.type} | ${c.amount}`);
+  }
+  lines.push('');
+
+  // Section Constructions (Phase 30 — VILL-05)
+  lines.push('## Constructions');
+  for (const b of data.unlockedBuildings ?? []) {
+    lines.push(`- ${b.timestamp} | ${b.buildingId} | ${b.palier}`);
   }
   lines.push('');
 
@@ -290,5 +312,85 @@ export async function appendContributionToVault(
 ): Promise<void> {
   const content = await vault.readFile(VILLAGE_FILE).catch(() => '');
   const updated = appendContribution(content, entry);
+  await vault.writeFile(VILLAGE_FILE, updated);
+}
+
+// ---------------------------------------------------------------------------
+// appendBuilding (Phase 30 — VILL-05)
+// ---------------------------------------------------------------------------
+
+/**
+ * Insere une ligne dans la section `## Constructions` du contenu jardin-familial.md.
+ * Pattern identique a appendContribution — jamais append en fin de fichier (Pitfall 3/4).
+ *
+ * - Trouve la section `## Constructions`
+ * - Insere AVANT la prochaine section `## `
+ * - Si section absente, la creer avant `## Historique` ou en fin de fichier
+ */
+export function appendBuilding(content: string, entry: UnlockedBuilding): string {
+  const newLine = `- ${entry.timestamp} | ${entry.buildingId} | ${entry.palier}`;
+
+  const lines = content.split('\n');
+
+  // Trouver la section ## Constructions
+  let constrStart = -1;
+  let nextSectionIdx = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().toLowerCase() === '## constructions') {
+      constrStart = i;
+      continue;
+    }
+    if (constrStart !== -1 && lines[i].startsWith('## ')) {
+      nextSectionIdx = i;
+      break;
+    }
+  }
+
+  if (constrStart === -1) {
+    // La section n'existe pas — la creer avant ## Historique ou en fin de fichier
+    const historiquelIdx = lines.findIndex(l => l.trim().toLowerCase() === '## historique');
+    if (historiquelIdx !== -1) {
+      const before = lines.slice(0, historiquelIdx);
+      const after = lines.slice(historiquelIdx);
+      while (before.length > 0 && before[before.length - 1].trim() === '') {
+        before.pop();
+      }
+      return [...before, '', '## Constructions', newLine, '', ...after].join('\n');
+    } else {
+      const trimmed = content.trimEnd();
+      return `${trimmed}\n\n## Constructions\n${newLine}\n`;
+    }
+  }
+
+  // La section existe
+  if (nextSectionIdx !== -1) {
+    let insertAt = nextSectionIdx;
+    while (insertAt > constrStart + 1 && lines[insertAt - 1].trim() === '') {
+      insertAt--;
+    }
+    const before = lines.slice(0, insertAt);
+    const after = lines.slice(insertAt);
+    return [...before, newLine, ...after].join('\n');
+  } else {
+    const trimmed = content.trimEnd();
+    return `${trimmed}\n${newLine}\n`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// appendBuildingToVault
+// ---------------------------------------------------------------------------
+
+/**
+ * Lit jardin-familial.md, ajoute le bâtiment, reecrit le fichier.
+ * Pattern identique a appendContributionToVault. Seule fonction async du bloc batiment.
+ */
+export async function appendBuildingToVault(
+  vault: VaultManager,
+  entry: UnlockedBuilding,
+): Promise<void> {
+  const content = await vault.readFile(VILLAGE_FILE).catch(() => '');
+  const updated = appendBuilding(content, entry);
   await vault.writeFile(VILLAGE_FILE, updated);
 }
