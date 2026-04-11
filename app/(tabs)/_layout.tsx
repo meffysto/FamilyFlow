@@ -281,6 +281,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="pregnancy" options={{ href: null }} />
         <Tabs.Screen name="skills" options={{ href: null }} />
         <Tabs.Screen name="tree" options={{ href: null }} />
+        <Tabs.Screen name="village" options={{ href: null }} />
         <Tabs.Screen name="night-mode" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       </Tabs>
 
