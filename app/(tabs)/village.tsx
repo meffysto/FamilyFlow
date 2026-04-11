@@ -32,6 +32,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -53,6 +54,12 @@ import type { VillageContribution } from '../../lib/village/types';
 import { VillageAvatar } from '../../components/village/VillageAvatar';
 import { AvatarTooltip } from '../../components/village/AvatarTooltip';
 import { PortalSprite } from '../../components/village/PortalSprite';
+// Phase 30 — bâtiments persistants (VILL-04, VILL-06)
+import { BuildingSprite } from '../../components/village/BuildingSprite';
+import { BuildingTooltip } from '../../components/village/BuildingTooltip';
+import { BuildingsCatalog } from '../../components/village/BuildingsCatalog';
+import { BUILDINGS_CATALOG } from '../../lib/village';
+import type { UnlockedBuilding } from '../../lib/village';
 import { VILLAGE_GRID } from '../../lib/village/grid';
 
 // ── Constantes module ──────────────────────────────────────────────────────
@@ -309,12 +316,22 @@ export default function VillageScreen() {
     weekHistory,
     claimReward,
     isLoading,
+    // Phase 30 — bâtiments persistants
+    familyLifetimeLeaves,
+    unlockedBuildings,
   } = useGarden();
 
   const [showAllFeed, setShowAllFeed] = useState(false);
   // Pitfall 4 (RESEARCH.md) — guard post-claim session pour éviter double-tap
   const [claimedThisSession, setClaimedThisSession] = useState(false);
   const [mapSize, setMapSize] = useState({ width: SCREEN_W, height: MAP_HEIGHT });
+  // Phase 30 — catalogue bâtiments + tooltip bâtiment (VILL-04, VILL-06)
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [buildingTooltip, setBuildingTooltip] = useState<{
+    label: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const season = getCurrentSeason();
 
   // ── Memos ─────────────────────────────────────────────────────────────
@@ -439,6 +456,23 @@ export default function VillageScreen() {
     };
   }, []);
 
+  // ── Phase 30 — handler tap bâtiment ──────────────────────────────────
+  const handleBuildingPress = useCallback(
+    (ub: UnlockedBuilding) => {
+      const entry = BUILDINGS_CATALOG.find(b => b.id === ub.buildingId);
+      const slot = VILLAGE_GRID.find(
+        s => s.id === `village_building_${ub.buildingId}`,
+      );
+      if (!entry || !slot) return;
+      setBuildingTooltip({
+        label: `${entry.labelFR} — Débloqué à ${entry.palier} feuilles familiales`,
+        x: slot.x * mapSize.width,
+        y: slot.y * mapSize.height,
+      });
+    },
+    [mapSize.width, mapSize.height],
+  );
+
   /** Activité IRL saisonnière — déterministe par semaine */
   const activity = useMemo(
     () =>
@@ -504,6 +538,16 @@ export default function VillageScreen() {
         ]}
       >
         <Text style={[styles.headerTitle, { color: colors.text }]}>Place du Village</Text>
+        {/* Phase 30 — bouton catalogue bâtiments (VILL-06) */}
+        <TouchableOpacity
+          onPress={() => setShowCatalog(true)}
+          style={styles.headerCatalogButton}
+          accessibilityRole="button"
+          accessibilityLabel="Bâtiments du village"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <MaterialCommunityIcons name="home-city" size={22} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       {/* ── Scroll unique (pattern tree.tsx) : carte + sections dans le même flux ── */}
@@ -554,6 +598,34 @@ export default function VillageScreen() {
               y={tooltip.y}
               containerWidth={mapSize.width}
               onDismiss={() => setTooltip(null)}
+            />
+          )}
+
+          {/* Phase 30 — overlay bâtiments (VILL-04) */}
+          {unlockedBuildings.map(ub => {
+            const slot = VILLAGE_GRID.find(
+              s => s.id === `village_building_${ub.buildingId}`,
+            );
+            if (!slot) return null;
+            return (
+              <BuildingSprite
+                key={ub.buildingId}
+                buildingId={ub.buildingId}
+                slotX={slot.x * mapSize.width}
+                slotY={slot.y * mapSize.height}
+                onPress={() => handleBuildingPress(ub)}
+              />
+            );
+          })}
+
+          {/* Phase 30 — tooltip bâtiment conditionnel */}
+          {buildingTooltip && (
+            <BuildingTooltip
+              label={buildingTooltip.label}
+              x={buildingTooltip.x}
+              y={buildingTooltip.y}
+              containerWidth={mapSize.width}
+              onDismiss={() => setBuildingTooltip(null)}
             />
           )}
 
@@ -736,6 +808,14 @@ export default function VillageScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Phase 30 — modal catalogue bâtiments (VILL-06) */}
+      <BuildingsCatalog
+        visible={showCatalog}
+        onClose={() => setShowCatalog(false)}
+        unlockedBuildings={unlockedBuildings}
+        familyLifetimeLeaves={familyLifetimeLeaves}
+      />
     </Animated.View>
   );
 }
@@ -765,6 +845,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+  headerCatalogButton: {
+    position: 'absolute',
+    right: Spacing['2xl'],
+    bottom: Spacing.xs,
+    padding: Spacing.md,
   },
 
   // Carte tilemap (dans le flux scroll, comme tree.tsx)
