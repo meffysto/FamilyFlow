@@ -47,6 +47,10 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - ✓ Compagnon étendu — 4 event types activés (weekly_recap, morning_greeting, gentle_nudge, comeback) + persistance messages SecureStore + bulle dashboard — v1.3
 - ✓ Fondation données village — module lib/village/ isolé (types, grille 4 éléments, 7 templates thématisés, parseur bidirectionnel append-only), 24 tests Jest — v1.4
 - ✓ Hook domaine jardin — useGarden.ts isolé (génération objectif hebdomadaire, contributions, claim anti-double-abus), câblage useVault.ts +13 lignes — v1.4
+- ✓ Écran Village — carte tilemap cobblestone 75%, barre progression LiquidXPBar, feed contributions, indicateurs membres, historique avec détail par membre — v1.4
+- ✓ Portail animé ferme → village (sprite pierre pixel art + glow Reanimated loop + fade cross-dissolve 400ms) remplaçant le FAB temporaire — v1.4
+- ✓ Auto-contribution village — récoltes ferme (useFarm) et tâches IRL complétées (useGamification) ajoutent automatiquement une contribution, toast discret "+1 Village 🏡" — v1.4
+- ✓ Récompense collective — bonus +25 XP + 1 loot box cosmétique équitable pour tous les profils actifs + suggestion d'activité IRL saisonnière (20 activités curatées × 4 saisons) — v1.4
 
 ### Active
 
@@ -57,10 +61,6 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - [ ] (Backlog) Suggestion automatique de recettes compatibles selon les convives sélectionnés
 - [ ] (Backlog) Tutoriels contextuels pour autres écrans complexes (budget OCR, sagas, quêtes)
 - [ ] (Backlog) Mécanique "Pokédex" — tracking de découverte codex par profil avec statistiques de complétion
-- ✓ Écran Village — carte tilemap cobblestone 75%, barre progression LiquidXPBar, feed contributions, indicateurs membres, historique avec détail par membre, FAB navigation depuis ferme — v1.4
-- [ ] (v1.4) Portail animé dans la ferme perso vers le jardin familial
-- [ ] (v1.4) Câblage auto-contribution (récoltes ferme + tâches IRL → village)
-- [ ] (v1.4) Récompense collective (bonus in-game + suggestion activité IRL)
 
 ### Out of Scope
 
