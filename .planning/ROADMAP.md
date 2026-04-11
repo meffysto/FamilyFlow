@@ -72,7 +72,7 @@ Détails : `.planning/milestones/v1.4-ROADMAP.md`.
 **Milestone Goal :** Transformer la Place du Village statique en espace vivant et personnalisé — les avatars de la famille y apparaissent, les semaines réussies laissent des traces visuelles durables, l'ambiance change selon l'heure et la saison, et l'arbre familial commun devient le cœur symbolique du village. Polish milestone, aucune nouvelle dépendance npm, réutilisation stricte de l'infra existante (`ReactiveAvatar`, `TileMapRenderer`, `useGarden`, `FarmProfileData`).
 
 - [x] **Phase 29: Avatars vivants + portail retour** — Avatars par profil sur la carte village avec état d'activité hebdo + portail bidirectionnel village → ferme — completed 2026-04-11
-- [ ] **Phase 30: Décorations persistantes** — Schéma append-only, déblocage par palier de feuilles famille, catalogue des 8 bâtiments
+- [x] **Phase 30: Décorations persistantes** — Schéma append-only, déblocage par palier de feuilles famille, catalogue des 8 bâtiments (completed 2026-04-11)
 - [ ] **Phase 31: Ambiance dynamique** — Cycle jour/nuit selon l'heure réelle + effets saisonniers superposés à la carte
 - [ ] **Phase 32: Arbre familial commun** — Sprite central au cœur du village, évolution visuelle selon le streak collectif
 
@@ -103,11 +103,11 @@ Plans:
   2. User retrouve l'ensemble des bâtiments accumulés après un restart complet de l'app (persistance append-only dans `jardin-familial.md` section `## Constructions`)
   3. User peut ouvrir un catalogue listant les 8 bâtiments débloquables et voit clairement le palier associé (100, 300, 700, 1500, 3000, 6000, 12000, 25000 feuilles)
   4. User voit dans le catalogue quelles bâtiments sont déjà débloqués versus verrouillés (silhouette sombre), avec la progression actuelle vers le prochain palier
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 30-01-PLAN.md — Data layer : types + parser ## Constructions + catalogue statique + slots VILLAGE_GRID (VILL-05, VILL-06)
 - [x] 30-02-PLAN.md — Unlock engine : useGarden familyLifetimeLeaves + effet append-on-threshold idempotent (VILL-04, VILL-05)
-- [ ] 30-03-PLAN.md — UI : BuildingSprite + BuildingTooltip + BuildingsCatalog modal + wiring village.tsx (VILL-04, VILL-06)
+- [x] 30-03-PLAN.md — UI : BuildingSprite + BuildingTooltip + BuildingsCatalog modal + wiring village.tsx (VILL-04, VILL-06)
 **UI hint**: yes
 
 ### Phase 31: Ambiance dynamique
@@ -139,7 +139,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 29. Avatars vivants + portail retour | 2/2 | Completed | 2026-04-11 |
-| 30. Décorations persistantes | 2/3 | In Progress|  |
+| 30. Décorations persistantes | 3/3 | Complete   | 2026-04-11 |
 | 31. Ambiance dynamique | 0/TBD | Not started | - |
 | 32. Arbre familial commun | 0/TBD | Not started | - |
 

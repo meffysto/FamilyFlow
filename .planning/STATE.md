@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: executing
-last_updated: "2026-04-11T13:01:33.439Z"
+status: verifying
+last_updated: "2026-04-11T13:18:57.841Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 4
+  completed_plans: 5
   percent: 25
 ---
 
@@ -32,7 +32,7 @@ Last activity: 2026-04-11
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ### Quick Tasks Completed
 
@@ -127,6 +127,7 @@ Status: Ready to execute
 | Phase 29-avatars-vivants-portail-retour P02 | 4min | 3 tasks | 4 files |
 | Phase 30-decorations-persistantes P01 | 12min | 2 tasks | 6 files |
 | Phase 30-decorations-persistantes P02 | 3min | 2 tasks | 2 files |
+| Phase 30-decorations-persistantes P03 | 13 min | 4 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -235,6 +236,9 @@ Recent decisions affecting current work:
 - [Phase 30-02]: Import statique appendBuilding (pas dynamic) — hook critique, pas de lazy loading
 - [Phase 30-02]: Cascade appendBuilding locale + 1 writeFile final — évite N readFile/writeFile si multi-paliers simultanés
 - [Phase 30-02]: Early return avant I/O sur toUnlock.length === 0 — idempotence stricte, pas de write spurieux au mount/re-render
+- [Phase 30-decorations-persistantes]: [Phase 30-03]: Double-couche idempotence appendBuilding — regex detection buildingId au parser + dedup parseGardenFile pour survivre StrictMode double-fire et reparer vaults pollues
+- [Phase 30-decorations-persistantes]: [Phase 30-03]: Shift Y band superieur village (+0.08) pour degager header absolute — slots puits/boulangerie/marche/cafe/forge ajustes post-checkpoint device
+- [Phase 30-decorations-persistantes]: [Phase 30-03]: BuildingTooltip fork de AvatarTooltip (pas generique) — evite coupling cross-domaine, contrat animation 2.5s preserve
 
 ### Todos
 
@@ -246,5 +250,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-11T13:01:33.436Z
+Last session: 2026-04-11T13:18:57.838Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)
