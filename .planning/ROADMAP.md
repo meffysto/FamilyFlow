@@ -88,7 +88,10 @@ Détails : `.planning/milestones/v1.4-ROADMAP.md`.
   3. User peut tap sur un avatar pour faire apparaître une bulle "[Prénom] — X contributions cette semaine" qui se dismiss automatiquement
   4. User peut revenir à sa ferme perso depuis le village via un portail de retour visuel symétrique au portail ferme → village
   5. User voit une transition fade cross-dissolve Reanimated ~400ms lors du retour village → ferme, cohérente avec l'animation aller
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [x] 29-PLAN-01-avatars-vivants.md — Avatars pixel art + halo actif hebdo + tooltip tap (VILL-01, 02, 03) — completed 2026-04-11
+- [ ] 29-PLAN-02-portail-retour.md — Portail partagé + fade 400ms retour village → ferme (VILL-11, 12)
 **UI hint**: yes
 
 ### Phase 30: Décorations persistantes
@@ -131,7 +134,7 @@ Détails : `.planning/milestones/v1.4-ROADMAP.md`.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 29. Avatars vivants + portail retour | 0/TBD | Not started | - |
+| 29. Avatars vivants + portail retour | 1/2 | In progress | - |
 | 30. Décorations persistantes | 0/TBD | Not started | - |
 | 31. Ambiance dynamique | 0/TBD | Not started | - |
 | 32. Arbre familial commun | 0/TBD | Not started | - |

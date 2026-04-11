@@ -10,9 +10,9 @@
 
 ### Catégorie AVATARS — Présence dynamique des membres
 
-- [ ] **VILL-01**: User voit un avatar par profil actif (photo/ReactiveAvatar) positionné sur la carte village, à un emplacement fixe par profil
-- [ ] **VILL-02**: User voit chaque avatar avec un indicateur visuel de l'activité hebdo (contribué cette semaine vs inactif) — halo coloré ou opacité différenciée
-- [ ] **VILL-03**: User voit un tap sur un avatar ouvrir une bulle rapide "[Prénom] — X contributions cette semaine" avec dismiss automatique
+- [x] **VILL-01**: User voit un avatar par profil actif (photo/ReactiveAvatar) positionné sur la carte village, à un emplacement fixe par profil
+- [x] **VILL-02**: User voit chaque avatar avec un indicateur visuel de l'activité hebdo (contribué cette semaine vs inactif) — halo coloré ou opacité différenciée
+- [x] **VILL-03**: User voit un tap sur un avatar ouvrir une bulle rapide "[Prénom] — X contributions cette semaine" avec dismiss automatique
 
 ### Catégorie DÉCORATIONS — Progression visuelle persistante
 

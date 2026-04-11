@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: Roadmap ready
-last_updated: "2026-04-11T10:18:15.176Z"
-last_activity: 2026-04-11 — v1.5 roadmap created (Phases 29-32)
+status: executing
+last_updated: "2026-04-11T11:08:11.690Z"
+last_activity: 2026-04-11
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 0
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** v1.5 Village Vivant — roadmap ready, ready to plan Phase 29
+**Current focus:** Phase 29 — avatars-vivants-portail-retour
 
 ## Current Position
 
-Phase: Not started (roadmap ready — next: plan Phase 29)
-Plan: —
+Phase: 29 (avatars-vivants-portail-retour) — EXECUTING
+Plan: 2 of 2
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: v1.4 Jardin Familial (2026-04-11)
-Last activity: 2026-04-11 — v1.5 roadmap created (Phases 29-32)
+Last activity: 2026-04-11
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Roadmap ready
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -123,6 +123,7 @@ Status: Roadmap ready
 | Phase 27-cran-village-composants P02 | 3min | 1 tasks | 1 files |
 | Phase 28 P02 | 2min | 2 tasks | 3 files |
 | Phase 28-portail-c-blage-contributions P01 | 12min | 2 tasks | 6 files |
+| Phase 29-avatars-vivants-portail-retour P01 | 7min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -218,6 +219,10 @@ Recent decisions affecting current work:
 - [Phase 28]: addVillageBonus utilise parseGamification/serializeGamification — gami-{id}.md est format gamification, pas farm (pattern useFarm.addCoins)
 - [Phase 28]: colors.bg utilisé (pas colors.background inexistant) pour texte bouton CTA RewardCard
 - [Phase 28-portail-c-blage-contributions]: SPRING_PORTAL constante module, onContribution après bloc Musée dans completeTask, runOnJS(router.push) dans withTiming callback, fadeStyle sur Animated.View diorama existant
+- [Phase 29-01]: COMPANION_SPRITES extrait dans lib/mascot/companion-sprites.ts module partage pour consommation double (CompanionSlot + VillageAvatar)
+- [Phase 29-01]: Filtrage contributions hebdo via comparaison string ISO lexicographique (c.timestamp >= weekStart) — zero parsing Date
+- [Phase 29-01]: Assignation profil->slot par tri alphabetique profile.id.localeCompare — deterministe sans persistance vault
+- [Phase 29-01]: Avatars rendus comme siblings du TileMapRenderer (pointerEvents none) dans mapContainer — pas children
 
 ### Todos
 
@@ -229,5 +234,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-11T10:18:15.172Z
+Last session: 2026-04-11T11:08:11.687Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)
