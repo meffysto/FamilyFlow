@@ -72,7 +72,7 @@ Détails : `.planning/milestones/v1.4-ROADMAP.md`.
 **Milestone Goal :** Transformer la Place du Village statique en espace vivant et personnalisé — les avatars de la famille y apparaissent, les semaines réussies laissent des traces visuelles durables, l'ambiance change selon l'heure et la saison, et l'arbre familial commun devient le cœur symbolique du village. Polish milestone, aucune nouvelle dépendance npm, réutilisation stricte de l'infra existante (`ReactiveAvatar`, `TileMapRenderer`, `useGarden`, `FarmProfileData`).
 
 - [x] **Phase 29: Avatars vivants + portail retour** — Avatars par profil sur la carte village avec état d'activité hebdo + portail bidirectionnel village → ferme — completed 2026-04-11
-- [ ] **Phase 30: Décorations persistantes** — Schéma append-only, déblocage par palier de streak collectif, catalogue des ~8 décorations
+- [ ] **Phase 30: Décorations persistantes** — Schéma append-only, déblocage par palier de feuilles famille, catalogue des 8 bâtiments
 - [ ] **Phase 31: Ambiance dynamique** — Cycle jour/nuit selon l'heure réelle + effets saisonniers superposés à la carte
 - [ ] **Phase 32: Arbre familial commun** — Sprite central au cœur du village, évolution visuelle selon le streak collectif
 
@@ -95,15 +95,19 @@ Plans:
 **UI hint**: yes
 
 ### Phase 30: Décorations persistantes
-**Goal**: Transformer chaque semaine d'objectif collectif réussie en trace visuelle durable — introduire le schéma de données append-only, le moteur de déblocage par palier de streak et le catalogue des décorations débloquables.
+**Goal**: Transformer chaque semaine d'objectif collectif réussie en trace visuelle durable — introduire le schéma de données append-only, le moteur de déblocage par palier de feuilles famille et le catalogue des 8 bâtiments débloquables (scope shift décorations → bâtiments pixel art, streak → feuilles lifetime per CONTEXT.md D-01/D-05).
 **Depends on**: Phase 29 (carte village stable, pattern append-only `jardin-familial.md` déjà en place depuis Phase 25)
 **Requirements**: VILL-04, VILL-05, VILL-06
 **Success Criteria** (what must be TRUE):
-  1. User voit une nouvelle décoration (guirlande, fanion, lanterne, banc, etc.) apparaître sur la carte village chaque semaine où l'objectif collectif est atteint
-  2. User retrouve l'ensemble des décorations accumulées après un restart complet de l'app (persistance append-only dans `jardin-familial.md`)
-  3. User peut ouvrir un catalogue listant les ~8 décorations débloquables et voit clairement le palier de streak collectif associé (1, 3, 5, 10, 15, 20, 25, 30 semaines)
-  4. User voit dans le catalogue quelles décorations sont déjà débloquées versus verrouillées, avec le prochain palier à atteindre
-**Plans**: TBD
+  1. User voit une nouvelle construction (puits, boulangerie, marché, café, forge, moulin, port, bibliothèque) apparaître sur la carte village quand un palier feuilles famille est franchi
+  2. User retrouve l'ensemble des bâtiments accumulés après un restart complet de l'app (persistance append-only dans `jardin-familial.md` section `## Constructions`)
+  3. User peut ouvrir un catalogue listant les 8 bâtiments débloquables et voit clairement le palier associé (100, 300, 700, 1500, 3000, 6000, 12000, 25000 feuilles)
+  4. User voit dans le catalogue quelles bâtiments sont déjà débloqués versus verrouillés (silhouette sombre), avec la progression actuelle vers le prochain palier
+**Plans:** 3 plans
+Plans:
+- [ ] 30-01-PLAN.md — Data layer : types + parser ## Constructions + catalogue statique + slots VILLAGE_GRID (VILL-05, VILL-06)
+- [ ] 30-02-PLAN.md — Unlock engine : useGarden familyLifetimeLeaves + effet append-on-threshold idempotent (VILL-04, VILL-05)
+- [ ] 30-03-PLAN.md — UI : BuildingSprite + BuildingTooltip + BuildingsCatalog modal + wiring village.tsx (VILL-04, VILL-06)
 **UI hint**: yes
 
 ### Phase 31: Ambiance dynamique
@@ -135,7 +139,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 29. Avatars vivants + portail retour | 2/2 | Completed | 2026-04-11 |
-| 30. Décorations persistantes | 0/TBD | Not started | - |
+| 30. Décorations persistantes | 0/3 | Not started | - |
 | 31. Ambiance dynamique | 0/TBD | Not started | - |
 | 32. Arbre familial commun | 0/TBD | Not started | - |
 
