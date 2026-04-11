@@ -148,47 +148,84 @@ export function buildFarmMap(treeStage: TreeStage): FarmMapData {
 
 /**
  * Genere la carte de terrain de la Place du Village.
- * Terrain cobblestone dominant (~60% surface) avec fontaine centrale et chemins d'entree.
  *
- * Mapping coordonnees VILLAGE_GRID → grille tilemap :
- *   col = x * COLS     row = y * ROWS
+ * Design "village pixel-art" — grande place hexagonale autour de la fontaine,
+ * chemins dirt reliant tous les batiments, riviere traversant le sud avec un
+ * pont au niveau du port.
  *
- * Fontaine: x=0.50, y=0.45 → cols 5-7, rows 8-10
- * Chemins:  entrees haut et bas en terre
+ * Mapping VILLAGE_GRID → grille cellules (cols=12, rows=20).
+ * Note : fillRect opere sur des vertices (cols+1)×(rows+1), donc pour obtenir
+ * N cellules de large en vertices il faut N+1 valeurs.
+ *
+ * Positions batiments (cellules) :
+ *   Puits (col 1, row 5) — Marche (col 6, row 4) — Cafe (col 11, row 5)
+ *   Moulin (col 1, row 10) — Bibliotheque (col 11, row 10)
+ *   Boulangerie (col 2, row 15) — Forge (col 10, row 15)
+ *   Port (col 6, row 16) — Fontaine centre plaza (col 6, row 9)
  */
 export function buildVillageMap(): FarmMapData {
   const cols = FARM_MAP_COLS; // 12
   const rows = FARM_MAP_ROWS; // 20
 
-  const cobblestone = emptyVertices(cols, rows);
-  const dirt = emptyVertices(cols, rows);
-  const water = emptyVertices(cols, rows);
-  const farmland = emptyVertices(cols, rows);
+  const cobblestone = emptyVertices(cols, rows); // non utilise village v4 — plaza passee en dirt
+  const dirt        = emptyVertices(cols, rows);
+  const water       = emptyVertices(cols, rows);
+  const farmland    = emptyVertices(cols, rows);
 
-  // Fond farmland (herbe verte du parc) — TOUTE la grille, aucune cellule vide
-  fillRect(farmland, 0, 0, 12, 20);
+  // ═══════════════════════════════════════════════════════════
+  // PLAZA CENTRALE (dirt) — forme hexagonale autour de la fontaine
+  // Corps 7×3 cells (cols 3-9, rows 8-10) + extensions 5-wide nord/sud
+  // ═══════════════════════════════════════════════════════════
+  fillRect(dirt, 3, 8, 10, 11);  // corps
+  fillRect(dirt, 4, 7, 9, 8);    // extension nord
+  fillRect(dirt, 4, 11, 9, 12);  // extension sud
 
-  // Place centrale cobblestone — large rectangle central, laisse bordure herbe visible
-  fillRect(cobblestone, 1, 4, 11, 16);
+  // ═══════════════════════════════════════════════════════════
+  // AVENUE CENTRALE N-S (2 cells large, cols 5-6)
+  // Avenue sud s'arrete a row 14 pour creer un buffer grass jusqu'au lac
+  // ═══════════════════════════════════════════════════════════
+  fillRect(dirt, 5, 0, 7, 7);    // nord (marche → plaza)
+  fillRect(dirt, 5, 12, 7, 15);  // sud  (plaza → route basse)
 
-  // Chemins d'entree en terre — haut et bas, plus larges qu'avant (3 cols de large)
-  fillRect(dirt, 4, 0, 8, 4);
-  fillRect(dirt, 4, 16, 8, 20);
+  // ═══════════════════════════════════════════════════════════
+  // ROUTE TRANSVERSALE HAUTE — row 4 (puits ↔ marche ↔ cafe)
+  // ═══════════════════════════════════════════════════════════
+  fillRect(dirt, 0, 4, 12, 5);
 
-  // Fontaine : petit espace eau au centre (VILLAGE_GRID fountain x=0.50 y=0.45 → cols 5-7, rows 8-10)
-  fillRect(water, 5, 8, 7, 10);
+  // ═══════════════════════════════════════════════════════════
+  // ALLEES LATERALES
+  //   - Gauche (col 1) : puits → moulin → boulangerie (rows 5-14)
+  //   - Droite (col 10) : cafe → biblio → forge → portail (rows 5-17)
+  // ═══════════════════════════════════════════════════════════
+  fillRect(dirt, 1, 5, 2, 15);    // gauche s'arrete avant le lac
+  fillRect(dirt, 10, 5, 11, 18);  // droite file jusqu'au portail
 
-  // NETTOYAGE — zones exclusives (pattern buildFarmMap)
-  // 1) Le cobblestone est percé par la fontaine (water rendu avant cobblestone dans TileMapRenderer)
-  // 2) Le farmland est percé par tous les autres terrains
+  // ═══════════════════════════════════════════════════════════
+  // CONNECTEURS E-O vers la plaza — row 9
+  // ═══════════════════════════════════════════════════════════
+  fillRect(dirt, 2, 9, 4, 10);
+  fillRect(dirt, 9, 9, 11, 10);
+
+  // ═══════════════════════════════════════════════════════════
+  // ROUTE TRANSVERSALE BASSE — row 14 (remontee d'une ligne pour liberer
+  // la zone lac). Relie boulangerie ↔ forge ↔ portail.
+  // ═══════════════════════════════════════════════════════════
+  fillRect(dirt, 1, 14, 11, 15);
+
+  // ═══════════════════════════════════════════════════════════
+  // LAC UNIFIE — zone sud, bean 8×3 cells (cols 0-7, rows 17-19)
+  // Le col 8 reste en shore grass (transition water → grass),
+  // col 9 est un buffer grass avant l'allee droite dirt col 10.
+  // ═══════════════════════════════════════════════════════════
+  fillRect(water, 0, 17, 8, 20);
+
+  // ═══════════════════════════════════════════════════════════
+  // NETTOYAGE — priorites : water > dirt > cobble
+  // ═══════════════════════════════════════════════════════════
   for (let y = 0; y <= rows; y++) {
     for (let x = 0; x <= cols; x++) {
-      if (water[y][x]) {
-        cobblestone[y][x] = false;
-      }
-      if (cobblestone[y][x] || dirt[y][x] || water[y][x]) {
-        farmland[y][x] = false;
-      }
+      if (dirt[y][x]) cobblestone[y][x] = false;
+      if (water[y][x]) { cobblestone[y][x] = false; dirt[y][x] = false; }
     }
   }
 

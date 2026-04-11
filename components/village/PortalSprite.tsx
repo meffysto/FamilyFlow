@@ -4,17 +4,14 @@
 // (ferme → village + village → ferme). Symétrie visuelle per D-16, D-17.
 // Couvre VILL-11 (portail retour visuel symétrique), CD-04 (mutualisation).
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { Image, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withRepeat,
-  withTiming,
   withSpring,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 
 // Spring config constante module (convention CLAUDE.md)
@@ -24,10 +21,6 @@ const SPRING_PORTAL = { damping: 12, stiffness: 200 } as const;
 const PORTAL_SIZE = 64;
 const CONTAINER_SIZE = 72; // hitbox = sprite + 8px padding
 
-// Glow loop values (per RESEARCH.md pattern 4)
-const GLOW_MIN = 0.4;
-const GLOW_MAX = 0.8;
-const GLOW_DURATION = 1200;
 const HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 } as const;
 
 interface PortalSpriteProps {
@@ -48,20 +41,8 @@ export function PortalSprite({
   y,
   accessibilityLabel = 'Portail vers le village',
 }: PortalSpriteProps) {
-  const { colors } = useThemeColors();
-  const glowOpacity = useSharedValue(GLOW_MIN);
   const scaleAnim = useSharedValue(1);
 
-  // Démarrer le glow loop au montage (pattern identique tree.tsx:315-317)
-  useEffect(() => {
-    glowOpacity.value = withRepeat(
-      withTiming(GLOW_MAX, { duration: GLOW_DURATION }),
-      -1,
-      true,
-    );
-  }, [glowOpacity]);
-
-  const glowStyle = useAnimatedStyle(() => ({ opacity: glowOpacity.value }));
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
   }));
@@ -94,16 +75,6 @@ export function PortalSprite({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
     >
-      {/* Glow overlay — pattern tree.tsx:342-350 */}
-      <Animated.View
-        style={[
-          StyleSheet.absoluteFillObject,
-          styles.glow,
-          { backgroundColor: colors.catJeux },
-          glowStyle,
-        ]}
-        pointerEvents="none"
-      />
       <TouchableOpacity
         onPress={handlePress}
         activeOpacity={1}
@@ -125,13 +96,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: CONTAINER_SIZE,
     height: CONTAINER_SIZE,
-    borderRadius: Radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
-  },
-  glow: {
-    borderRadius: Radius.xl,
   },
   sprite: {
     width: PORTAL_SIZE,

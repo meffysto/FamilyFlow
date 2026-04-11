@@ -27,8 +27,10 @@ import Animated, {
 import type { Season } from '../../lib/mascot/seasons';
 import type { TreeStage } from '../../lib/mascot/types';
 
-/** Tile d'herbe pure extraite du tileset — sert de fond pour matcher exactement */
+/** Tile d'herbe pure extraite du tileset ferme — sert de fond pour matcher exactement */
 export const GRASS_TILE_IMAGE = require('../../assets/terrain/tilesets/grass_tile.png');
+/** Tile d'herbe pure extraite du tileset village (PixelLab v2) */
+export const VILLAGE_GRASS_TILE_IMAGE = require('../../assets/terrain/tilesets/village/grass_tile.png');
 import {
   buildFarmMap,
   buildVillageMap,
@@ -42,7 +44,7 @@ import {
 
 // ── Tilesets (printemps pour l'instant, variantes saisonnieres plus tard) ──
 
-const TILESET_IMAGES: Record<TerrainType, any> = {
+const TILESET_IMAGES_FARM: Record<TerrainType, any> = {
   grass: null, // herbe = fond uni, pas de spritesheet
   dirt: require('../../assets/terrain/tilesets/grass_to_dirt.png'),
   farmland: require('../../assets/terrain/tilesets/grass_to_farmland.png'),
@@ -50,12 +52,31 @@ const TILESET_IMAGES: Record<TerrainType, any> = {
   cobblestone: require('../../assets/terrain/tilesets/grass_to_cobblestone.png'),
 };
 
-const TILESET_META: Record<TerrainType, any> = {
+const TILESET_META_FARM: Record<TerrainType, any> = {
   grass: null,
   dirt: require('../../assets/terrain/tilesets/grass_to_dirt.json'),
   farmland: require('../../assets/terrain/tilesets/grass_to_farmland.json'),
   water: require('../../assets/terrain/tilesets/grass_to_water.json'),
   cobblestone: require('../../assets/terrain/tilesets/grass_to_cobblestone.json'),
+};
+
+// Tileset dédié village — PNG PixelLab v2 (assets/terrain/tilesets/village/)
+// Les JSON sont copiés depuis la ferme car le layout tileset15 est canonique (identique).
+// Pas de farmland dans le village → fallback sur le tileset ferme si jamais utilisé.
+const TILESET_IMAGES_VILLAGE: Record<TerrainType, any> = {
+  grass: null,
+  dirt: require('../../assets/terrain/tilesets/village/grass_to_dirt.png'),
+  farmland: require('../../assets/terrain/tilesets/grass_to_farmland.png'),
+  water: require('../../assets/terrain/tilesets/village/grass_to_water.png'),
+  cobblestone: require('../../assets/terrain/tilesets/village/grass_to_cobblestone.png'),
+};
+
+const TILESET_META_VILLAGE: Record<TerrainType, any> = {
+  grass: null,
+  dirt: require('../../assets/terrain/tilesets/village/grass_to_dirt.json'),
+  farmland: require('../../assets/terrain/tilesets/grass_to_farmland.json'),
+  water: require('../../assets/terrain/tilesets/village/grass_to_water.json'),
+  cobblestone: require('../../assets/terrain/tilesets/village/grass_to_cobblestone.json'),
 };
 
 // ── Decorations de ferme ──
@@ -148,6 +169,12 @@ const FARM_OBJECTS = {
   bench: require('../../assets/garden/decos/farm/bench.png'),
   bridge: require('../../assets/garden/decos/farm/bridge.png'),
   torch: require('../../assets/garden/decos/farm/torch.png'),
+};
+
+// Maisons decoratives village (PixelLab v4) — pas interactives, juste deco
+const VILLAGE_DECO_HOUSES = {
+  cottage: require('../../assets/buildings/village/decos/maison_cottage.png'),
+  cabane:  require('../../assets/buildings/village/decos/maison_cabane.png'),
 };
 
 // Sprites de peche Mana Seed — autour du lac
@@ -442,6 +469,106 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
   return decos.filter(d => stageIdx >= d.minStage);
 }
 
+/**
+ * Decorations du village — arbres, rochers, buissons, fleurs.
+ * Positionnees dans les zones herbe libres (hors chemins, place, mare).
+ */
+function getVillageDecos(season: Season): FarmDeco[] {
+  const trees = SEASON_TREE_SPRITES[season] ?? SEASON_TREE_SPRITES.printemps;
+  return [
+    // ── Maisons decoratives (non interactives) — 2 groupes de 3 identiques
+    // Colonne sur l'allee droite (x=0.87 → col 10 dirt), maisons collees
+    // Plus petites (44px) que les batiments (72px) + fixed:true pour ignorer le filtre terrain.
+    { source: VILLAGE_DECO_HOUSES.cottage, x: 0.87, y: 0.28, w: 44, h: 44, minStage: 0, fixed: true },
+    { source: VILLAGE_DECO_HOUSES.cottage, x: 0.87, y: 0.32, w: 44, h: 44, minStage: 0, fixed: true },
+    { source: VILLAGE_DECO_HOUSES.cottage, x: 0.87, y: 0.36, w: 44, h: 44, minStage: 0, fixed: true },
+    { source: VILLAGE_DECO_HOUSES.cabane,  x: 0.87, y: 0.50, w: 44, h: 44, minStage: 0, fixed: true },
+    { source: VILLAGE_DECO_HOUSES.cabane,  x: 0.87, y: 0.54, w: 44, h: 44, minStage: 0, fixed: true },
+    { source: VILLAGE_DECO_HOUSES.cabane,  x: 0.87, y: 0.58, w: 44, h: 44, minStage: 0, fixed: true },
+
+    // ── Ambiance "ville" sur les chemins (fixed:true = ancre sur le dirt) ──
+    // Torches aux 4 coins de la plaza
+    { source: FARM_OBJECTS.torch, x: 0.28, y: 0.38, w: 18, h: 28, minStage: 0, fixed: true },
+    { source: FARM_OBJECTS.torch, x: 0.72, y: 0.38, w: 18, h: 28, minStage: 0, fixed: true },
+    { source: FARM_OBJECTS.torch, x: 0.28, y: 0.58, w: 18, h: 28, minStage: 0, fixed: true },
+    { source: FARM_OBJECTS.torch, x: 0.72, y: 0.58, w: 18, h: 28, minStage: 0, fixed: true },
+
+    // Banc au sud de la fontaine (extension plaza sud)
+    { source: FARM_OBJECTS.bench, x: 0.50, y: 0.60, w: 36, h: 24, minStage: 0, fixed: true },
+
+    // Panneau au croisement route haute / avenue centrale
+    { source: FARM_OBJECTS.sign_post, x: 0.42, y: 0.23, w: 20, h: 32, minStage: 0, fixed: true },
+
+    // Caisses pres du marche (route haute)
+    { source: FARM_OBJECTS.crate, x: 0.42, y: 0.20, w: 22, h: 22, minStage: 0, fixed: true },
+    { source: FARM_OBJECTS.crate, x: 0.58, y: 0.20, w: 22, h: 22, minStage: 0, fixed: true },
+
+    // Bottes de foin collees juste sous le moulin (moulin at 0.15, 0.42)
+    { source: GROUND.hay, x: 0.10, y: 0.47, w: 24, h: 24, minStage: 0, fixed: true },
+    { source: GROUND.hay, x: 0.15, y: 0.47, w: 24, h: 24, minStage: 0, fixed: true },
+
+    // Caisses pres de la boulangerie
+    { source: FARM_OBJECTS.crate, x: 0.10, y: 0.70, w: 22, h: 22, minStage: 0, fixed: true },
+    { source: FARM_OBJECTS.crate, x: 0.26, y: 0.70, w: 22, h: 22, minStage: 0, fixed: true },
+
+    // Tonneaux pres de la forge
+    { source: FARM_OBJECTS.barrel, x: 0.74, y: 0.70, w: 24, h: 24, minStage: 0, fixed: true },
+    { source: FARM_OBJECTS.barrel, x: 0.90, y: 0.70, w: 24, h: 24, minStage: 0, fixed: true },
+
+    // Tonneaux + caisse pres du port
+    { source: FARM_OBJECTS.barrel, x: 0.42, y: 0.80, w: 24, h: 24, minStage: 0, fixed: true },
+    { source: FARM_OBJECTS.barrel, x: 0.58, y: 0.80, w: 24, h: 24, minStage: 0, fixed: true },
+    { source: FARM_OBJECTS.crate,  x: 0.50, y: 0.72, w: 22, h: 22, minStage: 0, fixed: true },
+
+    // ── Grands arbres — coins et bordures ──
+    { source: trees.apple,  x: 0.03, y: 0.06, w: 52, h: 68, minStage: 0 },
+    { source: trees.peach,  x: 0.95, y: 0.06, w: 52, h: 68, minStage: 0 },
+    { source: trees.plum,   x: 0.03, y: 0.18, w: 48, h: 64, minStage: 0 },
+    { source: trees.orange, x: 0.95, y: 0.18, w: 48, h: 64, minStage: 0 },
+    { source: trees.pear,   x: 0.03, y: 0.62, w: 48, h: 64, minStage: 0 },
+    { source: trees.apple,  x: 0.95, y: 0.62, w: 48, h: 64, minStage: 0 },
+    { source: trees.peach,  x: 0.85, y: 0.90, w: 48, h: 64, minStage: 0 },
+    { source: trees.plum,   x: 0.95, y: 0.78, w: 46, h: 62, minStage: 0 },
+
+    // ── Petits arbres — interstices entre bâtiments ──
+    { source: trees.small1, x: 0.14, y: 0.08, w: 32, h: 44, minStage: 0 },
+    { source: trees.small2, x: 0.86, y: 0.08, w: 32, h: 44, minStage: 0 },
+    { source: trees.small3, x: 0.14, y: 0.60, w: 30, h: 42, minStage: 0 },
+    { source: trees.small1, x: 0.86, y: 0.60, w: 30, h: 42, minStage: 0 },
+    { source: trees.mid1,   x: 0.30, y: 0.88, w: 38, h: 52, minStage: 0 },
+    { source: trees.mid2,   x: 0.70, y: 0.88, w: 38, h: 52, minStage: 0 },
+
+    // ── Rochers — epars dans l'herbe ──
+    { source: GROUND.rock1, x: 0.10, y: 0.15, w: 24, h: 18, minStage: 0 },
+    { source: GROUND.rock2, x: 0.90, y: 0.15, w: 24, h: 18, minStage: 0 },
+    { source: GROUND.rock3, x: 0.08, y: 0.65, w: 20, h: 16, minStage: 0 },
+    { source: GROUND.rock1, x: 0.92, y: 0.65, w: 20, h: 16, minStage: 0 },
+    { source: GROUND.rock2, x: 0.75, y: 0.95, w: 22, h: 17, minStage: 0 },
+
+    // ── Buissons — bordures de chemins ──
+    { source: GROUND.bush1, x: 0.18, y: 0.55, w: 28, h: 22, minStage: 0 },
+    { source: GROUND.bush2, x: 0.82, y: 0.55, w: 28, h: 22, minStage: 0 },
+    { source: GROUND.bush3, x: 0.35, y: 0.05, w: 26, h: 20, minStage: 0 },
+    { source: GROUND.bush1, x: 0.65, y: 0.05, w: 26, h: 20, minStage: 0 },
+    { source: GROUND.bush2, x: 0.15, y: 0.35, w: 24, h: 19, minStage: 0 },
+    { source: GROUND.bush3, x: 0.85, y: 0.35, w: 24, h: 19, minStage: 0 },
+
+    // ── Fleurs — autour de la place ──
+    { source: GROUND.smallFlower1, x: 0.30, y: 0.42, w: 18, h: 14, minStage: 0 },
+    { source: GROUND.smallFlower2, x: 0.70, y: 0.42, w: 18, h: 14, minStage: 0 },
+    { source: GROUND.smallFlower3, x: 0.30, y: 0.55, w: 18, h: 14, minStage: 0 },
+    { source: GROUND.smallFlower4, x: 0.70, y: 0.55, w: 18, h: 14, minStage: 0 },
+    { source: GROUND.flower30,     x: 0.22, y: 0.48, w: 20, h: 15, minStage: 0 },
+    { source: GROUND.flower62,     x: 0.78, y: 0.48, w: 20, h: 15, minStage: 0 },
+
+    // ── Touffes d'herbe ──
+    { source: GROUND.grass1, x: 0.12, y: 0.28, w: 22, h: 16, minStage: 0 },
+    { source: GROUND.grass2, x: 0.88, y: 0.28, w: 22, h: 16, minStage: 0 },
+    { source: GROUND.grass3, x: 0.40, y: 0.96, w: 22, h: 16, minStage: 0 },
+    { source: GROUND.grass1, x: 0.60, y: 0.96, w: 22, h: 16, minStage: 0 },
+  ];
+}
+
 // ── Composant principal ──
 
 interface TileMapRendererProps {
@@ -540,7 +667,11 @@ export function TileMapRenderer({
     [treeStage, mode],
   );
 
-  // Parse tileset metadata (une seule fois)
+  // Selection du pack tileset — village a ses propres PNGs (PixelLab v2)
+  const TILESET_IMAGES = mode === 'village' ? TILESET_IMAGES_VILLAGE : TILESET_IMAGES_FARM;
+  const TILESET_META   = mode === 'village' ? TILESET_META_VILLAGE   : TILESET_META_FARM;
+
+  // Parse tileset metadata (une seule fois par mode)
   const tilesetMetas = useMemo(() => {
     const metas: Partial<Record<TerrainType, TileMeta[]>> = {};
     for (const key of ['dirt', 'farmland', 'water', 'cobblestone'] as TerrainType[]) {
@@ -548,7 +679,7 @@ export function TileMapRenderer({
       if (json) metas[key] = parseTilesetMeta(json);
     }
     return metas;
-  }, []);
+  }, [mode]);
 
   // Taille d'une cellule a l'ecran
   const cellW = containerWidth / FARM_MAP_COLS;
@@ -590,18 +721,19 @@ export function TileMapRenderer({
     return result;
   }, [farmMap, tilesetMetas]);
 
-  // Decos — pas de decorations ferme en mode village
+  // Decos — village = arbres/buissons/fleurs, ferme = objets progressifs
+  // Filtre terrain appliqué aux deux modes : exclut la vegetation qui tomberait
+  // sur un chemin, l'eau, les paves ou les cultures (per bug report 30-04).
   const decos = useMemo(() => {
-    if (mode === 'village') return [];
-    const allDecos = getFarmDecos(season, stageIdx);
+    const allDecos = mode === 'village'
+      ? getVillageDecos(season)
+      : getFarmDecos(season, stageIdx);
     const { water: waterV, dirt: dirtV, cobblestone: cobbleV, farmland: farmV } = farmMap.layers;
     return allDecos.filter(d => {
-      // Les objets de ferme (fixed) ne sont jamais filtrés
       if (d.fixed) return true;
       const col = Math.floor(d.x * FARM_MAP_COLS);
       const row = Math.floor(d.y * FARM_MAP_ROWS);
       if (row >= 0 && row <= FARM_MAP_ROWS && col >= 0 && col <= FARM_MAP_COLS) {
-        // Exclure vegetation si un coin est dans l'eau, le chemin, les paves ou le potager
         for (const layer of [waterV, dirtV, cobbleV, farmV]) {
           const any = layer[row]?.[col] || layer[row]?.[col + 1] ||
                       layer[row + 1]?.[col] || layer[row + 1]?.[col + 1];
@@ -656,8 +788,8 @@ export function TileMapRenderer({
         );
       })}
 
-      {/* Poisson koi anime dans le lac */}
-      {stageIdx >= 1 && (
+      {/* Poisson koi anime dans le lac (ferme stade 1+ / village toujours) */}
+      {(mode === 'village' || stageIdx >= 1) && (
         <SwimmingFish containerWidth={containerWidth} containerHeight={containerHeight} />
       )}
 

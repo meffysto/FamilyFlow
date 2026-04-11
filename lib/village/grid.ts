@@ -31,16 +31,14 @@ export const VILLAGE_GRID: VillageCell[] = [
   { id: 'village_portal_home', x: 0.85, y: 0.85, role: 'portal' },
 
   // Phase 30 — slots batiments village debloquables par palier (per D-09, D-11 — VILL-04)
-  // Note hotfix 30-03 : band superieur shifte vers le bas (+0.08 env.) pour
-  // degager la zone occupee par le header absolute de village.tsx (status bar
-  // + titre + bouton catalogue ≈ 13-16% mapHeight sur iPhone). Forge decalee
-  // en y=0.28 pour ne plus chevaucher le bouton home-city du header.
-  { id: 'village_building_puits',        x: 0.08, y: 0.22, role: 'building' },
-  { id: 'village_building_boulangerie',  x: 0.22, y: 0.18, role: 'building' },
-  { id: 'village_building_marche',       x: 0.45, y: 0.18, role: 'building' },
-  { id: 'village_building_cafe',         x: 0.68, y: 0.18, role: 'building' },
-  { id: 'village_building_forge',        x: 0.92, y: 0.28, role: 'building' },
-  { id: 'village_building_moulin',       x: 0.08, y: 0.50, role: 'building' },
-  { id: 'village_building_port',         x: 0.45, y: 0.92, role: 'building' },
-  { id: 'village_building_bibliotheque', x: 0.92, y: 0.55, role: 'building' },
+  // Layout v3 (30-04) : plaza dirt agrandie → buildings tires vers l'interieur
+  // pour "contenir" la grande place. Port remonte au bord nord du lac.
+  { id: 'village_building_puits',        x: 0.10, y: 0.20, role: 'building' },
+  { id: 'village_building_marche',       x: 0.50, y: 0.15, role: 'building' },
+  { id: 'village_building_cafe',         x: 0.90, y: 0.20, role: 'building' },
+  { id: 'village_building_moulin',       x: 0.15, y: 0.42, role: 'building' },
+  { id: 'village_building_bibliotheque', x: 0.85, y: 0.42, role: 'building' },
+  { id: 'village_building_boulangerie',  x: 0.18, y: 0.72, role: 'building' },
+  { id: 'village_building_forge',        x: 0.82, y: 0.72, role: 'building' },
+  { id: 'village_building_port',         x: 0.50, y: 0.80, role: 'building' },
 ];

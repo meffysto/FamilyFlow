@@ -20,6 +20,7 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +29,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
@@ -37,7 +40,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useGarden } from '../../hooks/useGarden';
-import { TileMapRenderer } from '../../components/mascot/TileMapRenderer';
+import { TileMapRenderer, VILLAGE_GRASS_TILE_IMAGE } from '../../components/mascot/TileMapRenderer';
 import { LiquidXPBar } from '../../components/ui/LiquidXPBar';
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
 import { ReactiveAvatar } from '../../components/ui/ReactiveAvatar';
@@ -58,6 +61,7 @@ import { PortalSprite } from '../../components/village/PortalSprite';
 import { BuildingSprite } from '../../components/village/BuildingSprite';
 import { BuildingTooltip } from '../../components/village/BuildingTooltip';
 import { BuildingsCatalog } from '../../components/village/BuildingsCatalog';
+import { VillageBuildingModal } from '../../components/village/VillageBuildingModal';
 import { BUILDINGS_CATALOG } from '../../lib/village';
 import type { UnlockedBuilding } from '../../lib/village';
 import { VILLAGE_GRID } from '../../lib/village/grid';
@@ -114,7 +118,8 @@ async function addVillageBonus(
 
   await vaultMgr.writeFile(gamiPath, serializeGamification(singleData));
 }
-const MAP_HEIGHT = Math.round(SCREEN_H * 0.75);
+const MAP_HEIGHT = SCREEN_W * 2;
+const FOUNTAIN_SIZE = 96;
 const GOLD = '#FFD700';
 const SPRING_FEED = { damping: 20, stiffness: 200 } as const;
 const FEED_LIMIT = 5;
@@ -319,6 +324,11 @@ export default function VillageScreen() {
     // Phase 30 — bâtiments persistants
     familyLifetimeLeaves,
     unlockedBuildings,
+    // Phase 31+ — production collective
+    inventory,
+    productionState,
+    lifetimeContributions,
+    collectBuildingProduction,
   } = useGarden();
 
   const [showAllFeed, setShowAllFeed] = useState(false);
@@ -332,6 +342,8 @@ export default function VillageScreen() {
     x: number;
     y: number;
   } | null>(null);
+  // Phase 31+ — modal bâtiment débloqué (production collective)
+  const [selectedBuilding, setSelectedBuilding] = useState<UnlockedBuilding | null>(null);
   const season = getCurrentSeason();
 
   // ── Memos ─────────────────────────────────────────────────────────────
@@ -398,6 +410,12 @@ export default function VillageScreen() {
     [],
   );
 
+  /** Slot de la fontaine centrale */
+  const fountainSlot = useMemo(
+    () => VILLAGE_GRID.find(c => c.role === 'fountain'),
+    [],
+  );
+
   // ── Phase 29 — Fade cross-dissolve retour village → ferme (VILL-12) ───
 
   /** sharedValue d'opacité pour la transition de sortie (per D-21) */
@@ -456,21 +474,21 @@ export default function VillageScreen() {
     };
   }, []);
 
-  // ── Phase 30 — handler tap bâtiment ──────────────────────────────────
+  // ── Phase 30/31 — handler tap bâtiment ───────────────────────────────
+  // Bâtiment débloqué → modal production. Bâtiment verrouillé → tooltip informatif.
   const handleBuildingPress = useCallback(
     (ub: UnlockedBuilding) => {
-      const entry = BUILDINGS_CATALOG.find(b => b.id === ub.buildingId);
-      const slot = VILLAGE_GRID.find(
-        s => s.id === `village_building_${ub.buildingId}`,
-      );
-      if (!entry || !slot) return;
-      setBuildingTooltip({
-        label: `${entry.labelFR} — Débloqué à ${entry.palier} feuilles familiales`,
-        x: slot.x * mapSize.width,
-        y: slot.y * mapSize.height,
-      });
+      setSelectedBuilding(ub);
     },
-    [mapSize.width, mapSize.height],
+    [],
+  );
+
+  const handleBuildingCollect = useCallback(
+    async (buildingId: string) => {
+      await collectBuildingProduction(buildingId);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+    [collectBuildingProduction],
   );
 
   /** Activité IRL saisonnière — déterministe par semaine */
@@ -563,6 +581,12 @@ export default function VillageScreen() {
           style={[styles.mapContainer, { height: MAP_HEIGHT, marginHorizontal: -Spacing['2xl'] }]}
           onLayout={handleMapLayout}
         >
+          {/* Fond herbe répété — couvre toute la carte y compris zones sans tile */}
+          <Image
+            source={VILLAGE_GRASS_TILE_IMAGE}
+            style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+            resizeMode="repeat"
+          />
           <TileMapRenderer
             treeStage="arbre"
             containerWidth={SCREEN_W}
@@ -570,6 +594,26 @@ export default function VillageScreen() {
             season={season}
             mode="village"
           />
+
+          {/* Fontaine centrale — sprite pixel statique sur le slot village_fountain */}
+          {fountainSlot && (
+            <View
+              style={[
+                styles.fountainSprite,
+                {
+                  left: fountainSlot.x * mapSize.width - FOUNTAIN_SIZE / 2,
+                  top:  fountainSlot.y * mapSize.height - FOUNTAIN_SIZE / 2,
+                },
+              ]}
+              pointerEvents="none"
+            >
+              <Image
+                source={require('../../assets/items/fontaine_village.png')}
+                style={{ width: FOUNTAIN_SIZE, height: FOUNTAIN_SIZE }}
+                resizeMode="contain"
+              />
+            </View>
+          )}
 
           {/* Overlay avatars — siblings du renderer (pointerEvents none) — per VILL-01/02, Pitfall 1 */}
           {sortedActiveProfiles.slice(0, 6).map((profile, idx) => {
@@ -618,7 +662,7 @@ export default function VillageScreen() {
             );
           })}
 
-          {/* Phase 30 — tooltip bâtiment conditionnel */}
+          {/* Phase 30 — tooltip bâtiment (verrouillé uniquement — les débloqués ont un modal) */}
           {buildingTooltip && (
             <BuildingTooltip
               label={buildingTooltip.label}
@@ -816,6 +860,19 @@ export default function VillageScreen() {
         unlockedBuildings={unlockedBuildings}
         familyLifetimeLeaves={familyLifetimeLeaves}
       />
+
+      {/* Phase 31+ — modal bâtiment débloqué (production collective) */}
+      {selectedBuilding && (
+        <VillageBuildingModal
+          visible={!!selectedBuilding}
+          building={selectedBuilding}
+          lifetimeContributions={lifetimeContributions}
+          productionState={productionState}
+          inventory={inventory}
+          onCollect={handleBuildingCollect}
+          onClose={() => setSelectedBuilding(null)}
+        />
+      )}
     </Animated.View>
   );
 }
@@ -854,6 +911,11 @@ const styles = StyleSheet.create({
   },
 
   // Carte tilemap (dans le flux scroll, comme tree.tsx)
+  fountainSprite: {
+    position: 'absolute',
+    width: FOUNTAIN_SIZE,
+    height: FOUNTAIN_SIZE,
+  },
   mapContainer: {
     width: SCREEN_W,
     overflow: 'hidden',
