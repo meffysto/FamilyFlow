@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: roadmap-ready
-last_updated: "2026-04-11T10:00:00.000Z"
+status: Roadmap ready
+last_updated: "2026-04-11T10:18:15.176Z"
 last_activity: 2026-04-11 — v1.5 roadmap created (Phases 29-32)
 progress:
   total_phases: 4
@@ -229,5 +229,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-11T10:00:00.000Z
+Last session: 2026-04-11T10:18:15.172Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)
