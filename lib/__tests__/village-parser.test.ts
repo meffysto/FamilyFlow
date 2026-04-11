@@ -53,7 +53,7 @@ const FULL_GARDEN_DATA: VillageData = {
   pastWeeks: [
     { weekStart: '2026-03-31', target: 45, total: 52, claimed: true },
   ],
-  unlockedBuildings: [],
+  unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
 };
 
 /** Contribution de test */
@@ -77,7 +77,7 @@ describe('parseGardenFile', () => {
       rewardClaimed: false,
       contributions: [],
       pastWeeks: [],
-      unlockedBuildings: [],
+      unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
     });
   });
 
@@ -169,7 +169,7 @@ describe('serializeGardenFile', () => {
       rewardClaimed: false,
       contributions: [],
       pastWeeks: [],
-      unlockedBuildings: [],
+      unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
     };
     const result = serializeGardenFile(emptyData);
     expect(result).toContain('## Contributions');
@@ -483,7 +483,7 @@ describe('parseGardenFile + serializeGardenFile — section Constructions (Phase
     const data: VillageData = {
       version: 1, createdAt: '2026-04-01', currentWeekStart: '2026-04-07',
       currentThemeIndex: 0, rewardClaimed: false,
-      contributions: [], pastWeeks: [], unlockedBuildings: [],
+      contributions: [], pastWeeks: [], unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
     };
     const out = serializeGardenFile(data);
     expect(out).toContain('## Constructions');
@@ -501,6 +501,7 @@ describe('parseGardenFile + serializeGardenFile — section Constructions (Phase
         { timestamp: '2026-04-12T14:32:00', buildingId: 'puits', palier: 100 },
         { timestamp: '2026-04-15T09:15:00', buildingId: 'boulangerie', palier: 300 },
       ],
+      inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
     };
     const serialized = serializeGardenFile(data);
     const reparsed = parseGardenFile(serialized);

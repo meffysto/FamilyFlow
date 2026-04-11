@@ -19,6 +19,14 @@ import {
   computeWeekTarget,
   computeBuildingsToUnlock,
   OBJECTIVE_TEMPLATES,
+  BUILDINGS_CATALOG,
+  VILLAGE_RECIPES,
+  canCraftVillageRecipe,
+  canUnlockVillageTech,
+  applyTechCost,
+  applyRecipeCost,
+  computeVillageTechBonuses,
+  VILLAGE_TECH_TREE,
 } from '../lib/village';
 import { parseFarmProfile, serializeFarmProfile } from '../lib/parser';
 import type {
@@ -27,7 +35,11 @@ import type {
   ContributionType,
   ObjectiveTemplate,
   UnlockedBuilding,
+  VillageInventory,
+  BuildingProductionState,
+  VillageAtelierCraft,
 } from '../lib/village';
+import type { VillageTechBonuses } from '../lib/village/atelier-engine';
 
 // ---------------------------------------------------------------------------
 // Fonctions utilitaires (hors hook)
@@ -66,6 +78,18 @@ export interface UseGardenReturn {
   // Phase 30 — bâtiments persistants (VILL-04, VILL-05)
   familyLifetimeLeaves: number;
   unlockedBuildings: UnlockedBuilding[];
+  // Phase 31+ — inventaire collectif + production par effort
+  inventory: VillageInventory;
+  productionState: BuildingProductionState;
+  lifetimeContributions: number;
+  getPendingItems: (buildingId: string) => number;
+  collectBuildingProduction: (buildingId: string) => Promise<void>;
+  // Atelier village
+  atelierCrafts: VillageAtelierCraft[];
+  atelierTechs: string[];
+  villageTechBonuses: VillageTechBonuses;
+  craftVillageItem: (recipeId: string, profileId: string) => Promise<boolean>;
+  unlockVillageTech: (techId: string) => Promise<boolean>;
 }
 
 /**
@@ -140,6 +164,64 @@ export function useGarden(): UseGardenReturn {
   const unlockedBuildings = useMemo<UnlockedBuilding[]>(
     () => gardenData.unlockedBuildings ?? [],
     [gardenData],
+  );
+
+  /** Inventaire collectif — Phase 31+ */
+  const inventory = useMemo<VillageInventory>(
+    () => gardenData.inventory ?? {},
+    [gardenData],
+  );
+
+  /** État de production (contributions consommées par bâtiment) — Phase 31+ */
+  const productionState = useMemo<BuildingProductionState>(
+    () => gardenData.productionState ?? {},
+    [gardenData],
+  );
+
+  /**
+   * Total contributions lifetime = semaine courante + cumul des semaines passées.
+   * Sert de base au calcul de production — monotone croissant.
+   */
+  const lifetimeContributions = useMemo(
+    () =>
+      (gardenData.contributions?.length ?? 0) +
+      (gardenData.pastWeeks ?? []).reduce((sum, w) => sum + (w.total ?? 0), 0),
+    [gardenData],
+  );
+
+  /** Historique crafts atelier village */
+  const atelierCrafts = useMemo<VillageAtelierCraft[]>(
+    () => gardenData.atelierCrafts ?? [],
+    [gardenData],
+  );
+
+  /** Techs village débloquées */
+  const atelierTechs = useMemo<string[]>(
+    () => gardenData.atelierTechs ?? [],
+    [gardenData],
+  );
+
+  /** Bonus agrégés des techs village */
+  const villageTechBonuses = useMemo<VillageTechBonuses>(
+    () => computeVillageTechBonuses(atelierTechs),
+    [atelierTechs],
+  );
+
+  /**
+   * Retourne le nombre d'items en attente de collecte pour un bâtiment donné.
+   * pendingItems = floor((lifetimeContribs - consumed) / (ratePerItem × prodMultiplier))
+   */
+  const getPendingItems = useCallback(
+    (buildingId: string): number => {
+      const entry = BUILDINGS_CATALOG.find(b => b.id === buildingId);
+      if (!entry) return 0;
+      const consumed = productionState[buildingId] ?? 0;
+      const available = Math.max(0, lifetimeContributions - consumed);
+      const multiplier = villageTechBonuses.productionRateMultiplier[buildingId] ?? 1;
+      const effectiveRate = Math.max(1, Math.floor(entry.production.ratePerItem * multiplier));
+      return Math.floor(available / effectiveRate);
+    },
+    [productionState, lifetimeContributions, villageTechBonuses],
   );
 
   // ---------------------------------------------------------------------------
@@ -271,6 +353,109 @@ export function useGarden(): UseGardenReturn {
   );
 
   // ---------------------------------------------------------------------------
+  // collectBuildingProduction — Phase 31+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Collecte les items produits par un bâtiment village.
+   * - Calcule les items en attente (lifetimeContribs - consumed) / rate
+   * - Ajoute les items à l'inventaire collectif
+   * - Met à jour productionState (contributions consommées)
+   * - Écrit jardin-familial.md en une seule passe
+   */
+  const collectBuildingProduction = useCallback(
+    async (buildingId: string): Promise<void> => {
+      if (!vault) return;
+      const entry = BUILDINGS_CATALOG.find(b => b.id === buildingId);
+      if (!entry) return;
+
+      const pending = getPendingItems(buildingId);
+      if (pending === 0) return;
+
+      const consumed = productionState[buildingId] ?? 0;
+      const newConsumed = consumed + pending * entry.production.ratePerItem;
+      const { itemId } = entry.production;
+      const currentQty = inventory[itemId] ?? 0;
+
+      const updatedData: VillageData = {
+        ...gardenData,
+        inventory: { ...inventory, [itemId]: currentQty + pending },
+        productionState: { ...productionState, [buildingId]: newConsumed },
+      };
+
+      const newContent = serializeGardenFile(updatedData);
+      await vault.writeFile(VILLAGE_FILE, newContent);
+      setGardenRaw(newContent);
+    },
+    [vault, gardenData, inventory, productionState, getPendingItems, setGardenRaw],
+  );
+
+  // ---------------------------------------------------------------------------
+  // craftVillageItem — Phase 31+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Crée un item dans l'atelier village.
+   * Vérifie les ingrédients, déduit l'inventaire, append dans ## Atelier Crafts.
+   * Retourne true si réussi.
+   */
+  const craftVillageItem = useCallback(
+    async (recipeId: string, profileId: string): Promise<boolean> => {
+      if (!vault) return false;
+      const { canCraft: ok } = canCraftVillageRecipe(
+        recipeId, inventory, villageTechBonuses.unlockedRecipeTier,
+      );
+      if (!ok) return false;
+
+      const updatedInventory = applyRecipeCost(inventory, recipeId);
+      const newCraft: VillageAtelierCraft = {
+        timestamp: new Date().toISOString(),
+        recipeId,
+        profileId,
+      };
+      const updatedData: VillageData = {
+        ...gardenData,
+        inventory: updatedInventory,
+        atelierCrafts: [...(gardenData.atelierCrafts ?? []), newCraft],
+      };
+      const newContent = serializeGardenFile(updatedData);
+      await vault.writeFile(VILLAGE_FILE, newContent);
+      setGardenRaw(newContent);
+      return true;
+    },
+    [vault, gardenData, inventory, villageTechBonuses, setGardenRaw],
+  );
+
+  // ---------------------------------------------------------------------------
+  // unlockVillageTech — Phase 31+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Débloque une tech village en dépensant les items requis.
+   * Retourne true si réussi.
+   */
+  const unlockVillageTech = useCallback(
+    async (techId: string): Promise<boolean> => {
+      if (!vault) return false;
+      const { canUnlock } = canUnlockVillageTech(techId, atelierTechs, inventory);
+      if (!canUnlock) return false;
+
+      const updatedInventory = applyTechCost(inventory, techId);
+      const updatedTechs = [...atelierTechs, techId];
+      const updatedData: VillageData = {
+        ...gardenData,
+        inventory: updatedInventory,
+        atelierTechs: updatedTechs,
+      };
+      const newContent = serializeGardenFile(updatedData);
+      await vault.writeFile(VILLAGE_FILE, newContent);
+      setGardenRaw(newContent);
+      return true;
+    },
+    [vault, gardenData, inventory, atelierTechs, setGardenRaw],
+  );
+
+  // ---------------------------------------------------------------------------
   // claimReward (per D-08, D-09)
   // ---------------------------------------------------------------------------
 
@@ -318,5 +503,16 @@ export function useGarden(): UseGardenReturn {
     // Phase 30
     familyLifetimeLeaves,
     unlockedBuildings,
+    // Phase 31+
+    inventory,
+    productionState,
+    lifetimeContributions,
+    getPendingItems,
+    collectBuildingProduction,
+    atelierCrafts,
+    atelierTechs,
+    villageTechBonuses,
+    craftVillageItem,
+    unlockVillageTech,
   };
 }

@@ -19,7 +19,7 @@
 //
 // Module pur : zéro import hook/context (per D-03c).
 
-import type { VillageData, VillageContribution, VillageWeekRecord, UnlockedBuilding } from './types';
+import type { VillageData, VillageContribution, VillageWeekRecord, UnlockedBuilding, VillageInventory, BuildingProductionState, VillageAtelierCraft } from './types';
 import type { VaultManager } from '../vault';
 
 /** Chemin du fichier village dans le vault Obsidian */
@@ -50,6 +50,10 @@ export function parseGardenFile(content: string): VillageData {
       contributions: [],
       pastWeeks: [],
       unlockedBuildings: [],
+      inventory: {},
+      productionState: {},
+      atelierCrafts: [],
+      atelierTechs: [],
     };
   }
 
@@ -79,9 +83,13 @@ export function parseGardenFile(content: string): VillageData {
   const contributions: VillageContribution[] = [];
   const pastWeeks: VillageWeekRecord[] = [];
   const unlockedBuildings: UnlockedBuilding[] = [];
+  const inventory: VillageInventory = {};
+  const productionState: BuildingProductionState = {};
+  const atelierCrafts: VillageAtelierCraft[] = [];
+  let atelierTechs: string[] = [];
 
   const lines = body.split('\n');
-  let section: 'none' | 'contributions' | 'historique' | 'constructions' = 'none';
+  let section: 'none' | 'contributions' | 'historique' | 'constructions' | 'inventaire' | 'production' | 'atelier_crafts' | 'atelier_tech' = 'none';
 
   for (const line of lines) {
     if (line.startsWith('## ')) {
@@ -92,6 +100,14 @@ export function parseGardenFile(content: string): VillageData {
         section = 'historique';
       } else if (header === '## constructions') {
         section = 'constructions';
+      } else if (header === '## inventaire') {
+        section = 'inventaire';
+      } else if (header === '## production') {
+        section = 'production';
+      } else if (header === '## atelier crafts') {
+        section = 'atelier_crafts';
+      } else if (header === '## atelier tech') {
+        section = 'atelier_tech';
       } else {
         section = 'none';
       }
@@ -168,6 +184,32 @@ export function parseGardenFile(content: string): VillageData {
         buildingId: buildingId.trim(),
         palier,
       });
+    } else if (section === 'inventaire') {
+      // Format : itemId: N
+      const colonIdx = raw.indexOf(':');
+      if (colonIdx === -1) continue;
+      const itemId = raw.slice(0, colonIdx).trim();
+      const qty = parseInt(raw.slice(colonIdx + 1).trim(), 10);
+      if (itemId && !isNaN(qty)) inventory[itemId] = qty;
+    } else if (section === 'production') {
+      // Format : buildingId: N  (contributions lifetime consommées)
+      const colonIdx = raw.indexOf(':');
+      if (colonIdx === -1) continue;
+      const buildingId = raw.slice(0, colonIdx).trim();
+      const consumed = parseInt(raw.slice(colonIdx + 1).trim(), 10);
+      if (buildingId && !isNaN(consumed)) productionState[buildingId] = consumed;
+    } else if (section === 'atelier_crafts') {
+      // Format : timestamp | recipeId | profileId
+      const parts = raw.split(' | ');
+      if (parts.length < 3) continue;
+      const [timestamp, recipeId, profileId] = parts;
+      if (timestamp && recipeId && profileId) {
+        atelierCrafts.push({ timestamp: timestamp.trim(), recipeId: recipeId.trim(), profileId: profileId.trim() });
+      }
+    } else if (section === 'atelier_tech') {
+      // Format : - techId,techId2,... (une seule ligne CSV)
+      const csv = raw.trim();
+      if (csv) atelierTechs = csv.split(',').map(s => s.trim()).filter(Boolean);
     }
   }
 
@@ -192,6 +234,10 @@ export function parseGardenFile(content: string): VillageData {
     contributions,
     pastWeeks,
     unlockedBuildings: dedupedBuildings,
+    inventory,
+    productionState,
+    atelierCrafts,
+    atelierTechs,
   };
 }
 
@@ -228,6 +274,34 @@ export function serializeGardenFile(data: VillageData): string {
   lines.push('## Constructions');
   for (const b of data.unlockedBuildings ?? []) {
     lines.push(`- ${b.timestamp} | ${b.buildingId} | ${b.palier}`);
+  }
+  lines.push('');
+
+  // Section Inventaire collectif
+  lines.push('## Inventaire');
+  for (const [itemId, qty] of Object.entries(data.inventory ?? {})) {
+    lines.push(`- ${itemId}: ${qty}`);
+  }
+  lines.push('');
+
+  // Section Production (contributions consommées par bâtiment)
+  lines.push('## Production');
+  for (const [buildingId, consumed] of Object.entries(data.productionState ?? {})) {
+    lines.push(`- ${buildingId}: ${consumed}`);
+  }
+  lines.push('');
+
+  // Section Atelier Crafts (historique crafts collectifs)
+  lines.push('## Atelier Crafts');
+  for (const c of data.atelierCrafts ?? []) {
+    lines.push(`- ${c.timestamp} | ${c.recipeId} | ${c.profileId}`);
+  }
+  lines.push('');
+
+  // Section Atelier Tech (techs village débloquées — CSV sur une ligne)
+  lines.push('## Atelier Tech');
+  if ((data.atelierTechs ?? []).length > 0) {
+    lines.push(`- ${data.atelierTechs.join(',')}`);
   }
   lines.push('');
 

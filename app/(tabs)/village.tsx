@@ -50,6 +50,7 @@ import { addPoints } from '../../lib/gamification/engine';
 import { parseGamification, serializeGamification } from '../../lib/parser';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 import type { VaultManager } from '../../lib/vault';
 import type { Profile } from '../../lib/types';
 import type { VillageContribution } from '../../lib/village/types';
@@ -62,6 +63,9 @@ import { BuildingSprite } from '../../components/village/BuildingSprite';
 import { BuildingTooltip } from '../../components/village/BuildingTooltip';
 import { BuildingsCatalog } from '../../components/village/BuildingsCatalog';
 import { VillageBuildingModal } from '../../components/village/VillageBuildingModal';
+// Phase 31+ — atelier village + arbre tech
+import { AtelierSheet } from '../../components/village/AtelierSheet';
+import { VillageTechSheet } from '../../components/village/VillageTechSheet';
 import { BUILDINGS_CATALOG } from '../../lib/village';
 import type { UnlockedBuilding } from '../../lib/village';
 import { VILLAGE_GRID } from '../../lib/village/grid';
@@ -329,6 +333,12 @@ export default function VillageScreen() {
     productionState,
     lifetimeContributions,
     collectBuildingProduction,
+    // Phase 31+ — atelier + techs
+    atelierCrafts,
+    atelierTechs,
+    villageTechBonuses,
+    craftVillageItem,
+    unlockVillageTech,
   } = useGarden();
 
   const [showAllFeed, setShowAllFeed] = useState(false);
@@ -344,6 +354,9 @@ export default function VillageScreen() {
   } | null>(null);
   // Phase 31+ — modal bâtiment débloqué (production collective)
   const [selectedBuilding, setSelectedBuilding] = useState<UnlockedBuilding | null>(null);
+  // Phase 31+ — modal atelier + modal arbre tech
+  const [showAtelier, setShowAtelier] = useState(false);
+  const [showTechTree, setShowTechTree] = useState(false);
   const season = getCurrentSeason();
 
   // ── Memos ─────────────────────────────────────────────────────────────
@@ -556,16 +569,6 @@ export default function VillageScreen() {
         ]}
       >
         <Text style={[styles.headerTitle, { color: colors.text }]}>Place du Village</Text>
-        {/* Phase 30 — bouton catalogue bâtiments (VILL-06) */}
-        <TouchableOpacity
-          onPress={() => setShowCatalog(true)}
-          style={styles.headerCatalogButton}
-          accessibilityRole="button"
-          accessibilityLabel="Bâtiments du village"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <MaterialCommunityIcons name="home-city" size={22} color={colors.text} />
-        </TouchableOpacity>
       </View>
 
       {/* ── Scroll unique (pattern tree.tsx) : carte + sections dans le même flux ── */}
@@ -683,6 +686,47 @@ export default function VillageScreen() {
             />
           )}
         </View>
+
+        {/* ── Carte Actions — chevauche le bas de la carte comme tree.tsx ── */}
+        <Animated.View
+          entering={FadeInDown.delay(200).duration(400)}
+          style={styles.actionCardWrapper}
+        >
+          <View style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={styles.actionItem}
+                onPress={() => setShowAtelier(true)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Atelier village"
+              >
+                <Text style={styles.actionItemIcon}>⚒️</Text>
+                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>Atelier</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionItem}
+                onPress={() => setShowTechTree(true)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Améliorations village"
+              >
+                <Text style={styles.actionItemIcon}>🏛️</Text>
+                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>Techs</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionItem}
+                onPress={() => setShowCatalog(true)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Bâtiments du village"
+              >
+                <Text style={styles.actionItemIcon}>🏘️</Text>
+                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>Bâtiments</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Animated.View>
 
         {isLoading || !gardenData ? (
           <View style={styles.loadingContainer}>
@@ -859,6 +903,10 @@ export default function VillageScreen() {
         onClose={() => setShowCatalog(false)}
         unlockedBuildings={unlockedBuildings}
         familyLifetimeLeaves={familyLifetimeLeaves}
+        onUnlockedBuildingPress={(building) => {
+          setShowCatalog(false);
+          setSelectedBuilding(building);
+        }}
       />
 
       {/* Phase 31+ — modal bâtiment débloqué (production collective) */}
@@ -873,6 +921,26 @@ export default function VillageScreen() {
           onClose={() => setSelectedBuilding(null)}
         />
       )}
+
+      {/* Phase 31+ — modal atelier village */}
+      <AtelierSheet
+        visible={showAtelier}
+        inventory={inventory}
+        atelierCrafts={atelierCrafts}
+        unlockedRecipeTier={villageTechBonuses.unlockedRecipeTier}
+        profileId={activeProfile?.id ?? ''}
+        onCraft={craftVillageItem}
+        onClose={() => setShowAtelier(false)}
+      />
+
+      {/* Phase 31+ — modal arbre tech village */}
+      <VillageTechSheet
+        visible={showTechTree}
+        inventory={inventory}
+        unlockedTechs={atelierTechs}
+        onUnlock={unlockVillageTech}
+        onClose={() => setShowTechTree(false)}
+      />
     </Animated.View>
   );
 }
@@ -903,11 +971,33 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
-  headerCatalogButton: {
-    position: 'absolute',
-    right: Spacing['2xl'],
-    bottom: Spacing.xs,
-    padding: Spacing.md,
+  // Carte Actions (pattern tree.tsx — chevauche bas de la carte)
+  actionCardWrapper: {
+    marginTop: -22,
+    zIndex: 10,
+    position: 'relative',
+  },
+  actionCard: {
+    borderRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  actionRow: {
+    flexDirection: 'row',
+  },
+  actionItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  actionItemIcon: {
+    fontSize: 22,
+    lineHeight: 28,
+  },
+  actionItemLabel: {
+    fontSize: 10,
+    fontWeight: FontWeight.semibold,
   },
 
   // Carte tilemap (dans le flux scroll, comme tree.tsx)

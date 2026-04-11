@@ -49,6 +49,7 @@ interface BuildingsCatalogProps {
   onClose: () => void;
   unlockedBuildings: UnlockedBuilding[];
   familyLifetimeLeaves: number;
+  onUnlockedBuildingPress?: (building: UnlockedBuilding) => void;
 }
 
 export function BuildingsCatalog({
@@ -56,6 +57,7 @@ export function BuildingsCatalog({
   onClose,
   unlockedBuildings,
   familyLifetimeLeaves,
+  onUnlockedBuildingPress,
 }: BuildingsCatalogProps) {
   const { colors } = useThemeColors();
   const { showToast } = useToast();
@@ -150,6 +152,9 @@ export function BuildingsCatalog({
                   isNew={isNew}
                   familyLifetimeLeaves={familyLifetimeLeaves}
                   onLockedPress={() => handleLockedPress(entry)}
+                  onUnlockedPress={unlock && onUnlockedBuildingPress
+                    ? () => onUnlockedBuildingPress(unlock)
+                    : undefined}
                   colors={colors}
                 />
               );
@@ -171,6 +176,7 @@ interface CatalogTileProps {
   isNew: boolean;
   familyLifetimeLeaves: number;
   onLockedPress: () => void;
+  onUnlockedPress?: () => void;
   colors: ColorsType;
 }
 
@@ -180,6 +186,7 @@ const CatalogTile = React.memo(function CatalogTile({
   isNew,
   familyLifetimeLeaves,
   onLockedPress,
+  onUnlockedPress,
   colors,
 }: CatalogTileProps) {
   const tileScale = useSharedValue(1);
@@ -207,6 +214,7 @@ const CatalogTile = React.memo(function CatalogTile({
         tileScale.value = withSpring(1, SPRING_CATALOG);
       });
       Haptics.selectionAsync();
+      onUnlockedPress?.();
     } else {
       onLockedPress();
     }

@@ -42,6 +42,23 @@ export interface UnlockedBuilding {
   palier: number;      // palier franchi au déblocage (100, 300, 700, 1500, 3000, 6000, 12000, 25000)
 }
 
+/** Item crafté dans l'atelier village — ligne append-only dans ## Atelier Crafts */
+export interface VillageAtelierCraft {
+  timestamp: string;   // ISO 8601
+  recipeId: string;
+  profileId: string;   // qui a déclenché le craft
+}
+
+/** Inventaire collectif village — stocké dans ## Inventaire (Phase 31+) */
+export interface VillageInventory {
+  [itemId: string]: number;  // itemId → quantité totale collectée
+}
+
+/** Contributions consommées par bâtiment pour la production — stocké dans ## Production */
+export interface BuildingProductionState {
+  [buildingId: string]: number;  // buildingId → nb contributions lifetime consommées
+}
+
 /** Donnees completes du village parsees depuis jardin-familial.md */
 export interface VillageData {
   version: number;
@@ -52,6 +69,10 @@ export interface VillageData {
   contributions: VillageContribution[];
   pastWeeks: VillageWeekRecord[];
   unlockedBuildings: UnlockedBuilding[]; // Phase 30 — bâtiments débloqués par paliers (VILL-05)
+  inventory: VillageInventory;           // Inventaire collectif (items produits par les bâtiments)
+  productionState: BuildingProductionState; // Contributions consommées par bâtiment
+  atelierCrafts: VillageAtelierCraft[];  // Historique crafts collectifs
+  atelierTechs: string[];               // CSV des techs village débloquées
 }
 
 /** Template d'objectif hebdomadaire thematise (per D-06) */
