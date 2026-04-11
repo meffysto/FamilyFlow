@@ -26,4 +26,7 @@ export const VILLAGE_GRID: VillageCell[] = [
   { id: 'village_avatar_slot_3', x: 0.70, y: 0.55, role: 'avatar' },
   { id: 'village_avatar_slot_4', x: 0.40, y: 0.72, role: 'avatar' },
   { id: 'village_avatar_slot_5', x: 0.60, y: 0.72, role: 'avatar' },
+
+  // Phase 29 — portail retour vers la ferme (per D-18 — VILL-11)
+  { id: 'village_portal_home', x: 0.85, y: 0.85, role: 'portal' },
 ];
