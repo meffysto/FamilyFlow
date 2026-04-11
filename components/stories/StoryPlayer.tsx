@@ -15,6 +15,7 @@ import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig, Profile } from 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { generateSpeech } from '../../lib/elevenlabs';
 import { ELEVENLABS_FRENCH_VOICES } from '../../lib/stories';
+import { getPersonalVoices } from '../../lib/personal-voice';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -129,6 +130,35 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
   );
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [recorderProfileId, setRecorderProfileId] = useState<string | null>(null);
+
+  // Picker iOS Personal Voice
+  const [personalPickerProfileId, setPersonalPickerProfileId] = useState<string | null>(null);
+  const [personalVoices, setPersonalVoices] = useState<Speech.Voice[]>([]);
+  const [personalVoicesLoading, setPersonalVoicesLoading] = useState(false);
+
+  const openPersonalVoicePicker = useCallback(async (profileId: string) => {
+    Haptics.impactAsync(ImpactFeedbackStyle.Light);
+    setPersonalPickerProfileId(profileId);
+    setPersonalVoicesLoading(true);
+    const voices = await getPersonalVoices();
+    setPersonalVoices(voices);
+    setPersonalVoicesLoading(false);
+  }, []);
+
+  const selectPersonalVoice = useCallback(async (voice: Speech.Voice) => {
+    if (!personalPickerProfileId) return;
+    try {
+      await updateProfile(personalPickerProfileId, {
+        voicePersonalId: voice.identifier,
+        voiceSource: 'ios-personal',
+      });
+      setSelectedParentId(personalPickerProfileId);
+      setPersonalPickerProfileId(null);
+    } catch (e) {
+      if (__DEV__) console.warn('updateProfile Personal Voice échoué :', e);
+      Alert.alert('Erreur', "Impossible d'enregistrer la voix personnelle sur le profil.");
+    }
+  }, [personalPickerProfileId, updateProfile]);
 
   // Override session-only : remplace voiceConfig quand un parent avec voix est sélectionné
   const effectiveVoiceConfig = React.useMemo<StoryVoiceConfig>(() => {
@@ -335,9 +365,18 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
                         setRecorderProfileId(p.id);
                       }}
                       style={[styles.parentAddBtn, { borderColor: colors.border }]}
-                      accessibilityLabel={`Enregistrer la voix de ${p.name}`}
+                      accessibilityLabel={`Enregistrer la voix ElevenLabs de ${p.name}`}
                     >
                       <Text style={[styles.parentAddBtnText, { color: primary }]}>+</Text>
+                    </Pressable>
+                  )}
+                  {!p.voicePersonalId && (
+                    <Pressable
+                      onPress={() => openPersonalVoicePicker(p.id)}
+                      style={[styles.parentAddBtn, { borderColor: colors.border }]}
+                      accessibilityLabel={`Utiliser iOS Personal Voice pour ${p.name}`}
+                    >
+                      <Text style={[styles.parentAddBtnText, { color: colors.textMuted }]}>🎙</Text>
                     </Pressable>
                   )}
                 </View>
@@ -386,6 +425,57 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
               />
             );
           })()}
+        </View>
+      </Modal>
+
+      {/* Modal picker iOS Personal Voice */}
+      <Modal
+        visible={personalPickerProfileId !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setPersonalPickerProfileId(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              iOS Personal Voice
+            </Text>
+            <Pressable onPress={() => setPersonalPickerProfileId(null)}>
+              <Text style={[styles.modalClose, { color: primary }]}>Fermer</Text>
+            </Pressable>
+          </View>
+          {personalVoicesLoading ? (
+            <View style={styles.personalVoiceCenter}>
+              <ActivityIndicator color={primary} />
+              <Text style={[styles.personalVoiceHint, { color: colors.textMuted }]}>
+                Chargement des voix…
+              </Text>
+            </View>
+          ) : personalVoices.length === 0 ? (
+            <View style={styles.personalVoiceCenter}>
+              <Text style={[styles.personalVoiceEmpty, { color: colors.textMuted }]}>
+                Aucune voix personnelle trouvée.{'\n'}
+                Créez-en une dans Réglages {'>'} Accessibilité {'>'} Voix personnelle.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.personalVoiceList}>
+              {personalVoices.map((voice) => (
+                <Pressable
+                  key={voice.identifier}
+                  onPress={() => selectPersonalVoice(voice)}
+                  style={[styles.personalVoiceItem, { borderBottomColor: colors.border }]}
+                >
+                  <Text style={[styles.personalVoiceName, { color: colors.text }]}>
+                    {voice.name}
+                  </Text>
+                  <Text style={[styles.personalVoiceMeta, { color: colors.textMuted }]}>
+                    {voice.language} · {voice.quality}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
       </Modal>
 
@@ -471,4 +561,12 @@ const styles = StyleSheet.create({
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing['4xl'], borderBottomWidth: 1 },
   modalTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
   modalClose: { fontSize: FontSize.body, fontWeight: FontWeight.medium },
+  // Picker iOS Personal Voice
+  personalVoiceCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing['4xl'] },
+  personalVoiceHint: { marginTop: Spacing.lg, fontSize: FontSize.sm },
+  personalVoiceEmpty: { fontSize: FontSize.body, textAlign: 'center', lineHeight: 24 },
+  personalVoiceList: { paddingTop: Spacing.md },
+  personalVoiceItem: { paddingHorizontal: Spacing['4xl'], paddingVertical: Spacing['2xl'], borderBottomWidth: 1 },
+  personalVoiceName: { fontSize: FontSize.body, fontWeight: FontWeight.medium },
+  personalVoiceMeta: { fontSize: FontSize.sm, marginTop: Spacing.xs },
 });
