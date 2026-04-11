@@ -220,7 +220,7 @@ Plans:
 
 Plans:
 - [ ] 28-01-PLAN.md — Portail animé ferme + câblage contributions (useFarm + useGamification)
-- [ ] 28-02-PLAN.md — Récompense collective + activités IRL saisonnières
+- [x] 28-02-PLAN.md — Récompense collective + activités IRL saisonnières
 
 ## Progress
 
@@ -239,7 +239,7 @@ Plans:
 | 25. Fondation données village | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 26. Hook domaine jardin | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 27. Écran Village + composants | v1.4 | 2/2 | Complete    | 2026-04-10 |
-| 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |
+| 28. Portail + câblage contributions | v1.4 | 1/2 | In Progress|  |
 
 ## Archived Milestones
 
