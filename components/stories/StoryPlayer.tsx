@@ -1,7 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Alert, Modal } from 'react-native';
-import { useVault } from '../../contexts/VaultContext';
-import VoiceRecorder from './VoiceRecorder';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, withSpring, cancelAnimation, Easing,
@@ -11,11 +9,9 @@ import { ImpactFeedbackStyle } from 'expo-haptics';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
-import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig, Profile } from '../../lib/types';
+import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { generateSpeech } from '../../lib/elevenlabs';
-import { ELEVENLABS_FRENCH_VOICES } from '../../lib/stories';
-import { getPersonalVoices } from '../../lib/personal-voice';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -122,87 +118,6 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
   const [isLoading, setIsLoading] = useState(false);
   const soundRef = useRef<any>(null);
 
-  // ─── Sélecteur voix parent ────────────────────────────────────────────────
-  const { profiles, updateProfile } = useVault();
-  const adultProfiles = React.useMemo(
-    () => profiles.filter((p: Profile) => p.role === 'adulte'),
-    [profiles],
-  );
-  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
-  const [recorderProfileId, setRecorderProfileId] = useState<string | null>(null);
-
-  // Picker iOS Personal Voice
-  const [personalPickerProfileId, setPersonalPickerProfileId] = useState<string | null>(null);
-  const [personalVoices, setPersonalVoices] = useState<Speech.Voice[]>([]);
-  const [personalVoicesLoading, setPersonalVoicesLoading] = useState(false);
-
-  const openPersonalVoicePicker = useCallback(async (profileId: string) => {
-    Haptics.impactAsync(ImpactFeedbackStyle.Light);
-    setPersonalPickerProfileId(profileId);
-    setPersonalVoicesLoading(true);
-    const voices = await getPersonalVoices();
-    setPersonalVoices(voices);
-    setPersonalVoicesLoading(false);
-  }, []);
-
-  const selectPersonalVoice = useCallback(async (voice: Speech.Voice) => {
-    if (!personalPickerProfileId) return;
-    try {
-      await updateProfile(personalPickerProfileId, {
-        voicePersonalId: voice.identifier,
-        voiceSource: 'ios-personal',
-      });
-      setSelectedParentId(personalPickerProfileId);
-      setPersonalPickerProfileId(null);
-    } catch (e) {
-      if (__DEV__) console.warn('updateProfile Personal Voice échoué :', e);
-      Alert.alert('Erreur', "Impossible d'enregistrer la voix personnelle sur le profil.");
-    }
-  }, [personalPickerProfileId, updateProfile]);
-
-  // Override session-only : remplace voiceConfig quand un parent avec voix est sélectionné
-  const effectiveVoiceConfig = React.useMemo<StoryVoiceConfig>(() => {
-    if (!selectedParentId) return voiceConfig;
-    const parent = adultProfiles.find((p: Profile) => p.id === selectedParentId);
-    if (!parent) return voiceConfig;
-
-    // 1. iOS Personal Voice — prioritaire si configurée
-    if (parent.voiceSource === 'ios-personal' && parent.voicePersonalId) {
-      return {
-        engine: 'expo-speech',
-        language: voiceConfig.language,
-        voiceIdentifier: parent.voicePersonalId,
-      };
-    }
-
-    // 2. Clone ElevenLabs si disponible
-    if (parent.voiceElevenLabsId) {
-      return {
-        engine: 'elevenlabs',
-        language: voiceConfig.language,
-        elevenLabsVoiceId: parent.voiceElevenLabsId,
-      };
-    }
-
-    // 3. Fallback ElevenLabs preset par genre — uniquement si engine initial est elevenlabs
-    //    (session-only, aucune persistance, bouton + reste visible)
-    if (voiceConfig.engine === 'elevenlabs') {
-      const BELLA_ID = 'EXAVITQu4vr4xnSDxMaL';
-      const ADAM_ID = 'pNInz6obpgDQGcFmaJgB';
-      const targetId = parent.gender === 'fille' ? BELLA_ID : ADAM_ID;
-      const preset = ELEVENLABS_FRENCH_VOICES.find(v => v.id === targetId);
-      if (preset) {
-        return {
-          engine: 'elevenlabs',
-          language: voiceConfig.language,
-          elevenLabsVoiceId: preset.id,
-        };
-      }
-    }
-
-    return voiceConfig;
-  }, [selectedParentId, adultProfiles, voiceConfig]);
-
   useEffect(() => {
     // Configurer ET activer AVAudioSession dès le montage (iOS 26 fix)
     Audio.setAudioModeAsync({
@@ -220,7 +135,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
   }, []);
 
   const stopPlayback = useCallback(async () => {
-    if (effectiveVoiceConfig.engine === 'expo-speech') {
+    if (voiceConfig.engine === 'expo-speech') {
       Speech.stop();
     } else {
       await soundRef.current?.stopAsync?.();
@@ -228,20 +143,20 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
       soundRef.current = null;
     }
     setIsPlaying(false);
-  }, [effectiveVoiceConfig.engine]);
+  }, [voiceConfig.engine]);
 
   const startPlayback = useCallback(async () => {
-    if (effectiveVoiceConfig.engine === 'expo-speech') {
-      const targetLang = effectiveVoiceConfig.language === 'en' ? 'en-US' : 'fr-FR';
+    if (voiceConfig.engine === 'expo-speech') {
+      const targetLang = voiceConfig.language === 'en' ? 'en-US' : 'fr-FR';
 
-      let voiceId: string | undefined = effectiveVoiceConfig.voiceIdentifier;
+      let voiceId: string | undefined = voiceConfig.voiceIdentifier;
 
       // Si pas d'identifier explicite (voix iOS Personal), résoudre par langue
       if (!voiceId) {
         try {
           const voices = await Speech.getAvailableVoicesAsync();
           if (__DEV__) console.log('Voix disponibles:', voices.map(v => `${v.identifier} (${v.language})`));
-          const match = voices.find(v => v.language.startsWith(effectiveVoiceConfig.language === 'en' ? 'en' : 'fr'));
+          const match = voices.find(v => v.language.startsWith(voiceConfig.language === 'en' ? 'en' : 'fr'));
           voiceId = match?.identifier;
           if (__DEV__) console.log('Voix choisie:', voiceId ?? 'aucune');
         } catch (e) {
@@ -272,7 +187,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
         return;
       }
       setIsLoading(true);
-      const result = await generateSpeech(elevenLabsKey, histoire.texte, effectiveVoiceConfig.elevenLabsVoiceId ?? '');
+      const result = await generateSpeech(elevenLabsKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '');
       setIsLoading(false);
       if ('error' in result) {
         Alert.alert('Erreur ElevenLabs', result.error);
@@ -297,7 +212,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
         Alert.alert('Erreur audio', "Impossible de lire l'histoire.");
       }
     }
-  }, [effectiveVoiceConfig, histoire.texte, speed, elevenLabsKey]);
+  }, [voiceConfig, histoire.texte, speed, elevenLabsKey]);
 
   const togglePlay = useCallback(async () => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
@@ -325,159 +240,6 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
     <View style={styles.container}>
       {/* Titre */}
       <Text style={[styles.title, { color: colors.text }]}>{histoire.titre}</Text>
-
-      {/* Section voix du narrateur (chips adultes + modal enregistrement) */}
-      {adultProfiles.length > 0 && (
-        <View style={styles.parentVoiceSection}>
-          <Text style={[styles.parentVoiceLabel, { color: colors.textMuted }]}>
-            Voix du narrateur
-          </Text>
-          <View style={styles.parentChipsRow}>
-            {adultProfiles.map((p: Profile) => {
-              const isSelected = selectedParentId === p.id;
-              const hasClone = !!p.voiceElevenLabsId;
-              return (
-                <View key={p.id} style={styles.parentChipWrap}>
-                  <Pressable
-                    onPress={() => {
-                      Haptics.selectionAsync();
-                      setSelectedParentId(isSelected ? null : p.id);
-                    }}
-                    style={[
-                      styles.parentChip,
-                      {
-                        backgroundColor: isSelected ? primary : colors.card,
-                        borderColor: isSelected ? primary : colors.border,
-                      },
-                    ]}
-                  >
-                    <Text style={[
-                      styles.parentChipText,
-                      { color: isSelected ? '#fff' : colors.text },
-                    ]}>
-                      Voix de {p.name}
-                    </Text>
-                  </Pressable>
-                  {!hasClone && (
-                    <Pressable
-                      onPress={() => {
-                        Haptics.impactAsync(ImpactFeedbackStyle.Light);
-                        setRecorderProfileId(p.id);
-                      }}
-                      style={[styles.parentAddBtn, { borderColor: colors.border }]}
-                      accessibilityLabel={`Enregistrer la voix ElevenLabs de ${p.name}`}
-                    >
-                      <Text style={[styles.parentAddBtnText, { color: primary }]}>+</Text>
-                    </Pressable>
-                  )}
-                  {!p.voicePersonalId && (
-                    <Pressable
-                      onPress={() => openPersonalVoicePicker(p.id)}
-                      style={[styles.parentAddBtn, { borderColor: colors.border }]}
-                      accessibilityLabel={`Utiliser iOS Personal Voice pour ${p.name}`}
-                    >
-                      <Text style={[styles.parentAddBtnText, { color: colors.textMuted }]}>🎙</Text>
-                    </Pressable>
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      <Modal
-        visible={recorderProfileId !== null}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setRecorderProfileId(null)}
-      >
-        <View style={{ flex: 1, backgroundColor: colors.bg }}>
-          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              Enregistrer votre voix
-            </Text>
-            <Pressable onPress={() => setRecorderProfileId(null)}>
-              <Text style={[styles.modalClose, { color: primary }]}>Fermer</Text>
-            </Pressable>
-          </View>
-          {recorderProfileId !== null && (() => {
-            const target = adultProfiles.find((p: Profile) => p.id === recorderProfileId);
-            if (!target) return null;
-            return (
-              <VoiceRecorder
-                profileId={target.id}
-                profileName={target.name}
-                apiKey={elevenLabsKey}
-                onVoiceReady={async (voiceId, source) => {
-                  try {
-                    await updateProfile(target.id, {
-                      voiceElevenLabsId: voiceId,
-                      voiceSource: source,
-                    });
-                    setSelectedParentId(target.id);
-                    setRecorderProfileId(null);
-                  } catch (e) {
-                    if (__DEV__) console.warn('updateProfile voix échoué :', e);
-                    Alert.alert('Erreur', "Impossible d'enregistrer la voix sur le profil.");
-                  }
-                }}
-              />
-            );
-          })()}
-        </View>
-      </Modal>
-
-      {/* Modal picker iOS Personal Voice */}
-      <Modal
-        visible={personalPickerProfileId !== null}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setPersonalPickerProfileId(null)}
-      >
-        <View style={{ flex: 1, backgroundColor: colors.bg }}>
-          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              iOS Personal Voice
-            </Text>
-            <Pressable onPress={() => setPersonalPickerProfileId(null)}>
-              <Text style={[styles.modalClose, { color: primary }]}>Fermer</Text>
-            </Pressable>
-          </View>
-          {personalVoicesLoading ? (
-            <View style={styles.personalVoiceCenter}>
-              <ActivityIndicator color={primary} />
-              <Text style={[styles.personalVoiceHint, { color: colors.textMuted }]}>
-                Chargement des voix…
-              </Text>
-            </View>
-          ) : personalVoices.length === 0 ? (
-            <View style={styles.personalVoiceCenter}>
-              <Text style={[styles.personalVoiceEmpty, { color: colors.textMuted }]}>
-                Aucune voix personnelle trouvée.{'\n'}
-                Créez-en une dans Réglages {'>'} Accessibilité {'>'} Voix personnelle.
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.personalVoiceList}>
-              {personalVoices.map((voice) => (
-                <Pressable
-                  key={voice.identifier}
-                  onPress={() => selectPersonalVoice(voice)}
-                  style={[styles.personalVoiceItem, { borderBottomColor: colors.border }]}
-                >
-                  <Text style={[styles.personalVoiceName, { color: colors.text }]}>
-                    {voice.name}
-                  </Text>
-                  <Text style={[styles.personalVoiceMeta, { color: colors.textMuted }]}>
-                    {voice.language} · {voice.quality}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
-        </View>
-      </Modal>
 
       {/* Waveform */}
       <View style={styles.waveform}>
@@ -548,25 +310,4 @@ const styles = StyleSheet.create({
   speedText: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
   finishButton: { paddingVertical: Spacing.lg },
   finishText: { fontSize: FontSize.sm },
-  // Sélecteur voix parent
-  parentVoiceSection: { width: '100%', paddingHorizontal: Spacing['4xl'], marginBottom: Spacing['3xl'], alignItems: 'center' },
-  parentVoiceLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.medium, marginBottom: Spacing.md },
-  parentChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, justifyContent: 'center' },
-  parentChipWrap: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  parentChip: { paddingHorizontal: Spacing['2xl'], paddingVertical: Spacing.md, borderRadius: Radius.full, borderWidth: 1 },
-  parentChipText: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
-  parentAddBtn: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  parentAddBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  // Modal enregistrement
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing['4xl'], borderBottomWidth: 1 },
-  modalTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
-  modalClose: { fontSize: FontSize.body, fontWeight: FontWeight.medium },
-  // Picker iOS Personal Voice
-  personalVoiceCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing['4xl'] },
-  personalVoiceHint: { marginTop: Spacing.lg, fontSize: FontSize.sm },
-  personalVoiceEmpty: { fontSize: FontSize.body, textAlign: 'center', lineHeight: 24 },
-  personalVoiceList: { paddingTop: Spacing.md },
-  personalVoiceItem: { paddingHorizontal: Spacing['4xl'], paddingVertical: Spacing['2xl'], borderBottomWidth: 1 },
-  personalVoiceName: { fontSize: FontSize.body, fontWeight: FontWeight.medium },
-  personalVoiceMeta: { fontSize: FontSize.sm, marginTop: Spacing.xs },
 });
