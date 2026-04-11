@@ -165,12 +165,12 @@ export function buildVillageMap(): FarmMapData {
   const water = emptyVertices(cols, rows);
   const farmland = emptyVertices(cols, rows);
 
-  // Place centrale cobblestone (~60% surface)
-  fillRect(cobblestone, 2, 4, 10, 16);
+  // Place centrale cobblestone — full width, grille entiere sauf bandes d'entree
+  fillRect(cobblestone, 0, 3, 12, 17);
 
-  // Chemins d'entree en terre (bordures haut et bas)
-  fillRect(dirt, 4, 0, 8, 3);
-  fillRect(dirt, 4, 17, 8, 20);
+  // Chemins d'entree en terre — full width en haut et en bas (bordures completes)
+  fillRect(dirt, 0, 0, 12, 3);
+  fillRect(dirt, 0, 17, 12, 20);
 
   // Fontaine : petit espace eau au centre (VILLAGE_GRID fountain x=0.50 y=0.45 → cols 5-7, rows 8-10)
   fillRect(water, 5, 8, 7, 10);
