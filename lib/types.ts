@@ -597,6 +597,9 @@ export interface FarmProfileData {
   unlockedEffectRecipes?: string[]; // IDs recettes debloquees via EFFECTS-10
   effectGoldenMultiplier?: number;  // EFFECTS-09 : x3 (distinct du GOLDEN_HARVEST_MULTIPLIER = 5)
   village_claimed_week?: string;    // ISO 'YYYY-MM-DD' — semaine village la plus recente claimee (per D-08)
+  // Q49 — Échange inter-familles via Port
+  trade_claimed_codes?: string[];   // Codes-cadeaux déjà réclamés (max 200 entrees)
+  trade_sent_today?: string;        // Anti-abus format "count|YYYY-MM-DD" (per MAX_TRADES_PER_DAY)
 }
 
 // ─── Histoires du soir ───────────────────────────────────────────────────────
