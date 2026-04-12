@@ -73,12 +73,12 @@ function StoryBookCard({ universe, selected, onPress }: Props) {
             <View style={[styles.corner, styles.cornerBR, { backgroundColor: accent + '99' }]} />
           </View>
 
-          {/* Illustration (sprite pixel-art ou emoji) */}
+          {/* Illustration plein cadre */}
           {STORY_UNIVERSE_SPRITES[universe.id] ? (
             <Image
               source={STORY_UNIVERSE_SPRITES[universe.id]!}
               style={styles.sprite}
-              resizeMode="contain"
+              resizeMode="cover"
             />
           ) : (
             <Text style={styles.emoji}>{universe.emoji}</Text>
@@ -140,9 +140,7 @@ const styles = StyleSheet.create({
   // ── Couverture ──
   cover: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: RIBBON_H,
+    overflow: 'hidden',
   },
 
   // Grain parchemin — voile sépia très léger
@@ -172,13 +170,15 @@ const styles = StyleSheet.create({
   cornerBL: { bottom: -CORNER_SIZE / 2, left: -CORNER_SIZE / 2 },
   cornerBR: { bottom: -CORNER_SIZE / 2, right: -CORNER_SIZE / 2 },
 
-  // Illustration
+  // Illustration plein cadre
   sprite: {
-    width: 120,
-    height: 120,
+    ...StyleSheet.absoluteFillObject,
   },
   emoji: {
     fontSize: 72,
+    position: 'absolute',
+    top: '30%',
+    alignSelf: 'center',
   },
 
   // Ruban titre
