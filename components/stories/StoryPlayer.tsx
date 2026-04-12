@@ -18,6 +18,7 @@ import {
 import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { generateSpeech } from '../../lib/elevenlabs';
+import { generateSpeechFish } from '../../lib/fish-audio';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -211,12 +212,15 @@ interface Props {
   histoire: BedtimeStory;
   voiceConfig: StoryVoiceConfig;
   elevenLabsKey: string;
+  fishAudioKey?: string;
   onFinish: () => void;
 }
 
-function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) {
+function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish }: Props) {
   const { primary, colors } = useThemeColors();
   const isElevenLabs = voiceConfig.engine === 'elevenlabs';
+  const isFishAudio = voiceConfig.engine === 'fish-audio';
+  const isApiVoice = isElevenLabs || isFishAudio;
 
   // État commun
   const [isPlaying, setIsPlaying] = useState(false);
@@ -249,15 +253,18 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
     };
   }, []);
 
-  // Pré-génération ElevenLabs au montage (une fois)
+  // Pre-generation API voice (ElevenLabs ou Fish Audio) au montage (une fois)
   useEffect(() => {
-    if (!isElevenLabs) return;
+    if (!isApiVoice) return;
 
     let cancelled = false;
 
     const run = async () => {
-      if (!elevenLabsKey) {
-        if (!cancelled) setGenError('Clé ElevenLabs manquante. Configurez votre clé API dans les paramètres.');
+      const apiKey = isFishAudio ? fishAudioKey : elevenLabsKey;
+      const engineLabel = isFishAudio ? 'Fish Audio' : 'ElevenLabs';
+
+      if (!apiKey) {
+        if (!cancelled) setGenError(`Cle ${engineLabel} manquante. Configurez votre cle API dans les parametres.`);
         return;
       }
 
@@ -267,12 +274,9 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
       }
 
       try {
-        const result = await generateSpeech(
-          elevenLabsKey,
-          histoire.texte,
-          voiceConfig.elevenLabsVoiceId ?? '',
-          histoire.id,
-        );
+        const result = isFishAudio
+          ? await generateSpeechFish(apiKey, histoire.texte, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
+          : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id);
         if (cancelled) return;
         if ('error' in result) {
           setGenError(result.error);
@@ -288,7 +292,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
 
     run();
     return () => { cancelled = true; };
-  }, [isElevenLabs, elevenLabsKey, histoire.texte, voiceConfig.elevenLabsVoiceId]);
+  }, [isApiVoice, isFishAudio, elevenLabsKey, fishAudioKey, histoire.texte, voiceConfig.elevenLabsVoiceId, voiceConfig.fishAudioReferenceId]);
 
   // ─── Playback expo-speech ────────────────────────────────────────────────
   const startExpoSpeech = useCallback(async () => {
@@ -348,7 +352,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
   // ─── Toggle play/pause unifié ─────────────────────────────────────────────
   const togglePlay = useCallback(async () => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
-    if (isElevenLabs) {
+    if (isApiVoice) {
       if (!audioPath) return;
       if (isPlaying) {
         await pauseElevenLabs();
@@ -362,7 +366,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
         await startExpoSpeech();
       }
     }
-  }, [isElevenLabs, isPlaying, audioPath, startElevenLabs, pauseElevenLabs, startExpoSpeech, stopExpoSpeech]);
+  }, [isApiVoice, isPlaying, audioPath, startElevenLabs, pauseElevenLabs, startExpoSpeech, stopExpoSpeech]);
 
   // ─── Changement de vitesse ────────────────────────────────────────────────
   const changeExpoSpeed = useCallback(async (newSpeed: StoryReadingSpeed) => {
@@ -413,8 +417,8 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
     <View style={styles.container}>
       <Text style={[styles.title, { color: colors.text }]}>{histoire.titre}</Text>
 
-      {/* Waveform : vraie pour ElevenLabs, décorative pour expo-speech */}
-      {isElevenLabs ? (
+      {/* Waveform : vraie pour ElevenLabs/Fish Audio, decorative pour expo-speech */}
+      {isApiVoice ? (
         <View style={styles.waveformEleven}>
           {audioPath ? (
             <View
@@ -482,11 +486,11 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
       <Pressable
         style={[styles.playButton, { backgroundColor: primary }]}
         onPress={togglePlay}
-        disabled={isElevenLabs && (!audioPath || !waveformReady || isLoading)}
+        disabled={isApiVoice && (!audioPath || !waveformReady || isLoading)}
         accessibilityRole="button"
         accessibilityLabel={isPlaying ? 'Pause' : 'Lire'}
       >
-        {isLoading || (isElevenLabs && audioPath && !waveformReady) ? (
+        {isLoading || (isApiVoice && audioPath && !waveformReady) ? (
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
@@ -495,7 +499,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
 
       {/* Contrôles vitesse */}
       <View style={styles.speedRow}>
-        {isElevenLabs
+        {isApiVoice
           ? SPEEDS_ELEVEN.map(s => (
               <Pressable
                 key={s}

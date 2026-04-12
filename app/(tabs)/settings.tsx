@@ -38,6 +38,7 @@ import { SettingsAutomations } from '../../components/settings/SettingsAutomatio
 import { SettingsGamiAdmin } from '../../components/settings/SettingsGamiAdmin';
 import { SettingsCoupling } from '../../components/settings/SettingsCoupling';
 import { SettingsElevenLabs } from '../../components/settings/SettingsElevenLabs';
+import { SettingsFishAudio } from '../../components/settings/SettingsFishAudio';
 import { useStoryVoice } from '../../contexts/StoryVoiceContext';
 import { useTranslation } from 'react-i18next';
 
@@ -48,7 +49,7 @@ const ZEN_CONFIG_KEY = 'zen_config_v1';
 type SectionId =
   | 'profiles' | 'appearance'
   | 'notifications' | 'zen' | 'vacation' | 'gamification' | 'coupling' | 'automations'
-  | 'ai' | 'elevenlabs' | 'telegram' | 'grandparents'
+  | 'ai' | 'elevenlabs' | 'fish-audio' | 'telegram' | 'grandparents'
   | 'auth' | 'parental' | 'vault' | 'help'
   | 'gami-admin';
 
@@ -106,7 +107,7 @@ export default function SettingsScreen() {
   const telegramStatus = telegramToken ? t('settingsScreen.labels.connected') : t('settingsScreen.labels.notConfigured');
 
   const { isConfigured: aiConfigured, model: aiModel } = useAI();
-  const { isElevenLabsConfigured } = useStoryVoice();
+  const { isElevenLabsConfigured, isFishAudioConfigured } = useStoryVoice();
   const { isAuthEnabled: authEnabled, biometryType } = useAuth();
   const authSubtitle = authEnabled
     ? (biometryType === 'face' ? t('settingsScreen.rows.authEnabledFace') : biometryType === 'fingerprint' ? t('settingsScreen.rows.authEnabledTouch') : t('settingsScreen.rows.authEnabled'))
@@ -124,6 +125,7 @@ export default function SettingsScreen() {
     automations: t('settingsScreen.modalTitles.automations'),
     ai: t('settingsScreen.modalTitles.ai'),
     elevenlabs: 'ElevenLabs',
+    'fish-audio': 'Fish Audio',
     telegram: t('settingsScreen.modalTitles.telegram'),
     grandparents: t('settingsScreen.modalTitles.grandparents'),
     auth: t('settingsScreen.modalTitles.auth'),
@@ -221,6 +223,12 @@ export default function SettingsScreen() {
               title="ElevenLabs"
               subtitle={isElevenLabsConfigured ? 'Voix premium configurée ✓' : 'Voix premium pour les histoires'}
               onPress={() => setActiveSection('elevenlabs')}
+            />
+            <SettingsRow
+              emoji="🐟"
+              title="Fish Audio"
+              subtitle={isFishAudioConfigured ? 'Fish Audio configuré ✓' : 'TTS + clonage vocal'}
+              onPress={() => setActiveSection('fish-audio')}
             />
             <SettingsRow
               emoji="📲"
@@ -379,6 +387,7 @@ export default function SettingsScreen() {
             {activeSection === 'automations' && <SettingsAutomations />}
             {activeSection === 'ai' && <SettingsAI />}
             {activeSection === 'elevenlabs' && <SettingsElevenLabs />}
+            {activeSection === 'fish-audio' && <SettingsFishAudio />}
             {activeSection === 'telegram' && (
               <SettingsTelegram
                 telegramToken={telegramToken} telegramChatId={telegramChatId}
