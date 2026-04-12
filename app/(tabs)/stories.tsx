@@ -22,6 +22,7 @@ import StoryPlayer from '../../components/stories/StoryPlayer';
 import VoiceRecorder from '../../components/stories/VoiceRecorder';
 import { getPersonalVoices } from '../../lib/personal-voice';
 import { getCachedStoryAudio } from '../../lib/elevenlabs';
+import { getCachedStoryAudioFish } from '../../lib/fish-audio';
 import {
   STORY_UNIVERSES, STORY_SUGGESTIONS, ELEVENLABS_FRENCH_VOICES, ELEVENLABS_ENGLISH_VOICES,
   STORY_LENGTHS, STORY_LENGTH_ORDER,
@@ -63,7 +64,7 @@ export default function StoriesScreen() {
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { config: aiConfig, storyConfig } = useAI();
-  const { voiceConfig, elevenLabsKey, isElevenLabsConfigured, setVoiceConfig } = useStoryVoice();
+  const { voiceConfig, elevenLabsKey, isElevenLabsConfigured, fishAudioKey, isFishAudioConfigured, setVoiceConfig } = useStoryVoice();
   const { reduceMotion } = useAnimConfig();
   const {
     profiles, moods, quotes, memories, rdvs, healthRecords, tasks, stories, saveStory, deleteStory, updateProfile,
@@ -84,7 +85,7 @@ export default function StoriesScreen() {
   // Onglet moteur affiché : 'expo-speech' | 'elevenlabs'
   // Le tab "Système" expose à la fois la voix par défaut et les voix Enhanced/Premium
   // (Audrey, Thomas, Aurélie… en FR), filtrées par langue courante.
-  const [localVoiceEngine, setLocalVoiceEngine] = useState<'expo-speech' | 'elevenlabs'>(
+  const [localVoiceEngine, setLocalVoiceEngine] = useState<'expo-speech' | 'elevenlabs' | 'fish-audio'>(
     voiceConfig.engine,
   );
   const [voiceSelectedParentId, setVoiceSelectedParentId] = useState<string | null>(null);
@@ -180,6 +181,11 @@ export default function StoriesScreen() {
     (async () => {
       const results = await Promise.all(
         stories.map(async (s) => {
+          // Verifier le cache selon le moteur de la voix
+          if (s.voice.engine === 'fish-audio' && s.voice.fishAudioReferenceId) {
+            const cached = await getCachedStoryAudioFish(s.id, s.voice.fishAudioReferenceId);
+            return [s.sourceFile, cached !== null] as const;
+          }
           const voiceId = s.voice.elevenLabsVoiceId;
           if (!voiceId) return [s.sourceFile, false] as const;
           const cached = await getCachedStoryAudio(s.id, voiceId);
@@ -448,7 +454,16 @@ export default function StoriesScreen() {
         }
         return { engine: 'elevenlabs', language: lang, elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId };
       }
-      // expo-speech — voix Premium/Enhanced optionnelle (persistée si choisie)
+      if (localVoiceEngine === 'fish-audio') {
+        if (voiceSelectedParentId) {
+          const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
+          if (parent?.voiceFishAudioId) {
+            return { engine: 'fish-audio', language: lang, fishAudioReferenceId: parent.voiceFishAudioId };
+          }
+        }
+        return { engine: 'fish-audio', language: lang, fishAudioReferenceId: voiceConfig.fishAudioReferenceId };
+      }
+      // expo-speech — voix Premium/Enhanced optionnelle (persistee si choisie)
       return {
         engine: 'expo-speech',
         language: lang,
@@ -719,9 +734,10 @@ export default function StoriesScreen() {
         {/* Onglets moteur */}
         <View style={styles.voiceEngineRow}>
           {([
-            { key: 'expo-speech', label: '🆓 Système' },
-            { key: 'elevenlabs', label: `✨ ElevenLabs${isElevenLabsConfigured ? '' : ' (clé)'}` },
-          ] as const).map(({ key, label }) => (
+            { key: 'expo-speech' as const, label: '🆓 Système' },
+            { key: 'elevenlabs' as const, label: `✨ ElevenLabs${isElevenLabsConfigured ? '' : ' (clé)'}` },
+            { key: 'fish-audio' as const, label: `🐟 Fish Audio${isFishAudioConfigured ? '' : ' (clé)'}` },
+          ]).map(({ key, label }) => (
             <Pressable
               key={key}
               style={[styles.voiceChip, { backgroundColor: localVoiceEngine === key ? primary : colors.card, borderColor: colors.border }]}
@@ -806,7 +822,52 @@ export default function StoriesScreen() {
           </View>
         )}
 
-        {/* Système — sélecteur voix Enhanced/Premium filtrées par langue */}
+        {/* Fish Audio — profils adultes avec clonage */}
+        {localVoiceEngine === 'fish-audio' && adultProfiles.length > 0 && (
+          <View style={{ marginTop: Spacing.lg }}>
+            <Text style={[styles.voiceSubLabel, { color: colors.textMuted }]}>Narrateur</Text>
+            <View style={styles.voiceParentRow}>
+              {adultProfiles.map((p: Profile) => {
+                const hasClone = !!p.voiceFishAudioId;
+                const isSelected = voiceSelectedParentId === p.id;
+                return (
+                  <View key={p.id} style={styles.voiceParentWrap}>
+                    <Pressable
+                      onPress={() => { Haptics.selectionAsync(); setVoiceSelectedParentId(isSelected ? null : p.id); }}
+                      style={[styles.voiceParentChip, { backgroundColor: isSelected ? primary : colors.card, borderColor: isSelected ? primary : colors.border }]}
+                    >
+                      <Text style={styles.voiceParentAvatar}>{p.avatar}</Text>
+                      <Text style={[styles.voiceParentName, { color: isSelected ? '#fff' : colors.text }]}>{p.name}</Text>
+                      <Text style={[styles.voiceParentBadge, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
+                        {hasClone ? '🎙 Clonee' : 'Voix par defaut'}
+                      </Text>
+                    </Pressable>
+                    {!hasClone && (
+                      <Pressable
+                        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setVoiceRecorderProfileId(p.id); }}
+                        style={[styles.voiceAddBtn, { borderColor: colors.border }]}
+                        accessibilityLabel={`Creer la voix clonee de ${p.name}`}
+                      >
+                        <Text style={[styles.voiceAddBtnText, { color: primary }]}>+</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Fish Audio — pas de profil adulte → info */}
+        {localVoiceEngine === 'fish-audio' && adultProfiles.length === 0 && (
+          <View style={{ marginTop: Spacing.lg, paddingHorizontal: Spacing.md }}>
+            <Text style={[{ color: colors.textMuted, fontSize: FontSize.sm, textAlign: 'center' }]}>
+              Fish Audio utilisera sa voix par defaut. Ajoutez un profil adulte pour cloner votre voix.
+            </Text>
+          </View>
+        )}
+
+        {/* Systeme — selecteur voix Enhanced/Premium filtrees par langue */}
         {localVoiceEngine === 'expo-speech' && (
           <View style={{ marginTop: Spacing.lg }}>
             <View style={styles.voicePremiumHeader}>
@@ -896,15 +957,19 @@ export default function StoriesScreen() {
                 <VoiceRecorder
                   profileId={target.id}
                   profileName={target.name}
-                  apiKey={elevenLabsKey}
+                  apiKey={localVoiceEngine === 'fish-audio' ? fishAudioKey : elevenLabsKey}
+                  cloneEngine={localVoiceEngine === 'fish-audio' ? 'fish-audio' : 'elevenlabs'}
                   language={voiceConfig.language}
                   onVoiceReady={async (voiceId, source) => {
                     try {
-                      await updateProfile(target.id, { voiceElevenLabsId: voiceId, voiceSource: source });
+                      const profileUpdate = source === 'fish-audio-cloned'
+                        ? { voiceFishAudioId: voiceId, voiceSource: source }
+                        : { voiceElevenLabsId: voiceId, voiceSource: source };
+                      await updateProfile(target.id, profileUpdate);
                       setVoiceSelectedParentId(target.id);
                       setVoiceRecorderProfileId(null);
                     } catch (e) {
-                      if (__DEV__) console.warn('updateProfile voix échoué :', e);
+                      if (__DEV__) console.warn('updateProfile voix echoue :', e);
                       Alert.alert('Erreur', "Impossible d'enregistrer la voix sur le profil.");
                     }
                   }}
@@ -1122,6 +1187,7 @@ export default function StoriesScreen() {
             histoire={currentStory}
             voiceConfig={voiceConfig}
             elevenLabsKey={elevenLabsKey}
+            fishAudioKey={fishAudioKey}
             onFinish={() => goTo({ etape: 'fin', histoire: currentStory })}
           />
         )}
@@ -1153,6 +1219,7 @@ export default function StoriesScreen() {
             histoire={histoire}
             voiceConfig={voiceConfig}
             elevenLabsKey={elevenLabsKey}
+            fishAudioKey={fishAudioKey}
             onFinish={() => setShowPlayer(false)}
           />
         ) : (
@@ -1187,6 +1254,7 @@ export default function StoriesScreen() {
           histoire={histoire}
           voiceConfig={histoire.voice}
           elevenLabsKey={elevenLabsKey}
+          fishAudioKey={fishAudioKey}
           onFinish={() => goTo({ etape: 'choisir_enfant' })}
         />
       </ScrollView>

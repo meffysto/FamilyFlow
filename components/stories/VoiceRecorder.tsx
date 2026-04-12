@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import { Audio } from 'expo-av';
 import { uploadVoiceClone } from '../../lib/voice-clone';
+import { uploadVoiceCloneFish } from '../../lib/voice-clone-fish';
 import { VOICE_CLONE_SCRIPT_FR, VOICE_CLONE_SCRIPT_EN } from '../../lib/stories';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -66,15 +67,17 @@ const LiveBar = React.memo(function LiveBar({ index, amplitudes, color }: LiveBa
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface VoiceRecorderProps {
-  /** Identifiant du profil — conservé pour cohérence de signature (non utilisé pour l'upload) */
+  /** Identifiant du profil — conserve pour coherence de signature (non utilise pour l'upload) */
   profileId: string;
-  /** Nom affiché comme label de voix dans ElevenLabs */
+  /** Nom affiche comme label de voix dans le service TTS */
   profileName: string;
-  /** Callback appelé à la fin de l'upload avec le voice_id et la source */
-  onVoiceReady: (voiceId: string, source: 'elevenlabs-cloned') => void;
-  /** Clé API ElevenLabs passée depuis le parent (pas de re-lecture SecureStore) */
+  /** Callback appele a la fin de l'upload avec le voice_id et la source */
+  onVoiceReady: (voiceId: string, source: 'elevenlabs-cloned' | 'fish-audio-cloned') => void;
+  /** Cle API passee depuis le parent (pas de re-lecture SecureStore) */
   apiKey: string;
-  /** Langue du script de lecture à afficher — défaut 'fr' */
+  /** Moteur de clonage — defaut 'elevenlabs' */
+  cloneEngine?: 'elevenlabs' | 'fish-audio';
+  /** Langue du script de lecture a afficher — defaut 'fr' */
   language?: 'fr' | 'en';
 }
 
@@ -87,7 +90,7 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
 
 // ─── VoiceRecorder ───────────────────────────────────────────────────────────
 
-function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKey, language = 'fr' }: VoiceRecorderProps) {
+function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKey, cloneEngine = 'elevenlabs', language = 'fr' }: VoiceRecorderProps) {
   const { primary, colors } = useThemeColors();
   const script = language === 'en' ? VOICE_CLONE_SCRIPT_EN : VOICE_CLONE_SCRIPT_FR;
   const instructionText = language === 'en'
@@ -159,15 +162,18 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
 
     setStatus('uploading');
     try {
-      const voiceId = await uploadVoiceClone(uri, profileName, apiKey);
+      const voiceId = cloneEngine === 'fish-audio'
+        ? await uploadVoiceCloneFish(uri, profileName, apiKey)
+        : await uploadVoiceClone(uri, profileName, apiKey);
+      const source = cloneEngine === 'fish-audio' ? 'fish-audio-cloned' as const : 'elevenlabs-cloned' as const;
       setStatus('done');
-      onVoiceReady(voiceId, 'elevenlabs-cloned');
+      onVoiceReady(voiceId, source);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Impossible de créer la voix.';
+      const msg = err instanceof Error ? err.message : 'Impossible de creer la voix.';
       Alert.alert('Erreur upload', msg);
       setStatus('idle');
     }
-  }, [profileName, apiKey, onVoiceReady, resetAmplitudes]);
+  }, [profileName, apiKey, cloneEngine, onVoiceReady, resetAmplitudes]);
 
   const startRecording = useCallback(async () => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);

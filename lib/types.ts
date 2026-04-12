@@ -78,8 +78,9 @@ export interface Profile {
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
   // ─── Voix TTS (IVC ElevenLabs + iOS Personal Voice) ───────────
   voiceElevenLabsId?: string;   // voice_id ElevenLabs (cloné ou prédéfini)
+  voiceFishAudioId?: string;    // reference_id Fish Audio (cloné via /model)
   voicePersonalId?: string;     // identifier iOS Personal Voice
-  voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'expo-speech';
+  voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'fish-audio-cloned' | 'expo-speech';
   treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
   mascotDecorations: string[];   // IDs des décorations achetées
   mascotInhabitants: string[];   // IDs des habitants achetés
@@ -606,7 +607,7 @@ export type StoryUniverseId =
 
 export type StoryReadingSpeed = 0.8 | 1.0 | 1.2;
 
-export type StoryVoiceEngine = 'expo-speech' | 'elevenlabs';
+export type StoryVoiceEngine = 'expo-speech' | 'elevenlabs' | 'fish-audio';
 
 export type StoryLength = 'courte' | 'moyenne' | 'longue' | 'tres-longue';
 
@@ -614,6 +615,7 @@ export interface StoryVoiceConfig {
   engine: StoryVoiceEngine;
   language: 'fr' | 'en';
   elevenLabsVoiceId?: string;
+  fishAudioReferenceId?: string; // reference_id voix Fish Audio (clonée ou prédéfinie)
   voiceIdentifier?: string; // identifier voix iOS Enhanced/Premium (expo-speech)
   length?: StoryLength;     // préférence taille histoire — défaut 'moyenne'
 }

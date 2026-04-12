@@ -9,6 +9,7 @@ import { ELEVENLABS_FRENCH_VOICES } from '../lib/stories';
 
 const VOICE_CONFIG_KEY = 'story_voice_config';
 const ELEVENLABS_KEY_STORAGE = 'story_elevenlabs_key';
+const FISH_AUDIO_KEY_STORAGE = 'story_fish_audio_key';
 
 const DEFAULT_VOICE_CONFIG: StoryVoiceConfig = {
   engine: 'expo-speech',
@@ -20,9 +21,13 @@ interface StoryVoiceState {
   voiceConfig: StoryVoiceConfig;
   elevenLabsKey: string;
   isElevenLabsConfigured: boolean;
+  fishAudioKey: string;
+  isFishAudioConfigured: boolean;
   setVoiceConfig: (config: StoryVoiceConfig) => Promise<void>;
   setElevenLabsKey: (key: string) => Promise<void>;
   clearElevenLabsKey: () => Promise<void>;
+  setFishAudioKey: (key: string) => Promise<void>;
+  clearFishAudioKey: () => Promise<void>;
 }
 
 const StoryVoiceContext = createContext<StoryVoiceState | null>(null);
@@ -30,17 +35,20 @@ const StoryVoiceContext = createContext<StoryVoiceState | null>(null);
 export function StoryVoiceProvider({ children }: { children: React.ReactNode }) {
   const [voiceConfig, setVoiceConfigState] = useState<StoryVoiceConfig>(DEFAULT_VOICE_CONFIG);
   const [elevenLabsKey, setElevenLabsKeyState] = useState('');
+  const [fishAudioKey, setFishAudioKeyState] = useState('');
 
   useEffect(() => {
     (async () => {
-      const [stored, storedKey] = await Promise.all([
+      const [stored, storedKey, storedFishKey] = await Promise.all([
         SecureStore.getItemAsync(VOICE_CONFIG_KEY),
         SecureStore.getItemAsync(ELEVENLABS_KEY_STORAGE),
+        SecureStore.getItemAsync(FISH_AUDIO_KEY_STORAGE),
       ]);
       if (stored) {
         try { setVoiceConfigState(JSON.parse(stored)); } catch { /* ignore */ }
       }
       if (storedKey) setElevenLabsKeyState(storedKey);
+      if (storedFishKey) setFishAudioKeyState(storedFishKey);
     })();
   }, []);
 
@@ -64,13 +72,32 @@ export function StoryVoiceProvider({ children }: { children: React.ReactNode }) 
     setElevenLabsKeyState('');
   }, []);
 
+  const setFishAudioKey = useCallback(async (key: string) => {
+    const trimmed = key.trim();
+    if (trimmed) {
+      await SecureStore.setItemAsync(FISH_AUDIO_KEY_STORAGE, trimmed);
+    } else {
+      await SecureStore.deleteItemAsync(FISH_AUDIO_KEY_STORAGE);
+    }
+    setFishAudioKeyState(trimmed);
+  }, []);
+
+  const clearFishAudioKey = useCallback(async () => {
+    await SecureStore.deleteItemAsync(FISH_AUDIO_KEY_STORAGE);
+    setFishAudioKeyState('');
+  }, []);
+
   const value: StoryVoiceState = {
     voiceConfig,
     elevenLabsKey,
     isElevenLabsConfigured: elevenLabsKey.length > 0,
+    fishAudioKey,
+    isFishAudioConfigured: fishAudioKey.length > 0,
     setVoiceConfig,
     setElevenLabsKey,
     clearElevenLabsKey,
+    setFishAudioKey,
+    clearFishAudioKey,
   };
 
   return <StoryVoiceContext.Provider value={value}>{children}</StoryVoiceContext.Provider>;

@@ -731,8 +731,9 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         theme,
         // ─── Voix TTS (IVC ElevenLabs + iOS Personal Voice) ───────────
         voiceElevenLabsId: currentProps.voiceElevenLabsId || undefined,
+        voiceFishAudioId: currentProps.voiceFishAudioId || undefined,
         voicePersonalId: currentProps.voicePersonalId || undefined,
-        voiceSource: (['ios-personal', 'elevenlabs-cloned', 'elevenlabs-preset', 'expo-speech'].includes(currentProps.voiceSource)
+        voiceSource: (['ios-personal', 'elevenlabs-cloned', 'elevenlabs-preset', 'fish-audio-cloned', 'expo-speech'].includes(currentProps.voiceSource)
           ? (currentProps.voiceSource as Profile['voiceSource'])
           : undefined),
         // Farm/mascot/companion fields live in farm-{profileId}.md — defaults here
@@ -797,6 +798,7 @@ export function serializeFamille(
     if (profile.theme) lines.push(`theme: ${profile.theme}`);
     // Voix TTS — omises si vides (lisibilité Obsidian)
     if (profile.voiceElevenLabsId) lines.push(`voiceElevenLabsId: ${profile.voiceElevenLabsId}`);
+    if (profile.voiceFishAudioId) lines.push(`voiceFishAudioId: ${profile.voiceFishAudioId}`);
     if (profile.voicePersonalId) lines.push(`voicePersonalId: ${profile.voicePersonalId}`);
     if (profile.voiceSource) lines.push(`voiceSource: ${profile.voiceSource}`);
     if (profile.sagaTitle) lines.push(`sagaTitle: ${profile.sagaTitle}`);
@@ -2944,6 +2946,7 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
     `voice_language: ${story.voice.language}`,
   );
   if (story.voice.elevenLabsVoiceId) lines.push(`voice_id: ${story.voice.elevenLabsVoiceId}`);
+  if (story.voice.fishAudioReferenceId) lines.push(`fish_audio_ref: ${story.voice.fishAudioReferenceId}`);
   if (story.length) lines.push(`length: ${story.length}`);
   lines.push(
     `version: ${story.version}`,
@@ -3012,10 +3015,14 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
       }
       return null;
     }
+    const engine = d.voice_engine === 'elevenlabs' ? 'elevenlabs'
+      : d.voice_engine === 'fish-audio' ? 'fish-audio'
+      : 'expo-speech';
     const voiceConfig: StoryVoiceConfig = {
-      engine: (d.voice_engine === 'elevenlabs' ? 'elevenlabs' : 'expo-speech') as 'expo-speech' | 'elevenlabs',
+      engine: engine as StoryVoiceConfig['engine'],
       language: (d.voice_language === 'en' ? 'en' : 'fr') as 'fr' | 'en',
       elevenLabsVoiceId: d.voice_id || undefined,
+      fishAudioReferenceId: d.fish_audio_ref || undefined,
     };
     const validLengths = new Set(['courte', 'moyenne', 'longue', 'tres-longue']);
     const length = d.length && validLengths.has(d.length)
