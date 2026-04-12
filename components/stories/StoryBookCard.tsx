@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import type { StoryUniverse } from '../../lib/types';
 import { STORY_UNIVERSE_SPRITES } from '../../lib/stories';
@@ -10,6 +10,8 @@ import { FontSize, FontWeight } from '../../constants/typography';
 export const BOOK_WIDTH = 205;
 export const BOOK_HEIGHT = 340;
 export const BOOK_GAP = 22;
+
+const SPRING_CONFIG = { damping: 14, stiffness: 160 };
 
 // ── Fond parchemin chaud teinté selon la couleur de l'univers ────────────────
 // Mélange 78% crème (#FFF5E0) + 22% accent pour donner une teinte unique
@@ -28,18 +30,26 @@ interface Props {
 }
 
 function StoryBookCard({ universe, selected, onPress }: Props) {
-  const scale = useSharedValue(1);
-  const shadowOpacity = useSharedValue(0.15);
+  // 0 = non sélectionné, 1 = sélectionné
+  const progress = useSharedValue(0);
 
   useEffect(() => {
-    scale.value = withTiming(selected ? 1.07 : 1, { duration: 200 });
-    shadowOpacity.value = withTiming(selected ? 0.5 : 0.15, { duration: 200 });
-  }, [selected, scale, shadowOpacity]);
+    progress.value = withSpring(selected ? 1 : 0, SPRING_CONFIG);
+  }, [selected, progress]);
 
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    shadowOpacity: shadowOpacity.value,
-  }));
+  const animStyle = useAnimatedStyle(() => {
+    const s = interpolate(progress.value, [0, 1], [0.92, 1.08]);
+    const ty = interpolate(progress.value, [0, 1], [0, -12]);
+    return {
+      transform: [{ scale: s }, { translateY: ty }],
+      shadowOpacity: interpolate(progress.value, [0, 1], [0.08, 0.45]),
+    };
+  });
+
+  const spriteAnimStyle = useAnimatedStyle(() => {
+    const s = interpolate(progress.value, [0, 1], [1, 1.08]);
+    return { transform: [{ scale: s }] };
+  });
 
   const coverBg = warmCoverColor(universe.couleurAccent);
   const accent = universe.couleurAccent;
@@ -63,11 +73,13 @@ function StoryBookCard({ universe, selected, onPress }: Props) {
 
           {/* Illustration en base — occupe tout l'espace du flex */}
           {STORY_UNIVERSE_SPRITES[universe.id] ? (
-            <Image
-              source={STORY_UNIVERSE_SPRITES[universe.id]!}
-              style={styles.sprite}
-              resizeMode="stretch"
-            />
+            <Animated.View style={[styles.spriteContainer, spriteAnimStyle]}>
+              <Image
+                source={STORY_UNIVERSE_SPRITES[universe.id]!}
+                style={styles.sprite}
+                resizeMode="stretch"
+              />
+            </Animated.View>
           ) : (
             <Text style={styles.emoji}>{universe.emoji}</Text>
           )}
@@ -171,6 +183,10 @@ const styles = StyleSheet.create({
   cornerBR: { bottom: -CORNER_SIZE / 2, right: -CORNER_SIZE / 2 },
 
   // Illustration plein cadre — enfant flex normal, remplit le cover
+  spriteContainer: {
+    flex: 1,
+    overflow: 'hidden',
+  },
   sprite: {
     flex: 1,
     width: '100%',

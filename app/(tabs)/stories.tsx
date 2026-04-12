@@ -410,9 +410,6 @@ export default function StoriesScreen() {
 
     return (
       <View style={styles.universCarouselWrapper}>
-        <Text style={[styles.stepTitle, styles.stepTitleCentered, { color: colors.text }]}>
-          Quel univers pour ce soir ?
-        </Text>
         <FlatList
           ref={bookListRef}
           data={STORY_UNIVERSES}
@@ -1402,8 +1399,8 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['6xl'] },
   stepTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing['4xl'] },
-  bookCarousel: { marginHorizontal: -Spacing['2xl'], paddingVertical: Spacing['2xl'] },
-  universCarouselWrapper: { flex: 1, justifyContent: 'center', paddingTop: Spacing['4xl'] },
+  bookCarousel: { marginHorizontal: -Spacing['2xl'], paddingVertical: 40, overflow: 'visible' },
+  universCarouselWrapper: { flex: 1, justifyContent: 'center', paddingTop: 80 },
   stepTitleCentered: { textAlign: 'center', paddingHorizontal: Spacing['4xl'] },
   universBottomBar: { paddingHorizontal: Spacing['4xl'], paddingBottom: 72 },
   primaryButtonFull: { width: '100%' },
