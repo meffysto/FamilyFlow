@@ -69,6 +69,11 @@ import { VillageTechSheet } from '../../components/village/VillageTechSheet';
 import { BUILDINGS_CATALOG } from '../../lib/village';
 import type { UnlockedBuilding } from '../../lib/village';
 import { VILLAGE_GRID } from '../../lib/village/grid';
+// Q49 — Échange inter-familles via Port
+import { PortTradeModal } from '../../components/village/PortTradeModal';
+import { TradeReceiptModal } from '../../components/village/TradeReceiptModal';
+import { parseFarmProfile } from '../../lib/parser';
+import type { FarmInventory, HarvestInventory } from '../../lib/mascot/types';
 
 // ── Constantes module ──────────────────────────────────────────────────────
 
@@ -339,6 +344,11 @@ export default function VillageScreen() {
     villageTechBonuses,
     craftVillageItem,
     unlockVillageTech,
+    // Q49 — Trade inter-familles
+    sendTrade,
+    receiveTrade,
+    canSendTradeToday: canSendTrade,
+    tradesSentRemaining,
   } = useGarden();
 
   const [showAllFeed, setShowAllFeed] = useState(false);
@@ -357,6 +367,11 @@ export default function VillageScreen() {
   // Phase 31+ — modal atelier + modal arbre tech
   const [showAtelier, setShowAtelier] = useState(false);
   const [showTechTree, setShowTechTree] = useState(false);
+  // Q49 — Trade inter-familles via Port
+  const [showPortTrade, setShowPortTrade] = useState(false);
+  const [tradeReceipt, setTradeReceipt] = useState<{ emoji: string; label: string; qty: number } | null>(null);
+  const [farmInv, setFarmInv] = useState<FarmInventory>({ oeuf: 0, lait: 0, farine: 0, miel: 0 });
+  const [harvestInv, setHarvestInv] = useState<HarvestInventory>({});
   const season = getCurrentSeason();
 
   // ── Memos ─────────────────────────────────────────────────────────────
@@ -487,13 +502,33 @@ export default function VillageScreen() {
     };
   }, []);
 
+  // Q49 — Charger les inventaires ferme du profil actif (ferme + récoltes)
+  const loadFarmInventories = useCallback(async () => {
+    if (!vault || !activeProfile) return;
+    try {
+      const gamiPath = `gami-${activeProfile.id}.md`;
+      const content = await vault.readFile(gamiPath).catch(() => '');
+      const farmData = parseFarmProfile(content);
+      setFarmInv(farmData.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 });
+      setHarvestInv(farmData.harvestInventory ?? {});
+    } catch {
+      /* non-critique */
+    }
+  }, [vault, activeProfile]);
+
   // ── Phase 30/31 — handler tap bâtiment ───────────────────────────────
-  // Bâtiment débloqué → modal production. Bâtiment verrouillé → tooltip informatif.
+  // Bâtiment débloqué → modal production. Port → PortTradeModal. Verrouillé → tooltip.
   const handleBuildingPress = useCallback(
     (ub: UnlockedBuilding) => {
+      // Q49 — Port intercepté : ouvre la modal d'échange inter-familles
+      if (ub.buildingId === 'port') {
+        loadFarmInventories();
+        setShowPortTrade(true);
+        return;
+      }
       setSelectedBuilding(ub);
     },
-    [],
+    [loadFarmInventories],
   );
 
   const handleBuildingCollect = useCallback(
@@ -553,6 +588,10 @@ export default function VillageScreen() {
   const handleToggleFeed = useCallback(() => {
     setShowAllFeed(prev => !prev);
   }, []);
+
+  useEffect(() => {
+    loadFarmInventories();
+  }, [loadFarmInventories]);
 
   // ── Render ────────────────────────────────────────────────────────────
 
@@ -945,6 +984,46 @@ export default function VillageScreen() {
         unlockedTechs={atelierTechs}
         onUnlock={unlockVillageTech}
         onClose={() => setShowTechTree(false)}
+      />
+
+      {/* Q49 — Modal Port : échange inter-familles */}
+      <PortTradeModal
+        visible={showPortTrade}
+        onClose={() => setShowPortTrade(false)}
+        villageInventory={inventory}
+        farmInventory={farmInv}
+        harvestInventory={harvestInv}
+        onSend={async (cat, itemId, qty) => {
+          if (!activeProfile) return null;
+          const code = await sendTrade(cat, itemId, qty, activeProfile.id);
+          if (code) await loadFarmInventories();
+          return code;
+        }}
+        onReceive={async (code) => {
+          if (!activeProfile) return { success: false, error: 'Profil introuvable' };
+          const result = await receiveTrade(code, activeProfile.id);
+          if (result.success) {
+            await loadFarmInventories();
+            setShowPortTrade(false);
+            setTradeReceipt({
+              emoji: result.emoji ?? '📦',
+              label: result.itemLabel ?? 'Item',
+              qty: result.quantity ?? 1,
+            });
+          }
+          return result;
+        }}
+        canSendToday={canSendTrade}
+        sendsRemaining={tradesSentRemaining}
+      />
+
+      {/* Q49 — Modal réception colis animée */}
+      <TradeReceiptModal
+        visible={!!tradeReceipt}
+        itemEmoji={tradeReceipt?.emoji ?? '📦'}
+        itemLabel={tradeReceipt?.label ?? ''}
+        quantity={tradeReceipt?.qty ?? 1}
+        onDone={() => setTradeReceipt(null)}
       />
     </Animated.View>
   );

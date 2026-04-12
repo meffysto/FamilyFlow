@@ -630,6 +630,10 @@ export function parseFarmProfile(content: string): FarmProfileData {
       ? props.unlocked_effect_recipes.split(',').map(s => s.trim()).filter(Boolean)
       : [],
     village_claimed_week: props.village_claimed_week || undefined,
+    trade_claimed_codes: props.trade_claimed_codes
+      ? props.trade_claimed_codes.split(',').map(s => s.trim()).filter(Boolean)
+      : [],
+    trade_sent_today: props.trade_sent_today || undefined,
   };
 }
 
@@ -674,6 +678,10 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
     lines.push(`unlocked_effect_recipes: ${data.unlockedEffectRecipes.join(',')}`);
   }
   if (data.village_claimed_week) lines.push(`village_claimed_week: ${data.village_claimed_week}`);
+  if (data.trade_claimed_codes && data.trade_claimed_codes.length > 0) {
+    lines.push(`trade_claimed_codes: ${data.trade_claimed_codes.join(',')}`);
+  }
+  if (data.trade_sent_today) lines.push(`trade_sent_today: ${data.trade_sent_today}`);
 
   return lines.join('\n') + '\n';
 }

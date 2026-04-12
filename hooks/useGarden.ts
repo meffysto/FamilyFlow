@@ -27,6 +27,16 @@ import {
   applyRecipeCost,
   computeVillageTechBonuses,
   VILLAGE_TECH_TREE,
+  encodeTrade,
+  decodeTrade,
+  isTradeExpired,
+  isTradeAlreadyClaimed,
+  canSendTradeToday,
+  incrementTradesSent,
+  tradesRemainingToday,
+  MAX_TRADES_PER_DAY,
+  getTradeItemMeta,
+  type TradeCategory,
 } from '../lib/village';
 import { parseFarmProfile, serializeFarmProfile } from '../lib/parser';
 import type {
@@ -90,6 +100,11 @@ export interface UseGardenReturn {
   villageTechBonuses: VillageTechBonuses;
   craftVillageItem: (recipeId: string, profileId: string) => Promise<boolean>;
   unlockVillageTech: (techId: string) => Promise<boolean>;
+  // Q49 — Échange inter-familles via Port
+  sendTrade: (category: TradeCategory, itemId: string, quantity: number, profileId: string) => Promise<string | null>;
+  receiveTrade: (code: string, profileId: string) => Promise<{ success: boolean; itemLabel?: string; emoji?: string; quantity?: number; error?: string }>;
+  canSendTradeToday: boolean;
+  tradesSentRemaining: number;
 }
 
 /**
@@ -106,6 +121,9 @@ export function useGarden(): UseGardenReturn {
 
   // État local chargement
   const [isLoading, setIsLoading] = useState(false);
+
+  // Q49 — État trade journalier (chargé au mount depuis le profil actif)
+  const [tradeSentTodayField, setTradeSentTodayField] = useState<string | undefined>(undefined);
 
   // ---------------------------------------------------------------------------
   // Derived state via useMemo
@@ -467,6 +485,218 @@ export function useGarden(): UseGardenReturn {
   );
 
   // ---------------------------------------------------------------------------
+  // Q49 — Trade inter-familles via Port
+  // ---------------------------------------------------------------------------
+
+  /** Dérive canSendTradeToday et tradesSentRemaining depuis tradeSentTodayField */
+  const canSendTradeTodayValue = useMemo(
+    () => canSendTradeToday(tradeSentTodayField),
+    [tradeSentTodayField],
+  );
+
+  const tradesSentRemainingValue = useMemo(
+    () => tradesRemainingToday(tradeSentTodayField),
+    [tradeSentTodayField],
+  );
+
+  /**
+   * Envoie un colis inter-familles.
+   * Vérifie le quota journalier, déduit le stock, incrémente le compteur, encode le code.
+   * Retourne le code ou null si impossible.
+   */
+  const sendTrade = useCallback(
+    async (category: TradeCategory, itemId: string, quantity: number, profileId: string): Promise<string | null> => {
+      if (!vault) return null;
+      if (!canSendTradeToday(tradeSentTodayField)) return null;
+
+      const gamiPath = `gami-${profileId}.md`;
+      const gamiContent = await vault.readFile(gamiPath).catch(() => '');
+      const farmData = parseFarmProfile(gamiContent);
+
+      // Vérifier et déduire le stock selon catégorie
+      let gardenUpdated = false;
+      let newGardenData: VillageData | null = null;
+
+      if (category === 'village') {
+        const currentQty = gardenData.inventory[itemId] ?? 0;
+        if (currentQty < quantity) return null;
+        newGardenData = {
+          ...gardenData,
+          inventory: { ...gardenData.inventory, [itemId]: currentQty - quantity },
+        };
+        gardenUpdated = true;
+      } else if (category === 'farm') {
+        const invKey = itemId as keyof import('../lib/mascot/types').FarmInventory;
+        const currentQty = (farmData.farmInventory?.[invKey] ?? 0);
+        if (currentQty < quantity) return null;
+        const updatedFarmInv = {
+          ...farmData.farmInventory,
+          oeuf: farmData.farmInventory?.oeuf ?? 0,
+          lait: farmData.farmInventory?.lait ?? 0,
+          farine: farmData.farmInventory?.farine ?? 0,
+          miel: farmData.farmInventory?.miel ?? 0,
+          [invKey]: currentQty - quantity,
+        };
+        const newField = incrementTradesSent(tradeSentTodayField);
+        const updatedFarmData = {
+          ...farmData,
+          farmInventory: updatedFarmInv,
+          trade_sent_today: newField,
+        };
+        const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        setTradeSentTodayField(newField);
+        // Encoder le code
+        const payload = {
+          category,
+          itemId,
+          quantity,
+          timestamp: Math.floor(Date.now() / 1000),
+          nonce: Math.floor(Math.random() * 9999),
+        };
+        return encodeTrade(payload);
+      } else if (category === 'harvest') {
+        const currentQty = farmData.harvestInventory?.[itemId] ?? 0;
+        if (currentQty < quantity) return null;
+        const updatedHarvest = {
+          ...farmData.harvestInventory,
+          [itemId]: currentQty - quantity,
+        };
+        const newField = incrementTradesSent(tradeSentTodayField);
+        const updatedFarmData = {
+          ...farmData,
+          harvestInventory: updatedHarvest,
+          trade_sent_today: newField,
+        };
+        const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        setTradeSentTodayField(newField);
+        const payload = {
+          category,
+          itemId,
+          quantity,
+          timestamp: Math.floor(Date.now() / 1000),
+          nonce: Math.floor(Math.random() * 9999),
+        };
+        return encodeTrade(payload);
+      }
+
+      // Village — écrire jardin-familial.md + gami pour trade_sent_today
+      if (gardenUpdated && newGardenData) {
+        const newContent = serializeGardenFile(newGardenData);
+        await vault.writeFile(VILLAGE_FILE, newContent);
+        setGardenRaw(newContent);
+        const newField = incrementTradesSent(tradeSentTodayField);
+        const updatedFarmData = { ...farmData, trade_sent_today: newField };
+        const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        setTradeSentTodayField(newField);
+        const payload = {
+          category,
+          itemId,
+          quantity,
+          timestamp: Math.floor(Date.now() / 1000),
+          nonce: Math.floor(Math.random() * 9999),
+        };
+        return encodeTrade(payload);
+      }
+
+      return null;
+    },
+    [vault, gardenData, tradeSentTodayField, profiles, setGardenRaw],
+  );
+
+  /**
+   * Reçoit un colis via un code-cadeau.
+   * Valide le code, vérifie expiration + double-claim, ajoute l'item à l'inventaire.
+   */
+  const receiveTrade = useCallback(
+    async (code: string, profileId: string): Promise<{ success: boolean; itemLabel?: string; emoji?: string; quantity?: number; error?: string }> => {
+      if (!vault) return { success: false, error: 'Vault non disponible' };
+
+      const payload = decodeTrade(code);
+      if (!payload) return { success: false, error: 'Code invalide' };
+
+      if (isTradeExpired(payload)) return { success: false, error: 'Code expiré (validité 48h)' };
+
+      const gamiPath = `gami-${profileId}.md`;
+      const gamiContent = await vault.readFile(gamiPath).catch(() => '');
+      const farmData = parseFarmProfile(gamiContent);
+
+      const claimedCodes = farmData.trade_claimed_codes ?? [];
+      if (isTradeAlreadyClaimed(code, claimedCodes)) {
+        return { success: false, error: 'Ce code a déjà été utilisé' };
+      }
+
+      const { label, emoji } = getTradeItemMeta(payload.category, payload.itemId);
+
+      // Ajouter l'item selon la catégorie
+      if (payload.category === 'village') {
+        const currentQty = gardenData.inventory[payload.itemId] ?? 0;
+        const newGardenData = {
+          ...gardenData,
+          inventory: { ...gardenData.inventory, [payload.itemId]: currentQty + payload.quantity },
+        };
+        const newContent = serializeGardenFile(newGardenData);
+        await vault.writeFile(VILLAGE_FILE, newContent);
+        setGardenRaw(newContent);
+      } else if (payload.category === 'farm') {
+        const invKey = payload.itemId as keyof import('../lib/mascot/types').FarmInventory;
+        const currentQty = farmData.farmInventory?.[invKey] ?? 0;
+        const updatedFarmInv = {
+          oeuf: farmData.farmInventory?.oeuf ?? 0,
+          lait: farmData.farmInventory?.lait ?? 0,
+          farine: farmData.farmInventory?.farine ?? 0,
+          miel: farmData.farmInventory?.miel ?? 0,
+          ...farmData.farmInventory,
+          [invKey]: currentQty + payload.quantity,
+        };
+        const newClaimedCodes = [...claimedCodes, code.trim().toUpperCase()].slice(-200);
+        const updatedFarmData = { ...farmData, farmInventory: updatedFarmInv, trade_claimed_codes: newClaimedCodes };
+        const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
+      } else if (payload.category === 'harvest') {
+        const currentQty = farmData.harvestInventory?.[payload.itemId] ?? 0;
+        const updatedHarvest = { ...farmData.harvestInventory, [payload.itemId]: currentQty + payload.quantity };
+        const newClaimedCodes = [...claimedCodes, code.trim().toUpperCase()].slice(-200);
+        const updatedFarmData = { ...farmData, harvestInventory: updatedHarvest, trade_claimed_codes: newClaimedCodes };
+        const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
+      }
+
+      // Village — mettre aussi à jour le claimed code dans gami
+      const newClaimedCodes = [...claimedCodes, code.trim().toUpperCase()].slice(-200);
+      const updatedFarmData = { ...farmData, trade_claimed_codes: newClaimedCodes };
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+
+      return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
+    },
+    [vault, gardenData, profiles, setGardenRaw],
+  );
+
+  // Charger trade_sent_today du profil actif au mount (et quand vault/profils changent)
+  useEffect(() => {
+    if (!vault || profiles.length === 0) return;
+    const activeProfile = profiles.find(p => p.statut !== 'grossesse');
+    if (!activeProfile) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const gamiPath = `gami-${activeProfile.id}.md`;
+        const content = await vault.readFile(gamiPath).catch(() => '');
+        const farmData = parseFarmProfile(content);
+        if (!cancelled) setTradeSentTodayField(farmData.trade_sent_today);
+      } catch {
+        /* non-critique */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [vault, profiles]);
+
+  // ---------------------------------------------------------------------------
   // claimReward (per D-08, D-09)
   // ---------------------------------------------------------------------------
 
@@ -525,5 +755,10 @@ export function useGarden(): UseGardenReturn {
     villageTechBonuses,
     craftVillageItem,
     unlockVillageTech,
+    // Q49 — Trade inter-familles
+    sendTrade,
+    receiveTrade,
+    canSendTradeToday: canSendTradeTodayValue,
+    tradesSentRemaining: tradesSentRemainingValue,
   };
 }
