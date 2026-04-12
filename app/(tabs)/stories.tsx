@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, FlatList, TextInput, ScrollView, Pressable,
   StyleSheet, SafeAreaView, ActivityIndicator, Alert, Modal,
+  ActionSheetIOS, Platform, useWindowDimensions,
 } from 'react-native';
 import * as Speech from 'expo-speech';
 import Animated, {
@@ -17,7 +18,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
 import { useStoryVoice } from '../../contexts/StoryVoiceContext';
 import { useAnimConfig } from '../../hooks/useAnimConfig';
-import StoryUniverseCard from '../../components/stories/StoryUniverseCard';
+import StoryBookCard, { BOOK_WIDTH, BOOK_GAP } from '../../components/stories/StoryBookCard';
 import StoryPlayer from '../../components/stories/StoryPlayer';
 import VoiceRecorder from '../../components/stories/VoiceRecorder';
 import { getPersonalVoices } from '../../lib/personal-voice';
@@ -30,7 +31,7 @@ import {
 } from '../../lib/stories';
 import { generateBedtimeStory } from '../../lib/ai-service';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
-import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryLength, Profile, Memory, ChildQuote } from '../../lib/types';
+import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryVoiceEngine, StoryLength, Profile, Memory, ChildQuote } from '../../lib/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -380,27 +381,53 @@ export default function StoriesScreen() {
   // ── Étape 2 : Choisir l'univers ──
 
   function ChoisirUniversStep({ enfantId, enfantName }: { enfantId: string; enfantName: string }) {
+    const { width: screenWidth } = useWindowDimensions();
+    const bookListRef = useRef<FlatList>(null);
+
     const recentIds = stories
       .filter(s => s.enfantId === enfantId)
       .slice(0, 5)
       .map(s => s.univers);
 
+    const SNAP_INTERVAL = BOOK_WIDTH + BOOK_GAP;
+    const horizontalPadding = (screenWidth - BOOK_WIDTH) / 2;
+
+    const handleSnap = useCallback((e: { nativeEvent: { contentOffset: { x: number } } }) => {
+      const index = Math.round(e.nativeEvent.contentOffset.x / SNAP_INTERVAL);
+      const universe = STORY_UNIVERSES[Math.max(0, Math.min(index, STORY_UNIVERSES.length - 1))];
+      if (!universe) return;
+      const realId = universe.id === 'surprise' ? pickSurpriseUniverse(recentIds) : universe.id;
+      setSelectedUniversId(realId);
+      Haptics.selectionAsync();
+    }, [recentIds, SNAP_INTERVAL]);
+
+    const handleBookPress = useCallback((u: typeof STORY_UNIVERSES[0]) => {
+      const realId = u.id === 'surprise' ? pickSurpriseUniverse(recentIds) : u.id;
+      setSelectedUniversId(realId);
+      const idx = STORY_UNIVERSES.indexOf(u);
+      bookListRef.current?.scrollToIndex({ index: idx, animated: true, viewPosition: 0.5 });
+    }, [recentIds]);
+
     return (
       <View>
         <Text style={[styles.stepTitle, { color: colors.text }]}>Quel univers pour ce soir ?</Text>
         <FlatList
+          ref={bookListRef}
           data={STORY_UNIVERSES}
           keyExtractor={u => u.id}
-          numColumns={2}
-          scrollEnabled={false}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={SNAP_INTERVAL}
+          decelerationRate="fast"
+          contentContainerStyle={{ paddingHorizontal: horizontalPadding }}
+          ItemSeparatorComponent={() => <View style={{ width: BOOK_GAP }} />}
+          style={styles.bookCarousel}
+          onMomentumScrollEnd={handleSnap}
           renderItem={({ item: u }) => (
-            <StoryUniverseCard
+            <StoryBookCard
               universe={u}
               selected={selectedUniversId === u.id}
-              onPress={() => {
-                const realId = u.id === 'surprise' ? pickSurpriseUniverse(recentIds) : u.id;
-                setSelectedUniversId(realId);
-              }}
+              onPress={() => handleBookPress(u)}
             />
           )}
         />
@@ -731,27 +758,35 @@ export default function StoriesScreen() {
         {/* Sélecteur voix unifié */}
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Voix de narration</Text>
 
-        {/* Onglets moteur */}
-        <View style={styles.voiceEngineRow}>
-          {([
-            { key: 'expo-speech' as const, label: '🆓 Système' },
-            { key: 'elevenlabs' as const, label: `✨ ElevenLabs${isElevenLabsConfigured ? '' : ' (clé)'}` },
-            { key: 'fish-audio' as const, label: `🐟 Fish Audio${isFishAudioConfigured ? '' : ' (clé)'}` },
-          ]).map(({ key, label }) => (
-            <Pressable
-              key={key}
-              style={[styles.voiceChip, { backgroundColor: localVoiceEngine === key ? primary : colors.card, borderColor: colors.border }]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setLocalVoiceEngine(key);
-              }}
-            >
-              <Text style={[styles.chipText, { color: localVoiceEngine === key ? '#fff' : colors.text }]}>
-                {label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        {/* Sélecteur moteur (tap → ActionSheet) */}
+        <Pressable
+          style={[styles.voiceEnginePicker, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => {
+            const engines: { key: StoryVoiceEngine; label: string }[] = [
+              { key: 'expo-speech', label: '🆓 Système (gratuit, hors-ligne)' },
+              { key: 'elevenlabs', label: `✨ ElevenLabs${isElevenLabsConfigured ? '' : ' (clé non configurée)'}` },
+              { key: 'fish-audio', label: `🐟 Fish Audio${isFishAudioConfigured ? '' : ' (clé non configurée)'}` },
+            ];
+            if (Platform.OS === 'ios') {
+              ActionSheetIOS.showActionSheetWithOptions(
+                { options: [...engines.map(e => e.label), 'Annuler'], cancelButtonIndex: engines.length, title: 'Moteur de voix' },
+                (idx) => { if (idx < engines.length) { Haptics.selectionAsync(); setLocalVoiceEngine(engines[idx].key); } },
+              );
+            } else {
+              // Fallback Android : cycle simple
+              const keys: StoryVoiceEngine[] = ['expo-speech', 'elevenlabs', 'fish-audio'];
+              const next = keys[(keys.indexOf(localVoiceEngine) + 1) % keys.length];
+              Haptics.selectionAsync();
+              setLocalVoiceEngine(next);
+            }
+          }}
+        >
+          <Text style={[styles.voiceEnginePickerLabel, { color: colors.textMuted }]}>Moteur</Text>
+          <Text style={[styles.voiceEnginePickerValue, { color: colors.text }]}>
+            {localVoiceEngine === 'expo-speech' ? '🆓 Système' : localVoiceEngine === 'elevenlabs' ? '✨ ElevenLabs' : '🐟 Fish Audio'}
+          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 16 }}>›</Text>
+        </Pressable>
 
         {/* Langue */}
         <View style={[styles.voiceEngineRow, { marginTop: Spacing.md }]}>
@@ -1341,6 +1376,7 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['6xl'] },
   stepTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing['4xl'] },
+  bookCarousel: { marginHorizontal: -Spacing['2xl'], paddingVertical: Spacing['2xl'] },
   emptyState: { alignItems: 'center', paddingTop: Spacing['6xl'] },
   emptyEmoji: { fontSize: 64, marginBottom: Spacing['2xl'] },
   emptyText: { fontSize: FontSize.body, textAlign: 'center' },
@@ -1362,6 +1398,9 @@ const styles = StyleSheet.create({
   textInput: { borderRadius: Radius.lg, borderWidth: 1, padding: Spacing['2xl'], fontSize: FontSize.body, minHeight: 60, marginBottom: Spacing.lg },
   voiceEngineRow: { flexDirection: 'row', gap: Spacing.md },
   voiceChip: { flex: 1, paddingVertical: Spacing.lg, borderRadius: Radius.full, borderWidth: 1, alignItems: 'center' },
+  voiceEnginePicker: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: Radius.lg, paddingVertical: Spacing.lg, paddingHorizontal: Spacing['2xl'], gap: Spacing.md },
+  voiceEnginePickerLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
+  voiceEnginePickerValue: { flex: 1, fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   voiceOption: { padding: Spacing.lg, borderRadius: Radius.md, borderWidth: 1, marginBottom: Spacing.md },
   voiceSubLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.medium, marginBottom: Spacing.md, textTransform: 'uppercase', letterSpacing: 0.8 },
   voiceParentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
