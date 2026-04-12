@@ -8,7 +8,7 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 export const BOOK_WIDTH = 205;
-export const BOOK_HEIGHT = 295;
+export const BOOK_HEIGHT = 340;
 export const BOOK_GAP = 22;
 
 // ── Fond parchemin chaud teinté selon la couleur de l'univers ────────────────
