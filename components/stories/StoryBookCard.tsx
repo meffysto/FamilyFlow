@@ -8,9 +8,9 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
-export const BOOK_WIDTH = 148;
-export const BOOK_HEIGHT = 210;
-export const BOOK_GAP = 16;
+export const BOOK_WIDTH = 175;
+export const BOOK_HEIGHT = 250;
+export const BOOK_GAP = 20;
 
 interface Props {
   universe: StoryUniverse;
@@ -89,24 +89,24 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     overflow: 'hidden',
     shadowOffset: { width: 3, height: 6 },
-    shadowRadius: 10,
+    shadowRadius: 12,
     elevation: 8,
   },
   spine: {
-    width: 11,
+    width: 13,
   },
   cover: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 44,
+    paddingBottom: 52,
   },
   sprite: {
-    width: 84,
-    height: 84,
+    width: 100,
+    height: 100,
   },
   emoji: {
-    fontSize: 52,
+    fontSize: 60,
   },
   titleBar: {
     position: 'absolute',

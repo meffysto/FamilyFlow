@@ -67,6 +67,7 @@ export default function StoriesScreen() {
   const { config: aiConfig, storyConfig } = useAI();
   const { voiceConfig, elevenLabsKey, isElevenLabsConfigured, fishAudioKey, isFishAudioConfigured, setVoiceConfig } = useStoryVoice();
   const { reduceMotion } = useAnimConfig();
+  const { width: screenWidth } = useWindowDimensions();
   const {
     profiles, moods, quotes, memories, rdvs, healthRecords, tasks, stories, saveStory, deleteStory, updateProfile,
   } = useVault();
@@ -80,6 +81,31 @@ export default function StoriesScreen() {
   const [step, setStep] = useState<StoryFlowStep>({ etape: 'choisir_enfant' });
   const [selectedUniversId, setSelectedUniversId] = useState<StoryUniverseId | null>(null);
   const [detailText, setDetailText] = useState('');
+
+  // ── Carousel livres (ChoisirUniversStep) ────────────────────────────────────
+  // Défini ici pour éviter le remount du FlatList quand selectedUniversId change
+  const bookListRef = useRef<FlatList>(null);
+  const SNAP_INTERVAL = BOOK_WIDTH + BOOK_GAP;
+  const bookHorizontalPadding = (screenWidth - BOOK_WIDTH) / 2;
+
+  const handleBookSnap = useCallback((e: { nativeEvent: { contentOffset: { x: number } } }) => {
+    const index = Math.round(e.nativeEvent.contentOffset.x / SNAP_INTERVAL);
+    const universe = STORY_UNIVERSES[Math.max(0, Math.min(index, STORY_UNIVERSES.length - 1))];
+    if (!universe) return;
+    const recentIds = step.etape === 'choisir_univers'
+      ? stories.filter(s => s.enfantId === step.enfantId).slice(0, 5).map(s => s.univers)
+      : [];
+    const realId = universe.id === 'surprise' ? pickSurpriseUniverse(recentIds) : universe.id;
+    setSelectedUniversId(realId);
+    Haptics.selectionAsync();
+  }, [SNAP_INTERVAL, step, stories]);
+
+  const handleBookPress = useCallback((u: typeof STORY_UNIVERSES[0], recentIds: StoryUniverseId[]) => {
+    const realId = u.id === 'surprise' ? pickSurpriseUniverse(recentIds) : u.id;
+    setSelectedUniversId(realId);
+    const idx = STORY_UNIVERSES.indexOf(u);
+    bookListRef.current?.scrollToOffset({ offset: idx * SNAP_INTERVAL, animated: true });
+  }, [SNAP_INTERVAL]);
   const confettiRef = useRef<any>(null);
 
   // ─── États sélecteur voix (PersonnaliserStep) ────────────────────────────
@@ -379,34 +405,13 @@ export default function StoriesScreen() {
   }
 
   // ── Étape 2 : Choisir l'univers ──
+  // Appelée comme fonction (pas JSX) pour éviter le remount FlatList sur chaque setState
 
-  function ChoisirUniversStep({ enfantId, enfantName }: { enfantId: string; enfantName: string }) {
-    const { width: screenWidth } = useWindowDimensions();
-    const bookListRef = useRef<FlatList>(null);
-
+  function renderChoisirUniversStep({ enfantId, enfantName }: { enfantId: string; enfantName: string }) {
     const recentIds = stories
       .filter(s => s.enfantId === enfantId)
       .slice(0, 5)
       .map(s => s.univers);
-
-    const SNAP_INTERVAL = BOOK_WIDTH + BOOK_GAP;
-    const horizontalPadding = (screenWidth - BOOK_WIDTH) / 2;
-
-    const handleSnap = useCallback((e: { nativeEvent: { contentOffset: { x: number } } }) => {
-      const index = Math.round(e.nativeEvent.contentOffset.x / SNAP_INTERVAL);
-      const universe = STORY_UNIVERSES[Math.max(0, Math.min(index, STORY_UNIVERSES.length - 1))];
-      if (!universe) return;
-      const realId = universe.id === 'surprise' ? pickSurpriseUniverse(recentIds) : universe.id;
-      setSelectedUniversId(realId);
-      Haptics.selectionAsync();
-    }, [recentIds, SNAP_INTERVAL]);
-
-    const handleBookPress = useCallback((u: typeof STORY_UNIVERSES[0]) => {
-      const realId = u.id === 'surprise' ? pickSurpriseUniverse(recentIds) : u.id;
-      setSelectedUniversId(realId);
-      const idx = STORY_UNIVERSES.indexOf(u);
-      bookListRef.current?.scrollToIndex({ index: idx, animated: true, viewPosition: 0.5 });
-    }, [recentIds]);
 
     return (
       <View>
@@ -419,15 +424,15 @@ export default function StoriesScreen() {
           showsHorizontalScrollIndicator={false}
           snapToInterval={SNAP_INTERVAL}
           decelerationRate="fast"
-          contentContainerStyle={{ paddingHorizontal: horizontalPadding }}
+          contentContainerStyle={{ paddingHorizontal: bookHorizontalPadding }}
           ItemSeparatorComponent={() => <View style={{ width: BOOK_GAP }} />}
           style={styles.bookCarousel}
-          onMomentumScrollEnd={handleSnap}
+          onMomentumScrollEnd={handleBookSnap}
           renderItem={({ item: u }) => (
             <StoryBookCard
               universe={u}
               selected={selectedUniversId === u.id}
-              onPress={() => handleBookPress(u)}
+              onPress={() => handleBookPress(u, recentIds)}
             />
           )}
         />
@@ -1302,7 +1307,7 @@ export default function StoriesScreen() {
       case 'choisir_enfant':
         return <ChoisirEnfantStep />;
       case 'choisir_univers':
-        return <ChoisirUniversStep enfantId={step.enfantId} enfantName={step.enfantName} />;
+        return renderChoisirUniversStep({ enfantId: step.enfantId, enfantName: step.enfantName });
       case 'personnaliser':
         return <PersonnaliserStep enfantId={step.enfantId} enfantName={step.enfantName} universId={step.universId} />;
       case 'generation':
