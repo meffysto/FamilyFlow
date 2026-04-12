@@ -414,8 +414,10 @@ export default function StoriesScreen() {
       .map(s => s.univers);
 
     return (
-      <View>
-        <Text style={[styles.stepTitle, { color: colors.text }]}>Quel univers pour ce soir ?</Text>
+      <View style={styles.universCarouselWrapper}>
+        <Text style={[styles.stepTitle, styles.stepTitleCentered, { color: colors.text }]}>
+          Quel univers pour ce soir ?
+        </Text>
         <FlatList
           ref={bookListRef}
           data={STORY_UNIVERSES}
@@ -436,9 +438,18 @@ export default function StoriesScreen() {
             />
           )}
         />
+      </View>
+    );
+  }
+
+  // Bouton Continuer spécifique à l'étape choisir_univers (hors ScrollView)
+  function renderUniversContinuerButton({ enfantId, enfantName }: { enfantId: string; enfantName: string }) {
+    return (
+      <View style={styles.universBottomBar}>
         <Pressable
           style={[
             styles.primaryButton,
+            styles.primaryButtonFull,
             { backgroundColor: selectedUniversId ? primary : colors.border },
           ]}
           disabled={!selectedUniversId}
@@ -1358,14 +1369,21 @@ export default function StoriesScreen() {
 
       {/* Contenu animé */}
       <Animated.View style={[styles.content, animStyle]}>
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderContent()}
-        </ScrollView>
+        {step.etape === 'choisir_univers' ? (
+          <>
+            {renderChoisirUniversStep({ enfantId: step.enfantId, enfantName: step.enfantName })}
+            {renderUniversContinuerButton({ enfantId: step.enfantId, enfantName: step.enfantName })}
+          </>
+        ) : (
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {renderContent()}
+          </ScrollView>
+        )}
       </Animated.View>
     </SafeAreaView>
   );
@@ -1382,6 +1400,10 @@ const styles = StyleSheet.create({
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['6xl'] },
   stepTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing['4xl'] },
   bookCarousel: { marginHorizontal: -Spacing['2xl'], paddingVertical: Spacing['2xl'] },
+  universCarouselWrapper: { flex: 1, justifyContent: 'center', paddingTop: Spacing['4xl'] },
+  stepTitleCentered: { textAlign: 'center', paddingHorizontal: Spacing['4xl'] },
+  universBottomBar: { paddingHorizontal: Spacing['4xl'], paddingBottom: Spacing['4xl'] },
+  primaryButtonFull: { width: '100%' },
   emptyState: { alignItems: 'center', paddingTop: Spacing['6xl'] },
   emptyEmoji: { fontSize: 64, marginBottom: Spacing['2xl'] },
   emptyText: { fontSize: FontSize.body, textAlign: 'center' },

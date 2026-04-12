@@ -7,9 +7,9 @@ import { STORY_UNIVERSE_SPRITES } from '../../lib/stories';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
-export const BOOK_WIDTH = 175;
-export const BOOK_HEIGHT = 250;
-export const BOOK_GAP = 20;
+export const BOOK_WIDTH = 205;
+export const BOOK_HEIGHT = 295;
+export const BOOK_GAP = 22;
 
 // ── Fond parchemin chaud teinté selon la couleur de l'univers ────────────────
 // Mélange 78% crème (#FFF5E0) + 22% accent pour donner une teinte unique
@@ -174,11 +174,11 @@ const styles = StyleSheet.create({
 
   // Illustration
   sprite: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 120,
   },
   emoji: {
-    fontSize: 60,
+    fontSize: 72,
   },
 
   // Ruban titre
