@@ -92,17 +92,12 @@ export default function StoriesScreen() {
     const index = Math.round(e.nativeEvent.contentOffset.x / SNAP_INTERVAL);
     const universe = STORY_UNIVERSES[Math.max(0, Math.min(index, STORY_UNIVERSES.length - 1))];
     if (!universe) return;
-    const recentIds = step.etape === 'choisir_univers'
-      ? stories.filter(s => s.enfantId === step.enfantId).slice(0, 5).map(s => s.univers)
-      : [];
-    const realId = universe.id === 'surprise' ? pickSurpriseUniverse(recentIds) : universe.id;
-    setSelectedUniversId(realId);
+    setSelectedUniversId(universe.id);
     Haptics.selectionAsync();
-  }, [SNAP_INTERVAL, step, stories]);
+  }, [SNAP_INTERVAL]);
 
-  const handleBookPress = useCallback((u: typeof STORY_UNIVERSES[0], recentIds: StoryUniverseId[]) => {
-    const realId = u.id === 'surprise' ? pickSurpriseUniverse(recentIds) : u.id;
-    setSelectedUniversId(realId);
+  const handleBookPress = useCallback((u: typeof STORY_UNIVERSES[0]) => {
+    setSelectedUniversId(u.id);
     const idx = STORY_UNIVERSES.indexOf(u);
     bookListRef.current?.scrollToOffset({ offset: idx * SNAP_INTERVAL, animated: true });
   }, [SNAP_INTERVAL]);
@@ -434,7 +429,7 @@ export default function StoriesScreen() {
             <StoryBookCard
               universe={u}
               selected={selectedUniversId === u.id}
-              onPress={() => handleBookPress(u, recentIds)}
+              onPress={() => handleBookPress(u)}
             />
           )}
         />
@@ -444,6 +439,11 @@ export default function StoriesScreen() {
 
   // Bouton Continuer spécifique à l'étape choisir_univers (hors ScrollView)
   function renderUniversContinuerButton({ enfantId, enfantName }: { enfantId: string; enfantName: string }) {
+    const recentIds = stories
+      .filter(s => s.enfantId === enfantId)
+      .slice(0, 5)
+      .map(s => s.univers);
+
     return (
       <View style={styles.universBottomBar}>
         <Pressable
@@ -455,7 +455,10 @@ export default function StoriesScreen() {
           disabled={!selectedUniversId}
           onPress={() => {
             if (!selectedUniversId) return;
-            goTo({ etape: 'personnaliser', enfantId, enfantName, universId: selectedUniversId });
+            const universId = selectedUniversId === 'surprise'
+              ? pickSurpriseUniverse(recentIds)
+              : selectedUniversId;
+            goTo({ etape: 'personnaliser', enfantId, enfantName, universId });
           }}
         >
           <Text style={styles.primaryButtonText}>Continuer →</Text>
