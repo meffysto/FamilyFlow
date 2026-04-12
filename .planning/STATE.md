@@ -4,7 +4,7 @@ milestone: v1.5
 milestone_name: Village Vivant
 status: verifying
 last_updated: "2026-04-11T21:54:36.065Z"
-last_activity: "2026-04-12 - Completed quick task 260412-0bj: iOS Personal Voice branché + fallback ElevenLabs par genre"
+last_activity: "2026-04-12 - Completed quick task 260412-q49: Échange inter-familles via le Port du village"
 progress:
   total_phases: 4
   completed_phases: 1
@@ -28,7 +28,7 @@ Phase: 30 (decorations-persistantes) — EXECUTING
 Plan: 3 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
-Last activity: 2026-04-12 - Completed quick task 260412-gf5: Fish Audio comme 3e moteur TTS histoires + clonage vocal
+Last activity: 2026-04-12 - Completed quick task 260412-q49: Échange inter-familles via le Port du village
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
@@ -47,6 +47,7 @@ Status: Phase complete — ready for verification
 | 260411-wyx | VoiceRecorder composant + sélecteur voix parent StoryPlayer ElevenLabs IVC | 2026-04-11 | 53855c4 | [260411-wyx-voicerecorder-composant-s-lecteur-voix-p](./quick/260411-wyx-voicerecorder-composant-s-lecteur-voix-p/) |
 | 260412-0bj | iOS Personal Voice branché + fallback ElevenLabs par genre dans StoryPlayer | 2026-04-12 | 42d702a | [260412-0bj-ios-personal-voice-branch-fallback-eleve](./quick/260412-0bj-ios-personal-voice-branch-fallback-eleve/) |
 | 260412-gf5 | Fish Audio comme 3e moteur TTS histoires + clonage vocal | 2026-04-12 | 4aaa6cb | [260412-gf5-ajouter-fish-audio-comme-3-me-moteur-tts](./quick/260412-gf5-ajouter-fish-audio-comme-3-me-moteur-tts/) |
+| 260412-q49 | Échange inter-familles via le Port du village | 2026-04-12 | c6e90ce | [260412-q49-change-inter-familles-via-le-port-du-vil](./quick/260412-q49-change-inter-familles-via-le-port-du-vil/) |
 
 ## Performance Metrics
 
