@@ -78,7 +78,7 @@ function StoryBookCard({ universe, selected, onPress }: Props) {
             <Image
               source={STORY_UNIVERSE_SPRITES[universe.id]!}
               style={styles.sprite}
-              resizeMode="cover"
+              resizeMode="stretch"
             />
           ) : (
             <Text style={styles.emoji}>{universe.emoji}</Text>
