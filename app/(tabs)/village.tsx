@@ -654,12 +654,17 @@ export default function VillageScreen() {
               s => s.id === `village_building_${ub.buildingId}`,
             );
             if (!slot) return null;
+            const catalogEntry = BUILDINGS_CATALOG.find(b => b.id === ub.buildingId);
+            const consumed = productionState[ub.buildingId] ?? 0;
+            const available = Math.max(0, lifetimeContributions - consumed);
+            const pending = catalogEntry ? Math.floor(available / catalogEntry.production.ratePerItem) : 0;
             return (
               <BuildingSprite
                 key={ub.buildingId}
                 buildingId={ub.buildingId}
                 slotX={slot.x * mapSize.width}
                 slotY={slot.y * mapSize.height}
+                pendingCount={pending}
                 onPress={() => handleBuildingPress(ub)}
               />
             );

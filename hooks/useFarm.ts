@@ -329,10 +329,10 @@ export function useFarm(
       if (onQuestProgress) {
         try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
       }
-      // Contribution village (COOP-01) -- fire-and-forget non-critical
-      if (onContribution) {
-        try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
-      }
+      // Contribution village (COOP-01) -- désactivé temporairement (seules les tâches comptent)
+      // if (onContribution) {
+      //   try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
+      // }
       return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
     }
 

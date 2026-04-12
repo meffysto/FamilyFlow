@@ -906,19 +906,17 @@ export default function TreeScreen() {
   // Dépendances stables uniquement — les refs capturent le reste
   }, [aiCall]));
 
-  // Collecter le revenu passif des batiments a l'ouverture + sunrise report
+  // Sunrise report + vérification usure à l'ouverture (collecte passive désactivée)
   useEffect(() => {
     if (!profile?.id) return;
     const buildings = profile.farmBuildings ?? [];
     if (buildings.length === 0) return;
 
     (async () => {
-      // Verifier si absence > 8h
       const SUNRISE_KEY = 'sunrise_last_shown';
       const lastShown = await SecureStore.getItemAsync(SUNRISE_KEY);
       const now = Date.now();
       const absenceThresholdMs = 6 * 60 * 60 * 1000;
-      // Première ouverture : initialiser le timestamp sans afficher le popup
       if (!lastShown) {
         await SecureStore.setItemAsync(SUNRISE_KEY, String(now));
         return;
@@ -926,7 +924,7 @@ export default function TreeScreen() {
       const lastTs = parseInt(lastShown, 10);
       const longAbsence = (now - lastTs) > absenceThresholdMs;
 
-      // Calculer le detail par ressource AVANT la collecte
+      // Calculer le détail par ressource (lecture seule — pas de collecte)
       const techBonuses = getTechBonuses(profile.farmTech ?? []);
       const resourceMap: Record<string, { emoji: string; label: string; qty: number }> = {};
       for (const b of buildings) {
@@ -941,8 +939,7 @@ export default function TreeScreen() {
         resourceMap[key].qty += pending;
       }
 
-      // Collecter
-      const totalCollected = await collectPassiveIncome(profile.id);
+      const totalPending = Object.values(resourceMap).reduce((s, r) => s + r.qty, 0);
 
       // Vérifier l'usure de la ferme (clôtures, toits, herbes, nuisibles)
       const newWearEvents = await checkWear(profile.id);
@@ -953,25 +950,15 @@ export default function TreeScreen() {
         else if (ev.type === 'pests') showToast(t('farm.wear.pests'), 'info');
       }
 
-      if (totalCollected === 0) return;
-
-      // Compter les taches d'hier
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().slice(0, 10);
-      const yesterdayTasks = gamiData?.history?.filter(
-        e => e.profileId === profile.id && e.timestamp?.slice(0, 10) === yesterdayStr && e.note?.startsWith('Tâche:')
-      ).length ?? 0;
-      const hasBonus = yesterdayTasks >= 3;
+      if (totalPending === 0) return;
 
       if (longAbsence) {
         const resources: SunriseResource[] = Object.values(resourceMap).map(r => ({
           emoji: r.emoji,
           label: r.label,
-          quantity: hasBonus ? Math.ceil(r.qty * 1.5) : r.qty,
+          quantity: r.qty,
         }));
-        const displayTotal = hasBonus ? Math.ceil(totalCollected * 1.5) : totalCollected;
-        setSunriseData({ resources, totalCollected: displayTotal, yesterdayTasks, hasBonus });
+        setSunriseData({ resources, totalCollected: totalPending, yesterdayTasks: 0, hasBonus: false });
         await SecureStore.setItemAsync(SUNRISE_KEY, String(now));
       } else {
         const detail = Object.values(resourceMap)

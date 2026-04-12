@@ -82,7 +82,7 @@ export function SunriseReport({
               </Animated.Text>
 
               <Animated.Text entering={FadeIn.delay(450).duration(300)} style={styles.subtitle}>
-                {'Pendant ton absence, ta ferme a produit\u00A0:'}
+                {'Pendant ton absence, ta ferme a accumul\u00E9\u00A0:'}
               </Animated.Text>
 
               {/* Ressources */}
@@ -100,26 +100,13 @@ export function SunriseReport({
                 ))}
               </View>
 
-              {/* Bonus */}
-              {hasBonus && (
-                <Animated.View
-                  entering={FadeIn.delay(600 + filteredResources.length * 150 + 100).duration(400)}
-                  style={styles.bonusBox}
-                >
-                  <Text style={styles.bonusText}>
-                    {`Hier\u00A0: ${yesterdayTasks} t\u00E2che${yesterdayTasks > 1 ? 's' : ''} `}
-                  </Text>
-                  <Text style={styles.bonusHighlight}>{'Bonus r\u00E9colte \u00D71.5\u00A0!'}</Text>
-                </Animated.View>
-              )}
-
-              {/* Total */}
+              {/* Total en attente */}
               <Animated.View
                 entering={FadeIn.delay(600 + filteredResources.length * 150 + 300).duration(400)}
                 style={styles.totalBox}
               >
                 <Text style={styles.totalText}>
-                  {`+${totalCollected} ressource${totalCollected > 1 ? 's' : ''} collect\u00E9e${totalCollected > 1 ? 's' : ''}`}
+                  {`${totalCollected} ressource${totalCollected > 1 ? 's' : ''} \u00E0 r\u00E9cuperer`}
                 </Text>
               </Animated.View>
 
