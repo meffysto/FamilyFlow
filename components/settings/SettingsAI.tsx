@@ -21,7 +21,7 @@ import { Shadows } from '../../constants/shadows';
 export function SettingsAI() {
   const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
-  const { isConfigured, model, setApiKey, clearApiKey, setModel } = useAI();
+  const { isConfigured, model, storyModel, setApiKey, clearApiKey, setModel, setStoryModel } = useAI();
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [keyInput, setKeyInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -93,6 +93,19 @@ export function SettingsAI() {
                       label={m.label}
                       selected={model === m.id}
                       onPress={() => setModel(m.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+              <View style={styles.modelSection}>
+                <Text style={[styles.modelLabel, { color: colors.textSub }]}>{t('settings.ai.storyModelLabel')}</Text>
+                <View style={styles.modelChips}>
+                  {AVAILABLE_MODELS.map((m) => (
+                    <Chip
+                      key={m.id}
+                      label={m.label}
+                      selected={storyModel === m.id}
+                      onPress={() => setStoryModel(m.id)}
                     />
                   ))}
                 </View>

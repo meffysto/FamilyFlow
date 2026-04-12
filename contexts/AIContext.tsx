@@ -15,7 +15,9 @@ import { askVault, generateAISuggestions, type AIConfig, type AIMessage, type AI
 
 const API_KEY_STORAGE = 'ai_api_key';
 const MODEL_STORAGE = 'ai_model';
+const STORY_MODEL_STORAGE = 'ai_story_model';
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
+const DEFAULT_STORY_MODEL = 'claude-sonnet-4-6';
 
 export const AVAILABLE_MODELS = [
   { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (rapide, économique)' },
@@ -29,16 +31,22 @@ interface AIState {
   isConfigured: boolean;
   /** Config API (apiKey + model), null si pas configuré */
   config: AIConfig | null;
-  /** Modèle sélectionné */
+  /** Modèle sélectionné (usage général) */
   model: string;
+  /** Modèle sélectionné spécifiquement pour la génération d'histoires du soir */
+  storyModel: string;
+  /** Config spécifique Histoires (apiKey + storyModel), null si pas configuré */
+  storyConfig: AIConfig | null;
   /** true pendant un appel API */
   isLoading: boolean;
   /** Enregistrer la clé API */
   setApiKey: (key: string) => Promise<void>;
   /** Supprimer la clé API */
   clearApiKey: () => Promise<void>;
-  /** Changer le modèle */
+  /** Changer le modèle général */
   setModel: (model: string) => Promise<void>;
+  /** Changer le modèle utilisé pour les histoires */
+  setStoryModel: (model: string) => Promise<void>;
   /** Poser une question sur le vault */
   ask: (question: string, vaultCtx: AIVaultContext, history?: AIMessage[]) => Promise<AIResponse>;
   /** Générer des suggestions IA */
@@ -52,6 +60,7 @@ const AICtx = createContext<AIState | null>(null);
 export function AIProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string>('');
   const [model, setModelState] = useState<string>(DEFAULT_MODEL);
+  const [storyModel, setStoryModelState] = useState<string>(DEFAULT_STORY_MODEL);
   const [isLoading, setIsLoading] = useState(false);
 
   // Charger la config au mount
@@ -59,9 +68,11 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     Promise.all([
       SecureStore.getItemAsync(API_KEY_STORAGE),
       SecureStore.getItemAsync(MODEL_STORAGE),
-    ]).then(([key, savedModel]) => {
+      SecureStore.getItemAsync(STORY_MODEL_STORAGE),
+    ]).then(([key, savedModel, savedStoryModel]) => {
       if (key) setApiKeyState(key);
       if (savedModel) setModelState(savedModel);
+      if (savedStoryModel) setStoryModelState(savedStoryModel);
     });
   }, []);
 
@@ -74,6 +85,11 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   const config: AIConfig | null = useMemo(
     () => (isConfigured ? { apiKey, model } : null),
     [apiKey, model, isConfigured],
+  );
+
+  const storyConfig: AIConfig | null = useMemo(
+    () => (isConfigured ? { apiKey, model: storyModel } : null),
+    [apiKey, storyModel, isConfigured],
   );
 
   const setApiKey = useCallback(async (key: string) => {
@@ -94,6 +110,11 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   const setModel = useCallback(async (m: string) => {
     await SecureStore.setItemAsync(MODEL_STORAGE, m);
     setModelState(m);
+  }, []);
+
+  const setStoryModel = useCallback(async (m: string) => {
+    await SecureStore.setItemAsync(STORY_MODEL_STORAGE, m);
+    setStoryModelState(m);
   }, []);
 
   const ask = useCallback(
@@ -137,8 +158,12 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value: AIState = useMemo(
-    () => ({ isConfigured, config, model, isLoading, setApiKey, clearApiKey, setModel, ask, getSuggestions }),
-    [isConfigured, config, model, isLoading, setApiKey, clearApiKey, setModel, ask, getSuggestions],
+    () => ({
+      isConfigured, config, storyConfig, model, storyModel, isLoading,
+      setApiKey, clearApiKey, setModel, setStoryModel, ask, getSuggestions,
+    }),
+    [isConfigured, config, storyConfig, model, storyModel, isLoading,
+      setApiKey, clearApiKey, setModel, setStoryModel, ask, getSuggestions],
   );
 
   return <AICtx.Provider value={value}>{children}</AICtx.Provider>;

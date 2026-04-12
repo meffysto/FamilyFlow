@@ -62,7 +62,7 @@ function computeAge(birthdate?: string): string {
 export default function StoriesScreen() {
   const router = useRouter();
   const { primary, colors } = useThemeColors();
-  const { config: aiConfig } = useAI();
+  const { config: aiConfig, storyConfig } = useAI();
   const { voiceConfig, elevenLabsKey, isElevenLabsConfigured, setVoiceConfig } = useStoryVoice();
   const { reduceMotion } = useAnimConfig();
   const {
@@ -897,6 +897,7 @@ export default function StoriesScreen() {
                   profileId={target.id}
                   profileName={target.name}
                   apiKey={elevenLabsKey}
+                  language={voiceConfig.language}
                   onVoiceReady={async (voiceId, source) => {
                     try {
                       await updateProfile(target.id, { voiceElevenLabsId: voiceId, voiceSource: source });
@@ -973,7 +974,7 @@ export default function StoriesScreen() {
 
       const anonMap = buildAnonymizationMap(profiles, rdvs, healthRecords, memories, tasks);
 
-      const resp = await generateBedtimeStory(aiConfig, {
+      const resp = await generateBedtimeStory(storyConfig ?? aiConfig, {
         enfantAnon: anonymize(enfantName, anonMap),
         enfantAge: computeAge(profile?.birthdate),
         universId,

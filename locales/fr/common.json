@@ -1882,6 +1882,7 @@
       "description": "Active un assistant IA pour des suggestions personnalisées et une recherche conversationnelle. Vos données restent sur votre appareil — seul un résumé anonymisé est envoyé.",
       "configureKey": "Configurer la clé API",
       "modelLabel": "Modèle",
+      "storyModelLabel": "Modèle pour les histoires du soir",
       "keyConfigured": "sk-ant-•••• configurée",
       "deleteBtn": "Supprimer",
       "deleteTitle": "Supprimer la clé ?",

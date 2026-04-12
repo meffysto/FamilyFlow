@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import { Audio } from 'expo-av';
 import { uploadVoiceClone } from '../../lib/voice-clone';
-import { VOICE_CLONE_SCRIPT_FR } from '../../lib/stories';
+import { VOICE_CLONE_SCRIPT_FR, VOICE_CLONE_SCRIPT_EN } from '../../lib/stories';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -74,6 +74,8 @@ export interface VoiceRecorderProps {
   onVoiceReady: (voiceId: string, source: 'elevenlabs-cloned') => void;
   /** Clé API ElevenLabs passée depuis le parent (pas de re-lecture SecureStore) */
   apiKey: string;
+  /** Langue du script de lecture à afficher — défaut 'fr' */
+  language?: 'fr' | 'en';
 }
 
 // ─── Options d'enregistrement avec metering activé ───────────────────────────
@@ -85,8 +87,12 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
 
 // ─── VoiceRecorder ───────────────────────────────────────────────────────────
 
-function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKey }: VoiceRecorderProps) {
+function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKey, language = 'fr' }: VoiceRecorderProps) {
   const { primary, colors } = useThemeColors();
+  const script = language === 'en' ? VOICE_CLONE_SCRIPT_EN : VOICE_CLONE_SCRIPT_FR;
+  const instructionText = language === 'en'
+    ? 'Read the text below in a natural voice, as if telling your child a bedtime story. About 1 to 2 minutes, in a quiet place.'
+    : 'Lisez le texte ci-dessous à voix naturelle, comme si vous racontiez une histoire à votre enfant. Environ 1 à 2 minutes, dans un endroit calme.';
   const [status, setStatus] = useState<'idle' | 'recording' | 'uploading' | 'done'>('idle');
   const [elapsed, setElapsed] = useState(0);
 
@@ -211,7 +217,7 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
     <View style={styles.container}>
       {/* Consignes de lecture */}
       <Text style={[styles.instruction, { color: colors.textMuted }]}>
-        Lisez le texte ci-dessous à voix naturelle, comme si vous racontiez une histoire à votre enfant. Environ 1 à 2 minutes, dans un endroit calme.
+        {instructionText}
       </Text>
 
       {/* Script à lire — encadré défilable */}
@@ -221,7 +227,7 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
         showsVerticalScrollIndicator
       >
         <Text style={[styles.scriptText, { color: colors.text }]}>
-          {VOICE_CLONE_SCRIPT_FR}
+          {script}
         </Text>
       </ScrollView>
 

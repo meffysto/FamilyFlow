@@ -116,6 +116,19 @@ Le ruisseau gargouilla joyeusement, comme s'il avait compris. Soudain, un petit 
 
 Le renard inclina la tête, puis il se mit à trottiner sur un sentier étroit. Lila le suivit, émerveillée. Ensemble, ils traversèrent un champ de fleurs bleues et violettes, grimpèrent une petite colline, et découvrirent un lac immense où se reflétaient mille lumières scintillantes.`;
 
+// English voice cloning script (~180 words, ~75-90 seconds at calm pace).
+// Designed for ElevenLabs IVC : bedtime story excerpt with varied phonetics
+// (soft and hard consonants, long/short vowels, dialogue for intonation).
+export const VOICE_CLONE_SCRIPT_EN = `That night, little Lila wandered gently through the sleeping forest. The stars shimmered above the tall pine trees, and a soft breeze made the silvery leaves whisper. She paused beside a small stream that sang quietly between smooth, round stones.
+
+"Hello there, little stream," she murmured with a smile. "Do you know the way to the moon?"
+
+The stream gurgled cheerfully, as if it had understood her. Suddenly, a small red fox appeared from behind a bush. He had big curious eyes and a bushy tail that brushed against the damp grass.
+
+"Don't be afraid," Lila said in a calm voice. "I'm only searching for the land of dreams."
+
+The fox tilted his head, then began trotting along a narrow path through the ferns. Lila followed, enchanted. Together, they crossed a field of blue and violet flowers, climbed a gentle hill, and discovered a vast lake where a thousand tiny lights were reflected on the water.`;
+
 export function storyFileName(enfantName: string, date: string, universId: StoryUniverseId): string {
   return `${STORIES_DIR}/${enfantName}/${date}-${universId}.md`;
 }

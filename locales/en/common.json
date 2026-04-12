@@ -1882,6 +1882,7 @@
       "description": "Enable an AI assistant for personalized suggestions and conversational search. Your data stays on your device — only an anonymized summary is sent.",
       "configureKey": "Configure API key",
       "modelLabel": "Model",
+      "storyModelLabel": "Model for bedtime stories",
       "keyConfigured": "sk-ant-•••• configured",
       "deleteBtn": "Delete",
       "deleteTitle": "Delete key?",
