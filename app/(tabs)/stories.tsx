@@ -220,7 +220,7 @@ export default function StoriesScreen() {
       runOnJS(setStep)(nextStep);
       translateY.value = 20;
       opacity.value = withTiming(1, { duration: 220 });
-      translateY.value = withSpring(0, { damping: 14, stiffness: 180 });
+      translateY.value = withTiming(0, { duration: 220 });
     });
   }, [reduceMotion, opacity, translateY]);
 
