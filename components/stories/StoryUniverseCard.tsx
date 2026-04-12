@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { Text, StyleSheet, Pressable } from 'react-native';
+import { Text, StyleSheet, Pressable, Image } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import type { StoryUniverse } from '../../lib/types';
+import { STORY_UNIVERSE_SPRITES } from '../../lib/stories';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -47,7 +48,15 @@ function StoryUniverseCard({ universe, selected, onPress }: Props) {
             glowStyle,
           ]}
         />
-        <Text style={styles.bgEmoji}>{universe.emoji}</Text>
+        {STORY_UNIVERSE_SPRITES[universe.id] ? (
+          <Image
+            source={STORY_UNIVERSE_SPRITES[universe.id]!}
+            style={styles.sprite}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={styles.bgEmoji}>{universe.emoji}</Text>
+        )}
         <Text style={[styles.title, { color: colors.text }]}>{universe.titre}</Text>
         <Text style={[styles.description, { color: colors.textMuted }]} numberOfLines={2}>
           {universe.description}
@@ -91,6 +100,11 @@ const styles = StyleSheet.create({
   },
   bgEmoji: {
     fontSize: 40,
+    marginBottom: Spacing.md,
+  },
+  sprite: {
+    width: 64,
+    height: 64,
     marginBottom: Spacing.md,
   },
   title: {

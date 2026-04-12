@@ -1,6 +1,20 @@
+import type { ImageSourcePropType } from 'react-native';
 import type { StoryUniverse, StoryUniverseId } from './types';
 
 export const STORIES_DIR = '09 - Histoires';
+
+// Sprites pixel-art pour chaque univers (sauf "surprise" qui garde l'emoji)
+export const STORY_UNIVERSE_SPRITES: Partial<Record<StoryUniverseId, ImageSourcePropType>> = {
+  espace: require('../assets/stories/themes/espace.png'),
+  ocean: require('../assets/stories/themes/ocean.png'),
+  foret: require('../assets/stories/themes/foret.png'),
+  dinosaures: require('../assets/stories/themes/dinosaures.png'),
+  princesse: require('../assets/stories/themes/princesse.png'),
+  'super-heros': require('../assets/stories/themes/super-heros.png'),
+  pirates: require('../assets/stories/themes/pirates.png'),
+  robots: require('../assets/stories/themes/robots.png'),
+  surprise: require('../assets/stories/themes/surprise.png'),
+};
 
 export const STORY_UNIVERSES: StoryUniverse[] = [
   { id: 'espace',      titre: 'Espace étoilé',        description: 'Voyage parmi les étoiles',     emoji: '🌠', couleurAccent: '#6366F1', couleurGlow: '#6366F180' },
