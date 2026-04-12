@@ -2944,6 +2944,7 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
     `voice_language: ${story.voice.language}`,
   );
   if (story.voice.elevenLabsVoiceId) lines.push(`voice_id: ${story.voice.elevenLabsVoiceId}`);
+  if (story.length) lines.push(`length: ${story.length}`);
   lines.push(
     `version: ${story.version}`,
     '---',
@@ -2956,31 +2957,87 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
   return lines.join('\n');
 }
 
+/**
+ * Parseur frontmatter minimal pour BedtimeStory — évite gray-matter qui crash
+ * sous Hermes (Property 'Buffer' doesn't exist). Le format BedtimeStory est
+ * strictement `key: value` ligne par ligne, sans structures imbriquées.
+ */
+function parseStoryFrontmatter(content: string): { data: Record<string, string>; body: string } | null {
+  if (!content.startsWith('---\n') && !content.startsWith('---\r\n')) return null;
+  const afterFirst = content.indexOf('\n', 3) + 1;
+  const endIdx = content.indexOf('\n---', afterFirst);
+  if (endIdx === -1) return null;
+
+  const yamlBlock = content.slice(afterFirst, endIdx);
+  // Saute le marker fermant + son retour ligne éventuel
+  const bodyStart = content.indexOf('\n', endIdx + 4);
+  const body = bodyStart === -1 ? '' : content.slice(bodyStart + 1);
+
+  const data: Record<string, string> = {};
+  for (const rawLine of yamlBlock.split('\n')) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const colonIdx = line.indexOf(':');
+    if (colonIdx === -1) continue;
+    const key = line.slice(0, colonIdx).trim();
+    let value = line.slice(colonIdx + 1).trim();
+    if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
+      value = value.slice(1, -1).replace(/\\"/g, '"');
+    } else if (value.startsWith("'") && value.endsWith("'") && value.length >= 2) {
+      value = value.slice(1, -1).replace(/\\'/g, "'");
+    }
+    data[key] = value;
+  }
+
+  return { data, body };
+}
+
 export function parseBedtimeStory(sourceFile: string, content: string): BedtimeStory | null {
   try {
-    const parsed = matter(content);
+    const parsed = parseStoryFrontmatter(content);
+    if (!parsed) {
+      if (__DEV__) console.warn(`[parseBedtimeStory] ${sourceFile} — frontmatter absent ou malformé`);
+      return null;
+    }
     const d = parsed.data;
-    if (!d.title || !d.enfant || !d.univers || !d.date) return null;
+    if (!d.title || !d.enfant || !d.univers || !d.date) {
+      if (__DEV__) {
+        console.warn(`[parseBedtimeStory] ${sourceFile} — champs manquants:`, {
+          title: d.title,
+          enfant: d.enfant,
+          univers: d.univers,
+          date: d.date,
+          toutesLesCles: Object.keys(d),
+        });
+      }
+      return null;
+    }
     const voiceConfig: StoryVoiceConfig = {
       engine: (d.voice_engine === 'elevenlabs' ? 'elevenlabs' : 'expo-speech') as 'expo-speech' | 'elevenlabs',
       language: (d.voice_language === 'en' ? 'en' : 'fr') as 'fr' | 'en',
-      elevenLabsVoiceId: d.voice_id ?? undefined,
+      elevenLabsVoiceId: d.voice_id || undefined,
     };
+    const validLengths = new Set(['courte', 'moyenne', 'longue', 'tres-longue']);
+    const length = d.length && validLengths.has(d.length)
+      ? (d.length as import('./types').StoryLength)
+      : undefined;
     return {
       id: `${d.date}-${d.univers}`,
-      titre: String(d.title),
-      enfant: String(d.enfant),
-      enfantId: String(d.enfant_id ?? d.enfant.toLowerCase().replace(/\s+/g, '_')),
+      titre: d.title,
+      enfant: d.enfant,
+      enfantId: d.enfant_id || d.enfant.toLowerCase().replace(/\s+/g, '_'),
       univers: d.univers as StoryUniverseId,
-      detail: d.detail ? String(d.detail) : undefined,
-      texte: parsed.content.replace(/^#[^\n]*\n+/, '').trim(),
-      date: String(d.date),
-      duree_lecture: Number(d.duree_lecture ?? 0),
+      detail: d.detail || undefined,
+      texte: parsed.body.replace(/^#[^\n]*\n+/, '').trim(),
+      date: d.date,
+      duree_lecture: Number(d.duree_lecture || 0),
       voice: voiceConfig,
-      version: Number(d.version ?? 1),
+      length,
+      version: Number(d.version || 1),
       sourceFile,
     };
-  } catch {
+  } catch (e) {
+    if (__DEV__) console.warn(`[parseBedtimeStory] ${sourceFile} — exception:`, e);
     return null;
   }
 }

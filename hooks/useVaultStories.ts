@@ -8,6 +8,7 @@ import type { VaultManager } from '../lib/vault';
 import type { BedtimeStory } from '../lib/types';
 import { parseBedtimeStory, serializeBedtimeStory } from '../lib/parser';
 import { STORIES_DIR } from '../lib/stories';
+import { deleteStoryAudios } from '../lib/elevenlabs';
 
 export interface UseVaultStoriesResult {
   stories: BedtimeStory[];
@@ -73,7 +74,13 @@ export function useVaultStories(
     try {
       await vaultRef.current.deleteFile(sourceFile);
     } catch { /* non-critique */ }
-    setStories(prev => prev.filter(s => s.sourceFile !== sourceFile));
+    setStories(prev => {
+      const story = prev.find(s => s.sourceFile === sourceFile);
+      if (story) {
+        deleteStoryAudios(story.id).catch(() => { /* non-critique */ });
+      }
+      return prev.filter(s => s.sourceFile !== sourceFile);
+    });
   }, [vaultRef]);
 
   const resetStories = useCallback(() => {

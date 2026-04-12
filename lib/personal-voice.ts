@@ -1,28 +1,33 @@
 /**
- * personal-voice.ts — Détection des voix iOS Personal Voice via expo-speech.
- * iOS Personal Voice (créée par l'utilisateur dans Réglages > Accessibilité > Voix personnelle)
- * est exposée par expo-speech avec quality === 'Enhanced' ou 'Premium'.
- * Ce module ne fait que lister ces voix — l'activation se fait ailleurs via Speech.speak().
+ * personal-voice.ts — Détection des voix iOS Enhanced/Premium via expo-speech.
+ * Inclut :
+ *  - Voix système Premium/Enhanced (Audrey, Thomas, Aurélie en FR ; Ava, Samantha en EN)
+ *  - iOS Personal Voice (Réglages > Accessibilité > Voix personnelle)
+ * Ces voix sont offline une fois téléchargées dans Réglages iOS.
  */
 import * as Speech from 'expo-speech';
 
 /**
- * Retourne la liste des voix iOS Enhanced/Premium disponibles sur l'appareil,
- * triées par nom alphabétique.
- * Ces voix incluent iOS Personal Voice (Accessibilité) et les voix premium Siri.
- * En cas d'erreur, retourne un tableau vide (usage non-critique).
+ * Retourne la liste des voix Enhanced/Premium disponibles, filtrée par langue
+ * si `language` est fourni (`'fr'` → voix `fr-*`, `'en'` → voix `en-*`).
+ * Triée par nom alphabétique. Retourne [] en cas d'erreur (usage non-critique).
  */
-export async function getPersonalVoices(): Promise<Speech.Voice[]> {
+export async function getPersonalVoices(
+  language?: 'fr' | 'en',
+): Promise<Speech.Voice[]> {
   try {
     const allVoices = await Speech.getAvailableVoicesAsync();
-    // Filtre sur quality Enhanced/Premium — inclut iOS Personal Voice et voix premium
-    // 'Premium' non présent dans l'enum expo-speech actuel mais retourné par iOS au runtime
+    // 'Premium' non présent dans l'enum expo-speech mais retourné par iOS au runtime
     const qualitesHautes = new Set<string>([Speech.VoiceQuality.Enhanced, 'Premium']);
-    const highQualityVoices = allVoices.filter(voice =>
-      qualitesHautes.has(voice.quality as string)
-    );
-    // Tri alphabétique pour un ordre prévisible dans l'UI
-    return highQualityVoices.sort((a, b) => a.name.localeCompare(b.name));
+    const langPrefix = language === 'en' ? 'en' : language === 'fr' ? 'fr' : null;
+
+    const filtered = allVoices.filter(voice => {
+      if (!qualitesHautes.has(voice.quality as string)) return false;
+      if (langPrefix && !voice.language.toLowerCase().startsWith(langPrefix)) return false;
+      return true;
+    });
+
+    return filtered.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     if (__DEV__) console.warn('[personal-voice] Erreur getAvailableVoicesAsync:', error);
     return [];

@@ -1,7 +1,60 @@
 import type { ImageSourcePropType } from 'react-native';
-import type { StoryUniverse, StoryUniverseId } from './types';
+import type { StoryUniverse, StoryUniverseId, StoryLength } from './types';
 
 export const STORIES_DIR = '09 - Histoires';
+
+// Configuration des 4 niveaux de taille d'histoire.
+// Injecté dans le prompt Claude (paragraphes + mots cibles) et utilisé pour max_tokens.
+export interface StoryLengthConfig {
+  key: StoryLength;
+  label: string;
+  emoji: string;
+  paragraphs: number;  // nombre de paragraphes cibles
+  words: number;       // nombre de mots cibles
+  maxTokens: number;   // budget Claude API
+  duration: string;    // durée de lecture estimée (affichage UI)
+}
+
+export const STORY_LENGTHS: Record<StoryLength, StoryLengthConfig> = {
+  'courte': {
+    key: 'courte',
+    label: 'Courte',
+    emoji: '🚀',
+    paragraphs: 2,
+    words: 100,
+    maxTokens: 500,
+    duration: '~45 sec',
+  },
+  'moyenne': {
+    key: 'moyenne',
+    label: 'Moyenne',
+    emoji: '📖',
+    paragraphs: 3,
+    words: 180,
+    maxTokens: 800,
+    duration: '~1:30 min',
+  },
+  'longue': {
+    key: 'longue',
+    label: 'Longue',
+    emoji: '📚',
+    paragraphs: 5,
+    words: 350,
+    maxTokens: 1400,
+    duration: '~2:30 min',
+  },
+  'tres-longue': {
+    key: 'tres-longue',
+    label: 'Très longue',
+    emoji: '📜',
+    paragraphs: 7,
+    words: 600,
+    maxTokens: 2000,
+    duration: '~4 min',
+  },
+};
+
+export const STORY_LENGTH_ORDER: StoryLength[] = ['courte', 'moyenne', 'longue', 'tres-longue'];
 
 // Sprites pixel-art pour chaque univers (sauf "surprise" qui garde l'emoji)
 export const STORY_UNIVERSE_SPRITES: Partial<Record<StoryUniverseId, ImageSourcePropType>> = {
@@ -49,6 +102,19 @@ export const ELEVENLABS_ENGLISH_VOICES = [
   { id: 'ErXwobaYiN019PkySvjV', label: 'Antoni — storyteller' },
   { id: 'MF3mGyEYCl7XYWbV9V6O', label: 'Elli — soft, calm' },
 ];
+
+// Texte de clonage vocal (~180 mots, ~75-90 secondes à voix calme).
+// Conçu pour ElevenLabs IVC : extrait d'histoire du soir varié phonétiquement
+// (nasales, liquides, voyelles ouvertes/fermées, dialogue pour l'intonation).
+export const VOICE_CLONE_SCRIPT_FR = `Ce soir-là, la petite Lila marchait doucement dans la forêt endormie. Les étoiles brillaient au-dessus des grands sapins, et une légère brise faisait frissonner les feuilles argentées. Elle s'arrêta près d'un ruisseau qui chantait entre les pierres rondes.
+
+« Bonjour, petit ruisseau, murmura-t-elle en souriant. Connais-tu le chemin de la lune ? »
+
+Le ruisseau gargouilla joyeusement, comme s'il avait compris. Soudain, un petit renard roux apparut derrière un buisson. Il avait de grands yeux curieux et une queue touffue qui balayait l'herbe humide.
+
+« N'aie pas peur, dit Lila d'une voix calme. Je cherche simplement le pays des rêves. »
+
+Le renard inclina la tête, puis il se mit à trottiner sur un sentier étroit. Lila le suivit, émerveillée. Ensemble, ils traversèrent un champ de fleurs bleues et violettes, grimpèrent une petite colline, et découvrirent un lac immense où se reflétaient mille lumières scintillantes.`;
 
 export function storyFileName(enfantName: string, date: string, universId: StoryUniverseId): string {
   return `${STORIES_DIR}/${enfantName}/${date}-${universId}.md`;

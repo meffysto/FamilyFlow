@@ -608,11 +608,14 @@ export type StoryReadingSpeed = 0.8 | 1.0 | 1.2;
 
 export type StoryVoiceEngine = 'expo-speech' | 'elevenlabs';
 
+export type StoryLength = 'courte' | 'moyenne' | 'longue' | 'tres-longue';
+
 export interface StoryVoiceConfig {
   engine: StoryVoiceEngine;
   language: 'fr' | 'en';
   elevenLabsVoiceId?: string;
-  voiceIdentifier?: string; // identifier iOS Personal Voice (expo-speech) — session-only
+  voiceIdentifier?: string; // identifier voix iOS Enhanced/Premium (expo-speech)
+  length?: StoryLength;     // préférence taille histoire — défaut 'moyenne'
 }
 
 export interface BedtimeStory {
@@ -626,6 +629,7 @@ export interface BedtimeStory {
   date: string;
   duree_lecture: number;
   voice: StoryVoiceConfig;
+  length?: StoryLength; // taille choisie à la génération (pour info/réutilisation)
   version: number;
   sourceFile: string;
 }

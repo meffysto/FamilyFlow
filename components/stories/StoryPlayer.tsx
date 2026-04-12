@@ -256,29 +256,6 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
     let cancelled = false;
 
     const run = async () => {
-      // Dev bypass : réutiliser un MP3 déjà caché pour éviter de consommer des credits
-      if (__DEV__) {
-        try {
-          const cacheDir = FileSystem.cacheDirectory;
-          if (cacheDir) {
-            const files = await FileSystem.readDirectoryAsync(cacheDir);
-            const cachedStory = files.find(
-              f => f.startsWith('story_') && f.endsWith('.mp3'),
-            );
-            if (cachedStory) {
-              if (__DEV__) console.log('[StoryPlayer] Dev: réutilisation MP3 caché', cachedStory);
-              if (!cancelled) {
-                setAudioPath(`${cacheDir}${cachedStory}`);
-                setIsLoading(false);
-              }
-              return;
-            }
-          }
-        } catch (e) {
-          if (__DEV__) console.warn('[StoryPlayer] Dev cache scan failed:', e);
-        }
-      }
-
       if (!elevenLabsKey) {
         if (!cancelled) setGenError('Clé ElevenLabs manquante. Configurez votre clé API dans les paramètres.');
         return;
@@ -294,6 +271,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, onFinish }: Props) 
           elevenLabsKey,
           histoire.texte,
           voiceConfig.elevenLabsVoiceId ?? '',
+          histoire.id,
         );
         if (cancelled) return;
         if ('error' in result) {

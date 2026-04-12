@@ -4,7 +4,7 @@
  * avec 40 barres qui défilent de droite à gauche au rythme du son.
  */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import { Audio } from 'expo-av';
 import { uploadVoiceClone } from '../../lib/voice-clone';
+import { VOICE_CLONE_SCRIPT_FR } from '../../lib/stories';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -208,10 +209,21 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
 
   return (
     <View style={styles.container}>
-      {/* Texte d'instruction */}
+      {/* Consignes de lecture */}
       <Text style={[styles.instruction, { color: colors.textMuted }]}>
-        Lisez à voix haute pendant 1 à 2 minutes pour créer votre voix personnalisée.
+        Lisez le texte ci-dessous à voix naturelle, comme si vous racontiez une histoire à votre enfant. Environ 1 à 2 minutes, dans un endroit calme.
       </Text>
+
+      {/* Script à lire — encadré défilable */}
+      <ScrollView
+        style={[styles.scriptBox, { backgroundColor: colors.card, borderColor: colors.border }]}
+        contentContainerStyle={styles.scriptContent}
+        showsVerticalScrollIndicator
+      >
+        <Text style={[styles.scriptText, { color: colors.text }]}>
+          {VOICE_CLONE_SCRIPT_FR}
+        </Text>
+      </ScrollView>
 
       {/* Waveform : BAR_COUNT barres pilotées par le metering */}
       <View style={styles.waveformRow}>
@@ -276,6 +288,19 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  scriptBox: {
+    width: '100%',
+    maxHeight: 260,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+  },
+  scriptContent: {
+    padding: Spacing['2xl'],
+  },
+  scriptText: {
+    fontSize: FontSize.body,
+    lineHeight: 26,
   },
   waveformRow: {
     flexDirection: 'row',

@@ -977,7 +977,7 @@ Règles :
 export interface StoryPersonalizationContext {
   recentMoods: Array<{ level: number; note?: string; date: string }>;
   recentQuotes: Array<{ citation: string; contexte?: string; date: string }>;
-  recentMemories: Array<{ titre: string; description?: string; date: string }>;
+  recentMemories: Array<{ titre: string; description?: string; date: string; type?: 'premières-fois' | 'moment-fort' }>;
   allergies: string[];
   gender?: 'garçon' | 'fille';
 }
@@ -989,6 +989,7 @@ export interface StoryGenerationConfig {
   universTitre: string;
   detail?: string;
   language: 'fr' | 'en';
+  length?: import('./types').StoryLength;
   context: StoryPersonalizationContext;
 }
 
@@ -996,6 +997,10 @@ export async function generateBedtimeStory(
   config: AIConfig,
   story: StoryGenerationConfig,
 ): Promise<AIResponse> {
+  // Import paresseux pour éviter un cycle potentiel
+  const { STORY_LENGTHS } = await import('./stories');
+  const lengthCfg = STORY_LENGTHS[story.length ?? 'moyenne'];
+
   const langInstr = story.language === 'en'
     ? 'Write the story in English.'
     : 'Écris l\'histoire en français.';
@@ -1009,15 +1014,24 @@ export async function generateBedtimeStory(
     : '';
 
   const memoriesContext = story.context.recentMemories.length > 0
-    ? `Souvenirs récents: ${story.context.recentMemories.map(m => m.description ? `"${m.titre}" — ${m.description}` : `"${m.titre}"`).join('; ')}.`
+    ? `Souvenirs récents: ${story.context.recentMemories.map(m => {
+        const marker = m.type === 'premières-fois' ? ' [PREMIÈRE FOIS]' : '';
+        const desc = m.description ? ` — ${m.description}` : '';
+        return `"${m.titre}"${marker}${desc}`;
+      }).join('; ')}.`
     : '';
 
-  const systemPrompt = `Tu es un conteur d'histoires pour enfants expert. Tu crées des histoires du soir courtes, douces et apaisantes, parfaites pour endormir un enfant de ${story.enfantAge}.
+  const hasPremiereFois = story.context.recentMemories.some(m => m.type === 'premières-fois');
+
+  // Template JSON adapté au nombre de paragraphes
+  const paragraphesTemplate = Array.from({ length: lengthCfg.paragraphs }, (_, i) => `paragraphe${i + 1}`).join('\\n\\n');
+
+  const systemPrompt = `Tu es un conteur d'histoires pour enfants expert. Tu crées des histoires du soir douces et apaisantes, parfaites pour endormir un enfant de ${story.enfantAge}.
 
 RÈGLES STRICTES :
 - ${langInstr}
 - Vocabulaire adapté à ${story.enfantAge}
-- Longueur : exactement 3 paragraphes bien distincts (~150 mots total)
+- Longueur : exactement ${lengthCfg.paragraphs} paragraphes bien distincts (~${lengthCfg.words} mots total, durée de lecture ${lengthCfg.duration})
 - Ton : doux, rassurant, poétique, jamais effrayant
 - Fin : paisible — le héros rentre chez lui ou s'endort après l'aventure
 - Le héros s'appelle "${story.enfantAnon}"
@@ -1025,7 +1039,8 @@ RÈGLES STRICTES :
 ${moodContext ? `- Adapte le ton selon l'humeur : ${moodContext}` : ''}
 ${quotesContext ? `- Intègre subtilement une expression de l'enfant : ${quotesContext}` : ''}
 ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesContext}` : ''}
-- Répondre UNIQUEMENT en JSON valide : { "titre": "...", "texte": "paragraphe1\\n\\nparagraphe2\\n\\nparagraphe3" }
+${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}
+- Répondre UNIQUEMENT en JSON valide : { "titre": "...", "texte": "${paragraphesTemplate}" }
 - Aucun texte en dehors du JSON`;
 
   const userMessage = `Crée une histoire du soir pour ${story.enfantAnon} (${story.enfantAge}) dans l'univers "${story.universTitre}"${story.detail ? `. Détail du jour à intégrer : ${story.detail}` : ''}.`;
@@ -1040,7 +1055,7 @@ ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesConte
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 700,
+        max_tokens: lengthCfg.maxTokens,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),

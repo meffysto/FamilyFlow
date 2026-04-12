@@ -21,13 +21,15 @@ import StoryUniverseCard from '../../components/stories/StoryUniverseCard';
 import StoryPlayer from '../../components/stories/StoryPlayer';
 import VoiceRecorder from '../../components/stories/VoiceRecorder';
 import { getPersonalVoices } from '../../lib/personal-voice';
+import { getCachedStoryAudio } from '../../lib/elevenlabs';
 import {
   STORY_UNIVERSES, STORY_SUGGESTIONS, ELEVENLABS_FRENCH_VOICES, ELEVENLABS_ENGLISH_VOICES,
+  STORY_LENGTHS, STORY_LENGTH_ORDER,
   storyFileName, pickSurpriseUniverse,
 } from '../../lib/stories';
 import { generateBedtimeStory } from '../../lib/ai-service';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
-import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, Profile } from '../../lib/types';
+import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryLength, Profile, Memory, ChildQuote } from '../../lib/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -37,8 +39,9 @@ type StoryFlowStep =
   | { etape: 'choisir_enfant' }
   | { etape: 'choisir_univers'; enfantId: string; enfantName: string }
   | { etape: 'personnaliser'; enfantId: string; enfantName: string; universId: StoryUniverseId }
-  | { etape: 'generation'; enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string }
-  | { etape: 'fin'; histoire: BedtimeStory };
+  | { etape: 'generation'; enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string; length: StoryLength }
+  | { etape: 'fin'; histoire: BedtimeStory }
+  | { etape: 'replay'; histoire: BedtimeStory };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -63,7 +66,7 @@ export default function StoriesScreen() {
   const { voiceConfig, elevenLabsKey, isElevenLabsConfigured, setVoiceConfig } = useStoryVoice();
   const { reduceMotion } = useAnimConfig();
   const {
-    profiles, moods, quotes, memories, rdvs, healthRecords, tasks, stories, saveStory, updateProfile,
+    profiles, moods, quotes, memories, rdvs, healthRecords, tasks, stories, saveStory, deleteStory, updateProfile,
   } = useVault();
 
   // Profils adultes — narrateurs disponibles
@@ -78,15 +81,118 @@ export default function StoriesScreen() {
   const confettiRef = useRef<any>(null);
 
   // ─── États sélecteur voix (PersonnaliserStep) ────────────────────────────
-  // Onglet moteur affiché : 'expo-speech' | 'elevenlabs' | 'ios-personal'
-  const [localVoiceEngine, setLocalVoiceEngine] = useState<'expo-speech' | 'elevenlabs' | 'ios-personal'>(
-    voiceConfig.voiceIdentifier ? 'ios-personal' : voiceConfig.engine,
+  // Onglet moteur affiché : 'expo-speech' | 'elevenlabs'
+  // Le tab "Système" expose à la fois la voix par défaut et les voix Enhanced/Premium
+  // (Audrey, Thomas, Aurélie… en FR), filtrées par langue courante.
+  const [localVoiceEngine, setLocalVoiceEngine] = useState<'expo-speech' | 'elevenlabs'>(
+    voiceConfig.engine,
   );
   const [voiceSelectedParentId, setVoiceSelectedParentId] = useState<string | null>(null);
   const [voiceSelectedPersonalVoice, setVoiceSelectedPersonalVoice] = useState<Speech.Voice | null>(null);
   const [voicePersonalVoices, setVoicePersonalVoices] = useState<Speech.Voice[]>([]);
   const [voicePersonalLoading, setVoicePersonalLoading] = useState(false);
   const [voiceRecorderProfileId, setVoiceRecorderProfileId] = useState<string | null>(null);
+
+  // Auto-fetch des voix Enhanced/Premium à l'entrée de l'étape personnaliser
+  // et à chaque changement de langue. Re-fetch explicite via bouton "Rafraîchir".
+  useEffect(() => {
+    if (step.etape !== 'personnaliser') return;
+    if (localVoiceEngine !== 'expo-speech') return;
+    let cancelled = false;
+    setVoicePersonalLoading(true);
+    getPersonalVoices(voiceConfig.language).then(vs => {
+      if (cancelled) return;
+      setVoicePersonalVoices(vs);
+      setVoicePersonalLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [step.etape, localVoiceEngine, voiceConfig.language]);
+
+  // Réhydrater la voix sélectionnée depuis le voiceIdentifier persisté
+  // une fois la liste chargée.
+  useEffect(() => {
+    if (!voiceConfig.voiceIdentifier || voicePersonalVoices.length === 0) return;
+    const match = voicePersonalVoices.find(v => v.identifier === voiceConfig.voiceIdentifier);
+    if (match && match.identifier !== voiceSelectedPersonalVoice?.identifier) {
+      setVoiceSelectedPersonalVoice(match);
+    }
+  }, [voicePersonalVoices, voiceConfig.voiceIdentifier, voiceSelectedPersonalVoice?.identifier]);
+
+  const refreshPersonalVoices = useCallback(async () => {
+    Haptics.selectionAsync();
+    setVoicePersonalLoading(true);
+    const vs = await getPersonalVoices(voiceConfig.language);
+    setVoicePersonalVoices(vs);
+    setVoicePersonalLoading(false);
+  }, [voiceConfig.language]);
+
+  // ─── Sélection contexte (inclusions utilisateur dans PersonnaliserStep) ──
+  // Par défaut, seul le plus récent de chaque catégorie est coché.
+  // L'utilisateur peut ouvrir une catégorie pour voir et cocher d'autres éléments.
+  const [moodIncluded, setMoodIncluded] = useState(true);
+  const [selectedQuoteKeys, setSelectedQuoteKeys] = useState<Set<string>>(new Set());
+  const [selectedMemoryKeys, setSelectedMemoryKeys] = useState<Set<string>>(new Set());
+  const [quotesExpanded, setQuotesExpanded] = useState(false);
+  const [memoriesExpanded, setMemoriesExpanded] = useState(false);
+
+  // Helpers clés uniques
+  const quoteKey = useCallback((q: ChildQuote) => `${q.sourceFile}#${q.lineIndex}`, []);
+  const memoryKey = useCallback((m: Memory) => `${m.enfant}|${m.date}|${m.title}`, []);
+
+  // Init : quand on entre dans PersonnaliserStep, sélectionne automatiquement
+  // le plus récent de chaque catégorie et replie les sections.
+  const currentEnfantName = step.etape === 'personnaliser' ? step.enfantName : null;
+  const currentEnfantId = step.etape === 'personnaliser' ? step.enfantId : null;
+
+  useEffect(() => {
+    if (!currentEnfantName || !currentEnfantId) return;
+
+    // Humeur : cochée par défaut
+    setMoodIncluded(true);
+
+    // Perle : la plus récente
+    const mostRecentQuote = quotes
+      .filter(q => q.enfant === currentEnfantName)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    setSelectedQuoteKeys(mostRecentQuote ? new Set([quoteKey(mostRecentQuote)]) : new Set());
+
+    // Souvenir : le plus récent dans la fenêtre 60 jours
+    const cutoffDate = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+    const mostRecentMemory = memories
+      .filter(m => m.enfant === currentEnfantName && m.date >= cutoffDate)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    setSelectedMemoryKeys(mostRecentMemory ? new Set([memoryKey(mostRecentMemory)]) : new Set());
+
+    // Replier les sections
+    setQuotesExpanded(false);
+    setMemoriesExpanded(false);
+  }, [currentEnfantName, currentEnfantId, quotes, memories, quoteKey, memoryKey]);
+
+  // ─── Cache MP3 persistant : badge "🔊" sur les histoires précédentes ──────
+  const [audioCacheMap, setAudioCacheMap] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (stories.length === 0) {
+      setAudioCacheMap({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.all(
+        stories.map(async (s) => {
+          const voiceId = s.voice.elevenLabsVoiceId;
+          if (!voiceId) return [s.sourceFile, false] as const;
+          const cached = await getCachedStoryAudio(s.id, voiceId);
+          return [s.sourceFile, cached !== null] as const;
+        }),
+      );
+      if (cancelled) return;
+      const map: Record<string, boolean> = {};
+      for (const [k, v] of results) map[k] = v;
+      setAudioCacheMap(map);
+    })();
+    return () => { cancelled = true; };
+  }, [stories]);
 
   // Cache de génération — évite de relancer l'IA si GenerationStep se remonte
   // (composant imbriqué redéfini à chaque re-render parent → React le démonte/remonte)
@@ -126,10 +232,39 @@ export default function StoriesScreen() {
       case 'personnaliser':
         goTo({ etape: 'choisir_univers', enfantId: step.enfantId, enfantName: step.enfantName });
         break;
+      case 'replay':
+        goTo({ etape: 'choisir_enfant' });
+        break;
       default:
         router.back();
     }
   }, [step, goTo, router]);
+
+  const handleReplayStory = useCallback((story: BedtimeStory) => {
+    Haptics.selectionAsync();
+    goTo({ etape: 'replay', histoire: story });
+  }, [goTo]);
+
+  const handleDeleteStory = useCallback((story: BedtimeStory) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      'Supprimer cette histoire ?',
+      `« ${story.titre} » sera supprimée définitivement (fichier markdown + audio en cache).`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            deleteStory(story.sourceFile).catch((e) => {
+              if (__DEV__) console.warn('deleteStory failed:', e);
+              Alert.alert('Erreur', 'Impossible de supprimer l\'histoire.');
+            });
+          },
+        },
+      ],
+    );
+  }, [deleteStory]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -157,6 +292,8 @@ export default function StoriesScreen() {
         </View>
       );
     }
+
+    const recentStories = stories.slice(0, 10);
 
     return (
       <View>
@@ -189,6 +326,47 @@ export default function StoriesScreen() {
             );
           }}
         />
+
+        {recentStories.length > 0 && (
+          <View style={{ marginTop: Spacing['4xl'] }}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+              📚 Histoires précédentes
+            </Text>
+            {recentStories.map(story => {
+              const univers = STORY_UNIVERSES.find(u => u.id === story.univers);
+              const hasCachedAudio = audioCacheMap[story.sourceFile] === true;
+              const [yyyy, mm, dd] = story.date.split('-');
+              const dateFR = (yyyy && mm && dd) ? `${dd}/${mm}/${yyyy}` : story.date;
+              return (
+                <Pressable
+                  key={story.sourceFile}
+                  style={[styles.previousStoryCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => handleReplayStory(story)}
+                  onLongPress={() => handleDeleteStory(story)}
+                  delayLongPress={500}
+                >
+                  <Text style={styles.previousStoryEmoji}>{univers?.emoji ?? '📖'}</Text>
+                  <View style={styles.previousStoryBody}>
+                    <Text style={[styles.previousStoryTitle, { color: colors.text }]} numberOfLines={1}>
+                      {story.titre}
+                    </Text>
+                    <Text style={[styles.previousStoryMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                      {story.enfant} · {dateFR}
+                    </Text>
+                  </View>
+                  {hasCachedAudio && (
+                    <View style={[styles.previousStoryBadge, { backgroundColor: `${primary}20` }]}>
+                      <Text style={[styles.previousStoryBadgeText, { color: primary }]}>🔊</Text>
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+            <Text style={[styles.previousStoryHint, { color: colors.textMuted }]}>
+              Appuyer pour relire · Maintenir pour supprimer
+            </Text>
+          </View>
+        )}
       </View>
     );
   }
@@ -240,16 +418,24 @@ export default function StoriesScreen() {
   // ── Étape 3 : Personnaliser ──
 
   function PersonnaliserStep({ enfantId, enfantName, universId }: { enfantId: string; enfantName: string; universId: StoryUniverseId }) {
-    const childMoods = moods.filter(m => m.profileId === enfantId).slice(0, 1);
-    const childQuotes = quotes.filter(q => q.enfant === enfantName).slice(0, 3);
+    // Doit matcher strictement GenerationStep : 1 humeur récente, 3 perles, 5 souvenirs sur 60j
+    const latestMood = moods
+      .filter(m => m.profileId === enfantId)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    const childQuotes = quotes
+      .filter(q => q.enfant === enfantName)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 3);
+    const cutoffDate = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+    const childMemories = memories
+      .filter(m => m.enfant === enfantName && m.date >= cutoffDate)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 5);
 
     const voiceOptions = voiceConfig.language === 'fr' ? ELEVENLABS_FRENCH_VOICES : ELEVENLABS_ENGLISH_VOICES;
 
     const buildFinalVoiceConfig = (): StoryVoiceConfig => {
       const lang = voiceConfig.language;
-      if (localVoiceEngine === 'ios-personal' && voiceSelectedPersonalVoice) {
-        return { engine: 'expo-speech', language: lang, voiceIdentifier: voiceSelectedPersonalVoice.identifier };
-      }
       if (localVoiceEngine === 'elevenlabs') {
         if (voiceSelectedParentId) {
           const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
@@ -262,8 +448,15 @@ export default function StoriesScreen() {
         }
         return { engine: 'elevenlabs', language: lang, elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId };
       }
-      return { engine: 'expo-speech', language: lang };
+      // expo-speech — voix Premium/Enhanced optionnelle (persistée si choisie)
+      return {
+        engine: 'expo-speech',
+        language: lang,
+        voiceIdentifier: voiceSelectedPersonalVoice?.identifier,
+      };
     };
+
+    const currentLength: StoryLength = voiceConfig.length ?? 'moyenne';
 
     const generate = (detail: string) => {
       if (!aiConfig) {
@@ -271,30 +464,196 @@ export default function StoriesScreen() {
         return;
       }
       setVoiceConfig(buildFinalVoiceConfig());
-      goTo({ etape: 'generation', enfantId, enfantName, universId, detail });
+      goTo({ etape: 'generation', enfantId, enfantName, universId, detail, length: currentLength });
     };
 
     return (
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={[styles.stepTitle, { color: colors.text }]}>Personnalise l'histoire</Text>
 
-        {/* Aperçu données vault */}
-        <View style={styles.vaultBadgesRow}>
-          {childMoods[0] && (
-            <View style={[styles.vaultBadge, { backgroundColor: colors.card }]}>
-              <Text style={[styles.vaultBadgeText, { color: colors.text }]}>
-                🌙 Humeur : {['😢', '😐', '😊', '😄', '🤩'][childMoods[0].level - 1]}
+        {/* Contexte vault — catégories (plus récent coché par défaut, ouvrir pour plus) */}
+        {(latestMood || childQuotes.length > 0 || childMemories.length > 0) && (
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+            Contexte pris en compte
+          </Text>
+        )}
+
+        {/* ── Catégorie Humeur (un seul élément, toujours visible) ── */}
+        {latestMood && (
+          <Pressable
+            onPress={() => { Haptics.selectionAsync(); setMoodIncluded(v => !v); }}
+            style={[
+              styles.contextCard,
+              {
+                backgroundColor: colors.card,
+                borderColor: moodIncluded ? primary : colors.border,
+                borderStyle: moodIncluded ? 'solid' : 'dashed',
+                opacity: moodIncluded ? 1 : 0.5,
+              },
+            ]}
+          >
+            <Text style={styles.contextCheck}>{moodIncluded ? '☑' : '☐'}</Text>
+            <Text style={styles.contextEmoji}>
+              {['😢', '😐', '😊', '😄', '🤩'][latestMood.level - 1]}
+            </Text>
+            <View style={styles.contextBody}>
+              <Text style={[styles.contextTitle, { color: colors.text }]}>
+                Humeur — niveau {latestMood.level}/5
               </Text>
+              {latestMood.note && (
+                <Text style={[styles.contextSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
+                  « {latestMood.note} »
+                </Text>
+              )}
             </View>
-          )}
-          {childQuotes.length > 0 && (
-            <View style={[styles.vaultBadge, { backgroundColor: colors.card }]}>
-              <Text style={[styles.vaultBadgeText, { color: colors.text }]}>
-                💬 {childQuotes.length} perle{childQuotes.length > 1 ? 's' : ''}
-              </Text>
+          </Pressable>
+        )}
+
+        {/* ── Catégorie Perles (collapsible) ── */}
+        {childQuotes.length > 0 && (() => {
+          const visibleQuotes = quotesExpanded ? childQuotes : childQuotes.slice(0, 1);
+          return (
+            <View style={styles.contextCategory}>
+              <Pressable
+                onPress={() => { Haptics.selectionAsync(); setQuotesExpanded(v => !v); }}
+                style={[styles.contextCategoryHeader, { borderColor: colors.border }]}
+              >
+                <Text style={styles.contextCategoryEmoji}>💬</Text>
+                <Text style={[styles.contextCategoryTitle, { color: colors.text }]}>
+                  Perles récentes
+                </Text>
+                <Text style={[styles.contextCategoryCount, { color: primary }]}>
+                  {selectedQuoteKeys.size}/{childQuotes.length}
+                </Text>
+                <Text style={[styles.contextCategoryChevron, { color: colors.textMuted }]}>
+                  {quotesExpanded ? '▾' : '▸'}
+                </Text>
+              </Pressable>
+              {visibleQuotes.map(q => {
+                const key = quoteKey(q);
+                const included = selectedQuoteKeys.has(key);
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setSelectedQuoteKeys(prev => {
+                        const next = new Set(prev);
+                        if (next.has(key)) next.delete(key); else next.add(key);
+                        return next;
+                      });
+                    }}
+                    style={[
+                      styles.contextCard,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: included ? primary : colors.border,
+                        borderStyle: included ? 'solid' : 'dashed',
+                        opacity: included ? 1 : 0.5,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.contextCheck}>{included ? '☑' : '☐'}</Text>
+                    <View style={styles.contextBody}>
+                      <Text style={[styles.contextTitle, { color: colors.text }]} numberOfLines={2}>
+                        « {q.citation} »
+                      </Text>
+                      {q.contexte && (
+                        <Text style={[styles.contextSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                          {q.contexte}
+                        </Text>
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+              {!quotesExpanded && childQuotes.length > 1 && (
+                <Pressable
+                  onPress={() => { Haptics.selectionAsync(); setQuotesExpanded(true); }}
+                  style={styles.contextMoreLink}
+                >
+                  <Text style={[styles.contextMoreLinkText, { color: primary }]}>
+                    + Voir {childQuotes.length - 1} autre{childQuotes.length - 1 > 1 ? 's' : ''}
+                  </Text>
+                </Pressable>
+              )}
             </View>
-          )}
-        </View>
+          );
+        })()}
+
+        {/* ── Catégorie Souvenirs (collapsible, premières-fois distinguées) ── */}
+        {childMemories.length > 0 && (() => {
+          const visibleMemories = memoriesExpanded ? childMemories : childMemories.slice(0, 1);
+          return (
+            <View style={styles.contextCategory}>
+              <Pressable
+                onPress={() => { Haptics.selectionAsync(); setMemoriesExpanded(v => !v); }}
+                style={[styles.contextCategoryHeader, { borderColor: colors.border }]}
+              >
+                <Text style={styles.contextCategoryEmoji}>✨</Text>
+                <Text style={[styles.contextCategoryTitle, { color: colors.text }]}>
+                  Souvenirs récents
+                </Text>
+                <Text style={[styles.contextCategoryCount, { color: primary }]}>
+                  {selectedMemoryKeys.size}/{childMemories.length}
+                </Text>
+                <Text style={[styles.contextCategoryChevron, { color: colors.textMuted }]}>
+                  {memoriesExpanded ? '▾' : '▸'}
+                </Text>
+              </Pressable>
+              {visibleMemories.map(m => {
+                const key = memoryKey(m);
+                const included = selectedMemoryKeys.has(key);
+                const isPremiereFois = m.type === 'premières-fois';
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setSelectedMemoryKeys(prev => {
+                        const next = new Set(prev);
+                        if (next.has(key)) next.delete(key); else next.add(key);
+                        return next;
+                      });
+                    }}
+                    style={[
+                      styles.contextCard,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: included ? primary : colors.border,
+                        borderStyle: included ? 'solid' : 'dashed',
+                        opacity: included ? 1 : 0.5,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.contextCheck}>{included ? '☑' : '☐'}</Text>
+                    <Text style={styles.contextEmoji}>{isPremiereFois ? '✨' : '💫'}</Text>
+                    <View style={styles.contextBody}>
+                      <Text style={[styles.contextTitle, { color: colors.text }]} numberOfLines={1}>
+                        {isPremiereFois ? '1ʳᵉ fois : ' : ''}{m.title}
+                      </Text>
+                      {m.description && (
+                        <Text style={[styles.contextSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
+                          {m.description}
+                        </Text>
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+              {!memoriesExpanded && childMemories.length > 1 && (
+                <Pressable
+                  onPress={() => { Haptics.selectionAsync(); setMemoriesExpanded(true); }}
+                  style={styles.contextMoreLink}
+                >
+                  <Text style={[styles.contextMoreLinkText, { color: primary }]}>
+                    + Voir {childMemories.length - 1} autre{childMemories.length - 1 > 1 ? 's' : ''}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          );
+        })()}
 
         {/* Chips suggestions */}
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Un détail pour ce soir ?</Text>
@@ -321,6 +680,39 @@ export default function StoriesScreen() {
           multiline
         />
 
+        {/* Sélecteur taille histoire */}
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Durée de l'histoire</Text>
+        <View style={styles.lengthRow}>
+          {STORY_LENGTH_ORDER.map(key => {
+            const cfg = STORY_LENGTHS[key];
+            const isSelected = currentLength === key;
+            return (
+              <Pressable
+                key={key}
+                style={[
+                  styles.lengthChip,
+                  {
+                    backgroundColor: isSelected ? primary : colors.card,
+                    borderColor: isSelected ? primary : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setVoiceConfig({ ...voiceConfig, length: key });
+                }}
+              >
+                <Text style={styles.lengthEmoji}>{cfg.emoji}</Text>
+                <Text style={[styles.lengthLabel, { color: isSelected ? '#fff' : colors.text }]}>
+                  {cfg.label}
+                </Text>
+                <Text style={[styles.lengthDuration, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
+                  {cfg.duration}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         {/* Sélecteur voix unifié */}
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Voix de narration</Text>
 
@@ -329,20 +721,13 @@ export default function StoriesScreen() {
           {([
             { key: 'expo-speech', label: '🆓 Système' },
             { key: 'elevenlabs', label: `✨ ElevenLabs${isElevenLabsConfigured ? '' : ' (clé)'}` },
-            { key: 'ios-personal', label: '🍎 iOS' },
           ] as const).map(({ key, label }) => (
             <Pressable
               key={key}
               style={[styles.voiceChip, { backgroundColor: localVoiceEngine === key ? primary : colors.card, borderColor: colors.border }]}
               onPress={() => {
+                Haptics.selectionAsync();
                 setLocalVoiceEngine(key);
-                if (key === 'ios-personal' && voicePersonalVoices.length === 0) {
-                  setVoicePersonalLoading(true);
-                  getPersonalVoices().then(vs => {
-                    setVoicePersonalVoices(vs);
-                    setVoicePersonalLoading(false);
-                  });
-                }
               }}
             >
               <Text style={[styles.chipText, { color: localVoiceEngine === key ? '#fff' : colors.text }]}>
@@ -421,15 +806,55 @@ export default function StoriesScreen() {
           </View>
         )}
 
-        {/* iOS Personal Voice */}
-        {localVoiceEngine === 'ios-personal' && (
+        {/* Système — sélecteur voix Enhanced/Premium filtrées par langue */}
+        {localVoiceEngine === 'expo-speech' && (
           <View style={{ marginTop: Spacing.lg }}>
-            {voicePersonalLoading ? (
-              <ActivityIndicator color={primary} />
-            ) : voicePersonalVoices.length === 0 ? (
-              <Text style={[styles.voicePersonalEmpty, { color: colors.textMuted }]}>
-                Créez une voix dans{'\n'}Réglages › Accessibilité › Voix personnelle
+            <View style={styles.voicePremiumHeader}>
+              <Text style={[styles.voiceSubLabel, { color: colors.textMuted, marginBottom: 0 }]}>
+                Voix premium {voiceConfig.language === 'fr' ? 'françaises' : 'anglaises'}
               </Text>
+              <Pressable
+                onPress={refreshPersonalVoices}
+                hitSlop={8}
+                accessibilityLabel="Rafraîchir la liste des voix"
+              >
+                <Text style={[styles.voiceRefreshText, { color: primary }]}>↻ Rafraîchir</Text>
+              </Pressable>
+            </View>
+
+            {/* Option « voix par défaut » (= laisser iOS choisir) */}
+            <Pressable
+              onPress={() => { Haptics.selectionAsync(); setVoiceSelectedPersonalVoice(null); }}
+              style={[
+                styles.voiceOption,
+                {
+                  backgroundColor: voiceSelectedPersonalVoice === null ? `${primary}20` : colors.card,
+                  borderColor: voiceSelectedPersonalVoice === null ? primary : colors.border,
+                },
+              ]}
+            >
+              <Text style={{ color: colors.text, fontSize: FontSize.sm, fontWeight: FontWeight.medium }}>
+                Voix par défaut du système
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: FontSize.micro }}>
+                Qualité standard · gratuit · hors-ligne
+              </Text>
+            </Pressable>
+
+            {voicePersonalLoading ? (
+              <ActivityIndicator color={primary} style={{ marginTop: Spacing.lg }} />
+            ) : voicePersonalVoices.length === 0 ? (
+              <View style={[styles.voiceEmptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.voiceEmptyTitle, { color: colors.text }]}>
+                  Aucune voix premium installée
+                </Text>
+                <Text style={[styles.voiceEmptyText, { color: colors.textMuted }]}>
+                  Téléchargez des voix haute qualité dans{'\n'}
+                  <Text style={{ fontWeight: FontWeight.bold }}>Réglages › Accessibilité ›{'\n'}Contenu énoncé › Voix</Text>
+                  {'\n\n'}
+                  Cherchez <Text style={{ fontWeight: FontWeight.bold }}>Audrey</Text>, <Text style={{ fontWeight: FontWeight.bold }}>Thomas</Text> ou <Text style={{ fontWeight: FontWeight.bold }}>Aurélie</Text> (Premium), puis revenez ici et appuyez sur Rafraîchir.
+                </Text>
+              </View>
             ) : (
               voicePersonalVoices.map(v => {
                 const isSelected = voiceSelectedPersonalVoice?.identifier === v.identifier;
@@ -439,8 +864,10 @@ export default function StoriesScreen() {
                     onPress={() => { Haptics.selectionAsync(); setVoiceSelectedPersonalVoice(isSelected ? null : v); }}
                     style={[styles.voiceOption, { backgroundColor: isSelected ? `${primary}20` : colors.card, borderColor: isSelected ? primary : colors.border }]}
                   >
-                    <Text style={{ color: colors.text, fontSize: FontSize.sm }}>{v.name}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: FontSize.micro }}>{v.language} · {v.quality}</Text>
+                    <Text style={{ color: colors.text, fontSize: FontSize.sm, fontWeight: FontWeight.medium }}>{v.name}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: FontSize.micro }}>
+                      {v.language} · {v.quality === 'Enhanced' ? 'Enhanced (HD)' : v.quality}
+                    </Text>
                   </Pressable>
                 );
               })
@@ -502,7 +929,7 @@ export default function StoriesScreen() {
 
   // ── Étape 4 : Génération + Player ──
 
-  function GenerationStep({ enfantId, enfantName, universId, detail }: { enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string }) {
+  function GenerationStep({ enfantId, enfantName, universId, detail, length }: { enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string; length: StoryLength }) {
     const [fullText, setFullText] = useState('');
     const [displayedText, setDisplayedText] = useState('');
     const [storyTitle, setStoryTitle] = useState('');
@@ -523,18 +950,26 @@ export default function StoriesScreen() {
       }
 
       const profile = profiles.find(p => p.id === enfantId);
-      const childMoods = moods
-        .filter(m => m.profileId === enfantId)
-        .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, 3);
+
+      // Filtres alignés avec PersonnaliserStep (fenêtre 60 jours pour souvenirs)
+      const cutoffDate = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+
+      const childMoods = moodIncluded
+        ? moods
+            .filter(m => m.profileId === enfantId)
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .slice(0, 3)
+        : [];
       const childQuotes = quotes
         .filter(q => q.enfant === enfantName)
         .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, 3);
+        .slice(0, 3)
+        .filter(q => selectedQuoteKeys.has(quoteKey(q)));
       const childMemories = memories
-        .filter(m => m.enfant === enfantName)
+        .filter(m => m.enfant === enfantName && m.date >= cutoffDate)
         .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, 2);
+        .slice(0, 5)
+        .filter(m => selectedMemoryKeys.has(memoryKey(m)));
 
       const anonMap = buildAnonymizationMap(profiles, rdvs, healthRecords, memories, tasks);
 
@@ -545,10 +980,11 @@ export default function StoriesScreen() {
         universTitre: STORY_UNIVERSES.find(u => u.id === universId)?.titre ?? universId,
         detail: detail ? anonymize(detail, anonMap) : undefined,
         language: voiceConfig.language,
+        length,
         context: {
           recentMoods: childMoods.map(m => ({ level: m.level, note: m.note ? anonymize(m.note, anonMap) : undefined, date: m.date })),
           recentQuotes: childQuotes.map(q => ({ citation: anonymize(q.citation, anonMap), contexte: q.contexte ? anonymize(q.contexte, anonMap) : undefined, date: q.date })),
-          recentMemories: childMemories.map(m => ({ titre: anonymize(m.title, anonMap), description: m.description ? anonymize(m.description, anonMap) : undefined, date: m.date })),
+          recentMemories: childMemories.map(m => ({ titre: anonymize(m.title, anonMap), description: m.description ? anonymize(m.description, anonMap) : undefined, date: m.date, type: m.type })),
           allergies: profile?.foodAllergies ?? [],
           gender: profile?.gender as 'garçon' | 'fille' | undefined,
         },
@@ -595,6 +1031,7 @@ export default function StoriesScreen() {
             date: today,
             duree_lecture: Math.round(texte.length / 15),
             voice: voiceConfig,
+            length,
             version: 1,
             sourceFile: storyFileName(enfantName, today, universId),
           };
@@ -738,6 +1175,23 @@ export default function StoriesScreen() {
     );
   }
 
+  // ── Étape Replay (histoire déjà générée) ──
+
+  function ReplayStep({ histoire }: { histoire: BedtimeStory }) {
+    return (
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={[styles.storyTitle, { color: colors.text }]}>{histoire.titre}</Text>
+        <Text style={[styles.storyText, { color: colors.text }]}>{histoire.texte}</Text>
+        <StoryPlayer
+          histoire={histoire}
+          voiceConfig={histoire.voice}
+          elevenLabsKey={elevenLabsKey}
+          onFinish={() => goTo({ etape: 'choisir_enfant' })}
+        />
+      </ScrollView>
+    );
+  }
+
   // ── Rendu selon étape ──
   const renderContent = () => {
     switch (step.etape) {
@@ -748,9 +1202,11 @@ export default function StoriesScreen() {
       case 'personnaliser':
         return <PersonnaliserStep enfantId={step.enfantId} enfantName={step.enfantName} universId={step.universId} />;
       case 'generation':
-        return <GenerationStep enfantId={step.enfantId} enfantName={step.enfantName} universId={step.universId} detail={step.detail} />;
+        return <GenerationStep enfantId={step.enfantId} enfantName={step.enfantName} universId={step.universId} detail={step.detail} length={step.length} />;
       case 'fin':
         return <FinStep histoire={step.histoire} />;
+      case 'replay':
+        return <ReplayStep histoire={step.histoire} />;
     }
   };
 
@@ -762,6 +1218,7 @@ export default function StoriesScreen() {
     personnaliser: 'Personnaliser',
     generation: 'Votre histoire',
     fin: 'Bonne nuit ! 🌙',
+    replay: 'Relire',
   };
 
   return (
@@ -847,12 +1304,92 @@ const styles = StyleSheet.create({
   voiceAddBtn: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   voiceAddBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   voicePersonalEmpty: { fontSize: FontSize.sm, textAlign: 'center', lineHeight: 22, padding: Spacing['2xl'] },
+  voicePremiumHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
+  voiceRefreshText: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
+  voiceEmptyBox: { borderRadius: Radius.lg, borderWidth: 1, padding: Spacing['2xl'], marginTop: Spacing.md, alignItems: 'center' },
+  voiceEmptyTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: Spacing.md, textAlign: 'center' },
+  voiceEmptyText: { fontSize: FontSize.caption, textAlign: 'center', lineHeight: 20 },
+  lengthRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.lg },
+  lengthChip: {
+    flex: 1,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  lengthEmoji: { fontSize: 22, marginBottom: Spacing.xs },
+  lengthLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.bold, marginBottom: 2, textAlign: 'center' },
+  lengthDuration: { fontSize: FontSize.micro, textAlign: 'center' },
+  previousStoryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing['2xl'],
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    gap: Spacing['2xl'],
+  },
+  previousStoryEmoji: { fontSize: 28 },
+  previousStoryBody: { flex: 1 },
+  previousStoryTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: 2 },
+  previousStoryMeta: { fontSize: FontSize.micro },
+  previousStoryBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previousStoryBadgeText: { fontSize: FontSize.sm },
+  previousStoryHint: {
+    fontSize: FontSize.micro,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+    fontStyle: 'italic',
+  },
   voiceModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing['4xl'], borderBottomWidth: 1 },
   voiceModalTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
   voiceModalClose: { fontSize: FontSize.body, fontWeight: FontWeight.medium },
-  vaultBadgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, marginBottom: Spacing['2xl'] },
-  vaultBadge: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, borderRadius: Radius.full },
-  vaultBadgeText: { fontSize: FontSize.caption },
+  contextCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    marginBottom: Spacing.sm,
+    gap: Spacing.md,
+  },
+  contextCheck: { fontSize: 18 },
+  contextEmoji: { fontSize: 22 },
+  contextBody: { flex: 1 },
+  contextTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, marginBottom: 2 },
+  contextSubtitle: { fontSize: FontSize.micro, lineHeight: 16 },
+  contextCategory: { marginBottom: Spacing.md },
+  contextCategoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: Spacing.sm,
+    gap: Spacing.md,
+  },
+  contextCategoryEmoji: { fontSize: 18 },
+  contextCategoryTitle: {
+    flex: 1,
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  contextCategoryCount: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+  },
+  contextCategoryChevron: { fontSize: FontSize.sm, width: 16, textAlign: 'center' },
+  contextMoreLink: { paddingVertical: Spacing.sm, alignItems: 'center' },
+  contextMoreLinkText: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
   loadingContainer: { alignItems: 'center', paddingTop: Spacing['6xl'] },
   starsRow: { flexDirection: 'row', gap: Spacing['2xl'], marginBottom: Spacing['4xl'] },
   starEmoji: { fontSize: 40 },
