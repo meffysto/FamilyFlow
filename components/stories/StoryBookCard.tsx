@@ -61,19 +61,7 @@ function StoryBookCard({ universe, selected, onPress }: Props) {
         {/* ── Couverture ── */}
         <View style={[styles.cover, { backgroundColor: coverBg }]}>
 
-          {/* Grain papier vieilli */}
-          <View style={styles.paperGrain} />
-
-          {/* Cadre décoratif intérieur */}
-          <View style={[styles.innerFrame, { borderColor: accent + '55' }]}>
-            {/* Coins ornementaux */}
-            <View style={[styles.corner, styles.cornerTL, { backgroundColor: accent + '99' }]} />
-            <View style={[styles.corner, styles.cornerTR, { backgroundColor: accent + '99' }]} />
-            <View style={[styles.corner, styles.cornerBL, { backgroundColor: accent + '99' }]} />
-            <View style={[styles.corner, styles.cornerBR, { backgroundColor: accent + '99' }]} />
-          </View>
-
-          {/* Illustration plein cadre */}
+          {/* Illustration en base — occupe tout l'espace du flex */}
           {STORY_UNIVERSE_SPRITES[universe.id] ? (
             <Image
               source={STORY_UNIVERSE_SPRITES[universe.id]!}
@@ -83,6 +71,19 @@ function StoryBookCard({ universe, selected, onPress }: Props) {
           ) : (
             <Text style={styles.emoji}>{universe.emoji}</Text>
           )}
+
+          {/* Overlays positionnés en absolute par-dessus l'image */}
+
+          {/* Grain papier vieilli */}
+          <View style={[StyleSheet.absoluteFill, styles.paperGrain]} />
+
+          {/* Cadre décoratif intérieur */}
+          <View style={[styles.innerFrame, { borderColor: accent + '55' }]}>
+            <View style={[styles.corner, styles.cornerTL, { backgroundColor: accent + '99' }]} />
+            <View style={[styles.corner, styles.cornerTR, { backgroundColor: accent + '99' }]} />
+            <View style={[styles.corner, styles.cornerBL, { backgroundColor: accent + '99' }]} />
+            <View style={[styles.corner, styles.cornerBR, { backgroundColor: accent + '99' }]} />
+          </View>
 
           {/* Bandeau titre style ruban */}
           <View style={[styles.ribbon, { backgroundColor: accent }]}>
@@ -143,9 +144,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Grain parchemin — voile sépia très léger
+  // Grain parchemin — voile sépia très léger (utilisé avec StyleSheet.absoluteFill)
   paperGrain: {
-    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#7B5E3A0A',
   },
 
@@ -170,9 +170,10 @@ const styles = StyleSheet.create({
   cornerBL: { bottom: -CORNER_SIZE / 2, left: -CORNER_SIZE / 2 },
   cornerBR: { bottom: -CORNER_SIZE / 2, right: -CORNER_SIZE / 2 },
 
-  // Illustration plein cadre
+  // Illustration plein cadre — enfant flex normal, remplit le cover
   sprite: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+    width: '100%',
   },
   emoji: {
     fontSize: 72,
