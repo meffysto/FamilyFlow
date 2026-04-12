@@ -372,6 +372,7 @@ export default function VillageScreen() {
   const [tradeReceipt, setTradeReceipt] = useState<{ emoji: string; label: string; qty: number } | null>(null);
   const [farmInv, setFarmInv] = useState<FarmInventory>({ oeuf: 0, lait: 0, farine: 0, miel: 0 });
   const [harvestInv, setHarvestInv] = useState<HarvestInventory>({});
+  const [craftedItems, setCraftedItems] = useState<import('../../lib/mascot/types').CraftedItem[]>([]);
   const season = getCurrentSeason();
 
   // ── Memos ─────────────────────────────────────────────────────────────
@@ -506,30 +507,32 @@ export default function VillageScreen() {
   const loadFarmInventories = useCallback(async () => {
     if (!vault || !activeProfile) return;
     try {
-      const gamiPath = `gami-${activeProfile.id}.md`;
-      const content = await vault.readFile(gamiPath).catch(() => '');
+      const farmPath = `farm-${activeProfile.id}.md`;
+      const content = await vault.readFile(farmPath).catch(() => '');
       const farmData = parseFarmProfile(content);
       setFarmInv(farmData.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 });
       setHarvestInv(farmData.harvestInventory ?? {});
+      setCraftedItems(farmData.craftedItems ?? []);
     } catch {
       /* non-critique */
     }
   }, [vault, activeProfile]);
 
   // ── Phase 30/31 — handler tap bâtiment ───────────────────────────────
-  // Bâtiment débloqué → modal production. Port → PortTradeModal. Verrouillé → tooltip.
+  // Bâtiment débloqué → modal production (tous). Port a en plus un bouton échange.
   const handleBuildingPress = useCallback(
     (ub: UnlockedBuilding) => {
-      // Q49 — Port intercepté : ouvre la modal d'échange inter-familles
-      if (ub.buildingId === 'port') {
-        loadFarmInventories();
-        setShowPortTrade(true);
-        return;
-      }
       setSelectedBuilding(ub);
     },
-    [loadFarmInventories],
+    [],
   );
+
+  // Q49 — Ouvre la modal trade depuis le bouton dans VillageBuildingModal
+  const handleOpenPortTrade = useCallback(() => {
+    setSelectedBuilding(null);
+    loadFarmInventories();
+    setShowPortTrade(true);
+  }, [loadFarmInventories]);
 
   const handleBuildingCollect = useCallback(
     async (buildingId: string) => {
@@ -963,6 +966,7 @@ export default function VillageScreen() {
           inventory={inventory}
           onCollect={handleBuildingCollect}
           onClose={() => setSelectedBuilding(null)}
+          onOpenTrade={selectedBuilding?.buildingId === 'port' ? handleOpenPortTrade : undefined}
         />
       )}
 
@@ -993,6 +997,7 @@ export default function VillageScreen() {
         villageInventory={inventory}
         farmInventory={farmInv}
         harvestInventory={harvestInv}
+        craftedItems={craftedItems}
         onSend={async (cat, itemId, qty) => {
           if (!activeProfile) return null;
           const code = await sendTrade(cat, itemId, qty, activeProfile.id);

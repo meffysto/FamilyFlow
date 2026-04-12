@@ -4,7 +4,8 @@
 //                Recevoir (saisir code → validation + animation réception)
 // Pattern identique à VillageBuildingModal : pageSheet slide + handle + sections.
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -15,9 +16,12 @@ import {
   TextInput,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { CROP_ICONS } from '../../lib/mascot/crop-sprites';
+import { CRAFT_RECIPES } from '../../lib/mascot/craft-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -28,7 +32,7 @@ import {
   type TradeItemOption,
 } from '../../lib/village/trade-engine';
 import type { VillageInventory } from '../../lib/village/types';
-import type { FarmInventory, HarvestInventory } from '../../lib/mascot/types';
+import type { FarmInventory, HarvestInventory, CraftedItem } from '../../lib/mascot/types';
 
 const RNShare = Platform.OS === 'web'
   ? { open: async (_opts: any) => ({}) }
@@ -43,6 +47,7 @@ interface PortTradeModalProps {
   villageInventory: VillageInventory;
   farmInventory: FarmInventory;
   harvestInventory: HarvestInventory;
+  craftedItems: CraftedItem[];
   // Callbacks
   onSend: (category: TradeCategory, itemId: string, quantity: number) => Promise<string | null>;
   onReceive: (code: string) => Promise<{ success: boolean; itemLabel?: string; emoji?: string; error?: string }>;
@@ -61,12 +66,14 @@ export function PortTradeModal({
   villageInventory,
   farmInventory,
   harvestInventory,
+  craftedItems,
   onSend,
   onReceive,
   canSendToday,
   sendsRemaining,
 }: PortTradeModalProps) {
   const { colors, primary, tint } = useThemeColors();
+  const { t } = useTranslation();
 
   // ── State onglets ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabId>('envoyer');
@@ -79,7 +86,6 @@ export function PortTradeModal({
   const [isSending, setIsSending] = useState(false);
 
   // ── State onglet Recevoir ───────────────────────────────────────────────────
-  const [codeInput, setCodeInput] = useState('');
   const [receiveError, setReceiveError] = useState<string | null>(null);
   const [isReceiving, setIsReceiving] = useState(false);
 
@@ -89,7 +95,23 @@ export function PortTradeModal({
     villageInventory,
     farmInventory,
     harvestInventory,
+    craftedItems,
   );
+
+  // Enrichir les items avec labels FR + sprites
+  const enrichedItems = useMemo(() => availableItems.map(item => {
+    let label = item.label;
+    let sprite: any = null;
+    if (selectedCategory === 'harvest') {
+      label = t(`farm.crop.${item.itemId}`, { defaultValue: item.label });
+      sprite = CROP_ICONS[item.itemId] ?? null;
+    } else if (selectedCategory === 'crafted') {
+      label = t(`craft.recipe.${item.itemId}`, { defaultValue: item.label });
+      const recipe = CRAFT_RECIPES.find(r => r.id === item.itemId);
+      sprite = recipe?.sprite ?? null;
+    }
+    return { ...item, label, sprite };
+  }), [availableItems, selectedCategory, t]);
 
   // Reset item sélectionné si catégorie change
   useEffect(() => {
@@ -106,7 +128,6 @@ export function PortTradeModal({
       setSelectedItem(null);
       setQuantity(1);
       setGeneratedCode(null);
-      setCodeInput('');
       setReceiveError(null);
     }
   }, [visible]);
@@ -152,7 +173,7 @@ export function PortTradeModal({
     if (!generatedCode) return;
     try {
       await RNShare.open({
-        message: `Colis FamilyFlow ! Utilise ce code dans le Port du village : ${generatedCode}`,
+        message: `Colis FamilyFlow ! Ouvre le Port du village et entre ce code :\n${generatedCode}`,
         failOnCancel: false,
       });
     } catch {
@@ -162,13 +183,12 @@ export function PortTradeModal({
 
   // ── Handlers Recevoir ───────────────────────────────────────────────────────
 
-  const handleReceive = useCallback(async () => {
-    const trimmed = codeInput.trim();
-    if (!trimmed || isReceiving) return;
+  const handleReceive = useCallback(async (code: string) => {
+    if (!code || isReceiving) return;
     setReceiveError(null);
     setIsReceiving(true);
     try {
-      const result = await onReceive(trimmed);
+      const result = await onReceive(code);
       if (result.success) {
         // Le parent ferme cette modal et ouvre TradeReceiptModal
       } else {
@@ -177,7 +197,7 @@ export function PortTradeModal({
     } finally {
       setIsReceiving(false);
     }
-  }, [codeInput, isReceiving, onReceive]);
+  }, [isReceiving, onReceive]);
 
   // ── Catégorie tabs ──────────────────────────────────────────────────────────
 
@@ -185,6 +205,7 @@ export function PortTradeModal({
     { id: 'village', label: 'Village', emoji: '🏘️' },
     { id: 'farm',    label: 'Ferme',   emoji: '🐄' },
     { id: 'harvest', label: 'Récoltes', emoji: '🌾' },
+    { id: 'crafted', label: 'Créations', emoji: '🍳' },
   ];
 
   return (
@@ -237,6 +258,7 @@ export function PortTradeModal({
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
           >
             {activeTab === 'envoyer' ? (
               <EnvoiTab
@@ -246,7 +268,7 @@ export function PortTradeModal({
                 categories={CATEGORIES}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
-                availableItems={availableItems}
+                availableItems={enrichedItems}
                 selectedItem={selectedItem}
                 onSelectItem={handleSelectItem}
                 quantity={quantity}
@@ -262,8 +284,6 @@ export function PortTradeModal({
               <RecevoirTab
                 colors={colors}
                 primary={primary}
-                codeInput={codeInput}
-                onCodeChange={setCodeInput}
                 receiveError={receiveError}
                 isReceiving={isReceiving}
                 onReceive={handleReceive}
@@ -291,7 +311,7 @@ function EnvoiTab({
   categories: { id: TradeCategory; label: string; emoji: string }[];
   selectedCategory: TradeCategory;
   onSelectCategory: (c: TradeCategory) => void;
-  availableItems: TradeItemOption[];
+  availableItems: (TradeItemOption & { sprite?: any })[];
   selectedItem: TradeItemOption | null;
   onSelectItem: (i: TradeItemOption) => void;
   quantity: number;
@@ -337,7 +357,7 @@ function EnvoiTab({
       </View>
 
       {/* Liste items */}
-      <Text style={[styles.sectionLabel, { color: colors.textSub }]}>Item à envoyer</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textSub }]}>Objet à envoyer</Text>
       {availableItems.length === 0 ? (
         <View style={[styles.emptyBox, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -357,7 +377,11 @@ function EnvoiTab({
               onPress={() => onSelectItem(item)}
               activeOpacity={0.7}
             >
-              <Text style={styles.itemEmoji}>{item.emoji}</Text>
+              {item.sprite ? (
+                <Image source={item.sprite} style={styles.itemSprite} resizeMode="contain" />
+              ) : (
+                <Text style={styles.itemEmoji}>{item.emoji}</Text>
+              )}
               <Text style={[styles.itemLabel, { color: colors.text }]} numberOfLines={2}>
                 {item.label}
               </Text>
@@ -432,62 +456,62 @@ function EnvoiTab({
 
 // ── Onglet Recevoir ───────────────────────────────────────────────────────────
 
-function RecevoirTab({
-  colors, primary,
-  codeInput, onCodeChange,
-  receiveError, isReceiving, onReceive,
-}: {
+function RecevoirTab({ colors, primary, receiveError, isReceiving, onReceive }: {
   colors: any; primary: string;
-  codeInput: string;
-  onCodeChange: (v: string) => void;
   receiveError: string | null;
   isReceiving: boolean;
-  onReceive: () => void;
+  onReceive: (code: string) => void;
 }) {
+  const handlePrompt = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        'Recevoir un colis',
+        'Colle le code FF-... reçu d\'une autre famille',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Ouvrir',
+            onPress: (value: string | undefined) => {
+              if (value?.trim()) {
+                // Met à jour le state puis déclenche la réception
+                onReceive(value.trim());
+              }
+            },
+          },
+        ],
+        'plain-text',
+        '',
+        'default',
+      );
+    }
+  }, [onReceive]);
+
   return (
     <>
-      <Text style={[styles.sectionLabel, { color: colors.textSub }]}>Code du colis</Text>
-      <TextInput
-        style={[
-          styles.codeInput,
-          { backgroundColor: colors.cardAlt, borderColor: receiveError ? '#EF4444' : colors.borderLight, color: colors.text },
-        ]}
-        placeholder="FF-..."
-        placeholderTextColor={colors.textMuted}
-        value={codeInput}
-        onChangeText={(v) => {
-          onCodeChange(v);
-        }}
-        autoCapitalize="characters"
-        autoCorrect={false}
-        returnKeyType="done"
-        onSubmitEditing={onReceive}
-      />
+      <View style={styles.receiveIllustration}>
+        <Text style={styles.receiveEmoji}>📦</Text>
+        <Text style={[styles.receiveTitle, { color: colors.text }]}>
+          Recevoir un colis
+        </Text>
+        <Text style={[styles.hintText, { color: colors.textMuted }]}>
+          Demande un code FF-... à une autre famille FamilyFlow puis colle-le ici.
+        </Text>
+      </View>
 
       {receiveError && (
         <Text style={styles.errorText}>{receiveError}</Text>
       )}
 
       <TouchableOpacity
-        style={[
-          styles.sendBtn,
-          { backgroundColor: codeInput.trim() ? primary : colors.borderLight },
-        ]}
-        onPress={codeInput.trim() ? onReceive : undefined}
-        activeOpacity={codeInput.trim() ? 0.7 : 1}
-        disabled={isReceiving || !codeInput.trim()}
+        style={[styles.sendBtn, { backgroundColor: primary }]}
+        onPress={handlePrompt}
+        activeOpacity={0.7}
+        disabled={isReceiving}
       >
-        <Text style={[
-          styles.sendBtnText,
-          { color: codeInput.trim() ? '#FFFFFF' : colors.textMuted },
-        ]}>
-          {isReceiving ? 'Vérification...' : 'Ouvrir le colis 📦'}
+        <Text style={[styles.sendBtnText, { color: '#FFFFFF' }]}>
+          {isReceiving ? 'Vérification...' : 'Saisir un code'}
         </Text>
       </TouchableOpacity>
-
-      <Text style={[styles.hintText, { color: colors.textMuted }]}>
-        Demande un code FF-... à une autre famille FamilyFlow et colle-le ici pour recevoir leur colis.
-      </Text>
     </>
   );
 }
@@ -624,6 +648,10 @@ const styles = StyleSheet.create({
   itemEmoji: {
     fontSize: 28,
   },
+  itemSprite: {
+    width: 32,
+    height: 32,
+  },
   itemLabel: {
     fontSize: FontSize.label,
     textAlign: 'center',
@@ -705,13 +733,17 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
-  codeInput: {
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing['2xl'],
-    fontSize: FontSize.body,
-    letterSpacing: 1,
+  receiveIllustration: {
+    alignItems: 'center' as const,
+    gap: Spacing.md,
+    paddingVertical: Spacing['2xl'],
+  },
+  receiveEmoji: {
+    fontSize: 56,
+  },
+  receiveTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
   },
   errorText: {
     fontSize: FontSize.sm,

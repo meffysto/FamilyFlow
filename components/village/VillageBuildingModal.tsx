@@ -31,6 +31,8 @@ interface VillageBuildingModalProps {
   inventory: VillageInventory;
   onCollect: (buildingId: string) => void;
   onClose: () => void;
+  /** Port uniquement — ouvre la modal d'échange inter-familles */
+  onOpenTrade?: () => void;
 }
 
 // ── Composant ────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ export function VillageBuildingModal({
   inventory,
   onCollect,
   onClose,
+  onOpenTrade,
 }: VillageBuildingModalProps) {
   const { colors, primary } = useThemeColors();
 
@@ -176,6 +179,17 @@ export function VillageBuildingModal({
               </View>
             </View>
 
+            {/* Port — bouton échange inter-familles */}
+            {building.buildingId === 'port' && onOpenTrade && (
+              <TouchableOpacity
+                style={[styles.tradeBtn, { backgroundColor: primary }]}
+                onPress={onOpenTrade}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.tradeBtnText}>📦 Échange inter-familles</Text>
+              </TouchableOpacity>
+            )}
+
             {/* Palier de déblocage */}
             <View style={styles.palierRow}>
               <Text style={[styles.palierText, { color: colors.textMuted }]}>
@@ -297,6 +311,16 @@ const styles = StyleSheet.create({
   palierRow: {
     alignItems: 'center',
     paddingBottom: Spacing.md,
+  },
+  tradeBtn: {
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing['2xl'],
+    alignItems: 'center',
+  },
+  tradeBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
   },
   palierText: {
     fontSize: FontSize.label,

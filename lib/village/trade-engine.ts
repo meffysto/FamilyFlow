@@ -5,9 +5,10 @@
 // Per ARCH-05 : zéro nouvelle dépendance npm. base36 natif JS (parseInt/toString(36)).
 
 import type { VillageInventory } from './types';
-import type { FarmInventory, HarvestInventory } from '../mascot/types';
+import type { FarmInventory, HarvestInventory, CraftedItem } from '../mascot/types';
 import { BUILDINGS_CATALOG } from './catalog';
 import { CROP_CATALOG } from '../mascot/types';
+import { CRAFT_RECIPES } from '../mascot/craft-engine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constantes
@@ -26,19 +27,21 @@ const CATEGORY_CHAR: Record<TradeCategory, string> = {
   village: 'V',
   farm: 'F',
   harvest: 'H',
+  crafted: 'C',
 };
 
 const CHAR_CATEGORY: Record<string, TradeCategory> = {
   V: 'village',
   F: 'farm',
   H: 'harvest',
+  C: 'crafted',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type TradeCategory = 'village' | 'farm' | 'harvest';
+export type TradeCategory = 'village' | 'farm' | 'harvest' | 'crafted';
 
 export interface TradePayload {
   category: TradeCategory;
@@ -236,6 +239,7 @@ export function getAvailableTradeItems(
   villageInv: VillageInventory,
   farmInv: FarmInventory,
   harvestInv: HarvestInventory,
+  craftedItems?: CraftedItem[],
 ): TradeItemOption[] {
   switch (category) {
     case 'village': {
@@ -274,6 +278,23 @@ export function getAvailableTradeItems(
       }
       return result;
     }
+
+    case 'crafted': {
+      const result: TradeItemOption[] = [];
+      if (!craftedItems) return result;
+      // Grouper par recipeId pour compter les quantités
+      const counts: Record<string, number> = {};
+      for (const item of craftedItems) {
+        counts[item.recipeId] = (counts[item.recipeId] ?? 0) + 1;
+      }
+      for (const [recipeId, available] of Object.entries(counts)) {
+        const recipe = CRAFT_RECIPES.find(r => r.id === recipeId);
+        if (recipe && available > 0) {
+          result.push({ itemId: recipeId, label: recipe.labelKey.replace('craft.recipe.', ''), emoji: recipe.emoji, available });
+        }
+      }
+      return result;
+    }
   }
 }
 
@@ -302,6 +323,11 @@ export function getTradeItemMeta(
       const cropDef = CROP_CATALOG.find(c => c.id === itemId);
       if (cropDef) return { label: cropDef.id, emoji: cropDef.emoji };
       return { label: itemId, emoji: '🌱' };
+    }
+    case 'crafted': {
+      const recipe = CRAFT_RECIPES.find(r => r.id === itemId);
+      if (recipe) return { label: recipe.labelKey.replace('craft.recipe.', ''), emoji: recipe.emoji };
+      return { label: itemId, emoji: '🍳' };
     }
   }
 }

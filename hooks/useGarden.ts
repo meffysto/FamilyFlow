@@ -509,9 +509,9 @@ export function useGarden(): UseGardenReturn {
       if (!vault) return null;
       if (!canSendTradeToday(tradeSentTodayField)) return null;
 
-      const gamiPath = `gami-${profileId}.md`;
-      const gamiContent = await vault.readFile(gamiPath).catch(() => '');
-      const farmData = parseFarmProfile(gamiContent);
+      const farmPath = `farm-${profileId}.md`;
+      const farmContent = await vault.readFile(farmPath).catch(() => '');
+      const farmData = parseFarmProfile(farmContent);
 
       // Vérifier et déduire le stock selon catégorie
       let gardenUpdated = false;
@@ -544,7 +544,7 @@ export function useGarden(): UseGardenReturn {
           trade_sent_today: newField,
         };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
-        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
         setTradeSentTodayField(newField);
         // Encoder le code
         const payload = {
@@ -569,7 +569,38 @@ export function useGarden(): UseGardenReturn {
           trade_sent_today: newField,
         };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
-        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
+        setTradeSentTodayField(newField);
+        const payload = {
+          category,
+          itemId,
+          quantity,
+          timestamp: Math.floor(Date.now() / 1000),
+          nonce: Math.floor(Math.random() * 9999),
+        };
+        return encodeTrade(payload);
+      } else if (category === 'crafted') {
+        const crafted = farmData.craftedItems ?? [];
+        // Compter combien on en a de ce recipeId
+        const available = crafted.filter(c => c.recipeId === itemId).length;
+        if (available < quantity) return null;
+        // Retirer `quantity` items de ce recipeId (les plus anciens)
+        let removed = 0;
+        const updatedCrafted = crafted.filter(c => {
+          if (c.recipeId === itemId && removed < quantity) {
+            removed++;
+            return false;
+          }
+          return true;
+        });
+        const newField = incrementTradesSent(tradeSentTodayField);
+        const updatedFarmData = {
+          ...farmData,
+          craftedItems: updatedCrafted,
+          trade_sent_today: newField,
+        };
+        const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+        await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
         setTradeSentTodayField(newField);
         const payload = {
           category,
@@ -581,7 +612,7 @@ export function useGarden(): UseGardenReturn {
         return encodeTrade(payload);
       }
 
-      // Village — écrire jardin-familial.md + gami pour trade_sent_today
+      // Village — écrire jardin-familial.md + farm pour trade_sent_today
       if (gardenUpdated && newGardenData) {
         const newContent = serializeGardenFile(newGardenData);
         await vault.writeFile(VILLAGE_FILE, newContent);
@@ -589,7 +620,7 @@ export function useGarden(): UseGardenReturn {
         const newField = incrementTradesSent(tradeSentTodayField);
         const updatedFarmData = { ...farmData, trade_sent_today: newField };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
-        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
         setTradeSentTodayField(newField);
         const payload = {
           category,
@@ -619,9 +650,9 @@ export function useGarden(): UseGardenReturn {
 
       if (isTradeExpired(payload)) return { success: false, error: 'Code expiré (validité 48h)' };
 
-      const gamiPath = `gami-${profileId}.md`;
-      const gamiContent = await vault.readFile(gamiPath).catch(() => '');
-      const farmData = parseFarmProfile(gamiContent);
+      const farmPath = `farm-${profileId}.md`;
+      const farmContent = await vault.readFile(farmPath).catch(() => '');
+      const farmData = parseFarmProfile(farmContent);
 
       const claimedCodes = farmData.trade_claimed_codes ?? [];
       if (isTradeAlreadyClaimed(code, claimedCodes)) {
@@ -654,7 +685,7 @@ export function useGarden(): UseGardenReturn {
         const newClaimedCodes = [...claimedCodes, code.trim().toUpperCase()].slice(-200);
         const updatedFarmData = { ...farmData, farmInventory: updatedFarmInv, trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
-        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
         return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
       } else if (payload.category === 'harvest') {
         const currentQty = farmData.harvestInventory?.[payload.itemId] ?? 0;
@@ -662,15 +693,26 @@ export function useGarden(): UseGardenReturn {
         const newClaimedCodes = [...claimedCodes, code.trim().toUpperCase()].slice(-200);
         const updatedFarmData = { ...farmData, harvestInventory: updatedHarvest, trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
-        await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+        await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
+        return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
+      } else if (payload.category === 'crafted') {
+        const crafted = farmData.craftedItems ?? [];
+        const newItems: import('../lib/mascot/types').CraftedItem[] = [];
+        for (let i = 0; i < payload.quantity; i++) {
+          newItems.push({ recipeId: payload.itemId, craftedAt: new Date().toISOString() });
+        }
+        const newClaimedCodes = [...claimedCodes, code.trim().toUpperCase()].slice(-200);
+        const updatedFarmData = { ...farmData, craftedItems: [...crafted, ...newItems], trade_claimed_codes: newClaimedCodes };
+        const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+        await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
         return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
       }
 
-      // Village — mettre aussi à jour le claimed code dans gami
+      // Village — mettre aussi à jour le claimed code dans farm
       const newClaimedCodes = [...claimedCodes, code.trim().toUpperCase()].slice(-200);
       const updatedFarmData = { ...farmData, trade_claimed_codes: newClaimedCodes };
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
-      await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updatedFarmData));
+      await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
 
       return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
     },
@@ -685,8 +727,8 @@ export function useGarden(): UseGardenReturn {
     let cancelled = false;
     (async () => {
       try {
-        const gamiPath = `gami-${activeProfile.id}.md`;
-        const content = await vault.readFile(gamiPath).catch(() => '');
+        const farmPath = `farm-${activeProfile.id}.md`;
+        const content = await vault.readFile(farmPath).catch(() => '');
         const farmData = parseFarmProfile(content);
         if (!cancelled) setTradeSentTodayField(farmData.trade_sent_today);
       } catch {

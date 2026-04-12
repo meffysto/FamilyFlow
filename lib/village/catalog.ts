@@ -60,7 +60,7 @@ export const BUILDINGS_CATALOG: BuildingCatalogEntry[] = [
     production: { itemId: 'farine_moulee', itemLabel: 'Farine moulue', itemEmoji: '🌾', ratePerItem: 4 },
   },
   {
-    id: 'port', labelFR: 'Port', palier: 12000,
+    id: 'port', labelFR: 'Port', palier: 8000,
     sprite: require('../../assets/buildings/village/port.png'),
     production: { itemId: 'coffre_maritime', itemLabel: 'Coffre maritime', itemEmoji: '⚓', ratePerItem: 6 },
   },
