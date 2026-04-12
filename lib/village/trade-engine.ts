@@ -59,35 +59,70 @@ export interface TradeItemOption {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Registre d'index compact — chaque item échangeable = 2 chars base36
+// Évite la troncation des itemIds longs (eau_fraiche, coffre_maritime, etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildItemRegistry(): { idToCode: Map<string, string>; codeToId: Map<string, string> } {
+  const allItems: string[] = [];
+  // Village
+  for (const b of BUILDINGS_CATALOG) allItems.push(`V:${b.production.itemId}`);
+  // Farm
+  for (const k of ['oeuf', 'lait', 'farine', 'miel']) allItems.push(`F:${k}`);
+  // Harvest
+  for (const c of CROP_CATALOG) allItems.push(`H:${c.id}`);
+  // Crafted
+  for (const r of CRAFT_RECIPES) allItems.push(`C:${r.id}`);
+
+  const idToCode = new Map<string, string>();
+  const codeToId = new Map<string, string>();
+  for (let i = 0; i < allItems.length; i++) {
+    const code = i.toString(36).padStart(2, '0');
+    idToCode.set(allItems[i], code);
+    codeToId.set(code, allItems[i]);
+  }
+  return { idToCode, codeToId };
+}
+
+const ITEM_REGISTRY = buildItemRegistry();
+
+function itemToCode(category: TradeCategory, itemId: string): string | null {
+  const key = `${CATEGORY_CHAR[category]}:${itemId}`;
+  return ITEM_REGISTRY.idToCode.get(key) ?? null;
+}
+
+function codeToItem(code: string): { category: TradeCategory; itemId: string } | null {
+  const entry = ITEM_REGISTRY.codeToId.get(code);
+  if (!entry) return null;
+  const [catChar, ...rest] = entry.split(':');
+  const category = CHAR_CATEGORY[catChar];
+  if (!category) return null;
+  return { category, itemId: rest.join(':') };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Encodage / Décodage
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Encode un TradePayload en code-cadeau partageable.
- * Format : FF-{catChar}{itemId8}{qty2}{timestamp6b36}{nonce3b36}{checksum2b36}
- * Utilise base36 pour timestamp et nonce. Checksum 2 chars (base36, mod 1296).
+ * Format : FF-{itemCode2}{qty2}{timestamp6b36}{nonce3b36}{checksum2b36}
+ * Total : FF- + 15 chars = 18 chars. Court et partageable.
  */
 export function encodeTrade(payload: TradePayload): string {
-  const catChar = CATEGORY_CHAR[payload.category];
-  // itemId tronqué/paddé à 8 chars, alphanumeric uniquement
-  const itemIdClean = payload.itemId.replace(/[^a-z0-9_]/gi, '').slice(0, 8).padEnd(8, '0');
-  // quantity sur 2 digits décimaux (max 99)
+  const ic = itemToCode(payload.category, payload.itemId);
+  if (!ic) return `${CODE_PREFIX}ERR`;
   const qtyStr = Math.min(99, Math.max(1, payload.quantity)).toString().padStart(2, '0');
-  // timestamp epoch seconds en base36, 6 chars
   const tsB36 = Math.floor(payload.timestamp).toString(36).padStart(6, '0').slice(-6);
-  // nonce 0-9999 en base36, 3 chars
   const nonceB36 = payload.nonce.toString(36).padStart(3, '0').slice(-3);
 
-  const payloadStr = `${catChar}${itemIdClean}${qtyStr}${tsB36}${nonceB36}`;
+  const payloadStr = `${ic}${qtyStr}${tsB36}${nonceB36}`;
 
-  // Checksum = somme des code-points modulo 1296, encodée base36 2 chars
   let sum = 0;
-  for (let i = 0; i < payloadStr.length; i++) {
-    sum += payloadStr.charCodeAt(i);
-  }
+  for (let i = 0; i < payloadStr.length; i++) sum += payloadStr.charCodeAt(i);
   const checksum = (sum % 1296).toString(36).padStart(2, '0');
 
-  return `${CODE_PREFIX}${payloadStr}${checksum}`;
+  return `${CODE_PREFIX}${payloadStr}${checksum}`.toUpperCase();
 }
 
 /**
@@ -95,46 +130,36 @@ export function encodeTrade(payload: TradePayload): string {
  */
 export function decodeTrade(code: string): TradePayload | null {
   const trimmed = code.trim().toUpperCase().replace(/\s/g, '');
-
   if (!trimmed.startsWith(CODE_PREFIX.toUpperCase())) return null;
 
-  const body = trimmed.slice(CODE_PREFIX.length);
-  // Structure attendue : catChar(1) + itemId8(8) + qty2(2) + ts6(6) + nonce3(3) + checksum2(2) = 22 chars
-  if (body.length !== 22) return null;
+  const body = trimmed.slice(CODE_PREFIX.length).toLowerCase();
+  // itemCode(2) + qty(2) + ts(6) + nonce(3) + checksum(2) = 15 chars
+  if (body.length !== 15) return null;
 
-  const catChar = body[0];
-  const category = CHAR_CATEGORY[catChar];
-  if (!category) return null;
+  const itemCode = body.slice(0, 2);
+  const resolved = codeToItem(itemCode);
+  if (!resolved) return null;
 
-  // Retirer le padding de zéros trailing de l'itemId
-  const itemId = body.slice(1, 9).toLowerCase().replace(/0+$/, '');
-  if (!itemId) return null;
-
-  const qtyStr = body.slice(9, 11);
+  const qtyStr = body.slice(2, 4);
   const quantity = parseInt(qtyStr, 10);
   if (isNaN(quantity) || quantity < 1) return null;
 
-  const tsB36 = body.slice(11, 17).toLowerCase();
+  const tsB36 = body.slice(4, 10);
   const timestamp = parseInt(tsB36, 36);
   if (isNaN(timestamp) || timestamp <= 0) return null;
 
-  const nonceB36 = body.slice(17, 20).toLowerCase();
+  const nonceB36 = body.slice(10, 13);
   const nonce = parseInt(nonceB36, 36);
   if (isNaN(nonce)) return null;
 
-  const givenChecksum = body.slice(20, 22).toLowerCase();
-
-  // Recalculer le checksum sur la partie payload (sans checksum)
-  const payloadStr = body.slice(0, 20).toLowerCase();
+  const givenChecksum = body.slice(13, 15);
+  const payloadStr = body.slice(0, 13);
   let sum = 0;
-  for (let i = 0; i < payloadStr.length; i++) {
-    sum += payloadStr.charCodeAt(i);
-  }
+  for (let i = 0; i < payloadStr.length; i++) sum += payloadStr.charCodeAt(i);
   const expectedChecksum = (sum % 1296).toString(36).padStart(2, '0');
-
   if (givenChecksum !== expectedChecksum) return null;
 
-  return { category, itemId, quantity, timestamp, nonce };
+  return { category: resolved.category, itemId: resolved.itemId, quantity, timestamp, nonce };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

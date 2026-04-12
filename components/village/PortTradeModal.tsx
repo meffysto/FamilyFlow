@@ -50,7 +50,7 @@ interface PortTradeModalProps {
   craftedItems: CraftedItem[];
   // Callbacks
   onSend: (category: TradeCategory, itemId: string, quantity: number) => Promise<string | null>;
-  onReceive: (code: string) => Promise<{ success: boolean; itemLabel?: string; emoji?: string; error?: string }>;
+  onReceive: (code: string) => Promise<{ success: boolean; itemLabel?: string; emoji?: string; quantity?: number; category?: string; itemId?: string; error?: string }>;
   // Anti-abus
   canSendToday: boolean;
   sendsRemaining: number;

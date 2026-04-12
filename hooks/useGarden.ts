@@ -102,7 +102,7 @@ export interface UseGardenReturn {
   unlockVillageTech: (techId: string) => Promise<boolean>;
   // Q49 — Échange inter-familles via Port
   sendTrade: (category: TradeCategory, itemId: string, quantity: number, profileId: string) => Promise<string | null>;
-  receiveTrade: (code: string, profileId: string) => Promise<{ success: boolean; itemLabel?: string; emoji?: string; quantity?: number; error?: string }>;
+  receiveTrade: (code: string, profileId: string) => Promise<{ success: boolean; itemLabel?: string; emoji?: string; quantity?: number; category?: string; itemId?: string; error?: string }>;
   canSendTradeToday: boolean;
   tradesSentRemaining: number;
 }
@@ -642,7 +642,7 @@ export function useGarden(): UseGardenReturn {
    * Valide le code, vérifie expiration + double-claim, ajoute l'item à l'inventaire.
    */
   const receiveTrade = useCallback(
-    async (code: string, profileId: string): Promise<{ success: boolean; itemLabel?: string; emoji?: string; quantity?: number; error?: string }> => {
+    async (code: string, profileId: string): Promise<{ success: boolean; itemLabel?: string; emoji?: string; quantity?: number; category?: string; itemId?: string; error?: string }> => {
       if (!vault) return { success: false, error: 'Vault non disponible' };
 
       const payload = decodeTrade(code);
@@ -686,7 +686,7 @@ export function useGarden(): UseGardenReturn {
         const updatedFarmData = { ...farmData, farmInventory: updatedFarmInv, trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
-        return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
+        return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
       } else if (payload.category === 'harvest') {
         const currentQty = farmData.harvestInventory?.[payload.itemId] ?? 0;
         const updatedHarvest = { ...farmData.harvestInventory, [payload.itemId]: currentQty + payload.quantity };
@@ -694,7 +694,7 @@ export function useGarden(): UseGardenReturn {
         const updatedFarmData = { ...farmData, harvestInventory: updatedHarvest, trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
-        return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
+        return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
       } else if (payload.category === 'crafted') {
         const crafted = farmData.craftedItems ?? [];
         const newItems: import('../lib/mascot/types').CraftedItem[] = [];
@@ -705,7 +705,7 @@ export function useGarden(): UseGardenReturn {
         const updatedFarmData = { ...farmData, craftedItems: [...crafted, ...newItems], trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
-        return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
+        return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
       }
 
       // Village — mettre aussi à jour le claimed code dans farm
@@ -714,7 +714,7 @@ export function useGarden(): UseGardenReturn {
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
       await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
 
-      return { success: true, itemLabel: label, emoji, quantity: payload.quantity };
+      return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
     },
     [vault, gardenData, profiles, setGardenRaw],
   );

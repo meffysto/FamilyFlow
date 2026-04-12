@@ -35,6 +35,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -319,6 +320,7 @@ export default function VillageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useThemeColors();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { activeProfile, profiles, vault, refreshGamification } = useVault();
   const {
@@ -1010,9 +1012,16 @@ export default function VillageScreen() {
           if (result.success) {
             await loadFarmInventories();
             setShowPortTrade(false);
+            // Traduire le label selon la catégorie
+            let displayLabel = result.itemLabel ?? 'Objet';
+            if (result.category === 'harvest' && result.itemId) {
+              displayLabel = t(`farm.crop.${result.itemId}`, { defaultValue: displayLabel });
+            } else if (result.category === 'crafted' && result.itemId) {
+              displayLabel = t(`craft.recipe.${result.itemId}`, { defaultValue: displayLabel });
+            }
             setTradeReceipt({
               emoji: result.emoji ?? '📦',
-              label: result.itemLabel ?? 'Item',
+              label: displayLabel,
               qty: result.quantity ?? 1,
             });
           }
