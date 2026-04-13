@@ -67,8 +67,8 @@ import { VillageBuildingModal } from '../../components/village/VillageBuildingMo
 // Phase 31+ — atelier village + arbre tech
 import { AtelierSheet } from '../../components/village/AtelierSheet';
 import { VillageTechSheet } from '../../components/village/VillageTechSheet';
-import { BUILDINGS_CATALOG } from '../../lib/village';
-import type { UnlockedBuilding } from '../../lib/village';
+import { BUILDINGS_CATALOG, VILLAGE_RECIPES } from '../../lib/village';
+import type { UnlockedBuilding, VillageAtelierCraft } from '../../lib/village';
 import { VILLAGE_GRID } from '../../lib/village/grid';
 // Q49 — Échange inter-familles via Port
 import { PortTradeModal } from '../../components/village/PortTradeModal';
@@ -314,6 +314,49 @@ const FeedItem = React.memo(function FeedItem({
   );
 });
 
+// ── UnifiedFeedItem — contributions + crafts mélangés ─────────────────────
+
+type UnifiedFeedItem =
+  | { kind: 'contribution'; data: VillageContribution; timestamp: string }
+  | { kind: 'craft'; data: VillageAtelierCraft; timestamp: string };
+
+// ── CraftFeedItem — mémoïsé ────────────────────────────────────────────────
+
+const CraftFeedItem = React.memo(function CraftFeedItem({
+  craft,
+  profileName,
+  profileEmoji,
+  colors,
+}: {
+  craft: VillageAtelierCraft;
+  profileName: string;
+  profileEmoji: string;
+  colors: ColorsType;
+}) {
+  const recipe = VILLAGE_RECIPES.find(r => r.id === craft.recipeId);
+  const label = recipe ? `${recipe.resultEmoji} ${recipe.labelFR}` : craft.recipeId;
+  const xp = recipe?.xpBonus ?? 0;
+  return (
+    <View style={[styles.feedItem, styles.craftFeedItem, { borderBottomColor: colors.borderLight, borderLeftColor: colors.warning }]}>
+      <Text style={styles.feedEmoji}>{profileEmoji}</Text>
+      <View style={styles.feedContent}>
+        <Text style={[styles.feedName, { color: colors.text }]} numberOfLines={1}>
+          {profileName}
+        </Text>
+        <Text style={[styles.feedType, { color: colors.textMuted }]} numberOfLines={1}>
+          a crafté · {label}
+        </Text>
+      </View>
+      {xp > 0 && (
+        <Text style={[styles.feedAmount, { color: colors.warning }]}>+{xp} XP</Text>
+      )}
+      <Text style={[styles.feedTime, { color: colors.textFaint ?? colors.textMuted }]}>
+        {formatRelativeTime(craft.timestamp)}
+      </Text>
+    </View>
+  );
+});
+
 // ── VillageScreen — Composant principal ───────────────────────────────────
 
 export default function VillageScreen() {
@@ -379,17 +422,19 @@ export default function VillageScreen() {
 
   // ── Memos ─────────────────────────────────────────────────────────────
 
-  /** Contributions — plus récentes en premier, limitées par défaut à FEED_LIMIT */
-  const feedItems = useMemo(
-    () =>
-      [...(gardenData?.contributions ?? [])].reverse().slice(
-        0,
-        showAllFeed ? undefined : FEED_LIMIT,
-      ),
-    [gardenData?.contributions, showAllFeed],
-  );
+  /** Feed unifié contributions + crafts — plus récents en premier */
+  const feedItems = useMemo<UnifiedFeedItem[]>(() => {
+    const contribs: UnifiedFeedItem[] = (gardenData?.contributions ?? []).map(c => ({
+      kind: 'contribution', data: c, timestamp: c.timestamp,
+    }));
+    const crafts: UnifiedFeedItem[] = (atelierCrafts ?? []).map(c => ({
+      kind: 'craft', data: c, timestamp: c.timestamp,
+    }));
+    const all = [...contribs, ...crafts].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    return showAllFeed ? all : all.slice(0, FEED_LIMIT);
+  }, [gardenData?.contributions, atelierCrafts, showAllFeed]);
 
-  const totalContribs = gardenData?.contributions?.length ?? 0;
+  const totalContribs = (gardenData?.contributions?.length ?? 0) + (atelierCrafts?.length ?? 0);
 
   /** Total de contributions par profil (pour les indicateurs membres) */
   const memberContribs = useMemo(() => {
@@ -816,29 +861,43 @@ export default function VillageScreen() {
             {/* ── Section Contributions ── */}
             <View style={[styles.section, { backgroundColor: colors.card }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Contributions cette semaine
+                Activité du village
               </Text>
 
               {totalContribs === 0 ? (
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyEmoji}>🌱</Text>
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                    Pas encore de contributions
+                    Pas encore d'activité
                   </Text>
                   <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    Les récoltes et tâches complétées cette semaine apparaîtront ici.
+                    Les récoltes, tâches et crafts apparaîtront ici.
                   </Text>
                 </View>
               ) : (
                 <>
-                  {feedItems.map((contribution, idx) => {
-                    const profile = profiles.find(p => p.id === contribution.profileId);
+                  {feedItems.map((item, idx) => {
+                    const profileId = item.data.profileId;
+                    const profile = profiles.find(p => p.id === profileId);
+                    const name = profile?.name ?? profileId;
+                    const emoji = profile?.avatar ?? '👤';
+                    if (item.kind === 'craft') {
+                      return (
+                        <CraftFeedItem
+                          key={`craft-${item.timestamp}-${idx}`}
+                          craft={item.data}
+                          profileName={name}
+                          profileEmoji={emoji}
+                          colors={colors}
+                        />
+                      );
+                    }
                     return (
                       <FeedItem
-                        key={`${contribution.profileId}-${contribution.timestamp}-${idx}`}
-                        contribution={contribution}
-                        profileName={profile?.name ?? contribution.profileId}
-                        profileEmoji={profile?.avatar ?? '👤'}
+                        key={`${profileId}-${item.timestamp}-${idx}`}
+                        contribution={item.data}
+                        profileName={name}
+                        profileEmoji={emoji}
                         colors={colors}
                       />
                     );
@@ -1174,6 +1233,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: Spacing.md,
     minHeight: 44,
+  },
+  craftFeedItem: {
+    borderLeftWidth: 3,
+    paddingLeft: Spacing.sm,
   },
   feedEmoji: {
     fontSize: FontSize.lg,

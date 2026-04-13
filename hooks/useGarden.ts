@@ -117,7 +117,7 @@ export interface UseGardenReturn {
  */
 export function useGarden(): UseGardenReturn {
   // Consommation useVault (per D-01 — pas de nouveau provider)
-  const { vault, gardenRaw, setGardenRaw, profiles } = useVault();
+  const { vault, gardenRaw, setGardenRaw, profiles, awardProfileXP } = useVault();
 
   // État local chargement
   const [isLoading, setIsLoading] = useState(false);
@@ -450,9 +450,20 @@ export function useGarden(): UseGardenReturn {
       const newContent = serializeGardenFile(updatedData);
       await vault.writeFile(VILLAGE_FILE, newContent);
       setGardenRaw(newContent);
+
+      const recipe = VILLAGE_RECIPES.find((r) => r.id === recipeId);
+      if (recipe && recipe.xpBonus > 0) {
+        const activeProfiles = profiles.filter((p) => p.statut !== 'grossesse');
+        for (const p of activeProfiles) {
+          try {
+            await awardProfileXP(p.id, recipe.xpBonus, `Craft: ${recipe.id}`);
+          } catch { /* Gamification — non-critical */ }
+        }
+      }
+
       return true;
     },
-    [vault, gardenData, inventory, villageTechBonuses, setGardenRaw],
+    [vault, gardenData, inventory, villageTechBonuses, setGardenRaw, profiles, awardProfileXP],
   );
 
   // ---------------------------------------------------------------------------

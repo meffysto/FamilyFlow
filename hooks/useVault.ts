@@ -270,6 +270,7 @@ export interface VaultState {
   completeAdventure: (profileId: string, points: number, adventureNote: string) => Promise<void>;
   completeSagaChapter: (profileId: string, points: number, sagaNote: string, rewardItem?: { id: string; type: 'decoration' | 'inhabitant' }, bonusCropId?: string) => Promise<void>;
   markLootUsed: (loot: UsedLoot) => Promise<void>;
+  awardProfileXP: (profileId: string, xp: number, note: string) => Promise<void>;
   setCompanion: (profileId: string, companion: CompanionData) => Promise<void>;
   unlockCompanion: (profileId: string, speciesId: CompanionSpecies) => Promise<void>;
   /** Préférences alimentaires famille + invités (Phase 15 — PREF-02/06/07) */
@@ -1514,6 +1515,34 @@ export function useVaultInternal(): VaultState {
     await vaultRef.current.writeFile(file, serializeGamification(singleData));
   }, [gamiData]);
 
+  // ─── XP générique (craft village, etc.) ──────────────────────────────────
+
+  const awardProfileXP = useCallback(async (profileId: string, xp: number, note: string) => {
+    if (!vaultRef.current || !gamiData) return;
+    const profile = gamiData.profiles.find((p) => p.id === profileId);
+    if (!profile) return;
+    const { profile: updated, entry, activeRewards: updatedRewards } = addPoints(profile, xp, note, gamiData.activeRewards);
+    setGamiData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        profiles: prev.profiles.map((p) => p.id === profileId ? updated : p),
+        history: [...prev.history, entry],
+        activeRewards: updatedRewards ?? prev.activeRewards,
+      };
+    });
+    const file = gamiFile(profileId);
+    const existingContent = await vaultRef.current.readFile(file).catch(() => '');
+    const existingGami = parseGamification(existingContent);
+    const singleData: GamificationData = {
+      profiles: existingGami.profiles.map(p => p.id === profileId ? updated : p),
+      history: [...existingGami.history, entry],
+      activeRewards: updatedRewards ? updatedRewards.filter(r => r.profileId === profileId) : (existingGami.activeRewards ?? []),
+      usedLoots: existingGami.usedLoots ?? [],
+    };
+    await vaultRef.current.writeFile(file, serializeGamification(singleData));
+  }, [gamiData]);
+
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
   const vault = vaultRef.current;
   return useMemo(() => ({
@@ -1646,6 +1675,7 @@ export function useVaultInternal(): VaultState {
     completeAdventure,
     completeSagaChapter,
     markLootUsed,
+    awardProfileXP,
     setCompanion,
     unlockCompanion,
     dietary: dietaryHook,
@@ -1677,7 +1707,7 @@ export function useVaultInternal(): VaultState {
     notesHook.addNote, notesHook.updateNote, notesHook.deleteNote,
     addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     missionsHook,
-    completeAdventure, completeSagaChapter, markLootUsed,
+    completeAdventure, completeSagaChapter, markLootUsed, awardProfileXP,
     setCompanion, unlockCompanion,
     dietaryHook,
     storiesHook,
