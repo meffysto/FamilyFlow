@@ -299,24 +299,42 @@ function gamiFile(profileId: string): string {
 function farmFile(profileId: string): string {
   return `farm-${profileId}.md`;
 }
-/** Migration one-shot : si gamification.md existe et qu'un profil n'a pas encore son gami-{id}.md, le créer */
+/**
+ * Migration one-shot + récupération : si gamification.md existe et qu'un profil n'a pas
+ * encore son gami-{id}.md (ou l'a eu corrompu — fichier vide/farm-format sans profils), le créer/réparer.
+ */
 async function migrateGamification(vault: VaultManager, profiles: { id: string }[]): Promise<void> {
   const legacyExists = await vault.exists('gamification.md');
   if (!legacyExists) return;
+
+  // Lire le contenu de chaque fichier per-profil (absent = '', corrompu = sans profils)
   const checks = await Promise.all(
-    profiles.map(async p => ({ id: p.id, exists: await vault.exists(gamiFile(p.id)) }))
+    profiles.map(async p => {
+      const content = await vault.readFile(gamiFile(p.id)).catch(() => '');
+      const parsed = parseGamification(content);
+      const hasProfile = parsed.profiles.some(g => g.id === p.id);
+      return { id: p.id, content, hasProfile };
+    })
   );
-  const needsMigration = checks.some(c => !c.exists);
-  if (!needsMigration) return;
+
+  const needsRepair = checks.some(c => !c.hasProfile);
+  if (!needsRepair) return;
+
   const legacyContent = await vault.readFile('gamification.md');
   const legacyData = parseGamification(legacyContent);
+
   for (const check of checks) {
-    if (check.exists) continue;
+    if (check.hasProfile) continue;
     const prof = legacyData.profiles.find(p => p.id === check.id);
     if (!prof) continue;
+    // Si le fichier existait déjà mais était corrompu, on préserve son historique
+    const existingGami = check.content ? parseGamification(check.content) : null;
     const singleData = {
       profiles: [prof],
-      history: legacyData.history.filter(e => e.profileId === check.id),
+      history: [
+        ...(existingGami?.history ?? []),
+        ...legacyData.history.filter(e => e.profileId === check.id),
+      ],
       activeRewards: (legacyData.activeRewards ?? []).filter(r => r.profileId === check.id),
       usedLoots: (legacyData.usedLoots ?? []).filter(u => u.profileId === check.id),
     };
@@ -528,6 +546,17 @@ export function useVaultInternal(): VaultState {
   // Domaine Quêtes coopératives — initialisé EN PREMIER pour que contribute soit disponible pour defisHook
   const gamiDataRef = useRef(gamiData);
   gamiDataRef.current = gamiData;
+
+  // ─── Backup consolidé : flush gamiData → gamification.md (1×/jour) ─────────
+  const lastGamiBackupDate = useRef<string | null>(null);
+  useEffect(() => {
+    if (!gamiData || !vaultRef.current) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (lastGamiBackupDate.current === today) return;
+    lastGamiBackupDate.current = today;
+    vaultRef.current.writeFile('gamification.md', serializeGamification(gamiData)).catch(() => {});
+  }, [gamiData]);
+
   const questsHook = useVaultFamilyQuests(vaultRef, gamiDataRef, setGamiData, setProfiles);
 
   // Domaine Défis délégué à useVaultDefis — reçoit questsHook.contribute comme onQuestProgress
@@ -1299,8 +1328,13 @@ export function useVaultInternal(): VaultState {
       const file = gamiFile(childProfileId);
       const existingContent = await vaultRef.current.readFile(file).catch(() => '');
       const existingGami = parseGamification(existingContent);
+      // Garde : ne pas écraser avec profiles vide si lecture échouée
+      const existingProfile = existingGami.profiles.find(p => p.id === childProfileId || p.name.toLowerCase().replace(/\s+/g, '') === childProfileId.toLowerCase());
+      const safeProfiles = existingProfile
+        ? existingGami.profiles.map(p => (p.id === childProfileId || p.name.toLowerCase().replace(/\s+/g, '') === childProfileId.toLowerCase()) ? updatedProfile : p)
+        : [updatedProfile];
       const singleData: GamificationData = {
-        profiles: existingGami.profiles.map(p => (p.id === childProfileId || p.name.toLowerCase().replace(/\s+/g, '') === childProfileId.toLowerCase()) ? updatedProfile : p),
+        profiles: safeProfiles,
         history: [...existingGami.history, entry],
         activeRewards: updatedRewards ? updatedRewards.filter(r => r.profileId === childProfileId) : (existingGami.activeRewards ?? []),
         usedLoots: existingGami.usedLoots ?? [],
@@ -1506,8 +1540,13 @@ export function useVaultInternal(): VaultState {
     const file = gamiFile(profileId);
     const existingContent = await vaultRef.current.readFile(file).catch(() => '');
     const existingGami = parseGamification(existingContent);
+    // Même garde que awardProfileXP : ne pas écraser avec profiles vide si lecture échouée
+    const existingProfile = existingGami.profiles.find(p => p.id === profileId);
+    const safeProfiles = existingProfile
+      ? existingGami.profiles
+      : gamiData.profiles.filter(p => p.id === profileId);
     const singleData: GamificationData = {
-      profiles: existingGami.profiles,
+      profiles: safeProfiles,
       history: existingGami.history,
       activeRewards: existingGami.activeRewards ?? [],
       usedLoots: [...(existingGami.usedLoots ?? []), loot],
@@ -1534,8 +1573,14 @@ export function useVaultInternal(): VaultState {
     const file = gamiFile(profileId);
     const existingContent = await vaultRef.current.readFile(file).catch(() => '');
     const existingGami = parseGamification(existingContent);
+    // Si le fichier est vide ou illisible (ex: iCloud pas syncé), ne pas écraser avec une liste vide.
+    // On part du profil issu de gamiData (déjà en mémoire) pour construire le fichier minimal.
+    const existingProfile = existingGami.profiles.find(p => p.id === profileId);
+    const safeProfiles = existingProfile
+      ? existingGami.profiles.map(p => p.id === profileId ? updated : p)
+      : [updated]; // fallback : profil en mémoire si fichier vide
     const singleData: GamificationData = {
-      profiles: existingGami.profiles.map(p => p.id === profileId ? updated : p),
+      profiles: safeProfiles,
       history: [...existingGami.history, entry],
       activeRewards: updatedRewards ? updatedRewards.filter(r => r.profileId === profileId) : (existingGami.activeRewards ?? []),
       usedLoots: existingGami.usedLoots ?? [],
