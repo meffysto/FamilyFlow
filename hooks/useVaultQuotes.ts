@@ -31,6 +31,7 @@ export interface UseVaultQuotesResult {
   quotes: ChildQuote[];
   setQuotes: (quotes: ChildQuote[]) => void;
   addQuote: (enfant: string, citation: string, contexte?: string) => Promise<void>;
+  editQuote: (lineIndex: number, citation: string, contexte?: string) => Promise<void>;
   deleteQuote: (lineIndex: number) => Promise<void>;
   resetQuotes: () => void;
 }
@@ -62,6 +63,22 @@ export function useVaultQuotes(
     setQuotes(parseQuotes(serialized));
   }, [vaultRef]);
 
+  const editQuote = useCallback(async (lineIndex: number, citation: string, contexte?: string) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(QUOTES_FILE);
+      const existing = parseQuotes(content);
+      const updated = existing.map(q =>
+        q.lineIndex === lineIndex ? { ...q, citation, contexte } : q,
+      );
+      const serialized = serializeQuotes(updated);
+      await vaultRef.current.writeFile(QUOTES_FILE, serialized);
+      setQuotes(parseQuotes(serialized));
+    } catch (e) {
+      warnUnexpected('editQuote', e);
+    }
+  }, [vaultRef]);
+
   const deleteQuote = useCallback(async (lineIndex: number) => {
     if (!vaultRef.current) return;
     try {
@@ -80,6 +97,7 @@ export function useVaultQuotes(
     quotes,
     setQuotes,
     addQuote,
+    editQuote,
     deleteQuote,
     resetQuotes,
   };

@@ -2145,6 +2145,7 @@
     "emptyTitle": "Aucun mot enregistré",
     "emptySubtitle": "Notez les perles de vos enfants pour les garder précieusement !",
     "newQuote": "Nouveau mot",
+    "editQuote": "Modifier le mot",
     "deleteTitle": "Supprimer ce mot ?",
     "cancel": "Annuler",
     "delete": "Supprimer",
@@ -2155,11 +2156,13 @@
       "quotePlaceholder": "Ce que l'enfant a dit...",
       "context": "Contexte (optionnel)",
       "contextPlaceholder": "Au parc, avant de dormir...",
-      "save": "Enregistrer"
+      "save": "Enregistrer",
+      "update": "Modifier"
     },
     "toast": {
       "fillRequired": "Remplissez au moins l'enfant et la citation",
       "added": "Mot ajouté !",
+      "edited": "Mot modifié !",
       "deleted": "Mot supprimé"
     }
   },

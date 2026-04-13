@@ -20,11 +20,6 @@ import {
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Chip } from '../ui/Chip';
@@ -37,9 +32,6 @@ import type { GuestProfile, DietarySeverity } from '../../lib/dietary/types';
 import { EU_ALLERGENS, COMMON_INTOLERANCES, COMMON_REGIMES } from '../../lib/dietary/catalogs';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
-
-/** Config spring pour l'apparition des chips (per UI-SPEC) */
-const SPRING_CONFIG = { damping: 15, stiffness: 200 };
 
 /** Structure des 4 catégories alimentaires */
 const CATEGORIES: Array<{
@@ -97,16 +89,6 @@ const AnimatedChip = React.memo(function AnimatedChip({
   onDelete,
 }: AnimatedChipProps) {
   const { colors } = useThemeColors();
-  const scale = useSharedValue(0.8);
-
-  // Apparition avec spring
-  React.useEffect(() => {
-    scale.value = withSpring(1.0, SPRING_CONFIG);
-  }, []);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
 
   const renderRightActions = useCallback(() => (
     <TouchableOpacity
@@ -126,9 +108,9 @@ const AnimatedChip = React.memo(function AnimatedChip({
       rightThreshold={40}
       overshootRight={false}
     >
-      <Animated.View style={[styles.chipWrapper, animStyle]}>
+      <View style={styles.chipWrapper}>
         <Chip label={label} />
-      </Animated.View>
+      </View>
     </ReanimatedSwipeable>
   );
 });

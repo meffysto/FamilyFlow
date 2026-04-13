@@ -205,7 +205,9 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses }: {
 }) {
   const { colors } = useThemeColors();
   const { t } = useTranslation();
-  const cells = getUnlockedCropCells(stageInfo.stage);
+  const cells = techBonuses
+    ? getExpandedCropCells(stageInfo.stage, techBonuses)
+    : getUnlockedCropCells(stageInfo.stage);
   const cell = cells.find((c: any) => c.id === tooltipInfo.cellId);
   if (!cell) return null;
 
@@ -2056,8 +2058,12 @@ export default function TreeScreen() {
               <FarmHintBanner onDismiss={() => markScreenSeen('farm')} />
             )}
 
-            {/* Couche 7 : Portail village (MAP-03 — remplace FAB temporaire per D-08) */}
-            <PortalSprite onPress={handlePortalPress} />
+            {/* Couche 7 : Portail village — sur le chemin, à côté des cannes à pêche */}
+            <PortalSprite
+              onPress={handlePortalPress}
+              x={0.42 * SCREEN_W}
+              y={0.70 * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60)}
+            />
 
           </View>
         </Animated.View>

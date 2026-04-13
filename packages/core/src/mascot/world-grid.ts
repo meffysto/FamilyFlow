@@ -102,7 +102,7 @@ export const EXPANSION_CROP_CELLS: WorldCell[] = [
 
 /** Cellule building supplementaire — debloquee par tech expansion-2 */
 export const EXPANSION_BUILDING_CELL: WorldCell =
-  { id: 'b3', col: 5, row: 5, x: 0.94, y: 0.90, cellType: 'building', unlockOrder: 25, size: 'large' };
+  { id: 'b3', col: 5, row: 2, x: 0.94, y: 0.52, cellType: 'building', unlockOrder: 25, size: 'large' };
 
 /** Parcelle geante crop — debloquee par tech expansion-3 */
 export const EXPANSION_LARGE_CROP_CELL: WorldCell =

@@ -32,7 +32,6 @@ import { Shadows } from '../../constants/shadows';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Button } from '../../components/ui/Button';
 import { Chip } from '../../components/ui/Chip';
-import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { EmptyState } from '../../components/EmptyState';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import type { ChildQuote } from '../../lib/types';
@@ -41,13 +40,14 @@ export default function QuotesScreen() {
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();
-  const { profiles, quotes, addQuote, deleteQuote, refresh } = useVault();
+  const { profiles, quotes, addQuote, editQuote, deleteQuote, refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [citation, setCitation] = useState('');
   const [contexte, setContexte] = useState('');
   const [selectedEnfant, setSelectedEnfant] = useState('');
+  const [editingQuote, setEditingQuote] = useState<ChildQuote | null>(null);
   const [dictaphoneVisible, setDictaphoneVisible] = useState(false);
   const dictaphoneResultRef = useRef<string>('');
 
@@ -76,19 +76,33 @@ export default function QuotesScreen() {
     setCitation('');
     setContexte('');
     setSelectedEnfant(enfants.length === 1 ? enfants[0].name : '');
+    setEditingQuote(null);
     setModalVisible(true);
   }, [enfants]);
+
+  const openEdit = useCallback((quote: ChildQuote) => {
+    setCitation(quote.citation);
+    setContexte(quote.contexte ?? '');
+    setSelectedEnfant(quote.enfant);
+    setEditingQuote(quote);
+    setModalVisible(true);
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (!citation.trim() || !selectedEnfant) {
       showToast(t('quotes.toast.fillRequired'), 'error');
       return;
     }
-    await addQuote(selectedEnfant, citation.trim(), contexte.trim() || undefined);
+    if (editingQuote) {
+      await editQuote(editingQuote.lineIndex, citation.trim(), contexte.trim() || undefined);
+      showToast(t('quotes.toast.edited'), 'success');
+    } else {
+      await addQuote(selectedEnfant, citation.trim(), contexte.trim() || undefined);
+      showToast(t('quotes.toast.added'), 'success');
+    }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast(t('quotes.toast.added'), 'success');
     setModalVisible(false);
-  }, [citation, contexte, selectedEnfant, addQuote, showToast]);
+  }, [citation, contexte, selectedEnfant, editingQuote, addQuote, editQuote, showToast]);
 
   const handleDelete = useCallback(async (quote: ChildQuote) => {
     Alert.alert(
@@ -121,7 +135,7 @@ export default function QuotesScreen() {
   );
 
   const renderItem = useCallback(({ item }: { item: ChildQuote }) => (
-    <SwipeToDelete onDelete={() => handleDelete(item)} skipConfirm hintId="quote">
+    <TouchableOpacity activeOpacity={0.7} onPress={() => openEdit(item)} onLongPress={() => handleDelete(item)}>
       <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
         <Text style={[styles.citation, { color: colors.text }]}>
           « {item.citation} »
@@ -136,8 +150,8 @@ export default function QuotesScreen() {
           </Text>
         </View>
       </View>
-    </SwipeToDelete>
-  ), [colors, primary, handleDelete]);
+    </TouchableOpacity>
+  ), [colors, primary, handleDelete, openEdit]);
 
   // Fermer le modal principal avant d'ouvrir le dictaphone (max 1 niveau)
   const openDictaphone = useCallback(() => {
@@ -202,10 +216,10 @@ export default function QuotesScreen() {
       {/* Modal ajout */}
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalVisible(false)}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
-          <ModalHeader title={t('quotes.newQuote')} onClose={() => setModalVisible(false)} />
+          <ModalHeader title={editingQuote ? t('quotes.editQuote') : t('quotes.newQuote')} onClose={() => setModalVisible(false)} />
 
           <View style={styles.modalContent}>
-            {/* Sélecteur enfant */}
+            {/* Sélecteur enfant — désactivé en mode édition */}
             <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.child')}</Text>
             <View style={styles.chipRow}>
               {enfants.map((e) => (
@@ -214,7 +228,7 @@ export default function QuotesScreen() {
                   label={e.name}
                   emoji={e.avatar}
                   selected={selectedEnfant === e.name}
-                  onPress={() => setSelectedEnfant(e.name)}
+                  onPress={editingQuote ? undefined : () => setSelectedEnfant(e.name)}
                 />
               ))}
             </View>
@@ -248,7 +262,7 @@ export default function QuotesScreen() {
 
             <View style={styles.saveBtn}>
               <Button
-                label={t('quotes.form.save')}
+                label={editingQuote ? t('quotes.form.update') : t('quotes.form.save')}
                 onPress={handleSave}
                 variant="primary"
               />

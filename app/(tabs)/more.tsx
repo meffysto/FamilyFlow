@@ -124,8 +124,8 @@ export default function MoreScreen() {
       { emoji: '📖', label: t('menu.items.recipes'), route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.catOrganisation, category: 'organisation' as const },
       { emoji: '🛒', label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.catOrganisation, category: 'organisation' as const },
       { emoji: '📦', label: t('menu.items.stock'), route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.catOrganisation, category: 'organisation' as const },
-      { emoji: '🥗', label: 'Préférences alimentaires', route: '/dietary', color: colors.catOrganisation, category: 'organisation' as const },
       // Santé & Bien-être — violet
+      { emoji: '🥗', label: 'Préférences alimentaires', route: '/dietary', color: colors.catSante, category: 'sante' as const },
       { emoji: '🏥', label: t('menu.items.health'), route: '/(tabs)/health', color: colors.catSante, category: 'sante' as const },
       { emoji: '🌤️', label: t('menu.items.moods'), route: '/(tabs)/moods', color: colors.catSante, category: 'sante' as const },
       ...(hasBaby ? [{ emoji: '🌙', label: t('menu.items.nightMode'), route: '/(tabs)/night-mode', color: colors.catSante, category: 'sante' as const }] : []),

@@ -28,6 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { categorizeIngredient } from '../../lib/cooklang';
 import { useToast } from '../../contexts/ToastContext';
 import { StockEditor } from '../../components/StockEditor';
 import { EmptyState } from '../../components/EmptyState';
@@ -271,7 +272,7 @@ export default function StockScreen() {
       const qty = item.qteAchat ? ` x${item.qteAchat}` : '';
       const detail =
         item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : '';
-      addCourseItem(`${item.produit}${detail}${qty}`);
+      addCourseItem(`${item.produit}${detail}${qty}`, categorizeIngredient(item.produit));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showToast(t('stock.addedToCourses', { name: item.produit }));
     },

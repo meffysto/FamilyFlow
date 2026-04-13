@@ -2145,6 +2145,7 @@
     "emptyTitle": "No quotes yet",
     "emptySubtitle": "Write down your kids' gems to keep them forever!",
     "newQuote": "New quote",
+    "editQuote": "Edit quote",
     "deleteTitle": "Delete this quote?",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -2155,11 +2156,13 @@
       "quotePlaceholder": "What the child said...",
       "context": "Context (optional)",
       "contextPlaceholder": "At the park, before bedtime...",
-      "save": "Save"
+      "save": "Save",
+      "update": "Update"
     },
     "toast": {
       "fillRequired": "Please fill in at least the child and the quote",
       "added": "Quote added!",
+      "edited": "Quote updated!",
       "deleted": "Quote deleted"
     }
   },

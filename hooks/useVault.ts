@@ -257,6 +257,7 @@ export interface VaultState {
   deleteNote: (sourceFile: string) => Promise<void>;
   quotes: ChildQuote[];
   addQuote: (enfant: string, citation: string, contexte?: string) => Promise<void>;
+  editQuote: (lineIndex: number, citation: string, contexte?: string) => Promise<void>;
   deleteQuote: (lineIndex: number) => Promise<void>;
   moods: MoodEntry[];
   addMood: (profileId: string, profileName: string, level: MoodLevel, note?: string) => Promise<void>;
@@ -613,6 +614,7 @@ export function useVaultInternal(): VaultState {
     quotes,
     setQuotes,
     addQuote,
+    editQuote,
     deleteQuote,
     resetQuotes,
   } = useVaultQuotes(vaultRef);
@@ -1707,6 +1709,7 @@ export function useVaultInternal(): VaultState {
     deleteNote: notesHook.deleteNote,
     quotes,
     addQuote,
+    editQuote,
     deleteQuote,
     moods,
     addMood,
@@ -1750,7 +1753,7 @@ export function useVaultInternal(): VaultState {
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
     notesHook.addNote, notesHook.updateNote, notesHook.deleteNote,
-    addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
+    addQuote, editQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     missionsHook,
     completeAdventure, completeSagaChapter, markLootUsed, awardProfileXP,
     setCompanion, unlockCompanion,
