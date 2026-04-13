@@ -184,107 +184,121 @@ export const VILLAGE_TECH_TREE: VillageTechNode[] = [
 // Catalogue recettes village
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** 11 recettes — paliers 0 (libre), 1 (atelier-1), 2 (atelier-2), 3 (atelier-3) */
+/** 11 recettes — paliers 0 (libre), 1 (atelier-1), 2 (atelier-2), 3 (atelier-3)
+ *
+ * Cadence cible (famille 25 tâches/jour) :
+ *   Tier 0 ≈ 2-3 j chacune (~1 craft/jour en alternant)
+ *   Tier 1 ≈ 7-10 j chacune (~1 craft/3 jours)
+ *   Tier 2 ≈ 13-16 j chacune (~1 craft/semaine)
+ *   Tier 3 ≈ 16-32 j chacune (événement rare)
+ *
+ * XP reflète la rareté des ressources et le temps d'accumulation :
+ *   Tier 0 : 15-25 XP (~10 % d'une journée d'XP)
+ *   Tier 1 : 50-75 XP (~20-30 %)
+ *   Tier 2 : 120-140 XP (~50 %)
+ *   Tier 3 : 250-400 XP (1-2 jours d'XP — célébration)
+ */
 export const VILLAGE_RECIPES: VillageRecipe[] = [
   // Palier 0 — toujours disponibles
   {
     id: 'soupe_village', labelFR: 'Soupe du village', resultEmoji: '🍲', resultLabel: 'Soupe du village',
     ingredients: [
-      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 1 },
-      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 1 },
+      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 6 },
+      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 5 },
     ],
-    xpBonus: 10, minAtelierTier: 0,
+    xpBonus: 15, minAtelierTier: 0,
   },
   {
     id: 'cafe_gourmand', labelFR: 'Café gourmand', resultEmoji: '☕', resultLabel: 'Café gourmand',
     ingredients: [
-      { itemId: 'cafe_matin', itemEmoji: '☕', quantity: 1 },
-      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 1 },
+      { itemId: 'cafe_matin', itemEmoji: '☕', quantity: 4 },
+      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 3 },
     ],
-    xpBonus: 10, minAtelierTier: 0,
+    xpBonus: 20, minAtelierTier: 0,
   },
   {
     id: 'fougasse', labelFR: 'Fougasse', resultEmoji: '🥖', resultLabel: 'Fougasse',
     ingredients: [
-      { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 1 },
-      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 1 },
+      { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 3 },
+      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 5 },
     ],
-    xpBonus: 15, minAtelierTier: 0,
+    xpBonus: 25, minAtelierTier: 0,
   },
 
   // Palier 1 — nécessite atelier-1
   {
     id: 'panier_pique_nique', labelFR: 'Panier pique-nique', resultEmoji: '🧺', resultLabel: 'Panier pique-nique',
     ingredients: [
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 1 },
-      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 1 },
-      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 1 },
+      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 8 },
+      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 5 },
+      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 4 },
     ],
-    xpBonus: 20, minAtelierTier: 1,
+    xpBonus: 50, minAtelierTier: 1,
   },
   {
     id: 'tarte_moulin', labelFR: 'Tarte du moulin', resultEmoji: '🥧', resultLabel: 'Tarte du moulin',
     ingredients: [
-      { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 1 },
-      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 1 },
-      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 1 },
+      { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 6 },
+      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 5 },
+      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 4 },
     ],
-    xpBonus: 25, minAtelierTier: 1,
+    xpBonus: 55, minAtelierTier: 1,
   },
   {
     id: 'livre_recettes', labelFR: 'Livre de recettes', resultEmoji: '📝', resultLabel: 'Livre de recettes',
     ingredients: [
-      { itemId: 'parchemin', itemEmoji: '📚', quantity: 1 },
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 1 },
+      { itemId: 'parchemin', itemEmoji: '📚', quantity: 3 },
+      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 5 },
     ],
-    xpBonus: 30, minAtelierTier: 1,
+    xpBonus: 75, minAtelierTier: 1,
   },
 
   // Palier 2 — nécessite atelier-2
   {
     id: 'outil_artisan', labelFR: 'Outil d\'artisan', resultEmoji: '⚒️', resultLabel: 'Outil d\'artisan',
     ingredients: [
-      { itemId: 'outil_forge', itemEmoji: '🔨', quantity: 2 },
-      { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 1 },
+      { itemId: 'outil_forge', itemEmoji: '🔨', quantity: 10 },
+      { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 5 },
     ],
-    xpBonus: 40, minAtelierTier: 2,
+    xpBonus: 120, minAtelierTier: 2,
   },
   {
     id: 'coffre_fort', labelFR: 'Coffre-fort', resultEmoji: '💎', resultLabel: 'Coffre-fort',
     ingredients: [
-      { itemId: 'coffre_maritime', itemEmoji: '⚓', quantity: 1 },
-      { itemId: 'outil_forge', itemEmoji: '🔨', quantity: 1 },
+      { itemId: 'coffre_maritime', itemEmoji: '⚓', quantity: 5 },
+      { itemId: 'outil_forge', itemEmoji: '🔨', quantity: 8 },
     ],
-    xpBonus: 50, minAtelierTier: 2,
+    xpBonus: 130, minAtelierTier: 2,
   },
   {
     id: 'parchemin_enluminé', labelFR: 'Parchemin enluminé', resultEmoji: '📜', resultLabel: 'Parchemin enluminé',
     ingredients: [
-      { itemId: 'parchemin', itemEmoji: '📚', quantity: 2 },
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 1 },
+      { itemId: 'parchemin', itemEmoji: '📚', quantity: 5 },
+      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 8 },
     ],
-    xpBonus: 45, minAtelierTier: 2,
+    xpBonus: 140, minAtelierTier: 2,
   },
 
   // Palier 3 — nécessite atelier-3
   {
     id: 'tresor_familial', labelFR: 'Trésor familial', resultEmoji: '🌟', resultLabel: 'Trésor familial',
     ingredients: [
-      { itemId: 'coffre_maritime', itemEmoji: '⚓', quantity: 1 },
-      { itemId: 'outil_forge', itemEmoji: '🔨', quantity: 1 },
-      { itemId: 'parchemin', itemEmoji: '📚', quantity: 1 },
+      { itemId: 'coffre_maritime', itemEmoji: '⚓', quantity: 10 },
+      { itemId: 'outil_forge', itemEmoji: '🔨', quantity: 12 },
+      { itemId: 'parchemin', itemEmoji: '📚', quantity: 10 },
     ],
-    xpBonus: 75, minAtelierTier: 3,
+    xpBonus: 400, minAtelierTier: 3,
   },
   {
     id: 'grand_festin', labelFR: 'Grand Festin', resultEmoji: '🎁', resultLabel: 'Grand Festin',
     ingredients: [
-      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 2 },
-      { itemId: 'cafe_matin', itemEmoji: '☕', quantity: 1 },
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 1 },
-      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 1 },
+      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 25 },
+      { itemId: 'cafe_matin', itemEmoji: '☕', quantity: 20 },
+      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 15 },
+      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 20 },
+      { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 12 },
     ],
-    xpBonus: 100, minAtelierTier: 3,
+    xpBonus: 250, minAtelierTier: 3,
   },
 ];
 

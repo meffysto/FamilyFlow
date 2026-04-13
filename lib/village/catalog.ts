@@ -32,42 +32,42 @@ export const BUILDINGS_CATALOG: BuildingCatalogEntry[] = [
   {
     id: 'puits', labelFR: 'Puits', palier: 100,
     sprite: require('../../assets/buildings/village/puits.png'),
-    production: { itemId: 'eau_fraiche', itemLabel: 'Eau fraîche', itemEmoji: '💧', ratePerItem: 1 },
+    production: { itemId: 'eau_fraiche', itemLabel: 'Eau fraîche', itemEmoji: '💧', ratePerItem: 6 },
   },
   {
     id: 'boulangerie', labelFR: 'Boulangerie', palier: 300,
     sprite: require('../../assets/buildings/village/boulangerie.png'),
-    production: { itemId: 'pain_frais', itemLabel: 'Pain frais', itemEmoji: '🍞', ratePerItem: 2 },
+    production: { itemId: 'pain_frais', itemLabel: 'Pain frais', itemEmoji: '🍞', ratePerItem: 10 },
   },
   {
     id: 'marche', labelFR: 'Marché', palier: 700,
     sprite: require('../../assets/buildings/village/marche.png'),
-    production: { itemId: 'panier_surprise', itemLabel: 'Panier surprise', itemEmoji: '🛒', ratePerItem: 3 },
+    production: { itemId: 'panier_surprise', itemLabel: 'Panier surprise', itemEmoji: '🛒', ratePerItem: 20 },
   },
   {
     id: 'cafe', labelFR: 'Café', palier: 1500,
     sprite: require('../../assets/buildings/village/cafe.png'),
-    production: { itemId: 'cafe_matin', itemLabel: 'Café du matin', itemEmoji: '☕', ratePerItem: 3 },
+    production: { itemId: 'cafe_matin', itemLabel: 'Café du matin', itemEmoji: '☕', ratePerItem: 20 },
   },
   {
     id: 'forge', labelFR: 'Forge', palier: 3000,
     sprite: require('../../assets/buildings/village/forge.png'),
-    production: { itemId: 'outil_forge', itemLabel: 'Outil forgé', itemEmoji: '🔨', ratePerItem: 5 },
+    production: { itemId: 'outil_forge', itemLabel: 'Outil forgé', itemEmoji: '🔨', ratePerItem: 40 },
   },
   {
     id: 'moulin', labelFR: 'Moulin', palier: 6000,
     sprite: require('../../assets/buildings/village/moulin.png'),
-    production: { itemId: 'farine_moulee', itemLabel: 'Farine moulue', itemEmoji: '🌾', ratePerItem: 4 },
+    production: { itemId: 'farine_moulee', itemLabel: 'Farine moulue', itemEmoji: '🌾', ratePerItem: 30 },
   },
   {
     id: 'port', labelFR: 'Port', palier: 8000,
     sprite: require('../../assets/buildings/village/port.png'),
-    production: { itemId: 'coffre_maritime', itemLabel: 'Coffre maritime', itemEmoji: '⚓', ratePerItem: 6 },
+    production: { itemId: 'coffre_maritime', itemLabel: 'Coffre maritime', itemEmoji: '⚓', ratePerItem: 60 },
   },
   {
     id: 'bibliotheque', labelFR: 'Bibliothèque', palier: 25000,
     sprite: require('../../assets/buildings/village/bibliotheque.png'),
-    production: { itemId: 'parchemin', itemLabel: 'Parchemin', itemEmoji: '📚', ratePerItem: 7 },
+    production: { itemId: 'parchemin', itemLabel: 'Parchemin', itemEmoji: '📚', ratePerItem: 80 },
   },
 ];
 
