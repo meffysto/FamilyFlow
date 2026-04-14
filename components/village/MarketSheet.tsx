@@ -11,6 +11,7 @@ import {
   Pressable,
   Modal,
   ScrollView,
+  TextInput,
   Alert,
 } from 'react-native';
 import Animated, {
@@ -41,6 +42,16 @@ import { Farm } from '../../constants/farm-theme';
 // ── Types ─────────────────────────────────────────────────────────────────
 
 type MarketTab = 'acheter' | 'vendre';
+type MarketCategoryFilter = 'all' | 'village' | 'farm' | 'harvest' | 'crafted' | 'village_craft';
+
+const CATEGORY_FILTERS: { key: MarketCategoryFilter; label: string; emoji: string }[] = [
+  { key: 'all',           label: 'Tout',      emoji: '🏪' },
+  { key: 'village',       label: 'Village',    emoji: '🏘️' },
+  { key: 'farm',          label: 'Ferme',      emoji: '🐔' },
+  { key: 'harvest',       label: 'Récoltes',   emoji: '🌾' },
+  { key: 'crafted',       label: 'Crafts',     emoji: '🍳' },
+  { key: 'village_craft', label: 'Atelier',    emoji: '⚒️' },
+];
 
 interface MarketSheetProps {
   visible: boolean;
@@ -321,6 +332,8 @@ export function MarketSheet({
 }: MarketSheetProps) {
   const { colors, primary } = useThemeColors();
   const [tab, setTab] = useState<MarketTab>('acheter');
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<MarketCategoryFilter>('all');
 
   // Animation flash quand transaction réussie
   const flashOpacity = useSharedValue(0);
@@ -389,11 +402,26 @@ export function MarketSheet({
   }, [onSell, flashOpacity]);
 
   const filteredSummaries = useMemo(() => {
-    if (tab === 'acheter') {
-      return summaries.filter(s => s.stock > 0);
+    let items = tab === 'acheter'
+      ? summaries.filter(s => s.stock > 0)
+      : summaries.filter(s => (sellableQtyMap[s.def.itemId] ?? 0) > 0);
+
+    // Filtre catégorie
+    if (categoryFilter !== 'all') {
+      items = items.filter(s => s.def.category === categoryFilter);
     }
-    return summaries.filter(s => (sellableQtyMap[s.def.itemId] ?? 0) > 0);
-  }, [summaries, tab, sellableQtyMap]);
+
+    // Filtre recherche
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      items = items.filter(s =>
+        s.def.label.toLowerCase().includes(q) ||
+        s.def.itemId.toLowerCase().includes(q),
+      );
+    }
+
+    return items;
+  }, [summaries, tab, sellableQtyMap, categoryFilter, search]);
 
   return (
     <Modal
@@ -467,6 +495,43 @@ export function MarketSheet({
                   </Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Barre de recherche */}
+              <View style={styles.searchBar}>
+                <Text style={styles.searchIcon}>🔍</Text>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Rechercher un item..."
+                  placeholderTextColor={Farm.brownTextSub}
+                  value={search}
+                  onChangeText={setSearch}
+                  autoCorrect={false}
+                  clearButtonMode="while-editing"
+                />
+              </View>
+
+              {/* Chips catégorie */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chipRow}
+              >
+                {CATEGORY_FILTERS.map(f => {
+                  const active = categoryFilter === f.key;
+                  return (
+                    <TouchableOpacity
+                      key={f.key}
+                      style={[styles.chip, active && styles.chipActive]}
+                      onPress={() => setCategoryFilter(active ? 'all' : f.key)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                        {f.emoji} {f.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
 
               <ScrollView
                 contentContainerStyle={styles.content}
@@ -716,6 +781,58 @@ const styles = StyleSheet.create({
   },
 
   // ── Contenu ─────────────────────────────────────
+  // Recherche
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing['2xl'],
+    marginTop: Spacing.lg,
+    backgroundColor: Farm.parchmentDark,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: Farm.woodDark,
+    paddingHorizontal: Spacing.lg,
+    height: 40,
+  },
+  searchIcon: {
+    fontSize: 14,
+    marginRight: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    color: Farm.brownText,
+    paddingVertical: 0,
+  },
+
+  // Chips catégorie
+  chipRow: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
+  },
+  chip: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodDark,
+  },
+  chipActive: {
+    backgroundColor: Farm.woodBtn,
+    borderColor: Farm.woodBtnShadow,
+  },
+  chipText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
+  },
+  chipTextActive: {
+    color: '#FFFFFF',
+  },
+
   content: {
     paddingHorizontal: Spacing['2xl'],
     paddingTop: Spacing.xl,
