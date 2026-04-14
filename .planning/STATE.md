@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
 status: executing
-last_updated: "2026-04-14T21:27:50.906Z"
+last_updated: "2026-04-14T21:33:01.710Z"
 last_activity: 2026-04-14
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 6
+  completed_plans: 7
   percent: 25
 ---
 
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 33 (exp-ditions) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
 Last activity: 2026-04-14
@@ -137,6 +137,7 @@ Status: Ready to execute
 | Phase 30-decorations-persistantes P02 | 3min | 2 tasks | 2 files |
 | Phase 30-decorations-persistantes P03 | 13 min | 4 tasks | 7 files |
 | Phase 33-exp-ditions P01 | 10min | 2 tasks | 5 files |
+| Phase 33-exp-ditions P02 | 3min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -251,6 +252,8 @@ Recent decisions affecting current work:
 - [Phase 33-exp-ditions]: CSV expedition: slice(2, length-2).join(':') pour ISO date avec ':' — identique building-engine.ts
 - [Phase 33-exp-ditions]: Pool LCG seed date-based (seed=parseInt(YYYYMMDD)) + offset par difficulte — deterministe et varie par jour
 - [Phase 33-exp-ditions]: failure et partial retournent undefined dans rollExpeditionLoot — perte totale OGame-style
+- [Phase 33-exp-ditions]: useExpeditions lit depuis currentProfile adulte sans farmRaw VaultState supplémentaire — identique pattern useFarm
+- [Phase 33-exp-ditions]: CAMP_EXPLORATION_CELL non dans WORLD_GRID — cellule spéciale rendue séparément dans tree.tsx (per RESEARCH)
 
 ### Todos
 
@@ -262,5 +265,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-14T21:27:50.902Z
+Last session: 2026-04-14T21:33:01.700Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)

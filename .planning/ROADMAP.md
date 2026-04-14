@@ -146,10 +146,10 @@ Plans:
   4. User peut perdre sa mise en cas d'échec — le risque est réel et communiqué clairement avant lancement
   5. User peut obtenir via les expéditions des objets exclusifs (habitants, décos, graines rares) introuvables dans la boutique classique
   6. User retrouve ses expéditions en cours et résultats après un restart de l'app (persistance dans le vault)
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 - [x] 33-01-PLAN.md — Types + parser CSV + expedition-engine (catalogue, roll, timer, pity, pool quotidien) (VILL-16, VILL-18, VILL-19, VILL-20)
-- [ ] 33-02-PLAN.md — Hook useExpeditions + cellule Camp d'exploration + items exclusifs expedition (VILL-16, VILL-17, VILL-19, VILL-20)
+- [x] 33-02-PLAN.md — Hook useExpeditions + cellule Camp d'exploration + items exclusifs expedition (VILL-16, VILL-17, VILL-19, VILL-20)
 - [ ] 33-03-PLAN.md — UI : ExpeditionsSheet modal + CampExplorationCell + ExpeditionChest + wiring tree.tsx (VILL-16, VILL-17, VILL-18, VILL-19, VILL-20)
 **UI hint**: yes
 
@@ -161,7 +161,7 @@ Plans:
 | 30. Décorations persistantes | 3/3 | Complete   | 2026-04-11 |
 | 31. Ambiance dynamique | 0/TBD | Not started | - |
 | 32. Arbre familial commun | 0/TBD | Not started | - |
-| 33. Expéditions | 1/3 | In Progress|  |
+| 33. Expéditions | 2/3 | In Progress|  |
 
 ## Archived Milestones
 
