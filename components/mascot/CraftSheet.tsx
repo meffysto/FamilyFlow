@@ -69,8 +69,8 @@ interface CraftSheetProps {
   craftedItems: CraftedItem[];
   treeStage: TreeStage;
   onCraft: (recipeId: string) => Promise<CraftedItem | null>;
-  onSellHarvest: (cropId: string) => Promise<number>;
-  onSellCrafted: (recipeId: string) => Promise<number>;
+  onSellHarvest: (cropId: string, qty: number) => Promise<number>;
+  onSellCrafted: (recipeId: string, qty: number) => Promise<number>;
   onOfferItem?: (itemType: string, itemId: string, maxQty: number, itemName: string) => void;
   giftHistory?: string;
   unlockedRecipes?: string[];
@@ -233,37 +233,53 @@ export function CraftSheet({
     setCrafting(null);
   }, [onCraft, craftBtnScale, showToast, t]);
 
+  const [sellQty, setSellQty] = useState<Record<string, number>>({});
+
+  const getSellQty = useCallback((id: string) => sellQty[id] ?? 1, [sellQty]);
+  const adjustSellQty = useCallback((id: string, delta: number, max: number) => {
+    setSellQty(prev => {
+      const current = prev[id] ?? 1;
+      const next = Math.max(1, Math.min(max, current + delta));
+      return { ...prev, [id]: next };
+    });
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+  }, []);
+
   const handleSellHarvest = useCallback(async (cropId: string) => {
+    const qty = sellQty[cropId] ?? 1;
     setSelling(cropId);
     try {
-      const amount = await onSellHarvest(cropId);
+      const amount = await onSellHarvest(cropId, qty);
       if (amount > 0) {
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
         showToast(t('craft.venteReussie', { amount }));
+        setSellQty(prev => { const next = { ...prev }; delete next[cropId]; return next; });
       }
     } catch {
       showToast(t('common.error'), 'error');
     }
     setSelling(null);
-  }, [onSellHarvest, showToast, t]);
+  }, [onSellHarvest, showToast, t, sellQty]);
 
   const handleSellCrafted = useCallback(async (recipeId: string) => {
+    const qty = sellQty[recipeId] ?? 1;
     setSelling(recipeId);
     try {
-      const amount = await onSellCrafted(recipeId);
+      const amount = await onSellCrafted(recipeId, qty);
       if (amount > 0) {
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
         showToast(t('craft.venteReussie', { amount }));
+        setSellQty(prev => { const next = { ...prev }; delete next[recipeId]; return next; });
       }
     } catch {
       showToast(t('common.error'), 'error');
     }
     setSelling(null);
-  }, [onSellCrafted, showToast, t]);
+  }, [onSellCrafted, showToast, t, sellQty]);
 
   // ── Compteur recettes craftables ──────────────
 
@@ -658,6 +674,9 @@ export function CraftSheet({
       )}
       {harvestEntries.map(({ cropId, qty, cropDef }, idx) => {
         const cropName = cropDef ? t(cropDef.labelKey) : cropId;
+        const currentQty = getSellQty(cropId);
+        const clampedQty = Math.min(currentQty, qty);
+        const unitPrice = cropDef?.harvestReward ?? 0;
         return (
           <Animated.View key={cropId} entering={FadeInDown.delay(idx * 60).duration(300)}>
             <View style={styles.inventoryRow}>
@@ -671,7 +690,7 @@ export function CraftSheet({
                   {cropName}
                 </Text>
                 <Text style={styles.inventoryQty}>
-                  x{qty} — {cropDef?.harvestReward ?? 0} 🍃/{t('craft.vendre').toLowerCase()}
+                  x{qty} — {unitPrice} 🍃/{t('craft.vendre').toLowerCase()}
                 </Text>
               </View>
               <TouchableOpacity
@@ -681,6 +700,17 @@ export function CraftSheet({
               >
                 <Text style={styles.giftBtnText}>{'🎁'}</Text>
               </TouchableOpacity>
+              {qty > 1 && (
+                <View style={styles.qtySelector}>
+                  <TouchableOpacity onPress={() => adjustSellQty(cropId, -1, qty)} style={styles.qtyBtn} activeOpacity={0.7}>
+                    <Text style={[styles.qtyBtnText, clampedQty <= 1 && { opacity: 0.3 }]}>−</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.qtyValue}>{clampedQty}</Text>
+                  <TouchableOpacity onPress={() => adjustSellQty(cropId, 1, qty)} style={styles.qtyBtn} activeOpacity={0.7}>
+                    <Text style={[styles.qtyBtnText, clampedQty >= qty && { opacity: 0.3 }]}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               <TouchableOpacity
                 style={[
                   styles.sellBtn,
@@ -691,7 +721,7 @@ export function CraftSheet({
                 activeOpacity={0.7}
               >
                 <Text style={styles.sellBtnText}>
-                  {t('craft.vendre')}
+                  {clampedQty > 1 ? `${unitPrice * clampedQty} 🍃` : t('craft.vendre')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -792,6 +822,8 @@ export function CraftSheet({
       )}
       {craftedGroups.map(({ recipe, count }, idx) => {
         const recipeName = t(recipe.labelKey);
+        const currentQty = getSellQty(recipe.id);
+        const clampedQty = Math.min(currentQty, count);
         return (
           <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
             <View style={styles.inventoryRow}>
@@ -815,6 +847,17 @@ export function CraftSheet({
               >
                 <Text style={styles.giftBtnText}>{'🎁'}</Text>
               </TouchableOpacity>
+              {count > 1 && (
+                <View style={styles.qtySelector}>
+                  <TouchableOpacity onPress={() => adjustSellQty(recipe.id, -1, count)} style={styles.qtyBtn} activeOpacity={0.7}>
+                    <Text style={[styles.qtyBtnText, clampedQty <= 1 && { opacity: 0.3 }]}>−</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.qtyValue}>{clampedQty}</Text>
+                  <TouchableOpacity onPress={() => adjustSellQty(recipe.id, 1, count)} style={styles.qtyBtn} activeOpacity={0.7}>
+                    <Text style={[styles.qtyBtnText, clampedQty >= count && { opacity: 0.3 }]}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               <TouchableOpacity
                 style={[
                   styles.sellBtn,
@@ -825,7 +868,7 @@ export function CraftSheet({
                 activeOpacity={0.7}
               >
                 <Text style={styles.sellBtnText}>
-                  {t('craft.vendre')}
+                  {clampedQty > 1 ? `${recipe.sellValue * clampedQty} 🍃` : t('craft.vendre')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1401,6 +1444,36 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     color: Farm.brownText,
+  },
+  qtySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    marginRight: Spacing.sm,
+  },
+  qtyBtn: {
+    width: 18,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  qtyValue: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    minWidth: 12,
+    textAlign: 'center',
   },
   sectionLabel: {
     fontSize: FontSize.caption,

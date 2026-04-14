@@ -25,7 +25,7 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { Spacing } from '../../constants/spacing';
-import type { HarvestEvent } from '../../lib/mascot/farm-engine';
+import type { HarvestEvent, RareSeedDrop } from '../../lib/mascot/farm-engine';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const CX = SW / 2; // centre X
@@ -139,8 +139,9 @@ function InsectesContent({ event }: { event: HarvestEvent }) {
           delay={b.delay} duration={1400}
         />
       ))}
-      {/* Label central */}
+      {/* Emoji + label central */}
       <Animated.View style={[styles.centerLabel, textStyle]}>
+        <Text style={styles.bigEmoji}>🐛</Text>
         <View style={styles.pixelLabel}>
           <Text style={styles.pixelLabelText}>{t(event.labelKey)}</Text>
         </View>
@@ -406,7 +407,7 @@ function MutationContent({ event }: { event: HarvestEvent }) {
 export function HarvestEventOverlay({ event, onDismiss }: HarvestEventOverlayProps) {
   useEffect(() => {
     if (!event) return;
-    const timer = setTimeout(onDismiss, 2500);
+    const timer = setTimeout(onDismiss, 1800);
     return () => clearTimeout(timer);
   }, [event, onDismiss]);
 
@@ -430,6 +431,100 @@ export function HarvestEventOverlay({ event, onDismiss }: HarvestEventOverlayPro
       {event.type === 'insectes' && <InsectesContent event={event} />}
       {event.type === 'pluie_doree' && <PluieDoreeContent event={event} />}
       {event.type === 'mutation_rare' && <MutationContent event={event} />}
+    </Animated.View>
+  );
+}
+
+// ── Graine rare — overlay dédié ─────────────────
+
+const SEED_SPARKLE_COLORS = ['#7CB342', '#8BC34A', '#FFD700', '#A5D6A7', '#FFF176', '#C8E6C9'];
+
+function SeedSparkle({ x, y, delay: d }: { x: number; y: number; delay: number }) {
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0);
+  const size = 3 + Math.floor(Math.random() * 4);
+  const color = SEED_SPARKLE_COLORS[Math.floor(Math.random() * SEED_SPARKLE_COLORS.length)];
+
+  useEffect(() => {
+    opacity.value = withDelay(d, withRepeat(
+      withSequence(withTiming(1, { duration: 200 }), withTiming(0, { duration: 400 })),
+      2, false,
+    ));
+    scale.value = withDelay(d, withRepeat(
+      withSequence(withTiming(1.5, { duration: 200 }), withTiming(0.5, { duration: 400 })),
+      2, false,
+    ));
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View style={[{
+      position: 'absolute', left: x, top: y,
+      width: size, height: size,
+      backgroundColor: color,
+    }, animStyle]} />
+  );
+}
+
+interface SeedDropOverlayProps {
+  seedDrop: RareSeedDrop | null;
+  onDismiss: () => void;
+}
+
+export function SeedDropOverlay({ seedDrop, onDismiss }: SeedDropOverlayProps) {
+  const emojiScale = useSharedValue(0);
+  const labelOpacity = useSharedValue(0);
+
+  const sparkles = useMemo(() =>
+    Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: CX + (Math.random() - 0.5) * SW * 0.6,
+      y: CY + (Math.random() - 0.5) * SH * 0.4,
+      delay: Math.random() * 600,
+    }))
+  , []);
+
+  useEffect(() => {
+    if (!seedDrop) return;
+    const timer = setTimeout(onDismiss, 2000);
+    return () => clearTimeout(timer);
+  }, [seedDrop, onDismiss]);
+
+  useEffect(() => {
+    if (!seedDrop) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    emojiScale.value = withSpring(1, { damping: 6, stiffness: 160 });
+    labelOpacity.value = withDelay(300, withTiming(1, { duration: 300 }));
+  }, [seedDrop]);
+
+  const emojiStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: emojiScale.value }],
+  }));
+  const textStyle = useAnimatedStyle(() => ({
+    opacity: labelOpacity.value,
+  }));
+
+  if (!seedDrop) return null;
+
+  return (
+    <Animated.View
+      entering={FadeIn.duration(150)}
+      exiting={FadeOut.duration(300)}
+      style={[styles.overlay, { backgroundColor: 'rgba(15, 40, 15, 0.90)' }]}
+    >
+      {sparkles.map(s => <SeedSparkle key={s.id} x={s.x} y={s.y} delay={s.delay} />)}
+      <View style={styles.centerLabel}>
+        <Animated.View style={emojiStyle}>
+          <Text style={styles.seedEmoji}>{seedDrop.emoji}</Text>
+        </Animated.View>
+        <Animated.View style={textStyle}>
+          <Text style={styles.seedTitle}>🌟 Graine rare trouvée !</Text>
+        </Animated.View>
+      </View>
     </Animated.View>
   );
 }
@@ -460,6 +555,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 1,
   },
+  bigEmoji: {
+    fontSize: 48,
+    marginBottom: Spacing.md,
+  },
   pixelMultiplierBox: {
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     borderWidth: 3,
@@ -477,5 +576,16 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#E1BEE7',
     zIndex: 10,
+  },
+  seedEmoji: {
+    fontSize: 64,
+    marginBottom: Spacing.md,
+  },
+  seedTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#A5D6A7',
+    textAlign: 'center',
+    letterSpacing: 1,
   },
 });

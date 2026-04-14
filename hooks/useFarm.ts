@@ -358,37 +358,38 @@ export function useFarm(
     if (onQuestProgress) {
       try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
     }
-    // Contribution village (COOP-01) -- fire-and-forget non-critical
-    if (onContribution) {
-      try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
-    }
+    // Contribution village (COOP-01) -- désactivé : seules les tâches comptent
+    // if (onContribution) {
+    //   try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
+    // }
 
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
   }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress, onContribution]);
 
-  /** Vendre une recolte brute depuis l'inventaire */
-  const sellHarvest = useCallback(async (profileId: string, cropId: string): Promise<number> => {
-    if (!vault) return 0;
-
+  /** Vendre une recolte brute depuis l'inventaire (qty = nombre d'unités à vendre) */
+  const sellHarvest = useCallback(async (profileId: string, cropId: string, qty: number = 1): Promise<number> => {
+    if (!vault || qty <= 0) return 0;
 
     const content = await vault.readFile(farmFile(profileId)).catch(() => '');
     const profile = parseFarmProfile(content);
 
     const harvestInv = profile.harvestInventory ?? {};
-    if ((harvestInv[cropId] ?? 0) <= 0) return 0;
+    const available = harvestInv[cropId] ?? 0;
+    if (available <= 0) return 0;
 
-    // Deduire de l'inventaire
+    const actualQty = Math.min(qty, available);
     const updatedInv = { ...harvestInv };
-    updatedInv[cropId] = updatedInv[cropId] - 1;
+    updatedInv[cropId] = updatedInv[cropId] - actualQty;
 
-    const reward = getEffectiveHarvestReward(cropId);
-    if (reward <= 0) return 0;
+    const unitReward = getEffectiveHarvestReward(cropId);
+    if (unitReward <= 0) return 0;
+    const totalReward = unitReward * actualQty;
 
     await writeProfileField(profileId, 'farm_harvest_inventory', serializeHarvestInventory(updatedInv));
-    await addCoins(profileId, reward, `🍃 Vente recolte : ${cropId}`);
+    await addCoins(profileId, totalReward, `🍃 Vente recolte x${actualQty} : ${cropId}`);
     await refreshFarm(profileId);
     await refreshGamification();
-    return reward;
+    return totalReward;
   }, [vault, writeProfileField, addCoins, refreshFarm, refreshGamification]);
 
   /** Crafter un item a partir des ingredients */
@@ -433,32 +434,39 @@ export function useFarm(
     return result.item;
   }, [vault, writeProfileFields, refreshFarm, refreshGamification, onQuestProgress]);
 
-  /** Vendre un item crafte */
-  const sellCrafted = useCallback(async (profileId: string, recipeId: string): Promise<number> => {
-    if (!vault) return 0;
-
+  /** Vendre des items craftés (qty = nombre d'unités à vendre) */
+  const sellCrafted = useCallback(async (profileId: string, recipeId: string, qty: number = 1): Promise<number> => {
+    if (!vault || qty <= 0) return 0;
 
     const content = await vault.readFile(farmFile(profileId)).catch(() => '');
     const profile = parseFarmProfile(content);
 
     const craftedItems = profile.craftedItems ?? [];
-    const itemIdx = craftedItems.findIndex(i => i.recipeId === recipeId);
-    if (itemIdx < 0) return 0;
+    const matching = craftedItems.filter(i => i.recipeId === recipeId);
+    if (matching.length === 0) return 0;
 
+    const actualQty = Math.min(qty, matching.length);
     const recipe = CRAFT_RECIPES.find(r => r.id === recipeId);
     if (!recipe) return 0;
 
-    // Supprimer le premier item correspondant
+    // Supprimer actualQty items correspondants
     const updatedItems = [...craftedItems];
-    updatedItems.splice(itemIdx, 1);
+    let removed = 0;
+    for (let i = updatedItems.length - 1; i >= 0 && removed < actualQty; i--) {
+      if (updatedItems[i].recipeId === recipeId) {
+        updatedItems.splice(i, 1);
+        removed++;
+      }
+    }
 
-    const sellValue = sellCraftedItemFn(recipe);
+    const unitValue = sellCraftedItemFn(recipe);
+    const totalValue = unitValue * actualQty;
 
     await writeProfileField(profileId, 'farm_crafted_items', serializeCraftedItems(updatedItems));
-    await addCoins(profileId, sellValue, `🎁 Vente craft : ${recipeId}`);
+    await addCoins(profileId, totalValue, `🎁 Vente craft x${actualQty} : ${recipeId}`);
     await refreshFarm(profileId);
     await refreshGamification();
-    return sellValue;
+    return totalValue;
   }, [vault, writeProfileField, addCoins, refreshFarm, refreshGamification]);
 
   /** Construire un batiment sur une cellule (nouveau systeme PlacedBuilding) */

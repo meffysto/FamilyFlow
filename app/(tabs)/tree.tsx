@@ -99,8 +99,8 @@ import { CROP_ICONS } from '../../lib/mascot/crop-sprites';
 import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL } from '../../lib/mascot/world-grid';
 import { getTechBonuses, type TechBonuses } from '../../lib/mascot/tech-engine';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
-import { HarvestEventOverlay } from '../../components/mascot/HarvestEventOverlay';
-import type { HarvestEvent } from '../../lib/mascot/farm-engine';
+import { HarvestEventOverlay, SeedDropOverlay } from '../../components/mascot/HarvestEventOverlay';
+import type { HarvestEvent, RareSeedDrop } from '../../lib/mascot/farm-engine';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
 import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
@@ -374,6 +374,7 @@ export default function TreeScreen() {
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
   const [harvestEvent, setHarvestEvent] = useState<HarvestEvent | null>(null);
+  const [seedDropEvent, setSeedDropEvent] = useState<RareSeedDrop | null>(null);
   // Sunrise report
   const [sunriseData, setSunriseData] = useState<{
     resources: SunriseResource[];
@@ -1191,11 +1192,9 @@ export default function TreeScreen() {
             undefined,
             { icon: emoji, subtitle: `+${finalReward} 🍂${result.isGolden ? ' · Culture dorée !' : ''}` }
           );
-          // Toast spécial graine rare avec délai pour ne pas masquer le toast récolte
+          // Animation graine rare avec délai pour ne pas chevaucher le toast récolte
           if (result.seedDrop) {
-            setTimeout(() => {
-              showToast(`🌟 ${result.seedDrop!.emoji} Graine rare trouvée : ${t(result.seedDrop!.labelKey)} !`);
-            }, 1500);
+            setTimeout(() => setSeedDropEvent(result.seedDrop), 1500);
           }
           if (result.harvestEvent) {
             setHarvestEvent(result.harvestEvent);
@@ -2306,8 +2305,8 @@ export default function TreeScreen() {
           if (result) triggerActionMsg('craft');
           return result;
         }}
-        onSellHarvest={(cropId) => sellHarvest(profile!.id, cropId)}
-        onSellCrafted={(recipeId) => sellCrafted(profile!.id, recipeId)}
+        onSellHarvest={(cropId, qty) => sellHarvest(profile!.id, cropId, qty)}
+        onSellCrafted={(recipeId, qty) => sellCrafted(profile!.id, recipeId, qty)}
         onOfferItem={(itemType, itemId, maxQty, itemName) => {
           setShowCraftSheet(false);
           setGiftOffer({ itemType, itemId, maxQty, itemName });
@@ -2429,6 +2428,10 @@ export default function TreeScreen() {
       <HarvestEventOverlay
         event={harvestEvent}
         onDismiss={() => setHarvestEvent(null)}
+      />
+      <SeedDropOverlay
+        seedDrop={seedDropEvent}
+        onDismiss={() => setSeedDropEvent(null)}
       />
 
       {/* Quêtes coopératives — détail + picker */}
