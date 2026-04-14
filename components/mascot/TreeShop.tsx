@@ -12,17 +12,24 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   Modal,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  FadeIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { hapticsShopBuy, hapticsShopError } from '../../lib/mascot/haptics';
 import { useTone } from '../../lib/mascot/tone';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { TreeView } from './TreeView';
+import { Farm } from '../../constants/farm-theme';
 
 import {
   DECORATIONS,
@@ -81,6 +88,87 @@ const RARITY_BG: Record<string, string> = {
   'légendaire': 'rgba(245,158,11,0.12)',
   prestige: 'rgba(233,30,99,0.12)',
 };
+
+// ── Spring config ──────────────────────────────
+
+const SPRING_CONFIG = { damping: 12, stiffness: 180 };
+
+// ── Animated Buy Button ────────────────────────
+
+interface BuyButtonProps {
+  canAfford: boolean;
+  disabled: boolean;
+  onPress: () => void;
+  label: string;
+}
+
+function BuyButton({ canAfford, disabled, onPress, label }: BuyButtonProps) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Pressable
+      onPressIn={() => { scale.value = withSpring(0.96, SPRING_CONFIG); }}
+      onPressOut={() => { scale.value = withSpring(1, SPRING_CONFIG); }}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Animated.View style={[styles.buyBtnOuter, animStyle]}>
+        <View
+          style={[
+            styles.buyBtnInner,
+            canAfford
+              ? { backgroundColor: Farm.greenBtn }
+              : { backgroundColor: Farm.parchmentDark },
+          ]}
+        >
+          {canAfford && (
+            <View style={styles.buyBtnGloss} />
+          )}
+          <Text
+            style={[
+              styles.buyBtnText,
+              { color: canAfford ? Farm.parchment : Farm.brownTextSub },
+            ]}
+          >
+            {label}
+          </Text>
+        </View>
+        <View
+          style={[
+            styles.buyBtnShadow,
+            { backgroundColor: canAfford ? Farm.greenBtnShadow : '#D0CBC3' },
+          ]}
+        />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ── Awning Stripes ─────────────────────────────
+
+function AwningStripes() {
+  const stripes = Array.from({ length: Farm.awningStripeCount });
+  return (
+    <View style={styles.awning}>
+      {stripes.map((_, i) => (
+        <View
+          key={i}
+          style={[
+            styles.awningStripe,
+            { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+          ]}
+        />
+      ))}
+      {/* Scallop dots row */}
+      <View style={styles.awningScallops}>
+        {stripes.map((_, i) => (
+          <View key={i} style={styles.scallop} />
+        ))}
+      </View>
+    </View>
+  );
+}
 
 // ── Composant ──────────────────────────────────
 
@@ -141,7 +229,6 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
 
   // Détermine la clé description pour un item
   const getDescKey = useCallback((item: MascotDecoration | MascotInhabitant) => {
-    // labelKey = "mascot.deco.balancoire" → descKey = "mascot.deco.balancoire_desc"
     return `${item.labelKey}_desc`;
   }, []);
 
@@ -160,12 +247,10 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
         <TouchableOpacity
           style={[
             styles.itemCard,
-            { backgroundColor: colors.card, borderColor: owned ? rarityColor : colors.borderLight },
-            owned && { borderWidth: 2, opacity: 0.7 },
-            Shadows.sm,
+            locked && styles.itemCardLocked,
           ]}
           onPress={() => setSelectedItem(item)}
-          activeOpacity={0.7}
+          activeOpacity={0.75}
         >
           {/* Emoji + infos */}
           <View style={styles.itemContent}>
@@ -175,10 +260,10 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
               <Text style={styles.itemEmoji}>{item.emoji}</Text>
             )}
             <View style={styles.itemInfo}>
-              <Text style={[styles.itemName, { color: colors.text }]}>
+              <Text style={[styles.itemName, locked && styles.itemNameLocked]}>
                 {t(item.labelKey)}
               </Text>
-              <Text style={[styles.itemDesc, { color: colors.textMuted }]} numberOfLines={1}>
+              <Text style={styles.itemDesc} numberOfLines={1}>
                 {t(getDescKey(item))}
               </Text>
               <View style={styles.itemMeta}>
@@ -188,7 +273,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                   </Text>
                 </View>
                 {!owned && (
-                  <Text style={[styles.itemCost, { color: colors.textSub }]}>
+                  <Text style={styles.itemCost}>
                     {t('mascot.shop.leaves', { count: item.cost })}
                   </Text>
                 )}
@@ -198,24 +283,24 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
 
           {/* Badge statut */}
           {owned ? (
-            <View style={[styles.ownedBadge, { backgroundColor: tint }]}>
-              <Text style={[styles.ownedText, { color: primary }]}>
+            <View style={styles.ownedBadge}>
+              <Text style={styles.ownedText}>
                 {t('mascot.shop.owned')}
               </Text>
             </View>
           ) : locked ? (
-            <View style={[styles.lockedBadge, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.lockedText, { color: colors.textMuted }]} numberOfLines={1}>
+            <View style={styles.lockedBadge}>
+              <Text style={styles.lockedText} numberOfLines={1}>
                 {t(TREE_STAGES[minStageIdx].labelKey)}
               </Text>
             </View>
           ) : (
-            <Text style={[styles.chevron, { color: colors.textFaint }]}>{'›'}</Text>
+            <Text style={styles.chevron}>{'›'}</Text>
           )}
         </TouchableOpacity>
       </Animated.View>
     );
-  }, [ownedList, stageIdx, colors, primary, tint, getDescKey, t]);
+  }, [ownedList, stageIdx, getDescKey, t]);
 
   // ── Modal de détail ──────────────────────────
 
@@ -237,105 +322,107 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
         onRequestClose={() => setSelectedItem(null)}
       >
         <View style={styles.detailOverlay}>
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            style={[styles.detailCard, { backgroundColor: colors.card }, Shadows.lg]}
-          >
-            <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-              {/* Header emoji + nom */}
-              <View style={styles.detailHeader}>
-                {ITEM_ILLUSTRATIONS[selectedItem.id] ? (
-                  <Image source={ITEM_ILLUSTRATIONS[selectedItem.id]} style={styles.detailIllustration} />
-                ) : (
-                  <Text style={styles.detailEmoji}>{selectedItem.emoji}</Text>
-                )}
-                <Text style={[styles.detailName, { color: colors.text }]}>
-                  {t(selectedItem.labelKey)}
-                </Text>
-                <View style={[styles.rarityBadge, { backgroundColor: rarityBg, alignSelf: 'center' }]}>
-                  <Text style={[styles.rarityText, { color: rarityColor }]}>
-                    {t(`mascot.shop.rarity.${selectedItem.rarity}`)}
-                  </Text>
-                </View>
-              </View>
+          <Animated.View entering={FadeIn.duration(200)} style={styles.detailWoodFrame}>
+            {/* Inner wood border */}
+            <View style={styles.detailWoodInner}>
+              {/* Close button */}
+              <TouchableOpacity
+                style={styles.detailCloseBtn}
+                onPress={() => setSelectedItem(null)}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.detailCloseBtnText}>{'✕'}</Text>
+              </TouchableOpacity>
 
-              {/* Description */}
-              <Text style={[styles.detailDescription, { color: colors.textSub }]}>
-                {t(getDescKey(selectedItem))}
-              </Text>
+              {/* Awning */}
+              <AwningStripes />
 
-              {/* Infos : stade requis + coût */}
-              <View style={[styles.detailInfoRow, { borderColor: colors.borderLight }]}>
-                <View style={styles.detailInfoItem}>
-                  <Text style={[styles.detailInfoLabel, { color: colors.textMuted }]}>
-                    {t('mascot.shop.requiredStage', { stage: t(TREE_STAGES[minStageIdx].labelKey) })}
-                  </Text>
-                </View>
-                <View style={[styles.detailInfoDivider, { backgroundColor: colors.borderLight }]} />
-                <View style={styles.detailInfoItem}>
-                  <Text style={[styles.detailInfoLabel, { color: colors.textMuted }]}>
-                    {t('mascot.shop.points', { count: selectedItem.cost })}
-                  </Text>
-                </View>
-              </View>
+              {/* Parchment body */}
+              <View style={styles.detailParchment}>
+                {/* Handle */}
+                <View style={styles.handle} />
 
-              {/* Aperçu objet agrandi */}
-              <View style={[styles.detailPreview, { backgroundColor: colors.cardAlt }]}>
-                {ITEM_ILLUSTRATIONS[selectedItem.id] ? (
-                  <Image
-                    source={ITEM_ILLUSTRATIONS[selectedItem.id]}
-                    style={styles.detailPreviewImage}
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <Text style={styles.detailPreviewEmoji}>{selectedItem.emoji}</Text>
-                )}
-              </View>
-
-              {/* Boutons */}
-              <View style={styles.detailActions}>
-                {owned ? (
-                  <View style={[styles.detailOwnedBadge, { backgroundColor: tint }]}>
-                    <Text style={[styles.detailOwnedText, { color: primary }]}>
-                      {t('mascot.shop.owned')}
+                <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+                  {/* Header emoji + nom */}
+                  <View style={styles.detailHeader}>
+                    {ITEM_ILLUSTRATIONS[selectedItem.id] ? (
+                      <Image source={ITEM_ILLUSTRATIONS[selectedItem.id]} style={styles.detailIllustration} />
+                    ) : (
+                      <Text style={styles.detailEmoji}>{selectedItem.emoji}</Text>
+                    )}
+                    <Text style={styles.detailName}>
+                      {t(selectedItem.labelKey)}
                     </Text>
+                    <View style={[styles.rarityBadge, { backgroundColor: rarityBg, alignSelf: 'center' }]}>
+                      <Text style={[styles.rarityText, { color: rarityColor }]}>
+                        {t(`mascot.shop.rarity.${selectedItem.rarity}`)}
+                      </Text>
+                    </View>
                   </View>
-                ) : locked ? (
-                  <View style={[styles.detailLockedBadge, { backgroundColor: colors.cardAlt }]}>
-                    <Text style={[styles.detailLockedText, { color: colors.textMuted }]}>
-                      {t('mascot.shop.locked', { stage: t(TREE_STAGES[minStageIdx].labelKey) })}
-                    </Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={[
-                      styles.detailBuyBtn,
-                      { backgroundColor: canAfford ? primary : colors.cardAlt },
-                      buying === selectedItem.id && { opacity: 0.5 },
-                    ]}
-                    onPress={() => handleBuy(selectedItem)}
-                    disabled={!canAfford || buying === selectedItem.id}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.detailBuyText, { color: canAfford ? colors.onPrimary : colors.textMuted }]}>
-                      {canAfford
-                        ? t('mascot.shop.buyConfirm', { cost: selectedItem.cost, context: tone })
-                        : t('mascot.shop.notEnoughLeaves', { context: tone })}
-                    </Text>
-                  </TouchableOpacity>
-                )}
 
-                <TouchableOpacity
-                  style={[styles.detailCloseBtn, { borderColor: colors.borderLight }]}
-                  onPress={() => setSelectedItem(null)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.detailCloseText, { color: colors.textSub }]}>
-                    {t('mascot.shop.close')}
+                  {/* Description */}
+                  <Text style={styles.detailDescription}>
+                    {t(getDescKey(selectedItem))}
                   </Text>
-                </TouchableOpacity>
+
+                  {/* Infos : stade requis + coût */}
+                  <View style={styles.detailInfoRow}>
+                    <View style={styles.detailInfoItem}>
+                      <Text style={styles.detailInfoLabel}>
+                        {t('mascot.shop.requiredStage', { stage: t(TREE_STAGES[minStageIdx].labelKey) })}
+                      </Text>
+                    </View>
+                    <View style={styles.detailInfoDivider} />
+                    <View style={styles.detailInfoItem}>
+                      <Text style={styles.detailInfoLabel}>
+                        {t('mascot.shop.points', { count: selectedItem.cost })}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Aperçu objet agrandi */}
+                  <View style={styles.detailPreview}>
+                    {ITEM_ILLUSTRATIONS[selectedItem.id] ? (
+                      <Image
+                        source={ITEM_ILLUSTRATIONS[selectedItem.id]}
+                        style={styles.detailPreviewImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Text style={styles.detailPreviewEmoji}>{selectedItem.emoji}</Text>
+                    )}
+                  </View>
+
+                  {/* Boutons */}
+                  <View style={styles.detailActions}>
+                    {owned ? (
+                      <View style={styles.detailOwnedBadge}>
+                        <Text style={styles.detailOwnedText}>
+                          {t('mascot.shop.owned')}
+                        </Text>
+                      </View>
+                    ) : locked ? (
+                      <View style={styles.detailLockedBadge}>
+                        <Text style={styles.detailLockedText}>
+                          {t('mascot.shop.locked', { stage: t(TREE_STAGES[minStageIdx].labelKey) })}
+                        </Text>
+                      </View>
+                    ) : (
+                      <BuyButton
+                        canAfford={canAfford}
+                        disabled={!canAfford || buying === selectedItem.id}
+                        onPress={() => handleBuy(selectedItem)}
+                        label={
+                          canAfford
+                            ? t('mascot.shop.buyConfirm', { cost: selectedItem.cost, context: tone })
+                            : t('mascot.shop.notEnoughLeaves', { context: tone })
+                        }
+                      />
+                    )}
+                  </View>
+                </ScrollView>
               </View>
-            </ScrollView>
+            </View>
           </Animated.View>
         </View>
       </Modal>
@@ -343,210 +430,322 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
-        <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-          <Text style={[styles.closeBtnText, { color: primary }]}>{'←'}</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('mascot.shop.title', { context: tone })}
-        </Text>
-        <View style={styles.closeBtn} />
-      </View>
+    <View style={styles.container}>
+        {/* Awning */}
+        <AwningStripes />
 
-      {/* Points */}
-      <View style={[styles.pointsBar, { backgroundColor: tint }]}>
-        <Text style={[styles.pointsText, { color: primary }]}>
-          {t('mascot.shop.yourLeaves', { count: coins, context: tone })}
-        </Text>
-      </View>
-
-      {/* Onglets */}
-      <View style={[styles.tabs, { borderBottomColor: colors.borderLight }]}>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'decorations' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-          onPress={() => setTab('decorations')}
-        >
-          <Text style={[styles.tabText, { color: tab === 'decorations' ? primary : colors.textMuted }]}>
-            {t('mascot.shop.decorations')}
-          </Text>
+        {/* Parchment content */}
+        <View style={styles.parchment}>
+        {/* Close button */}
+        <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.75}>
+          <Text style={styles.closeBtnText}>{'✕'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'inhabitants' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-          onPress={() => setTab('inhabitants')}
-        >
-          <Text style={[styles.tabText, { color: tab === 'inhabitants' ? primary : colors.textMuted }]}>
-            {t('mascot.shop.inhabitants')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'buildings' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-          onPress={() => setTab('buildings')}
-        >
-          <Text style={[styles.tabText, { color: tab === 'buildings' ? primary : colors.textMuted }]}>
-            {t('farm.building.buy') ?? 'Bâtiments'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+          {/* Handle */}
+          <View style={styles.handle} />
 
-      {/* Liste */}
-      <ScrollView
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-      >
-        {tab === 'buildings' ? (
-          BUILDING_CATALOG.map((building, idx) => {
-            const owned = (ownedBuildings ?? []).some(b => b.buildingId === building.id);
-            const minStageIdx = TREE_STAGES.findIndex(s => s.stage === building.minTreeStage);
-            const locked = stageIdx < minStageIdx;
-            const canAfford = coins >= building.cost;
+          {/* Title + Coins */}
+          <View style={styles.shopHeader}>
+            <Text style={styles.shopTitle}>
+              {t('mascot.shop.title', { context: tone })}
+            </Text>
+            <View style={styles.coinsBadge}>
+              <Text style={styles.coinsText}>
+                {t('mascot.shop.yourLeaves', { count: coins, context: tone })}
+              </Text>
+            </View>
+            {/* Espace pour le bouton close */}
+            <View style={{ width: 36 }} />
+          </View>
 
-            return (
-              <Animated.View key={building.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
+          {/* Onglets */}
+          <View style={styles.tabs}>
+            {(['decorations', 'inhabitants', 'buildings'] as ShopTab[]).map((tabKey) => {
+              const label =
+                tabKey === 'decorations'
+                  ? t('mascot.shop.decorations')
+                  : tabKey === 'inhabitants'
+                  ? t('mascot.shop.inhabitants')
+                  : (t('farm.building.buy') ?? 'Bâtiments');
+              const active = tab === tabKey;
+              return (
                 <TouchableOpacity
-                  style={[
-                    styles.itemCard,
-                    { backgroundColor: colors.card, borderColor: owned ? colors.warning : colors.borderLight },
-                    owned && { borderWidth: 2, opacity: 0.7 },
-                    Shadows.sm,
-                  ]}
-                  onPress={() => {
-                    if (!owned && !locked && canAfford && onBuyBuilding) {
-                      // Trouver la prochaine cellule libre
-                      const occupiedCells = (ownedBuildings ?? []).map(b => b.cellId);
-                      const freeCell = BUILDING_CELLS.find(c => !occupiedCells.includes(c.id));
-                      if (!freeCell) return; // toutes les cellules sont occupees
-                      setBuying(building.id);
-                      onBuyBuilding(building.id, freeCell.id).then(() => {
-                        hapticsShopBuy();
-                        setBuying(null);
-                      }).catch(() => {
-                        hapticsShopError();
-                        setBuying(null);
-                      });
-                    }
-                  }}
-                  activeOpacity={0.7}
-                  disabled={owned || locked || !canAfford || buying === building.id}
+                  key={tabKey}
+                  style={[styles.tab, active && styles.tabActive]}
+                  onPress={() => setTab(tabKey)}
+                  activeOpacity={0.75}
                 >
-                  <View style={styles.itemContent}>
-                    {BUILDING_SPRITES[building.id]
-                      ? <Image source={BUILDING_SPRITES[building.id]} style={{ width: 32, height: 32 }} />
-                      : <Text style={styles.itemEmoji}>{building.emoji}</Text>
-                    }
-                    <View style={styles.itemInfo}>
-                      <Text style={[styles.itemName, { color: colors.text }]}>
-                        {t(building.labelKey)}
-                      </Text>
-                      <Text style={[styles.itemDesc, { color: colors.textMuted }]} numberOfLines={1}>
-                        {t(`${building.labelKey}_desc`)}
-                      </Text>
-                      <View style={styles.itemMeta}>
-                        <Text style={{ color: colors.success, fontSize: 12, fontWeight: '600' }}>
-                          {t('farm.building.dailyIncome', { amount: building.dailyIncome })}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  {owned ? (
-                    <View style={[styles.ownedBadge, { backgroundColor: tint }]}>
-                      <Text style={[styles.ownedText, { color: primary }]}>
-                        {t('farm.building.owned')}
-                      </Text>
-                    </View>
-                  ) : locked ? (
-                    <View style={[styles.lockedBadge, { backgroundColor: colors.cardAlt }]}>
-                      <Text style={[styles.lockedText, { color: colors.textMuted }]}>
-                        🔒 {t(TREE_STAGES[minStageIdx].labelKey)}
-                      </Text>
-                    </View>
-                  ) : (
-                    <View style={[styles.costBadge, { backgroundColor: canAfford ? tint : colors.cardAlt }]}>
-                      <Text style={[styles.costText, { color: canAfford ? primary : colors.textMuted }]}>
-                        {building.cost} 🍃
-                      </Text>
-                    </View>
-                  )}
+                  <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                    {label}
+                  </Text>
                 </TouchableOpacity>
-              </Animated.View>
-            );
-          })
-        ) : (
-          items.map((item, idx) => renderItem(item, idx))
-        )}
-        <View style={{ height: 40 }} />
-      </ScrollView>
+              );
+            })}
+          </View>
+
+          {/* Liste */}
+          <ScrollView
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+          >
+            {tab === 'buildings' ? (
+              BUILDING_CATALOG.map((building, idx) => {
+                const owned = (ownedBuildings ?? []).some(b => b.buildingId === building.id);
+                const minStageIdx = TREE_STAGES.findIndex(s => s.stage === building.minTreeStage);
+                const locked = stageIdx < minStageIdx;
+                const canAfford = coins >= building.cost;
+
+                return (
+                  <Animated.View key={building.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
+                    <TouchableOpacity
+                      style={[
+                        styles.itemCard,
+                        (locked || owned) && styles.itemCardLocked,
+                      ]}
+                      onPress={() => {
+                        if (!owned && !locked && canAfford && onBuyBuilding) {
+                          const occupiedCells = (ownedBuildings ?? []).map(b => b.cellId);
+                          const freeCell = BUILDING_CELLS.find(c => !occupiedCells.includes(c.id));
+                          if (!freeCell) return;
+                          setBuying(building.id);
+                          onBuyBuilding(building.id, freeCell.id).then(() => {
+                            hapticsShopBuy();
+                            setBuying(null);
+                          }).catch(() => {
+                            hapticsShopError();
+                            setBuying(null);
+                          });
+                        }
+                      }}
+                      activeOpacity={0.75}
+                      disabled={owned || locked || !canAfford || buying === building.id}
+                    >
+                      <View style={styles.itemContent}>
+                        {BUILDING_SPRITES[building.id]
+                          ? <Image source={BUILDING_SPRITES[building.id]} style={{ width: 32, height: 32 }} />
+                          : <Text style={styles.itemEmoji}>{building.emoji}</Text>
+                        }
+                        <View style={styles.itemInfo}>
+                          <Text style={[styles.itemName, (locked || owned) && styles.itemNameLocked]}>
+                            {t(building.labelKey)}
+                          </Text>
+                          <Text style={styles.itemDesc} numberOfLines={1}>
+                            {t(`${building.labelKey}_desc`)}
+                          </Text>
+                          <View style={styles.itemMeta}>
+                            <Text style={styles.buildingIncome}>
+                              {t('farm.building.dailyIncome', { amount: building.dailyIncome })}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      {owned ? (
+                        <View style={styles.ownedBadge}>
+                          <Text style={styles.ownedText}>
+                            {t('farm.building.owned')}
+                          </Text>
+                        </View>
+                      ) : locked ? (
+                        <View style={styles.lockedBadge}>
+                          <Text style={styles.lockedText}>
+                            🔒 {t(TREE_STAGES[minStageIdx].labelKey)}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.costBadge, !canAfford && styles.costBadgeDim]}>
+                          <Text style={[styles.costText, !canAfford && styles.costTextDim]}>
+                            {building.cost} 🍃
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })
+            ) : (
+              items.map((item, idx) => renderItem(item, idx))
+            )}
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </View>
 
       {/* Modal détail */}
       {renderDetailModal()}
-    </SafeAreaView>
+    </View>
   );
 }
 
 // ── Styles ─────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
+    flex: 1,
+    backgroundColor: Farm.parchmentDark,
+  },
+  // ── Wood frame shell ──
+  woodFrame: {
+    backgroundColor: Farm.woodDark,
+    padding: 5,
+    borderRadius: Radius['2xl'],
+    ...Shadows.xl,
+    maxHeight: '88%',
+    minHeight: '88%',
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing['4xl'],
+  },
+  woodFrameInner: {
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    overflow: 'hidden',
+    borderRadius: Radius.xl,
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+
+  // ── Close button (absolute on woodFrameInner) ──
   closeBtn: {
-    width: 44,
-    height: 44,
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   closeBtnText: {
-    fontSize: FontSize.titleLg,
+    color: Farm.parchment,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
-  title: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.bold,
+
+  // ── Awning ──
+  awning: {
+    flexDirection: 'row',
+    height: 28,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 0,
+    elevation: 4,
   },
-  pointsBar: {
-    paddingVertical: Spacing.sm,
+  awningStripe: {
+    flex: 1,
+    height: 28,
+  },
+  awningScallops: {
+    position: 'absolute',
+    bottom: -4,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+  },
+  scallop: {
+    flex: 1,
+    height: 8,
+    backgroundColor: Farm.woodLight,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+
+  // ── Parchment body ──
+  parchment: {
+    backgroundColor: Farm.parchmentDark,
+    flex: 1,
+    paddingBottom: Spacing['3xl'],
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    backgroundColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    alignSelf: 'center',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+
+  // ── Shop header ──
+  shopHeader: {
     paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
     alignItems: 'center',
+    gap: Spacing.sm,
   },
-  pointsText: {
+  shopTitle: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
+  },
+  coinsBadge: {
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+  },
+  coinsText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
   },
+
+  // ── Tabs ──
   tabs: {
     flexDirection: 'row',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.lg,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    padding: Spacing.xs,
+    gap: Spacing.xs,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+  },
+  tabActive: {
+    backgroundColor: Farm.woodBtn,
   },
   tabText: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
   },
+  tabTextActive: {
+    color: Farm.parchment,
+  },
+
+  // ── Item list ──
   list: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xs,
   },
   itemCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
     marginBottom: Spacing.sm,
+  },
+  itemCardLocked: {
+    opacity: 0.5,
   },
   itemContent: {
     flexDirection: 'row',
@@ -569,10 +768,15 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
     marginBottom: 2,
+  },
+  itemNameLocked: {
+    fontStyle: 'italic',
   },
   itemDesc: {
     fontSize: FontSize.caption,
+    color: Farm.brownTextSub,
     marginBottom: Spacing.xs,
   },
   itemMeta: {
@@ -592,58 +796,151 @@ const styles = StyleSheet.create({
   itemCost: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
+    color: Farm.brownTextSub,
+  },
+  buildingIncome: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Farm.greenBtn,
   },
   ownedBadge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
+    backgroundColor: Farm.gold,
   },
   ownedText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    color: Farm.goldText,
   },
   lockedBadge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
+    backgroundColor: Farm.parchment,
   },
   lockedText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
+    color: Farm.brownTextSub,
+    fontStyle: 'italic',
   },
   costBadge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+  },
+  costBadgeDim: {
+    opacity: 0.6,
   },
   costText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  costTextDim: {
+    color: Farm.brownTextSub,
   },
   chevron: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.normal,
     marginLeft: Spacing.sm,
+    color: Farm.brownTextSub,
   },
 
-  // ── Detail modal ──
+  // ── Buy button 3D ──
+  buyBtnOuter: {
+    position: 'relative',
+    marginBottom: 4,
+  },
+  buyBtnInner: {
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  buyBtnGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: Farm.greenBtnHighlight,
+    opacity: 0.35,
+    borderTopLeftRadius: Radius.full,
+    borderTopRightRadius: Radius.full,
+  },
+  buyBtnShadow: {
+    position: 'absolute',
+    bottom: -4,
+    left: 4,
+    right: 4,
+    height: 4,
+    borderRadius: Radius.full,
+    zIndex: -1,
+  },
+  buyBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+
+  // ── Detail modal overlay ──
   detailOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing['2xl'],
   },
-  detailCard: {
-    borderRadius: Radius.xl,
-    padding: Spacing['2xl'],
-    maxHeight: '90%',
+  detailWoodFrame: {
+    backgroundColor: Farm.woodDark,
+    padding: 5,
+    borderRadius: Radius['2xl'],
+    ...Shadows.xl,
+    maxHeight: '70%',
     width: '100%',
     maxWidth: 400,
+  },
+  detailWoodInner: {
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    overflow: 'hidden',
+    borderRadius: Radius.xl,
+    flexShrink: 1,
+  },
+  detailCloseBtn: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  detailCloseBtnText: {
+    color: Farm.parchment,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+  },
+  detailParchment: {
+    backgroundColor: Farm.parchmentDark,
+    flexShrink: 1,
+    paddingBottom: Spacing['3xl'],
   },
   detailHeader: {
     alignItems: 'center',
     marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
   },
   detailIllustration: {
     width: 72,
@@ -658,13 +955,19 @@ const styles = StyleSheet.create({
   detailName: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
     marginBottom: Spacing.sm,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
   },
   detailDescription: {
     fontSize: FontSize.body,
     lineHeight: 22,
     textAlign: 'center',
+    color: Farm.brownTextSub,
     marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
   },
   detailInfoRow: {
     flexDirection: 'row',
@@ -672,8 +975,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: Farm.woodHighlight,
     paddingVertical: Spacing.lg,
     marginBottom: Spacing.xl,
+    marginHorizontal: Spacing.lg,
   },
   detailInfoItem: {
     flex: 1,
@@ -682,10 +987,12 @@ const styles = StyleSheet.create({
   detailInfoDivider: {
     width: 1,
     height: 24,
+    backgroundColor: Farm.woodHighlight,
   },
   detailInfoLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
+    color: Farm.brownTextSub,
   },
   detailPreview: {
     alignItems: 'center',
@@ -693,6 +1000,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     paddingVertical: Spacing['2xl'],
     marginBottom: Spacing.xl,
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
   },
   detailPreviewImage: {
     width: 96,
@@ -702,43 +1013,33 @@ const styles = StyleSheet.create({
     fontSize: 72,
   },
   detailActions: {
+    paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   detailOwnedBadge: {
     paddingVertical: Spacing.lg,
     borderRadius: Radius.full,
     alignItems: 'center',
+    backgroundColor: Farm.gold,
   },
   detailOwnedText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
+    color: Farm.goldText,
   },
   detailLockedBadge: {
     paddingVertical: Spacing.lg,
     borderRadius: Radius.full,
     alignItems: 'center',
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
   },
   detailLockedText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
-  },
-  detailBuyBtn: {
-    paddingVertical: Spacing.lg,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-  },
-  detailBuyText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-  },
-  detailCloseBtn: {
-    paddingVertical: Spacing.lg,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  detailCloseText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
+    color: Farm.brownTextSub,
+    fontStyle: 'italic',
   },
 });

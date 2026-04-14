@@ -30,6 +30,25 @@ import type { Profile, GamificationData } from '../../lib/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
+
+// ── AwningStripes ─────────────────────────────────────────────────────────
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View key={i} style={[styles.awningStripe, { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream }]} />
+        ))}
+      </View>
+      <View style={styles.awningScallops}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View key={i} style={styles.awningScallopDot} />
+        ))}
+      </View>
+    </View>
+  );
+}
 
 // ── Props ──────────────────────────────────────
 
@@ -155,36 +174,39 @@ export function BadgesSheet({ visible, onClose, profile, gamiData }: BadgesSheet
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={[styles.closeBtnText, { color: primary }]}>{'←'}</Text>
+      <View style={styles.container}>
+        <AwningStripes />
+        <View style={styles.parchment}>
+          {/* Bouton fermer */}
+          <TouchableOpacity style={styles.farmCloseBtn} onPress={onClose} activeOpacity={0.8}>
+            <Text style={styles.farmCloseBtnText}>{'✕'}</Text>
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {'🏅 ' + t('badges.title', 'Badges')}
-          </Text>
-          <View style={styles.closeBtn} />
-        </View>
 
-        {/* Resume */}
-        <View style={[styles.summaryBar, { backgroundColor: tint }]}>
-          <Text style={[styles.summaryText, { color: primary }]}>
-            {t('badges.earned', { count: totalBadges, total: badgeProgress.length, defaultValue: `${totalBadges} / ${badgeProgress.length} badges obtenus` })}
-          </Text>
-        </View>
+          {/* Handle */}
+          <View style={styles.handle} />
 
-        {/* Liste */}
-        <ScrollView
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-        >
-          {badgeProgress.map((bp, idx) => (
-            <BadgeCard key={bp.badge.id} bp={bp} idx={idx} />
-          ))}
-          <View style={{ height: Spacing['3xl'] }} />
-        </ScrollView>
-      </SafeAreaView>
+          {/* Header */}
+          <View style={styles.farmHeader}>
+            <Text style={styles.farmTitle}>
+              {'🏅 ' + t('badges.title', 'Badges')}
+            </Text>
+            <Text style={styles.farmHeaderSub}>
+              {t('badges.earned', { count: totalBadges, total: badgeProgress.length, defaultValue: `${totalBadges} / ${badgeProgress.length} badges obtenus` })}
+            </Text>
+          </View>
+
+          {/* Liste */}
+          <ScrollView
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+          >
+            {badgeProgress.map((bp, idx) => (
+              <BadgeCard key={bp.badge.id} bp={bp} idx={idx} />
+            ))}
+            <View style={{ height: Spacing['3xl'] }} />
+          </ScrollView>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -192,38 +214,32 @@ export function BadgesSheet({ visible, onClose, profile, gamiData }: BadgesSheet
 // ── Styles ──────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
+  container: { flex: 1, backgroundColor: Farm.parchmentDark },
+  awning: { overflow: 'hidden' },
+  awningStripes: { flexDirection: 'row', height: 28 },
+  awningStripe: { flex: 1 },
+  awningScallops: { flexDirection: 'row', marginTop: -4, paddingHorizontal: 2 },
+  awningScallopDot: { flex: 1, height: 8, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: Farm.awningGreen, marginHorizontal: 1 },
+  parchment: { flex: 1, backgroundColor: Farm.parchmentDark },
+  farmCloseBtn: {
+    position: 'absolute',
+    top: Spacing.xl,
+    right: Spacing['2xl'],
+    width: 32,
+    height: 32,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
-  closeBtnText: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.bold,
-  },
-  title: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.bold,
-  },
-  summaryBar: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    alignItems: 'center',
-  },
-  summaryText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-  },
+  farmCloseBtnText: { color: Farm.parchment, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: Farm.woodHighlight, alignSelf: 'center', marginTop: Spacing.xl, marginBottom: Spacing.lg },
+  farmHeader: { paddingHorizontal: Spacing['2xl'], marginBottom: Spacing.md, marginRight: 40, gap: Spacing.xxs },
+  farmTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, color: Farm.brownText, textShadowColor: 'rgba(255,255,255,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
+  farmHeaderSub: { fontSize: FontSize.label, color: Farm.brownTextSub },
   list: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,

@@ -30,6 +30,25 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Farm } from '../../constants/farm-theme';
+
+// ── AwningStripes ─────────────────────────────────────────────────────────
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View key={i} style={[styles.awningStripe, { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream }]} />
+        ))}
+      </View>
+      <View style={styles.awningScallops}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View key={i} style={styles.awningScallopDot} />
+        ))}
+      </View>
+    </View>
+  );
+}
 import type { VaultManager } from '../../lib/vault';
 import {
   parseMuseumEntries,
@@ -193,34 +212,36 @@ export function MuseumModal({ visible, onClose, profileId, vault }: MuseumModalP
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-        {/* Header maison — PAS ModalHeader (per anti-pattern RESEARCH.md) */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={handleClose}
-            style={styles.closeBtn}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.closeIcon, { color: colors.text }]}>{'✕'}</Text>
+      <View style={styles.container}>
+        <AwningStripes />
+        <View style={styles.parchment}>
+          {/* Bouton fermer */}
+          <TouchableOpacity style={styles.farmCloseBtn} onPress={handleClose} activeOpacity={0.8}>
+            <Text style={styles.farmCloseBtnText}>{'✕'}</Text>
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {t('museum.title', 'Musée des effets')}
-          </Text>
-          {/* Spacer pour centrer le titre */}
-          <View style={styles.closeBtn} />
-        </View>
 
-        {/* SectionList directement dans SafeAreaView (Pitfall 3 RESEARCH.md : PAS dans ScrollView) */}
-        <SectionList
-          sections={sections}
-          renderSectionHeader={renderSectionHeader}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          stickySectionHeadersEnabled
-          ListEmptyComponent={ListEmptyComponent}
-          contentContainerStyle={styles.listContent}
-        />
-      </SafeAreaView>
+          {/* Handle */}
+          <View style={styles.handle} />
+
+          {/* Header */}
+          <View style={styles.farmHeader}>
+            <Text style={styles.farmTitle}>
+              {'🏛️ ' + t('museum.title', 'Musée des effets')}
+            </Text>
+          </View>
+
+          {/* SectionList */}
+          <SectionList
+            sections={sections}
+            renderSectionHeader={renderSectionHeader}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            stickySectionHeadersEnabled
+            ListEmptyComponent={ListEmptyComponent}
+            contentContainerStyle={styles.listContent}
+          />
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -230,30 +251,23 @@ export function MuseumModal({ visible, onClose, profileId, vault }: MuseumModalP
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.xl,
+  container: { flex: 1, backgroundColor: Farm.parchmentDark },
+  awning: { overflow: 'hidden' },
+  awningStripes: { flexDirection: 'row', height: 28 },
+  awningStripe: { flex: 1 },
+  awningScallops: { flexDirection: 'row', marginTop: -4, paddingHorizontal: 2 },
+  awningScallopDot: { flex: 1, height: 8, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: Farm.awningGreen, marginHorizontal: 1 },
+  parchment: { flex: 1, backgroundColor: Farm.parchmentDark },
+  farmCloseBtn: {
+    position: 'absolute', top: Spacing.xl, right: Spacing['2xl'],
+    width: 32, height: 32, backgroundColor: Farm.woodDark,
+    borderWidth: 2, borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', zIndex: 10,
   },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeIcon: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
-  },
-  title: {
-    fontSize: FontSize.subtitle,
-    fontWeight: FontWeight.bold,
-    flex: 1,
-    textAlign: 'center',
-  },
+  farmCloseBtnText: { color: Farm.parchment, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: Farm.woodHighlight, alignSelf: 'center', marginTop: Spacing.xl, marginBottom: Spacing.lg },
+  farmHeader: { paddingHorizontal: Spacing['2xl'], marginBottom: Spacing.md, marginRight: 40 },
+  farmTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, color: Farm.brownText, textShadowColor: 'rgba(255,255,255,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
   sectionHeader: {
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.md,

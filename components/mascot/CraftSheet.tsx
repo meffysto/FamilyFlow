@@ -52,6 +52,7 @@ import {
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
 
 // ── Types ──────────────────────────────────────
 
@@ -113,6 +114,64 @@ const STAGE_EMOJI: Record<TreeStage, string> = {
   legendaire: '⭐',
 };
 
+const SPRING_CONFIG = { damping: 12, stiffness: 180 };
+
+// ── AwningStripes ─────────────────────────────────────
+
+function AwningStripes() {
+  return (
+    <View style={awningStyles.container}>
+      {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        <View
+          key={i}
+          style={[
+            awningStyles.stripe,
+            { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+          ]}
+        />
+      ))}
+      {/* Scallop dots row */}
+      <View style={awningStyles.scallopRow}>
+        {Array.from({ length: 12 }).map((_, i) => (
+          <View key={i} style={awningStyles.scallopDot} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const awningStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    height: 28,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  stripe: {
+    flex: 1,
+  },
+  scallopRow: {
+    position: 'absolute',
+    bottom: -4,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  scallopDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Farm.parchment,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+});
+
 // ── Composant principal ──────────────────────────────
 
 export function CraftSheet({
@@ -132,7 +191,7 @@ export function CraftSheet({
   unlockedRecipes = [],
 }: CraftSheetProps) {
   const { t } = useTranslation();
-  const { primary, tint, colors } = useThemeColors();
+  const { colors } = useThemeColors();
   const { showToast } = useToast();
   const [tab, setTab] = useState<CraftTab>('catalogue');
   const [crafting, setCrafting] = useState<string | null>(null);
@@ -144,6 +203,12 @@ export function CraftSheet({
   const craftBtnScale = useSharedValue(1);
   const craftBtnAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: craftBtnScale.value }],
+  }));
+
+  // Animation press bouton craft (3D translateY)
+  const craftBtnY = useSharedValue(0);
+  const craftBtnYStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: craftBtnY.value }],
   }));
 
   // ── Handlers ──────────────────────────────────
@@ -221,7 +286,6 @@ export function CraftSheet({
       const recipes = filterMode === 'craftable' && !locked
         ? allStageRecipes.filter(r => canCraft(r, harvestInventory, farmInventory))
         : allStageRecipes;
-      // Toujours inclure les stades qui ont des recettes (meme si filtre vide)
       return { stage, stageInfo, recipes, locked, totalCount: allStageRecipes.length };
     }).filter(Boolean) as Array<{
       stage: TreeStage;
@@ -242,15 +306,15 @@ export function CraftSheet({
           style={[
             styles.catChip,
             filterMode === 'all'
-              ? { backgroundColor: primary }
-              : { backgroundColor: tint },
+              ? { backgroundColor: Farm.woodBtn }
+              : { backgroundColor: Farm.parchmentDark },
           ]}
           onPress={() => setFilterMode('all')}
           activeOpacity={0.7}
         >
           <Text style={[
             styles.catChipText,
-            { color: filterMode === 'all' ? colors.onPrimary : primary },
+            { color: filterMode === 'all' ? Farm.parchment : Farm.brownTextSub },
           ]}>
             {t('craft.filtreToutes')}
           </Text>
@@ -259,15 +323,15 @@ export function CraftSheet({
           style={[
             styles.catChip,
             filterMode === 'craftable'
-              ? { backgroundColor: primary }
-              : { backgroundColor: tint },
+              ? { backgroundColor: Farm.woodBtn }
+              : { backgroundColor: Farm.parchmentDark },
           ]}
           onPress={() => setFilterMode('craftable')}
           activeOpacity={0.7}
         >
           <Text style={[
             styles.catChipText,
-            { color: filterMode === 'craftable' ? colors.onPrimary : primary },
+            { color: filterMode === 'craftable' ? Farm.parchment : Farm.brownTextSub },
           ]}>
             {t('craft.filtreDisponibles', { count: craftableCount })}
           </Text>
@@ -281,19 +345,19 @@ export function CraftSheet({
         {groupedByStage.map(({ stage, stageInfo, recipes, locked, totalCount }) => (
           <View key={stage}>
             {/* Header de section stade */}
-            <View style={[styles.catSectionHeader, { backgroundColor: colors.bg }]}>
+            <View style={styles.catSectionHeader}>
               <Text style={styles.catSectionEmoji}>
                 {locked ? '🔒' : STAGE_EMOJI[stage]}
               </Text>
-              <Text style={[styles.catSectionLabel, { color: colors.text }]}>
+              <Text style={styles.catSectionLabel}>
                 {t(stageInfo.labelKey)}
               </Text>
-              <Text style={[styles.catSectionLevel, { color: colors.textMuted }]}>
+              <Text style={styles.catSectionLevel}>
                 {' '}{t('craft.niveauRequis', { level: stageInfo.minLevel })}
               </Text>
               <View style={styles.catSectionSpacer} />
-              <View style={[styles.catSectionBadge, { backgroundColor: tint }]}>
-                <Text style={[styles.catSectionBadgeText, { color: primary }]}>
+              <View style={styles.catSectionBadge}>
+                <Text style={styles.catSectionBadgeText}>
                   {filterMode === 'craftable' && !locked ? recipes.length : totalCount}
                 </Text>
               </View>
@@ -312,11 +376,9 @@ export function CraftSheet({
                     <TouchableOpacity
                       style={[
                         styles.catCard,
-                        { backgroundColor: colors.card },
-                        craftable && { borderColor: colors.success, borderWidth: 1.5 },
-                        !craftable && !locked && { borderColor: colors.borderLight, borderWidth: StyleSheet.hairlineWidth },
-                        locked && { opacity: 0.5, borderColor: colors.borderLight, borderWidth: StyleSheet.hairlineWidth },
-                        Shadows.sm,
+                        craftable && { borderColor: Farm.greenBtn, borderWidth: 1.5 },
+                        !craftable && !locked && { borderColor: Farm.woodHighlight, borderWidth: 1.5 },
+                        locked && { opacity: 0.5, borderColor: Farm.woodHighlight, borderWidth: 1.5 },
                       ]}
                       onPress={locked ? undefined : () => setSelectedRecipe(recipe)}
                       activeOpacity={locked ? 1 : 0.7}
@@ -330,7 +392,7 @@ export function CraftSheet({
                           <Text style={styles.catCardEmoji}>{recipe.emoji}</Text>
                         )}
                         {craftable && (
-                          <View style={[styles.catCraftableBadge, { backgroundColor: colors.success }]}>
+                          <View style={[styles.catCraftableBadge, { backgroundColor: Farm.greenBtn }]}>
                             <Text style={styles.catCraftableBadgeText}>{'✓'}</Text>
                           </View>
                         )}
@@ -343,14 +405,14 @@ export function CraftSheet({
 
                       {/* Nom */}
                       <Text
-                        style={[styles.catCardName, { color: colors.text }]}
+                        style={styles.catCardName}
                         numberOfLines={1}
                       >
                         {t(recipe.labelKey)}
                       </Text>
 
                       {/* Valeur + XP */}
-                      <Text style={[styles.catCardValue, { color: colors.textMuted }]}>
+                      <Text style={styles.catCardValue}>
                         {recipe.sellValue}{' 🍃 +'}{recipe.xpBonus}{'XP'}
                       </Text>
 
@@ -372,7 +434,7 @@ export function CraftSheet({
                               key={ing.itemId}
                               style={[
                                 styles.catIngBadge,
-                                { backgroundColor: enough ? colors.successBg : colors.errorBg },
+                                { backgroundColor: enough ? (colors.success + '22') : (colors.error + '22') },
                               ]}
                             >
                               <Text style={styles.catIngEmoji}>{emoji}</Text>
@@ -411,7 +473,7 @@ export function CraftSheet({
             onPress={() => setSelectedRecipe(null)}
           >
             <TouchableOpacity
-              style={[styles.catModalContent, { backgroundColor: colors.card }, Shadows.lg]}
+              style={[styles.catModalContent, Shadows.lg]}
               activeOpacity={1}
               onPress={() => { /* empêche la fermeture au tap sur le contenu */ }}
             >
@@ -421,7 +483,7 @@ export function CraftSheet({
                 onPress={() => setSelectedRecipe(null)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.catModalCloseText, { color: colors.textMuted }]}>{'✕'}</Text>
+                <Text style={styles.catModalCloseText}>{'✕'}</Text>
               </TouchableOpacity>
 
               {/* Header */}
@@ -430,17 +492,17 @@ export function CraftSheet({
               ) : (
                 <Text style={styles.catModalEmoji}>{selectedRecipe.emoji}</Text>
               )}
-              <Text style={[styles.catModalTitle, { color: colors.text }]}>
+              <Text style={styles.catModalTitle}>
                 {t(selectedRecipe.labelKey)}
               </Text>
-              <Text style={[styles.catModalValue, { color: colors.textSub }]}>
+              <Text style={styles.catModalValue}>
                 {t('craft.valeurVente', { amount: selectedRecipe.sellValue })}
                 {selectedRecipe.xpBonus > 0 ? `  +${selectedRecipe.xpBonus} XP` : ''}
               </Text>
 
               {/* Ingredients */}
               <ScrollView style={styles.catModalIngList} showsVerticalScrollIndicator={false}>
-                <Text style={[styles.ingredientsTitle, { color: colors.textMuted }]}>
+                <Text style={styles.ingredientsTitle}>
                   {t('craft.ingredients')}
                 </Text>
                 {selectedRecipe.ingredients.map((ing) => {
@@ -472,7 +534,7 @@ export function CraftSheet({
                     <View key={ing.itemId} style={styles.ingredientBlock}>
                       <View style={styles.ingredientRow}>
                         <Text style={styles.ingredientEmoji}>{emoji}</Text>
-                        <Text style={[styles.ingredientName, { color: colors.textSub }]}>
+                        <Text style={styles.ingredientName}>
                           {name}
                         </Text>
                         <Text style={[
@@ -483,7 +545,7 @@ export function CraftSheet({
                         </Text>
                       </View>
                       {hint && (
-                        <Text style={[styles.ingredientHint, { color: colors.textMuted }]}>
+                        <Text style={styles.ingredientHint}>
                           {'💡 '}{hint}
                         </Text>
                       )}
@@ -492,43 +554,61 @@ export function CraftSheet({
                 })}
               </ScrollView>
 
-              {/* Bouton Crafter */}
-              <Animated.View style={crafting === selectedRecipe.id ? craftBtnAnimStyle : undefined}>
-                <TouchableOpacity
-                  style={[
-                    styles.craftBtn,
-                    {
-                      backgroundColor: canCraft(selectedRecipe, harvestInventory, farmInventory)
-                        ? primary
-                        : colors.cardAlt,
-                    },
-                    crafting === selectedRecipe.id && { opacity: 0.5 },
-                  ]}
-                  onPress={canCraft(selectedRecipe, harvestInventory, farmInventory)
-                    ? async () => {
-                        const r = selectedRecipe;
-                        setSelectedRecipe(null);
-                        await handleCraft(r);
-                      }
-                    : undefined}
-                  disabled={
-                    !canCraft(selectedRecipe, harvestInventory, farmInventory) ||
-                    crafting === selectedRecipe.id
-                  }
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.craftBtnText,
-                    {
-                      color: canCraft(selectedRecipe, harvestInventory, farmInventory)
-                        ? colors.onPrimary
-                        : colors.textMuted,
-                    },
-                  ]}>
-                    {t('craft.crafter')}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
+              {/* Bouton Crafter — FarmButton 3D */}
+              {(() => {
+                const craftable = canCraft(selectedRecipe, harvestInventory, farmInventory);
+                const isCurrentlyCrafting = crafting === selectedRecipe.id;
+                return (
+                  <Animated.View style={[craftable ? craftBtnAnimStyle : undefined, craftBtnYStyle]}>
+                    <Pressable
+                      onPressIn={() => {
+                        if (craftable && !isCurrentlyCrafting) {
+                          craftBtnY.value = withSpring(4, SPRING_CONFIG);
+                          if (Platform.OS !== 'web') {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          }
+                        }
+                      }}
+                      onPressOut={() => {
+                        craftBtnY.value = withSpring(0, SPRING_CONFIG);
+                      }}
+                      onPress={craftable && !isCurrentlyCrafting
+                        ? async () => {
+                            const r = selectedRecipe;
+                            setSelectedRecipe(null);
+                            await handleCraft(r);
+                          }
+                        : undefined}
+                      disabled={!craftable || isCurrentlyCrafting}
+                      style={({ pressed }) => [
+                        styles.craftBtnOuter,
+                        craftable
+                          ? { backgroundColor: Farm.greenBtnShadow }
+                          : { backgroundColor: '#D0CBC3' },
+                      ]}
+                    >
+                      <View style={[
+                        styles.craftBtnInner,
+                        craftable
+                          ? { backgroundColor: Farm.greenBtn }
+                          : { backgroundColor: Farm.parchmentDark },
+                        isCurrentlyCrafting && { opacity: 0.6 },
+                      ]}>
+                        {/* Gloss highlight */}
+                        {craftable && (
+                          <View style={styles.craftBtnGloss} pointerEvents="none" />
+                        )}
+                        <Text style={[
+                          styles.craftBtnText,
+                          { color: craftable ? Farm.parchment : Farm.brownTextSub },
+                        ]}>
+                          {t('craft.crafter')}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  </Animated.View>
+                );
+              })()}
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
@@ -566,13 +646,13 @@ export function CraftSheet({
   const renderInventaire = () => (
     <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
       {harvestEntries.length === 0 && resourceEntries.length === 0 && (
-        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+        <Text style={styles.emptyText}>
           {t('craft.aucuneRecolte')}
         </Text>
       )}
       {/* Récoltes */}
       {harvestEntries.length > 0 && (
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+        <Text style={styles.sectionLabel}>
           {t('craft.recoltes', '🌱 Récoltes')}
         </Text>
       )}
@@ -580,23 +660,17 @@ export function CraftSheet({
         const cropName = cropDef ? t(cropDef.labelKey) : cropId;
         return (
           <Animated.View key={cropId} entering={FadeInDown.delay(idx * 60).duration(300)}>
-            <View
-              style={[
-                styles.inventoryRow,
-                { backgroundColor: colors.card, borderColor: colors.borderLight },
-                Shadows.sm,
-              ]}
-            >
+            <View style={styles.inventoryRow}>
               {CROP_ICON_SPRITES[cropId] ? (
                 <Image source={CROP_ICON_SPRITES[cropId]} style={styles.inventorySprite} />
               ) : (
                 <Text style={styles.inventoryEmoji}>{cropDef?.emoji ?? '?'}</Text>
               )}
               <View style={styles.inventoryInfo}>
-                <Text style={[styles.inventoryName, { color: colors.text }]}>
+                <Text style={styles.inventoryName}>
                   {cropName}
                 </Text>
-                <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
+                <Text style={styles.inventoryQty}>
                   x{qty} — {cropDef?.harvestReward ?? 0} 🍃/{t('craft.vendre').toLowerCase()}
                 </Text>
               </View>
@@ -610,14 +684,13 @@ export function CraftSheet({
               <TouchableOpacity
                 style={[
                   styles.sellBtn,
-                  { backgroundColor: tint, borderColor: primary },
                   selling === cropId && { opacity: 0.5 },
                 ]}
                 onPress={() => handleSellHarvest(cropId)}
                 disabled={selling === cropId}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.sellBtnText, { color: primary }]}>
+                <Text style={styles.sellBtnText}>
                   {t('craft.vendre')}
                 </Text>
               </TouchableOpacity>
@@ -627,7 +700,7 @@ export function CraftSheet({
       })}
       {/* Ressources bâtiments */}
       {resourceEntries.length > 0 && (
-        <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: harvestEntries.length > 0 ? Spacing.lg : 0 }]}>
+        <Text style={[styles.sectionLabel, { marginTop: harvestEntries.length > 0 ? Spacing.lg : 0 }]}>
           {t('craft.ressources', '🏠 Ressources')}
         </Text>
       )}
@@ -635,19 +708,13 @@ export function CraftSheet({
         const resName = t(labelKey);
         return (
           <Animated.View key={resourceId} entering={FadeInDown.delay((harvestEntries.length + idx) * 60).duration(300)}>
-            <View
-              style={[
-                styles.inventoryRow,
-                { backgroundColor: colors.card, borderColor: colors.borderLight },
-                Shadows.sm,
-              ]}
-            >
+            <View style={styles.inventoryRow}>
               <Text style={styles.inventoryEmoji}>{emoji}</Text>
               <View style={styles.inventoryInfo}>
-                <Text style={[styles.inventoryName, { color: colors.text }]}>
+                <Text style={styles.inventoryName}>
                   {resName}
                 </Text>
-                <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
+                <Text style={styles.inventoryQty}>
                   x{qty}
                 </Text>
               </View>
@@ -665,7 +732,7 @@ export function CraftSheet({
       {/* Historique cadeaux */}
       {giftHistoryEntries.length > 0 && (
         <>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>
+          <Text style={[styles.sectionLabel, { marginTop: Spacing.xl }]}>
             {t('gamification:gift_history_title')}
           </Text>
           {giftHistoryEntries.map((entry, idx) => {
@@ -678,13 +745,13 @@ export function CraftSheet({
             const isReceived = entry.direction === 'received';
             return (
               <Animated.View key={idx} entering={FadeInDown.delay(idx * 40).duration(250)}>
-                <View style={[styles.giftHistoryRow, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+                <View style={styles.giftHistoryRow}>
                   <Text style={styles.giftHistoryIcon}>{isReceived ? '📥' : '📤'}</Text>
                   <View style={styles.giftHistoryInfo}>
-                    <Text style={[styles.giftHistoryItem, { color: colors.text }]} numberOfLines={1}>
+                    <Text style={styles.giftHistoryItem} numberOfLines={1}>
                       {entry.itemId}{' x'}{entry.quantity}
                     </Text>
-                    <Text style={[styles.giftHistoryMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                    <Text style={styles.giftHistoryMeta} numberOfLines={1}>
                       {isReceived
                         ? t('gamification:gift_history_received', { name: entry.fromId })
                         : t('gamification:gift_history_sent', { name: entry.toId })
@@ -719,7 +786,7 @@ export function CraftSheet({
   const renderCreations = () => (
     <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
       {craftedGroups.length === 0 && (
-        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+        <Text style={styles.emptyText}>
           {t('craft.aucunItem')}
         </Text>
       )}
@@ -727,23 +794,17 @@ export function CraftSheet({
         const recipeName = t(recipe.labelKey);
         return (
           <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
-            <View
-              style={[
-                styles.inventoryRow,
-                { backgroundColor: colors.card, borderColor: colors.borderLight },
-                Shadows.sm,
-              ]}
-            >
+            <View style={styles.inventoryRow}>
               {recipe.sprite ? (
                 <Image source={recipe.sprite} style={styles.inventorySprite} />
               ) : (
                 <Text style={styles.inventoryEmoji}>{recipe.emoji}</Text>
               )}
               <View style={styles.inventoryInfo}>
-                <Text style={[styles.inventoryName, { color: colors.text }]}>
+                <Text style={styles.inventoryName}>
                   {recipeName}
                 </Text>
-                <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
+                <Text style={styles.inventoryQty}>
                   x{count} — {recipe.sellValue} 🍃 + {recipe.xpBonus} XP
                 </Text>
               </View>
@@ -757,14 +818,13 @@ export function CraftSheet({
               <TouchableOpacity
                 style={[
                   styles.sellBtn,
-                  { backgroundColor: tint, borderColor: primary },
                   selling === recipe.id && { opacity: 0.5 },
                 ]}
                 onPress={() => handleSellCrafted(recipe.id)}
                 disabled={selling === recipe.id}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.sellBtnText, { color: primary }]}>
+                <Text style={styles.sellBtnText}>
                   {t('craft.vendre')}
                 </Text>
               </TouchableOpacity>
@@ -785,58 +845,67 @@ export function CraftSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={[styles.closeBtnText, { color: primary }]}>{'←'}</Text>
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {'🔨 ' + t('craft.atelier')}
-          </Text>
-          <View style={styles.closeBtn} />
-        </View>
+      <View style={styles.container}>
+        {/* Auvent */}
+        <AwningStripes />
 
-        {/* Points */}
-        <View style={[styles.pointsBar, { backgroundColor: tint }]}>
-          <Text style={[styles.pointsText, { color: primary }]}>
-            {coins} 🍃
-          </Text>
-        </View>
+        {/* Contenu parchemin */}
+        <View style={styles.parchment}>
+          {/* Bouton fermer */}
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={onClose}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.closeBtnText}>{'✕'}</Text>
+          </TouchableOpacity>
+              {/* Handle */}
+              <View style={styles.handle} />
 
-        {/* Onglets */}
-        <View style={[styles.tabs, { borderBottomColor: colors.borderLight }]}>
-          <TouchableOpacity
-            style={[styles.tab, tab === 'catalogue' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-            onPress={() => setTab('catalogue')}
-          >
-            <Text style={[styles.tabText, { color: tab === 'catalogue' ? primary : colors.textMuted }]}>
-              {t('craft.catalogue')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, tab === 'inventaire' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-            onPress={() => setTab('inventaire')}
-          >
-            <Text style={[styles.tabText, { color: tab === 'inventaire' ? primary : colors.textMuted }]}>
-              {t('craft.inventaire')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, tab === 'creations' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-            onPress={() => setTab('creations')}
-          >
-            <Text style={[styles.tabText, { color: tab === 'creations' ? primary : colors.textMuted }]}>
-              {t('craft.mesCreations')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+              {/* Titre + coins */}
+              <View style={styles.headerRow}>
+                <Text style={styles.title}>
+                  {'🔨 ' + t('craft.atelier')}
+                </Text>
+                <View style={styles.coinsBadge}>
+                  <Text style={styles.coinsText}>{coins} 🍃</Text>
+                </View>
+                {/* Espace pour le bouton close */}
+                <View style={{ width: 36 }} />
+              </View>
 
-        {/* Contenu de l'onglet actif */}
-        {tab === 'catalogue' && renderCatalogue()}
-        {tab === 'inventaire' && renderInventaire()}
-        {tab === 'creations' && renderCreations()}
-      </SafeAreaView>
+              {/* Onglets */}
+              <View style={styles.tabsRow}>
+                {(['catalogue', 'inventaire', 'creations'] as CraftTab[]).map((tabKey) => {
+                  const labels: Record<CraftTab, string> = {
+                    catalogue: t('craft.catalogue'),
+                    inventaire: t('craft.inventaire'),
+                    creations: t('craft.mesCreations'),
+                  };
+                  const active = tab === tabKey;
+                  return (
+                    <TouchableOpacity
+                      key={tabKey}
+                      style={[styles.tabItem, active && styles.tabItemActive]}
+                      onPress={() => setTab(tabKey)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                        {labels[tabKey]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Contenu de l'onglet actif */}
+              <View style={{ flex: 1 }}>
+                {tab === 'catalogue' && renderCatalogue()}
+                {tab === 'inventaire' && renderInventaire()}
+                {tab === 'creations' && renderCreations()}
+              </View>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -844,53 +913,111 @@ export function CraftSheet({
 // ── Styles ─────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
+    backgroundColor: Farm.parchmentDark,
   },
-  header: {
+
+  // ── Bouton fermer ──
+  closeBtn: {
+    position: 'absolute',
+    top: Spacing.xl,
+    right: Spacing['2xl'],
+    width: 32,
+    height: 32,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  closeBtnText: {
+    color: Farm.parchment,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    lineHeight: 16,
+  },
+
+  // ── Parchemin ──
+  parchment: {
+    flex: 1,
+    backgroundColor: Farm.parchmentDark,
+  },
+
+  // ── Handle ──
+  handle: {
+    width: 36,
+    height: 4,
+    backgroundColor: Farm.woodHighlight,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+
+  // ── Header row (titre + coins) ──
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtnText: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.bold,
+    paddingBottom: Spacing.sm,
   },
   title: {
-    fontSize: FontSize.titleLg,
+    fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
   },
-  pointsBar: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    alignItems: 'center',
+  coinsBadge: {
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
   },
-  pointsText: {
+  coinsText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
   },
-  tabs: {
+
+  // ── Onglets ──
+  tabsRow: {
     flexDirection: 'row',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.lg,
+    padding: Spacing.xs,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
   },
-  tab: {
+  tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: 'transparent',
+  },
+  tabItemActive: {
+    backgroundColor: Farm.woodBtn,
   },
   tabText: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
   },
+  tabTextActive: {
+    color: Farm.parchment,
+  },
+
+  // ── Contenu commun ──
   list: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
@@ -898,6 +1025,7 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     fontSize: FontSize.body,
+    color: Farm.brownText,
     marginTop: Spacing['3xl'],
   },
 
@@ -929,6 +1057,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Farm.woodHighlight,
   },
   catSectionEmoji: {
     fontSize: FontSize.body,
@@ -937,9 +1067,11 @@ const styles = StyleSheet.create({
   catSectionLabel: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
   catSectionLevel: {
     fontSize: FontSize.caption,
+    color: Farm.brownTextSub,
   },
   catSectionSpacer: {
     flex: 1,
@@ -950,10 +1082,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     minWidth: 24,
     alignItems: 'center',
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
   },
   catSectionBadgeText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
 
   // ── Catalogue — grille ──
@@ -969,8 +1105,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   catCard: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.md,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
   },
 
   // ── Catalogue — carte ──
@@ -1015,10 +1154,12 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     marginBottom: 2,
+    color: Farm.brownText,
   },
   catCardValue: {
     fontSize: FontSize.micro,
     marginBottom: Spacing.xs,
+    color: Farm.brownTextSub,
   },
   catDotRow: {
     flexDirection: 'row',
@@ -1055,17 +1196,29 @@ const styles = StyleSheet.create({
     maxHeight: '60%',
     borderRadius: Radius.xl,
     padding: Spacing.xl,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
   },
   catModalClose: {
     position: 'absolute',
     top: Spacing.md,
     right: Spacing.md,
-    padding: Spacing.sm,
-    zIndex: 1,
+    width: 32,
+    height: 32,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   catModalCloseText: {
-    fontSize: FontSize.body,
+    color: Farm.parchment,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
+    lineHeight: 16,
   },
   catModalEmoji: {
     fontSize: 48,
@@ -1083,11 +1236,16 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     textAlign: 'center',
     marginBottom: 2,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
   },
   catModalValue: {
     fontSize: FontSize.caption,
     textAlign: 'center',
     marginBottom: Spacing.md,
+    color: Farm.brownTextSub,
   },
   catModalIngList: {
     maxHeight: 200,
@@ -1097,9 +1255,11 @@ const styles = StyleSheet.create({
   // ── Catalogue existant (recipeCard conservé pour compatibilité) ──
   recipeCard: {
     borderRadius: Radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
+    backgroundColor: Farm.parchmentDark,
   },
   recipeHeader: {
     flexDirection: 'row',
@@ -1117,9 +1277,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
     marginBottom: 2,
+    color: Farm.brownText,
   },
   recipeSellValue: {
     fontSize: FontSize.caption,
+    color: Farm.brownTextSub,
   },
   ingredientsList: {
     marginBottom: Spacing.md,
@@ -1130,6 +1292,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: Spacing.sm,
+    color: Farm.brownTextSub,
   },
   ingredientBlock: {
     paddingVertical: Spacing.xs,
@@ -1142,6 +1305,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.micro,
     marginLeft: 28,
     marginTop: 2,
+    color: Farm.brownTextSub,
   },
   ingredientEmoji: {
     fontSize: 18,
@@ -1150,15 +1314,34 @@ const styles = StyleSheet.create({
   ingredientName: {
     flex: 1,
     fontSize: FontSize.sm,
+    color: Farm.brownTextSub,
   },
   ingredientQty: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
-  craftBtn: {
+
+  // ── Bouton craft 3D ──
+  craftBtnOuter: {
+    borderRadius: Radius.md,
+    paddingBottom: 4,
+  },
+  craftBtnInner: {
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  craftBtnGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    backgroundColor: Farm.greenBtnHighlight,
+    opacity: 0.3,
+    borderTopLeftRadius: Radius.md,
+    borderTopRightRadius: Radius.md,
   },
   craftBtnText: {
     fontSize: FontSize.body,
@@ -1170,9 +1353,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: Radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
     padding: Spacing.lg,
     marginBottom: Spacing.sm,
+    backgroundColor: Farm.parchmentDark,
   },
   inventoryEmoji: {
     fontSize: 28,
@@ -1191,9 +1376,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
     marginBottom: 2,
+    color: Farm.brownText,
   },
   inventoryQty: {
     fontSize: FontSize.caption,
+    color: Farm.brownTextSub,
   },
   giftBtn: {
     paddingVertical: Spacing.sm,
@@ -1206,11 +1393,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
   },
   sellBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
   },
   sectionLabel: {
     fontSize: FontSize.caption,
@@ -1218,15 +1408,18 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: Spacing.sm,
+    color: Farm.brownTextSub,
   },
   giftHistoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.sm,
     borderRadius: Radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
     marginBottom: Spacing.xs,
     gap: Spacing.sm,
+    backgroundColor: Farm.parchmentDark,
   },
   giftHistoryIcon: {
     fontSize: 18,
@@ -1237,9 +1430,11 @@ const styles = StyleSheet.create({
   giftHistoryItem: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
   },
   giftHistoryMeta: {
     fontSize: FontSize.caption,
     marginTop: 2,
+    color: Farm.brownTextSub,
   },
 });

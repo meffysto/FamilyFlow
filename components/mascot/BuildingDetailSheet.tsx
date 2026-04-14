@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   },
   woodFrameInner: {
     borderRadius: Radius.xl,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: Farm.parchmentDark,
     borderWidth: 2,
     borderColor: Farm.woodHighlight,
     overflow: 'hidden',
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
 
   // ── Fond parchemin ──────────────────────────────
   parchment: {
-    backgroundColor: Farm.parchment,
+    backgroundColor: Farm.parchmentDark,
     flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },

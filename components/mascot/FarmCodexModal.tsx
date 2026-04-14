@@ -42,6 +42,25 @@ import { CodexEntryDetailModal } from './CodexEntryDetailModal';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
+
+// ── AwningStripes ─────────────────────────────────────────────────────────
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View key={i} style={[styles.awningStripe, { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream }]} />
+        ))}
+      </View>
+      <View style={styles.awningScallops}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View key={i} style={styles.awningScallopDot} />
+        ))}
+      </View>
+    </View>
+  );
+}
 
 interface FarmCodexModalProps {
   visible: boolean;
@@ -167,22 +186,26 @@ export function FarmCodexModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+      <View style={styles.container}>
+        <AwningStripes />
+        <View style={styles.parchment}>
+        {/* Bouton fermer */}
+        <TouchableOpacity
+          style={styles.farmCloseBtn}
+          onPress={() => { Haptics.selectionAsync(); onClose(); }}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.farmCloseBtnText}>{'✕'}</Text>
+        </TouchableOpacity>
+
+        {/* Handle */}
+        <View style={styles.handle} />
+
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.selectionAsync();
-              onClose();
-            }}
-            style={styles.closeBtn}
-          >
-            <Text style={[styles.closeIcon, { color: colors.text }]}>✕</Text>
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>
+        <View style={styles.farmHeader}>
+          <Text style={styles.farmTitle}>
             {t('codex:modal.title')}
           </Text>
-          <View style={styles.closeBtn} />
         </View>
 
         {/* Search bar */}
@@ -285,7 +308,8 @@ export function FarmCodexModal({
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+        </View>
+      </View>
 
       {/* Mini-modal détail (D-02) */}
       <CodexEntryDetailModal
@@ -298,30 +322,23 @@ export function FarmCodexModal({
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.xl,
+  container: { flex: 1, backgroundColor: Farm.parchmentDark },
+  awning: { overflow: 'hidden' },
+  awningStripes: { flexDirection: 'row', height: 28 },
+  awningStripe: { flex: 1 },
+  awningScallops: { flexDirection: 'row', marginTop: -4, paddingHorizontal: 2 },
+  awningScallopDot: { flex: 1, height: 8, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: Farm.awningGreen, marginHorizontal: 1 },
+  parchment: { flex: 1, backgroundColor: Farm.parchmentDark },
+  farmCloseBtn: {
+    position: 'absolute', top: Spacing.xl, right: Spacing['2xl'],
+    width: 32, height: 32, backgroundColor: Farm.woodDark,
+    borderWidth: 2, borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', zIndex: 10,
   },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeIcon: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
-  },
-  title: {
-    fontSize: FontSize.subtitle,
-    fontWeight: FontWeight.bold,
-    flex: 1,
-    textAlign: 'center',
-  },
+  farmCloseBtnText: { color: Farm.parchment, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: Farm.woodHighlight, alignSelf: 'center', marginTop: Spacing.xl, marginBottom: Spacing.lg },
+  farmHeader: { paddingHorizontal: Spacing['2xl'], marginBottom: Spacing.md, marginRight: 40 },
+  farmTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, color: Farm.brownText, textShadowColor: 'rgba(255,255,255,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
