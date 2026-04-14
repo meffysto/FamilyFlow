@@ -11,12 +11,14 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   Modal,
   ScrollView,
   TextInput,
   Platform,
   Alert,
   Image,
+  Animated,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -25,6 +27,7 @@ import { CRAFT_RECIPES } from '../../lib/mascot/craft-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
 import {
   getAvailableTradeItems,
   MAX_TRADES_PER_DAY,
@@ -37,6 +40,8 @@ import type { FarmInventory, HarvestInventory, CraftedItem } from '../../lib/mas
 const RNShare = Platform.OS === 'web'
   ? { open: async (_opts: any) => ({}) }
   : require('react-native-share').default;
+
+const SPRING_CONFIG = { damping: 12, stiffness: 180 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,6 +62,71 @@ interface PortTradeModalProps {
 }
 
 type TabId = 'envoyer' | 'recevoir';
+
+// ── FarmButton 3D ─────────────────────────────────────────────────────────────
+
+function FarmButton({
+  label,
+  onPress,
+  disabled,
+  style,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  style?: any;
+}) {
+  const translateY = React.useRef(new Animated.Value(0)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(translateY, { toValue: 4, useNativeDriver: true, ...SPRING_CONFIG }).start();
+  }, [translateY]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(translateY, { toValue: 0, useNativeDriver: true, ...SPRING_CONFIG }).start();
+  }, [translateY]);
+
+  const shadowBg = disabled ? '#D0CBC3' : Farm.greenBtnShadow;
+  const bodyBg   = disabled ? Farm.parchmentDark : Farm.greenBtn;
+  const textColor = disabled ? Farm.brownTextSub : Farm.parchment;
+
+  return (
+    <Pressable
+      onPress={disabled ? undefined : onPress}
+      onPressIn={disabled ? undefined : handlePressIn}
+      onPressOut={disabled ? undefined : handlePressOut}
+      disabled={disabled}
+      style={[styles.farmBtnWrapper, style]}
+    >
+      {/* Shadow layer */}
+      <View style={[styles.farmBtnShadow, { backgroundColor: shadowBg }]} />
+      {/* Body layer */}
+      <Animated.View style={[styles.farmBtnBody, { backgroundColor: bodyBg, transform: [{ translateY }] }]}>
+        {/* Gloss top 40% */}
+        <View style={styles.farmBtnGloss} />
+        <Text style={[styles.farmBtnText, { color: textColor }]}>{label}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ── AwningStripes ─────────────────────────────────────────────────────────────
+
+function AwningStripes() {
+  const stripes = Array.from({ length: Farm.awningStripeCount });
+  return (
+    <View style={styles.awningRow}>
+      {stripes.map((_, i) => {
+        const isGreen = i % 2 === 0;
+        return (
+          <View key={i} style={[styles.awningStripe, { backgroundColor: isGreen ? Farm.awningGreen : Farm.awningCream }]}>
+            <View style={styles.awningScallop} />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
 
 // ── Composant ─────────────────────────────────────────────────────────────────
 
@@ -218,78 +288,88 @@ export function PortTradeModal({
     >
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.overlayBg} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: colors.card }]}>
-          {/* Handle */}
-          <View style={[styles.handle, { backgroundColor: colors.borderLight }]} />
 
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.portEmoji}>⚓</Text>
-            <Text style={[styles.title, { color: colors.text }]}>Port</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <Text style={[styles.closeBtnText, { color: colors.textSub }]}>{'✕'}</Text>
-            </TouchableOpacity>
-          </View>
+        {/* Wood frame outer */}
+        <View style={styles.woodFrame}>
+          {/* Wood frame inner */}
+          <View style={styles.woodFrameInner}>
+            {/* Awning */}
+            <AwningStripes />
 
-          {/* Onglets Envoyer / Recevoir */}
-          <View style={[styles.tabRow, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
-            {(['envoyer', 'recevoir'] as TabId[]).map(tab => (
-              <TouchableOpacity
-                key={tab}
-                style={[
-                  styles.tab,
-                  activeTab === tab && { backgroundColor: primary, borderRadius: Radius.md },
-                ]}
-                onPress={() => setActiveTab(tab)}
-                activeOpacity={0.7}
+            {/* Parchment content area */}
+            <View style={styles.parchment}>
+              {/* Handle */}
+              <View style={styles.handle} />
+
+              {/* Header */}
+              <View style={styles.header}>
+                <Text style={styles.title}>⚓ Port</Text>
+                <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+                  <Text style={styles.closeBtnText}>{'✕'}</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Onglets Envoyer / Recevoir */}
+              <View style={styles.tabRow}>
+                {(['envoyer', 'recevoir'] as TabId[]).map(tab => (
+                  <TouchableOpacity
+                    key={tab}
+                    style={[
+                      styles.tab,
+                      activeTab === tab && styles.tabActive,
+                    ]}
+                    onPress={() => setActiveTab(tab)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.tabText,
+                      { color: activeTab === tab ? Farm.parchment : Farm.brownTextSub },
+                    ]}>
+                      {tab === 'envoyer' ? '📤 Envoyer' : '📥 Recevoir'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Contenu scroll */}
+              <ScrollView
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="interactive"
               >
-                <Text style={[
-                  styles.tabText,
-                  { color: activeTab === tab ? '#FFFFFF' : colors.textSub },
-                ]}>
-                  {tab === 'envoyer' ? '📤 Envoyer' : '📥 Recevoir'}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                {activeTab === 'envoyer' ? (
+                  <EnvoiTab
+                    colors={colors}
+                    primary={primary}
+                    tint={tint}
+                    categories={CATEGORIES}
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={setSelectedCategory}
+                    availableItems={enrichedItems}
+                    selectedItem={selectedItem}
+                    onSelectItem={handleSelectItem}
+                    quantity={quantity}
+                    onQuantityChange={handleQuantityChange}
+                    generatedCode={generatedCode}
+                    canSendToday={canSendToday}
+                    sendsRemaining={sendsRemaining}
+                    isSending={isSending}
+                    onSend={handleSend}
+                    onShare={handleShare}
+                  />
+                ) : (
+                  <RecevoirTab
+                    colors={colors}
+                    primary={primary}
+                    receiveError={receiveError}
+                    isReceiving={isReceiving}
+                    onReceive={handleReceive}
+                  />
+                )}
+              </ScrollView>
+            </View>
           </View>
-
-          {/* Contenu scroll */}
-          <ScrollView
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="interactive"
-          >
-            {activeTab === 'envoyer' ? (
-              <EnvoiTab
-                colors={colors}
-                primary={primary}
-                tint={tint}
-                categories={CATEGORIES}
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                availableItems={enrichedItems}
-                selectedItem={selectedItem}
-                onSelectItem={handleSelectItem}
-                quantity={quantity}
-                onQuantityChange={handleQuantityChange}
-                generatedCode={generatedCode}
-                canSendToday={canSendToday}
-                sendsRemaining={sendsRemaining}
-                isSending={isSending}
-                onSend={handleSend}
-                onShare={handleShare}
-              />
-            ) : (
-              <RecevoirTab
-                colors={colors}
-                primary={primary}
-                receiveError={receiveError}
-                isReceiving={isReceiving}
-                onReceive={handleReceive}
-              />
-            )}
-          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -326,8 +406,8 @@ function EnvoiTab({
   return (
     <>
       {/* Badge envois restants */}
-      <View style={[styles.badgeRow, { backgroundColor: tint }]}>
-        <Text style={[styles.badgeText, { color: primary }]}>
+      <View style={styles.badgeRow}>
+        <Text style={styles.badgeText}>
           {canSendToday
             ? `${sendsRemaining} envoi${sendsRemaining > 1 ? 's' : ''} restant${sendsRemaining > 1 ? 's' : ''} aujourd'hui`
             : 'Limite journalière atteinte (5/5)'}
@@ -335,21 +415,20 @@ function EnvoiTab({
       </View>
 
       {/* Sélecteur catégorie */}
-      <Text style={[styles.sectionLabel, { color: colors.textSub }]}>Catégorie</Text>
+      <Text style={styles.sectionLabel}>Catégorie</Text>
       <View style={styles.categoryRow}>
         {categories.map(cat => (
           <TouchableOpacity
             key={cat.id}
             style={[
               styles.categoryBtn,
-              { borderColor: selectedCategory === cat.id ? primary : colors.borderLight },
-              selectedCategory === cat.id && { backgroundColor: tint },
+              selectedCategory === cat.id && styles.categoryBtnSelected,
             ]}
             onPress={() => onSelectCategory(cat.id)}
             activeOpacity={0.7}
           >
             <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-            <Text style={[styles.categoryLabel, { color: selectedCategory === cat.id ? primary : colors.textSub }]}>
+            <Text style={[styles.categoryLabel, { color: selectedCategory === cat.id ? Farm.brownText : Farm.brownTextSub }]}>
               {cat.label}
             </Text>
           </TouchableOpacity>
@@ -357,10 +436,10 @@ function EnvoiTab({
       </View>
 
       {/* Liste items */}
-      <Text style={[styles.sectionLabel, { color: colors.textSub }]}>Objet à envoyer</Text>
+      <Text style={styles.sectionLabel}>Objet à envoyer</Text>
       {availableItems.length === 0 ? (
-        <View style={[styles.emptyBox, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyText}>
             Aucun item disponible dans cette catégorie
           </Text>
         </View>
@@ -371,8 +450,7 @@ function EnvoiTab({
               key={item.itemId}
               style={[
                 styles.itemCard,
-                { borderColor: selectedItem?.itemId === item.itemId ? primary : colors.borderLight },
-                { backgroundColor: selectedItem?.itemId === item.itemId ? tint : colors.cardAlt },
+                selectedItem?.itemId === item.itemId && styles.itemCardSelected,
               ]}
               onPress={() => onSelectItem(item)}
               activeOpacity={0.7}
@@ -382,10 +460,10 @@ function EnvoiTab({
               ) : (
                 <Text style={styles.itemEmoji}>{item.emoji}</Text>
               )}
-              <Text style={[styles.itemLabel, { color: colors.text }]} numberOfLines={2}>
+              <Text style={styles.itemLabel} numberOfLines={2}>
                 {item.label}
               </Text>
-              <View style={[styles.itemBadge, { backgroundColor: primary }]}>
+              <View style={styles.itemBadge}>
                 <Text style={styles.itemBadgeText}>{item.available}</Text>
               </View>
             </TouchableOpacity>
@@ -396,24 +474,24 @@ function EnvoiTab({
       {/* Sélecteur quantité */}
       {selectedItem && !generatedCode && (
         <>
-          <Text style={[styles.sectionLabel, { color: colors.textSub }]}>Quantité</Text>
+          <Text style={styles.sectionLabel}>Quantité</Text>
           <View style={styles.stepperRow}>
             <TouchableOpacity
-              style={[styles.stepperBtn, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+              style={styles.stepperBtn}
               onPress={() => onQuantityChange(-1)}
               activeOpacity={0.7}
               disabled={quantity <= 1}
             >
-              <Text style={[styles.stepperBtnText, { color: quantity <= 1 ? colors.textMuted : colors.text }]}>−</Text>
+              <Text style={[styles.stepperBtnText, { color: quantity <= 1 ? Farm.brownTextSub : Farm.brownText }]}>−</Text>
             </TouchableOpacity>
-            <Text style={[styles.stepperValue, { color: colors.text }]}>{quantity}</Text>
+            <Text style={styles.stepperValue}>{quantity}</Text>
             <TouchableOpacity
-              style={[styles.stepperBtn, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+              style={styles.stepperBtn}
               onPress={() => onQuantityChange(1)}
               activeOpacity={0.7}
               disabled={quantity >= selectedItem.available}
             >
-              <Text style={[styles.stepperBtnText, { color: quantity >= selectedItem.available ? colors.textMuted : colors.text }]}>+</Text>
+              <Text style={[styles.stepperBtnText, { color: quantity >= selectedItem.available ? Farm.brownTextSub : Farm.brownText }]}>+</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -421,34 +499,18 @@ function EnvoiTab({
 
       {/* Code généré */}
       {generatedCode ? (
-        <View style={[styles.codeBox, { backgroundColor: colors.cardAlt, borderColor: primary }]}>
-          <Text style={[styles.codeLabel, { color: colors.textSub }]}>Code du colis</Text>
-          <Text style={[styles.codeText, { color: primary }]} selectable>{generatedCode}</Text>
-          <TouchableOpacity
-            style={[styles.shareBtn, { backgroundColor: primary }]}
-            onPress={onShare}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.shareBtnText}>📤 Partager le code</Text>
-          </TouchableOpacity>
+        <View style={styles.codeBox}>
+          <Text style={styles.codeLabel}>Code du colis</Text>
+          <Text style={styles.codeText} selectable>{generatedCode}</Text>
+          <FarmButton label="📤 Partager le code" onPress={onShare} />
         </View>
       ) : selectedItem && (
-        <TouchableOpacity
-          style={[
-            styles.sendBtn,
-            { backgroundColor: canSendToday ? primary : colors.borderLight },
-          ]}
-          onPress={canSendToday ? onSend : undefined}
-          activeOpacity={canSendToday ? 0.7 : 1}
+        <FarmButton
+          label={isSending ? 'Préparation...' : `Envoyer le colis (${quantity} ${selectedItem.emoji})`}
+          onPress={onSend}
           disabled={isSending || !canSendToday}
-        >
-          <Text style={[
-            styles.sendBtnText,
-            { color: canSendToday ? '#FFFFFF' : colors.textMuted },
-          ]}>
-            {isSending ? 'Préparation...' : `Envoyer le colis (${quantity} ${selectedItem.emoji})`}
-          </Text>
-        </TouchableOpacity>
+          style={styles.actionBtnFull}
+        />
       )}
     </>
   );
@@ -490,10 +552,10 @@ function RecevoirTab({ colors, primary, receiveError, isReceiving, onReceive }: 
     <>
       <View style={styles.receiveIllustration}>
         <Text style={styles.receiveEmoji}>📦</Text>
-        <Text style={[styles.receiveTitle, { color: colors.text }]}>
+        <Text style={styles.receiveTitle}>
           Recevoir un colis
         </Text>
-        <Text style={[styles.hintText, { color: colors.textMuted }]}>
+        <Text style={styles.hintText}>
           Demande un code FF-... à une autre famille FamilyFlow puis colle-le ici.
         </Text>
       </View>
@@ -502,16 +564,12 @@ function RecevoirTab({ colors, primary, receiveError, isReceiving, onReceive }: 
         <Text style={styles.errorText}>{receiveError}</Text>
       )}
 
-      <TouchableOpacity
-        style={[styles.sendBtn, { backgroundColor: primary }]}
+      <FarmButton
+        label={isReceiving ? 'Vérification...' : 'Saisir un code'}
         onPress={handlePrompt}
-        activeOpacity={0.7}
         disabled={isReceiving}
-      >
-        <Text style={[styles.sendBtnText, { color: '#FFFFFF' }]}>
-          {isReceiving ? 'Vérification...' : 'Saisir un code'}
-        </Text>
-      </TouchableOpacity>
+        style={styles.actionBtnFull}
+      />
     </>
   );
 }
@@ -527,17 +585,63 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
-  sheet: {
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingBottom: Spacing['5xl'],
+
+  // Wood frame
+  woodFrame: {
+    backgroundColor: Farm.woodDark,
+    padding: Spacing['lg'],
+    borderRadius: Radius['2xl'],
+    ...Shadows.xl,
     maxHeight: '85%',
-    ...Shadows.lg,
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing['4xl'],
   },
+  woodFrameInner: {
+    backgroundColor: Farm.woodLight,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    overflow: 'hidden',
+    flexShrink: 1,
+    borderRadius: Radius.xl,
+  },
+
+  // Awning
+  awningRow: {
+    flexDirection: 'row',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  awningStripe: {
+    flex: 1,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  awningScallop: {
+    width: 8,
+    height: 8,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(0,0,0,0.10)',
+    marginBottom: 2,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+
+  // Parchment area
+  parchment: {
+    backgroundColor: Farm.parchment,
+    flexShrink: 1,
+    paddingBottom: Spacing['3xl'],
+  },
+
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
+    backgroundColor: Farm.woodHighlight,
     alignSelf: 'center',
     marginTop: Spacing.xl,
     marginBottom: Spacing.lg,
@@ -549,58 +653,84 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing['2xl'],
     marginBottom: Spacing.lg,
   },
-  portEmoji: {
-    fontSize: 24,
-    marginRight: Spacing.md,
-  },
   title: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
     flex: 1,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   closeBtn: {
-    padding: Spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeBtnText: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.sm,
+    color: Farm.parchment,
+    fontWeight: FontWeight.bold,
   },
+
+  // Tabs
   tabRow: {
     flexDirection: 'row',
     marginHorizontal: Spacing['2xl'],
     borderRadius: Radius.lg,
     padding: Spacing.xs,
     borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
     marginBottom: Spacing['2xl'],
   },
   tab: {
     flex: 1,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
+    borderRadius: Radius.md,
+  },
+  tabActive: {
+    backgroundColor: Farm.woodBtn,
   },
   tabText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
+
   content: {
     paddingHorizontal: Spacing['2xl'],
     paddingBottom: Spacing['3xl'],
     gap: Spacing.xl,
   },
+
+  // Badge
   badgeRow: {
     borderRadius: Radius.full,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing['2xl'],
     alignSelf: 'flex-start',
+    backgroundColor: Farm.parchmentDark,
   },
   badgeText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
+    color: Farm.greenBtn,
   },
+
   sectionLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
     marginBottom: -Spacing.sm,
   },
+
+  // Category buttons
   categoryRow: {
     flexDirection: 'row',
     gap: Spacing.md,
@@ -612,6 +742,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1.5,
     gap: Spacing.xs,
+    backgroundColor: Farm.parchmentDark,
+    borderColor: Farm.woodHighlight,
+  },
+  categoryBtnSelected: {
+    borderColor: Farm.greenBtn,
+    backgroundColor: Farm.parchmentDark,
   },
   categoryEmoji: {
     fontSize: 24,
@@ -620,16 +756,23 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
   },
+
+  // Empty
   emptyBox: {
     borderRadius: Radius.lg,
     borderWidth: 1,
     padding: Spacing['2xl'],
     alignItems: 'center',
+    backgroundColor: Farm.parchmentDark,
+    borderColor: Farm.woodHighlight,
   },
   emptyText: {
     fontSize: FontSize.sm,
     textAlign: 'center',
+    color: Farm.brownTextSub,
   },
+
+  // Item grid
   itemGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -644,6 +787,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     gap: Spacing.xs,
     position: 'relative',
+    backgroundColor: Farm.parchmentDark,
+    borderColor: Farm.woodHighlight,
+  },
+  itemCardSelected: {
+    borderColor: Farm.greenBtn,
   },
   itemEmoji: {
     fontSize: 28,
@@ -655,6 +803,7 @@ const styles = StyleSheet.create({
   itemLabel: {
     fontSize: FontSize.label,
     textAlign: 'center',
+    color: Farm.brownText,
   },
   itemBadge: {
     position: 'absolute',
@@ -665,12 +814,15 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     minWidth: 20,
     alignItems: 'center',
+    backgroundColor: Farm.greenBtn,
   },
   itemBadgeText: {
     fontSize: FontSize.micro,
-    color: '#FFFFFF',
+    color: Farm.parchment,
     fontWeight: FontWeight.bold,
   },
+
+  // Stepper
   stepperRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -684,6 +836,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: Farm.parchmentDark,
+    borderColor: Farm.woodHighlight,
   },
   stepperBtnText: {
     fontSize: FontSize.title,
@@ -694,45 +848,80 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     minWidth: 40,
     textAlign: 'center',
+    color: Farm.brownText,
   },
+
+  // Code box
   codeBox: {
     borderRadius: Radius.lg,
     borderWidth: 1.5,
     padding: Spacing['2xl'],
     alignItems: 'center',
     gap: Spacing.xl,
+    backgroundColor: Farm.parchmentDark,
+    borderColor: Farm.greenBtn,
   },
   codeLabel: {
     fontSize: FontSize.sm,
+    color: Farm.brownTextSub,
   },
   codeText: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.bold,
     letterSpacing: 2,
     textAlign: 'center',
+    color: Farm.brownText,
   },
-  shareBtn: {
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing['3xl'],
-    alignItems: 'center',
+
+  // Action button full width helper
+  actionBtnFull: {
     width: '100%',
-  },
-  shareBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
-  },
-  sendBtn: {
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing['2xl'],
-    alignItems: 'center',
     marginTop: Spacing.md,
   },
-  sendBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
+
+  // FarmButton 3D
+  farmBtnWrapper: {
+    position: 'relative',
+    height: 52,
+    borderRadius: Radius.lg,
+    overflow: 'visible',
   },
+  farmBtnShadow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 52,
+    borderRadius: Radius.lg,
+  },
+  farmBtnBody: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 52,
+    borderRadius: Radius.lg,
+    marginBottom: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  farmBtnGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+  },
+  farmBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+  },
+
+  // Recevoir tab
   receiveIllustration: {
     alignItems: 'center' as const,
     gap: Spacing.md,
@@ -744,6 +933,7 @@ const styles = StyleSheet.create({
   receiveTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
   },
   errorText: {
     fontSize: FontSize.sm,
@@ -755,5 +945,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginTop: Spacing.md,
+    color: Farm.brownTextSub,
   },
 });

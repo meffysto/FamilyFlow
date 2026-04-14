@@ -1,9 +1,9 @@
 /**
- * BuildingShopSheet.tsx — Bottom sheet construction d'un batiment
+ * BuildingShopSheet.tsx — Boutique de construction farm-game
  *
  * S'ouvre quand l'utilisateur tape sur une cellule batiment vide.
- * Affiche les batiments constructibles filtres par stade d'arbre et possession.
- * Look cozy farm game : cartes terre/bois, boutons 3D, animations spring d'entree.
+ * Esthétique "cozy farm game" : cadre bois, auvent rayé, fond parchemin,
+ * cartes avec sprite circulaire, boutons glossy vert.
  */
 
 import React, { useMemo } from 'react';
@@ -11,6 +11,7 @@ import {
   View,
   Text,
   StyleSheet,
+  Pressable,
   TouchableOpacity,
   Modal,
   ScrollView,
@@ -20,15 +21,13 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
   FadeIn,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { BUILDING_CATALOG, TREE_STAGES, type TreeStage, type PlacedBuilding } from '../../lib/mascot/types';
 import { TECH_TREE } from '../../lib/mascot/tech-engine';
-// Sprites inline pour garantir resolution Metro (niveau 1 pour l'aperçu boutique)
 const SHOP_SPRITES: Record<string, any> = {
   poulailler: require('../../assets/buildings/poulailler_lv1.png'),
   grange: require('../../assets/buildings/grange_lv1.png'),
@@ -38,15 +37,11 @@ const SHOP_SPRITES: Record<string, any> = {
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
 
-// ── Constantes animations ────────────────────────────────────────
+// ── Constantes farm game ────────────────────────────────────────
 
 const SPRING_CONFIG = { damping: 12, stiffness: 180 };
-
-// Couleurs cosmétiques dorées (décision Phase 4 — constantes locales StyleSheet)
-const GOLD_COLOR = '#FFD700';
-const GOLD_OVERLAY = 'rgba(255,215,0,0.10)';
-const GOLD_BORDER = 'rgba(255,215,0,0.18)';
 
 // ── Props ────────────────────────────────────────────────────────
 
@@ -61,86 +56,94 @@ interface BuildingShopSheetProps {
   onClose: () => void;
 }
 
-// ── Utilitaire : index stade pour comparaison ────────────────────
+// ── Utilitaire ──────────────────────────────────────────────────
 
 const STAGE_ORDER = TREE_STAGES.map(s => s.stage);
-
 function stageIndex(stage: TreeStage): number {
   return STAGE_ORDER.indexOf(stage);
 }
 
-// ── Sous-composant : ligne batiment animée ───────────────────────
+// ── Sous-composant : auvent rayé ────────────────────────────────
 
-interface BuildingRowProps {
-  children: React.ReactNode;
-  index: number;
-  delay?: number;
-}
-
-function AnimatedBuildingRow({ children, index, delay = 0 }: BuildingRowProps) {
+function AwningStripes() {
   return (
-    <Animated.View
-      entering={FadeIn.delay(index * 80 + delay).springify().damping(12).stiffness(180)}
-    >
-      {children}
-    </Animated.View>
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningStripe,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={styles.awningShadow} />
+      <View style={styles.awningScallop}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningScallopDot,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
   );
 }
 
-// ── Sous-composant : bouton 3D ───────────────────────────────────
+// ── Sous-composant : bouton farm 3D ─────────────────────────────
 
-interface Button3DProps {
+interface FarmButtonProps {
   label: string;
   enabled: boolean;
-  backgroundColor: string;
-  shadowColor: string;
-  textColor: string;
   onPress?: () => void;
 }
 
-function Button3D({ label, enabled, backgroundColor, shadowColor, textColor, onPress }: Button3DProps) {
+function FarmButton({ label, enabled, onPress }: FarmButtonProps) {
   const pressedY = useSharedValue(0);
+
+  const bg = enabled ? Farm.greenBtn : Farm.parchmentDark;
+  const shadow = enabled ? Farm.greenBtnShadow : '#D0CBC3';
+  const highlight = enabled ? Farm.greenBtnHighlight : Farm.parchment;
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: pressedY.value }],
   }));
 
   const shadowStyle = useAnimatedStyle(() => ({
-    opacity: 1 - pressedY.value / 3,
+    opacity: 1 - pressedY.value / 4,
   }));
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={enabled ? onPress : undefined}
-      activeOpacity={enabled ? 0.85 : 1}
       onPressIn={() => {
-        pressedY.value = withSpring(3, SPRING_CONFIG);
+        if (enabled) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          pressedY.value = withSpring(4, SPRING_CONFIG);
+        }
       }}
       onPressOut={() => {
         pressedY.value = withSpring(0, SPRING_CONFIG);
       }}
     >
-      {/* Ombre 3D (bande inférieure) */}
       <Animated.View
-        style={[
-          styles.btn3DShadow,
-          { backgroundColor: shadowColor },
-          shadowStyle,
-        ]}
+        style={[styles.farmBtnShadow, { backgroundColor: shadow }, shadowStyle]}
       />
-      {/* Corps du bouton */}
-      <Animated.View
-        style={[
-          styles.btn3DBody,
-          { backgroundColor },
-          btnStyle,
-        ]}
-      >
-        <Text style={[styles.buildBtnText, { color: textColor }]}>
+      <Animated.View style={[styles.farmBtnBody, { backgroundColor: bg }, btnStyle]}>
+        <View style={[styles.farmBtnGloss, { backgroundColor: highlight }]} />
+        <Text style={[
+          styles.farmBtnText,
+          { color: enabled ? '#FFFFFF' : Farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' },
+        ]}>
           {label}
         </Text>
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -157,14 +160,10 @@ export function BuildingShopSheet({
   onClose,
 }: BuildingShopSheetProps) {
   const { t } = useTranslation();
-  const { colors, primary } = useThemeColors();
+  const { colors } = useThemeColors();
 
   const currentStageIdx = stageIndex(treeStage);
 
-  // Calculer la couleur d'ombre du bouton primaire (version plus sombre du primary)
-  const primaryShadow = primary + 'AA';
-
-  // Filtrer les batiments disponibles
   const availableBuildings = useMemo(() => {
     const ownedIds = new Set(ownedBuildings.map(b => b.buildingId));
     return BUILDING_CATALOG.filter(def => {
@@ -194,147 +193,144 @@ export function BuildingShopSheet({
     >
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.overlayBg} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: colors.cardAlt }]}>
 
-          {/* Handle */}
-          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+        {/* Panneau farm game */}
+        <View style={styles.woodFrame}>
+          <View style={styles.woodFrameInner}>
+            {/* Auvent rayé */}
+            <AwningStripes />
 
-          {/* Header décoratif avec bannière */}
-          <View style={[styles.headerBanner, { borderBottomColor: GOLD_BORDER }]}>
-            {/* Overlay doré subtil */}
-            <View style={[styles.headerGoldOverlay, { backgroundColor: GOLD_OVERLAY }]} />
+            {/* Fond parchemin */}
+            <View style={styles.parchment}>
+              {/* Handle */}
+              <View style={styles.handle} />
 
-            <View style={styles.headerInner}>
-              <Text style={styles.headerEmoji}>🏗️</Text>
-              <View style={styles.headerTextBlock}>
-                <Text style={[styles.title, { color: colors.text }]}>
+              {/* Titre + solde */}
+              <Animated.View
+                entering={FadeIn.springify().damping(14).stiffness(200)}
+                style={styles.farmTitle}
+              >
+                <Text style={styles.farmTitleText}>
                   {t('farm.building.constructTitle')}
                 </Text>
-                <Text style={[styles.headerCoins, { color: colors.textSub }]}>
-                  {'🍃 '}{coins}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-                <Text style={[styles.closeBtnText, { color: colors.textSub }]}>{'✕'}</Text>
-              </TouchableOpacity>
+                <View style={styles.coinsBadge}>
+                  <Text style={styles.coinsText}>{'🍃 '}{coins}</Text>
+                </View>
+              </Animated.View>
+
+              <ScrollView
+                contentContainerStyle={styles.list}
+                showsVerticalScrollIndicator={false}
+              >
+                {availableBuildings.length === 0 && lockedBuildings.length === 0 && (
+                  <Text style={styles.emptyText}>
+                    {t('farm.building.noAvailable')}
+                  </Text>
+                )}
+
+                {availableBuildings.map((def, index) => {
+                  const tier0 = def.tiers[0];
+                  const canAfford = coins >= def.cost;
+                  const sprite = SHOP_SPRITES[def.id];
+
+                  return (
+                    <Animated.View
+                      key={def.id}
+                      entering={FadeIn.delay(index * 80).springify().damping(12).stiffness(180)}
+                    >
+                      <View style={styles.buildingCard}>
+                        {/* Sprite rond */}
+                        <View style={styles.spriteCircle}>
+                          {sprite ? (
+                            <Image source={sprite} style={styles.sprite} />
+                          ) : (
+                            <Text style={styles.spriteEmoji}>{def.emoji}</Text>
+                          )}
+                        </View>
+
+                        {/* Infos */}
+                        <View style={styles.infoBox}>
+                          <Text style={styles.buildingName}>
+                            {t(def.labelKey)}
+                          </Text>
+                          <Text style={styles.buildingDetail}>
+                            {t('farm.building.frequency', {
+                              resource: t(`farm.building.resource.${def.resourceType}`),
+                              hours: tier0.productionRateHours,
+                            })}
+                          </Text>
+                          <Text style={[
+                            styles.buildingCost,
+                            { color: canAfford ? Farm.greenBtn : Farm.brownTextSub },
+                          ]}>
+                            {t('farm.building.cost', { cost: def.cost })}
+                          </Text>
+                        </View>
+
+                        {/* Bouton */}
+                        <FarmButton
+                          label={t('farm.building.construct')}
+                          enabled={canAfford}
+                          onPress={() => onBuild(def.id)}
+                        />
+                      </View>
+                    </Animated.View>
+                  );
+                })}
+
+                {/* Bâtiments verrouillés */}
+                {lockedBuildings.map((def, index) => {
+                  const tier0 = def.tiers[0];
+                  const techNode = def.techRequired ? TECH_TREE.find(n => n.id === def.techRequired) : null;
+                  const lockReason = def.techRequired && !unlockedTechs.includes(def.techRequired) && techNode
+                    ? t('farm.building.unlockedByTech', { tech: t(`tech.${techNode.id}`) })
+                    : t('farm.building.unlockedAt', { stage: t(`mascot.stages.${def.minTreeStage}`) });
+                  return (
+                    <Animated.View
+                      key={def.id}
+                      entering={FadeIn.delay(availableBuildings.length * 80 + 60 + index * 80).springify().damping(12).stiffness(180)}
+                    >
+                      <View style={[styles.buildingCard, styles.lockedCard]}>
+                        <View style={[styles.spriteCircle, { opacity: 0.4 }]}>
+                          {SHOP_SPRITES[def.id] ? (
+                            <Image source={SHOP_SPRITES[def.id]} style={styles.sprite} />
+                          ) : (
+                            <Text style={styles.spriteEmoji}>{def.emoji}</Text>
+                          )}
+                        </View>
+                        <View style={styles.infoBox}>
+                          <Text style={[styles.buildingName, { opacity: 0.6 }]}>
+                            {t(def.labelKey)}
+                          </Text>
+                          <Text style={styles.buildingDetail}>
+                            {t('farm.building.frequency', {
+                              resource: t(`farm.building.resource.${def.resourceType}`),
+                              hours: tier0.productionRateHours,
+                            })}
+                          </Text>
+                          <Text style={styles.buildingCost}>
+                            {def.cost} 🍃
+                          </Text>
+                          <Text style={styles.lockReason}>
+                            {'🔒 '}{lockReason}
+                          </Text>
+                        </View>
+                      </View>
+                    </Animated.View>
+                  );
+                })}
+              </ScrollView>
             </View>
+
+            {/* Bouton fermer */}
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtnFarm}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.closeBtnFarmText}>{'✕'}</Text>
+            </TouchableOpacity>
           </View>
-
-          <ScrollView
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-          >
-            {availableBuildings.length === 0 && lockedBuildings.length === 0 && (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                {t('farm.building.noAvailable')}
-              </Text>
-            )}
-
-            {availableBuildings.map((def, index) => {
-              const tier0 = def.tiers[0];
-              const canAfford = coins >= def.cost;
-              const sprite = SHOP_SPRITES[def.id];
-
-              return (
-                <AnimatedBuildingRow key={def.id} index={index}>
-                  <View
-                    style={[
-                      styles.buildingRow,
-                      {
-                        backgroundColor: colors.card,
-                        borderColor: colors.border,
-                      },
-                      Shadows.md,
-                    ]}
-                  >
-                    {/* Sprite avec fond circulaire */}
-                    <View style={[styles.spriteCircle, { backgroundColor: colors.cardAlt }]}>
-                      {sprite ? (
-                        <Image source={sprite} style={styles.sprite} />
-                      ) : (
-                        <Text style={styles.spriteEmoji}>{def.emoji}</Text>
-                      )}
-                    </View>
-
-                    {/* Infos */}
-                    <View style={styles.infoBox}>
-                      <Text style={[styles.buildingName, { color: colors.text }]}>
-                        {t(def.labelKey)}
-                      </Text>
-                      <Text style={[styles.buildingDetail, { color: colors.textSub }]}>
-                        {t('farm.building.frequency', {
-                          resource: t(`farm.building.resource.${def.resourceType}`),
-                          hours: tier0.productionRateHours,
-                        })}
-                      </Text>
-                      <Text style={[styles.buildingCost, { color: canAfford ? colors.success : colors.textMuted }]}>
-                        {t('farm.building.cost', { cost: def.cost })}
-                      </Text>
-                    </View>
-
-                    {/* Bouton 3D */}
-                    <Button3D
-                      label={t('farm.building.construct')}
-                      enabled={canAfford}
-                      backgroundColor={canAfford ? primary : colors.borderLight}
-                      shadowColor={canAfford ? primaryShadow : colors.border}
-                      textColor={canAfford ? colors.bg : colors.textMuted}
-                      onPress={() => onBuild(def.id)}
-                    />
-                  </View>
-                </AnimatedBuildingRow>
-              );
-            })}
-
-            {/* Batiments verrouillés */}
-            {lockedBuildings.map((def, index) => {
-              const tier0 = def.tiers[0];
-              const techNode = def.techRequired ? TECH_TREE.find(n => n.id === def.techRequired) : null;
-              const lockReason = def.techRequired && !unlockedTechs.includes(def.techRequired) && techNode
-                ? t('farm.building.unlockedByTech', { tech: t(`tech.${techNode.id}`) })
-                : t('farm.building.unlockedAt', { stage: t(`mascot.stages.${def.minTreeStage}`) });
-              return (
-                <AnimatedBuildingRow key={def.id} index={index} delay={availableBuildings.length * 80 + 60}>
-                  <View
-                    style={[
-                      styles.buildingRow,
-                      styles.lockedRow,
-                      {
-                        backgroundColor: colors.card,
-                        borderColor: colors.borderLight,
-                        opacity: 0.6,
-                      },
-                    ]}
-                  >
-                    <View style={[styles.spriteCircle, { backgroundColor: colors.cardAlt }]}>
-                      {SHOP_SPRITES[def.id] ? (
-                        <Image source={SHOP_SPRITES[def.id]} style={[styles.sprite, { opacity: 0.5 }]} />
-                      ) : (
-                        <Text style={styles.spriteEmoji}>{def.emoji}</Text>
-                      )}
-                    </View>
-                    <View style={styles.infoBox}>
-                      <Text style={[styles.buildingName, { color: colors.text }]}>
-                        {t(def.labelKey)}
-                      </Text>
-                      <Text style={[styles.buildingDetail, { color: colors.textSub }]}>
-                        {t('farm.building.frequency', {
-                          resource: t(`farm.building.resource.${def.resourceType}`),
-                          hours: tier0.productionRateHours,
-                        })}
-                      </Text>
-                      <Text style={[styles.buildingCost, { color: colors.textMuted }]}>
-                        {def.cost} 🍃
-                      </Text>
-                      <Text style={[styles.buildingDetail, { color: colors.textMuted }]}>
-                        {'🔒 '}{lockReason}
-                      </Text>
-                    </View>
-                  </View>
-                </AnimatedBuildingRow>
-              );
-            })}
-          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -348,84 +344,136 @@ const styles = StyleSheet.create({
   },
   overlayBg: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
-  sheet: {
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingBottom: Spacing['5xl'],
+
+  // ── Cadre bois ──────────────────────────────────
+  woodFrame: {
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing['4xl'],
+    borderRadius: Radius['2xl'],
+    backgroundColor: Farm.woodDark,
+    padding: 5,
+    ...Shadows.xl,
     maxHeight: '80%',
-    ...Shadows.lg,
+  },
+  woodFrameInner: {
+    borderRadius: Radius.xl,
+    backgroundColor: Farm.woodLight,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    overflow: 'hidden',
+    flexShrink: 1,
+  },
+
+  // ── Auvent ──────────────────────────────────────
+  awning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  awningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  awningStripe: {
+    flex: 1,
+  },
+  awningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
+  awningScallop: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 4,
+    left: 0,
+    right: 0,
+  },
+  awningScallopDot: {
+    flex: 1,
+    height: 8,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+
+  // ── Fond parchemin ──────────────────────────────
+  parchment: {
+    backgroundColor: Farm.parchment,
+    flexShrink: 1,
+    paddingBottom: Spacing['3xl'],
   },
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.md,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+    backgroundColor: Farm.woodHighlight,
   },
-  // Header bannière décoratif
-  headerBanner: {
-    borderBottomWidth: 1,
-    marginBottom: Spacing.xl,
-    overflow: 'hidden',
-  },
-  headerGoldOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  headerInner: {
-    flexDirection: 'row',
+
+  // ── Titre farm ──────────────────────────────────
+  farmTitle: {
     alignItems: 'center',
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.xl,
-    gap: Spacing.xl,
+    paddingVertical: Spacing.md,
+    gap: Spacing.xs,
   },
-  headerEmoji: {
-    fontSize: FontSize.icon,
-  },
-  headerTextBlock: {
-    flex: 1,
-    gap: Spacing.xxs,
-  },
-  title: {
-    fontSize: FontSize.lg,
+  farmTitleText: {
+    fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
   },
-  headerCoins: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
+  coinsBadge: {
+    backgroundColor: Farm.parchmentDark,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xxs,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
   },
-  closeBtn: {
-    padding: Spacing.md,
+  coinsText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
-  closeBtnText: {
-    fontSize: FontSize.lg,
-  },
+
+  // ── Liste ───────────────────────────────────────
   list: {
     paddingHorizontal: Spacing['2xl'],
-    paddingBottom: Spacing['3xl'],
+    paddingBottom: Spacing.md,
     gap: Spacing.xl,
   },
   emptyText: {
     textAlign: 'center',
     fontSize: FontSize.sm,
     marginTop: Spacing['3xl'],
+    color: Farm.brownTextSub,
   },
-  buildingRow: {
+
+  // ── Carte bâtiment ──────────────────────────────
+  buildingCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Radius['2xl'],
+    borderRadius: Radius.xl,
     borderWidth: 1.5,
-    padding: Spacing['2xl'],
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
+    padding: Spacing.xl,
     gap: Spacing.xl,
   },
-  lockedRow: {},
-  // Fond circulaire derrière le sprite
+  lockedCard: {
+    opacity: 0.5,
+  },
   spriteCircle: {
     width: 56,
     height: 56,
     borderRadius: Radius.full,
+    backgroundColor: Farm.parchment,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -439,38 +487,82 @@ const styles = StyleSheet.create({
   },
   infoBox: {
     flex: 1,
-    gap: Spacing.xs,
+    gap: Spacing.xxs,
   },
   buildingName: {
     fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
   buildingDetail: {
     fontSize: FontSize.label,
+    color: Farm.brownTextSub,
   },
   buildingCost: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
   },
-  // Bouton 3D
-  btn3DShadow: {
+  lockReason: {
+    fontSize: FontSize.caption,
+    color: Farm.brownTextSub,
+    fontStyle: 'italic',
+  },
+
+  // ── Bouton farm 3D ──────────────────────────────
+  farmBtnShadow: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 3,
+    height: 4,
     borderBottomLeftRadius: Radius.lg,
     borderBottomRightRadius: Radius.lg,
   },
-  btn3DBody: {
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing['3xl'],
+  farmBtnBody: {
     borderRadius: Radius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     alignItems: 'center',
-    marginBottom: 3,
+    justifyContent: 'center',
+    marginBottom: 4,
+    overflow: 'hidden',
   },
-  buildBtnText: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
+  farmBtnGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    opacity: 0.3,
+  },
+  farmBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+
+  // ── Bouton fermer ───────────────────────────────
+  closeBtnFarm: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeBtnFarmText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.parchment,
   },
 });

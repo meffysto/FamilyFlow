@@ -1,9 +1,8 @@
 /**
- * BuildingDetailSheet.tsx — Bottom sheet detail/collecte/amelioration d'un batiment
+ * BuildingDetailSheet.tsx — Panneau farm-game detail/collecte/amelioration
  *
- * S'ouvre quand l'utilisateur tape sur un batiment place sur la grille.
- * Look cozy farm game : sprite avec fond decoratif, barre de progression animée avec
- * effet glossy, boutons 3D avec spring au press, sections terre/bois.
+ * Esthétique "cozy farm game" : cadre bois, auvent rayé, fond parchemin,
+ * boutons glossy vert/bois, sprite hero, barre de progression chaleureuse.
  */
 
 import React, { useEffect } from 'react';
@@ -36,17 +35,11 @@ import type { TechBonuses } from '../../lib/mascot/tech-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
 
-// ── Constantes animations ────────────────────────────────────────
+// ── Constantes farm game ────────────────────────────────────────
 
 const SPRING_CONFIG = { damping: 12, stiffness: 180 };
-
-// Couleurs cosmétiques (décision Phase 4 — constantes locales StyleSheet)
-const GOLD_COLOR = '#FFD700';
-const GOLD_TEXT = '#7B5300';
-const REPAIR_COLOR = '#FF9800';
-const PROGRESS_BG = 'rgba(0,0,0,0.06)';
-const PROGRESS_BORDER = 'rgba(0,0,0,0.04)';
 
 // ── Props ────────────────────────────────────────────────────────
 
@@ -62,57 +55,101 @@ interface BuildingDetailSheetProps {
   onClose: () => void;
 }
 
-// ── Sous-composant : bouton 3D avec spring au press ──────────────
+// ── Sous-composant : auvent rayé ────────────────────────────────
 
-interface Button3DProps {
-  label: string;
-  enabled: boolean;
-  backgroundColor: string;
-  shadowColor: string;
-  textColor: string;
-  onPress?: () => void;
-  style?: object;
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningStripe,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+      {/* Ombre sous l'auvent */}
+      <View style={styles.awningShadow} />
+      {/* Bord scalloped simulé — petits demi-cercles */}
+      <View style={styles.awningScallop}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningScallopDot,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
 }
 
-function Button3D({ label, enabled, backgroundColor, shadowColor, textColor, onPress, style }: Button3DProps) {
+// ── Sous-composant : bouton farm 3D ─────────────────────────────
+
+interface FarmButtonProps {
+  label: string;
+  enabled: boolean;
+  variant: 'green' | 'wood' | 'orange';
+  onPress?: () => void;
+  fullWidth?: boolean;
+}
+
+function FarmButton({ label, enabled, variant, onPress, fullWidth }: FarmButtonProps) {
   const pressedY = useSharedValue(0);
+
+  const btnColors = variant === 'green'
+    ? { bg: Farm.greenBtn, shadow: Farm.greenBtnShadow, highlight: Farm.greenBtnHighlight }
+    : variant === 'orange'
+      ? { bg: Farm.orange, shadow: Farm.orangeShadow, highlight: '#F0A855' }
+      : { bg: Farm.woodBtn, shadow: Farm.woodBtnShadow, highlight: Farm.woodBtnHighlight };
+
+  const bg = enabled ? btnColors.bg : Farm.parchmentDark;
+  const shadow = enabled ? btnColors.shadow : '#D0CBC3';
+  const highlight = enabled ? btnColors.highlight : Farm.parchment;
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: pressedY.value }],
   }));
 
   const shadowStyle = useAnimatedStyle(() => ({
-    opacity: 1 - pressedY.value / 3,
+    opacity: 1 - pressedY.value / 4,
   }));
 
   return (
     <Pressable
       onPress={enabled ? onPress : undefined}
       onPressIn={() => {
-        if (enabled) pressedY.value = withSpring(3, SPRING_CONFIG);
+        if (enabled) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          pressedY.value = withSpring(4, SPRING_CONFIG);
+        }
       }}
       onPressOut={() => {
         pressedY.value = withSpring(0, SPRING_CONFIG);
       }}
+      style={fullWidth ? styles.btnFullWidth : undefined}
     >
-      {/* Ombre 3D inférieure */}
+      {/* Ombre 3D */}
       <Animated.View
         style={[
-          styles.btn3DShadow,
-          { backgroundColor: shadowColor },
+          styles.farmBtnShadow,
+          { backgroundColor: shadow },
           shadowStyle,
         ]}
       />
       {/* Corps du bouton */}
-      <Animated.View
-        style={[
-          styles.btn3DBody,
-          { backgroundColor },
-          style,
-          btnStyle,
-        ]}
-      >
-        <Text style={[styles.btnText, { color: textColor }]}>
+      <Animated.View style={[styles.farmBtnBody, { backgroundColor: bg }, btnStyle]}>
+        {/* Reflet glossy en haut */}
+        <View style={[styles.farmBtnGloss, { backgroundColor: highlight }]} />
+        <Text style={[
+          styles.farmBtnText,
+          { color: enabled ? '#FFFFFF' : Farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' },
+        ]}>
           {label}
         </Text>
       </Animated.View>
@@ -120,29 +157,28 @@ function Button3D({ label, enabled, backgroundColor, shadowColor, textColor, onP
   );
 }
 
-// ── Sous-composant : barre de progression animée ─────────────────
+// ── Sous-composant : barre de progression farm ──────────────────
 
 interface ProgressBarProps {
   progressRatio: number;
   isFull: boolean;
-  primaryColor: string;
-  successColor: string;
+  resourceEmoji: string;
   elapsedMinutes: number;
   totalMinutes: number;
 }
 
-function AnimatedProgressBar({ progressRatio, isFull, primaryColor, successColor, elapsedMinutes, totalMinutes }: ProgressBarProps) {
+function FarmProgressBar({ progressRatio, isFull, resourceEmoji, elapsedMinutes, totalMinutes }: ProgressBarProps) {
   const widthPercent = useSharedValue(0);
   const glowOpacity = useSharedValue(1);
 
   useEffect(() => {
-    widthPercent.value = withTiming(progressRatio, { duration: 600, easing: Easing.out(Easing.quad) });
+    widthPercent.value = withTiming(progressRatio, { duration: 700, easing: Easing.out(Easing.quad) });
   }, [progressRatio]);
 
   useEffect(() => {
     if (isFull) {
       glowOpacity.value = withRepeat(
-        withTiming(0.6, { duration: 800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.6, { duration: 900, easing: Easing.inOut(Easing.sin) }),
         -1,
         true,
       );
@@ -156,19 +192,21 @@ function AnimatedProgressBar({ progressRatio, isFull, primaryColor, successColor
     opacity: glowOpacity.value,
   }));
 
-  const fillColor = isFull ? successColor : primaryColor;
+  const hoursLeft = Math.floor((totalMinutes - elapsedMinutes) / 60);
+  const minsLeft = Math.round((totalMinutes - elapsedMinutes) % 60);
+  const timeLabel = hoursLeft > 0
+    ? `${hoursLeft}h${minsLeft > 0 ? String(minsLeft).padStart(2, '0') : ''}`
+    : `${minsLeft}min`;
 
   return (
-    <View>
-      <View style={styles.progressBarBg}>
-        <Animated.View style={[styles.progressBarFill, { backgroundColor: fillColor }, fillStyle]}>
-          {/* Effet glossy */}
+    <View style={styles.progressContainer}>
+      <Text style={styles.progressEmoji}>{resourceEmoji}</Text>
+      <View style={styles.progressTrack}>
+        <Animated.View style={[styles.progressFill, fillStyle]}>
           <View style={styles.progressGloss} />
         </Animated.View>
       </View>
-      <Text style={[styles.progressLabel, { color: 'rgba(0,0,0,0.35)' }]}>
-        {Math.round(elapsedMinutes)}/{Math.round(totalMinutes)} min
-      </Text>
+      <Text style={styles.progressTime}>{isFull ? '!' : timeLabel}</Text>
     </View>
   );
 }
@@ -208,16 +246,6 @@ export function BuildingDetailSheet({
   const totalMinutes = effectiveRateHours * 60;
   const elapsedMinutes = totalMinutes - minutesUntilNext;
   const progressRatio = minutesUntilNext === 0 ? 1 : Math.max(0, Math.min(1, elapsedMinutes / totalMinutes));
-  const hoursLeft = Math.floor(minutesUntilNext / 60);
-  const minsLeft = minutesUntilNext % 60;
-  const timerLabel = minutesUntilNext === 0
-    ? null
-    : hoursLeft > 0
-      ? `${hoursLeft}h${minsLeft > 0 ? `${String(minsLeft).padStart(2, '0')}` : ''}`
-      : `${minsLeft}min`;
-
-  const primaryShadow = primary + 'AA';
-  const successShadow = colors.success + 'AA';
 
   const handleCollect = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -229,193 +257,141 @@ export function BuildingDetailSheet({
       visible={visible}
       transparent
       animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.overlayBg} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: colors.cardAlt }]}>
 
-          {/* Handle */}
-          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+        {/* Panneau farm game */}
+        <View style={styles.woodFrame}>
+          {/* Bordure bois intérieure */}
+          <View style={styles.woodFrameInner}>
+            {/* Auvent rayé */}
+            <AwningStripes />
 
-          {/* Header décoratif */}
-          <View style={styles.header}>
-            {/* Cercle emoji décoratif */}
-            <View style={[styles.headerEmojiCircle, { backgroundColor: colors.card }]}>
-              <Text style={styles.headerEmojiText}>{def.emoji}</Text>
-            </View>
+            {/* Fond parchemin */}
+            <View style={styles.parchment}>
+              {/* Handle */}
+              <View style={styles.handle} />
 
-            {/* Nom + badge niveau */}
-            <View style={styles.headerTextBlock}>
-              <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-                {t(def.labelKey)}
-              </Text>
-              <View style={styles.levelBadge}>
-                <Text style={[styles.levelBadgeText, { color: GOLD_TEXT }]}>
-                  {t('farm.building.level', { level: building.level })}
+              {/* Titre du bâtiment — style farm */}
+              <Animated.View
+                entering={FadeIn.springify().damping(14).stiffness(200)}
+                style={styles.farmTitle}
+              >
+                <Text style={styles.farmTitleText}>
+                  {t(def.labelKey)}
                 </Text>
-              </View>
-            </View>
+                {/* Badge capacité */}
+                <View style={styles.capacityBadge}>
+                  <Text style={styles.capacityText}>
+                    {t('farm.building.level', { level: building.level })}
+                  </Text>
+                </View>
+              </Animated.View>
 
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <Text style={[styles.closeBtnText, { color: colors.textSub }]}>{'✕'}</Text>
-            </TouchableOpacity>
-          </View>
+              <ScrollView
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+              >
+                {/* Sprite hero */}
+                <Animated.View
+                  style={styles.spriteHero}
+                  entering={FadeIn.springify().damping(12).stiffness(180)}
+                >
+                  {sprite ? (
+                    <Image source={sprite} style={styles.spriteImg} />
+                  ) : (
+                    <Text style={styles.spriteEmoji}>{def.emoji}</Text>
+                  )}
+                </Animated.View>
 
-          <ScrollView
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Sprite avec fond décoratif */}
-            <Animated.View
-              style={styles.spriteContainer}
-              entering={FadeIn.springify().damping(12).stiffness(180)}
-            >
-              <View style={[styles.spriteBackdrop, { backgroundColor: colors.card }, Shadows.sm]}>
-                {sprite ? (
-                  <Image source={sprite} style={styles.sprite} />
-                ) : (
-                  <Text style={styles.spriteEmoji}>{def.emoji}</Text>
-                )}
-              </View>
-            </Animated.View>
+                {/* Section info — resource + timer */}
+                <Animated.View
+                  entering={FadeIn.delay(100).springify().damping(12).stiffness(180)}
+                  style={styles.infoSection}
+                >
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>{resourceLabel}</Text>
+                    <Text style={styles.infoCapacity}>
+                      {pendingCount}/{effectiveMaxPending}
+                    </Text>
+                  </View>
 
-            {/* Section production */}
-            <Animated.View
-              entering={FadeIn.delay(100).springify().damping(12).stiffness(180)}
-              style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }, Shadows.md]}
-            >
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {'⚙️ '}Production
-              </Text>
-              <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
-                {resourceEmoji}{' '}{t('farm.building.frequency', {
-                  resource: resourceLabel,
-                  hours: Math.round(effectiveRateHours * 10) / 10,
-                })}
-              </Text>
-              {timerLabel ? (
-                <>
-                  <AnimatedProgressBar
+                  <FarmProgressBar
                     progressRatio={progressRatio}
-                    isFull={false}
-                    primaryColor={primary}
-                    successColor={colors.success}
+                    isFull={isFull}
+                    resourceEmoji={resourceEmoji}
                     elapsedMinutes={elapsedMinutes}
                     totalMinutes={totalMinutes}
                   />
-                  <Text style={[styles.sectionDetail, { color: primary }]}>
-                    {'⏳ '}{t('farm.building.nextIn', { time: timerLabel, defaultValue: `Prochain ${resourceLabel} dans ${timerLabel}` })}
-                  </Text>
-                </>
-              ) : pendingCount > 0 ? null : (
-                <AnimatedProgressBar
-                  progressRatio={1}
-                  isFull={true}
-                  primaryColor={primary}
-                  successColor={colors.success}
-                  elapsedMinutes={totalMinutes}
-                  totalMinutes={totalMinutes}
-                />
-              )}
-            </Animated.View>
 
-            {/* Section collecte */}
-            <Animated.View
-              entering={FadeIn.delay(200).springify().damping(12).stiffness(180)}
-              style={[
-                styles.section,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: isFull ? colors.warning : colors.border,
-                },
-                Shadows.md,
-              ]}
-            >
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {'📦 '}{t('farm.building.pendingOf', { count: pendingCount, max: effectiveMaxPending, resource: resourceLabel })}
-              </Text>
-              {isFull && (
-                <Text style={[styles.sectionDetail, { color: colors.warning, fontWeight: FontWeight.semibold }]}>
-                  {t('farm.building.storageFull')}
-                </Text>
-              )}
-              <Button3D
-                label={pendingCount > 0
-                  ? t('farm.building.collect', { count: pendingCount, resource: resourceLabel })
-                  : t('farm.building.noPending')}
-                enabled={pendingCount > 0}
-                backgroundColor={pendingCount > 0 ? colors.success : colors.borderLight}
-                shadowColor={pendingCount > 0 ? successShadow : colors.border}
-                textColor={pendingCount > 0 ? colors.bg : colors.textMuted}
-                onPress={handleCollect}
-                style={styles.fullWidthBtn}
-              />
-            </Animated.View>
+                  {isFull && (
+                    <Text style={styles.fullWarning}>
+                      {t('farm.building.storageFull')}
+                    </Text>
+                  )}
+                </Animated.View>
 
-            {/* Section réparation toit — visible uniquement si endommagé */}
-            {isDamaged && onRepairRoof && (
-              <Animated.View entering={FadeIn.delay(280).springify().damping(12).stiffness(180)}>
-                <Button3D
-                  label={t('farm.wear.repair', { cost: 25 })}
-                  enabled={true}
-                  backgroundColor={REPAIR_COLOR}
-                  shadowColor={'#C0600080'}
-                  textColor={colors.bg}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    onRepairRoof();
-                  }}
-                  style={styles.fullWidthBtn}
-                />
-              </Animated.View>
-            )}
-
-            {/* Section amélioration */}
-            <Animated.View
-              entering={FadeIn.delay(300).springify().damping(12).stiffness(180)}
-              style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }, Shadows.md]}
-            >
-              {upgradable && nextTier ? (
-                <>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                    {'⬆️ '}Amélioration
-                  </Text>
-                  <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
-                    {t('farm.building.frequency', {
-                      resource: resourceLabel,
-                      hours: Math.round(nextTier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0) * 10) / 10,
-                    })}
-                  </Text>
-                  <Text style={[styles.sectionDetail, { color: coins >= upgradeCost ? colors.success : colors.textMuted }]}>
-                    {t('farm.building.upgradeCost', { cost: upgradeCost })}
-                  </Text>
-                  <Button3D
-                    label={t('farm.building.upgrade', { level: building.level + 1 })}
-                    enabled={coins >= upgradeCost}
-                    backgroundColor={coins >= upgradeCost ? primary : colors.borderLight}
-                    shadowColor={coins >= upgradeCost ? primaryShadow : colors.border}
-                    textColor={coins >= upgradeCost ? colors.bg : colors.textMuted}
-                    onPress={() => onUpgrade(building.cellId)}
-                    style={styles.fullWidthBtn}
+                {/* Boutons action — empilés */}
+                <Animated.View
+                  entering={FadeIn.delay(200).springify().damping(12).stiffness(180)}
+                  style={styles.buttonsColumn}
+                >
+                  <FarmButton
+                    label={pendingCount > 0
+                      ? `${t('farm.building.collect', { count: pendingCount, resource: resourceLabel })}`
+                      : t('farm.building.noPending')}
+                    enabled={pendingCount > 0}
+                    variant="green"
+                    onPress={handleCollect}
+                    fullWidth
                   />
-                </>
-              ) : (
-                <View style={styles.maxLevelRow}>
-                  <Text style={[styles.maxLevelBadge, { backgroundColor: GOLD_COLOR, color: GOLD_TEXT }]}>
-                    {t('farm.building.maxLevel')}
-                  </Text>
-                  <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
-                    {t('farm.building.frequency', {
-                      resource: resourceLabel,
-                      hours: Math.round(effectiveRateHours * 10) / 10,
-                    })}
-                  </Text>
-                </View>
-              )}
-            </Animated.View>
-          </ScrollView>
+
+                  {upgradable && nextTier ? (
+                    <FarmButton
+                      label={`${t('farm.building.upgrade', { level: building.level + 1 })}  ·  ${upgradeCost} 🍃`}
+                      enabled={coins >= upgradeCost}
+                      variant="wood"
+                      onPress={() => onUpgrade(building.cellId)}
+                      fullWidth
+                    />
+                  ) : (
+                    <View style={styles.maxLevelBadge}>
+                      <Text style={styles.maxLevelText}>
+                        {t('farm.building.maxLevel')}
+                      </Text>
+                    </View>
+                  )}
+                </Animated.View>
+
+                {/* Bouton réparation si endommagé */}
+                {isDamaged && onRepairRoof && (
+                  <Animated.View entering={FadeIn.delay(280).springify().damping(12).stiffness(180)}>
+                    <FarmButton
+                      label={t('farm.wear.repair', { cost: 25 })}
+                      enabled={true}
+                      variant="orange"
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        onRepairRoof();
+                      }}
+                      fullWidth
+                    />
+                  </Animated.View>
+                )}
+              </ScrollView>
+            </View>
+
+            {/* Bouton fermer — petit rond bois en haut à droite */}
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtnFarm}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.closeBtnFarmText}>{'✕'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -429,166 +405,271 @@ const styles = StyleSheet.create({
   },
   overlayBg: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
-  sheet: {
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingBottom: Spacing['5xl'],
-    maxHeight: '80%',
-    ...Shadows.lg,
+
+  // ── Cadre bois ──────────────────────────────────
+  woodFrame: {
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing['4xl'],
+    borderRadius: Radius['2xl'],
+    backgroundColor: Farm.woodDark,
+    padding: 5,
+    ...Shadows.xl,
+    maxHeight: '82%',
+  },
+  woodFrameInner: {
+    borderRadius: Radius.xl,
+    backgroundColor: Farm.woodLight,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    overflow: 'hidden',
+    flexShrink: 1,
+  },
+
+  // ── Auvent ──────────────────────────────────────
+  awning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  awningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  awningStripe: {
+    flex: 1,
+  },
+  awningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
+  awningScallop: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 4,
+    left: 0,
+    right: 0,
+  },
+  awningScallopDot: {
+    flex: 1,
+    height: 8,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+
+  // ── Fond parchemin ──────────────────────────────
+  parchment: {
+    backgroundColor: Farm.parchment,
+    flexShrink: 1,
+    paddingBottom: Spacing['3xl'],
   },
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.lg,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+    backgroundColor: Farm.woodHighlight,
   },
-  header: {
-    flexDirection: 'row',
+
+  // ── Titre farm ──────────────────────────────────
+  farmTitle: {
     alignItems: 'center',
-    paddingHorizontal: Spacing['2xl'],
-    marginBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  headerEmojiCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerEmojiText: {
-    fontSize: FontSize.heading,
-  },
-  headerTextBlock: {
-    flex: 1,
+    paddingVertical: Spacing.md,
     gap: Spacing.xs,
   },
-  title: {
-    fontSize: FontSize.lg,
+  farmTitleText: {
+    fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
   },
-  levelBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: GOLD_COLOR,
+  capacityBadge: {
+    backgroundColor: Farm.gold,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.xxs,
+    borderWidth: 1.5,
+    borderColor: Farm.goldText,
   },
-  levelBadgeText: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
+  capacityText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+    color: Farm.goldText,
   },
-  closeBtn: {
-    padding: Spacing.md,
-  },
-  closeBtnText: {
-    fontSize: FontSize.lg,
-  },
-  content: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingBottom: Spacing['3xl'],
-    gap: Spacing.xl,
-  },
-  // Sprite display
-  spriteContainer: {
+
+  // ── Sprite hero ─────────────────────────────────
+  spriteHero: {
     alignItems: 'center',
     paddingVertical: Spacing.xl,
   },
-  spriteBackdrop: {
-    width: 96,
-    height: 96,
-    borderRadius: Radius['3xl'],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sprite: {
-    width: 72,
-    height: 72,
+  spriteImg: {
+    width: 120,
+    height: 120,
     resizeMode: 'contain',
   },
   spriteEmoji: {
-    fontSize: FontSize.hero,
+    fontSize: 80,
   },
-  // Sections carte style terre/bois
-  section: {
-    borderRadius: Radius['2xl'],
+
+  // ── Section info ────────────────────────────────
+  infoSection: {
+    backgroundColor: Farm.parchmentDark,
+    borderRadius: Radius.xl,
     borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
     padding: Spacing['2xl'],
     gap: Spacing.md,
   },
-  sectionTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  sectionDetail: {
+  infoLabel: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  infoCapacity: {
     fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
   },
-  // Barre de progression améliorée
-  progressBarBg: {
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: PROGRESS_BG,
-    borderWidth: 0.5,
-    borderColor: PROGRESS_BORDER,
+  fullWarning: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.orange,
+    textAlign: 'center',
+  },
+
+  // ── Barre de progression ────────────────────────
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  progressEmoji: {
+    fontSize: FontSize.heading,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: Farm.progressBg,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
     overflow: 'hidden',
   },
-  progressBarFill: {
-    height: 10,
-    borderRadius: 5,
+  progressFill: {
+    height: '100%',
+    borderRadius: 7,
+    backgroundColor: Farm.progressGold,
     overflow: 'hidden',
   },
   progressGloss: {
     position: 'absolute',
     top: 1,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.30)',
-    borderRadius: 2,
+    left: 2,
+    right: 2,
+    height: 5,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 3,
   },
-  progressLabel: {
-    fontSize: FontSize.caption,
-    marginTop: Spacing.xs,
+  progressTime: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    minWidth: 50,
   },
-  // Bouton 3D
-  btn3DShadow: {
+
+  content: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing.md,
+    gap: Spacing.xl,
+  },
+
+  // ── Boutons ─────────────────────────────────────
+  buttonsColumn: {
+    gap: Spacing.xl,
+  },
+  btnFullWidth: {
+    width: '100%',
+  },
+  farmBtnShadow: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 3,
-    borderBottomLeftRadius: Radius.md,
-    borderBottomRightRadius: Radius.md,
+    height: 5,
+    borderBottomLeftRadius: Radius.lg,
+    borderBottomRightRadius: Radius.lg,
   },
-  btn3DBody: {
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.lg,
+  farmBtnBody: {
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing['2xl'],
     alignItems: 'center',
-    marginBottom: 3,
-  },
-  fullWidthBtn: {
-    width: '100%',
-  },
-  btnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-  },
-  // Max level
-  maxLevelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xl,
-  },
-  maxLevelBadge: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
+    justifyContent: 'center',
+    marginBottom: 5,
+    minHeight: 48,
     overflow: 'hidden',
+  },
+  farmBtnGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    opacity: 0.3,
+  },
+  farmBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+
+  // ── Bouton fermer ───────────────────────────────
+  closeBtnFarm: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeBtnFarmText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.parchment,
+  },
+
+  // ── Max level ───────────────────────────────────
+  maxLevelBadge: {
+    backgroundColor: Farm.gold,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: Farm.goldText,
+    paddingVertical: Spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  maxLevelText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.goldText,
   },
 });

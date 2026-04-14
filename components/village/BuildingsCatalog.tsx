@@ -30,6 +30,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
+import { Farm } from '../../constants/farm-theme';
 import {
   BUILDINGS_CATALOG,
   type BuildingCatalogEntry,
@@ -39,8 +40,40 @@ import {
 // ── Constantes module ──────────────────────────────────────────────
 const SEEN_KEY = 'village_buildings_seen_at';
 const SPRITE_SIZE = 96;
-const BADGE_GOLD = '#FFD700'; // cosmetic constant per UI-SPEC (star accent)
+const BADGE_GOLD = Farm.gold;
 const SPRING_CATALOG = { damping: 12, stiffness: 180 } as const;
+
+// ── Sous-composant : auvent rayé ─────────────────────────────────
+
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningStripe,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={styles.awningShadow} />
+      <View style={styles.awningScallop}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningScallopDot,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
 
 // ── BuildingsCatalog ───────────────────────────────────────────────
 
@@ -109,9 +142,10 @@ export function BuildingsCatalog({
       presentationStyle="pageSheet"
       animationType="slide"
     >
-      <View style={[styles.container, { backgroundColor: colors.bg }]}>
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.title, { color: colors.text }]}>
+      <View style={styles.container}>
+        {/* En-tête parchemin foncé */}
+        <View style={styles.header}>
+          <Text style={styles.title}>
             Bâtiments du village
           </Text>
           <TouchableOpacity
@@ -120,17 +154,20 @@ export function BuildingsCatalog({
             accessibilityLabel="Fermer"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MaterialCommunityIcons name="close" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="close" size={24} color={Farm.brownText} />
           </TouchableOpacity>
         </View>
+
+        {/* Bande auvent sous le header */}
+        <AwningStripes />
 
         <ScrollView contentContainerStyle={styles.scroll}>
           {unlockedBuildings.length === 0 && (
             <View style={styles.emptyState}>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              <Text style={styles.emptyTitle}>
                 Aucun bâtiment encore débloqué
               </Text>
-              <Text style={[styles.emptyBody, { color: colors.textMuted }]}>
+              <Text style={styles.emptyBody}>
                 Gagnez des feuilles en famille pour construire votre village
               </Text>
             </View>
@@ -226,9 +263,7 @@ const CatalogTile = React.memo(function CatalogTile({
     : `${familyLifetimeLeaves}/${entry.palier} feuilles familiales`;
 
   return (
-    <Animated.View
-      style={[styles.tile, { backgroundColor: colors.card }, tileAnim]}
-    >
+    <Animated.View style={[styles.tile, tileAnim]}>
       <TouchableOpacity
         onPress={handlePress}
         style={styles.tileTouch}
@@ -241,28 +276,25 @@ const CatalogTile = React.memo(function CatalogTile({
           style={[
             styles.tileSprite,
             !isUnlocked && {
-              tintColor: colors.textMuted,
+              tintColor: Farm.brownTextSub,
               opacity: 0.4,
             },
           ]}
           resizeMode="contain"
         />
-        <Text style={[styles.tileLabel, { color: colors.text }]} numberOfLines={1}>
+        <Text style={styles.tileLabel} numberOfLines={1}>
           {entry.labelFR}
         </Text>
         <Text
           style={[
             styles.tileStatus,
-            { color: isUnlocked ? colors.success : colors.textMuted },
+            { color: isUnlocked ? Farm.greenBtn : Farm.brownTextSub },
           ]}
         >
           {progressLabel}
         </Text>
         {progressDetail && (
-          <Text
-            style={[styles.tileProgress, { color: colors.textFaint }]}
-            numberOfLines={1}
-          >
+          <Text style={styles.tileProgress} numberOfLines={1}>
             {progressDetail}
           </Text>
         )}
@@ -270,16 +302,10 @@ const CatalogTile = React.memo(function CatalogTile({
 
       {isNew && (
         <Animated.View
-          style={[
-            styles.badge,
-            { backgroundColor: colors.successBg },
-            badgeAnim,
-          ]}
+          style={[styles.badge, badgeAnim]}
           pointerEvents="none"
         >
-          <Text style={[styles.badgeText, { color: colors.successText }]}>
-            Nouveau
-          </Text>
+          <Text style={styles.badgeText}>Nouveau</Text>
           <Text style={[styles.badgeStar, { color: BADGE_GOLD }]}>✨</Text>
         </Animated.View>
       )}
@@ -288,20 +314,59 @@ const CatalogTile = React.memo(function CatalogTile({
 });
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: Farm.parchment,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    backgroundColor: Farm.parchmentDark,
+    borderBottomWidth: 2,
+    borderBottomColor: Farm.woodHighlight,
   },
   title: {
-    fontSize: FontSize.heading,
-    fontWeight: FontWeight.semibold,
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
     lineHeight: LineHeight.title,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
+  // ── Auvent ──────────────────────────────────────
+  awning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  awningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  awningStripe: {
+    flex: 1,
+  },
+  awningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
+  awningScallop: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 4,
+    left: 0,
+    right: 0,
+  },
+  awningScallopDot: {
+    flex: 1,
+    height: 8,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  // ── Contenu ─────────────────────────────────────
   scroll: {
     paddingHorizontal: Spacing['2xl'],
     paddingTop: Spacing['4xl'],
@@ -315,10 +380,13 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: '48%',
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.xl,
     minHeight: 170,
     position: 'relative',
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
   },
   tileTouch: {
     alignItems: 'center',
@@ -334,6 +402,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     textAlign: 'center',
+    color: Farm.brownText,
   },
   tileStatus: {
     marginTop: Spacing.xs,
@@ -345,6 +414,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xxs,
     fontSize: FontSize.caption,
     textAlign: 'center',
+    color: Farm.brownTextSub,
   },
   badge: {
     position: 'absolute',
@@ -356,10 +426,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.sm,
+    backgroundColor: Farm.gold,
   },
   badgeText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
+    color: Farm.goldText,
   },
   badgeStar: {
     fontSize: FontSize.caption,
@@ -374,9 +446,11 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
     marginBottom: Spacing.md,
     textAlign: 'center',
+    color: Farm.brownText,
   },
   emptyBody: {
     fontSize: FontSize.caption,
     textAlign: 'center',
+    color: Farm.brownTextSub,
   },
 });
