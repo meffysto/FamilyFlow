@@ -600,6 +600,24 @@ export interface FarmProfileData {
   // Q49 — Échange inter-familles via Port
   trade_claimed_codes?: string[];   // Codes-cadeaux déjà réclamés (max 200 entrees)
   trade_sent_today?: string;        // Anti-abus format "count|YYYY-MM-DD" (per MAX_TRADES_PER_DAY)
+  // Phase 33 — Expeditions
+  activeExpeditions?: ActiveExpedition[];
+  expeditionPity?: number;
+}
+
+// ─── Phase 33 — Expeditions ──────────────────────────────────────────────────
+
+export type ExpeditionDifficulty = 'easy' | 'medium' | 'hard';
+export type ExpeditionOutcome = 'success' | 'partial' | 'failure' | 'rare_discovery';
+
+export interface ActiveExpedition {
+  missionId: string;
+  difficulty: ExpeditionDifficulty;
+  startedAt: string;           // ISO string
+  durationHours: number;       // 4 | 12 | 24
+  result?: ExpeditionOutcome;  // undefined = pas encore collecte
+  lootItemId?: string;         // ID item obtenu
+  lootType?: 'inhabitant' | 'seed' | 'booster';
 }
 
 // ─── Histoires du soir ───────────────────────────────────────────────────────

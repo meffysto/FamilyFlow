@@ -49,6 +49,9 @@ import {
   BedtimeStory,
   StoryUniverseId,
   StoryVoiceConfig,
+  ActiveExpedition,
+  ExpeditionDifficulty,
+  ExpeditionOutcome,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
@@ -564,6 +567,44 @@ export function serializeCompanion(data: CompanionData): string {
   return `${data.activeSpecies}:${data.name}:${unlocked}`;
 }
 
+// ─── Phase 33 — Expeditions CSV ─────────────────────────────────────────────
+
+/**
+ * Parse le CSV des expeditions actives depuis farm-{profileId}.md.
+ * Format par expedition : missionId:difficulty:ISO_startedAt:durationHours:result|...
+ * ATTENTION : startedAt est une date ISO contenant des ':' — reconstruire via slice + join
+ */
+export function parseActiveExpeditions(csv: string | undefined): ActiveExpedition[] {
+  if (!csv) return [];
+  return csv.split('|').map(entry => {
+    const parts = entry.trim().split(':');
+    if (parts.length < 5) return null;
+    const missionId = parts[0];
+    const difficulty = parts[1] as ExpeditionDifficulty;
+    const durationHours = parseInt(parts[parts.length - 2], 10);
+    const resultRaw = parts[parts.length - 1] || undefined;
+    const startedAt = parts.slice(2, parts.length - 2).join(':');
+    if (!missionId || !startedAt || isNaN(durationHours)) return null;
+    return {
+      missionId,
+      difficulty,
+      startedAt,
+      durationHours,
+      result: resultRaw as ExpeditionOutcome | undefined,
+    } as ActiveExpedition;
+  }).filter((e): e is ActiveExpedition => e !== null);
+}
+
+/**
+ * Sérialise le tableau d'expeditions actives en CSV pour farm-{profileId}.md.
+ */
+export function serializeActiveExpeditions(exps: ActiveExpedition[]): string {
+  return exps.map(e =>
+    `${e.missionId}:${e.difficulty}:${e.startedAt}:${e.durationHours}:${e.result ?? ''}`
+    + (e.lootItemId ? `:${e.lootItemId}:${e.lootType ?? ''}` : '')
+  ).join('|');
+}
+
 // ─── farm-{profileId}.md ────────────────────────────────────────────────────
 
 /**
@@ -634,6 +675,8 @@ export function parseFarmProfile(content: string): FarmProfileData {
       ? props.trade_claimed_codes.split(',').map(s => s.trim()).filter(Boolean)
       : [],
     trade_sent_today: props.trade_sent_today || undefined,
+    activeExpeditions: parseActiveExpeditions(props.active_expeditions),
+    expeditionPity: props.expedition_pity ? parseInt(props.expedition_pity, 10) : 0,
   };
 }
 
@@ -682,6 +725,12 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
     lines.push(`trade_claimed_codes: ${data.trade_claimed_codes.join(',')}`);
   }
   if (data.trade_sent_today) lines.push(`trade_sent_today: ${data.trade_sent_today}`);
+  if (data.activeExpeditions && data.activeExpeditions.length > 0) {
+    lines.push(`active_expeditions: ${serializeActiveExpeditions(data.activeExpeditions)}`);
+  }
+  if (data.expeditionPity && data.expeditionPity > 0) {
+    lines.push(`expedition_pity: ${data.expeditionPity}`);
+  }
 
   return lines.join('\n') + '\n';
 }
