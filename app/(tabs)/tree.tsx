@@ -96,7 +96,14 @@ import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG }
 import type { GiftEntry } from '../../lib/mascot/gift-engine';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops, RARE_SEED_DROP_RULES } from '../../lib/mascot/farm-engine';
 import { CROP_ICONS } from '../../lib/mascot/crop-sprites';
-import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL } from '../../lib/mascot/world-grid';
+import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL, CAMP_EXPLORATION_CELL } from '../../lib/mascot/world-grid';
+import { useExpeditions } from '../../hooks/useExpeditions';
+import { ExpeditionsSheet } from '../../components/mascot/ExpeditionsSheet';
+import { CampExplorationCell } from '../../components/mascot/CampExplorationCell';
+import { ExpeditionChest } from '../../components/mascot/ExpeditionChest';
+import { isExpeditionComplete, getExpeditionRemainingMinutes } from '../../lib/mascot/expedition-engine';
+import type { ExpeditionOutcome } from '../../lib/types';
+import type { ExpeditionLoot } from '../../lib/mascot/expedition-engine';
 import { getTechBonuses, type TechBonuses } from '../../lib/mascot/tech-engine';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
 import { HarvestEventOverlay, SeedDropOverlay } from '../../components/mascot/HarvestEventOverlay';
@@ -393,6 +400,20 @@ export default function TreeScreen() {
   // Musée des effets (Phase 23)
   const [showMuseum, setShowMuseum] = useState(false);
 
+  // Expéditions (Phase 33)
+  const [showExpeditions, setShowExpeditions] = useState(false);
+  const [chestData, setChestData] = useState<{
+    visible: boolean;
+    outcome: ExpeditionOutcome;
+    loot?: ExpeditionLoot;
+    missionName: string;
+  }>({ visible: false, outcome: 'failure', missionName: '' });
+  const {
+    dailyPool, activeExpeditions, completedExpeditions, pendingResults,
+    activeCount, canLaunch, pityCount,
+    launchExpedition, collectExpedition, dismissExpedition,
+  } = useExpeditions();
+
   // Cadeaux — envoi
   const [giftOffer, setGiftOffer] = useState<{ itemType: string; itemId: string; maxQty: number; itemName: string } | null>(null);
   // Cadeaux — reception
@@ -456,6 +477,20 @@ export default function TreeScreen() {
       setShowQuestDetail(false);
     }
   }, [activeQuest, deleteFamilyQuest]);
+
+  // Handlers expéditions (Phase 33)
+  const handleCollectExpedition = useCallback(async (missionId: string) => {
+    const { outcome, loot } = await collectExpedition(missionId);
+    const mission = dailyPool.find(m => m.id === missionId) ?? { name: 'Expédition' };
+    setShowExpeditions(false);
+    setTimeout(() => {
+      setChestData({ visible: true, outcome: outcome ?? 'failure', loot, missionName: mission.name });
+    }, 300);
+  }, [collectExpedition, dailyPool]);
+
+  const handleCloseChest = useCallback(() => {
+    setChestData(prev => ({ ...prev, visible: false }));
+  }, []);
 
   const handleCreateQuest = useCallback(async (templateId: string) => {
     if (activeProfile) {
@@ -2064,6 +2099,32 @@ export default function TreeScreen() {
               y={0.70 * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60)}
             />
 
+            {/* Couche 8 : Camp d'exploration (Phase 33) */}
+            {(() => {
+              const dioH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
+              const shortestRemaining = activeExpeditions
+                .filter(e => e.result === undefined && !isExpeditionComplete(e))
+                .reduce((min, e) => Math.min(min, getExpeditionRemainingMinutes(e)), Infinity);
+              return (
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: CAMP_EXPLORATION_CELL.x * SCREEN_W - 32,
+                    top: CAMP_EXPLORATION_CELL.y * dioH - 32,
+                    zIndex: 6,
+                  }}
+                  pointerEvents="box-none"
+                >
+                  <CampExplorationCell
+                    activeCount={activeCount}
+                    hasResult={pendingResults.length > 0}
+                    shortestRemaining={shortestRemaining}
+                    onPress={() => setShowExpeditions(true)}
+                  />
+                </View>
+              );
+            })()}
+
           </View>
         </Animated.View>
         </Animated.View>
@@ -2455,6 +2516,30 @@ export default function TreeScreen() {
         colors={colors}
         primary={primary}
         t={t}
+      />
+
+      {/* Expéditions — modal catalogue (Phase 33) */}
+      <ExpeditionsSheet
+        visible={showExpeditions}
+        onClose={() => setShowExpeditions(false)}
+        dailyPool={dailyPool}
+        activeExpeditions={activeExpeditions}
+        completedExpeditions={completedExpeditions}
+        pendingResults={pendingResults}
+        canLaunch={canLaunch}
+        pityCount={pityCount}
+        onLaunch={launchExpedition}
+        onCollect={handleCollectExpedition}
+        onDismiss={dismissExpedition}
+      />
+
+      {/* Expéditions — coffre animé résultat (Phase 33) */}
+      <ExpeditionChest
+        visible={chestData.visible}
+        outcome={chestData.outcome}
+        loot={chestData.loot}
+        missionName={chestData.missionName}
+        onClose={handleCloseChest}
       />
 
       {/* Phase 18-04 : tutoriel ferme — overlay au-dessus du HUD, refs cibles pour étapes 2-4 */}
