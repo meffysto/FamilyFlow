@@ -5,6 +5,9 @@
 // Formule : price = basePrice * (refStock / currentStock) ^ elasticity
 
 import { BUILDINGS_CATALOG } from './catalog';
+import { CROP_CATALOG } from '../mascot/types';
+import { CRAFT_RECIPES } from '../mascot/craft-engine';
+import { VILLAGE_RECIPES } from './atelier-engine';
 import type { MarketStock, MarketTransaction } from './types';
 
 // Re-export pour accès direct depuis le barrel
@@ -36,7 +39,7 @@ export const MAX_TRANSACTION_LOG = 50;
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type MarketCategory = 'village' | 'farm';
+export type MarketCategory = 'village' | 'farm' | 'harvest' | 'crafted' | 'village_craft';
 
 export interface MarketItemDef {
   itemId: string;
@@ -71,12 +74,19 @@ export interface MarketItemSummary {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Catalogue marché — items village (produits par les bâtiments) + items ferme.
- * Prix de base calibrés sur la difficulté de production (ratePerItem / rareté).
- * Stock initial = stock d'équilibre × 1.2 pour démarrer avec un marché sain.
+ * Catalogue marché — TOUS les items échangeables (sauf décorations/inhabitants).
+ * Prix de base calibrés sur la difficulté de production / rareté / sellValue.
+ * Stock initial ≈ referenceStock × 1.2 pour démarrer avec un marché sain.
+ *
+ * Catégories :
+ * - village : items produits par les bâtiments village (inventaire collectif)
+ * - farm : ressources des bâtiments ferme (oeuf/lait/farine/miel — per-profile)
+ * - harvest : récoltes cultures (per-profile HarvestInventory)
+ * - crafted : items craftés ferme (per-profile CraftedItem[])
+ * - village_craft : items craftés atelier village (inventaire collectif — résultats des recettes)
  */
 export const MARKET_ITEMS: MarketItemDef[] = [
-  // Village items — issus de la production des bâtiments
+  // ── Village items — production bâtiments collectifs ──
   { itemId: 'eau_fraiche',     category: 'village', label: 'Eau fraîche',     emoji: '💧', basePrice: 3,  initialStock: 25, referenceStock: 20 },
   { itemId: 'pain_frais',     category: 'village', label: 'Pain frais',      emoji: '🍞', basePrice: 5,  initialStock: 20, referenceStock: 15 },
   { itemId: 'cafe_matin',     category: 'village', label: 'Café du matin',   emoji: '☕', basePrice: 12, initialStock: 12, referenceStock: 10 },
@@ -85,11 +95,73 @@ export const MARKET_ITEMS: MarketItemDef[] = [
   { itemId: 'coffre_maritime', category: 'village', label: 'Coffre maritime', emoji: '⚓', basePrice: 35, initialStock: 5,  referenceStock: 5 },
   { itemId: 'parchemin',      category: 'village', label: 'Parchemin',       emoji: '📚', basePrice: 50, initialStock: 4,  referenceStock: 4 },
 
-  // Farm items — issus des bâtiments de la ferme personnelle
+  // ── Farm items — ressources bâtiments ferme (per-profile) ──
   { itemId: 'oeuf',   category: 'farm', label: 'Œufs',   emoji: '🥚', basePrice: 4,  initialStock: 15, referenceStock: 12 },
   { itemId: 'lait',   category: 'farm', label: 'Lait',   emoji: '🥛', basePrice: 7,  initialStock: 12, referenceStock: 10 },
   { itemId: 'farine', category: 'farm', label: 'Farine', emoji: '🌾', basePrice: 6,  initialStock: 12, referenceStock: 10 },
   { itemId: 'miel',   category: 'farm', label: 'Miel',   emoji: '🍯', basePrice: 10, initialStock: 8,  referenceStock: 8 },
+
+  // ── Harvest items — récoltes cultures (per-profile) ──
+  // Prix basé sur harvestReward / 10 (ratio coins vs effort)
+  // Rapides (tasksPerStage=1)
+  { itemId: 'carrot',     category: 'harvest', label: 'Carotte',      emoji: '🥕', basePrice: 3,  initialStock: 20, referenceStock: 15 },
+  { itemId: 'wheat',      category: 'harvest', label: 'Blé',          emoji: '🌾', basePrice: 4,  initialStock: 18, referenceStock: 15 },
+  { itemId: 'potato',     category: 'harvest', label: 'Pomme de terre', emoji: '🥔', basePrice: 4, initialStock: 18, referenceStock: 15 },
+  { itemId: 'beetroot',   category: 'harvest', label: 'Betterave',    emoji: '🫜', basePrice: 3,  initialStock: 18, referenceStock: 15 },
+  // Moyennes (tasksPerStage=2)
+  { itemId: 'tomato',     category: 'harvest', label: 'Tomate',       emoji: '🍅', basePrice: 8,  initialStock: 12, referenceStock: 10 },
+  { itemId: 'cabbage',    category: 'harvest', label: 'Chou',         emoji: '🥬', basePrice: 7,  initialStock: 12, referenceStock: 10 },
+  { itemId: 'cucumber',   category: 'harvest', label: 'Concombre',    emoji: '🥒', basePrice: 8,  initialStock: 12, referenceStock: 10 },
+  { itemId: 'sunflower',  category: 'harvest', label: 'Tournesol',    emoji: '🌻', basePrice: 10, initialStock: 10, referenceStock: 8 },
+  // Lentes (tasksPerStage=3+)
+  { itemId: 'corn',       category: 'harvest', label: 'Maïs',         emoji: '🌽', basePrice: 15, initialStock: 6,  referenceStock: 5 },
+  { itemId: 'strawberry', category: 'harvest', label: 'Fraise',       emoji: '🍓', basePrice: 12, initialStock: 8,  referenceStock: 6 },
+  { itemId: 'pumpkin',    category: 'harvest', label: 'Citrouille',   emoji: '🎃', basePrice: 20, initialStock: 4,  referenceStock: 4 },
+  // Rares (dropOnly) — très cher, stock très bas
+  { itemId: 'orchidee',     category: 'harvest', label: 'Orchidée',       emoji: '🪻', basePrice: 30, initialStock: 2, referenceStock: 2 },
+  { itemId: 'rose_doree',   category: 'harvest', label: 'Rose dorée',     emoji: '🌹', basePrice: 50, initialStock: 1, referenceStock: 1 },
+  { itemId: 'truffe',       category: 'harvest', label: 'Truffe',         emoji: '🍄', basePrice: 80, initialStock: 1, referenceStock: 1 },
+  { itemId: 'fruit_dragon', category: 'harvest', label: 'Fruit du dragon', emoji: '🐉', basePrice: 60, initialStock: 1, referenceStock: 1 },
+
+  // ── Crafted items — recettes ferme (per-profile CraftedItem[]) ──
+  // Prix basé sur sellValue / 10 (ratio marché vs vente directe)
+  { itemId: 'soupe',             category: 'crafted', label: 'Soupe',              emoji: '🥣', basePrice: 15,  initialStock: 5, referenceStock: 4 },
+  { itemId: 'bouquet',           category: 'crafted', label: 'Bouquet',            emoji: '💐', basePrice: 20,  initialStock: 4, referenceStock: 3 },
+  { itemId: 'crepe',             category: 'crafted', label: 'Crêpe',              emoji: '🥞', basePrice: 22,  initialStock: 4, referenceStock: 3 },
+  { itemId: 'bortsch',           category: 'crafted', label: 'Bortsch',            emoji: '🍲', basePrice: 13,  initialStock: 5, referenceStock: 4 },
+  { itemId: 'fromage',           category: 'crafted', label: 'Fromage',            emoji: '🧀', basePrice: 48,  initialStock: 3, referenceStock: 2 },
+  { itemId: 'gratin',            category: 'crafted', label: 'Gratin',             emoji: '🫕', basePrice: 44,  initialStock: 3, referenceStock: 2 },
+  { itemId: 'omelette',          category: 'crafted', label: 'Omelette',           emoji: '🍳', basePrice: 44,  initialStock: 3, referenceStock: 2 },
+  { itemId: 'hydromel',          category: 'crafted', label: 'Hydromel',           emoji: '🍯', basePrice: 66,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'nougat',            category: 'crafted', label: 'Nougat',             emoji: '🍬', basePrice: 76,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'pain_epices',       category: 'crafted', label: 'Pain d\'épices',     emoji: '🍪', basePrice: 56,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'parfum_orchidee',   category: 'crafted', label: 'Parfum d\'orchidée', emoji: '🪻', basePrice: 120, initialStock: 1, referenceStock: 1 },
+  { itemId: 'gaspacho',          category: 'crafted', label: 'Gaspacho',           emoji: '🥗', basePrice: 37,  initialStock: 3, referenceStock: 3 },
+  { itemId: 'pain',              category: 'crafted', label: 'Pain',               emoji: '🍞', basePrice: 48,  initialStock: 3, referenceStock: 2 },
+  { itemId: 'confiture',         category: 'crafted', label: 'Confiture',          emoji: '🍓', basePrice: 46,  initialStock: 3, referenceStock: 2 },
+  { itemId: 'popcorn',           category: 'crafted', label: 'Popcorn',            emoji: '🍿', basePrice: 54,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'huile_tournesol',   category: 'crafted', label: 'Huile de tournesol', emoji: '🫙', basePrice: 50,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'brioche_tournesol', category: 'crafted', label: 'Brioche tournesol',  emoji: '🥐', basePrice: 44,  initialStock: 3, referenceStock: 2 },
+  { itemId: 'gateau',            category: 'crafted', label: 'Gâteau',             emoji: '🎂', basePrice: 54,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'confiture_royale',  category: 'crafted', label: 'Confiture royale',   emoji: '🌹', basePrice: 150, initialStock: 1, referenceStock: 1 },
+  { itemId: 'soupe_citrouille',  category: 'crafted', label: 'Soupe de citrouille', emoji: '🎃', basePrice: 56, initialStock: 2, referenceStock: 2 },
+  { itemId: 'tarte_citrouille',  category: 'crafted', label: 'Tarte citrouille',   emoji: '🥧', basePrice: 70,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'risotto_truffe',    category: 'crafted', label: 'Risotto à la truffe', emoji: '🍄', basePrice: 200, initialStock: 1, referenceStock: 1 },
+  { itemId: 'elixir_dragon',     category: 'crafted', label: 'Élixir du dragon',   emoji: '🐲', basePrice: 160, initialStock: 1, referenceStock: 1 },
+  { itemId: 'galette_royale',    category: 'crafted', label: 'Galette royale',     emoji: '👑', basePrice: 110, initialStock: 1, referenceStock: 1 },
+
+  // ── Village craft items — recettes atelier village (inventaire collectif) ──
+  // Prix basé sur xpBonus × 3 (les crafts village sont rares et collectifs)
+  { itemId: 'soupe_village',     category: 'village_craft', label: 'Soupe du village',   emoji: '🍲', basePrice: 45,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'cafe_gourmand',     category: 'village_craft', label: 'Café gourmand',      emoji: '☕', basePrice: 60,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'fougasse',          category: 'village_craft', label: 'Fougasse',            emoji: '🥖', basePrice: 75,  initialStock: 2, referenceStock: 2 },
+  { itemId: 'tarte_moulin',      category: 'village_craft', label: 'Tarte du moulin',    emoji: '🥧', basePrice: 165, initialStock: 1, referenceStock: 1 },
+  { itemId: 'livre_recettes',    category: 'village_craft', label: 'Livre de recettes',  emoji: '📝', basePrice: 225, initialStock: 1, referenceStock: 1 },
+  { itemId: 'outil_artisan',     category: 'village_craft', label: 'Outil d\'artisan',   emoji: '⚒️', basePrice: 360, initialStock: 1, referenceStock: 1 },
+  { itemId: 'coffre_fort',       category: 'village_craft', label: 'Coffre-fort',        emoji: '💎', basePrice: 390, initialStock: 1, referenceStock: 1 },
+  { itemId: 'parchemin_enluminé', category: 'village_craft', label: 'Parchemin enluminé', emoji: '📜', basePrice: 420, initialStock: 1, referenceStock: 1 },
+  { itemId: 'tresor_familial',   category: 'village_craft', label: 'Trésor familial',    emoji: '🌟', basePrice: 1200, initialStock: 0, referenceStock: 1 },
+  { itemId: 'grand_festin',      category: 'village_craft', label: 'Grand Festin',       emoji: '🎁', basePrice: 750, initialStock: 0, referenceStock: 1 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1140,6 +1140,14 @@ export default function VillageScreen() {
           farine: farmInv.farine ?? 0,
           miel: farmInv.miel ?? 0,
         }}
+        harvestInventory={harvestInv}
+        craftedCounts={(() => {
+          const counts: Record<string, number> = {};
+          for (const item of craftedItems) {
+            counts[item.recipeId] = (counts[item.recipeId] ?? 0) + 1;
+          }
+          return counts;
+        })()}
         onBuy={async (itemId, qty) => {
           if (!activeProfile) return { success: false, error: 'Profil introuvable' };
           const result = await buyFromMarket(itemId, qty, activeProfile.id);

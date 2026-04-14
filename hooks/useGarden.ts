@@ -86,8 +86,8 @@ function pickTemplate(weekIndex: number): ObjectiveTemplate {
   return OBJECTIVE_TEMPLATES[weekIndex % OBJECTIVE_TEMPLATES.length];
 }
 
-/** Retourne la catégorie marché d'un item (village ou farm) */
-function findMarketItemCategory(itemId: string): 'village' | 'farm' | null {
+/** Retourne la catégorie marché d'un item */
+function findMarketItemCategory(itemId: string): string | null {
   const def = MARKET_ITEMS.find(m => m.itemId === itemId);
   return def?.category ?? null;
 }
@@ -517,15 +517,19 @@ export function useGarden(): UseGardenReturn {
       const check = canBuyItem(itemId, quantity, marketStock, profile.coins ?? 0);
       if (!check.canBuy) return { success: false, error: check.reason };
 
+      const category = findMarketItemCategory(itemId);
+
       // Exécuter l'achat
       const { newStock, transaction, totalCost } = executeBuy(itemId, quantity, profileId, marketStock);
 
       // Mettre à jour le stock + log dans jardin-familial.md
       const updatedTxns = pruneTransactionLog([...marketTransactions, transaction]);
+
+      // Items village/village_craft → inventaire collectif
+      const isCollective = category === 'village' || category === 'village_craft';
       const updatedData: VillageData = {
         ...gardenData,
-        // Pour les items village → ajouter à l'inventaire collectif aussi
-        inventory: findMarketItemCategory(itemId) === 'village'
+        inventory: isCollective
           ? { ...inventory, [itemId]: (inventory[itemId] ?? 0) + quantity }
           : inventory,
         marketStock: newStock,
@@ -549,6 +553,42 @@ export function useGarden(): UseGardenReturn {
         }
         refreshGamification();
       } catch { /* Gamification — non-critical */ }
+
+      // Items farm/harvest → ajouter à l'inventaire ferme du profil
+      if (category === 'farm' || category === 'harvest') {
+        try {
+          const farmPath = `farm-${profileId}.md`;
+          const farmRaw = await vault.readFile(farmPath).catch(() => '');
+          const farmData = parseFarmProfile(farmRaw);
+          if (category === 'farm') {
+            const farmInvObj = { ...(farmData.farmInventory ?? {}) } as any;
+            farmInvObj[itemId] = (farmInvObj[itemId] ?? 0) + quantity;
+            const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+            await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, farmInventory: farmInvObj }));
+          } else {
+            const harvestInvObj = { ...(farmData.harvestInventory ?? {}) } as any;
+            harvestInvObj[itemId] = (harvestInvObj[itemId] ?? 0) + quantity;
+            const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+            await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, harvestInventory: harvestInvObj }));
+          }
+        } catch { /* non-critical */ }
+      }
+
+      // Items crafted → ajouter au CraftedItem[] du profil
+      if (category === 'crafted') {
+        try {
+          const farmPath = `farm-${profileId}.md`;
+          const farmRaw = await vault.readFile(farmPath).catch(() => '');
+          const farmData = parseFarmProfile(farmRaw);
+          const craftedItems = [...(farmData.craftedItems ?? [])];
+          const now = new Date().toISOString();
+          for (let i = 0; i < quantity; i++) {
+            craftedItems.push({ recipeId: itemId, craftedAt: now });
+          }
+          const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+          await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, craftedItems }));
+        } catch { /* non-critical */ }
+      }
 
       return { success: true, totalCost };
     },
@@ -575,16 +615,22 @@ export function useGarden(): UseGardenReturn {
       const category = findMarketItemCategory(itemId);
 
       // Vérifier le stock disponible selon la catégorie
+      const isCollective = category === 'village' || category === 'village_craft';
       let profileItemCount = 0;
-      if (category === 'village') {
+      if (isCollective) {
         profileItemCount = inventory[itemId] ?? 0;
-      } else if (category === 'farm') {
-        // Lire l'inventaire ferme du profil
+      } else {
+        // Items per-profile : farm, harvest, crafted
         try {
           const farmRaw = await vault.readFile(`farm-${profileId}.md`).catch(() => '');
           const farmData = parseFarmProfile(farmRaw);
-          const farmInvObj = farmData.farmInventory ?? {};
-        profileItemCount = (farmInvObj as any)?.[itemId] ?? 0;
+          if (category === 'farm') {
+            profileItemCount = (farmData.farmInventory as any)?.[itemId] ?? 0;
+          } else if (category === 'harvest') {
+            profileItemCount = (farmData.harvestInventory as any)?.[itemId] ?? 0;
+          } else if (category === 'crafted') {
+            profileItemCount = (farmData.craftedItems ?? []).filter((c: any) => c.recipeId === itemId).length;
+          }
         } catch {
           profileItemCount = 0;
         }
@@ -597,8 +643,8 @@ export function useGarden(): UseGardenReturn {
 
       const updatedTxns = pruneTransactionLog([...marketTransactions, transaction]);
 
-      // Mettre à jour village
-      const updatedInventory = category === 'village'
+      // Mettre à jour l'inventaire collectif si village/village_craft
+      const updatedInventory = isCollective
         ? { ...inventory, [itemId]: Math.max(0, (inventory[itemId] ?? 0) - quantity) }
         : inventory;
 
@@ -613,16 +659,32 @@ export function useGarden(): UseGardenReturn {
       await vault.writeFile(VILLAGE_FILE, newContent);
       setGardenRaw(newContent);
 
-      // Déduire les items ferme si farm
-      if (category === 'farm') {
+      // Déduire les items per-profile si farm/harvest/crafted
+      if (!isCollective) {
         try {
           const farmPath = `farm-${profileId}.md`;
           const farmRaw = await vault.readFile(farmPath).catch(() => '');
           const farmData = parseFarmProfile(farmRaw);
-          const farmInv = { ...(farmData.farmInventory ?? {}) } as Record<string, number>;
-          farmInv[itemId] = Math.max(0, (farmInv[itemId] ?? 0) - quantity);
           const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
-          await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, farmInventory: farmInv as any }));
+
+          if (category === 'farm') {
+            const farmInv = { ...(farmData.farmInventory ?? {}) } as any;
+            farmInv[itemId] = Math.max(0, (farmInv[itemId] ?? 0) - quantity);
+            await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, farmInventory: farmInv }));
+          } else if (category === 'harvest') {
+            const harvestInv = { ...(farmData.harvestInventory ?? {}) } as any;
+            harvestInv[itemId] = Math.max(0, (harvestInv[itemId] ?? 0) - quantity);
+            await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, harvestInventory: harvestInv }));
+          } else if (category === 'crafted') {
+            // Retirer N CraftedItem avec ce recipeId (les plus anciens d'abord)
+            const craftedItems = [...(farmData.craftedItems ?? [])];
+            let removed = 0;
+            const filtered = craftedItems.filter((c: any) => {
+              if (removed < quantity && c.recipeId === itemId) { removed++; return false; }
+              return true;
+            });
+            await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, craftedItems: filtered }));
+          }
         } catch { /* non-critical */ }
       }
 

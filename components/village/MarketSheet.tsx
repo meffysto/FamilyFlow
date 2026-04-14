@@ -48,8 +48,14 @@ interface MarketSheetProps {
   marketTransactions: MarketTransaction[];
   profileId: string;
   profileCoins: number;
+  /** Items village + village_craft (inventaire collectif) */
   villageInventory: Record<string, number>;
+  /** Items ferme (oeuf/lait/farine/miel — per-profile) */
   farmInventory: Record<string, number>;
+  /** Récoltes cultures (per-profile) */
+  harvestInventory: Record<string, number>;
+  /** Items craftés ferme — recipeId → count (per-profile) */
+  craftedCounts: Record<string, number>;
   onBuy: (itemId: string, quantity: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
   onSell: (itemId: string, quantity: number) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
   onClose: () => void;
@@ -307,6 +313,8 @@ export function MarketSheet({
   profileCoins,
   villageInventory,
   farmInventory,
+  harvestInventory,
+  craftedCounts,
   onBuy,
   onSell,
   onClose,
@@ -338,14 +346,19 @@ export function MarketSheet({
   const sellableQtyMap = useMemo(() => {
     const map: Record<string, number> = {};
     for (const s of summaries) {
-      if (s.def.category === 'village') {
+      const cat = s.def.category;
+      if (cat === 'village' || cat === 'village_craft') {
         map[s.def.itemId] = villageInventory[s.def.itemId] ?? 0;
-      } else if (s.def.category === 'farm') {
+      } else if (cat === 'farm') {
         map[s.def.itemId] = farmInventory[s.def.itemId] ?? 0;
+      } else if (cat === 'harvest') {
+        map[s.def.itemId] = harvestInventory[s.def.itemId] ?? 0;
+      } else if (cat === 'crafted') {
+        map[s.def.itemId] = craftedCounts[s.def.itemId] ?? 0;
       }
     }
     return map;
-  }, [summaries, villageInventory, farmInventory]);
+  }, [summaries, villageInventory, farmInventory, harvestInventory, craftedCounts]);
 
   const handleBuy = useCallback(async (itemId: string, qty: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
