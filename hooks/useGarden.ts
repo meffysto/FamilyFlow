@@ -1043,29 +1043,35 @@ export function useGarden(): UseGardenReturn {
 
   /**
    * Réclame la récompense collective si l'objectif est atteint.
-   * Guard anti-double-claim : vérifie village_claimed_week dans gami-{id}.md (D-08).
+   * Guard anti-double-claim : vérifie village_claimed_week dans farm-{id}.md (D-08).
    * Retourne true si le claim a réussi, false si déjà réclamé ou objectif non atteint.
    */
   const claimReward = useCallback(
     async (profileId: string): Promise<boolean> => {
       if (!vault || !isGoalReached) return false;
 
-      // Lire le fichier gami du profil
-      const gamiPath = `gami-${profileId}.md`;
-      const content = await vault.readFile(gamiPath).catch(() => '');
+      // Lire le fichier farm du profil (village_claimed_week est un champ FarmProfileData)
+      const farmPath = `farm-${profileId}.md`;
+      const content = await vault.readFile(farmPath).catch(() => '');
       const farmData = parseFarmProfile(content);
 
-      // Guard anti-double-claim (D-08) — village_claimed_week persisté par profil
+      // Guard anti-double-claim (D-08) — village_claimed_week persisté dans farm-{id}.md
       if (farmData.village_claimed_week === gardenData.currentWeekStart) return false;
 
-      // Écrire le flag anti-double-claim dans gami-{id}.md
+      // Écrire le flag anti-double-claim dans farm-{id}.md
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
       const updated = { ...farmData, village_claimed_week: gardenData.currentWeekStart };
-      await vault.writeFile(gamiPath, serializeFarmProfile(profileName, updated));
+      await vault.writeFile(farmPath, serializeFarmProfile(profileName, updated));
+
+      // Persister rewardClaimed dans jardin-familial.md pour que le bouton reste caché
+      const claimedGardenData: VillageData = { ...gardenData, rewardClaimed: true };
+      const newContent = serializeGardenFile(claimedGardenData);
+      await vault.writeFile(VILLAGE_FILE, newContent);
+      setGardenRaw(newContent);
 
       return true;
     },
-    [vault, isGoalReached, gardenData, profiles],
+    [vault, isGoalReached, gardenData, profiles, setGardenRaw],
   );
 
   // ---------------------------------------------------------------------------
