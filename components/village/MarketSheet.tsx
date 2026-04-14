@@ -496,42 +496,43 @@ export function MarketSheet({
                 </TouchableOpacity>
               </View>
 
-              {/* Barre de recherche */}
-              <View style={styles.searchBar}>
-                <Text style={styles.searchIcon}>🔍</Text>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Rechercher un item..."
-                  placeholderTextColor={Farm.brownTextSub}
-                  value={search}
-                  onChangeText={setSearch}
-                  autoCorrect={false}
-                  clearButtonMode="while-editing"
-                />
-              </View>
+              {/* Barre de recherche + chips catégorie — zone fixe (pas scrollable) */}
+              <View style={styles.filterZone}>
+                <View style={styles.searchBar}>
+                  <Text style={styles.searchIcon}>🔍</Text>
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Rechercher un item..."
+                    placeholderTextColor={Farm.brownTextSub}
+                    value={search}
+                    onChangeText={setSearch}
+                    autoCorrect={false}
+                    clearButtonMode="while-editing"
+                  />
+                </View>
 
-              {/* Chips catégorie */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipRow}
-              >
-                {CATEGORY_FILTERS.map(f => {
-                  const active = categoryFilter === f.key;
-                  return (
-                    <TouchableOpacity
-                      key={f.key}
-                      style={[styles.chip, active && styles.chipActive]}
-                      onPress={() => setCategoryFilter(active ? 'all' : f.key)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                        {f.emoji} {f.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chipRow}
+                >
+                  {CATEGORY_FILTERS.map(f => {
+                    const active = categoryFilter === f.key;
+                    return (
+                      <TouchableOpacity
+                        key={f.key}
+                        style={[styles.chip, active && styles.chipActive]}
+                        onPress={() => setCategoryFilter(active ? 'all' : f.key)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                          {f.emoji} {f.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
 
               <ScrollView
                 contentContainerStyle={styles.content}
@@ -781,6 +782,11 @@ const styles = StyleSheet.create({
   },
 
   // ── Contenu ─────────────────────────────────────
+  // Zone filtre (recherche + chips) — hauteur garantie, pas de shrink
+  filterZone: {
+    flexShrink: 0,
+  },
+
   // Recherche
   searchBar: {
     flexDirection: 'row',
@@ -790,17 +796,17 @@ const styles = StyleSheet.create({
     backgroundColor: Farm.parchmentDark,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Farm.woodDark,
-    paddingHorizontal: Spacing.lg,
-    height: 40,
+    borderColor: Farm.woodLight,
+    paddingHorizontal: Spacing.xl,
+    height: 44,
   },
   searchIcon: {
-    fontSize: 14,
-    marginRight: Spacing.sm,
+    fontSize: 16,
+    marginRight: Spacing.md,
   },
   searchInput: {
     flex: 1,
-    fontSize: FontSize.sm,
+    fontSize: FontSize.body,
     color: Farm.brownText,
     paddingVertical: 0,
   },
@@ -809,25 +815,26 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.lg,
-    gap: Spacing.md,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.lg,
   },
   chip: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: Radius.full,
     backgroundColor: Farm.parchmentDark,
     borderWidth: 1.5,
-    borderColor: Farm.woodDark,
+    borderColor: Farm.woodLight,
   },
   chipActive: {
     backgroundColor: Farm.woodBtn,
     borderColor: Farm.woodBtnShadow,
   },
   chipText: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: Farm.brownText,
   },
   chipTextActive: {
     color: '#FFFFFF',
