@@ -809,12 +809,12 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.md,
   },
   chip: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.lg,
     borderRadius: Radius.full,
     backgroundColor: Farm.parchmentDark,
     borderWidth: 1.5,
@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
     borderColor: Farm.woodBtnShadow,
   },
   chipText: {
-    fontSize: FontSize.label,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     color: Farm.brownTextSub,
   },
