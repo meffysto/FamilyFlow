@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: verifying
-last_updated: "2026-04-14T20:00:30.107Z"
-last_activity: "2026-04-14 - Completed quick task 260414-l12: Améliorer le visuel des modals buildings cozy farm"
+status: executing
+last_updated: "2026-04-14T21:27:50.906Z"
+last_activity: 2026-04-14
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 5
+  total_plans: 6
+  completed_plans: 6
   percent: 25
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 30 — decorations-persistantes
+**Current focus:** Phase 33 — exp-ditions
 
 ## Current Position
 
-Phase: 30 (decorations-persistantes) — EXECUTING
-Plan: 3 of 3
+Phase: 33 (exp-ditions) — EXECUTING
+Plan: 2 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
-Last activity: 2026-04-14 - Completed quick task 260414-l12: Améliorer le visuel des modals buildings cozy farm
+Last activity: 2026-04-14
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
-Status: Phase complete — ready for verification
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -136,6 +136,7 @@ Status: Phase complete — ready for verification
 | Phase 30-decorations-persistantes P01 | 12min | 2 tasks | 6 files |
 | Phase 30-decorations-persistantes P02 | 3min | 2 tasks | 2 files |
 | Phase 30-decorations-persistantes P03 | 13 min | 4 tasks | 7 files |
+| Phase 33-exp-ditions P01 | 10min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -247,6 +248,9 @@ Recent decisions affecting current work:
 - [Phase 30-decorations-persistantes]: [Phase 30-03]: Double-couche idempotence appendBuilding — regex detection buildingId au parser + dedup parseGardenFile pour survivre StrictMode double-fire et reparer vaults pollues
 - [Phase 30-decorations-persistantes]: [Phase 30-03]: Shift Y band superieur village (+0.08) pour degager header absolute — slots puits/boulangerie/marche/cafe/forge ajustes post-checkpoint device
 - [Phase 30-decorations-persistantes]: [Phase 30-03]: BuildingTooltip fork de AvatarTooltip (pas generique) — evite coupling cross-domaine, contrat animation 2.5s preserve
+- [Phase 33-exp-ditions]: CSV expedition: slice(2, length-2).join(':') pour ISO date avec ':' — identique building-engine.ts
+- [Phase 33-exp-ditions]: Pool LCG seed date-based (seed=parseInt(YYYYMMDD)) + offset par difficulte — deterministe et varie par jour
+- [Phase 33-exp-ditions]: failure et partial retournent undefined dans rollExpeditionLoot — perte totale OGame-style
 
 ### Todos
 
@@ -258,5 +262,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-14T20:00:30.101Z
+Last session: 2026-04-14T21:27:50.902Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)
