@@ -7,7 +7,7 @@
 - ✅ **v1.2 Confort & Découverte** — Phases 15-18 (shipped 2026-04-08)
 - ✅ **v1.3 Seed** — Phases 19-24 (shipped 2026-04-10)
 - ✅ **v1.4 Jardin Familial** — Phases 25-28 (shipped 2026-04-11)
-- 🚧 **v1.5 Village Vivant** — Phases 29-32 (planning)
+- 🚧 **v1.5 Village Vivant** — Phases 29-33 (planning)
 
 ## Phases
 
@@ -75,6 +75,7 @@ Détails : `.planning/milestones/v1.4-ROADMAP.md`.
 - [x] **Phase 30: Décorations persistantes** — Schéma append-only, déblocage par palier de feuilles famille, catalogue des 8 bâtiments (completed 2026-04-11)
 - [ ] **Phase 31: Ambiance dynamique** — Cycle jour/nuit selon l'heure réelle + effets saisonniers superposés à la carte
 - [ ] **Phase 32: Arbre familial commun** — Sprite central au cœur du village, évolution visuelle selon le streak collectif
+- [ ] **Phase 33: Expéditions** — Missions avec risque : miser feuilles/récoltes, timer, résultats aléatoires pondérés, objets exclusifs
 
 ## Phase Details
 
@@ -134,6 +135,20 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 33: Expéditions
+**Goal**: Créer un système d'expéditions inspiré OGame — le joueur mise des feuilles et des récoltes pour envoyer des expéditions de difficulté variable, reçoit un résultat aléatoire pondéré après un timer, et peut obtenir des objets exclusifs introuvables autrement. Sink récurrent infini pour l'économie de feuilles.
+**Depends on**: Phase 30 (économie feuilles stable, catalogue bâtiments, stock récoltes via craft-engine)
+**Requirements**: VILL-16, VILL-17, VILL-18, VILL-19, VILL-20
+**Success Criteria** (what must be TRUE):
+  1. User peut choisir une expédition parmi un catalogue de missions de difficulté croissante et voit clairement le coût d'entrée (feuilles + récoltes)
+  2. User voit un timer en cours avec la durée restante et peut consulter les expéditions actives
+  3. User reçoit un résultat aléatoire à la fin du timer (réussite/partielle/échec/découverte rare) avec feedback visuel et haptic
+  4. User peut perdre sa mise en cas d'échec — le risque est réel et communiqué clairement avant lancement
+  5. User peut obtenir via les expéditions des objets exclusifs (habitants, décos, graines rares) introuvables dans la boutique classique
+  6. User retrouve ses expéditions en cours et résultats après un restart de l'app (persistance dans le vault)
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -142,6 +157,7 @@ Plans:
 | 30. Décorations persistantes | 3/3 | Complete   | 2026-04-11 |
 | 31. Ambiance dynamique | 0/TBD | Not started | - |
 | 32. Arbre familial commun | 0/TBD | Not started | - |
+| 33. Expéditions | 0/TBD | Not started | - |
 
 ## Archived Milestones
 

@@ -37,6 +37,14 @@
 
 ---
 
+### Catégorie EXPÉDITIONS — Missions avec risque et récompense
+
+- [ ] **VILL-16**: User peut lancer une expédition depuis la ferme en misant des feuilles et/ou des récoltes du stock
+- [ ] **VILL-17**: User voit un timer d'expédition en cours avec la durée restante et la difficulté choisie
+- [ ] **VILL-18**: User reçoit un résultat aléatoire pondéré à la fin de l'expédition (réussite, partielle, échec, découverte rare) avec feedback visuel
+- [ ] **VILL-19**: User peut consulter un catalogue d'expéditions disponibles avec coûts, durées et niveaux de difficulté
+- [ ] **VILL-20**: User retrouve les résultats d'expéditions et les objets découverts après un restart (persistance)
+
 ## Future Requirements (Deferred)
 
 - [ ] **VILL-13**: Météo dynamique village (pluie, vent, soleil) indépendante des saisons
