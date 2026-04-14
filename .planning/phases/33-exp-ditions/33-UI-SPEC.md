@@ -35,17 +35,15 @@ Project token file: `constants/spacing.ts` — base-4 scale with named tokens.
 | Token | Value | Usage in this phase |
 |-------|-------|---------------------|
 | Spacing.xs | 4px | Icon-text inline gaps, badge padding |
-| Spacing.md | 8px | Gap between difficulty badge and label |
-| Spacing.xl | 12px | Card internal padding, section gaps |
+| Spacing.md | 8px | Gap between difficulty badge and label, card internal padding, section gaps |
 | Spacing['2xl'] | 16px | Modal horizontal padding, row spacing |
-| Spacing['3xl'] | 20px | Modal section vertical padding |
-| Spacing['4xl'] | 24px | Safe area padding, header spacing |
+| Spacing['4xl'] | 24px | Modal section vertical padding, safe area padding, header spacing |
 | Spacing['5xl'] | 32px | Major section separators in modal |
 | Spacing['6xl'] | 48px | Modal top padding (drag handle clearance) |
 
 Exceptions:
 - Touch targets (camp building tap, chest tap): minimum 44px height — inline TouchableOpacity minHeight 44
-- Countdown badge on CampExplorationCell: 20px height, 6px horizontal padding (compact overlay)
+- Countdown badge on CampExplorationCell: 20px height, 8px horizontal padding (compact overlay)
 - Chest animation tap area: 64x64px minimum (haptic action must be easy to hit)
 
 Source: constants/spacing.ts (existing) + D-13/D-14 CONTEXT.md
@@ -63,7 +61,7 @@ Project token file: `constants/typography.ts`.
 | Heading | FontSize.title | 20px | FontWeight.semibold (600) | LineHeight.title (28) | Modal header "Expéditions", result reveal title |
 | Display | FontSize.subtitle | 17px | FontWeight.semibold (600) | LineHeight.body (22) | Expedition name (e.g. "Forêt Ancienne"), section titles |
 
-Note: Only 2 weights used — normal (400) for descriptive text, semibold (600) for all interactive labels, headings, and data values. Bold (700) reserved exclusively for rare/epic reward reveal.
+Note: Only 2 weights used — normal (400) for descriptive text, semibold (600) for all interactive labels, headings, and data values. Rare/epic reward reveal achieves visual distinction through Farm.gold text color on Farm.parchment background and FontSize.title (20px) size, not a third weight.
 
 Source: constants/typography.ts (existing) + established modal pattern (BuildingsCatalog)
 
@@ -77,7 +75,7 @@ All colors via `useThemeColors()` → `colors.*`. Farm accent palette via `const
 |------|-------------|------------|-------|
 | Dominant (60%) — surfaces | colors.bg (#EDEAE4) | colors.bg (#12151A) | Modal background, screen background |
 | Secondary (30%) — cards | colors.card (#FFFFFF) | colors.card (#1C1F28) | Expedition cards, result container, Camp building cell background |
-| Accent (10%) — interactive | primary (theme-dependent) | primary (theme-dependent) | Launch CTA button only |
+| Accent (10%) — interactive | primary (theme-dependent) | primary (theme-dependent) | Launch CTA button + active tab underline |
 | Destructive | colors.error (#EF4444 / #F87171) | idem | Risk warning text, "mise perdue" failure state |
 
 ### Semantic color assignments
@@ -85,6 +83,7 @@ All colors via `useThemeColors()` → `colors.*`. Farm accent palette via `const
 | Element | Color token | Rationale |
 |---------|-------------|-----------|
 | "Lancer" CTA button background | primary (via useThemeColors) | Single accent usage per D-12 pattern |
+| Active tab underline indicator | primary (via useThemeColors) | Navigation affordance, same accent source |
 | Difficulty: Facile | colors.success (#10B981) | Green = low risk |
 | Difficulty: Moyen | colors.warning (#F59E0B) | Amber = medium risk |
 | Difficulty: Dur | colors.error (#EF4444) | Red = high risk |
@@ -100,7 +99,7 @@ All colors via `useThemeColors()` → `colors.*`. Farm accent palette via `const
 | Resource cost (récoltes) | colors.catJeux (#16A34A / #4ADE80) text chip | Green = plant/crop semantic |
 | Pity system indicator | colors.info + italic | Subtle, non-alarming |
 
-Accent reserved for: Launch CTA button background exclusively. No other interactive element uses primary color.
+Accent reserved for: Launch CTA button background and active tab underline. No other interactive element uses primary color.
 
 Source: constants/colors.ts, constants/farm-theme.ts, CONTEXT.md D-12, BuildingsCatalog.tsx established pattern
 
@@ -140,7 +139,7 @@ Modal (pageSheet, presentationStyle)
 ├── AwningStripes (Farm chrome header)
 ├── ModalHeader ("Expéditions ⚔️", drag-to-dismiss)
 ├── Tab row (3 tabs: Catalogue / En cours / Résultats)
-│   └── Tab highlight: primary color underline
+│   └── Tab highlight: primary color underline (8px horizontal padding each side)
 ├── ScrollView (per active tab)
 │   ├── [Catalogue tab] Pool du jour — 3 ExpeditionCards (Facile / Moyen / Dur)
 │   ├── [En cours tab] Up to 2 ActiveExpeditionRows
@@ -171,9 +170,9 @@ TouchableOpacity (44px min height row, Radius.lg border)
 View (slot dans grille ferme, same size as other farm cells)
 ├── Image (camp sprite, pixel art)
 ├── [Si expeditions actives] Badge overlay top-right
-│   └── Text "1/2" ou "2/2" (FontSize.micro, Farm.gold bg)
+│   └── Text "1/2" ou "2/2" (FontSize.micro, Farm.gold bg, 8px horizontal padding)
 └── [Si expédition terminée] Badge overlay bottom
-    └── Text "Retour !" (FontSize.micro, colors.success bg, pulse animation)
+    └── Text "Retour !" (FontSize.micro, colors.success bg, 8px horizontal padding, pulse animation)
 ```
 
 ### Screen: Résultat (ExpeditionChest)
@@ -183,7 +182,7 @@ Modal/overlay (fullscreen, overlay background)
 ├── Chest sprite (centered, 96x96 initial, 128x128 post-open)
 ├── [Avant tap] Text "Appuie pour ouvrir !" (FontSize.label, textMuted)
 ├── [Après tap] Reveal row: récompense emoji + nom + type badge
-└── [Bouton] "Fermer" (secondary style, 44px)
+└── [Bouton] "Fermer le coffre" (secondary style, 44px)
 ```
 
 ---
@@ -214,7 +213,7 @@ Modal/overlay (fullscreen, overlay background)
 5. User taps chest: withSpring scale 1.0 → 1.3 → 1.0 + Haptics.notificationAsync(NotificationFeedbackType.Success)
 6. Chest opens: reveal animation (opacity fade-in of reward, 300ms)
 7. Result badge: colored per outcome (success/partial/failure/rare)
-8. "Fermer" closes overlay, removes expedition from active list, appends to results history
+8. "Fermer le coffre" closes overlay, removes expedition from active list, appends to results history
 
 ### Failure state
 
@@ -253,6 +252,7 @@ Modal/overlay (fullscreen, overlay background)
 | Pity system note (after 4 failures) | "Ta prochaine expédition est protégée ✨" (FontSize.caption, colors.info, italic) |
 | CampExplorationCell badge — complete | "Retour !" |
 | CampExplorationCell badge — active | "1/2" or "2/2" |
+| Chest close button | "Fermer le coffre" |
 | Error: launch failed (vault write error) | "Impossible de lancer l'expédition. Vérifie ton espace de stockage." |
 | Error: collect failed (vault write error) | "Impossible de récupérer le résultat. Réessaie en rouvrant l'app." |
 
