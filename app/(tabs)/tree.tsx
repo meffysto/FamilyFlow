@@ -444,11 +444,11 @@ export default function TreeScreen() {
   // Handlers quêtes coopératives
   const handleCompleteQuest = useCallback(async () => {
     if (activeQuest) {
-      await completeFamilyQuest(activeQuest.id);
+      await completeFamilyQuest(activeQuest.id, activeProfile?.id);
       setShowQuestDetail(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  }, [activeQuest, completeFamilyQuest]);
+  }, [activeQuest, completeFamilyQuest, activeProfile?.id]);
 
   const handleDeleteQuest = useCallback(async () => {
     if (activeQuest) {

@@ -39,11 +39,33 @@ export async function applyQuestReward(
   profileIds: string[],
   reward: FamilyFarmReward,
   questsFilePath: string = 'family-quests.md',
+  activeProfileId?: string,
 ): Promise<void> {
+  // Helper : écriture directe pour le profil actif, pending-reward pour les autres
+  // Évite d'écrire dans les fichiers gami/farm des autres profils (iCloud stale)
+  const writePendingReward = async (pid: string) => {
+    try {
+      const pending = JSON.stringify({
+        type: 'quest',
+        rewardType: reward.type,
+        reward,
+        from: activeProfileId,
+        at: new Date().toISOString(),
+      });
+      const pendingFile = `pending-reward-${pid}.md`;
+      const existing = await vault.readFile(pendingFile).catch(() => '');
+      const separator = existing ? '\n---\n' : '';
+      await vault.writeFile(pendingFile, existing + separator + pending);
+    } catch { /* Quest pending — non-critical */ }
+  };
+
   switch (reward.type) {
     case 'loot_legendary': {
-      // Pour chaque profil, incrémenter lootBoxesAvailable dans gami-{id}.md
       for (const pid of profileIds) {
+        if (activeProfileId && pid !== activeProfileId) {
+          await writePendingReward(pid);
+          continue;
+        }
         try {
           const file = gamiFile(pid);
           const content = await vault.readFile(file).catch(() => '');
@@ -59,18 +81,19 @@ export async function applyQuestReward(
     }
 
     case 'rare_seeds': {
-      // Pour chaque profil, ajouter au farmRareSeeds dans farm-{id}.md
       for (const pid of profileIds) {
+        if (activeProfileId && pid !== activeProfileId) {
+          await writePendingReward(pid);
+          continue;
+        }
         try {
           const file = farmFile(pid);
           const content = await vault.readFile(file).catch(() => '');
           const farm = parseFarmProfile(content);
           const currentRareSeeds = farm.farmRareSeeds ?? {};
-          // Ajouter les graines rares comme "rare_quest_seed"
           const seedKey = 'rare_quest_seed';
           const updated = { ...currentRareSeeds, [seedKey]: (currentRareSeeds[seedKey] ?? 0) + reward.count };
           farm.farmRareSeeds = updated;
-          // Trouver le nom du profil (utiliser pid comme fallback)
           await vault.writeFile(file, serializeFarmProfile(pid, farm));
         } catch { /* Quest — non-critical */ }
       }
@@ -99,13 +122,14 @@ export async function applyQuestReward(
     }
 
     case 'building': {
-      // Pour chaque profil, ajouter offeredBuilding dans farm-{id}.md
       for (const pid of profileIds) {
+        if (activeProfileId && pid !== activeProfileId) {
+          await writePendingReward(pid);
+          continue;
+        }
         try {
           const file = farmFile(pid);
           const content = await vault.readFile(file).catch(() => '');
-          const farm = parseFarmProfile(content);
-          // Stocker dans un champ texte (parse/serialize géré via writeFile direct)
           const offeredLine = `offeredBuilding: ${reward.buildingId}`;
           if (!content.includes('offeredBuilding:')) {
             await vault.writeFile(file, content.trim() + `\n${offeredLine}\n`);
@@ -116,8 +140,11 @@ export async function applyQuestReward(
     }
 
     case 'tech_unlock': {
-      // Pour chaque profil, ajouter nodeId à farm_tech dans farm-{id}.md
       for (const pid of profileIds) {
+        if (activeProfileId && pid !== activeProfileId) {
+          await writePendingReward(pid);
+          continue;
+        }
         try {
           const file = farmFile(pid);
           const content = await vault.readFile(file).catch(() => '');
@@ -133,8 +160,11 @@ export async function applyQuestReward(
     }
 
     case 'unlock_plot': {
-      // Pour chaque profil, ajouter 'unlock_extra_plot' à farm_tech dans farm-{id}.md
       for (const pid of profileIds) {
+        if (activeProfileId && pid !== activeProfileId) {
+          await writePendingReward(pid);
+          continue;
+        }
         try {
           const file = farmFile(pid);
           const content = await vault.readFile(file).catch(() => '');

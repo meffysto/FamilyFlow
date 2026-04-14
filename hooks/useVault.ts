@@ -234,7 +234,7 @@ export interface VaultState {
   unlockedRecipes: string[];
   startFamilyQuest: (templateId: string, profileId: string, profiles: Profile[]) => Promise<void>;
   contributeFamilyQuest: (profileId: string, type: string, amount: number) => Promise<void>;
-  completeFamilyQuest: (questId: string) => Promise<void>;
+  completeFamilyQuest: (questId: string, activeProfileId?: string) => Promise<void>;
   deleteFamilyQuest: (questId: string) => Promise<void>;
   gratitudeDays: GratitudeDay[];
   addGratitudeEntry: (date: string, profileId: string, profileName: string, text: string) => Promise<void>;
@@ -698,6 +698,51 @@ export function useVaultInternal(): VaultState {
 
         // Migration one-shot depuis famille.md → farm-{id}.md
         await migrateFarmData(vault, baseProfiles);
+
+        // Consommer les pending-reward-{id}.md (rewards village/quêtes écrits par un autre appareil)
+        // Pattern claim-first : supprimer le fichier AVANT d'appliquer pour éviter double-consommation
+        for (const p of baseProfiles) {
+          try {
+            const pendingFile = `pending-reward-${p.id}.md`;
+            const pendingContent = await vault.readFile(pendingFile).catch(() => '');
+            if (!pendingContent) continue;
+            // Supprimer immédiatement (claim-first)
+            await vault.deleteFile(pendingFile);
+            // Parser les rewards (séparés par ---)
+            const entries = pendingContent.split('\n---\n').filter(Boolean);
+            for (const entry of entries) {
+              try {
+                const reward = JSON.parse(entry.trim());
+                if (reward.type === 'village' && reward.xp) {
+                  // Village reward : +XP + loot boxes dans gami-{id}.md
+                  const gamiPath = gamiFile(p.id);
+                  const gamiRaw = await vault.readFile(gamiPath).catch(() => '');
+                  if (!gamiRaw) continue;
+                  const gami = parseGamification(gamiRaw);
+                  const gamiProfile = gami.profiles.find((gp: any) => gp.id === p.id || gp.name === p.name);
+                  if (!gamiProfile) continue;
+                  const { profile: updated } = addPoints(gamiProfile, reward.xp, reward.note ?? 'Récompense village');
+                  gamiProfile.points = updated.points;
+                  gamiProfile.coins = updated.coins;
+                  gamiProfile.level = updated.level;
+                  gamiProfile.lootBoxesAvailable = (gamiProfile.lootBoxesAvailable ?? 0) + (reward.lootBoxes ?? 0);
+                  const newEntry = { profileId: p.id, action: `+${reward.xp}`, points: reward.xp, note: reward.note ?? 'Récompense village', timestamp: reward.at ?? new Date().toISOString() };
+                  const singleData = {
+                    profiles: [gamiProfile],
+                    history: [...gami.history.filter((e: any) => e.profileId === p.id), newEntry],
+                    activeRewards: (gami.activeRewards ?? []).filter((r: any) => r.profileId === p.id),
+                    usedLoots: (gami.usedLoots ?? []).filter((u: any) => u.profileId === p.id),
+                  };
+                  await vault.writeFile(gamiPath, serializeGamification(singleData));
+                } else if (reward.type === 'quest' && reward.reward) {
+                  // Quest reward : appliquer directement (ce profil est local)
+                  const { applyQuestReward } = await import('../lib/quest-engine');
+                  await applyQuestReward(vault, [p.id], reward.reward);
+                }
+              } catch { /* Pending reward parse — non-critical */ }
+            }
+          } catch { /* Pending reward — non-critical */ }
+        }
 
         // Lecture multi-fichier per-profil + merge en mémoire
         const [gamiFileResults, farmFileResults] = await Promise.all([

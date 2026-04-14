@@ -55,7 +55,7 @@ export interface UseVaultFamilyQuestsResult {
   setUnlockedRecipes: Dispatch<SetStateAction<string[]>>;
   startQuest: (templateId: string, profileId: string, profiles: Profile[]) => Promise<void>;
   contribute: (profileId: string, type: string, amount: number) => Promise<void>;
-  completeQuest: (questId: string) => Promise<void>;
+  completeQuest: (questId: string, activeProfileId?: string) => Promise<void>;
   deleteQuest: (questId: string) => Promise<void>;
   resetQuests: () => void;
   checkAndExpireQuests: (quests: FamilyQuest[]) => Promise<FamilyQuest[]>;
@@ -168,7 +168,7 @@ export function useVaultFamilyQuests(
    * Complète une quête et applique la récompense ferme à tous les profils.
    * Pattern reward-first : applique AVANT de marquer completed.
    */
-  const completeQuest = useCallback(async (questId: string) => {
+  const completeQuest = useCallback(async (questId: string, activeProfileId?: string) => {
     if (!vaultRef.current) return;
 
     // Trouver la quête
@@ -182,7 +182,9 @@ export function useVaultFamilyQuests(
       const profileIds = allProfiles.map(p => p.id);
 
       // Reward-first : appliquer AVANT de marquer completed
-      await applyQuestReward(vaultRef.current, profileIds, quest.farmReward, FAMILY_QUESTS_FILE);
+      // activeProfileId permet le pattern pending-reward (écriture directe pour le profil local,
+      // fichier pending pour les autres — évite les écritures cross-profil stale via iCloud)
+      await applyQuestReward(vaultRef.current, profileIds, quest.farmReward, FAMILY_QUESTS_FILE, activeProfileId);
 
       // Marquer completed
       const completedDate = new Date().toISOString().slice(0, 10);

@@ -630,11 +630,16 @@ export default function VillageScreen() {
     const success = await claimReward(activeProfile.id);
     if (success) {
       setClaimedThisSession(true);
-      // Bonus XP + loot box pour TOUS les profils actifs (D-07 — équitable, pas proportionnel)
-      // OBJ-03 : +25 XP + 1 loot box (item cosmetique via systeme loot existant per D-07)
-      for (const p of activeProfiles) {
+      // Bonus XP + loot box — profil actif : écriture directe (son propre gami)
+      // Autres profils : pending-reward pour éviter d'écrire dans leurs fichiers (iCloud stale)
+      try {
+        await addVillageBonus(vault, activeProfile, 25, 'Objectif village atteint');
+      } catch { /* Gamification — non-critical */ }
+      const otherProfiles = activeProfiles.filter(p => p.id !== activeProfile.id);
+      for (const p of otherProfiles) {
         try {
-          await addVillageBonus(vault, p, 25, 'Objectif village atteint');
+          const pending = JSON.stringify({ type: 'village', xp: 25, lootBoxes: 1, note: 'Objectif village atteint', from: activeProfile.id, at: new Date().toISOString() });
+          await vault.writeFile(`pending-reward-${p.id}.md`, pending);
         } catch { /* Gamification — non-critical */ }
       }
       refreshGamification();
