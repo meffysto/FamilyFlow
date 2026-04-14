@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: executing
-last_updated: "2026-04-14T21:33:01.710Z"
+status: verifying
+last_updated: "2026-04-14T21:39:23.300Z"
 last_activity: 2026-04-14
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 7
+  completed_plans: 8
   percent: 25
 ---
 
@@ -32,7 +32,7 @@ Last activity: 2026-04-14
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ### Quick Tasks Completed
 
@@ -138,6 +138,7 @@ Status: Ready to execute
 | Phase 30-decorations-persistantes P03 | 13 min | 4 tasks | 7 files |
 | Phase 33-exp-ditions P01 | 10min | 2 tasks | 5 files |
 | Phase 33-exp-ditions P02 | 3min | 2 tasks | 3 files |
+| Phase 33-exp-ditions P03 | 4min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -254,6 +255,7 @@ Recent decisions affecting current work:
 - [Phase 33-exp-ditions]: failure et partial retournent undefined dans rollExpeditionLoot — perte totale OGame-style
 - [Phase 33-exp-ditions]: useExpeditions lit depuis currentProfile adulte sans farmRaw VaultState supplémentaire — identique pattern useFarm
 - [Phase 33-exp-ditions]: CAMP_EXPLORATION_CELL non dans WORLD_GRID — cellule spéciale rendue séparément dans tree.tsx (per RESEARCH)
+- [Phase 33-exp-ditions]: handleCollectExpedition : délai 300ms entre fermeture modal et ouverture coffre pour éviter collision animation iOS
 
 ### Todos
 
@@ -265,5 +267,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-14T21:33:01.700Z
+Last session: 2026-04-14T21:39:23.297Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)
