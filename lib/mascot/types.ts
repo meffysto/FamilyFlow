@@ -178,7 +178,8 @@ export interface MascotInhabitant {
   cost: number;
   rarity: 'commun' | 'rare' | 'épique' | 'légendaire' | 'prestige';
   minStage: TreeStage;
-  sagaExclusive?: boolean; // true = obtenu uniquement via saga (pas achetable)
+  sagaExclusive?: boolean;      // true = obtenu uniquement via saga (pas achetable)
+  expeditionExclusive?: boolean; // true = obtenu uniquement via expédition (Phase 33)
 }
 
 /** Assets illustrés (remplacent les emojis quand disponibles) */
@@ -260,6 +261,11 @@ export const INHABITANTS: MascotInhabitant[] = [
   // Saga exclusives
   { id: 'esprit_eau',      labelKey: 'mascot.hab.espritEau',      emoji: '💧', cost: 0, rarity: 'épique',     minStage: 'pousse', sagaExclusive: true },
   { id: 'ancien_gardien',  labelKey: 'mascot.hab.ancienGardien',  emoji: '🌿', cost: 0, rarity: 'légendaire', minStage: 'pousse', sagaExclusive: true },
+  // Expédition exclusives (Phase 33)
+  { id: 'renard_arctique', labelKey: 'mascot.hab.renardArctique', emoji: '🦊', cost: 0, rarity: 'rare' as const,    minStage: 'pousse', expeditionExclusive: true },
+  { id: 'aigle_dore',      labelKey: 'mascot.hab.aigleDore',      emoji: '🦅', cost: 0, rarity: 'épique' as const,  minStage: 'pousse', expeditionExclusive: true },
+  { id: 'lynx_mystere',    labelKey: 'mascot.hab.lynxMystere',    emoji: '🐱', cost: 0, rarity: 'rare' as const,    minStage: 'pousse', expeditionExclusive: true },
+  { id: 'dragon_glace',    labelKey: 'mascot.hab.dragonGlace',    emoji: '🐉', cost: 0, rarity: 'épique' as const,  minStage: 'pousse', expeditionExclusive: true },
 ];
 
 // ─────────────────────────────────────────────
@@ -277,6 +283,7 @@ export interface CropDefinition {
   cost: number;            // cout en feuilles pour les graines
   techRequired?: string;   // id du noeud tech requis pour debloquer (optionnel)
   dropOnly?: boolean;      // true = graine rare, obtenue uniquement par drop (pas achetable)
+  expeditionExclusive?: boolean; // true = graine obtenue uniquement via expédition (Phase 33)
 }
 
 /** Instance de culture plantee */
@@ -327,6 +334,9 @@ export const CROP_CATALOG: CropDefinition[] = [
   { id: 'rose_doree',     labelKey: 'farm.crop.rose_doree',     emoji: '🌹', tasksPerStage: 4, harvestReward: 500, minTreeStage: 'arbre',      cost: 0, dropOnly: true },
   { id: 'truffe',         labelKey: 'farm.crop.truffe',         emoji: '🍄', tasksPerStage: 5, harvestReward: 800, minTreeStage: 'majestueux', cost: 0, dropOnly: true },
   { id: 'fruit_dragon',   labelKey: 'farm.crop.fruit_dragon',   emoji: '🐉', tasksPerStage: 4, harvestReward: 600, minTreeStage: 'arbre',      cost: 0, dropOnly: true },
+  // Graines exclusives expédition (Phase 33)
+  { id: 'fleur_lave',     labelKey: 'farm.crop.fleur_lave',     emoji: '🌺', tasksPerStage: 4, harvestReward: 600, minTreeStage: 'arbre',      cost: 0, dropOnly: true, expeditionExclusive: true },
+  { id: 'cristal_noir',   labelKey: 'farm.crop.cristal_noir',   emoji: '💎', tasksPerStage: 5, harvestReward: 900, minTreeStage: 'majestueux', cost: 0, dropOnly: true, expeditionExclusive: true },
 ];
 
 // ─────────────────────────────────────────────

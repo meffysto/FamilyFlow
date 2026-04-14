@@ -108,6 +108,11 @@ export const EXPANSION_BUILDING_CELL: WorldCell =
 export const EXPANSION_LARGE_CROP_CELL: WorldCell =
   { id: 'c20', col: 0, row: 5, x: 0.14, y: 0.55, cellType: 'crop', unlockOrder: 26, size: 'large' };
 
+/** Cellule speciale Camp d'exploration — point d'entree expeditions (Phase 33) */
+export const CAMP_EXPLORATION_CELL: WorldCell = {
+  id: 'camp_exp', col: 0, row: 5, x: 0.10, y: 0.90, cellType: 'any', unlockOrder: 0, size: 'large',
+};
+
 /** Verifie si un plotIndex correspond a la parcelle geante (double recolte) */
 export function isLargeCropPlot(plotIndex: number, treeStage: TreeStage, techBonuses: TechBonuses): boolean {
   if (!techBonuses.hasLargeCropCell) return false;
