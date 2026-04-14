@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
 status: verifying
-last_updated: "2026-04-14T21:39:23.300Z"
+last_updated: "2026-04-14T21:46:36.488Z"
 last_activity: 2026-04-14
 progress:
   total_phases: 5
@@ -139,6 +139,7 @@ Status: Phase complete — ready for verification
 | Phase 33-exp-ditions P01 | 10min | 2 tasks | 5 files |
 | Phase 33-exp-ditions P02 | 3min | 2 tasks | 3 files |
 | Phase 33-exp-ditions P03 | 4min | 2 tasks | 4 files |
+| Phase 33-exp-ditions P03 | 12 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -256,6 +257,8 @@ Recent decisions affecting current work:
 - [Phase 33-exp-ditions]: useExpeditions lit depuis currentProfile adulte sans farmRaw VaultState supplémentaire — identique pattern useFarm
 - [Phase 33-exp-ditions]: CAMP_EXPLORATION_CELL non dans WORLD_GRID — cellule spéciale rendue séparément dans tree.tsx (per RESEARCH)
 - [Phase 33-exp-ditions]: handleCollectExpedition : délai 300ms entre fermeture modal et ouverture coffre pour éviter collision animation iOS
+- [Phase 33-exp-ditions]: harvestInventory exposé par useExpeditions et passé en prop — évite double accès vault depuis les composants UI
+- [Phase 33-exp-ditions]: CostChip récolte : CROP_CATALOG.find + t(labelKey) + have/required avec colors.success/error — pattern réutilisable pour les coûts de récolte
 
 ### Todos
 
@@ -267,5 +270,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-14T21:39:23.297Z
+Last session: 2026-04-14T21:46:36.485Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)

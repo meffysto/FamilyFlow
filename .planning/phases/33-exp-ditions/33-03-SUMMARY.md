@@ -2,7 +2,7 @@
 phase: 33-exp-ditions
 plan: 03
 subsystem: ui
-tags: [react-native, expo, reanimated, haptics, expedition, farm, mascot]
+tags: [react-native, expo, reanimated, haptics, expedition, farm, mascot, i18n]
 
 # Dependency graph
 requires:
@@ -11,7 +11,7 @@ requires:
   - phase: 33-02
     provides: useExpeditions hook (launchExpedition, collectExpedition, dismissExpedition, dailyPool, activeExpeditions)
 provides:
-  - ExpeditionsSheet.tsx : modal pageSheet 3 onglets (Catalogue / En cours / Résultats)
+  - ExpeditionsSheet.tsx : modal pageSheet 3 onglets (Catalogue / En cours / Résultats) avec noms traduits + indicateur stock
   - CampExplorationCell.tsx : cellule ferme avec badge actif + countdown + pulse Retour!
   - ExpeditionChest.tsx : coffre animé tap-to-open avec haptics + reveal + étoiles rare
   - tree.tsx câblé : Camp visible sur la ferme, modal ouvert depuis le Camp, coffre ouvert après collecte
@@ -27,6 +27,8 @@ tech-stack:
     - CampExplorationCell positionné en absolu sur le diorama via CAMP_EXPLORATION_CELL.x/y * container dims
     - handleCollectExpedition : ferme modal → délai 300ms → ouvre coffre (séquence sans collision modale)
     - Countdown ticker via useEffect + setInterval 60s dans ExpeditionsSheet
+    - CROP_CATALOG lookup + t(cropDef.labelKey) pour noms traduits des récoltes
+    - Chip récolte avec compteur have/required coloré (vert = suffisant, rouge = insuffisant)
 
 key-files:
   created:
@@ -35,34 +37,37 @@ key-files:
     - components/mascot/ExpeditionChest.tsx
   modified:
     - app/(tabs)/tree.tsx
+    - hooks/useExpeditions.ts
 
 key-decisions:
   - "CampExplorationCell exporté depuis son propre fichier (pas tree.tsx) — pattern identique BuildingSprite"
   - "handleCollectExpedition : délai 300ms entre fermeture modal et ouverture coffre — évite collision animation iOS pageSheet + Modal transparent"
   - "CAMP_EXPLORATION_CELL réexporté depuis CampExplorationCell.tsx pour éviter double import dans tree.tsx"
+  - "harvestInventory exposé par useExpeditions et passé en prop à ExpeditionsSheet — pas de double appel hook"
+  - "Chip récolte row : emoji + nom traduit + compteur stock séparés visuellement, fond rouge si insuffisant"
 
 patterns-established:
   - "ExpeditionChest : état `opened` interne + reset dans useEffect[visible] — pattern coffre isolé réutilisable"
   - "CampExplorationCell : withRepeat(withSequence) pour pulse animation badge retour"
+  - "CostChip récolte : CROP_CATALOG.find + t(labelKey) + have/required avec colors.success/error — pattern réutilisable pour tous les systèmes à coût de récolte"
 
 requirements-completed: [VILL-16, VILL-17, VILL-18, VILL-19, VILL-20]
 
 # Metrics
-duration: 4min
+duration: 12min
 completed: 2026-04-14
 ---
 
 # Phase 33 Plan 03: Composants UI Expéditions + Intégration tree.tsx Summary
 
-**Modal expéditions pageSheet 3 onglets + cellule ferme animée + coffre tap-to-open avec haptics, câblés dans tree.tsx**
+**Modal expéditions pageSheet 3 onglets + cellule ferme animée + coffre tap-to-open avec haptics, câblés dans tree.tsx. Post-checkpoint : noms récoltes traduits + indicateur stock par item.**
 
 ## Performance
 
-- **Duration:** 4 min
-- **Started:** 2026-04-14T21:34:49Z
-- **Completed:** 2026-04-14T21:38:36Z
-- **Tasks:** 2/3 (Task 3 = checkpoint humain, en attente)
-- **Files modified:** 4
+- **Duration:** 12 min (tâches 1-2 : 4 min, fix post-checkpoint : 8 min)
+- **Completed:** 2026-04-14
+- **Tasks:** 3/3
+- **Files modified:** 5
 
 ## Accomplishments
 
@@ -70,42 +75,61 @@ completed: 2026-04-14
 - CampExplorationCell.tsx : cellule 64px avec badge "1/2", badge "Retour !" + pulse withRepeat, mini countdown
 - ExpeditionChest.tsx : overlay fullscreen tap-to-open, spring scale, haptics Success/Error/Heavy, reveal opacity, 4 étoiles staggerées pour rare_discovery
 - tree.tsx : imports + state showExpeditions/chestData + hook useExpeditions + CampExplorationCell sur diorama (couche 8) + ExpeditionsSheet + ExpeditionChest câblés
+- **Fix post-checkpoint :** noms récoltes traduits (CROP_CATALOG + t(labelKey)) + indicateur stock visuel par récolte (have/required, vert/rouge)
 
 ## Task Commits
 
-1. **Task 1: Composants UI** - `d9b9bff` (feat)
-2. **Task 2: Intégration tree.tsx** - `08ba4d0` (feat)
-3. **Task 3: Vérification humaine** - en attente checkpoint
+1. **Task 1: Composants UI** — `d9b9bff` (feat)
+2. **Task 2: Intégration tree.tsx** — `08ba4d0` (feat)
+3. **Task 3 fix: Traductions + indicateur stock récoltes** — `98176a9` (fix)
 
 ## Files Created/Modified
 
-- `components/mascot/ExpeditionsSheet.tsx` - Modal 3 onglets catalogue/en cours/résultats
-- `components/mascot/CampExplorationCell.tsx` - Cellule ferme avec badges et pulse animation
-- `components/mascot/ExpeditionChest.tsx` - Coffre animé reveal résultat expédition
-- `app/(tabs)/tree.tsx` - Intégration complète expéditions (imports, state, hook, JSX)
+- `components/mascot/ExpeditionsSheet.tsx` — Modal 3 onglets catalogue/en cours/résultats + noms traduits + stock indicator
+- `components/mascot/CampExplorationCell.tsx` — Cellule ferme avec badges et pulse animation
+- `components/mascot/ExpeditionChest.tsx` — Coffre animé reveal résultat expédition
+- `app/(tabs)/tree.tsx` — Intégration complète expéditions + prop harvestInventory
+- `hooks/useExpeditions.ts` — Exposition de harvestInventory dans le retour du hook
 
 ## Decisions Made
 
 - Délai 300ms entre fermeture ExpeditionsSheet et ouverture ExpeditionChest pour éviter collision animation iOS
 - CampExplorationCell positionné en absolu sur le diorama via CAMP_EXPLORATION_CELL.x/y * dimensions conteneur (même pattern que PortalSprite Phase 29)
 - Tab indicator `withTiming 150ms` sur translateX (UI-SPEC respect strict)
+- harvestInventory exposé depuis useExpeditions et passé en prop plutôt que d'accéder au vault directement depuis ExpeditionsSheet
 
 ## Deviations from Plan
 
-None - plan exécuté exactement comme spécifié.
+### Auto-fixed Issues (post-checkpoint)
 
-## Issues Encountered
+**1. [Rule 1 - Bug] Noms de récoltes affichés comme clés brutes**
+- **Found during:** Task 3 (vérification humaine)
+- **Issue:** Les chips de coût affichaient `${cost.cropId}` (ex: "strawberry") au lieu du nom traduit
+- **Fix:** Import de `CROP_CATALOG` et `useTranslation` dans ExpeditionsSheet. Lookup par `cropId` pour récupérer emoji et `t(cropDef.labelKey)`
+- **Files modified:** `components/mascot/ExpeditionsSheet.tsx`
+- **Commit:** `98176a9`
 
-None — TypeScript propre dès la première compilation sur tous les fichiers.
+**2. [Rule 2 - Missing UX] Indicateur de stock absent pour chaque récolte requise**
+- **Found during:** Task 3 (vérification humaine)
+- **Issue:** L'utilisateur ne pouvait pas savoir s'il avait assez de chaque récolte sans ouvrir l'inventaire
+- **Fix:** `harvestInventory` exposé depuis `useExpeditions`, passé en prop à `ExpeditionsSheet`. Nouveau style `costChip` avec compteur `have/required` coloré (vert = suffisant, rouge = insuffisant), fond adapté
+- **Files modified:** `hooks/useExpeditions.ts`, `app/(tabs)/tree.tsx`, `components/mascot/ExpeditionsSheet.tsx`
+- **Commit:** `98176a9`
 
 ## Known Stubs
 
 None — tous les composants sont câblés aux données réelles via useExpeditions hook.
 
-## Next Phase Readiness
+## Self-Check: PASSED
 
-- Système expéditions complet côté code — attend validation visuelle sur device iOS (Task 3 checkpoint)
-- Task 3 checkpoint requis : vérifier Camp visible en bas-gauche de la ferme, modal catalogue avec 3 missions, lancement + timer, collecte coffre animé, persistance restart
+- FOUND: components/mascot/ExpeditionsSheet.tsx
+- FOUND: components/mascot/CampExplorationCell.tsx
+- FOUND: components/mascot/ExpeditionChest.tsx
+- FOUND: hooks/useExpeditions.ts (harvestInventory exposé)
+- FOUND: commit d9b9bff (Task 1 — composants UI)
+- FOUND: commit 08ba4d0 (Task 2 — intégration tree.tsx)
+- FOUND: commit 98176a9 (fix — traductions + stock indicator)
+- TypeScript: 0 nouvelles erreurs
 
 ---
 *Phase: 33-exp-ditions*
