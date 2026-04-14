@@ -410,7 +410,7 @@ export default function TreeScreen() {
   }>({ visible: false, outcome: 'failure', missionName: '' });
   const {
     dailyPool, activeExpeditions, completedExpeditions, pendingResults,
-    activeCount, canLaunch, pityCount,
+    activeCount, canLaunch, pityCount, harvestInventory: expeditionHarvestInventory,
     launchExpedition, collectExpedition, dismissExpedition,
   } = useExpeditions();
 
@@ -2528,6 +2528,7 @@ export default function TreeScreen() {
         pendingResults={pendingResults}
         canLaunch={canLaunch}
         pityCount={pityCount}
+        harvestInventory={expeditionHarvestInventory}
         onLaunch={launchExpedition}
         onCollect={handleCollectExpedition}
         onDismiss={dismissExpedition}

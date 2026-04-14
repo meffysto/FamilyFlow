@@ -302,6 +302,11 @@ export function useExpeditions() {
 
   // ─── Retour du hook ───────────────────────────────────────────────────────
 
+  const harvestInventory = useMemo(
+    () => farmData?.harvestInventory ?? {},
+    [farmData]
+  );
+
   return {
     dailyPool,
     activeExpeditions,
@@ -310,6 +315,7 @@ export function useExpeditions() {
     activeCount,
     canLaunch,
     pityCount,
+    harvestInventory,
     launchExpedition,
     collectExpedition,
     dismissExpedition,

@@ -6,7 +6,7 @@
  * Calqué sur BuildingsCatalog.tsx (AwningStripes, SPRING_CATALOG, tab pattern)
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   ScrollView,
@@ -25,6 +25,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -34,6 +35,7 @@ import {
   isExpeditionComplete,
   type ExpeditionMission,
 } from '../../lib/mascot/expedition-engine';
+import { CROP_CATALOG, type HarvestInventory } from '../../lib/mascot/types';
 import type { ActiveExpedition, ExpeditionOutcome } from '../../lib/types';
 
 // ── Constantes module ─────────────────────────────────────────────────────────
@@ -130,6 +132,7 @@ interface Props {
   pendingResults: ActiveExpedition[];
   canLaunch: boolean;
   pityCount: number;
+  harvestInventory: HarvestInventory;
   onLaunch: (mission: ExpeditionMission) => void;
   onCollect: (missionId: string) => void;
   onDismiss: (missionId: string) => void;
@@ -146,11 +149,13 @@ export function ExpeditionsSheet({
   pendingResults,
   canLaunch,
   pityCount,
+  harvestInventory,
   onLaunch,
   onCollect,
   onDismiss,
 }: Props) {
   const { primary, colors } = useThemeColors();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>('catalogue');
 
   // Countdown ticker — recalculer toutes les 60s
@@ -267,6 +272,8 @@ export function ExpeditionsSheet({
                     onLaunch={() => onLaunch(mission)}
                     colors={colors}
                     primary={primary}
+                    harvestInventory={harvestInventory}
+                    t={t}
                   />
                 ))
               )}
@@ -330,10 +337,12 @@ interface CardProps {
   onLaunch: () => void;
   colors: any;
   primary: string;
+  harvestInventory: HarvestInventory;
+  t: (key: string) => string;
 }
 
 const ExpeditionCard = React.memo(function ExpeditionCard({
-  mission, canLaunch, onLaunch, colors, primary,
+  mission, canLaunch, onLaunch, colors, primary, harvestInventory, t,
 }: CardProps) {
   const cardScale = useSharedValue(1);
   const cardAnim = useAnimatedStyle(() => ({
@@ -377,13 +386,30 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
             {`${mission.costCoins} 🍃`}
           </Text>
         </View>
-        {mission.costCrops.map((cost) => (
-          <View key={cost.cropId} style={[styles.chip, { backgroundColor: colors.catJeux + '22' }]}>
-            <Text style={[styles.chipText, { color: colors.catJeux }]}>
-              {`${cost.quantity} ${cost.cropId}`}
-            </Text>
-          </View>
-        ))}
+        {mission.costCrops.map((cost) => {
+          const cropDef = CROP_CATALOG.find(c => c.id === cost.cropId);
+          const cropEmoji = cropDef?.emoji ?? '🌿';
+          const cropName = cropDef ? t(cropDef.labelKey) : cost.cropId;
+          const have = harvestInventory[cost.cropId] ?? 0;
+          const enough = have >= cost.quantity;
+          return (
+            <View
+              key={cost.cropId}
+              style={[
+                styles.costChip,
+                { backgroundColor: enough ? colors.catJeux + '22' : colors.error + '18' },
+              ]}
+            >
+              <Text style={styles.costChipEmoji}>{cropEmoji}</Text>
+              <Text style={[styles.costChipName, { color: enough ? colors.catJeux : colors.error }]}>
+                {cropName}
+              </Text>
+              <Text style={[styles.costChipQty, { color: enough ? colors.success : colors.error }]}>
+                {`${have}/${cost.quantity}`}
+              </Text>
+            </View>
+          );
+        })}
       </View>
 
       {/* Bouton lancer */}
@@ -662,6 +688,26 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
+  },
+  // Coût récolte avec indicateur stock
+  costChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.sm,
+    gap: Spacing.xs,
+  },
+  costChipEmoji: {
+    fontSize: FontSize.label,
+  },
+  costChipName: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+  },
+  costChipQty: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
   launchBtn: {
     height: 44,
