@@ -1,0 +1,421 @@
+// lib/village/market-engine.ts
+// Moteur pur Marché Boursier Village — prix dynamiques offre/demande, FOMO.
+// Module pur TypeScript — zéro import hook/context.
+// Le marché a un stock propre. Les prix fluctuent selon le stock courant vs stock d'équilibre.
+// Formule : price = basePrice * (refStock / currentStock) ^ elasticity
+
+import { BUILDINGS_CATALOG } from './catalog';
+import type { MarketStock, MarketTransaction } from './types';
+
+// Re-export pour accès direct depuis le barrel
+export type { MarketStock, MarketTransaction } from './types';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constantes
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Élasticité prix — 0.7 = volatilité modérée, stock /4 → prix ×2.6 */
+const ELASTICITY = 0.7;
+
+/** Plancher prix (ratio vs base) — jamais en dessous de 25% du prix de base */
+const MIN_PRICE_RATIO = 0.25;
+
+/** Plafond prix (ratio vs base) — jamais au-dessus de 4x le prix de base */
+const MAX_PRICE_RATIO = 4.0;
+
+/** Le marché achète à 70% du prix courant (spread 30%) */
+const SELL_SPREAD = 0.7;
+
+/** Nombre max de transactions par jour par profil */
+export const MAX_MARKET_TXN_PER_DAY = 10;
+
+/** Taille max du log de transactions (les plus anciennes sont purgées) */
+export const MAX_TRANSACTION_LOG = 50;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type MarketCategory = 'village' | 'farm';
+
+export interface MarketItemDef {
+  itemId: string;
+  category: MarketCategory;
+  label: string;
+  emoji: string;
+  basePrice: number;       // prix de base en 🍃
+  initialStock: number;    // stock de départ du marché
+  referenceStock: number;  // stock d'équilibre (calcul prix)
+}
+
+/** Tendance de prix (vs prix de base) */
+export type PriceTrend = 'tres_cher' | 'cher' | 'normal' | 'bon_prix' | 'brade';
+
+/** Niveau de stock du marché */
+export type StockLevel = 'rupture' | 'faible' | 'normal' | 'abondant';
+
+/** Résumé d'un item au marché (pour l'affichage UI) */
+export interface MarketItemSummary {
+  def: MarketItemDef;
+  stock: number;
+  buyPrice: number;
+  sellPrice: number;
+  trend: PriceTrend;
+  stockLevel: StockLevel;
+  trendEmoji: string;
+  stockEmoji: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catalogue des items échangeables au marché
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Catalogue marché — items village (produits par les bâtiments) + items ferme.
+ * Prix de base calibrés sur la difficulté de production (ratePerItem / rareté).
+ * Stock initial = stock d'équilibre × 1.2 pour démarrer avec un marché sain.
+ */
+export const MARKET_ITEMS: MarketItemDef[] = [
+  // Village items — issus de la production des bâtiments
+  { itemId: 'eau_fraiche',     category: 'village', label: 'Eau fraîche',     emoji: '💧', basePrice: 3,  initialStock: 25, referenceStock: 20 },
+  { itemId: 'pain_frais',     category: 'village', label: 'Pain frais',      emoji: '🍞', basePrice: 5,  initialStock: 20, referenceStock: 15 },
+  { itemId: 'cafe_matin',     category: 'village', label: 'Café du matin',   emoji: '☕', basePrice: 12, initialStock: 12, referenceStock: 10 },
+  { itemId: 'outil_forge',    category: 'village', label: 'Outil forgé',     emoji: '🔨', basePrice: 25, initialStock: 8,  referenceStock: 8 },
+  { itemId: 'farine_moulee',  category: 'village', label: 'Farine moulue',   emoji: '🌾', basePrice: 18, initialStock: 10, referenceStock: 10 },
+  { itemId: 'coffre_maritime', category: 'village', label: 'Coffre maritime', emoji: '⚓', basePrice: 35, initialStock: 5,  referenceStock: 5 },
+  { itemId: 'parchemin',      category: 'village', label: 'Parchemin',       emoji: '📚', basePrice: 50, initialStock: 4,  referenceStock: 4 },
+
+  // Farm items — issus des bâtiments de la ferme personnelle
+  { itemId: 'oeuf',   category: 'farm', label: 'Œufs',   emoji: '🥚', basePrice: 4,  initialStock: 15, referenceStock: 12 },
+  { itemId: 'lait',   category: 'farm', label: 'Lait',   emoji: '🥛', basePrice: 7,  initialStock: 12, referenceStock: 10 },
+  { itemId: 'farine', category: 'farm', label: 'Farine', emoji: '🌾', basePrice: 6,  initialStock: 12, referenceStock: 10 },
+  { itemId: 'miel',   category: 'farm', label: 'Miel',   emoji: '🍯', basePrice: 10, initialStock: 8,  referenceStock: 8 },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calcul de prix — formule bourse
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Prix brut calculé selon l'offre et la demande.
+ * Formule : basePrice × (refStock / currentStock) ^ elasticity
+ * - Stock bas → ratio élevé → prix monte (FOMO)
+ * - Stock haut → ratio bas → prix baisse (soldes)
+ */
+function rawPrice(basePrice: number, currentStock: number, referenceStock: number): number {
+  const ratio = referenceStock / Math.max(1, currentStock);
+  const multiplier = Math.pow(ratio, ELASTICITY);
+  const clamped = Math.max(MIN_PRICE_RATIO, Math.min(MAX_PRICE_RATIO, multiplier));
+  return Math.round(basePrice * clamped);
+}
+
+/** Prix d'achat (le profil paie ce prix pour acheter au marché) */
+export function getBuyPrice(def: MarketItemDef, currentStock: number): number {
+  return Math.max(1, rawPrice(def.basePrice, currentStock, def.referenceStock));
+}
+
+/**
+ * Prix de vente (le marché paie ce prix pour racheter au profil).
+ * Spread 30% — le marché prend toujours une marge.
+ */
+export function getSellPrice(def: MarketItemDef, currentStock: number): number {
+  return Math.max(1, Math.floor(rawPrice(def.basePrice, currentStock, def.referenceStock) * SELL_SPREAD));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Indicateurs FOMO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Tendance prix par rapport au prix de base */
+export function getPriceTrend(currentBuyPrice: number, basePrice: number): PriceTrend {
+  const ratio = currentBuyPrice / basePrice;
+  if (ratio >= 3.0) return 'tres_cher';
+  if (ratio >= 1.5) return 'cher';
+  if (ratio >= 0.7) return 'normal';
+  if (ratio >= 0.4) return 'bon_prix';
+  return 'brade';
+}
+
+/** Emoji indicateur de tendance */
+export function getTrendEmoji(trend: PriceTrend): string {
+  switch (trend) {
+    case 'tres_cher': return '🔴';
+    case 'cher':      return '🟠';
+    case 'normal':    return '⚪';
+    case 'bon_prix':  return '🟢';
+    case 'brade':     return '🔵';
+  }
+}
+
+/** Label tendance français */
+export function getTrendLabel(trend: PriceTrend): string {
+  switch (trend) {
+    case 'tres_cher': return 'Très cher';
+    case 'cher':      return 'En hausse';
+    case 'normal':    return 'Normal';
+    case 'bon_prix':  return 'Bon prix';
+    case 'brade':     return 'Bradé !';
+  }
+}
+
+/** Niveau de stock relatif */
+export function getStockLevel(currentStock: number, referenceStock: number): StockLevel {
+  const ratio = currentStock / Math.max(1, referenceStock);
+  if (ratio <= 0.1) return 'rupture';
+  if (ratio <= 0.35) return 'faible';
+  if (ratio <= 1.5) return 'normal';
+  return 'abondant';
+}
+
+/** Emoji indicateur de stock */
+export function getStockEmoji(level: StockLevel): string {
+  switch (level) {
+    case 'rupture':  return '🚨';
+    case 'faible':   return '⚠️';
+    case 'normal':   return '📦';
+    case 'abondant': return '📦📦';
+  }
+}
+
+/** Label stock français */
+export function getStockLabel(level: StockLevel): string {
+  switch (level) {
+    case 'rupture':  return 'En rupture !';
+    case 'faible':   return 'Stock faible';
+    case 'normal':   return 'Disponible';
+    case 'abondant': return 'Abondant';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Résumé par item (pour l'UI)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Construit le résumé complet d'un item pour l'affichage au marché.
+ */
+export function getMarketItemSummary(def: MarketItemDef, marketStock: MarketStock): MarketItemSummary {
+  const stock = marketStock[def.itemId] ?? 0;
+  const buyPrice = getBuyPrice(def, stock);
+  const sellPrice = getSellPrice(def, stock);
+  const trend = getPriceTrend(buyPrice, def.basePrice);
+  const stockLevel = getStockLevel(stock, def.referenceStock);
+  return {
+    def,
+    stock,
+    buyPrice,
+    sellPrice,
+    trend,
+    stockLevel,
+    trendEmoji: getTrendEmoji(trend),
+    stockEmoji: getStockEmoji(stockLevel),
+  };
+}
+
+/** Résumé de tous les items du marché */
+export function getAllMarketSummaries(marketStock: MarketStock): MarketItemSummary[] {
+  return MARKET_ITEMS.map(def => getMarketItemSummary(def, marketStock));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Validation & Exécution (fonctions pures)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Trouve la définition d'un item marché par son ID */
+export function findMarketItem(itemId: string): MarketItemDef | undefined {
+  return MARKET_ITEMS.find(m => m.itemId === itemId);
+}
+
+/**
+ * Vérifie si un achat est possible.
+ * Le profil achète `quantity` items au marché → il paie des coins, le stock baisse.
+ */
+export function canBuyItem(
+  itemId: string,
+  quantity: number,
+  marketStock: MarketStock,
+  profileCoins: number,
+): { canBuy: boolean; totalCost: number; reason?: string } {
+  const def = findMarketItem(itemId);
+  if (!def) return { canBuy: false, totalCost: 0, reason: 'Article introuvable' };
+
+  const stock = marketStock[def.itemId] ?? 0;
+  if (stock < quantity) {
+    return { canBuy: false, totalCost: 0, reason: `Stock insuffisant (${stock} dispo)` };
+  }
+
+  const unitPrice = getBuyPrice(def, stock);
+  const totalCost = unitPrice * quantity;
+  if (profileCoins < totalCost) {
+    return { canBuy: false, totalCost, reason: `Pas assez de 🍃 (${profileCoins} / ${totalCost})` };
+  }
+
+  return { canBuy: true, totalCost };
+}
+
+/**
+ * Vérifie si une vente est possible.
+ * Le profil vend `quantity` items au marché → il reçoit des coins, le stock monte.
+ * `profileItemCount` = quantité que le profil possède de cet item.
+ */
+export function canSellItem(
+  itemId: string,
+  quantity: number,
+  marketStock: MarketStock,
+  profileItemCount: number,
+): { canSell: boolean; totalGain: number; reason?: string } {
+  const def = findMarketItem(itemId);
+  if (!def) return { canSell: false, totalGain: 0, reason: 'Article introuvable' };
+
+  if (profileItemCount < quantity) {
+    return { canSell: false, totalGain: 0, reason: `Vous n'avez que ${profileItemCount}` };
+  }
+
+  const stock = marketStock[def.itemId] ?? 0;
+  const unitPrice = getSellPrice(def, stock);
+  const totalGain = unitPrice * quantity;
+
+  return { canSell: true, totalGain };
+}
+
+/**
+ * Exécute un achat (pur — retourne le nouveau stock et la transaction).
+ * NE mute PAS les entrées.
+ */
+export function executeBuy(
+  itemId: string,
+  quantity: number,
+  profileId: string,
+  marketStock: MarketStock,
+  now: Date = new Date(),
+): { newStock: MarketStock; transaction: MarketTransaction; totalCost: number } {
+  const def = findMarketItem(itemId)!;
+  const stock = marketStock[def.itemId] ?? 0;
+  const unitPrice = getBuyPrice(def, stock);
+  const totalCost = unitPrice * quantity;
+
+  const newStock = { ...marketStock };
+  newStock[def.itemId] = Math.max(0, stock - quantity);
+
+  const transaction: MarketTransaction = {
+    timestamp: now.toISOString().replace('Z', '').split('.')[0],
+    profileId,
+    action: 'buy',
+    itemId,
+    quantity,
+    unitPrice,
+    totalPrice: totalCost,
+  };
+
+  return { newStock, transaction, totalCost };
+}
+
+/**
+ * Exécute une vente (pur — retourne le nouveau stock et la transaction).
+ * NE mute PAS les entrées.
+ */
+export function executeSell(
+  itemId: string,
+  quantity: number,
+  profileId: string,
+  marketStock: MarketStock,
+  now: Date = new Date(),
+): { newStock: MarketStock; transaction: MarketTransaction; totalGain: number } {
+  const def = findMarketItem(itemId)!;
+  const stock = marketStock[def.itemId] ?? 0;
+  const unitPrice = getSellPrice(def, stock);
+  const totalGain = unitPrice * quantity;
+
+  const newStock = { ...marketStock };
+  newStock[def.itemId] = stock + quantity;
+
+  const transaction: MarketTransaction = {
+    timestamp: now.toISOString().replace('Z', '').split('.')[0],
+    profileId,
+    action: 'sell',
+    itemId,
+    quantity,
+    unitPrice,
+    totalPrice: totalGain,
+  };
+
+  return { newStock, transaction, totalGain };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rate limiting — 10 transactions / jour / profil
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Compte les transactions d'un profil aujourd'hui.
+ */
+export function getTransactionsToday(
+  transactions: MarketTransaction[],
+  profileId: string,
+  now: Date = new Date(),
+): number {
+  const todayStr = formatDateYMD(now);
+  return transactions.filter(
+    t => t.profileId === profileId && t.timestamp.startsWith(todayStr),
+  ).length;
+}
+
+/**
+ * Vérifie si le profil peut encore faire une transaction aujourd'hui.
+ */
+export function canTransactToday(
+  transactions: MarketTransaction[],
+  profileId: string,
+  now: Date = new Date(),
+): boolean {
+  return getTransactionsToday(transactions, profileId, now) < MAX_MARKET_TXN_PER_DAY;
+}
+
+/**
+ * Retourne le nombre de transactions restantes aujourd'hui.
+ */
+export function transactionsRemainingToday(
+  transactions: MarketTransaction[],
+  profileId: string,
+  now: Date = new Date(),
+): number {
+  return Math.max(0, MAX_MARKET_TXN_PER_DAY - getTransactionsToday(transactions, profileId, now));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stock initial
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Initialise le stock du marché avec les valeurs par défaut.
+ * Utilisé à la première ouverture (stock vide → stock initial).
+ */
+export function initializeMarketStock(): MarketStock {
+  const stock: MarketStock = {};
+  for (const item of MARKET_ITEMS) {
+    stock[item.itemId] = item.initialStock;
+  }
+  return stock;
+}
+
+/**
+ * Purge le log de transactions pour ne garder que les N plus récentes.
+ */
+export function pruneTransactionLog(
+  transactions: MarketTransaction[],
+  maxSize: number = MAX_TRANSACTION_LOG,
+): MarketTransaction[] {
+  if (transactions.length <= maxSize) return transactions;
+  return transactions.slice(transactions.length - maxSize);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Utilitaire interne
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatDateYMD(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}

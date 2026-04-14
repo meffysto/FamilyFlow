@@ -39,7 +39,7 @@ export interface VillageWeekRecord {
 export interface UnlockedBuilding {
   timestamp: string;   // ISO 8601 sans Z — ex: 2026-04-12T14:32:00
   buildingId: string;  // 'puits' | 'boulangerie' | 'marche' | 'cafe' | 'forge' | 'moulin' | 'port' | 'bibliotheque'
-  palier: number;      // palier franchi au déblocage (100, 300, 700, 1500, 3000, 6000, 12000, 25000)
+  palier: number;      // palier franchi au déblocage (100, 300, 700, 1500, 3000, 6000, 8000, 25000)
 }
 
 /** Item crafté dans l'atelier village — ligne append-only dans ## Atelier Crafts */
@@ -59,6 +59,22 @@ export interface BuildingProductionState {
   [buildingId: string]: number;  // buildingId → nb contributions lifetime consommées
 }
 
+/** Stock du marché boursier village — itemId → quantité disponible */
+export interface MarketStock {
+  [itemId: string]: number;
+}
+
+/** Transaction enregistrée au marché */
+export interface MarketTransaction {
+  timestamp: string;       // ISO 8601
+  profileId: string;
+  action: 'buy' | 'sell';
+  itemId: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
 /** Donnees completes du village parsees depuis jardin-familial.md */
 export interface VillageData {
   version: number;
@@ -73,6 +89,8 @@ export interface VillageData {
   productionState: BuildingProductionState; // Contributions consommées par bâtiment
   atelierCrafts: VillageAtelierCraft[];  // Historique crafts collectifs
   atelierTechs: string[];               // CSV des techs village débloquées
+  marketStock: MarketStock;              // Stock du marché boursier
+  marketTransactions: MarketTransaction[]; // Log des 50 dernières transactions
 }
 
 /** Template d'objectif hebdomadaire thematise (per D-06) */

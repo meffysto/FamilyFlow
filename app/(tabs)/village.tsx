@@ -73,6 +73,8 @@ import { VILLAGE_GRID } from '../../lib/village/grid';
 // Q49 — Échange inter-familles via Port
 import { PortTradeModal } from '../../components/village/PortTradeModal';
 import { TradeReceiptModal } from '../../components/village/TradeReceiptModal';
+// Marché boursier
+import { MarketSheet } from '../../components/village/MarketSheet';
 import { parseFarmProfile } from '../../lib/parser';
 import type { FarmInventory, HarvestInventory } from '../../lib/mascot/types';
 
@@ -394,6 +396,11 @@ export default function VillageScreen() {
     receiveTrade,
     canSendTradeToday: canSendTrade,
     tradesSentRemaining,
+    // Marché boursier
+    marketStock,
+    marketTransactions,
+    buyFromMarket,
+    sellToMarket,
   } = useGarden();
 
   const [showAllFeed, setShowAllFeed] = useState(false);
@@ -414,6 +421,8 @@ export default function VillageScreen() {
   const [showTechTree, setShowTechTree] = useState(false);
   // Q49 — Trade inter-familles via Port
   const [showPortTrade, setShowPortTrade] = useState(false);
+  // Marché boursier
+  const [showMarket, setShowMarket] = useState(false);
   const [tradeReceipt, setTradeReceipt] = useState<{ emoji: string; label: string; qty: number } | null>(null);
   const [farmInv, setFarmInv] = useState<FarmInventory>({ oeuf: 0, lait: 0, farine: 0, miel: 0 });
   const [harvestInv, setHarvestInv] = useState<HarvestInventory>({});
@@ -567,11 +576,17 @@ export default function VillageScreen() {
 
   // ── Phase 30/31 — handler tap bâtiment ───────────────────────────────
   // Bâtiment débloqué → modal production (tous). Port a en plus un bouton échange.
+  // Marché → ouvre le MarketSheet au lieu du modal générique.
   const handleBuildingPress = useCallback(
     (ub: UnlockedBuilding) => {
+      if (ub.buildingId === 'marche') {
+        loadFarmInventories();
+        setShowMarket(true);
+        return;
+      }
       setSelectedBuilding(ub);
     },
-    [],
+    [loadFarmInventories],
   );
 
   // Q49 — Ouvre la modal trade depuis le bouton dans VillageBuildingModal
@@ -746,7 +761,7 @@ export default function VillageScreen() {
             const catalogEntry = BUILDINGS_CATALOG.find(b => b.id === ub.buildingId);
             const consumed = productionState[ub.buildingId] ?? 0;
             const available = Math.max(0, lifetimeContributions - consumed);
-            const pending = catalogEntry ? Math.floor(available / catalogEntry.production.ratePerItem) : 0;
+            const pending = catalogEntry?.production ? Math.floor(available / catalogEntry.production.ratePerItem) : 0;
             return (
               <BuildingSprite
                 key={ub.buildingId}
@@ -788,6 +803,18 @@ export default function VillageScreen() {
         >
           <View style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
             <View style={styles.actionRow}>
+              {unlockedBuildings.some(b => b.buildingId === 'marche') && (
+                <TouchableOpacity
+                  style={styles.actionItem}
+                  onPress={() => { loadFarmInventories(); setShowMarket(true); }}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Marché du village"
+                >
+                  <Text style={styles.actionItemIcon}>📈</Text>
+                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>Marché</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 style={styles.actionItem}
                 onPress={() => setShowAtelier(true)}
@@ -1097,6 +1124,35 @@ export default function VillageScreen() {
         itemLabel={tradeReceipt?.label ?? ''}
         quantity={tradeReceipt?.qty ?? 1}
         onDone={() => setTradeReceipt(null)}
+      />
+
+      {/* Marché boursier */}
+      <MarketSheet
+        visible={showMarket}
+        marketStock={marketStock}
+        marketTransactions={marketTransactions}
+        profileId={activeProfile?.id ?? ''}
+        profileCoins={activeProfile?.coins ?? 0}
+        villageInventory={inventory}
+        farmInventory={{
+          oeuf: farmInv.oeuf ?? 0,
+          lait: farmInv.lait ?? 0,
+          farine: farmInv.farine ?? 0,
+          miel: farmInv.miel ?? 0,
+        }}
+        onBuy={async (itemId, qty) => {
+          if (!activeProfile) return { success: false, error: 'Profil introuvable' };
+          const result = await buyFromMarket(itemId, qty, activeProfile.id);
+          if (result.success) await loadFarmInventories();
+          return result;
+        }}
+        onSell={async (itemId, qty) => {
+          if (!activeProfile) return { success: false, error: 'Profil introuvable' };
+          const result = await sellToMarket(itemId, qty, activeProfile.id);
+          if (result.success) await loadFarmInventories();
+          return result;
+        }}
+        onClose={() => setShowMarket(false)}
       />
     </Animated.View>
   );

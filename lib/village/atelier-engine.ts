@@ -126,7 +126,7 @@ export const VILLAGE_TECH_TREE: VillageTechNode[] = [
     descriptionFR: 'Débloque les recettes intermédiaires.',
     emoji: '🪛',
     cost: [
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 5 },
+      { itemId: 'cafe_matin', itemEmoji: '☕', quantity: 5 },
       { itemId: 'parchemin', itemEmoji: '📚', quantity: 3 },
     ],
     requires: 'atelier-1',
@@ -227,15 +227,6 @@ export const VILLAGE_RECIPES: VillageRecipe[] = [
 
   // Palier 1 — nécessite atelier-1
   {
-    id: 'panier_pique_nique', labelFR: 'Panier pique-nique', resultEmoji: '🧺', resultLabel: 'Panier pique-nique',
-    ingredients: [
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 8 },
-      { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 5 },
-      { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 4 },
-    ],
-    xpBonus: 50, minAtelierTier: 1,
-  },
-  {
     id: 'tarte_moulin', labelFR: 'Tarte du moulin', resultEmoji: '🥧', resultLabel: 'Tarte du moulin',
     ingredients: [
       { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 6 },
@@ -248,7 +239,7 @@ export const VILLAGE_RECIPES: VillageRecipe[] = [
     id: 'livre_recettes', labelFR: 'Livre de recettes', resultEmoji: '📝', resultLabel: 'Livre de recettes',
     ingredients: [
       { itemId: 'parchemin', itemEmoji: '📚', quantity: 3 },
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 5 },
+      { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 4 },
     ],
     xpBonus: 75, minAtelierTier: 1,
   },
@@ -274,7 +265,7 @@ export const VILLAGE_RECIPES: VillageRecipe[] = [
     id: 'parchemin_enluminé', labelFR: 'Parchemin enluminé', resultEmoji: '📜', resultLabel: 'Parchemin enluminé',
     ingredients: [
       { itemId: 'parchemin', itemEmoji: '📚', quantity: 5 },
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 8 },
+      { itemId: 'cafe_matin', itemEmoji: '☕', quantity: 6 },
     ],
     xpBonus: 140, minAtelierTier: 2,
   },
@@ -294,7 +285,7 @@ export const VILLAGE_RECIPES: VillageRecipe[] = [
     ingredients: [
       { itemId: 'pain_frais', itemEmoji: '🍞', quantity: 25 },
       { itemId: 'cafe_matin', itemEmoji: '☕', quantity: 20 },
-      { itemId: 'panier_surprise', itemEmoji: '🛒', quantity: 15 },
+      { itemId: 'outil_forge', itemEmoji: '🔨', quantity: 10 },
       { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 20 },
       { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 12 },
     ],
@@ -390,9 +381,8 @@ export function computeVillageTechBonuses(unlockedTechs: string[]): VillageTechB
     productionRateMultiplier['puits'] = 0.8;
     productionRateMultiplier['boulangerie'] = 0.8;
   }
-  // production-2 → Marché + Café + Forge ×0.8
+  // production-2 → Café + Forge ×0.8 (Marché = pas de production, interface boursière)
   if (unlockedTechs.includes('production-2')) {
-    productionRateMultiplier['marche'] = 0.8;
     productionRateMultiplier['cafe'] = 0.8;
     productionRateMultiplier['forge'] = 0.8;
   }

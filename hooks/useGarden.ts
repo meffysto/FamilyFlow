@@ -37,6 +37,16 @@ import {
   MAX_TRADES_PER_DAY,
   getTradeItemMeta,
   type TradeCategory,
+  // Marché boursier
+  initializeMarketStock,
+  executeBuy,
+  executeSell,
+  canBuyItem,
+  canSellItem,
+  canTransactToday,
+  transactionsRemainingToday,
+  pruneTransactionLog,
+  MAX_MARKET_TXN_PER_DAY,
 } from '../lib/village';
 import { parseFarmProfile, serializeFarmProfile } from '../lib/parser';
 import type {
@@ -48,8 +58,13 @@ import type {
   VillageInventory,
   BuildingProductionState,
   VillageAtelierCraft,
+  MarketStock,
+  MarketTransaction,
 } from '../lib/village';
 import type { VillageTechBonuses } from '../lib/village/atelier-engine';
+import { MARKET_ITEMS } from '../lib/village/market-engine';
+import { parseGamification, serializeGamification } from '../lib/parser';
+import type { VaultManager } from '../lib/vault';
 
 // ---------------------------------------------------------------------------
 // Fonctions utilitaires (hors hook)
@@ -69,6 +84,38 @@ function getMondayISO(date: Date): string {
  */
 function pickTemplate(weekIndex: number): ObjectiveTemplate {
   return OBJECTIVE_TEMPLATES[weekIndex % OBJECTIVE_TEMPLATES.length];
+}
+
+/** Retourne la catégorie marché d'un item (village ou farm) */
+function findMarketItemCategory(itemId: string): 'village' | 'farm' | null {
+  const def = MARKET_ITEMS.find(m => m.itemId === itemId);
+  return def?.category ?? null;
+}
+
+/** Parse un profil depuis gami-{id}.md pour lire/écrire les coins */
+function parseGamificationForMarket(raw: string): { coins: number } | null {
+  try {
+    const gami = parseGamification(raw);
+    const profile = gami.profiles?.[0];
+    if (!profile) return null;
+    return { coins: profile.coins ?? 0 };
+  } catch {
+    return null;
+  }
+}
+
+/** Écrit les coins mis à jour dans gami-{id}.md */
+async function writeGamiCoins(
+  vaultMgr: VaultManager,
+  gamiPath: string,
+  rawContent: string,
+  newCoins: number,
+): Promise<void> {
+  const gami = parseGamification(rawContent);
+  const profile = gami.profiles?.[0];
+  if (!profile) return;
+  profile.coins = newCoins;
+  await vaultMgr.writeFile(gamiPath, serializeGamification(gami));
 }
 
 // ---------------------------------------------------------------------------
@@ -105,6 +152,11 @@ export interface UseGardenReturn {
   receiveTrade: (code: string, profileId: string) => Promise<{ success: boolean; itemLabel?: string; emoji?: string; quantity?: number; category?: string; itemId?: string; error?: string }>;
   canSendTradeToday: boolean;
   tradesSentRemaining: number;
+  // Marché boursier
+  marketStock: MarketStock;
+  marketTransactions: MarketTransaction[];
+  buyFromMarket: (itemId: string, quantity: number, profileId: string) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
+  sellToMarket: (itemId: string, quantity: number, profileId: string) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
 }
 
 /**
@@ -117,7 +169,7 @@ export interface UseGardenReturn {
  */
 export function useGarden(): UseGardenReturn {
   // Consommation useVault (per D-01 — pas de nouveau provider)
-  const { vault, gardenRaw, setGardenRaw, profiles, awardProfileXP } = useVault();
+  const { vault, gardenRaw, setGardenRaw, profiles, awardProfileXP, refreshGamification } = useVault();
 
   // État local chargement
   const [isLoading, setIsLoading] = useState(false);
@@ -225,6 +277,26 @@ export function useGarden(): UseGardenReturn {
     [atelierTechs],
   );
 
+  // ---------------------------------------------------------------------------
+  // Marché boursier — stock, transactions, buy/sell
+  // ---------------------------------------------------------------------------
+
+  /** Stock du marché — initialisé au premier accès si vide */
+  const marketStock = useMemo<MarketStock>(() => {
+    const raw = gardenData.marketStock ?? {};
+    // Si vide et marché débloqué → initialiser avec le stock par défaut
+    if (Object.keys(raw).length === 0 && unlockedBuildings.some(b => b.buildingId === 'marche')) {
+      return initializeMarketStock();
+    }
+    return raw;
+  }, [gardenData, unlockedBuildings]);
+
+  /** Log des transactions marché */
+  const marketTransactions = useMemo<MarketTransaction[]>(
+    () => gardenData.marketTransactions ?? [],
+    [gardenData],
+  );
+
   /**
    * Retourne le nombre d'items en attente de collecte pour un bâtiment donné.
    * pendingItems = floor((lifetimeContribs - consumed) / (ratePerItem × prodMultiplier))
@@ -232,7 +304,7 @@ export function useGarden(): UseGardenReturn {
   const getPendingItems = useCallback(
     (buildingId: string): number => {
       const entry = BUILDINGS_CATALOG.find(b => b.id === buildingId);
-      if (!entry) return 0;
+      if (!entry || !entry.production) return 0; // Marché = production null
       const consumed = productionState[buildingId] ?? 0;
       const available = Math.max(0, lifetimeContributions - consumed);
       const multiplier = villageTechBonuses.productionRateMultiplier[buildingId] ?? 1;
@@ -396,7 +468,7 @@ export function useGarden(): UseGardenReturn {
     async (buildingId: string): Promise<void> => {
       if (!vault) return;
       const entry = BUILDINGS_CATALOG.find(b => b.id === buildingId);
-      if (!entry) return;
+      if (!entry || !entry.production) return; // Marché = production null
 
       const pending = getPendingItems(buildingId);
       if (pending === 0) return;
@@ -417,6 +489,160 @@ export function useGarden(): UseGardenReturn {
       setGardenRaw(newContent);
     },
     [vault, gardenData, inventory, productionState, getPendingItems, setGardenRaw],
+  );
+
+  // ---------------------------------------------------------------------------
+  // buyFromMarket — Marché boursier
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Achète un item au marché. Le profil paie des coins, le stock du marché baisse.
+   * Écrit dans jardin-familial.md (stock + transaction log).
+   * Les coins sont déduits du profil via gami-{id}.md.
+   */
+  const buyFromMarket = useCallback(
+    async (itemId: string, quantity: number, profileId: string): Promise<{ success: boolean; totalCost?: number; error?: string }> => {
+      if (!vault) return { success: false, error: 'Vault non disponible' };
+
+      // Vérifier le rate limit
+      if (!canTransactToday(marketTransactions, profileId)) {
+        return { success: false, error: 'Limite de 10 transactions/jour atteinte' };
+      }
+
+      // Trouver le profil pour vérifier les coins
+      const profile = profiles.find(p => p.id === profileId);
+      if (!profile) return { success: false, error: 'Profil introuvable' };
+
+      // Vérifier l'achat
+      const check = canBuyItem(itemId, quantity, marketStock, profile.coins ?? 0);
+      if (!check.canBuy) return { success: false, error: check.reason };
+
+      // Exécuter l'achat
+      const { newStock, transaction, totalCost } = executeBuy(itemId, quantity, profileId, marketStock);
+
+      // Mettre à jour le stock + log dans jardin-familial.md
+      const updatedTxns = pruneTransactionLog([...marketTransactions, transaction]);
+      const updatedData: VillageData = {
+        ...gardenData,
+        // Pour les items village → ajouter à l'inventaire collectif aussi
+        inventory: findMarketItemCategory(itemId) === 'village'
+          ? { ...inventory, [itemId]: (inventory[itemId] ?? 0) + quantity }
+          : inventory,
+        marketStock: newStock,
+        marketTransactions: updatedTxns,
+      };
+
+      const newContent = serializeGardenFile(updatedData);
+      await vault.writeFile(VILLAGE_FILE, newContent);
+      setGardenRaw(newContent);
+
+      // Déduire les coins du profil via gami-{id}.md
+      try {
+        const gamiPath = `gami-${profileId}.md`;
+        const gamiRaw = await vault.readFile(gamiPath).catch(() => '');
+        if (gamiRaw) {
+          const gami = parseGamificationForMarket(gamiRaw);
+          if (gami) {
+            gami.coins = Math.max(0, (gami.coins ?? 0) - totalCost);
+            await writeGamiCoins(vault, gamiPath, gamiRaw, gami.coins);
+          }
+        }
+        refreshGamification();
+      } catch { /* Gamification — non-critical */ }
+
+      return { success: true, totalCost };
+    },
+    [vault, gardenData, inventory, marketStock, marketTransactions, profiles, setGardenRaw, refreshGamification],
+  );
+
+  // ---------------------------------------------------------------------------
+  // sellToMarket — Marché boursier
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Vend un item au marché. Le stock du marché monte, le profil reçoit des coins.
+   * Items village : déduit de l'inventaire collectif.
+   * Items farm : déduit de l'inventaire ferme du profil.
+   */
+  const sellToMarket = useCallback(
+    async (itemId: string, quantity: number, profileId: string): Promise<{ success: boolean; totalGain?: number; error?: string }> => {
+      if (!vault) return { success: false, error: 'Vault non disponible' };
+
+      if (!canTransactToday(marketTransactions, profileId)) {
+        return { success: false, error: 'Limite de 10 transactions/jour atteinte' };
+      }
+
+      const category = findMarketItemCategory(itemId);
+
+      // Vérifier le stock disponible selon la catégorie
+      let profileItemCount = 0;
+      if (category === 'village') {
+        profileItemCount = inventory[itemId] ?? 0;
+      } else if (category === 'farm') {
+        // Lire l'inventaire ferme du profil
+        try {
+          const farmRaw = await vault.readFile(`farm-${profileId}.md`).catch(() => '');
+          const farmData = parseFarmProfile(farmRaw);
+          const farmInvObj = farmData.farmInventory ?? {};
+        profileItemCount = (farmInvObj as any)?.[itemId] ?? 0;
+        } catch {
+          profileItemCount = 0;
+        }
+      }
+
+      const check = canSellItem(itemId, quantity, marketStock, profileItemCount);
+      if (!check.canSell) return { success: false, error: check.reason };
+
+      const { newStock, transaction, totalGain } = executeSell(itemId, quantity, profileId, marketStock);
+
+      const updatedTxns = pruneTransactionLog([...marketTransactions, transaction]);
+
+      // Mettre à jour village
+      const updatedInventory = category === 'village'
+        ? { ...inventory, [itemId]: Math.max(0, (inventory[itemId] ?? 0) - quantity) }
+        : inventory;
+
+      const updatedData: VillageData = {
+        ...gardenData,
+        inventory: updatedInventory,
+        marketStock: newStock,
+        marketTransactions: updatedTxns,
+      };
+
+      const newContent = serializeGardenFile(updatedData);
+      await vault.writeFile(VILLAGE_FILE, newContent);
+      setGardenRaw(newContent);
+
+      // Déduire les items ferme si farm
+      if (category === 'farm') {
+        try {
+          const farmPath = `farm-${profileId}.md`;
+          const farmRaw = await vault.readFile(farmPath).catch(() => '');
+          const farmData = parseFarmProfile(farmRaw);
+          const farmInv = { ...(farmData.farmInventory ?? {}) } as Record<string, number>;
+          farmInv[itemId] = Math.max(0, (farmInv[itemId] ?? 0) - quantity);
+          const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+          await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, farmInventory: farmInv as any }));
+        } catch { /* non-critical */ }
+      }
+
+      // Créditer les coins au profil
+      try {
+        const gamiPath = `gami-${profileId}.md`;
+        const gamiRaw = await vault.readFile(gamiPath).catch(() => '');
+        if (gamiRaw) {
+          const gami = parseGamificationForMarket(gamiRaw);
+          if (gami) {
+            gami.coins = (gami.coins ?? 0) + totalGain;
+            await writeGamiCoins(vault, gamiPath, gamiRaw, gami.coins);
+          }
+        }
+        refreshGamification();
+      } catch { /* Gamification — non-critical */ }
+
+      return { success: true, totalGain };
+    },
+    [vault, gardenData, inventory, marketStock, marketTransactions, profiles, setGardenRaw, refreshGamification],
   );
 
   // ---------------------------------------------------------------------------
@@ -813,5 +1039,10 @@ export function useGarden(): UseGardenReturn {
     receiveTrade,
     canSendTradeToday: canSendTradeTodayValue,
     tradesSentRemaining: tradesSentRemainingValue,
+    // Marché boursier
+    marketStock,
+    marketTransactions,
+    buyFromMarket,
+    sellToMarket,
   };
 }

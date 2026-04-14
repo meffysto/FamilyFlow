@@ -20,7 +20,7 @@ export interface BuildingCatalogEntry {
   labelFR: string;     // 'Puits', 'Boulangerie', etc.
   palier: number;      // 100, 300, 700, ...
   sprite: ReturnType<typeof require>;
-  production: BuildingProductionDef;
+  production: BuildingProductionDef | null; // null = bâtiment spécial (Marché)
 }
 
 /**
@@ -42,7 +42,7 @@ export const BUILDINGS_CATALOG: BuildingCatalogEntry[] = [
   {
     id: 'marche', labelFR: 'Marché', palier: 700,
     sprite: require('../../assets/buildings/village/marche.png'),
-    production: { itemId: 'panier_surprise', itemLabel: 'Panier surprise', itemEmoji: '🛒', ratePerItem: 20 },
+    production: null, // Bâtiment spécial — interface marché boursier (pas de production classique)
   },
   {
     id: 'cafe', labelFR: 'Café', palier: 1500,

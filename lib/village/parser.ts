@@ -19,7 +19,7 @@
 //
 // Module pur : zéro import hook/context (per D-03c).
 
-import type { VillageData, VillageContribution, VillageWeekRecord, UnlockedBuilding, VillageInventory, BuildingProductionState, VillageAtelierCraft } from './types';
+import type { VillageData, VillageContribution, VillageWeekRecord, UnlockedBuilding, VillageInventory, BuildingProductionState, VillageAtelierCraft, MarketStock, MarketTransaction } from './types';
 import type { VaultManager } from '../vault';
 
 /** Chemin du fichier village dans le vault Obsidian */
@@ -54,6 +54,8 @@ export function parseGardenFile(content: string): VillageData {
       productionState: {},
       atelierCrafts: [],
       atelierTechs: [],
+      marketStock: {},
+      marketTransactions: [],
     };
   }
 
@@ -87,9 +89,11 @@ export function parseGardenFile(content: string): VillageData {
   const productionState: BuildingProductionState = {};
   const atelierCrafts: VillageAtelierCraft[] = [];
   let atelierTechs: string[] = [];
+  const marketStock: MarketStock = {};
+  const marketTransactions: MarketTransaction[] = [];
 
   const lines = body.split('\n');
-  let section: 'none' | 'contributions' | 'historique' | 'constructions' | 'inventaire' | 'production' | 'atelier_crafts' | 'atelier_tech' = 'none';
+  let section: 'none' | 'contributions' | 'historique' | 'constructions' | 'inventaire' | 'production' | 'atelier_crafts' | 'atelier_tech' | 'marche_stock' | 'marche_log' = 'none';
 
   for (const line of lines) {
     if (line.startsWith('## ')) {
@@ -108,6 +112,10 @@ export function parseGardenFile(content: string): VillageData {
         section = 'atelier_crafts';
       } else if (header === '## atelier tech') {
         section = 'atelier_tech';
+      } else if (header === '## marché stock' || header === '## marche stock') {
+        section = 'marche_stock';
+      } else if (header === '## marché log' || header === '## marche log') {
+        section = 'marche_log';
       } else {
         section = 'none';
       }
@@ -210,6 +218,33 @@ export function parseGardenFile(content: string): VillageData {
       // Format : - techId,techId2,... (une seule ligne CSV)
       const csv = raw.trim();
       if (csv) atelierTechs = csv.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (section === 'marche_stock') {
+      // Format : itemId: N
+      const colonIdx = raw.indexOf(':');
+      if (colonIdx === -1) continue;
+      const itemId = raw.slice(0, colonIdx).trim();
+      const qty = parseInt(raw.slice(colonIdx + 1).trim(), 10);
+      if (itemId && !isNaN(qty)) marketStock[itemId] = qty;
+    } else if (section === 'marche_log') {
+      // Format : timestamp | profileId | action | itemId | quantity | unitPrice | totalPrice
+      const parts = raw.split(' | ');
+      if (parts.length < 7) continue;
+      const [timestamp, profileId, action, itemId, qtyStr, unitStr, totalStr] = parts;
+      if (!timestamp || !profileId || !action || !itemId) continue;
+      if (action.trim() !== 'buy' && action.trim() !== 'sell') continue;
+      const quantity = parseInt(qtyStr?.trim() ?? '', 10);
+      const unitPrice = parseInt(unitStr?.trim() ?? '', 10);
+      const totalPrice = parseInt(totalStr?.trim() ?? '', 10);
+      if (isNaN(quantity) || isNaN(unitPrice) || isNaN(totalPrice)) continue;
+      marketTransactions.push({
+        timestamp: timestamp.trim(),
+        profileId: profileId.trim(),
+        action: action.trim() as 'buy' | 'sell',
+        itemId: itemId.trim(),
+        quantity,
+        unitPrice,
+        totalPrice,
+      });
     }
   }
 
@@ -238,6 +273,8 @@ export function parseGardenFile(content: string): VillageData {
     productionState,
     atelierCrafts,
     atelierTechs,
+    marketStock,
+    marketTransactions,
   };
 }
 
@@ -302,6 +339,20 @@ export function serializeGardenFile(data: VillageData): string {
   lines.push('## Atelier Tech');
   if ((data.atelierTechs ?? []).length > 0) {
     lines.push(`- ${data.atelierTechs.join(',')}`);
+  }
+  lines.push('');
+
+  // Section Marché Stock (stock du marché boursier)
+  lines.push('## Marché Stock');
+  for (const [itemId, qty] of Object.entries(data.marketStock ?? {})) {
+    lines.push(`- ${itemId}: ${qty}`);
+  }
+  lines.push('');
+
+  // Section Marché Log (dernières transactions)
+  lines.push('## Marché Log');
+  for (const t of data.marketTransactions ?? []) {
+    lines.push(`- ${t.timestamp} | ${t.profileId} | ${t.action} | ${t.itemId} | ${t.quantity} | ${t.unitPrice} | ${t.totalPrice}`);
   }
   lines.push('');
 

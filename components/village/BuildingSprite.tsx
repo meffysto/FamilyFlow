@@ -116,7 +116,7 @@ export const BuildingSprite = React.memo(function BuildingSprite({
             <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
           </View>
           <Animated.Text style={[styles.pendingEmoji, emojiStyle]}>
-            {entry.production.itemEmoji}
+            {entry.production?.itemEmoji ?? '📦'}
           </Animated.Text>
         </>
       )}

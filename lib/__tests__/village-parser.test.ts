@@ -53,7 +53,7 @@ const FULL_GARDEN_DATA: VillageData = {
   pastWeeks: [
     { weekStart: '2026-03-31', target: 45, total: 52, claimed: true },
   ],
-  unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
+  unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [], marketStock: {}, marketTransactions: [],
 };
 
 /** Contribution de test */
@@ -77,7 +77,7 @@ describe('parseGardenFile', () => {
       rewardClaimed: false,
       contributions: [],
       pastWeeks: [],
-      unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
+      unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [], marketStock: {}, marketTransactions: [],
     });
   });
 
@@ -169,7 +169,7 @@ describe('serializeGardenFile', () => {
       rewardClaimed: false,
       contributions: [],
       pastWeeks: [],
-      unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
+      unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [], marketStock: {}, marketTransactions: [],
     };
     const result = serializeGardenFile(emptyData);
     expect(result).toContain('## Contributions');
@@ -317,9 +317,9 @@ describe('BUILDINGS_CATALOG (Phase 30)', () => {
     ]);
   });
 
-  it('contient les paliers exacts 100/300/700/1500/3000/6000/12000/25000', () => {
+  it('contient les paliers exacts 100/300/700/1500/3000/6000/8000/25000', () => {
     expect(BUILDINGS_CATALOG.map(b => b.palier)).toEqual([
-      100, 300, 700, 1500, 3000, 6000, 12000, 25000
+      100, 300, 700, 1500, 3000, 6000, 8000, 25000
     ]);
   });
 
@@ -483,7 +483,7 @@ describe('parseGardenFile + serializeGardenFile — section Constructions (Phase
     const data: VillageData = {
       version: 1, createdAt: '2026-04-01', currentWeekStart: '2026-04-07',
       currentThemeIndex: 0, rewardClaimed: false,
-      contributions: [], pastWeeks: [], unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
+      contributions: [], pastWeeks: [], unlockedBuildings: [], inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [], marketStock: {}, marketTransactions: [],
     };
     const out = serializeGardenFile(data);
     expect(out).toContain('## Constructions');
@@ -501,7 +501,7 @@ describe('parseGardenFile + serializeGardenFile — section Constructions (Phase
         { timestamp: '2026-04-12T14:32:00', buildingId: 'puits', palier: 100 },
         { timestamp: '2026-04-15T09:15:00', buildingId: 'boulangerie', palier: 300 },
       ],
-      inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [],
+      inventory: {}, productionState: {}, atelierCrafts: [], atelierTechs: [], marketStock: {}, marketTransactions: [],
     };
     const serialized = serializeGardenFile(data);
     const reparsed = parseGardenFile(serialized);

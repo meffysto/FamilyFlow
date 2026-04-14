@@ -10,3 +10,4 @@ export * from './activities';
 export * from './catalog';
 export * from './atelier-engine';
 export * from './trade-engine';
+export * from './market-engine';

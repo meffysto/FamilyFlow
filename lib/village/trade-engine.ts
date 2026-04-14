@@ -66,7 +66,9 @@ export interface TradeItemOption {
 function buildItemRegistry(): { idToCode: Map<string, string>; codeToId: Map<string, string> } {
   const allItems: string[] = [];
   // Village
-  for (const b of BUILDINGS_CATALOG) allItems.push(`V:${b.production.itemId}`);
+  for (const b of BUILDINGS_CATALOG) {
+    if (b.production) allItems.push(`V:${b.production.itemId}`);
+  }
   // Farm
   for (const k of ['oeuf', 'lait', 'farine', 'miel']) allItems.push(`F:${k}`);
   // Harvest
@@ -270,6 +272,7 @@ export function getAvailableTradeItems(
     case 'village': {
       const result: TradeItemOption[] = [];
       for (const entry of BUILDINGS_CATALOG) {
+        if (!entry.production) continue; // Marché = pas de production
         const { itemId, itemLabel, itemEmoji } = entry.production;
         const available = villageInv[itemId] ?? 0;
         if (available > 0) {
@@ -333,8 +336,8 @@ export function getTradeItemMeta(
 ): { label: string; emoji: string } {
   switch (category) {
     case 'village': {
-      const entry = BUILDINGS_CATALOG.find(b => b.production.itemId === itemId);
-      if (entry) {
+      const entry = BUILDINGS_CATALOG.find(b => b.production?.itemId === itemId);
+      if (entry?.production) {
         return { label: entry.production.itemLabel, emoji: entry.production.itemEmoji };
       }
       return { label: itemId, emoji: '📦' };
