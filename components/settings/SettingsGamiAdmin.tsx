@@ -14,6 +14,7 @@ import { View, Text, StyleSheet, TextInput, Alert, TouchableOpacity } from 'reac
 import { useTranslation } from 'react-i18next';
 import { serializeGamification, parseFarmProfile, serializeFarmProfile } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -313,6 +314,96 @@ function ProfileCard({
   );
 }
 
+// ── Crops de test pour HarvestCardToast ───────────────────────────────────
+const TEST_CROPS = [
+  { emoji: '🍅', label: 'Tomate récoltée !', qty: 12 },
+  { emoji: '🥕', label: 'Carotte récoltée !', qty: 8 },
+  { emoji: '🌽', label: 'Maïs récolté !', qty: 20 },
+  { emoji: '🍓', label: '✨ Fraise dorée récoltée !', qty: 60 },
+  { emoji: '🌾', label: 'Blé récolté !', qty: 5 },
+];
+
+function HarvestCardTest() {
+  const { colors, primary } = useThemeColors();
+  const { showHarvestCard } = useToast();
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
+      <TouchableOpacity
+        style={styles.cardHeader}
+        onPress={() => setExpanded(e => !e)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.cardTitle, { color: colors.text }]}>🌾 Test HarvestCardToast</Text>
+        <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
+          Tester l'accumulation live
+        </Text>
+        <Text style={[styles.chevron, { color: colors.textFaint }]}>{expanded ? '▼' : '▶'}</Text>
+      </TouchableOpacity>
+
+      {expanded && (
+        <View style={styles.cardBody}>
+          <Text style={[styles.sectionLabel, { color: primary }]}>Récoltes individuelles</Text>
+          <Text style={[styles.levelHint, { color: colors.textFaint }]}>
+            Tape plusieurs fois le même bouton → observe l'accumulation (merge qty + pulse)
+          </Text>
+
+          {TEST_CROPS.map(crop => (
+            <TouchableOpacity
+              key={crop.emoji}
+              style={[styles.testBtn, { backgroundColor: primary + '20', borderColor: primary + '40' }]}
+              onPress={() => showHarvestCard({ emoji: crop.emoji, label: crop.label, qty: crop.qty }, crop.emoji === '🍓')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.testBtnText, { color: colors.text }]}>
+                {crop.emoji}  {crop.label}  <Text style={{ color: primary }}>+{crop.qty} 🍂</Text>
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <Text style={[styles.sectionLabel, { color: primary }]}>Stress test</Text>
+          <Text style={[styles.levelHint, { color: colors.textFaint }]}>
+            Déclenche 5 récoltes différentes en rafale → tous les chips doivent s'accumuler
+          </Text>
+          <TouchableOpacity
+            style={[styles.testBtn, { backgroundColor: '#ef444420', borderColor: '#ef444440' }]}
+            onPress={() => {
+              TEST_CROPS.forEach((crop, i) => {
+                setTimeout(() => {
+                  showHarvestCard({ emoji: crop.emoji, label: crop.label, qty: crop.qty }, crop.emoji === '🍓');
+                }, i * 300);
+              });
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.testBtnText, { color: '#ef4444' }]}>
+              🚀  Rafale × 5 cultures (300ms d'écart)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.testBtn, { backgroundColor: '#ef444420', borderColor: '#ef444440' }]}
+            onPress={() => {
+              // Même culture × 8 fois rapidement → qty doit s'additionner
+              for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                  showHarvestCard({ emoji: '🍅', label: 'Tomate récoltée !', qty: 12 });
+                }, i * 200);
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.testBtnText, { color: '#ef4444' }]}>
+              🔁  Même culture × 8 (merge qty : attendu +96 🍂)
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export function SettingsGamiAdmin({ vault, profiles, gamiData, refresh }: SettingsGamiAdminProps) {
   const { colors } = useThemeColors();
 
@@ -331,6 +422,7 @@ export function SettingsGamiAdmin({ vault, profiles, gamiData, refresh }: Settin
       <Text style={[styles.warning, { color: '#ef4444' }]}>
         Mode admin — Les modifications sont écrites directement dans le vault.
       </Text>
+      <HarvestCardTest />
       {profiles.map(profile => (
         <ProfileCard
           key={profile.id}
@@ -433,5 +525,16 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: FontSize.body,
+  },
+  testBtn: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  testBtnText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
   },
 });
