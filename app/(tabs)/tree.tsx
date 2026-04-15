@@ -320,7 +320,7 @@ export default function TreeScreen() {
     3: TERRAIN_HEIGHT, 4: TERRAIN_HEIGHT, 5: TERRAIN_HEIGHT,
   };
   const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
-  const { showToast } = useToast();
+  const { showToast, showHarvestCard } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded, activeFarmTutorialStep } = useHelp();
 
@@ -1232,13 +1232,11 @@ export default function TreeScreen() {
           const emoji = harvestedCropDef?.emoji ?? '🌾';
           const cropLabel = harvestedCropDef ? t(harvestedCropDef.labelKey) : result.cropId;
           const accord = FEMININE_CROPS.has(result.cropId) ? 'récoltée' : 'récolté';
-          const goldenPrefix = result.isGolden ? '✨ ' : '';
           const finalReward = displayReward * (result.isGolden ? 5 : 1);
-          showToast(
-            `${goldenPrefix}${cropLabel} ${accord} !`,
-            'success',
-            undefined,
-            { icon: emoji, subtitle: `+${finalReward} 🍂${result.isGolden ? ' · Culture dorée !' : ''}` }
+          const harvestLabel = `${result.isGolden ? '✨ ' : ''}${cropLabel} ${accord} !`;
+          showHarvestCard(
+            { emoji, label: harvestLabel, qty: finalReward },
+            result.isGolden,
           );
           // Animation graine rare avec délai pour ne pas chevaucher le toast récolte
           if (result.seedDrop) {
