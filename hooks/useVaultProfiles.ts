@@ -51,6 +51,7 @@ export interface UseVaultProfilesResult {
   setAgeUpgrades: Dispatch<SetStateAction<AgeUpgrade[]>>;
   setActiveProfile: (profileId: string) => Promise<void>;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
+  renameGarden: (profileId: string, name: string) => Promise<void>;
   updateTreeSpecies: (profileId: string, species: string) => Promise<void>;
   buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
@@ -129,6 +130,23 @@ export function useVaultProfiles(
       }
     });
   }, []);
+
+  const renameGarden = useCallback(async (profileId: string, name: string) => {
+    if (!vaultRef.current) return;
+    try {
+      const file = farmFile(profileId);
+      const content = await vaultRef.current.readFile(file).catch(() => '');
+      const farmData = parseFarmProfile(content);
+      farmData.gardenName = name || undefined;
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vaultRef.current.writeFile(file, serializeFarmProfile(profileName, farmData));
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === profileId ? { ...p, gardenName: name || undefined } : p))
+      );
+    } catch (e) {
+      throw new Error(`renameGarden: ${e}`);
+    }
+  }, [profiles]);
 
   const updateTreeSpecies = useCallback(async (profileId: string, species: string) => {
     if (!vaultRef.current) return;
@@ -663,6 +681,7 @@ export function useVaultProfiles(
     setAgeUpgrades,
     setActiveProfile,
     updateProfileTheme,
+    renameGarden,
     updateTreeSpecies,
     buyMascotItem,
     placeMascotItem,

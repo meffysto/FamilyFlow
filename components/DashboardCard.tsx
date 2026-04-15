@@ -53,6 +53,8 @@ interface DashboardCardProps {
   tinted?: boolean;
   /** Masque le lien "Voir tout →" dans le header (garde le tap sur la carte). */
   hideMoreLink?: boolean;
+  /** Appui long sur le titre — ex: renommer. */
+  onTitleLongPress?: () => void;
 }
 
 const STORAGE_PREFIX = 'dashboard_collapsed_';
@@ -73,6 +75,7 @@ export function DashboardCard({
   glass = true,
   tinted = false,
   hideMoreLink = false,
+  onTitleLongPress,
 }: DashboardCardProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
@@ -130,10 +133,11 @@ export function DashboardCard({
     if (h > 0 && h !== contentHeight) setContentHeight(h);
   }, [contentHeight]);
 
-  const HeaderWrapper = collapsible ? TouchableOpacity : View;
-  const headerProps = collapsible
+  const HeaderWrapper = (collapsible || onTitleLongPress) ? TouchableOpacity : View;
+  const headerProps = (collapsible || onTitleLongPress)
     ? {
-        onPress: toggleCollapse,
+        onPress: collapsible ? toggleCollapse : undefined,
+        onLongPress: onTitleLongPress,
         activeOpacity: 0.7,
         accessibilityRole: 'button' as const,
         accessibilityLabel: `${title}, ${isCollapsed ? 'replié' : 'déplié'}. Appuyez pour ${isCollapsed ? 'déplier' : 'replier'}.`,

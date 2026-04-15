@@ -137,7 +137,7 @@ export default function MoreScreen() {
       { emoji: '📖', label: 'Histoires du soir', route: '/(tabs)/stories', color: colors.catSouvenirs, category: 'souvenirs' as const },
       // Jeux & Progrès — vert
       { emoji: '🌱', label: t('menu.items.skills'), route: '/(tabs)/skills', color: colors.catJeux, category: 'jeux' as const },
-      { emoji: '🌳', label: t('menu.items.tree'), route: '/(tabs)/tree' as any, color: colors.catJeux, category: 'jeux' as const },
+      { emoji: '🌳', label: activeProfile?.gardenName || t('menu.items.tree'), route: '/(tabs)/tree' as any, color: colors.catJeux, category: 'jeux' as const },
       { emoji: '🎰', label: t('menu.items.rewards'), route: '/(tabs)/loot', badge: lootBoxes || undefined, color: colors.catJeux, category: 'jeux' as const },
       { emoji: '🏅', label: t('menu.items.challenges'), route: '/(tabs)/defis', badge: activeDefis || undefined, color: colors.catJeux, category: 'jeux' as const },
       // Vie de famille — rose

@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, LayoutAnimation } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, LayoutAnimation, Modal, TextInput, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -165,7 +165,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
-  const { profiles, activeProfile, completeAdventure, familyQuests } = useVault();
+  const { profiles, activeProfile, completeAdventure, familyQuests, renameGarden } = useVault();
   const { showToast } = useToast();
   const tone = useTone();
 
@@ -190,6 +190,28 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
       return next;
     });
   }, []);
+
+  // ── Rename garden modal ──────────────────────────────────────
+  const [renameVisible, setRenameVisible] = useState(false);
+  const [renameText, setRenameText] = useState('');
+
+  const gardenDisplayName = activeProfile?.gardenName || t('mascot.garden.title');
+
+  const handleTitleLongPress = useCallback(() => {
+    setRenameText(activeProfile?.gardenName ?? '');
+    setRenameVisible(true);
+  }, [activeProfile?.gardenName]);
+
+  const handleRenameConfirm = useCallback(async () => {
+    if (!activeProfile) return;
+    const trimmed = renameText.trim();
+    try {
+      await renameGarden(activeProfile.id, trimmed);
+    } catch (e) {
+      if (__DEV__) console.warn('renameGarden', e);
+    }
+    setRenameVisible(false);
+  }, [activeProfile, renameText, renameGarden]);
 
   // ── Quete cooperative active ─────────────────────────────────
   const activeQuest = useMemo(
@@ -662,12 +684,13 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
 
   return (
     <DashboardCard
-      title={t('mascot.garden.title')}
+      title={gardenDisplayName}
       icon="🌳"
       color={colors.catJeux}
       tinted
       collapsible
       cardId="garden"
+      onTitleLongPress={handleTitleLongPress}
     >
       {/* Header : profil actif a gauche, toggle + badge a droite */}
       {activeProfile && (
@@ -830,6 +853,47 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
           {isChildMode ? t('mascot.garden.ctaChild') : t('mascot.garden.cta')}
         </Text>
       </TouchableOpacity>
+
+      {/* Modal rename jardin */}
+      <Modal
+        visible={renameVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRenameVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setRenameVisible(false)}>
+          <Pressable style={[styles.modalContent, { backgroundColor: colors.card }]} onPress={() => {}}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t('mascot.garden.renameTitle')}
+            </Text>
+            <TextInput
+              style={[styles.modalInput, { color: colors.text, borderColor: colors.border }]}
+              value={renameText}
+              onChangeText={setRenameText}
+              placeholder={t('mascot.garden.renamePlaceholder')}
+              placeholderTextColor={colors.textSub}
+              maxLength={30}
+              autoFocus
+              selectTextOnFocus
+              onSubmitEditing={handleRenameConfirm}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.border }]}
+                onPress={() => setRenameVisible(false)}
+              >
+                <Text style={{ color: colors.text }}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: primary }]}
+                onPress={handleRenameConfirm}
+              >
+                <Text style={{ color: colors.onPrimary }}>{t('mascot.garden.renameConfirm')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </DashboardCard>
   );
 }
@@ -1318,6 +1382,41 @@ const styles = StyleSheet.create({
   sagaTeaserTitle: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
+  },
+  // ── Modal rename ──────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  modalTitle: {
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    fontSize: FontSize.body,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    justifyContent: 'flex-end',
+  },
+  modalBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.md,
   },
 });
 

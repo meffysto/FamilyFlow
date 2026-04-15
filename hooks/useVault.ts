@@ -151,6 +151,7 @@ export interface VaultState {
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
+  renameGarden: (profileId: string, name: string) => Promise<void>;
   updateTreeSpecies: (profileId: string, species: string) => Promise<void>;
   buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
@@ -1661,6 +1662,7 @@ export function useVaultInternal(): VaultState {
     addPhoto,
     getPhotoUri,
     updateProfileTheme: profilesHook.updateProfileTheme,
+    renameGarden: profilesHook.renameGarden,
     updateTreeSpecies: profilesHook.updateTreeSpecies,
     buyMascotItem: profilesHook.buyMascotItem,
     placeMascotItem: profilesHook.placeMascotItem,

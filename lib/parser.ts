@@ -648,6 +648,7 @@ export function parseFarmProfile(content: string): FarmProfileData {
     : [];
 
   return {
+    gardenName: props.garden_name || undefined,
     treeSpecies,
     mascotDecorations,
     mascotInhabitants,
@@ -688,6 +689,7 @@ export function parseFarmProfile(content: string): FarmProfileData {
 export function serializeFarmProfile(profileName: string, data: FarmProfileData): string {
   const lines: string[] = [`# Farm — ${profileName}`, ''];
 
+  if (data.gardenName) lines.push(`garden_name: ${data.gardenName}`);
   if (data.treeSpecies) lines.push(`tree_species: ${data.treeSpecies}`);
   if (data.mascotDecorations.length > 0) lines.push(`mascot_decorations: ${data.mascotDecorations.join(',')}`);
   if (data.mascotInhabitants.length > 0) lines.push(`mascot_inhabitants: ${data.mascotInhabitants.join(',')}`);

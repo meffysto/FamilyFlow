@@ -81,6 +81,7 @@ export interface Profile {
   voiceFishAudioId?: string;    // reference_id Fish Audio (cloné via /model)
   voicePersonalId?: string;     // identifier iOS Personal Voice
   voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'fish-audio-cloned' | 'expo-speech';
+  gardenName?: string;           // nom personnalisé du jardin (fallback "Mon jardin")
   treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
   mascotDecorations: string[];   // IDs des décorations achetées
   mascotInhabitants: string[];   // IDs des habitants achetés
@@ -574,6 +575,7 @@ export interface Note {
 
 /** Données ferme/mascot/compagnon per-profil — stockées dans farm-{profileId}.md */
 export interface FarmProfileData {
+  gardenName?: string;
   treeSpecies?: import('../lib/mascot/types').TreeSpecies;
   mascotDecorations: string[];
   mascotInhabitants: string[];
