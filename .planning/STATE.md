@@ -28,7 +28,7 @@ Phase: 33 (exp-ditions) — EXECUTING
 Plan: 3 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
-Last activity: 2026-04-15 - Completed quick task 260415-mby: Entrée naturelle visiteur marche depuis hors-écran
+Last activity: 2026-04-15 - Completed quick task 260415-pdq: Aligner calcul pending items village avec productionRateMultiplier
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
@@ -53,6 +53,7 @@ Status: Phase complete — ready for verification
 | 260415-j0b | Afficher les gains dans les expéditions | 2026-04-15 | ae37ebf | [260415-j0b-afficher-les-gains-dans-les-exp-ditions](./quick/260415-j0b-afficher-les-gains-dans-les-exp-ditions/) |
 | 260415-lyp | Mouvement naturel compagnon ferme | 2026-04-15 | d7d5148 | [260415-lyp-mouvement-naturel-compagnon-ferme](./quick/260415-lyp-mouvement-naturel-compagnon-ferme/) |
 | 260415-mby | Entrée naturelle visiteur marche depuis hors-écran | 2026-04-15 | 51aa26e | [260415-mby-entr-e-naturelle-visiteur-marche-depuis-](./quick/260415-mby-entr-e-naturelle-visiteur-marche-depuis-/) |
+| 260415-pdq | Aligner calcul pending items village avec productionRateMultiplier | 2026-04-15 | 94cd0e8 | [260415-pdq-aligner-calcul-pending-items-village-ave](./quick/260415-pdq-aligner-calcul-pending-items-village-ave/) |
 
 ## Performance Metrics
 
