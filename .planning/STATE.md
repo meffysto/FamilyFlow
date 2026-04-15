@@ -4,7 +4,7 @@ milestone: v1.5
 milestone_name: Village Vivant
 status: verifying
 last_updated: "2026-04-15T12:00:14.449Z"
-last_activity: 2026-04-14
+last_activity: 2026-04-15
 progress:
   total_phases: 5
   completed_phases: 2
@@ -50,6 +50,7 @@ Status: Phase complete — ready for verification
 | 260412-q49 | Échange inter-familles via le Port du village | 2026-04-12 | c6e90ce | [260412-q49-change-inter-familles-via-le-port-du-vil](./quick/260412-q49-change-inter-familles-via-le-port-du-vil/) |
 | 260414-l12 | Améliorer le visuel des modals BuildingShopSheet et BuildingDetailSheet pour un look cozy/farm game | 2026-04-14 | 5139e70 | [260414-l12-am-liorer-le-visuel-des-modals-buildings](./quick/260414-l12-am-liorer-le-visuel-des-modals-buildings/) |
 | 260415-egg | Augmenter la taille des inhabitants dans Mon jardin (animaux x2, items +50%, emojis +30%) | 2026-04-15 | 5aebf7b | [260415-egg-augmenter-la-taille-des-inhabitants-dans](./quick/260415-egg-augmenter-la-taille-des-inhabitants-dans/) |
+| 260415-j0b | Afficher les gains dans les expéditions | 2026-04-15 | ae37ebf | [260415-j0b-afficher-les-gains-dans-les-exp-ditions](./quick/260415-j0b-afficher-les-gains-dans-les-exp-ditions/) |
 
 ## Performance Metrics
 
