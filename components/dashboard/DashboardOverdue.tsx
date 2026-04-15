@@ -29,7 +29,7 @@ function DashboardOverdueInner({ handleTaskToggle, handleTaskSkip }: DashboardSe
   if (overdueTasks.length === 0) return null;
 
   return (
-    <DashboardCard key="overdue" title={t('dashboard.overdue.title')} icon="⚠️" count={overdueTasks.length} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/tasks')}>
+    <DashboardCard key="overdue" title={t('dashboard.overdue.title')} icon="⚠️" count={overdueTasks.length} color={colors.catSante} tinted onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'retard' } })}>
       <View style={styles.metricRow}>
         <Text style={[styles.metricNum, { color: colors.catSante }]}>{overdueTasks.length}</Text>
         <View style={styles.metricLabel}>

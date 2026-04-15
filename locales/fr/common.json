@@ -447,6 +447,7 @@
     },
     "filters": {
       "all": "Tous",
+      "overdue": "En retard",
       "home": "Maison",
       "myTasks": "Mes tâches"
     },
@@ -3344,11 +3345,15 @@
       "palmierDesc": "Exotique et fun, le palmier évoque les vacances et l'aventure. Symbole de liberté et de détente."
     },
     "garden": {
-      "title": "Jardin familial",
+      "title": "Mon jardin",
       "treeA11y": "Arbre de {{name}}",
       "choose": "Choisir",
       "cta": "Voir le jardin",
-      "ctaChild": "Mon jardin !"
+      "ctaChild": "Mon jardin !",
+      "renameTitle": "Renommer mon jardin",
+      "renamePlaceholder": "Mon jardin",
+      "renameConfirm": "Renommer",
+      "renameHint": "Appui long pour renommer"
     },
     "screen": {
       "title": "Mon jardin",

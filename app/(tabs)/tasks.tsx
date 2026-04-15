@@ -159,6 +159,7 @@ const weatherStyles = StyleSheet.create({
 // Les labels sont résolus dynamiquement via t() dans buildFilters
 const STATIC_FILTER_IDS = [
   { id: 'tous', labelKey: 'tasks.filters.all', emoji: '📋' },
+  { id: 'retard', labelKey: 'tasks.filters.overdue', emoji: '⚠️' },
   { id: 'maison', labelKey: 'tasks.filters.home', emoji: '🏠' },
 ];
 
@@ -485,7 +486,10 @@ export default function TasksScreen() {
       result = [...tasks];
 
       // Apply filter
-      if (filter === 'mes-taches') {
+      if (filter === 'retard') {
+        const todayISO = new Date().toISOString().slice(0, 10);
+        result = result.filter((t) => !t.completed && t.dueDate && t.dueDate < todayISO);
+      } else if (filter === 'mes-taches') {
         if (activeProfile) {
           const nameNorm = activeProfile.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\s_]+/g, '');
           result = result.filter((t) =>

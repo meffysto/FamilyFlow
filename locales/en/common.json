@@ -447,6 +447,7 @@
     },
     "filters": {
       "all": "All",
+      "overdue": "Overdue",
       "home": "Home",
       "myTasks": "My tasks"
     },
