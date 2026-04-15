@@ -35,6 +35,7 @@ import {
   isExpeditionComplete,
   getLootDisplay,
   EXPEDITION_DROP_RATES,
+  EXPEDITION_LOOT_TABLE,
   type ExpeditionMission,
 } from '../../lib/mascot/expedition-engine';
 import { CROP_CATALOG, type HarvestInventory } from '../../lib/mascot/types';
@@ -421,6 +422,19 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
         })}
       </View>
 
+      {/* Gains possibles */}
+      <View style={styles.lootRow}>
+        <Text style={[styles.lootLabel, { color: colors.textMuted }]}>Gains possibles :</Text>
+        <View style={styles.lootChips}>
+          {EXPEDITION_LOOT_TABLE[mission.difficulty].map((item) => (
+            <View key={item.itemId} style={[styles.lootChip, { backgroundColor: colors.catJeux + '18', borderColor: colors.catJeux + '44' }]}>
+              <Text style={styles.lootChipEmoji}>{item.emoji}</Text>
+              <Text style={[styles.lootChipText, { color: colors.catJeux }]} numberOfLines={1}>{item.label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
       {/* Bouton lancer */}
       <TouchableOpacity
         onPress={handlePress}
@@ -746,6 +760,35 @@ const styles = StyleSheet.create({
   costChipQty: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
+  },
+  lootRow: {
+    gap: Spacing.xs,
+  },
+  lootLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+  },
+  lootChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  lootChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    gap: Spacing.xs,
+  },
+  lootChipEmoji: {
+    fontSize: FontSize.label,
+  },
+  lootChipText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    maxWidth: 110,
   },
   launchBtn: {
     height: 44,

@@ -174,7 +174,7 @@ export const EXPEDITION_DROP_RATES: Record<ExpeditionDifficulty, Record<Expediti
 
 // ─── Table de loot ────────────────────────────────────────────────────────────
 
-const EXPEDITION_LOOT_TABLE: Record<ExpeditionDifficulty, ExpeditionLoot[]> = {
+export const EXPEDITION_LOOT_TABLE: Record<ExpeditionDifficulty, ExpeditionLoot[]> = {
   easy: [
     {
       itemId: 'boost_recolte_2x',
