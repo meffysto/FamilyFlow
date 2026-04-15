@@ -424,7 +424,7 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
 
       {/* Gains possibles */}
       <View style={styles.lootRow}>
-        <Text style={[styles.lootLabel, { color: colors.textMuted }]}>Gains possibles :</Text>
+        <Text style={[styles.lootLabel, { color: colors.textMuted }]}>1 gain au sort parmi :</Text>
         <View style={styles.lootChips}>
           {EXPEDITION_LOOT_TABLE[mission.difficulty].map((item) => (
             <View key={item.itemId} style={[styles.lootChip, { backgroundColor: colors.catJeux + '18', borderColor: colors.catJeux + '44' }]}>
