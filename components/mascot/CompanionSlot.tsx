@@ -96,8 +96,7 @@ const HOME_IDX = 0;
 // pour partage avec VillageAvatar. Importe en tete de fichier.
 
 // ── Walk sprites (4 frames par direction) ────────────
-// Pour l'instant seul le lapin bébé a des vrais sprites de marche.
-// Les autres espèces/stades fallback sur idle frame swap.
+// Sprites de marche disponibles pour bébé, jeune et adulte (adulte ajouté P1 PixelLab).
 
 const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<CompanionStage, any[]>>>> = {
   chat: {
@@ -119,6 +118,16 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chat/jeune/walk_down_7.png'),
       require('../../assets/garden/animals/chat/jeune/walk_down_8.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/chat/adulte/walk_down_1.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_down_2.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_down_3.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_down_4.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_down_5.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_down_6.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_down_7.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_down_8.png'),
+    ],
   },
   chien: {
     bebe: [
@@ -136,6 +145,16 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chien/jeune/walk_down_4.png'),
       require('../../assets/garden/animals/chien/jeune/walk_down_5.png'),
       require('../../assets/garden/animals/chien/jeune/walk_down_6.png'),
+    ],
+    adulte: [
+      require('../../assets/garden/animals/chien/adulte/walk_down_1.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_down_2.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_down_3.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_down_4.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_down_5.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_down_6.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_down_7.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_down_8.png'),
     ],
   },
   renard: {
@@ -157,6 +176,16 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/renard/jeune/walk_down_5.png'),
       require('../../assets/garden/animals/renard/jeune/walk_down_6.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/renard/adulte/walk_down_1.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_down_2.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_down_3.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_down_4.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_down_5.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_down_6.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_down_7.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_down_8.png'),
+    ],
   },
   lapin: {
     bebe: [
@@ -177,6 +206,16 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/lapin/jeune/walk_down_7.png'),
       require('../../assets/garden/animals/lapin/jeune/walk_down_8.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/lapin/adulte/walk_down_1.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_down_2.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_down_3.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_down_4.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_down_5.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_down_6.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_down_7.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_down_8.png'),
+    ],
   },
   herisson: {
     jeune: [
@@ -188,6 +227,16 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/herisson/jeune/walk_down_6.png'),
       require('../../assets/garden/animals/herisson/jeune/walk_down_7.png'),
       require('../../assets/garden/animals/herisson/jeune/walk_down_8.png'),
+    ],
+    adulte: [
+      require('../../assets/garden/animals/herisson/adulte/walk_down_1.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_down_2.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_down_3.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_down_4.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_down_5.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_down_6.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_down_7.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_down_8.png'),
     ],
   },
 };
@@ -212,6 +261,16 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/chat/jeune/walk_up_7.png'),
       require('../../assets/garden/animals/chat/jeune/walk_up_8.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/chat/adulte/walk_up_1.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_up_2.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_up_3.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_up_4.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_up_5.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_up_6.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_up_7.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_up_8.png'),
+    ],
   },
   chien: {
     bebe: [
@@ -229,6 +288,16 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/chien/jeune/walk_up_4.png'),
       require('../../assets/garden/animals/chien/jeune/walk_up_5.png'),
       require('../../assets/garden/animals/chien/jeune/walk_up_6.png'),
+    ],
+    adulte: [
+      require('../../assets/garden/animals/chien/adulte/walk_up_1.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_up_2.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_up_3.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_up_4.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_up_5.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_up_6.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_up_7.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_up_8.png'),
     ],
   },
   renard: {
@@ -250,6 +319,16 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/renard/jeune/walk_up_5.png'),
       require('../../assets/garden/animals/renard/jeune/walk_up_6.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/renard/adulte/walk_up_1.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_up_2.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_up_3.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_up_4.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_up_5.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_up_6.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_up_7.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_up_8.png'),
+    ],
   },
   lapin: {
     bebe: [
@@ -270,6 +349,16 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/lapin/jeune/walk_up_7.png'),
       require('../../assets/garden/animals/lapin/jeune/walk_up_8.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/lapin/adulte/walk_up_1.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_up_2.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_up_3.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_up_4.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_up_5.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_up_6.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_up_7.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_up_8.png'),
+    ],
   },
   herisson: {
     jeune: [
@@ -281,6 +370,16 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/herisson/jeune/walk_up_6.png'),
       require('../../assets/garden/animals/herisson/jeune/walk_up_7.png'),
       require('../../assets/garden/animals/herisson/jeune/walk_up_8.png'),
+    ],
+    adulte: [
+      require('../../assets/garden/animals/herisson/adulte/walk_up_1.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_up_2.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_up_3.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_up_4.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_up_5.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_up_6.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_up_7.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_up_8.png'),
     ],
   },
 };
@@ -305,6 +404,16 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chat/jeune/walk_left_7.png'),
       require('../../assets/garden/animals/chat/jeune/walk_left_8.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/chat/adulte/walk_left_1.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_left_2.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_left_3.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_left_4.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_left_5.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_left_6.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_left_7.png'),
+      require('../../assets/garden/animals/chat/adulte/walk_left_8.png'),
+    ],
   },
   chien: {
     bebe: [
@@ -322,6 +431,16 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chien/jeune/walk_left_4.png'),
       require('../../assets/garden/animals/chien/jeune/walk_left_5.png'),
       require('../../assets/garden/animals/chien/jeune/walk_left_6.png'),
+    ],
+    adulte: [
+      require('../../assets/garden/animals/chien/adulte/walk_left_1.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_left_2.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_left_3.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_left_4.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_left_5.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_left_6.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_left_7.png'),
+      require('../../assets/garden/animals/chien/adulte/walk_left_8.png'),
     ],
   },
   renard: {
@@ -343,6 +462,16 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/renard/jeune/walk_left_5.png'),
       require('../../assets/garden/animals/renard/jeune/walk_left_6.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/renard/adulte/walk_left_1.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_left_2.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_left_3.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_left_4.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_left_5.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_left_6.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_left_7.png'),
+      require('../../assets/garden/animals/renard/adulte/walk_left_8.png'),
+    ],
   },
   lapin: {
     bebe: [
@@ -363,6 +492,16 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/lapin/jeune/walk_left_7.png'),
       require('../../assets/garden/animals/lapin/jeune/walk_left_8.png'),
     ],
+    adulte: [
+      require('../../assets/garden/animals/lapin/adulte/walk_left_1.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_left_2.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_left_3.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_left_4.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_left_5.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_left_6.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_left_7.png'),
+      require('../../assets/garden/animals/lapin/adulte/walk_left_8.png'),
+    ],
   },
   herisson: {
     jeune: [
@@ -374,6 +513,16 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/herisson/jeune/walk_left_6.png'),
       require('../../assets/garden/animals/herisson/jeune/walk_left_7.png'),
       require('../../assets/garden/animals/herisson/jeune/walk_left_8.png'),
+    ],
+    adulte: [
+      require('../../assets/garden/animals/herisson/adulte/walk_left_1.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_left_2.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_left_3.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_left_4.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_left_5.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_left_6.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_left_7.png'),
+      require('../../assets/garden/animals/herisson/adulte/walk_left_8.png'),
     ],
   },
 };
