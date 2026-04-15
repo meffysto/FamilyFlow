@@ -26,7 +26,7 @@ const TRANSLATE_Y_START = -4;
 const OFFSET_ABOVE_SPRITE = 52;
 
 interface BuildingTooltipProps {
-  /** Texte à afficher, ex: "Café — Débloqué à 1500 feuilles familiales" */
+  /** Texte à afficher, ex: "Café — Débloqué à 1500 XP famille" */
   label: string;
   /** Position centree px du sprite cible */
   x: number;

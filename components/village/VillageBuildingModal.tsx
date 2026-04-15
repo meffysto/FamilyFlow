@@ -323,7 +323,7 @@ export function VillageBuildingModal({
                 {/* Palier de déblocage */}
                 <View style={styles.palierRow}>
                   <Text style={styles.palierText}>
-                    Débloqué à {entry.palier.toLocaleString('fr-FR')} feuilles familiales
+                    Débloqué à {entry.palier.toLocaleString('fr-FR')} XP famille
                   </Text>
                 </View>
               </ScrollView>

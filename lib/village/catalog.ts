@@ -24,7 +24,7 @@ export interface BuildingCatalogEntry {
 }
 
 /**
- * Liste verrouillée des 8 bâtiments village débloquables par paliers de feuilles famille.
+ * Liste verrouillée des 8 bâtiments village débloquables par paliers d'XP famille.
  * Per D-02, D-06 CONTEXT.md. Ordre = ordre narratif hameau → ville vivante (per D-07).
  * Sprites dans assets/buildings/village/ (sous-dossier obligatoire — collision moulin.png ferme, Pitfall 5).
  */

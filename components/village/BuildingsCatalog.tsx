@@ -129,7 +129,7 @@ export function BuildingsCatalog({
     const remaining = Math.max(0, entry.palier - familyLifetimeLeaves);
     const plural = remaining > 1 ? 's' : '';
     showToast(
-      `Encore ${remaining} feuille${plural} familiale${plural} pour débloquer ${entry.labelFR}`,
+      `Encore ${remaining} XP famille pour débloquer ${entry.labelFR}`,
       'info',
     );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -257,10 +257,10 @@ const CatalogTile = React.memo(function CatalogTile({
     }
   };
 
-  const progressLabel = isUnlocked ? 'Débloqué' : `À ${entry.palier} feuilles`;
+  const progressLabel = isUnlocked ? 'Débloqué' : `À ${entry.palier} XP`;
   const progressDetail = isUnlocked
     ? null
-    : `${familyLifetimeLeaves}/${entry.palier} feuilles familiales`;
+    : `${familyLifetimeLeaves}/${entry.palier} XP famille`;
 
   return (
     <Animated.View style={[styles.tile, tileAnim]}>
