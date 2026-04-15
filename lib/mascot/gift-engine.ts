@@ -179,9 +179,10 @@ export function addGiftToInventory(
 
     case 'crafted': {
       const existingItems: CraftedItem[] = [...(farmData.craftedItems ?? [])];
-      // Verifier si un item avec le meme recipeId existe deja (non-golden)
-      // Pour simplifier le transfert cadeau on ajoute toujours un nouvel item
-      existingItems.push({ recipeId: item_id, craftedAt: entry.sent_at });
+      // Ajouter autant d'items que la quantite indiquee (quantity peut etre > 1)
+      for (let i = 0; i < quantity; i++) {
+        existingItems.push({ recipeId: item_id, craftedAt: entry.sent_at });
+      }
       return { ...farmData, craftedItems: existingItems };
     }
 
@@ -231,10 +232,17 @@ export function removeFromInventory(
 
     case 'crafted': {
       const items: CraftedItem[] = [...(farmData.craftedItems ?? [])];
-      const idx = items.findIndex(i => i.recipeId === itemId);
-      if (idx < 0) return failure;
-      items.splice(idx, 1);
-      return { success: true, updated: { ...farmData, craftedItems: items } };
+      const available = items.filter(i => i.recipeId === itemId).length;
+      if (available < qty) return failure;
+      let removed = 0;
+      const updatedItems = items.filter(i => {
+        if (i.recipeId === itemId && removed < qty) {
+          removed++;
+          return false;
+        }
+        return true;
+      });
+      return { success: true, updated: { ...farmData, craftedItems: updatedItems } };
     }
 
     case 'building_resource': {

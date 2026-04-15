@@ -220,6 +220,14 @@ describe('addGiftToInventory', () => {
     expect(updated.craftedItems?.[0].recipeId).toBe('confiture');
   });
 
+  it('ajoute N items crafted quand quantity > 1', () => {
+    const farm = baseFarmData();
+    const gift = makeGiftEntry({ item_type: 'crafted', item_id: 'soupe', quantity: 4 });
+    const updated = addGiftToInventory(farm, gift);
+    expect(updated.craftedItems).toHaveLength(4);
+    expect(updated.craftedItems?.every(i => i.recipeId === 'soupe')).toBe(true);
+  });
+
   it('ne mute pas la farm originale (copie defensive)', () => {
     const farm = baseFarmData();
     const originalHarvest = { ...farm.harvestInventory };
@@ -269,6 +277,33 @@ describe('removeFromInventory', () => {
     const originalHarvest = { ...farm.harvestInventory };
     removeFromInventory(farm, 'harvest', 'carrot', 10);
     expect(farm.harvestInventory).toEqual(originalHarvest);
+  });
+
+  it('retire N items crafted quand qty > 1', () => {
+    const farm = {
+      ...baseFarmData(),
+      craftedItems: [
+        { recipeId: 'soupe', craftedAt: '2026-01-01T00:00:00.000Z' },
+        { recipeId: 'soupe', craftedAt: '2026-01-02T00:00:00.000Z' },
+        { recipeId: 'soupe', craftedAt: '2026-01-03T00:00:00.000Z' },
+        { recipeId: 'confiture', craftedAt: '2026-01-04T00:00:00.000Z' },
+      ],
+    };
+    const { success, updated } = removeFromInventory(farm, 'crafted', 'soupe', 3);
+    expect(success).toBe(true);
+    expect(updated.craftedItems).toHaveLength(1);
+    expect(updated.craftedItems?.[0].recipeId).toBe('confiture');
+  });
+
+  it('retourne success=false si crafted insuffisant en quantite', () => {
+    const farm = {
+      ...baseFarmData(),
+      craftedItems: [
+        { recipeId: 'soupe', craftedAt: '2026-01-01T00:00:00.000Z' },
+      ],
+    };
+    const { success } = removeFromInventory(farm, 'crafted', 'soupe', 3);
+    expect(success).toBe(false);
   });
 });
 
