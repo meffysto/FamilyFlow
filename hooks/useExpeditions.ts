@@ -41,12 +41,12 @@ function gamiFilePath(profileId: string): string {
 // ─── Hook principal ──────────────────────────────────────────────────────────
 
 export function useExpeditions(treeStage: TreeStage = 'graine') {
-  const { vault, profiles, refreshFarm } = useVault();
+  const { vault, profiles, activeProfile, refreshFarm } = useVault();
 
-  // Profil actif — utilise le premier profil adulte par défaut
+  // Profil actif — utilise le profil actif sélectionné (sinon premier profil adulte)
   const currentProfile = useMemo(
-    () => profiles.find(p => p.role === 'adulte') ?? profiles[0],
-    [profiles]
+    () => activeProfile ?? profiles.find(p => p.role === 'adulte') ?? profiles[0],
+    [activeProfile, profiles]
   );
 
   // ─── Pool quotidien ────────────────────────────────────────────────────────

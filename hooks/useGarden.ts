@@ -169,7 +169,7 @@ export interface UseGardenReturn {
  */
 export function useGarden(): UseGardenReturn {
   // Consommation useVault (per D-01 — pas de nouveau provider)
-  const { vault, gardenRaw, setGardenRaw, profiles, awardProfileXP, refreshGamification } = useVault();
+  const { vault, gardenRaw, setGardenRaw, profiles, awardProfileXP, refreshGamification, refreshFarm } = useVault();
 
   // État local chargement
   const [isLoading, setIsLoading] = useState(false);
@@ -571,6 +571,7 @@ export function useGarden(): UseGardenReturn {
             const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
             await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, harvestInventory: harvestInvObj }));
           }
+          await refreshFarm(profileId);
         } catch { /* non-critical */ }
       }
 
@@ -587,12 +588,13 @@ export function useGarden(): UseGardenReturn {
           }
           const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
           await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, craftedItems }));
+          await refreshFarm(profileId);
         } catch { /* non-critical */ }
       }
 
       return { success: true, totalCost };
     },
-    [vault, gardenData, inventory, marketStock, marketTransactions, profiles, setGardenRaw, refreshGamification],
+    [vault, gardenData, inventory, marketStock, marketTransactions, profiles, setGardenRaw, refreshGamification, refreshFarm],
   );
 
   // ---------------------------------------------------------------------------
@@ -685,6 +687,7 @@ export function useGarden(): UseGardenReturn {
             });
             await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, craftedItems: filtered }));
           }
+          await refreshFarm(profileId);
         } catch { /* non-critical */ }
       }
 
@@ -704,7 +707,7 @@ export function useGarden(): UseGardenReturn {
 
       return { success: true, totalGain };
     },
-    [vault, gardenData, inventory, marketStock, marketTransactions, profiles, setGardenRaw, refreshGamification],
+    [vault, gardenData, inventory, marketStock, marketTransactions, profiles, setGardenRaw, refreshGamification, refreshFarm],
   );
 
   // ---------------------------------------------------------------------------
@@ -869,6 +872,7 @@ export function useGarden(): UseGardenReturn {
         };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
+        await refreshFarm(profileId);
         setTradeSentTodayField(newField);
         const payload = {
           category,
@@ -900,6 +904,7 @@ export function useGarden(): UseGardenReturn {
         };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
+        await refreshFarm(profileId);
         setTradeSentTodayField(newField);
         const payload = {
           category,
@@ -985,6 +990,7 @@ export function useGarden(): UseGardenReturn {
         const updatedFarmData = { ...farmData, farmInventory: updatedFarmInv, trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
+        await refreshFarm(profileId);
         return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
       } else if (payload.category === 'harvest') {
         const currentQty = farmData.harvestInventory?.[payload.itemId] ?? 0;
@@ -993,6 +999,7 @@ export function useGarden(): UseGardenReturn {
         const updatedFarmData = { ...farmData, harvestInventory: updatedHarvest, trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
+        await refreshFarm(profileId);
         return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
       } else if (payload.category === 'crafted') {
         const crafted = farmData.craftedItems ?? [];
@@ -1004,6 +1011,7 @@ export function useGarden(): UseGardenReturn {
         const updatedFarmData = { ...farmData, craftedItems: [...crafted, ...newItems], trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarmData));
+        await refreshFarm(profileId);
         return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
       }
 
@@ -1015,7 +1023,7 @@ export function useGarden(): UseGardenReturn {
 
       return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
     },
-    [vault, gardenData, profiles, setGardenRaw],
+    [vault, gardenData, profiles, setGardenRaw, refreshFarm],
   );
 
   // Charger trade_sent_today du profil actif au mount (et quand vault/profils changent)
