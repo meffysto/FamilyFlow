@@ -209,7 +209,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
               questFarmEffect = activeEffect.type;
             }
           } catch { /* Quest — non-critical */ }
-          const farmResult = advanceFarmCrops(currentCrops, profileTechBonuses, questFarmEffect);
+          const farmResult = advanceFarmCrops(currentCrops, profileTechBonuses, questFarmEffect, farmData.plotLevels);
           cropsMatured = farmResult.matured.map(c => c.cropId);
           farmData.farmCrops = serializeCrops(farmResult.crops);
         }

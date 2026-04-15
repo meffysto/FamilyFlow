@@ -674,6 +674,9 @@ export function parseFarmProfile(content: string): FarmProfileData {
     trade_sent_today: props.trade_sent_today || undefined,
     activeExpeditions: parseActiveExpeditions(props.active_expeditions),
     expeditionPity: props.expedition_pity ? parseInt(props.expedition_pity, 10) : 0,
+    plotLevels: props.plot_levels
+      ? props.plot_levels.split(',').map(s => parseInt(s, 10) || 1)
+      : undefined,
   };
 }
 
@@ -728,6 +731,9 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   }
   if (data.expeditionPity && data.expeditionPity > 0) {
     lines.push(`expedition_pity: ${data.expeditionPity}`);
+  }
+  if (data.plotLevels && data.plotLevels.some(l => l > 1)) {
+    lines.push(`plot_levels: ${data.plotLevels.join(',')}`);
   }
 
   return lines.join('\n') + '\n';

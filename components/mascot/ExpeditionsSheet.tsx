@@ -40,7 +40,7 @@ import {
   type ExpeditionMission,
 } from '../../lib/mascot/expedition-engine';
 import { CROP_CATALOG, type HarvestInventory } from '../../lib/mascot/types';
-import type { ActiveExpedition, ExpeditionOutcome } from '../../lib/types';
+import type { ActiveExpedition, ExpeditionDifficulty, ExpeditionOutcome } from '../../lib/types';
 
 // ── Constantes module ─────────────────────────────────────────────────────────
 
@@ -90,16 +90,22 @@ function AwningStripes() {
 
 // ── Helpers couleur ───────────────────────────────────────────────────────────
 
-function difficultyColor(difficulty: 'easy' | 'medium' | 'hard', colors: AppColors): string {
+function difficultyColor(difficulty: ExpeditionDifficulty, colors: AppColors): string {
   if (difficulty === 'easy') return colors.success;
+  if (difficulty === 'pousse') return '#38BDF8';
   if (difficulty === 'medium') return colors.warning;
-  return colors.error;
+  if (difficulty === 'hard') return colors.error;
+  if (difficulty === 'expert') return colors.info;
+  return '#FFD700'; // legendary = or
 }
 
-function difficultyLabel(difficulty: 'easy' | 'medium' | 'hard'): string {
+function difficultyLabel(difficulty: ExpeditionDifficulty): string {
   if (difficulty === 'easy') return 'Facile';
+  if (difficulty === 'pousse') return 'Novice';
   if (difficulty === 'medium') return 'Moyen';
-  return 'Dur';
+  if (difficulty === 'hard') return 'Dur';
+  if (difficulty === 'expert') return 'Expert';
+  return 'Légendaire';
 }
 
 function outcomeLabel(outcome: ExpeditionOutcome): string {

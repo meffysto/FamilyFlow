@@ -849,6 +849,38 @@ export function useFarm(
     return pending.gifts;
   }, [vault, profiles, refreshFarm]);
 
+  /** Améliorer une parcelle au niveau suivant (sink feuilles) */
+  const upgradePlotAction = useCallback(async (profileId: string, plotIndex: number): Promise<boolean> => {
+    if (!vault) return false;
+
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const farmData = parseFarmProfile(content);
+
+    const fullProfile = profiles?.find(p => p.id === profileId);
+    const coins = fullProfile?.coins ?? 0;
+
+    const { getPlotLevel, getPlotUpgradeCost, upgradePlot: doUpgrade, MAX_PLOT_LEVEL } = await import('../lib/mascot/farm-engine');
+    const currentLevel = getPlotLevel(farmData.plotLevels, plotIndex);
+    if (currentLevel >= MAX_PLOT_LEVEL) throw new Error('Parcelle déjà au niveau maximum');
+
+    const cost = getPlotUpgradeCost(currentLevel);
+    if (!cost || coins < cost) throw new Error('Pas assez de feuilles');
+
+    const vaultProfile = profiles?.find(p => p.id === profileId);
+    const treeStage = getTreeStageInfo(vaultProfile?.level ?? 1).stage;
+    const maxPlots = getUnlockedPlotCount(treeStage) + 10; // marge pour extensions
+
+    const newLevels = doUpgrade(farmData.plotLevels, plotIndex, maxPlots);
+    farmData.plotLevels = newLevels;
+
+    const profileName = vaultProfile?.name ?? profileId;
+    await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, farmData));
+    await deductCoins(profileId, cost, `⬆ Parcelle ${plotIndex + 1} → niv ${currentLevel + 1}`);
+    await refreshFarm(profileId);
+    await refreshGamification();
+    return true;
+  }, [vault, profiles, deductCoins, refreshFarm, refreshGamification]);
+
   return {
     plant,
     harvest,
@@ -866,5 +898,6 @@ export function useFarm(
     getWearEvents,
     sendGift,
     receiveGifts,
+    upgradePlotAction,
   };
 }

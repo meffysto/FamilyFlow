@@ -32,7 +32,7 @@ import { type TechBonuses } from '../../lib/mascot/tech-engine';
 import { type PlantedCrop, type TreeStage, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG, TREE_STAGES } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
 import { getPendingResources } from '../../lib/mascot/building-engine';
-import { parseCrops, hasCropSeasonalBonus, getMainPlotIndex } from '../../lib/mascot/farm-engine';
+import { parseCrops, hasCropSeasonalBonus, getMainPlotIndex, getPlotLevel, getPlotUpgradeCost, MAX_PLOT_LEVEL } from '../../lib/mascot/farm-engine';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 import { type WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing } from '../../constants/spacing';
@@ -51,11 +51,27 @@ interface WorldGridViewProps {
   onRepairWeed?: (plotIndex: number) => void;
   onRepairPest?: (cellId: string) => void;
   onRepairFence?: (plotIndex: number) => void;
+  /** Niveaux de parcelles (1-5), index = plotIndex */
+  plotLevels?: number[];
+  /** Long press sur une parcelle → sheet d'amélioration */
+  onPlotLongPress?: (plotIndex: number) => void;
+  /** Feuilles disponibles du joueur (pour afficher le hint upgrade) */
+  playerCoins?: number;
   /** Gèle toutes les animations ambiantes (D-06 tutoriel ferme) */
   paused?: boolean;
 }
 
-const DIRT_SPRITE = require('../../assets/garden/ground/dirt_patch.png');
+const DIRT_SPRITES: Record<number, number> = {
+  1: require('../../assets/garden/ground/dirt_patch.png'),
+  2: require('../../assets/garden/ground/dirt_enriched.png'),
+  3: require('../../assets/garden/ground/dirt_fertile.png'),
+  4: require('../../assets/garden/ground/dirt_golden.png'),
+  5: require('../../assets/garden/ground/dirt_crystal.png'),
+};
+
+function getDirtSprite(level: number): number {
+  return DIRT_SPRITES[level] ?? DIRT_SPRITES[1];
+}
 
 // ── Cellule culture ──
 
@@ -69,13 +85,15 @@ const CROP_WHISPERS = [
   '🌱',
 ];
 
-function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEffects, containerWidth, containerHeight, frameIdx, whisperCellId, paused, onPress, onRepairWeed, onRepairFence }: {
+function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLevel, canUpgrade, wearEffects, containerWidth, containerHeight, frameIdx, whisperCellId, paused, onPress, onLongPress, onRepairWeed, onRepairFence }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
   isMature: boolean;
   isMainPlot: boolean;
   plotIndex: number;
+  plotLevel: number;
+  canUpgrade: boolean;
   wearEffects?: WearEffects;
   containerWidth: number;
   containerHeight: number;
@@ -83,6 +101,7 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
   whisperCellId: string | null;
   paused: boolean;
   onPress: () => void;
+  onLongPress?: () => void;
   onRepairWeed?: (plotIndex: number) => void;
   onRepairFence?: (plotIndex: number) => void;
 }) {
@@ -166,9 +185,11 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={handleCropCellPress}
+        onLongPress={onLongPress}
+        delayLongPress={400}
         style={styles.cell}
       >
-        <Image source={DIRT_SPRITE} style={styles.dirtBg as any} />
+        <Image source={getDirtSprite(plotLevel)} style={styles.dirtBg as any} />
         {isMature && <View style={styles.matureGlow} />}
 
         {crop && cropDef ? (
@@ -199,11 +220,6 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
                 />
               ))}
             </View>
-            {!isMature && (
-              <Text style={styles.taskCount}>
-                {crop.tasksCompleted}/{cropDef.tasksPerStage}
-              </Text>
-            )}
           </View>
         ) : (
           <Text style={styles.emptyPlus}>+</Text>
@@ -221,6 +237,10 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
           <View style={styles.weedsOverlay}>
             <Text style={styles.weedsIcon}>{'🌿'}</Text>
           </View>
+        )}
+        {/* Hint upgrade disponible */}
+        {canUpgrade && !isBlocked && (
+          <Text style={styles.upgradeHint}>{'⬆'}</Text>
         )}
       </TouchableOpacity>
       {/* Bulle whisper auto */}
@@ -628,6 +648,9 @@ export function WorldGridView({
   onRepairWeed,
   onRepairPest,
   onRepairFence,
+  plotLevels,
+  onPlotLongPress,
+  playerCoins = 0,
   paused = false,
 }: WorldGridViewProps) {
   const unlockedCrops = getUnlockedCropCells(treeStage);
@@ -709,6 +732,8 @@ export function WorldGridView({
             isMature={isMature}
             isMainPlot={!isMature && cellIdx === mainPlotIndex}
             plotIndex={cellIdx}
+            plotLevel={getPlotLevel(plotLevels, cellIdx)}
+            canUpgrade={getPlotLevel(plotLevels, cellIdx) < MAX_PLOT_LEVEL && (getPlotUpgradeCost(getPlotLevel(plotLevels, cellIdx)) ?? Infinity) <= playerCoins}
             wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
@@ -716,6 +741,7 @@ export function WorldGridView({
             whisperCellId={whisperCellId}
             paused={paused}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
+            onLongPress={() => onPlotLongPress?.(cellIdx)}
             onRepairWeed={onRepairWeed}
             onRepairFence={onRepairFence}
           />
@@ -739,6 +765,8 @@ export function WorldGridView({
             isMature={isMature}
             isMainPlot={!isMature && cellIdx === mainPlotIndex}
             plotIndex={cellIdx}
+            plotLevel={getPlotLevel(plotLevels, cellIdx)}
+            canUpgrade={getPlotLevel(plotLevels, cellIdx) < MAX_PLOT_LEVEL && (getPlotUpgradeCost(getPlotLevel(plotLevels, cellIdx)) ?? Infinity) <= playerCoins}
             wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
@@ -746,6 +774,7 @@ export function WorldGridView({
             whisperCellId={whisperCellId}
             paused={paused}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
+            onLongPress={() => onPlotLongPress?.(cellIdx)}
             onRepairWeed={onRepairWeed}
             onRepairFence={onRepairFence}
           />
@@ -780,6 +809,8 @@ export function WorldGridView({
               isMature={isMature}
               isMainPlot={!isMature && cellIdx === mainPlotIndex}
               plotIndex={cellIdx}
+              plotLevel={getPlotLevel(plotLevels, cellIdx)}
+              canUpgrade={getPlotLevel(plotLevels, cellIdx) < MAX_PLOT_LEVEL && (getPlotUpgradeCost(getPlotLevel(plotLevels, cellIdx)) ?? Infinity) <= playerCoins}
               wearEffects={wearEffects}
               containerWidth={containerWidth}
               containerHeight={containerHeight}
@@ -787,6 +818,7 @@ export function WorldGridView({
               whisperCellId={whisperCellId}
               paused={paused}
               onPress={() => onCropPlotPress?.(cell.id, crop)}
+              onLongPress={() => onPlotLongPress?.(cellIdx)}
               onRepairWeed={onRepairWeed}
               onRepairFence={onRepairFence}
             />
@@ -1044,6 +1076,13 @@ const styles = StyleSheet.create({
   },
   weedsIcon: {
     fontSize: FontSize.subtitle,
+  },
+  upgradeHint: {
+    position: 'absolute',
+    top: 1,
+    right: 2,
+    fontSize: 10,
+    opacity: 0.7,
   },
   // ── Overlays d'usure — BuildingCell ──
   damagedBadge: {

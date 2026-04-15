@@ -93,6 +93,7 @@ export interface Profile {
   craftedItems?: import('../lib/mascot/types').CraftedItem[];         // Items craftes en inventaire
   farmTech?: string[];    // IDs des noeuds tech debloques
   farmRareSeeds?: import('../lib/mascot/types').RareSeedInventory;  // Graines rares en stock
+  plotLevels?: number[];  // niveaux d'amélioration des parcelles (1-5)
   wearEvents?: import('./mascot/wear-engine').WearEvent[];          // Evenements d'usure ferme
   companion?: import('./mascot/companion-types').CompanionData | null; // Compagnon actif du profil
   giftHistory?: string;       // CSV historique cadeaux (pipe-separe, 10 derniers)
@@ -605,11 +606,13 @@ export interface FarmProfileData {
   // Phase 33 — Expeditions
   activeExpeditions?: ActiveExpedition[];
   expeditionPity?: number;
+  // Amélioration des parcelles (sink feuilles)
+  plotLevels?: number[];  // niveau 1-5 par plotIndex (absent = tout niveau 1)
 }
 
 // ─── Phase 33 — Expeditions ──────────────────────────────────────────────────
 
-export type ExpeditionDifficulty = 'easy' | 'medium' | 'hard';
+export type ExpeditionDifficulty = 'easy' | 'pousse' | 'medium' | 'hard' | 'expert' | 'legendary';
 export type ExpeditionOutcome = 'success' | 'partial' | 'failure' | 'rare_discovery';
 
 export interface ActiveExpedition {

@@ -61,6 +61,7 @@ import { FarmTutorialOverlay } from '../../components/mascot/FarmTutorialOverlay
 import { GiftSenderSheet } from '../../components/mascot/GiftSenderSheet';
 import { GiftReceiptModal } from '../../components/mascot/GiftReceiptModal';
 import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
+import { PlotUpgradeSheet } from '../../components/mascot/PlotUpgradeSheet';
 import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { FamilyQuestBanner } from '../../components/mascot/FamilyQuestBanner';
@@ -381,7 +382,7 @@ export default function TreeScreen() {
   }, [screenOpacity]));
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts } = useFarm(contributeFamilyQuest, addContribution);
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction } = useFarm(contributeFamilyQuest, addContribution);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
@@ -430,6 +431,7 @@ export default function TreeScreen() {
 
   // Tech tree
   const [showTechTree, setShowTechTree] = useState(false);
+  const [plotUpgradeIndex, setPlotUpgradeIndex] = useState<number | null>(null);
   const [showBadges, setShowBadges] = useState(false);
   const techBonuses = useMemo(() => {
     return getTechBonuses(profile?.farmTech ?? []);
@@ -1889,6 +1891,9 @@ export default function TreeScreen() {
               onRepairWeed={isOwnTree ? handleRepairWeed : undefined}
               onRepairPest={isOwnTree ? handleRepairPest : undefined}
               onRepairFence={isOwnTree ? handleRepairFence : undefined}
+              plotLevels={profile?.plotLevels}
+              onPlotLongPress={isOwnTree ? (idx: number) => setPlotUpgradeIndex(idx) : undefined}
+              playerCoins={profile?.coins ?? 0}
               paused={activeFarmTutorialStep !== null || animationsPaused}
             />
 
@@ -2434,6 +2439,19 @@ export default function TreeScreen() {
         onUnlock={(techId) => unlockTech(profile!.id, techId)}
         onMessage={(text, type) => showToast(text, type)}
       />
+
+      {/* Bottom sheet amélioration parcelle */}
+      {plotUpgradeIndex !== null && (
+        <PlotUpgradeSheet
+          visible={true}
+          onClose={() => setPlotUpgradeIndex(null)}
+          plotIndex={plotUpgradeIndex}
+          plotLevels={profile?.plotLevels}
+          coins={profile?.coins ?? 0}
+          onUpgrade={(idx) => upgradePlotAction(profile!.id, idx)}
+          onMessage={(text, type) => showToast(text, type)}
+        />
+      )}
 
       {/* Bottom sheet construction batiment */}
       <BuildingShopSheet

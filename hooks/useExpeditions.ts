@@ -257,9 +257,17 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
           // Boost croissance +12h
           const until = new Date(now.getTime() + 12 * 60 * 60 * 1000);
           farm.growthSprintUntil = until.toISOString();
-        } else if (loot.itemId === 'boost_production_2x') {
-          // Boost batiments +24h
+        } else if (loot.itemId === 'boost_mega_recolte_3x') {
+          // Boost croissance ×3 → +24h (version améliorée)
           const until = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+          farm.growthSprintUntil = until.toISOString();
+        } else if (loot.itemId === 'boost_production_2x') {
+          // Boost bâtiments +24h
+          const until = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+          farm.buildingTurboUntil = until.toISOString();
+        } else if (loot.itemId === 'boost_production_3x') {
+          // Boost bâtiments ×3 → +48h (version améliorée)
+          const until = new Date(now.getTime() + 48 * 60 * 60 * 1000);
           farm.buildingTurboUntil = until.toISOString();
         } else {
           // Booster générique → capacité +48h

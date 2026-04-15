@@ -9,6 +9,55 @@ import { type WearEffects } from './wear-engine';
 
 const MAX_CROP_STAGE = 4;
 
+// ─── Amélioration des parcelles ──────────────────────────────────────────────
+
+export const MAX_PLOT_LEVEL = 5;
+
+/** Coût en feuilles pour upgrader une parcelle au niveau suivant (index = niveau cible) */
+export const PLOT_UPGRADE_COSTS: Record<number, number> = {
+  2: 1000,
+  3: 3000,
+  4: 8000,
+  5: 20000,
+};
+
+/** Bonus par niveau de parcelle */
+export interface PlotLevelBonus {
+  tasksPerStageReduction: number;  // réduction tâches par stade
+  goldenChanceMultiplier: number;  // multiplicateur de chance dorée
+  doubleHarvest: boolean;          // double récolte garantie
+}
+
+export const PLOT_LEVEL_BONUSES: Record<number, PlotLevelBonus> = {
+  1: { tasksPerStageReduction: 0, goldenChanceMultiplier: 1, doubleHarvest: false },
+  2: { tasksPerStageReduction: 1, goldenChanceMultiplier: 1, doubleHarvest: false },
+  3: { tasksPerStageReduction: 1, goldenChanceMultiplier: 2, doubleHarvest: false },
+  4: { tasksPerStageReduction: 2, goldenChanceMultiplier: 3, doubleHarvest: false },
+  5: { tasksPerStageReduction: 2, goldenChanceMultiplier: 3, doubleHarvest: true },
+};
+
+/** Retourne le niveau d'une parcelle (défaut 1) */
+export function getPlotLevel(plotLevels: number[] | undefined, plotIndex: number): number {
+  return plotLevels?.[plotIndex] ?? 1;
+}
+
+/** Retourne le coût pour upgrader une parcelle, ou null si déjà max */
+export function getPlotUpgradeCost(currentLevel: number): number | null {
+  if (currentLevel >= MAX_PLOT_LEVEL) return null;
+  return PLOT_UPGRADE_COSTS[currentLevel + 1] ?? null;
+}
+
+/** Upgrade une parcelle et retourne le nouveau tableau de niveaux */
+export function upgradePlot(plotLevels: number[] | undefined, plotIndex: number, maxPlots: number): number[] {
+  const levels = plotLevels ? [...plotLevels] : Array(maxPlots).fill(1);
+  // Étendre si nécessaire
+  while (levels.length <= plotIndex) levels.push(1);
+  const current = levels[plotIndex] ?? 1;
+  if (current >= MAX_PLOT_LEVEL) return levels;
+  levels[plotIndex] = current + 1;
+  return levels;
+}
+
 /** Probabilite de mutation doree a la plantation */
 export const GOLDEN_CROP_CHANCE = 0.03;
 
@@ -84,6 +133,7 @@ export function advanceFarmCrops(
   crops: PlantedCrop[],
   techBonuses?: TechBonuses,
   questEffect?: QuestFarmEffect,
+  plotLevels?: number[],
 ): { crops: PlantedCrop[]; matured: PlantedCrop[] } {
   if (crops.length === 0) return { crops, matured: [] };
 
@@ -120,8 +170,9 @@ export function advanceFarmCrops(
       : (i === targetIdx ? seasonBonus : seasonBonus * 0.5);
     updated.tasksCompleted += increment;
 
-    // Avancer d'un stade si assez de taches (bonus tech reduit le seuil)
-    const effectiveTasksPerStage = Math.max(1, cropDef.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+    // Avancer d'un stade si assez de taches (bonus tech + bonus parcelle reduisent le seuil)
+    const plotBonus = PLOT_LEVEL_BONUSES[getPlotLevel(plotLevels, crop.plotIndex)]?.tasksPerStageReduction ?? 0;
+    const effectiveTasksPerStage = Math.max(1, cropDef.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0) - plotBonus);
     if (updated.tasksCompleted >= effectiveTasksPerStage) {
       updated.currentStage += 1;
       updated.tasksCompleted = 0;

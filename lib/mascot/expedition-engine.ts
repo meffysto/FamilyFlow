@@ -34,7 +34,7 @@ export interface ExpeditionLoot {
   emoji: string;
 }
 
-// ─── Catalogue (9 missions statiques) ────────────────────────────────────────
+// ─── Catalogue (32 missions, 6 difficultés) ─────────────────────────────────
 
 export const EXPEDITION_CATALOG: ExpeditionMission[] = [
   // ─ Facile (4h) — accessible dès 'graine' ───────────────────────
@@ -70,6 +70,103 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     costCrops: [{ cropId: 'potato', quantity: 2 }],
     description: 'Explorer les prairies sauvages à la recherche de fleurs rares.',
     minTreeStage: 'graine',
+  },
+  {
+    id: 'colline_facile',
+    name: 'Colline Ventée',
+    emoji: '🌿',
+    difficulty: 'easy',
+    durationHours: 4,
+    costCoins: 35,
+    costCrops: [
+      { cropId: 'carrot', quantity: 2 },
+      { cropId: 'wheat', quantity: 1 },
+    ],
+    description: 'Grimper la colline pour observer les étoiles filantes.',
+    minTreeStage: 'graine',
+  },
+  {
+    id: 'ruisseau_facile',
+    name: 'Ruisseau Chantant',
+    emoji: '💧',
+    difficulty: 'easy',
+    durationHours: 4,
+    costCoins: 42,
+    costCrops: [{ cropId: 'beetroot', quantity: 2 }],
+    description: 'Suivre le ruisseau pour trouver des pierres brillantes.',
+    minTreeStage: 'graine',
+  },
+
+  // ─ Pousse (6h) — accessible dès 'pousse' ───────────────────────
+  {
+    id: 'marais_pousse',
+    name: 'Marais Brumeux',
+    emoji: '🐸',
+    difficulty: 'pousse',
+    durationHours: 6,
+    costCoins: 60,
+    costCrops: [
+      { cropId: 'carrot', quantity: 3 },
+      { cropId: 'wheat', quantity: 2 },
+    ],
+    description: 'Explorer les marécages mystérieux à l\'aube.',
+    minTreeStage: 'pousse',
+  },
+  {
+    id: 'clairiere_pousse',
+    name: 'Clairière Secrète',
+    emoji: '🍃',
+    difficulty: 'pousse',
+    durationHours: 6,
+    costCoins: 65,
+    costCrops: [
+      { cropId: 'potato', quantity: 3 },
+      { cropId: 'beetroot', quantity: 2 },
+    ],
+    description: 'Découvrir la clairière cachée au cœur de la forêt.',
+    minTreeStage: 'pousse',
+  },
+  {
+    id: 'grotte_pousse',
+    name: 'Grotte Lumineuse',
+    emoji: '🕯️',
+    difficulty: 'pousse',
+    durationHours: 6,
+    costCoins: 70,
+    costCrops: [
+      { cropId: 'wheat', quantity: 4 },
+      { cropId: 'carrot', quantity: 1 },
+    ],
+    description: 'Descendre dans la grotte où brillent des lucioles.',
+    minTreeStage: 'pousse',
+  },
+  {
+    id: 'sentier_pousse',
+    name: 'Sentier des Fées',
+    emoji: '🧚',
+    difficulty: 'pousse',
+    durationHours: 6,
+    costCoins: 55,
+    costCrops: [
+      { cropId: 'beetroot', quantity: 2 },
+      { cropId: 'potato', quantity: 2 },
+    ],
+    description: 'Suivre le sentier enchanté jusqu\'au cercle de champignons.',
+    minTreeStage: 'pousse',
+  },
+  {
+    id: 'lac_pousse',
+    name: 'Lac Endormi',
+    emoji: '🌙',
+    difficulty: 'pousse',
+    durationHours: 6,
+    costCoins: 75,
+    costCrops: [
+      { cropId: 'carrot', quantity: 3 },
+      { cropId: 'potato', quantity: 2 },
+    ],
+    description: 'Traverser le lac gelé sous la lumière de la lune.',
+    minTreeStage: 'pousse',
   },
 
   // ─ Moyen (12h) — accessible dès 'arbuste' ──────────────────────
@@ -113,6 +210,49 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
       { cropId: 'cabbage', quantity: 3 },
     ],
     description: 'S\'enfoncer dans les grottes illuminées de gemmes phosphorescentes.',
+    minTreeStage: 'arbuste',
+  },
+  {
+    id: 'desert_moyen',
+    name: 'Désert des Mirages',
+    emoji: '🏜️',
+    difficulty: 'medium',
+    durationHours: 12,
+    costCoins: 160,
+    costCrops: [
+      { cropId: 'tomato', quantity: 3 },
+      { cropId: 'wheat', quantity: 3 },
+    ],
+    description: 'Traverser les dunes mouvantes pour trouver l\'oasis cachée.',
+    minTreeStage: 'arbuste',
+  },
+  {
+    id: 'jungle_moyen',
+    name: 'Jungle Émeraude',
+    emoji: '🌴',
+    difficulty: 'medium',
+    durationHours: 12,
+    costCoins: 185,
+    costCrops: [
+      { cropId: 'cucumber', quantity: 4 },
+      { cropId: 'carrot', quantity: 2 },
+    ],
+    description: 'S\'enfoncer dans la jungle tropicale vers les ruines anciennes.',
+    minTreeStage: 'arbuste',
+  },
+  {
+    id: 'temple_moyen',
+    name: 'Temple Englouti',
+    emoji: '🏛️',
+    difficulty: 'medium',
+    durationHours: 12,
+    costCoins: 190,
+    costCrops: [
+      { cropId: 'cabbage', quantity: 3 },
+      { cropId: 'tomato', quantity: 3 },
+      { cropId: 'potato', quantity: 2 },
+    ],
+    description: 'Plonger dans le temple submergé pour déchiffrer les inscriptions.',
     minTreeStage: 'arbuste',
   },
 
@@ -162,84 +302,263 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     description: 'Atteindre les îles flottantes au-dessus des nuages. Destination légendaire.',
     minTreeStage: 'arbre',
   },
+  {
+    id: 'abysses_dur',
+    name: 'Abysses Oubliées',
+    emoji: '🦑',
+    difficulty: 'hard',
+    durationHours: 24,
+    costCoins: 420,
+    costCrops: [
+      { cropId: 'corn', quantity: 6 },
+      { cropId: 'cabbage', quantity: 5 },
+      { cropId: 'tomato', quantity: 4 },
+    ],
+    description: 'Descendre dans les abysses où dorment les créatures anciennes.',
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'citadelle_dur',
+    name: 'Citadelle des Vents',
+    emoji: '🏰',
+    difficulty: 'hard',
+    durationHours: 24,
+    costCoins: 470,
+    costCrops: [
+      { cropId: 'strawberry', quantity: 7 },
+      { cropId: 'cucumber', quantity: 5 },
+      { cropId: 'wheat', quantity: 5 },
+    ],
+    description: 'Escalader la forteresse perchée au sommet du monde.',
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'foret_petrifiee_dur',
+    name: 'Forêt Pétrifiée',
+    emoji: '🪨',
+    difficulty: 'hard',
+    durationHours: 24,
+    costCoins: 480,
+    costCrops: [
+      { cropId: 'corn', quantity: 6 },
+      { cropId: 'tomato', quantity: 6 },
+      { cropId: 'carrot', quantity: 5 },
+    ],
+    description: 'Explorer la forêt de pierre où le temps s\'est arrêté.',
+    minTreeStage: 'arbre',
+  },
+
+  // ─ Expert (36h) — accessible dès 'majestueux' ──────────────────
+  {
+    id: 'palais_expert',
+    name: 'Palais Céleste',
+    emoji: '✨',
+    difficulty: 'expert',
+    durationHours: 36,
+    costCoins: 800,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 6 },
+      { cropId: 'corn', quantity: 8 },
+      { cropId: 'strawberry', quantity: 5 },
+    ],
+    description: 'Accéder au palais flottant au-dessus des nuages d\'or.',
+    minTreeStage: 'majestueux',
+  },
+  {
+    id: 'labyrinthe_expert',
+    name: 'Labyrinthe Vivant',
+    emoji: '🌀',
+    difficulty: 'expert',
+    durationHours: 36,
+    costCoins: 850,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 5 },
+      { cropId: 'tomato', quantity: 7 },
+      { cropId: 'cabbage', quantity: 6 },
+    ],
+    description: 'Naviguer le labyrinthe dont les murs changent chaque heure.',
+    minTreeStage: 'majestueux',
+  },
+  {
+    id: 'forge_expert',
+    name: 'Forge du Titan',
+    emoji: '🔥',
+    difficulty: 'expert',
+    durationHours: 36,
+    costCoins: 900,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 7 },
+      { cropId: 'corn', quantity: 6 },
+      { cropId: 'cucumber', quantity: 5 },
+    ],
+    description: 'Trouver la forge légendaire au cœur du volcan endormi.',
+    minTreeStage: 'majestueux',
+  },
+  {
+    id: 'sanctuaire_expert',
+    name: 'Sanctuaire Glacé',
+    emoji: '🧊',
+    difficulty: 'expert',
+    durationHours: 36,
+    costCoins: 750,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 5 },
+      { cropId: 'wheat', quantity: 8 },
+      { cropId: 'potato', quantity: 7 },
+    ],
+    description: 'Atteindre le sanctuaire de glace éternelle du Grand Nord.',
+    minTreeStage: 'majestueux',
+  },
+  {
+    id: 'iles_expert',
+    name: 'Îles Suspendues',
+    emoji: '🪂',
+    difficulty: 'expert',
+    durationHours: 36,
+    costCoins: 870,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 6 },
+      { cropId: 'strawberry', quantity: 7 },
+      { cropId: 'beetroot', quantity: 6 },
+    ],
+    description: 'Sauter entre les îles flottantes au-dessus de la mer de nuages.',
+    minTreeStage: 'majestueux',
+  },
+
+  // ─ Légendaire (48h) — accessible dès 'legendaire' ──────────────
+  {
+    id: 'nexus_legendaire',
+    name: 'Nexus des Mondes',
+    emoji: '🌌',
+    difficulty: 'legendary',
+    durationHours: 48,
+    costCoins: 1500,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 8 },
+      { cropId: 'corn', quantity: 8 },
+      { cropId: 'strawberry', quantity: 7 },
+      { cropId: 'sunflower', quantity: 5 },
+    ],
+    description: 'Traverser le portail entre les dimensions pour sauver l\'arbre ancestral.',
+    minTreeStage: 'legendaire',
+  },
+  {
+    id: 'abime_legendaire',
+    name: 'Abîme Éternel',
+    emoji: '🕳️',
+    difficulty: 'legendary',
+    durationHours: 48,
+    costCoins: 1600,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 9 },
+      { cropId: 'tomato', quantity: 7 },
+      { cropId: 'cabbage', quantity: 7 },
+      { cropId: 'sunflower', quantity: 6 },
+    ],
+    description: 'Plonger dans l\'abîme sans fond où naissent les étoiles.',
+    minTreeStage: 'legendaire',
+  },
+  {
+    id: 'cime_legendaire',
+    name: 'Cime du Monde',
+    emoji: '🗻',
+    difficulty: 'legendary',
+    durationHours: 48,
+    costCoins: 1400,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 7 },
+      { cropId: 'wheat', quantity: 9 },
+      { cropId: 'potato', quantity: 8 },
+      { cropId: 'corn', quantity: 5 },
+    ],
+    description: 'Grimper jusqu\'au sommet du monde pour toucher le ciel.',
+    minTreeStage: 'legendaire',
+  },
+  {
+    id: 'jardin_legendaire',
+    name: 'Jardin des Origines',
+    emoji: '🌺',
+    difficulty: 'legendary',
+    durationHours: 48,
+    costCoins: 1700,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 10 },
+      { cropId: 'strawberry', quantity: 8 },
+      { cropId: 'corn', quantity: 6 },
+      { cropId: 'sunflower', quantity: 6 },
+    ],
+    description: 'Retrouver le jardin mythique où la première graine a été plantée.',
+    minTreeStage: 'legendaire',
+  },
+  {
+    id: 'etoiles_legendaire',
+    name: 'Mer des Étoiles',
+    emoji: '🌠',
+    difficulty: 'legendary',
+    durationHours: 48,
+    costCoins: 1800,
+    costCrops: [
+      { cropId: 'pumpkin', quantity: 9 },
+      { cropId: 'sunflower', quantity: 8 },
+      { cropId: 'corn', quantity: 7 },
+      { cropId: 'strawberry', quantity: 7 },
+    ],
+    description: 'Naviguer sur l\'océan de lumière vers la constellation oubliée.',
+    minTreeStage: 'legendaire',
+  },
 ];
 
 // ─── Taux de drop par difficulté ─────────────────────────────────────────────
 
 export const EXPEDITION_DROP_RATES: Record<ExpeditionDifficulty, Record<ExpeditionOutcome, number>> = {
-  easy:   { success: 0.60, partial: 0.25, failure: 0.12, rare_discovery: 0.03 },
-  medium: { success: 0.40, partial: 0.30, failure: 0.20, rare_discovery: 0.10 },
-  hard:   { success: 0.25, partial: 0.25, failure: 0.30, rare_discovery: 0.20 },
+  easy:      { success: 0.60, partial: 0.25, failure: 0.12, rare_discovery: 0.03 },
+  pousse:    { success: 0.55, partial: 0.25, failure: 0.15, rare_discovery: 0.05 },
+  medium:    { success: 0.40, partial: 0.30, failure: 0.20, rare_discovery: 0.10 },
+  hard:      { success: 0.25, partial: 0.25, failure: 0.30, rare_discovery: 0.20 },
+  expert:    { success: 0.20, partial: 0.25, failure: 0.30, rare_discovery: 0.25 },
+  legendary: { success: 0.15, partial: 0.20, failure: 0.30, rare_discovery: 0.35 },
 };
 
 // ─── Table de loot ────────────────────────────────────────────────────────────
 
 export const EXPEDITION_LOOT_TABLE: Record<ExpeditionDifficulty, ExpeditionLoot[]> = {
   easy: [
-    {
-      itemId: 'boost_recolte_2x',
-      type: 'booster',
-      label: 'Boost Récolte ×2',
-      emoji: '🌾',
-    },
+    { itemId: 'boost_recolte_2x', type: 'booster', label: 'Boost Récolte ×2', emoji: '🌾' },
+  ],
+  pousse: [
+    { itemId: 'loutre_riviere', type: 'inhabitant', label: 'Loutre de Rivière', emoji: '🦦' },
+    { itemId: 'mousse_etoile', type: 'seed', label: 'Mousse Étoilée', emoji: '🌟' },
+    { itemId: 'boost_recolte_2x', type: 'booster', label: 'Boost Récolte ×2', emoji: '🌾' },
   ],
   medium: [
-    {
-      itemId: 'renard_expedition',
-      type: 'inhabitant',
-      label: 'Renard Explorateur',
-      emoji: '🦊',
-    },
-    {
-      itemId: 'fleur_de_lave',
-      type: 'seed',
-      label: 'Fleur de Lave',
-      emoji: '🌺',
-    },
-    {
-      itemId: 'boost_recolte_2x',
-      type: 'booster',
-      label: 'Boost Récolte ×2',
-      emoji: '🌾',
-    },
-    {
-      itemId: 'boost_production_2x',
-      type: 'booster',
-      label: 'Boost Production ×2',
-      emoji: '⚙️',
-    },
+    { itemId: 'renard_expedition', type: 'inhabitant', label: 'Renard Explorateur', emoji: '🦊' },
+    { itemId: 'fleur_de_lave', type: 'seed', label: 'Fleur de Lave', emoji: '🌺' },
+    { itemId: 'boost_recolte_2x', type: 'booster', label: 'Boost Récolte ×2', emoji: '🌾' },
+    { itemId: 'boost_production_2x', type: 'booster', label: 'Boost Production ×2', emoji: '⚙️' },
   ],
   hard: [
-    {
-      itemId: 'aigle_expedition',
-      type: 'inhabitant',
-      label: 'Aigle Légendaire',
-      emoji: '🦅',
-    },
-    {
-      itemId: 'graine_celeste',
-      type: 'seed',
-      label: 'Graine Céleste',
-      emoji: '✨',
-    },
-    {
-      itemId: 'fleur_de_lave',
-      type: 'seed',
-      label: 'Fleur de Lave',
-      emoji: '🌺',
-    },
-    {
-      itemId: 'boost_chance_doree',
-      type: 'booster',
-      label: 'Boost Chance Dorée',
-      emoji: '🌟',
-    },
-    {
-      itemId: 'boost_production_2x',
-      type: 'booster',
-      label: 'Boost Production ×2',
-      emoji: '⚙️',
-    },
+    { itemId: 'aigle_expedition', type: 'inhabitant', label: 'Aigle Légendaire', emoji: '🦅' },
+    { itemId: 'graine_celeste', type: 'seed', label: 'Graine Céleste', emoji: '✨' },
+    { itemId: 'fleur_de_lave', type: 'seed', label: 'Fleur de Lave', emoji: '🌺' },
+    { itemId: 'boost_chance_doree', type: 'booster', label: 'Boost Chance Dorée', emoji: '🌟' },
+    { itemId: 'boost_production_2x', type: 'booster', label: 'Boost Production ×2', emoji: '⚙️' },
+  ],
+  expert: [
+    { itemId: 'cerf_argente', type: 'inhabitant', label: 'Cerf Argenté', emoji: '🦌' },
+    { itemId: 'tortue_ancienne', type: 'inhabitant', label: 'Tortue Ancienne', emoji: '🐢' },
+    { itemId: 'racine_geante', type: 'seed', label: 'Racine Géante', emoji: '🌿' },
+    { itemId: 'cristal_noir', type: 'seed', label: 'Cristal Noir', emoji: '💎' },
+    { itemId: 'boost_chance_doree', type: 'booster', label: 'Boost Chance Dorée', emoji: '🌟' },
+    { itemId: 'boost_mega_recolte_3x', type: 'booster', label: 'Boost Méga-Récolte ×3', emoji: '🌾' },
+  ],
+  legendary: [
+    { itemId: 'phenix_celeste', type: 'inhabitant', label: 'Phénix Céleste', emoji: '🔥' },
+    { itemId: 'loup_etoile', type: 'inhabitant', label: 'Loup des Étoiles', emoji: '🐺' },
+    { itemId: 'fleur_celeste', type: 'seed', label: 'Fleur Céleste', emoji: '🌸' },
+    { itemId: 'racine_geante', type: 'seed', label: 'Racine Géante', emoji: '🌿' },
+    { itemId: 'cristal_noir', type: 'seed', label: 'Cristal Noir', emoji: '💎' },
+    { itemId: 'boost_mega_recolte_3x', type: 'booster', label: 'Boost Méga-Récolte ×3', emoji: '🌾' },
+    { itemId: 'boost_production_3x', type: 'booster', label: 'Boost Production ×3', emoji: '⚙️' },
   ],
 };
 
@@ -330,7 +649,7 @@ export function getDailyExpeditionPool(date?: string): ExpeditionMission[] {
     return ((seed * 1103515245 + offset * 12345) & 0x7fffffff) / 0x7fffffff;
   }
 
-  const difficulties: ExpeditionDifficulty[] = ['easy', 'medium', 'hard'];
+  const difficulties: ExpeditionDifficulty[] = ['easy', 'pousse', 'medium', 'hard', 'expert', 'legendary'];
   const result: ExpeditionMission[] = [];
 
   for (let i = 0; i < difficulties.length; i++) {
