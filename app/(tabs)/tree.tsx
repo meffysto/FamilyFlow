@@ -1709,18 +1709,19 @@ export default function TreeScreen() {
                     {lockedRare.map(crop => {
                       const effectiveTasksPerStage = Math.max(1, crop.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
                       const totalTasks = effectiveTasksPerStage * 4;
+                      const isExpeditionOnly = crop.expeditionExclusive === true;
                       return (
                         <View
                           key={crop.id}
                           style={[
                             styles.seedRow,
-                            { backgroundColor: colors.cardAlt, borderColor: colors.borderLight, opacity: 0.5 },
+                            { backgroundColor: colors.cardAlt, borderColor: isExpeditionOnly ? 'rgba(59,130,246,0.4)' : colors.borderLight, opacity: isExpeditionOnly ? 0.75 : 0.5 },
                           ]}
                         >
                           <View>
                             <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
-                            <View style={[styles.rareSeedBadge, { backgroundColor: colors.textMuted }]}>
-                              <Text style={styles.rareSeedBadgeText}>?</Text>
+                            <View style={[styles.rareSeedBadge, { backgroundColor: isExpeditionOnly ? 'rgba(59,130,246,0.7)' : colors.textMuted }]}>
+                              <Text style={styles.rareSeedBadgeText}>{isExpeditionOnly ? '🗺️' : '?'}</Text>
                             </View>
                           </View>
                           <View style={styles.seedRowInfo}>
@@ -1728,14 +1729,22 @@ export default function TreeScreen() {
                               <Text style={[styles.seedRowName, { color: colors.text }]}>
                                 {t(`farm.crop.${crop.id}`)}
                               </Text>
-                              <View style={[styles.seedSeasonBadge, { backgroundColor: colors.borderLight }]}>
-                                <Text style={[styles.seedSeasonBadgeText, { color: colors.textMuted }]}>
-                                  {t('farm.rare')}
-                                </Text>
-                              </View>
+                              {isExpeditionOnly ? (
+                                <View style={[styles.seedSeasonBadge, { backgroundColor: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.4)', borderWidth: 1 }]}>
+                                  <Text style={[styles.seedSeasonBadgeText, { color: '#2563EB' }]}>
+                                    {t('mascot.shop.expedition')}
+                                  </Text>
+                                </View>
+                              ) : (
+                                <View style={[styles.seedSeasonBadge, { backgroundColor: colors.borderLight }]}>
+                                  <Text style={[styles.seedSeasonBadgeText, { color: colors.textMuted }]}>
+                                    {t('farm.rare')}
+                                  </Text>
+                                </View>
+                              )}
                             </View>
-                            <Text style={[styles.seedRowDesc, { color: colors.textMuted }]} numberOfLines={2}>
-                              {getDropHint(crop.id)}
+                            <Text style={[styles.seedRowDesc, { color: isExpeditionOnly ? '#2563EB' : colors.textMuted }]} numberOfLines={2}>
+                              {isExpeditionOnly ? t('mascot.shop.expeditionOnly') : getDropHint(crop.id)}
                             </Text>
                             <View style={styles.seedRowStats}>
                               <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
