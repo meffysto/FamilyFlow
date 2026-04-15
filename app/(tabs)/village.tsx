@@ -21,6 +21,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Image,
+  AppState,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -54,7 +55,6 @@ import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import type { VaultManager } from '../../lib/vault';
 import type { Profile } from '../../lib/types';
-import type { VillageContribution } from '../../lib/village/types';
 // Phase 29 — overlay avatars + tooltip (VILL-01/02/03) + portail retour (VILL-11/12)
 import { VillageAvatar } from '../../components/village/VillageAvatar';
 import { AvatarTooltip } from '../../components/village/AvatarTooltip';
@@ -282,45 +282,9 @@ function RewardCard({
   );
 }
 
-// ── FeedItem — mémoïsé (per CLAUDE.md — React.memo sur list items) ────────
+// ── UnifiedFeedItem — crafts uniquement ───────────────────────────────────
 
-const FeedItem = React.memo(function FeedItem({
-  contribution,
-  profileName,
-  profileEmoji,
-  colors,
-}: {
-  contribution: VillageContribution;
-  profileName: string;
-  profileEmoji: string;
-  colors: ColorsType;
-}) {
-  const typeLabel =
-    contribution.type === 'harvest' ? 'a récolté' : 'a complété une tâche';
-  return (
-    <View style={[styles.feedItem, { borderBottomColor: colors.borderLight }]}>
-      <Text style={styles.feedEmoji}>{profileEmoji}</Text>
-      <View style={styles.feedContent}>
-        <Text style={[styles.feedName, { color: colors.text }]} numberOfLines={1}>
-          {profileName}
-        </Text>
-        <Text style={[styles.feedType, { color: colors.textMuted }]} numberOfLines={1}>
-          {typeLabel}
-        </Text>
-      </View>
-      <Text style={[styles.feedAmount, { color: colors.success }]}>+{contribution.amount}</Text>
-      <Text style={[styles.feedTime, { color: colors.textFaint ?? colors.textMuted }]}>
-        {formatRelativeTime(contribution.timestamp)}
-      </Text>
-    </View>
-  );
-});
-
-// ── UnifiedFeedItem — contributions + crafts mélangés ─────────────────────
-
-type UnifiedFeedItem =
-  | { kind: 'contribution'; data: VillageContribution; timestamp: string }
-  | { kind: 'craft'; data: VillageAtelierCraft; timestamp: string };
+type UnifiedFeedItem = { kind: 'craft'; data: VillageAtelierCraft; timestamp: string };
 
 // ── CraftFeedItem — mémoïsé ────────────────────────────────────────────────
 
@@ -429,21 +393,35 @@ export default function VillageScreen() {
   const [craftedItems, setCraftedItems] = useState<import('../../lib/mascot/types').CraftedItem[]>([]);
   const season = getCurrentSeason();
 
+  // ── Pause animations (background + onglet pas visible) ───────────────
+  const [isAppActive, setIsAppActive] = useState(true);
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      setIsAppActive(state === 'active');
+    });
+    return () => sub.remove();
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setIsScreenFocused(true);
+      return () => setIsScreenFocused(false);
+    }, []),
+  );
+  const animationsPaused = !isAppActive || !isScreenFocused;
+
   // ── Memos ─────────────────────────────────────────────────────────────
 
   /** Feed unifié contributions + crafts — plus récents en premier */
   const feedItems = useMemo<UnifiedFeedItem[]>(() => {
-    const contribs: UnifiedFeedItem[] = (gardenData?.contributions ?? []).map(c => ({
-      kind: 'contribution', data: c, timestamp: c.timestamp,
-    }));
     const crafts: UnifiedFeedItem[] = (atelierCrafts ?? []).map(c => ({
       kind: 'craft', data: c, timestamp: c.timestamp,
     }));
-    const all = [...contribs, ...crafts].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    const all = crafts.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     return showAllFeed ? all : all.slice(0, FEED_LIMIT);
-  }, [gardenData?.contributions, atelierCrafts, showAllFeed]);
+  }, [atelierCrafts, showAllFeed]);
 
-  const totalContribs = (gardenData?.contributions?.length ?? 0) + (atelierCrafts?.length ?? 0);
+  const totalContribs = atelierCrafts?.length ?? 0;
 
   /** Total de contributions par profil (pour les indicateurs membres) */
   const memberContribs = useMemo(() => {
@@ -740,6 +718,7 @@ export default function VillageScreen() {
                 slotX={slotX}
                 slotY={slotY}
                 isActive={(weeklyContribs[profile.id] ?? 0) > 0}
+                paused={animationsPaused}
                 onPress={() => handleAvatarPress(profile, slotX, slotY)}
               />
             );
@@ -903,7 +882,7 @@ export default function VillageScreen() {
                     Pas encore d'activité
                   </Text>
                   <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    Les récoltes, tâches et crafts apparaîtront ici.
+                    Les crafts apparaîtront ici.
                   </Text>
                 </View>
               ) : (
@@ -913,21 +892,10 @@ export default function VillageScreen() {
                     const profile = profiles.find(p => p.id === profileId);
                     const name = profile?.name ?? profileId;
                     const emoji = profile?.avatar ?? '👤';
-                    if (item.kind === 'craft') {
-                      return (
-                        <CraftFeedItem
-                          key={`craft-${item.timestamp}-${idx}`}
-                          craft={item.data}
-                          profileName={name}
-                          profileEmoji={emoji}
-                          colors={colors}
-                        />
-                      );
-                    }
                     return (
-                      <FeedItem
-                        key={`${profileId}-${item.timestamp}-${idx}`}
-                        contribution={item.data}
+                      <CraftFeedItem
+                        key={`craft-${item.timestamp}-${idx}`}
+                        craft={item.data as VillageAtelierCraft}
                         profileName={name}
                         profileEmoji={emoji}
                         colors={colors}
@@ -1153,9 +1121,9 @@ export default function VillageScreen() {
           }
           return counts;
         })()}
-        onBuy={async (itemId, qty) => {
+        onBuy={async (itemId, qty, priceOverride?) => {
           if (!activeProfile) return { success: false, error: 'Profil introuvable' };
-          const result = await buyFromMarket(itemId, qty, activeProfile.id);
+          const result = await buyFromMarket(itemId, qty, activeProfile.id, priceOverride);
           if (result.success) await loadFarmInventories();
           return result;
         }}

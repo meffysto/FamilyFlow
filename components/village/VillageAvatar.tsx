@@ -36,6 +36,8 @@ interface VillageAvatarProps {
   slotY: number;
   /** true si profil a >=1 contribution cette semaine (per D-09) */
   isActive: boolean;
+  /** true quand l'app est en background ou l'onglet pas visible */
+  paused?: boolean;
   onPress: () => void;
 }
 
@@ -44,15 +46,16 @@ export const VillageAvatar = React.memo(function VillageAvatar({
   slotX,
   slotY,
   isActive,
+  paused = false,
   onPress,
 }: VillageAvatarProps) {
   const { colors } = useThemeColors();
   const haloOpacity = useSharedValue(0);
   const [frameIdx, setFrameIdx] = useState<0 | 1>(0);
 
-  // Pulse halo si actif, sinon cancel (per D-10, Pitfall 8 cancelAnimation cleanup)
+  // Pulse halo si actif et pas en pause, sinon cancel (per D-10, Pitfall 8 cancelAnimation cleanup)
   useEffect(() => {
-    if (isActive) {
+    if (isActive && !paused) {
       haloOpacity.value = HALO_MIN;
       haloOpacity.value = withRepeat(
         withTiming(HALO_MAX, { duration: HALO_DURATION }),
@@ -61,16 +64,17 @@ export const VillageAvatar = React.memo(function VillageAvatar({
       );
     } else {
       cancelAnimation(haloOpacity);
-      haloOpacity.value = 0;
+      haloOpacity.value = isActive ? HALO_MIN : 0;
     }
     return () => cancelAnimation(haloOpacity);
-  }, [isActive, haloOpacity]);
+  }, [isActive, paused, haloOpacity]);
 
-  // Alternance respiration idle_1/idle_2 (pattern CompanionSlot.tsx)
+  // Alternance respiration idle_1/idle_2 — stoppée en pause
   useEffect(() => {
+    if (paused) return;
     const timer = setTimeout(() => setFrameIdx(f => (f === 0 ? 1 : 0)), FRAME_MS);
     return () => clearTimeout(timer);
-  }, [frameIdx]);
+  }, [frameIdx, paused]);
 
   const haloStyle = useAnimatedStyle(() => ({ opacity: haloOpacity.value }));
 

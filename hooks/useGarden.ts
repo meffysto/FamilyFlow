@@ -155,7 +155,7 @@ export interface UseGardenReturn {
   // Marché boursier
   marketStock: MarketStock;
   marketTransactions: MarketTransaction[];
-  buyFromMarket: (itemId: string, quantity: number, profileId: string) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
+  buyFromMarket: (itemId: string, quantity: number, profileId: string, priceOverride?: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
   sellToMarket: (itemId: string, quantity: number, profileId: string) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
 }
 
@@ -501,7 +501,7 @@ export function useGarden(): UseGardenReturn {
    * Les coins sont déduits du profil via gami-{id}.md.
    */
   const buyFromMarket = useCallback(
-    async (itemId: string, quantity: number, profileId: string): Promise<{ success: boolean; totalCost?: number; error?: string }> => {
+    async (itemId: string, quantity: number, profileId: string, priceOverride?: number): Promise<{ success: boolean; totalCost?: number; error?: string }> => {
       if (!vault) return { success: false, error: 'Vault non disponible' };
 
       // Vérifier le rate limit
@@ -514,13 +514,13 @@ export function useGarden(): UseGardenReturn {
       if (!profile) return { success: false, error: 'Profil introuvable' };
 
       // Vérifier l'achat
-      const check = canBuyItem(itemId, quantity, marketStock, profile.coins ?? 0);
+      const check = canBuyItem(itemId, quantity, marketStock, profile.coins ?? 0, priceOverride);
       if (!check.canBuy) return { success: false, error: check.reason };
 
       const category = findMarketItemCategory(itemId);
 
       // Exécuter l'achat
-      const { newStock, transaction, totalCost } = executeBuy(itemId, quantity, profileId, marketStock);
+      const { newStock, transaction, totalCost } = executeBuy(itemId, quantity, profileId, marketStock, new Date(), priceOverride);
 
       // Mettre à jour le stock + log dans jardin-familial.md
       const updatedTxns = pruneTransactionLog([...marketTransactions, transaction]);

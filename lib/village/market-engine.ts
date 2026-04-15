@@ -179,6 +179,53 @@ export const MARKET_ITEMS: MarketItemDef[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Deal du jour — FOMO quotidien
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Réduction appliquée au deal du jour (50% du prix d'achat courant) */
+const DAILY_DEAL_DISCOUNT = 0.5;
+
+export interface DailyDeal {
+  def: MarketItemDef;
+  discountedPrice: number;
+  originalPrice: number;
+  dateKey: string;           // YYYY-MM-DD — change chaque jour
+}
+
+/**
+ * Hash déterministe simple d'une string → nombre positif.
+ * Même date → même item chaque jour, pour tous les profils.
+ */
+function hashDateString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+/**
+ * Retourne le deal du jour — un item aléatoire (déterministe par date) à -50%.
+ * Exclut les items avec stock 0 (rupture totale).
+ * Le deal change à minuit.
+ */
+export function getDailyDeal(marketStock: MarketStock, now: Date = new Date()): DailyDeal | null {
+  const dateKey = formatDateYMD(now);
+  const hash = hashDateString(`deal-${dateKey}`);
+
+  // Items éligibles : stock > 0
+  const eligible = MARKET_ITEMS.filter(item => (marketStock[item.itemId] ?? 0) > 0);
+  if (eligible.length === 0) return null;
+
+  const picked = eligible[hash % eligible.length];
+  const stock = marketStock[picked.itemId] ?? 0;
+  const originalPrice = getBuyPrice(picked, stock);
+  const discountedPrice = Math.max(1, Math.round(originalPrice * DAILY_DEAL_DISCOUNT));
+
+  return { def: picked, discountedPrice, originalPrice, dateKey };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Calcul de prix — formule bourse
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -321,6 +368,7 @@ export function canBuyItem(
   quantity: number,
   marketStock: MarketStock,
   profileCoins: number,
+  priceOverride?: number,
 ): { canBuy: boolean; totalCost: number; reason?: string } {
   const def = findMarketItem(itemId);
   if (!def) return { canBuy: false, totalCost: 0, reason: 'Article introuvable' };
@@ -330,7 +378,7 @@ export function canBuyItem(
     return { canBuy: false, totalCost: 0, reason: `Stock insuffisant (${stock} dispo)` };
   }
 
-  const unitPrice = getBuyPrice(def, stock);
+  const unitPrice = priceOverride ?? getBuyPrice(def, stock);
   const totalCost = unitPrice * quantity;
   if (profileCoins < totalCost) {
     return { canBuy: false, totalCost, reason: `Pas assez de 🍃 (${profileCoins} / ${totalCost})` };
@@ -374,10 +422,11 @@ export function executeBuy(
   profileId: string,
   marketStock: MarketStock,
   now: Date = new Date(),
+  priceOverride?: number,
 ): { newStock: MarketStock; transaction: MarketTransaction; totalCost: number } {
   const def = findMarketItem(itemId)!;
   const stock = marketStock[def.itemId] ?? 0;
-  const unitPrice = getBuyPrice(def, stock);
+  const unitPrice = priceOverride ?? getBuyPrice(def, stock);
   const totalCost = unitPrice * quantity;
 
   const newStock = { ...marketStock };

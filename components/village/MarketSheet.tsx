@@ -30,9 +30,10 @@ import {
   getTrendLabel,
   getStockLabel,
   transactionsRemainingToday,
+  getDailyDeal,
   MAX_MARKET_TXN_PER_DAY,
 } from '../../lib/village/market-engine';
-import type { MarketItemSummary } from '../../lib/village/market-engine';
+import type { MarketItemSummary, DailyDeal } from '../../lib/village/market-engine';
 import type { MarketStock, MarketTransaction } from '../../lib/village/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -67,7 +68,7 @@ interface MarketSheetProps {
   harvestInventory: Record<string, number>;
   /** Items craftés ferme — recipeId → count (per-profile) */
   craftedCounts: Record<string, number>;
-  onBuy: (itemId: string, quantity: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
+  onBuy: (itemId: string, quantity: number, priceOverride?: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
   onSell: (itemId: string, quantity: number) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
   onClose: () => void;
 }
@@ -314,6 +315,45 @@ function formatTime(iso: string): string {
   return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
+// ── DailyDealCard — bandeau FOMO journalier ─────────────────────────────
+
+const DailyDealCard = React.memo(function DailyDealCard({
+  deal,
+  onBuy,
+}: {
+  deal: DailyDeal;
+  onBuy: (itemId: string, qty: number) => void;
+}) {
+  return (
+    <Animated.View entering={FadeInDown.duration(300)} style={styles.dealCard}>
+      <View style={styles.dealBadge}>
+        <Text style={styles.dealBadgeText}>DEAL DU JOUR</Text>
+      </View>
+      <View style={styles.dealContent}>
+        <View style={styles.dealLeft}>
+          <View style={styles.dealEmojiCircle}>
+            <Text style={styles.dealEmoji}>{deal.def.emoji}</Text>
+          </View>
+          <View style={styles.dealInfo}>
+            <Text style={styles.dealName} numberOfLines={1}>{deal.def.label}</Text>
+            <View style={styles.dealPriceRow}>
+              <Text style={styles.dealOldPrice}>{deal.originalPrice} 🍃</Text>
+              <Text style={styles.dealNewPrice}>{deal.discountedPrice} 🍃</Text>
+            </View>
+          </View>
+        </View>
+        <FarmButton
+          label={`${deal.discountedPrice} 🍃`}
+          enabled
+          variant="buy"
+          onPress={() => onBuy(deal.def.itemId, 1)}
+        />
+      </View>
+      <Text style={styles.dealTimer}>Offre valable aujourd'hui uniquement</Text>
+    </Animated.View>
+  );
+});
+
 // ── MarketSheet ──────────────────────────────────────────────────────────
 
 export function MarketSheet({
@@ -346,6 +386,26 @@ export function MarketSheet({
     [marketStock],
   );
 
+  const dailyDeal = useMemo(
+    () => getDailyDeal(marketStock),
+    [marketStock],
+  );
+
+  const handleBuyDeal = useCallback(async (itemId: string, qty: number) => {
+    if (!dailyDeal) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const result = await onBuy(itemId, qty, dailyDeal.discountedPrice);
+    if (result.success) {
+      flashOpacity.value = withSequence(
+        withTiming(1, { duration: 100 }),
+        withTiming(0, { duration: 400 }),
+      );
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      Alert.alert('Achat impossible', result.error ?? 'Erreur inconnue');
+    }
+  }, [onBuy, flashOpacity, dailyDeal]);
+
   const txnsRemaining = useMemo(
     () => transactionsRemainingToday(marketTransactions, profileId),
     [marketTransactions, profileId],
@@ -360,9 +420,9 @@ export function MarketSheet({
     const map: Record<string, number> = {};
     for (const s of summaries) {
       const cat = s.def.category;
-      if (cat === 'village' || cat === 'village_craft') {
-        map[s.def.itemId] = villageInventory[s.def.itemId] ?? 0;
-      } else if (cat === 'farm') {
+      // Inventaire collectif — pas vendable par un profil individuel
+      if (cat === 'village' || cat === 'village_craft') continue;
+      if (cat === 'farm') {
         map[s.def.itemId] = farmInventory[s.def.itemId] ?? 0;
       } else if (cat === 'harvest') {
         map[s.def.itemId] = harvestInventory[s.def.itemId] ?? 0;
@@ -547,6 +607,10 @@ export function MarketSheet({
                       Limite atteinte — revenez demain !
                     </Text>
                   </Animated.View>
+                )}
+
+                {tab === 'acheter' && dailyDeal && (
+                  <DailyDealCard deal={dailyDeal} onBuy={handleBuyDeal} />
                 )}
 
                 {filteredSummaries.length === 0 ? (
@@ -1082,5 +1146,82 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     color: Farm.parchment,
+  },
+
+  // ── Deal du jour ───────────────────────────────
+  dealCard: {
+    borderRadius: Radius.xl,
+    borderWidth: 2,
+    borderColor: Farm.gold,
+    backgroundColor: '#FFF9E6',
+    padding: Spacing.xl,
+    gap: Spacing.md,
+  },
+  dealBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: Farm.gold,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+  },
+  dealBadgeText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    color: Farm.goldText,
+    letterSpacing: 1,
+  },
+  dealContent: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    gap: Spacing.lg,
+  },
+  dealLeft: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: Spacing.md,
+  },
+  dealEmojiCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.parchment,
+    borderWidth: 2,
+    borderColor: Farm.gold,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  dealEmoji: {
+    fontSize: 22,
+  },
+  dealInfo: {
+    flex: 1,
+  },
+  dealName: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  dealPriceRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'baseline' as const,
+    gap: Spacing.md,
+    marginTop: 2,
+  },
+  dealOldPrice: {
+    fontSize: FontSize.sm,
+    color: Farm.brownTextSub,
+    textDecorationLine: 'line-through' as const,
+  },
+  dealNewPrice: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: '#D97706',
+  },
+  dealTimer: {
+    fontSize: FontSize.label,
+    color: Farm.goldText,
+    fontStyle: 'italic' as const,
   },
 });

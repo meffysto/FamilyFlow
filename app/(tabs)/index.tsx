@@ -1307,7 +1307,6 @@ const styles = StyleSheet.create({
   halfRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 14,
     alignItems: 'stretch',
   },
   halfCol: {

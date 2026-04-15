@@ -35,7 +35,7 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
   const firstEntry = todayGrat?.entries[0];
 
   return (
-    <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} icon="🙏" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/gratitude' as any)} hideMoreLink style={{ flex: 1, marginBottom: 0 }}>
+    <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} icon="🙏" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/gratitude' as any)} hideMoreLink style={{ flex: 1 }}>
       {firstEntry ? (
         <>
           <View style={[styles.quoteBorder, { borderLeftColor: colors.catSouvenirs }]}>

@@ -114,7 +114,7 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
       tinted
       collapsible
       cardId="anniversaires"
-      style={{ flex: 1, marginBottom: 0 }}
+      style={{ flex: 1 }}
     >
       <Text style={[styles.bigCountdown, { color: isToday ? colors.accentPink : colors.catFamille }]}>{mainLabel}</Text>
       <Text style={[styles.nameMain, { color: colors.text }]} numberOfLines={1}>
