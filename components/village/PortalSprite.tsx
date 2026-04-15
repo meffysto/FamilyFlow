@@ -5,7 +5,7 @@
 // Couvre VILL-11 (portail retour visuel symétrique), CD-04 (mutualisation).
 
 import React, { useCallback } from 'react';
-import { Dimensions, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -37,6 +37,8 @@ interface PortalSpriteProps {
   x?: number;
   y?: number;
   accessibilityLabel?: string;
+  /** Nombre d'objets à récupérer dans le village — affiche un badge rouge si > 0 */
+  badgeCount?: number;
 }
 
 export function PortalSprite({
@@ -44,6 +46,7 @@ export function PortalSprite({
   x,
   y,
   accessibilityLabel = 'Portail vers le village',
+  badgeCount = 0,
 }: PortalSpriteProps) {
   const scaleAnim = useSharedValue(1);
 
@@ -90,6 +93,11 @@ export function PortalSprite({
           style={styles.sprite}
           resizeMode="contain"
         />
+        {badgeCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
+          </View>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -107,5 +115,25 @@ const styles = StyleSheet.create({
   sprite: {
     width: PORTAL_SIZE,
     height: PORTAL_SIZE,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#fff',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+    lineHeight: 13,
   },
 });

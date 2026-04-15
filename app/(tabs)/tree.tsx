@@ -353,7 +353,13 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Village / Portail (Phase 28 — MAP-03)
-  const { addContribution } = useGarden();
+  const { addContribution, getPendingItems, unlockedBuildings } = useGarden();
+
+  // Total items à récupérer dans le village (badge portail)
+  const villagePendingCount = useMemo(
+    () => unlockedBuildings.reduce((sum, b) => sum + getPendingItems(b.buildingId), 0),
+    [unlockedBuildings, getPendingItems],
+  );
 
   // Fade cross-dissolve pour la navigation portail → village
   const screenOpacity = useSharedValue(1);
@@ -2101,6 +2107,7 @@ export default function TreeScreen() {
               onPress={handlePortalPress}
               x={0.42 * SCREEN_W}
               y={0.70 * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60)}
+              badgeCount={villagePendingCount}
             />
 
             {/* Couche 8 : Camp d'exploration (Phase 33) */}
