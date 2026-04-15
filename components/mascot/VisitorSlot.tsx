@@ -22,6 +22,7 @@ import Animated, {
   withSequence,
   withTiming,
   withRepeat,
+  Easing,
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -216,12 +217,17 @@ export function VisitorSlot({
     // Flip sprite si entrée par la gauche (le perso marche vers la droite)
     setFlipForEntry(enterFromLeft);
 
-    // Marche depuis hors-écran vers position cible
-    posX.value = withSpring(TARGET_X, SPRING_WALK, (finished) => {
+    // Marche lente depuis hors-écran vers position cible (~3-6s)
+    const distance = Math.abs(TARGET_X - ENTRY_X);
+    const walkDuration = Math.max(3000, Math.min(6000, distance * 8));
+    posX.value = withTiming(TARGET_X, {
+      duration: walkDuration,
+      easing: Easing.inOut(Easing.quad),
+    }, (finished) => {
       if (finished) {
         runOnJS(setState)('idle');
         runOnJS(setIsWalking)(false);
-        runOnJS(setFlipForEntry)(false); // reset flip quand idle
+        runOnJS(setFlipForEntry)(false);
       }
     });
 
@@ -386,8 +392,13 @@ export function VisitorSlot({
         }
       }, 900);
     } else {
-      // Départ normal : marche vers la droite
-      posX.value = withSpring(DEPART_X, SPRING_WALK_DEPART, (finished) => {
+      // Départ normal : marche lente hors-écran
+      const departDist = Math.abs(DEPART_X - posX.value);
+      const departDuration = Math.max(3000, Math.min(6000, departDist * 8));
+      posX.value = withTiming(DEPART_X, {
+        duration: departDuration,
+        easing: Easing.inOut(Easing.quad),
+      }, (finished) => {
         if (finished) {
           runOnJS(setState)('departed');
           if (onDepartComplete) runOnJS(onDepartComplete)();
