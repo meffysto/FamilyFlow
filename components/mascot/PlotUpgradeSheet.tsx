@@ -1,8 +1,8 @@
 /**
  * PlotUpgradeSheet.tsx — Bottom sheet d'amélioration de parcelle
  *
- * Affiché via long press sur une parcelle dans WorldGridView.
- * Montre le niveau actuel, le prochain bonus et le coût.
+ * Esthétique "cozy farm game" : cadre bois, auvent rayé, fond parchemin,
+ * bouton glossy vert, sprites hero. Même design que BuildingDetailSheet.
  */
 
 import React, { useCallback } from 'react';
@@ -11,24 +11,31 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   Modal,
   Alert,
   Image,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  FadeIn,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { useThemeColors } from '../../contexts/ThemeContext';
 import {
   MAX_PLOT_LEVEL,
-  PLOT_UPGRADE_COSTS,
-  PLOT_LEVEL_BONUSES,
   getPlotLevel,
   getPlotUpgradeCost,
 } from '../../lib/mascot/farm-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { ModalHeader } from '../ui';
+import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
 
-// ── Sprites ──────────────────────────────────────────────────────────────────
+// ── Constantes ───────────────────────────────────────────────────────────────
+
+const SPRING_CONFIG = { damping: 12, stiffness: 180 };
 
 const DIRT_SPRITES: Record<number, number> = {
   1: require('../../assets/garden/ground/dirt_patch.png'),
@@ -54,7 +61,78 @@ const LEVEL_DESCRIPTIONS: Record<number, string> = {
   5: 'Pousse -2 tâches + double récolte garantie',
 };
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Sous-composant : auvent rayé ─────────────────────────────────────────────
+
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningStripe,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={styles.awningShadow} />
+      <View style={styles.awningScallop}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningScallopDot,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ── Sous-composant : bouton farm 3D ──────────────────────────────────────────
+
+function FarmButton({ label, enabled, onPress }: { label: string; enabled: boolean; onPress?: () => void }) {
+  const pressedY = useSharedValue(0);
+
+  const bg = enabled ? Farm.greenBtn : Farm.parchmentDark;
+  const shadow = enabled ? Farm.greenBtnShadow : '#D0CBC3';
+  const highlight = enabled ? Farm.greenBtnHighlight : Farm.parchment;
+
+  const btnStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: pressedY.value }],
+  }));
+  const shadowStyle = useAnimatedStyle(() => ({
+    opacity: 1 - pressedY.value / 4,
+  }));
+
+  return (
+    <Pressable
+      onPress={enabled ? onPress : undefined}
+      onPressIn={() => {
+        if (enabled) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          pressedY.value = withSpring(4, SPRING_CONFIG);
+        }
+      }}
+      onPressOut={() => { pressedY.value = withSpring(0, SPRING_CONFIG); }}
+      style={styles.btnFullWidth}
+    >
+      <Animated.View style={[styles.farmBtnShadow, { backgroundColor: shadow }, shadowStyle]} />
+      <Animated.View style={[styles.farmBtnBody, { backgroundColor: bg }, btnStyle]}>
+        <View style={[styles.farmBtnGloss, { backgroundColor: highlight }]} />
+        <Text style={[styles.farmBtnText, { color: enabled ? '#FFFFFF' : Farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' }]}>
+          {label}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ── Props ────────────────────────────────────────────────────────────────────
 
 interface PlotUpgradeSheetProps {
   visible: boolean;
@@ -66,7 +144,7 @@ interface PlotUpgradeSheetProps {
   onMessage?: (text: string, type?: 'success' | 'error') => void;
 }
 
-// ── Composant ────────────────────────────────────────────────────────────────
+// ── Composant principal ──────────────────────────────────────────────────────
 
 export function PlotUpgradeSheet({
   visible,
@@ -77,7 +155,6 @@ export function PlotUpgradeSheet({
   onUpgrade,
   onMessage,
 }: PlotUpgradeSheetProps) {
-  const { primary, colors } = useThemeColors();
   const currentLevel = getPlotLevel(plotLevels, plotIndex);
   const isMax = currentLevel >= MAX_PLOT_LEVEL;
   const upgradeCost = getPlotUpgradeCost(currentLevel);
@@ -113,113 +190,126 @@ export function PlotUpgradeSheet({
   return (
     <Modal
       visible={visible}
+      transparent
       animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={[styles.container, { backgroundColor: colors.bg }]}>
-        <ModalHeader title={`Parcelle ${plotIndex + 1}`} onClose={onClose} />
+      <View style={styles.overlay}>
+        <TouchableOpacity style={styles.overlayBg} activeOpacity={1} onPress={onClose} />
 
-        <View style={styles.content}>
-          {/* Aperçu sprite actuel */}
-          <View style={styles.previewRow}>
-            <View style={styles.previewCard}>
-              <Image
-                source={DIRT_SPRITES[currentLevel] ?? DIRT_SPRITES[1]}
-                style={styles.previewSprite}
-              />
-              <Text style={[styles.previewLabel, { color: colors.text }]}>
-                Niv. {currentLevel}
-              </Text>
-              <Text style={[styles.previewName, { color: colors.textSub }]}>
-                {LEVEL_NAMES[currentLevel]}
-              </Text>
-            </View>
+        {/* Panneau farm game */}
+        <View style={styles.woodFrame}>
+          <View style={styles.woodFrameInner}>
+            <AwningStripes />
 
-            {!isMax && (
-              <>
-                <Text style={[styles.arrow, { color: colors.textSub }]}>→</Text>
-                <View style={styles.previewCard}>
-                  <Image
-                    source={DIRT_SPRITES[nextLevel] ?? DIRT_SPRITES[1]}
-                    style={styles.previewSprite}
-                  />
-                  <Text style={[styles.previewLabel, { color: primary }]}>
-                    Niv. {nextLevel}
-                  </Text>
-                  <Text style={[styles.previewName, { color: colors.textSub }]}>
-                    {LEVEL_NAMES[nextLevel]}
+            <View style={styles.parchment}>
+              {/* Handle */}
+              <View style={styles.handle} />
+
+              {/* Titre */}
+              <Animated.View
+                entering={FadeIn.springify().damping(14).stiffness(200)}
+                style={styles.farmTitle}
+              >
+                <Text style={styles.farmTitleText}>
+                  Parcelle {plotIndex + 1}
+                </Text>
+                <View style={styles.levelBadge}>
+                  <Text style={styles.levelBadgeText}>
+                    Niv. {currentLevel}
                   </Text>
                 </View>
-              </>
-            )}
-          </View>
+              </Animated.View>
 
-          {/* Bonus actuel */}
-          <View style={[styles.bonusCard, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
-            <Text style={[styles.bonusTitle, { color: colors.text }]}>Bonus actuel</Text>
-            <Text style={[styles.bonusDesc, { color: colors.textSub }]}>
-              {LEVEL_DESCRIPTIONS[currentLevel]}
-            </Text>
-          </View>
+              {/* Sprites avant → après */}
+              <Animated.View
+                entering={FadeIn.delay(80).springify().damping(12).stiffness(180)}
+                style={styles.previewRow}
+              >
+                <View style={styles.previewCard}>
+                  <Image source={DIRT_SPRITES[currentLevel] ?? DIRT_SPRITES[1]} style={styles.spriteImg} />
+                  <Text style={styles.spriteName}>{LEVEL_NAMES[currentLevel]}</Text>
+                </View>
 
-          {/* Prochain bonus */}
-          {!isMax && (
-            <View style={[styles.bonusCard, { backgroundColor: colors.successBg, borderColor: colors.success }]}>
-              <Text style={[styles.bonusTitle, { color: colors.successText }]}>Prochain niveau</Text>
-              <Text style={[styles.bonusDesc, { color: colors.successText }]}>
-                {LEVEL_DESCRIPTIONS[nextLevel]}
-              </Text>
-            </View>
-          )}
+                {!isMax && (
+                  <>
+                    <Text style={styles.arrow}>→</Text>
+                    <View style={styles.previewCard}>
+                      <Image source={DIRT_SPRITES[nextLevel] ?? DIRT_SPRITES[1]} style={styles.spriteImg} />
+                      <Text style={[styles.spriteName, { color: Farm.awningGreen }]}>{LEVEL_NAMES[nextLevel]}</Text>
+                    </View>
+                  </>
+                )}
+              </Animated.View>
 
-          {/* Progression niveaux */}
-          <View style={styles.levelBar}>
-            {Array.from({ length: MAX_PLOT_LEVEL }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.levelDot,
-                  {
-                    backgroundColor: i < currentLevel ? colors.success : colors.borderLight,
-                  },
-                ]}
-              />
-            ))}
-          </View>
+              {/* Barre de progression */}
+              <Animated.View
+                entering={FadeIn.delay(160).springify().damping(12).stiffness(180)}
+                style={styles.progressSection}
+              >
+                <View style={styles.progressTrack}>
+                  {Array.from({ length: MAX_PLOT_LEVEL }).map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.progressSegment,
+                        {
+                          backgroundColor: i < currentLevel ? Farm.progressGold : Farm.progressBg,
+                          borderColor: i < currentLevel ? Farm.gold : Farm.parchmentDark,
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
+              </Animated.View>
 
-          {/* Bouton upgrade ou MAX */}
-          {isMax ? (
-            <View style={[styles.maxBadge, { backgroundColor: colors.infoBg }]}>
-              <Text style={[styles.maxText, { color: colors.info }]}>
-                Niveau maximum atteint ✨
-              </Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.upgradeButton,
-                { backgroundColor: canAfford ? colors.success : colors.borderLight },
-              ]}
-              onPress={handleUpgrade}
-              disabled={!canAfford}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.upgradeButtonText, { color: canAfford ? '#fff' : colors.textSub }]}>
-                Améliorer — {upgradeCost?.toLocaleString('fr-FR')} 🍃
-              </Text>
-              {!canAfford && (
-                <Text style={[styles.insufficientText, { color: colors.error }]}>
-                  Il te manque {((upgradeCost ?? 0) - coins).toLocaleString('fr-FR')} 🍃
+              {/* Info bonus */}
+              <Animated.View
+                entering={FadeIn.delay(240).springify().damping(12).stiffness(180)}
+                style={styles.infoSection}
+              >
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Bonus actuel</Text>
+                  <Text style={styles.infoValue}>{LEVEL_DESCRIPTIONS[currentLevel]}</Text>
+                </View>
+                {!isMax && (
+                  <View style={[styles.infoRow, styles.nextBonusRow]}>
+                    <Text style={[styles.infoLabel, { color: Farm.awningGreen }]}>Prochain</Text>
+                    <Text style={[styles.infoValue, { color: Farm.awningGreen }]}>{LEVEL_DESCRIPTIONS[nextLevel]}</Text>
+                  </View>
+                )}
+              </Animated.View>
+
+              {/* Bouton / Max */}
+              <Animated.View
+                entering={FadeIn.delay(320).springify().damping(12).stiffness(180)}
+                style={styles.actionSection}
+              >
+                {isMax ? (
+                  <View style={styles.maxBadge}>
+                    <Text style={styles.maxText}>Niveau maximum ✨</Text>
+                  </View>
+                ) : (
+                  <>
+                    <FarmButton
+                      label={`Améliorer — ${upgradeCost?.toLocaleString('fr-FR')} 🍃`}
+                      enabled={canAfford}
+                      onPress={handleUpgrade}
+                    />
+                    {!canAfford && (
+                      <Text style={styles.insufficientText}>
+                        Il te manque {((upgradeCost ?? 0) - coins).toLocaleString('fr-FR')} 🍃
+                      </Text>
+                    )}
+                  </>
+                )}
+
+                <Text style={styles.balanceText}>
+                  Solde : {coins.toLocaleString('fr-FR')} 🍃
                 </Text>
-              )}
-            </TouchableOpacity>
-          )}
-
-          {/* Solde */}
-          <Text style={[styles.balance, { color: colors.textSub }]}>
-            Solde : {coins.toLocaleString('fr-FR')} 🍃
-          </Text>
+              </Animated.View>
+            </View>
+          </View>
         </View>
       </View>
     </Modal>
@@ -229,85 +319,235 @@ export function PlotUpgradeSheet({
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: {
+  // ── Overlay ──
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  overlayBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+
+  // ── Cadre bois ──
+  woodFrame: {
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing['4xl'],
+    borderRadius: Radius['2xl'],
+    backgroundColor: Farm.woodDark,
+    padding: 5,
+    ...Shadows.xl,
+    maxHeight: '82%',
+  },
+  woodFrameInner: {
+    borderRadius: Radius['2xl'] - 3,
+    overflow: 'hidden',
+    backgroundColor: Farm.woodLight,
+  },
+
+  // ── Auvent ──
+  awning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  awningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  awningStripe: {
     flex: 1,
   },
-  content: {
-    padding: Spacing['2xl'],
-    gap: Spacing.xl,
-    alignItems: 'center',
+  awningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
+  awningScallop: {
+    flexDirection: 'row',
+    height: 8,
+    marginTop: -4,
+  },
+  awningScallopDot: {
+    flex: 1,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+
+  // ── Parchemin ──
+  parchment: {
+    backgroundColor: Farm.parchmentDark,
+    paddingBottom: Spacing['3xl'],
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+    backgroundColor: Farm.woodHighlight,
+  },
+
+  // ── Titre ──
+  farmTitle: {
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    gap: Spacing.xs,
+  },
+  farmTitleText: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  levelBadge: {
+    backgroundColor: Farm.gold + '33',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 2,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Farm.gold,
+  },
+  levelBadgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Farm.goldText,
+  },
+
+  // ── Preview sprites ──
   previewRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.xl,
+    paddingVertical: Spacing.lg,
   },
   previewCard: {
     alignItems: 'center',
     gap: Spacing.xs,
   },
-  previewSprite: {
-    width: 80,
-    height: 80,
+  spriteImg: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.md,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
   },
-  previewLabel: {
-    fontSize: FontSize.subtitle,
-    fontWeight: FontWeight.bold,
-  },
-  previewName: {
+  spriteName: {
     fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
   },
   arrow: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: FontWeight.bold,
+    color: Farm.brownTextSub,
   },
-  bonusCard: {
-    width: '100%',
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
+
+  // ── Barre progression ──
+  progressSection: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.sm,
+  },
+  progressTrack: {
+    flexDirection: 'row',
     gap: Spacing.xs,
   },
-  bonusTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+  progressSegment: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1,
   },
-  bonusDesc: {
+
+  // ── Info bonus ──
+  infoSection: {
+    marginHorizontal: Spacing['2xl'],
+    backgroundColor: Farm.parchment,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  infoRow: {
+    gap: 2,
+  },
+  nextBonusRow: {
+    borderTopWidth: 1,
+    borderTopColor: Farm.parchmentDark,
+    paddingTop: Spacing.md,
+  },
+  infoLabel: {
     fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
   },
-  levelBar: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
+  infoValue: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+    color: Farm.brownText,
   },
-  levelDot: {
-    width: 24,
-    height: 6,
-    borderRadius: 3,
+
+  // ── Actions ──
+  actionSection: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing.xl,
+    gap: Spacing.md,
+    alignItems: 'center',
   },
   maxBadge: {
+    backgroundColor: Farm.gold + '22',
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing['2xl'],
     borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Farm.gold,
   },
   maxText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-  },
-  upgradeButton: {
-    width: '100%',
-    paddingVertical: Spacing.lg,
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  upgradeButtonText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    color: Farm.goldText,
   },
   insufficientText: {
     fontSize: FontSize.caption,
+    color: '#B44',
   },
-  balance: {
+  balanceText: {
     fontSize: FontSize.caption,
+    color: Farm.brownTextSub,
+  },
+
+  // ── Bouton farm 3D ──
+  btnFullWidth: {
+    width: '100%',
+  },
+  farmBtnShadow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 44,
+    borderRadius: Radius.lg,
+  },
+  farmBtnBody: {
+    height: 44,
+    borderRadius: Radius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  farmBtnGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '45%',
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    opacity: 0.35,
+  },
+  farmBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
