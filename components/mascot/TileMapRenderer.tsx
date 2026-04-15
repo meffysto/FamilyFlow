@@ -359,11 +359,6 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
     decos.push({ source: FARM_OBJECTS.sign_post, x: 0.46, y: 0.45, w: 24, h: 36, minStage: 1, fixed: true });
   }
 
-  // ── Banc — zone repos, en bas a gauche ──
-  if (stageIdx >= 3) {
-    decos.push({ source: FARM_OBJECTS.bench, x: 0.18, y: 0.90, w: 36, h: 24, minStage: 3, fixed: true });
-  }
-
   // ── Torches — bordures du chemin ──
   if (stageIdx >= 4) {
     decos.push({ source: FARM_OBJECTS.torch, x: 0.40, y: 0.42, w: 18, h: 28, minStage: 4, fixed: true });

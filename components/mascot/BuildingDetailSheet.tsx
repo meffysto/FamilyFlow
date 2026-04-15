@@ -349,13 +349,18 @@ export function BuildingDetailSheet({
                   />
 
                   {upgradable && nextTier ? (
-                    <FarmButton
-                      label={`${t('farm.building.upgrade', { level: building.level + 1 })}  ·  ${upgradeCost} 🍃`}
-                      enabled={coins >= upgradeCost}
-                      variant="wood"
-                      onPress={() => onUpgrade(building.cellId)}
-                      fullWidth
-                    />
+                    <View style={styles.upgradeBlock}>
+                      <FarmButton
+                        label={`${t('farm.building.upgrade', { level: building.level + 1 })}  ·  ${upgradeCost} 🍃`}
+                        enabled={coins >= upgradeCost}
+                        variant="wood"
+                        onPress={() => onUpgrade(building.cellId)}
+                        fullWidth
+                      />
+                      <Text style={styles.upgradeBonus}>
+                        {`${resourceEmoji} ${tier?.productionRateHours ?? '?'}h → ${nextTier.productionRateHours}h par ${resourceLabel.toLowerCase()}`}
+                      </Text>
+                    </View>
                   ) : (
                     <View style={styles.maxLevelBadge}>
                       <Text style={styles.maxLevelText}>
@@ -654,6 +659,17 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     color: Farm.parchment,
+  },
+
+  // ── Upgrade block ──────────────────────────────
+  upgradeBlock: {
+    gap: Spacing.sm,
+  },
+  upgradeBonus: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
+    textAlign: 'center',
   },
 
   // ── Max level ───────────────────────────────────
