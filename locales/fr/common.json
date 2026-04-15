@@ -3467,7 +3467,17 @@
       "lynxMystere": "Lynx mystère",
       "lynxMystere_desc": "Un lynx insaisissable qui apparaît et disparaît comme une ombre. Il porte bonheur à ceux qui l'aperçoivent.",
       "dragonGlace": "Dragon de glace",
-      "dragonGlace_desc": "Un dragon cristallin venu des montagnes enneigées. Son souffle givrant pare l'arbre de dentelles de glace."
+      "dragonGlace_desc": "Un dragon cristallin venu des montagnes enneigées. Son souffle givrant pare l'arbre de dentelles de glace.",
+      "loutreRiviere": "Loutre de rivière",
+      "loutreRiviere_desc": "Une loutre espiègle qui glisse sur les pierres du ruisseau. Elle apporte la fraîcheur et la joie à tout le jardin.",
+      "cerfArgente": "Cerf argenté",
+      "cerfArgente_desc": "Un cerf majestueux aux bois couverts d'argent. Sa silhouette lumineuse illumine le jardin à la tombée de la nuit.",
+      "tortueAncienne": "Tortue ancienne",
+      "tortueAncienne_desc": "Une tortue millénaire qui porte sur son dos la sagesse des âges. Sa carapace est couverte de mousse et d'étoiles.",
+      "phenixCeleste": "Phénix céleste",
+      "phenixCeleste_desc": "Un phénix né des étoiles, dont les plumes brillent comme des aurores boréales. Il renaît encore plus puissant à chaque aube.",
+      "loupEtoile": "Loup des étoiles",
+      "loupEtoile_desc": "Un loup légendaire dont le pelage reflète la voûte céleste. Il guide les voyageurs perdus et veille sur les siens la nuit."
     },
     "shop": {
       "title": "Boutique de l'arbre",

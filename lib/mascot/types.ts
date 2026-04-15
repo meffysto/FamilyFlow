@@ -215,6 +215,16 @@ export const ITEM_ILLUSTRATIONS: Record<string, number> = {
   dragon:     require('../../assets/garden/animals/dragon/idle_1.png'),
   phoenix:    require('../../assets/garden/animals/phoenix/idle_1.png'),
   licorne:    require('../../assets/garden/animals/licorne/idle_1.png'),
+  // Habitants expédition-exclusifs (PixelLab)
+  renard_arctique: require('../../assets/garden/animals/renard_arctique/idle_1.png'),
+  aigle_dore:      require('../../assets/garden/animals/aigle_dore/idle_1.png'),
+  lynx_mystere:    require('../../assets/garden/animals/lynx_mystere/idle_1.png'),
+  dragon_glace:    require('../../assets/garden/animals/dragon_glace/idle_1.png'),
+  loutre_riviere:  require('../../assets/garden/animals/loutre_riviere/idle_1.png'),
+  cerf_argente:    require('../../assets/garden/animals/cerf_argente/idle_1.png'),
+  tortue_ancienne: require('../../assets/garden/animals/tortue_ancienne/idle_1.png'),
+  phenix_celeste:  require('../../assets/garden/animals/phenix_celeste/idle_1.png'),
+  loup_etoile:     require('../../assets/garden/animals/loup_etoile/idle_1.png'),
 };
 
 /** Catalogue décorations MVP */
@@ -266,6 +276,11 @@ export const INHABITANTS: MascotInhabitant[] = [
   { id: 'aigle_dore',      labelKey: 'mascot.hab.aigleDore',      emoji: '🦅', cost: 0, rarity: 'épique' as const,  minStage: 'pousse', expeditionExclusive: true },
   { id: 'lynx_mystere',    labelKey: 'mascot.hab.lynxMystere',    emoji: '🐱', cost: 0, rarity: 'rare' as const,    minStage: 'pousse', expeditionExclusive: true },
   { id: 'dragon_glace',    labelKey: 'mascot.hab.dragonGlace',    emoji: '🐉', cost: 0, rarity: 'épique' as const,  minStage: 'pousse', expeditionExclusive: true },
+  { id: 'loutre_riviere',  labelKey: 'mascot.hab.loutreRiviere',  emoji: '🦦', cost: 0, rarity: 'rare' as const,       minStage: 'pousse', expeditionExclusive: true },
+  { id: 'cerf_argente',    labelKey: 'mascot.hab.cerfArgente',    emoji: '🦌', cost: 0, rarity: 'épique' as const,     minStage: 'majestueux', expeditionExclusive: true },
+  { id: 'tortue_ancienne', labelKey: 'mascot.hab.tortueAncienne', emoji: '🐢', cost: 0, rarity: 'légendaire' as const, minStage: 'majestueux', expeditionExclusive: true },
+  { id: 'phenix_celeste',  labelKey: 'mascot.hab.phenixCeleste',  emoji: '🔥', cost: 0, rarity: 'légendaire' as const, minStage: 'legendaire', expeditionExclusive: true },
+  { id: 'loup_etoile',     labelKey: 'mascot.hab.loupEtoile',     emoji: '🐺', cost: 0, rarity: 'prestige' as const,   minStage: 'legendaire', expeditionExclusive: true },
 ];
 
 // ─────────────────────────────────────────────
@@ -337,6 +352,9 @@ export const CROP_CATALOG: CropDefinition[] = [
   // Graines exclusives expédition (Phase 33)
   { id: 'fleur_lave',     labelKey: 'farm.crop.fleur_lave',     emoji: '🌺', tasksPerStage: 4, harvestReward: 600, minTreeStage: 'arbre',      cost: 0, dropOnly: true, expeditionExclusive: true },
   { id: 'cristal_noir',   labelKey: 'farm.crop.cristal_noir',   emoji: '💎', tasksPerStage: 5, harvestReward: 900, minTreeStage: 'majestueux', cost: 0, dropOnly: true, expeditionExclusive: true },
+  { id: 'mousse_etoile',  labelKey: 'farm.crop.mousse_etoile',  emoji: '🌟', tasksPerStage: 3, harvestReward: 350, minTreeStage: 'pousse',     cost: 0, dropOnly: true, expeditionExclusive: true },
+  { id: 'racine_geante',  labelKey: 'farm.crop.racine_geante',  emoji: '🌿', tasksPerStage: 5, harvestReward: 1000, minTreeStage: 'majestueux', cost: 0, dropOnly: true, expeditionExclusive: true },
+  { id: 'fleur_celeste',  labelKey: 'farm.crop.fleur_celeste',  emoji: '🌸', tasksPerStage: 6, harvestReward: 1500, minTreeStage: 'legendaire', cost: 0, dropOnly: true, expeditionExclusive: true },
 ];
 
 // ─────────────────────────────────────────────
