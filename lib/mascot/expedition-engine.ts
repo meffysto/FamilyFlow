@@ -356,6 +356,23 @@ export function filterExpeditionsByTreeStage(
   return pool.filter(m => TREE_STAGE_ORDER.indexOf(m.minTreeStage) <= viewerIdx);
 }
 
+// ─── Helper lookup loot ───────────────────────────────────────────────────────
+
+/**
+ * Retourne le label et l'emoji lisibles pour un itemId donné.
+ * Cherche dans toutes les difficultés de EXPEDITION_LOOT_TABLE.
+ * Retourne null si l'itemId est introuvable.
+ */
+export function getLootDisplay(
+  itemId: string
+): { label: string; emoji: string } | null {
+  for (const difficulty of Object.keys(EXPEDITION_LOOT_TABLE) as ExpeditionDifficulty[]) {
+    const found = EXPEDITION_LOOT_TABLE[difficulty].find(item => item.itemId === itemId);
+    if (found) return { label: found.label, emoji: found.emoji };
+  }
+  return null;
+}
+
 // ─── Helpers coût ─────────────────────────────────────────────────────────────
 
 /**

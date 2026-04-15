@@ -33,6 +33,7 @@ import { Farm } from '../../constants/farm-theme';
 import {
   getExpeditionRemainingMinutes,
   isExpeditionComplete,
+  getLootDisplay,
   EXPEDITION_DROP_RATES,
   type ExpeditionMission,
 } from '../../lib/mascot/expedition-engine';
@@ -511,6 +512,11 @@ const ResultRow = React.memo(function ResultRow({
   const outcome = expedition.result!;
   const outColor = outcomeColor(outcome, colors);
 
+  // Résoudre le loot lisible depuis l'itemId stocké
+  const lootDisplay = expedition.lootItemId
+    ? getLootDisplay(expedition.lootItemId)
+    : null;
+
   return (
     <View style={[styles.resultRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
       <Text style={styles.rowEmoji}>{mission?.emoji ?? '🗺️'}</Text>
@@ -523,9 +529,25 @@ const ResultRow = React.memo(function ResultRow({
             {outcomeLabel(outcome)}
           </Text>
         </View>
-        {expedition.lootItemId && (
-          <Text style={[styles.lootLabel, { color: colors.textMuted }]}>
-            {`Loot : ${expedition.lootItemId}`}
+        {/* Loot lisible : emoji + label */}
+        {lootDisplay && (
+          <View style={[styles.lootChip, { backgroundColor: colors.catJeux + '22' }]}>
+            <Text style={styles.lootChipEmoji}>{lootDisplay.emoji}</Text>
+            <Text style={[styles.lootChipLabel, { color: colors.catJeux }]}>
+              {lootDisplay.label}
+            </Text>
+          </View>
+        )}
+        {/* Message explicite perte pour failure */}
+        {outcome === 'failure' && (
+          <Text style={[styles.lootLossLabel, { color: colors.error }]}>
+            {'Mise perdue'}
+          </Text>
+        )}
+        {/* Message explicite pour partial */}
+        {outcome === 'partial' && (
+          <Text style={[styles.lootLossLabel, { color: colors.warning }]}>
+            {'Retour partiel — pas de butin'}
           </Text>
         )}
       </View>
@@ -813,6 +835,30 @@ const styles = StyleSheet.create({
   },
   lootLabel: {
     fontSize: FontSize.caption,
+    marginTop: Spacing.xs,
+  },
+  // Loot lisible dans ResultRow
+  lootChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.sm,
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  lootChipEmoji: {
+    fontSize: FontSize.label,
+  },
+  lootChipLabel: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+  },
+  // Message perte explicite
+  lootLossLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
     marginTop: Spacing.xs,
   },
   dismissBtn: {

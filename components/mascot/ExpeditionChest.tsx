@@ -239,6 +239,26 @@ export function ExpeditionChest({ visible, outcome, loot, missionName, onClose }
               </View>
             )}
 
+            {/* Bandeau perte pour failure */}
+            {outcome === 'failure' && (
+              <View style={[styles.lossBanner, { backgroundColor: colors.error + '18', borderColor: colors.error }]}>
+                <MaterialCommunityIcons name="close-circle" size={20} color={colors.error} />
+                <Text style={[styles.lossBannerText, { color: colors.error }]}>
+                  {'Toute la mise a été perdue'}
+                </Text>
+              </View>
+            )}
+
+            {/* Bandeau retour partiel */}
+            {outcome === 'partial' && (
+              <View style={[styles.lossBanner, { backgroundColor: colors.warning + '18', borderColor: colors.warning }]}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.warning} />
+                <Text style={[styles.lossBannerText, { color: colors.warning }]}>
+                  {'Retour partiel — butin perdu'}
+                </Text>
+              </View>
+            )}
+
             {/* Bouton fermer */}
             <TouchableOpacity
               onPress={onClose}
@@ -361,5 +381,21 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+  // Bandeau perte (failure / partial)
+  lossBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.xl,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    width: '100%',
+  },
+  lossBannerText: {
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.semibold,
+    flex: 1,
   },
 });
