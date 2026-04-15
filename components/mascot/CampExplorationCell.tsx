@@ -5,11 +5,11 @@
  * Affiche le Camp d'exploration sur la grille ferme avec :
  * - Badge "1/2" ou "2/2" si expéditions actives
  * - Badge "Retour !" avec pulse animation si résultat prêt
- * - Mini countdown sous le sprite
+ * - Pilule timer stylisée sous le sprite (une ligne par expédition)
  */
 
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -24,6 +24,10 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Farm } from '../../constants/farm-theme';
 import { CAMP_EXPLORATION_CELL } from '../../lib/mascot/world-grid';
 
+// ── Assets ───────────────────────────────────────────────────────────────────
+
+const EXPEDITION_BOAT = require('../../assets/garden/decos/expedition_boat.png');
+
 // ── Constantes module ─────────────────────────────────────────────────────────
 
 const CELL_SIZE = 64;
@@ -31,12 +35,12 @@ const CELL_SIZE = 64;
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatMinutes(minutes: number): string {
-  if (!isFinite(minutes) || minutes <= 0) return '';
+  if (!isFinite(minutes) || minutes <= 0) return '0m';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   if (h === 0) return `${m}m`;
   if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
+  return `${h}h${m}m`;
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -44,19 +48,27 @@ function formatMinutes(minutes: number): string {
 interface Props {
   activeCount: number;
   hasResult: boolean;
-  shortestRemaining: number;
+  remainingMinutes: number[];
   onPress: () => void;
 }
 
 // ── Composant ─────────────────────────────────────────────────────────────────
 
-export function CampExplorationCell({ activeCount, hasResult, shortestRemaining, onPress }: Props) {
+export function CampExplorationCell({ activeCount, hasResult, remainingMinutes, onPress }: Props) {
   const { colors } = useThemeColors();
+
+  const isIdle = activeCount === 0 && !hasResult;
 
   // Animation pulse pour le badge "Retour !"
   const pulseScale = useSharedValue(1);
   const pulseAnim = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
+  }));
+
+  // Animation bob flottant pour la bulle "!" idle
+  const bobY = useSharedValue(0);
+  const bobAnim = useAnimatedStyle(() => ({
+    transform: [{ translateY: bobY.value }],
   }));
 
   useEffect(() => {
@@ -74,8 +86,26 @@ export function CampExplorationCell({ activeCount, hasResult, shortestRemaining,
     }
   }, [hasResult, pulseScale]);
 
-  const countdownText = formatMinutes(shortestRemaining);
-  const showCountdown = activeCount > 0 && !hasResult && countdownText.length > 0;
+  useEffect(() => {
+    if (isIdle) {
+      bobY.value = withRepeat(
+        withSequence(
+          withTiming(-4, { duration: 1200 }),
+          withTiming(0, { duration: 1200 }),
+        ),
+        -1,
+        true,
+      );
+    } else {
+      bobY.value = 0;
+    }
+  }, [isIdle, bobY]);
+
+  // Timers triés du plus court au plus long, filtre les terminés (0m)
+  const activeTimers = remainingMinutes
+    .filter(m => isFinite(m) && m > 0)
+    .sort((a, b) => a - b);
+  const showTimers = activeTimers.length > 0 && !hasResult;
 
   return (
     <TouchableOpacity
@@ -86,10 +116,8 @@ export function CampExplorationCell({ activeCount, hasResult, shortestRemaining,
       accessibilityLabel="Camp d'exploration"
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
-      {/* Sprite principal — tente/boussole sur fond parchemin */}
-      <View style={[styles.spriteCircle, { backgroundColor: Farm.parchmentDark, borderColor: Farm.woodHighlight }]}>
-        <MaterialCommunityIcons name="tent" size={36} color={Farm.woodDark} />
-      </View>
+      {/* Sprite principal — barque d'exploration */}
+      <Image source={EXPEDITION_BOAT} style={styles.boatSprite} />
 
       {/* Badge compteur actif — top-right */}
       {activeCount > 0 && (
@@ -105,11 +133,26 @@ export function CampExplorationCell({ activeCount, hasResult, shortestRemaining,
         </Animated.View>
       )}
 
-      {/* Mini countdown sous le sprite */}
-      {showCountdown && (
-        <Text style={[styles.countdown, { color: colors.textMuted }]}>
-          {countdownText}
-        </Text>
+      {/* Bulle "!" dorée flottante — aucune expédition en cours */}
+      {isIdle && (
+        <Animated.View style={[styles.idleBubble, bobAnim]}>
+          <View style={styles.idleBubbleInner}>
+            <Text style={styles.idleBubbleText}>{'!'}</Text>
+          </View>
+          <View style={styles.idleBubbleTail} />
+        </Animated.View>
+      )}
+
+      {/* Pilule timer stylisée sous le sprite */}
+      {showTimers && (
+        <View style={styles.timerPill}>
+          {activeTimers.map((min, i) => (
+            <View key={i} style={styles.timerRow}>
+              <MaterialCommunityIcons name="compass-outline" size={10} color={Farm.brownText} />
+              <Text style={styles.timerText}>{formatMinutes(min)}</Text>
+            </View>
+          ))}
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -125,13 +168,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'absolute',
   },
-  spriteCircle: {
+  boatSprite: {
     width: CELL_SIZE,
     height: CELL_SIZE,
-    borderRadius: Radius.full,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
+    resizeMode: 'contain',
   },
   countBadge: {
     position: 'absolute',
@@ -161,12 +201,59 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     color: '#FFFFFF',
   },
-  countdown: {
+  idleBubble: {
     position: 'absolute',
-    bottom: -20,
+    top: -18,
+    alignItems: 'center',
+  },
+  idleBubbleInner: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Farm.gold,
+    borderWidth: 2,
+    borderColor: Farm.goldText,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  idleBubbleText: {
+    fontSize: 13,
+    fontWeight: FontWeight.heavy,
+    color: Farm.goldText,
+    marginTop: -1,
+  },
+  idleBubbleTail: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
+    borderTopWidth: 5,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: Farm.goldText,
+    marginTop: -1,
+  },
+  timerPill: {
+    position: 'absolute',
+    bottom: -6,
+    alignSelf: 'center',
+    backgroundColor: Farm.parchmentDark,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    gap: 1,
+  },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  timerText: {
     fontSize: FontSize.micro,
-    fontWeight: FontWeight.semibold,
-    textAlign: 'center',
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
 });
 

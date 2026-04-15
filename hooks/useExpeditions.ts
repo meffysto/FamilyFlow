@@ -11,6 +11,7 @@ import { useCallback, useMemo } from 'react';
 import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../contexts/VaultContext';
 import { parseFarmProfile, serializeFarmProfile, parseGamification, serializeGamification } from '../lib/parser';
 import {
@@ -42,6 +43,7 @@ function gamiFilePath(profileId: string): string {
 
 export function useExpeditions(treeStage: TreeStage = 'graine') {
   const { vault, profiles, activeProfile, refreshFarm } = useVault();
+  const { t } = useTranslation();
 
   // Profil actif — utilise le profil actif sélectionné (sinon premier profil adulte)
   const currentProfile = useMemo(
@@ -157,7 +159,7 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     return new Promise<boolean>((resolve) => {
       Alert.alert(
         "Confirmer l'expédition ?",
-        `Tu vas miser ${mission.costCoins} 🍃 + ${getExpeditionCostDescription(mission)} pour une expédition ${mission.durationHours}h.\n\nEn cas d'échec, toute la mise est perdue.`,
+        `Tu vas miser ${mission.costCoins} 🍃${mission.costCrops.length > 0 ? ` + ${getExpeditionCostDescription(mission, t)}` : ''} pour une expédition ${mission.durationHours}h.\n\nEn cas d'échec, toute la mise est perdue.`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           {

@@ -7,7 +7,7 @@
  */
 
 import type { ActiveExpedition, ExpeditionDifficulty, ExpeditionOutcome } from '../types';
-import { type TreeStage, TREE_STAGE_ORDER } from './types';
+import { type TreeStage, TREE_STAGE_ORDER, CROP_CATALOG } from './types';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -395,13 +395,20 @@ export function canAffordExpedition(
 }
 
 /**
- * Retourne une description lisible du coût d'une expédition.
- * Ex: "50 🍃 + 2 carotte"
+ * Retourne une description lisible du coût récolte d'une expédition.
+ * Ex: "2 🥕 Carotte + 1 🌾 Blé"
+ * Ne contient PAS les feuilles (ajoutées par l'appelant).
  */
-export function getExpeditionCostDescription(mission: ExpeditionMission): string {
-  const parts: string[] = [`${mission.costCoins} 🍃`];
+export function getExpeditionCostDescription(
+  mission: ExpeditionMission,
+  t?: (key: string) => string,
+): string {
+  const parts: string[] = [];
   for (const cost of mission.costCrops) {
-    parts.push(`${cost.quantity} ${cost.cropId}`);
+    const cropDef = CROP_CATALOG.find(c => c.id === cost.cropId);
+    const emoji = cropDef?.emoji ?? '';
+    const label = cropDef && t ? t(cropDef.labelKey) : cost.cropId;
+    parts.push(`${cost.quantity} ${emoji} ${label}`);
   }
   return parts.join(' + ');
 }

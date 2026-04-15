@@ -2122,9 +2122,9 @@ export default function TreeScreen() {
             {/* Couche 8 : Camp d'exploration (Phase 33) */}
             {(() => {
               const dioH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
-              const shortestRemaining = activeExpeditions
+              const remainingMinutes = activeExpeditions
                 .filter(e => e.result === undefined && !isExpeditionComplete(e))
-                .reduce((min, e) => Math.min(min, getExpeditionRemainingMinutes(e)), Infinity);
+                .map(e => getExpeditionRemainingMinutes(e));
               return (
                 <View
                   style={{
@@ -2138,7 +2138,7 @@ export default function TreeScreen() {
                   <CampExplorationCell
                     activeCount={activeCount}
                     hasResult={pendingResults.length > 0}
-                    shortestRemaining={shortestRemaining}
+                    remainingMinutes={remainingMinutes}
                     onPress={() => setShowExpeditions(true)}
                   />
                 </View>

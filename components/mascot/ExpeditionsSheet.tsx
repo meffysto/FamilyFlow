@@ -545,8 +545,8 @@ const ResultRow = React.memo(function ResultRow({
         </View>
         {/* Loot lisible : emoji + label */}
         {lootDisplay && (
-          <View style={[styles.lootChip, { backgroundColor: colors.catJeux + '22' }]}>
-            <Text style={styles.lootChipEmoji}>{lootDisplay.emoji}</Text>
+          <View style={[styles.resultLootChip, { backgroundColor: colors.catJeux + '22' }]}>
+            <Text style={styles.resultLootChipEmoji}>{lootDisplay.emoji}</Text>
             <Text style={[styles.lootChipLabel, { color: colors.catJeux }]}>
               {lootDisplay.label}
             </Text>
@@ -876,12 +876,12 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
   },
-  lootLabel: {
+  resultLootLabel: {
     fontSize: FontSize.caption,
     marginTop: Spacing.xs,
   },
   // Loot lisible dans ResultRow
-  lootChip: {
+  resultLootChip: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: Spacing.xs,
   },
-  lootChipEmoji: {
+  resultLootChipEmoji: {
     fontSize: FontSize.label,
   },
   lootChipLabel: {
