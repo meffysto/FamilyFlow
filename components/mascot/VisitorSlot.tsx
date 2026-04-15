@@ -179,15 +179,18 @@ export function VisitorSlot({
   const [walkFrameIdx, setWalkFrameIdx] = useState(0);
   const [isWalking, setIsWalking] = useState(true); // true pendant entering + departing
   const [flipForDepart, setFlipForDepart] = useState(false); // scaleX: -1 sur Image pour walk_right
+  const [flipForEntry, setFlipForEntry] = useState(false);  // scaleX: -1 si entrée par la gauche
 
   // ── Ref pour cleanup ─────────────────────────────
   const mounted = useRef(true);
 
   // ── Positions calculées ───────────────────────────
-  const TARGET_X = containerWidth * (propTargetFX ?? TARGET_FX);
+  const effectiveFX = propTargetFX ?? TARGET_FX;
+  const enterFromLeft = effectiveFX < 0.5;
+  const TARGET_X = containerWidth * effectiveFX;
   const TARGET_Y = containerHeight * (propTargetFY ?? TARGET_FY);
-  const ENTRY_X = containerWidth * 1.15;
-  const DEPART_X = containerWidth * 1.20;
+  const ENTRY_X = enterFromLeft ? -VISITOR_SIZE : containerWidth * 1.15;
+  const DEPART_X = enterFromLeft ? -VISITOR_SIZE * 1.5 : containerWidth * 1.20;
 
   // ── Shared values animations ─────────────────────
   const posX       = useSharedValue(ENTRY_X);
@@ -206,14 +209,19 @@ export function VisitorSlot({
     if (!visible) return;
     mounted.current = true;
 
-    // Fade in rapide
-    opacity.value = withTiming(1, { duration: 200 });
+    // Position initiale hors-écran du bon côté — pas de fade-in
+    posX.value = ENTRY_X;
+    opacity.value = 1; // Opacité 1 direct — pas de withTiming fade-in
 
-    // Marche depuis hors-écran droite vers position cible
+    // Flip sprite si entrée par la gauche (le perso marche vers la droite)
+    setFlipForEntry(enterFromLeft);
+
+    // Marche depuis hors-écran vers position cible
     posX.value = withSpring(TARGET_X, SPRING_WALK, (finished) => {
       if (finished) {
         runOnJS(setState)('idle');
         runOnJS(setIsWalking)(false);
+        runOnJS(setFlipForEntry)(false); // reset flip quand idle
       }
     });
 
@@ -355,7 +363,7 @@ export function VisitorSlot({
 
     setState('departing');
     setIsWalking(true);
-    setFlipForDepart(true); // walk_right via scaleX: -1 sur Image
+    setFlipForDepart(!enterFromLeft); // flip seulement si départ vers la droite (saga); pas de flip si départ vers la gauche (saisonnier)
 
     if (isLastChapter) {
       // Départ dramatique : flash blanc + scale up + fadeout
@@ -452,7 +460,7 @@ export function VisitorSlot({
           source={currentFrame}
           style={[
             { width: VISITOR_SIZE, height: VISITOR_SIZE },
-            flipForDepart ? { transform: [{ scaleX: -1 }] } : {},
+            (flipForDepart || flipForEntry) ? { transform: [{ scaleX: -1 }] } : {},
           ] as any}
         />
       </Pressable>
