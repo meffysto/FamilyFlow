@@ -50,6 +50,10 @@ const CRAFT_SPRITES: Record<string, ReturnType<typeof require>> = {
   soupe_citrouille:  require('../../assets/garden/craft/soupe_citrouille.png'),
   tarte_citrouille:  require('../../assets/garden/craft/tarte_citrouille.png'),
   risotto_truffe:    require('../../assets/garden/craft/risotto_truffe.png'),
+  huile_phenix:      require('../../assets/garden/craft/huile_phenix.png'),
+  tisane_volcanique: require('../../assets/garden/craft/tisane_volcanique.png'),
+  encre_etoiles:     require('../../assets/garden/craft/encre_etoiles.png'),
+  potion_eveil:      require('../../assets/garden/craft/potion_eveil.png'),
 };
 
 export const CRAFT_RECIPES: CraftRecipe[] = [
@@ -355,6 +359,62 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     xpBonus: 70,
     sellValue: 1600, // (600+120) x 2.2
     minTreeStage: 'arbre',
+  },
+  // ── Expédition exclusive — fleur_lave (arbre) ──
+  {
+    id: 'huile_phenix',
+    labelKey: 'craft.recipe.huile_phenix',
+    emoji: '🔥',
+    sprite: CRAFT_SPRITES.huile_phenix,
+    ingredients: [
+      { itemId: 'fleur_lave', quantity: 1, source: 'crop' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 65,
+    sellValue: 1580, // (600+120) x 2.2
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'tisane_volcanique',
+    labelKey: 'craft.recipe.tisane_volcanique',
+    emoji: '🌋',
+    sprite: CRAFT_SPRITES.tisane_volcanique,
+    ingredients: [
+      { itemId: 'fleur_lave', quantity: 1, source: 'crop' },
+      { itemId: 'lait', quantity: 1, source: 'building' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 85,
+    sellValue: 2050, // (600+100+120) x 2.5
+    minTreeStage: 'arbre',
+  },
+  // ── Expédition exclusive — cristal_noir (majestueux) ──
+  {
+    id: 'encre_etoiles',
+    labelKey: 'craft.recipe.encre_etoiles',
+    emoji: '🌑',
+    sprite: CRAFT_SPRITES.encre_etoiles,
+    ingredients: [
+      { itemId: 'cristal_noir', quantity: 1, source: 'crop' },
+      { itemId: 'fruit_dragon', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 110,
+    sellValue: 3450, // (900+600) x 2.3
+    minTreeStage: 'majestueux',
+  },
+  {
+    id: 'potion_eveil',
+    labelKey: 'craft.recipe.potion_eveil',
+    emoji: '✨',
+    sprite: CRAFT_SPRITES.potion_eveil,
+    ingredients: [
+      { itemId: 'cristal_noir', quantity: 1, source: 'crop' },
+      { itemId: 'truffe', quantity: 1, source: 'crop' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 120,
+    sellValue: 3900, // (900+800+80) x 2.2
+    minTreeStage: 'majestueux',
   },
   // ── Recettes déverrouillables (quêtes coopératives) ──
   {
