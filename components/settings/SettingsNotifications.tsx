@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import type { AppColors } from '../../constants/colors';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Switch, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +42,7 @@ interface ToggleItemProps {
   detail: string;
   enabled: boolean;
   onToggle: () => void;
-  colors: any;
+  colors: AppColors;
   primary: string;
   isLast?: boolean;
 }

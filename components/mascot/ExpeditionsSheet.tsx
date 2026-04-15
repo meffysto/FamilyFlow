@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import type { AppColors } from '../../constants/colors';
 import {
   Modal,
   ScrollView,
@@ -89,7 +90,7 @@ function AwningStripes() {
 
 // ── Helpers couleur ───────────────────────────────────────────────────────────
 
-function difficultyColor(difficulty: 'easy' | 'medium' | 'hard', colors: any): string {
+function difficultyColor(difficulty: 'easy' | 'medium' | 'hard', colors: AppColors): string {
   if (difficulty === 'easy') return colors.success;
   if (difficulty === 'medium') return colors.warning;
   return colors.error;
@@ -108,7 +109,7 @@ function outcomeLabel(outcome: ExpeditionOutcome): string {
   return 'Découverte rare !';
 }
 
-function outcomeColor(outcome: ExpeditionOutcome, colors: any): string {
+function outcomeColor(outcome: ExpeditionOutcome, colors: AppColors): string {
   if (outcome === 'success') return colors.success;
   if (outcome === 'partial') return colors.warning;
   if (outcome === 'failure') return colors.error;
@@ -338,7 +339,7 @@ interface CardProps {
   mission: ExpeditionMission;
   canLaunch: boolean;
   onLaunch: () => void;
-  colors: any;
+  colors: AppColors;
   primary: string;
   harvestInventory: HarvestInventory;
   t: (key: string) => string;
@@ -461,7 +462,7 @@ interface ActiveRowProps {
   expedition: ActiveExpedition;
   mission: ExpeditionMission | undefined;
   onCollect: () => void;
-  colors: any;
+  colors: AppColors;
   primary: string;
   tick: number;
 }
@@ -517,7 +518,7 @@ interface ResultRowProps {
   expedition: ActiveExpedition;
   mission: ExpeditionMission | undefined;
   onDismiss: () => void;
-  colors: any;
+  colors: AppColors;
 }
 
 const ResultRow = React.memo(function ResultRow({

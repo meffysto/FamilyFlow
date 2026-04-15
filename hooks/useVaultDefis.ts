@@ -9,7 +9,7 @@ import { useState, useCallback, type SetStateAction, type Dispatch } from 'react
 import type React from 'react';
 import type { Defi, DefiDayEntry, GamificationData, Profile } from '../lib/types';
 import type { VaultManager } from '../lib/vault';
-import { parseDefis, serializeDefis, parseGamification, serializeGamification, parseFamille, mergeProfiles } from '../lib/parser';
+import { serializeDefis, parseGamification, serializeGamification, parseFamille, mergeProfiles } from '../lib/parser';
 import { addPoints } from '../lib/gamification';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────

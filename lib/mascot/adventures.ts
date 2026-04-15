@@ -162,8 +162,3 @@ export function getDailyAdventure(profileId: string, date: Date = new Date()): A
   const idx = hash % ADVENTURES.length;
   return ADVENTURES[idx];
 }
-
-/** @deprecated Utiliser formatDateStr depuis ./utils */
-export function getTodayStr(date: Date = new Date()): string {
-  return formatDateStr(date);
-}

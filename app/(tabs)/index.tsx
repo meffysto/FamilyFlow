@@ -90,15 +90,11 @@ import {
   DashboardGarden,
   DashboardCompanion,
 } from '../../components/dashboard';
+import type { ZenConfig } from '../../components/settings/SettingsZen';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
 const SMART_SORT_KEY = 'dashboard_smart_sort';
 const ZEN_CONFIG_KEY = 'zen_config_v1';
-
-interface ZenConfig {
-  enabled: boolean;
-  excludedSections: string[];
-}
 
 /** Sections TOUJOURS exclues du calcul zen (non configurables par l'utilisateur) */
 const ZEN_HARDCODED_EXCLUDED = [

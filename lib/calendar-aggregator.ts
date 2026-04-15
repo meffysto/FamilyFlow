@@ -8,7 +8,7 @@
 import { format, eachDayOfInterval, parseISO, addDays, addWeeks, addMonths } from 'date-fns';
 import type { RDV, Task, Anniversary, MealItem, Defi, Memory, MoodEntry, ChildQuote, VacationConfig } from './types';
 import { MOOD_EMOJIS } from './types';
-import type { CalendarEvent, CalendarEventType } from './calendar-types';
+import type { CalendarEvent } from './calendar-types';
 import { EVENT_CONFIG, DAYS_ORDER_FR } from './calendar-types';
 
 export interface AggregatorInput {

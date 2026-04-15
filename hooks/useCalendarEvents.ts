@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { format, startOfMonth, endOfMonth, startOfWeek, addWeeks, parseISO, eachDayOfInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, addWeeks } from 'date-fns';
 import { useVault } from '../contexts/VaultContext';
 import { aggregateCalendarEvents, resolveMealsForRange, indexByDate, type AggregatorInput, type DateRange } from '../lib/calendar-aggregator';
 import type { CalendarEvent } from '../lib/calendar-types';

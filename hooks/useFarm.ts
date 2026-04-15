@@ -5,12 +5,12 @@
  * et deduit/ajoute les feuilles dans gamification.md.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
-import type { PlacedBuilding, FarmInventory, CraftedItem } from '../lib/mascot/types';
+import type { FarmInventory, CraftedItem } from '../lib/mascot/types';
 import { isLargeCropPlot } from '../lib/mascot/world-grid';
 import { getTreeStageInfo } from '../lib/mascot/engine';
 import {
@@ -28,7 +28,6 @@ import {
   CRAFT_RECIPES,
   craftItem as craftItemFn,
   sellCraftedItem as sellCraftedItemFn,
-  sellRawHarvest as sellRawHarvestFn,
   serializeHarvestInventory,
   parseHarvestInventory,
   serializeCraftedItems,

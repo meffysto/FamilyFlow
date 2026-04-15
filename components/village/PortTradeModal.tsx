@@ -5,6 +5,7 @@
 // Pattern identique à VillageBuildingModal : pageSheet slide + handle + sections.
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import type { AppColors } from '../../constants/colors';
 import { useTranslation } from 'react-i18next';
 import {
   View,
@@ -387,7 +388,7 @@ function EnvoiTab({
   canSendToday, sendsRemaining,
   isSending, onSend, onShare,
 }: {
-  colors: any; primary: string; tint: string;
+  colors: AppColors; primary: string; tint: string;
   categories: { id: TradeCategory; label: string; emoji: string }[];
   selectedCategory: TradeCategory;
   onSelectCategory: (c: TradeCategory) => void;
@@ -519,7 +520,7 @@ function EnvoiTab({
 // ── Onglet Recevoir ───────────────────────────────────────────────────────────
 
 function RecevoirTab({ colors, primary, receiveError, isReceiving, onReceive }: {
-  colors: any; primary: string;
+  colors: AppColors; primary: string;
   receiveError: string | null;
   isReceiving: boolean;
   onReceive: (code: string) => void;

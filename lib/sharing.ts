@@ -12,7 +12,7 @@ const RNShare = Platform.OS === 'web'
   ? { open: async (_opts: any) => ({}) }
   : require('react-native-share').default;
 import * as SecureStore from 'expo-secure-store';
-import { sendTelegram, sendTelegramPhoto, sendTelegramMediaGroup, sendWeeklyRecap } from './telegram';
+import { sendTelegram, sendWeeklyRecap } from './telegram';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

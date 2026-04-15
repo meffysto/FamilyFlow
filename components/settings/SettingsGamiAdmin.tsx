@@ -9,6 +9,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
+import type { AppColors } from '../../constants/colors';
 import { View, Text, StyleSheet, TextInput, Alert, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { serializeGamification, parseFarmProfile, serializeFarmProfile } from '../../lib/parser';
@@ -41,7 +42,7 @@ function NumField({
   label: string;
   value: string;
   onChangeText: (v: string) => void;
-  colors: any;
+  colors: AppColors;
 }) {
   return (
     <View style={styles.fieldRow}>

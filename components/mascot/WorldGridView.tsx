@@ -2,10 +2,10 @@
  * WorldGridView.tsx — Rendu de la grille monde unifiee
  *
  * Affiche les cellules de la grille : cultures, batiments, decos.
- * Remplace FarmPlots avec un systeme extensible.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import type { AppColors } from '../../constants/colors';
 import { View, Image, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -859,7 +859,7 @@ export function WorldGridView({
 }
 
 /** Compteur ferme (a afficher sous le diorama) */
-export function FarmStats({ farmCropsCSV, colors, t }: { farmCropsCSV: string; colors: any; t: (key: string, opts?: any) => string }) {
+export function FarmStats({ farmCropsCSV, colors, t }: { farmCropsCSV: string; colors: AppColors; t: (key: string, opts?: any) => string }) {
   const crops = parseCrops(farmCropsCSV);
   if (crops.length === 0) return null;
 

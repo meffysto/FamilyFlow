@@ -25,7 +25,6 @@ import {
 } from '../lib/parser';
 import {
   FamilyQuest,
-  FamilyQuestType,
   applyQuestReward,
   createQuestFromTemplate,
 } from '../lib/quest-engine';

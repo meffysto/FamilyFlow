@@ -6,7 +6,7 @@
  * - 6 mois de budget
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import { parseJournalStats, JournalStats } from '../lib/journal-stats';
 import { parseBudgetMonth } from '../lib/budget';

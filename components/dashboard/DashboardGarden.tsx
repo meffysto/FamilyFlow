@@ -28,7 +28,8 @@ import { CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 import { getPendingResources, getMinutesUntilNext, MAX_PENDING } from '../../lib/mascot/building-engine';
 import { getActiveWearEffects } from '../../lib/mascot/wear-engine';
-import { getDailyAdventure, getTodayStr } from '../../lib/mascot/adventures';
+import { getDailyAdventure } from '../../lib/mascot/adventures';
+import { formatDateStr } from '../../lib/mascot/utils';
 import { hapticsTreeTap } from '../../lib/mascot/haptics';
 import { useTone } from '../../lib/mascot/tone';
 import type { SagaProgress } from '../../lib/mascot/sagas-types';
@@ -170,7 +171,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   const tone = useTone();
 
   const profileId = activeProfile?.id ?? '';
-  const today = getTodayStr();
+  const today = formatDateStr();
   const completedSagas = activeProfile?.completedSagas ?? [];
 
   // ── Family Toggle ────────────────────────────────────────────

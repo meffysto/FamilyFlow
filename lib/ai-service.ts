@@ -422,7 +422,7 @@ async function callClaude(
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
+      await response.text();
       if (response.status === 401) {
         return { text: '', error: 'Clé API invalide. Vérifiez dans les réglages.' };
       }

@@ -1,4 +1,5 @@
-import { getDailyAdventure, getTodayStr, ADVENTURES } from '../mascot/adventures';
+import { getDailyAdventure, ADVENTURES } from '../mascot/adventures';
+import { formatDateStr } from '../mascot/utils';
 
 describe('getDailyAdventure', () => {
   it('retourne une aventure valide', () => {
@@ -49,12 +50,12 @@ describe('getDailyAdventure', () => {
   });
 });
 
-describe('getTodayStr', () => {
+describe('formatDateStr', () => {
   it('formate correctement', () => {
-    expect(getTodayStr(new Date(2026, 2, 25))).toBe('2026-03-25');
+    expect(formatDateStr(new Date(2026, 2, 25))).toBe('2026-03-25');
   });
 
   it('pad les mois et jours', () => {
-    expect(getTodayStr(new Date(2026, 0, 5))).toBe('2026-01-05');
+    expect(formatDateStr(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 });

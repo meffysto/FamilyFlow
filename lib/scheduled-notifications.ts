@@ -153,11 +153,6 @@ async function cancelByCategory(prefix: string): Promise<void> {
   }
 }
 
-function formatDate(d: string): string {
-  const [y, m, day] = d.split('-');
-  return `${day}/${m}/${y}`;
-}
-
 // ─── 1. RDV ──────────────────────────────────────────────────────────────────
 
 export async function scheduleRDVAlerts(

@@ -111,7 +111,6 @@ import type { HarvestEvent, RareSeedDrop } from '../../lib/mascot/farm-engine';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
 import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
-// StreakFlames supprime — infos dans le HUD
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -127,7 +126,7 @@ import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../..
 import { createEmptySagaProgress, type SagaProgress, type SagaTrait } from '../../lib/mascot/sagas-types';
 import { getSagaById, getSagaCompletionResult, getNextSagaForProfile } from '../../lib/mascot/sagas-engine';
 import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion, clearSagaProgress } from '../../lib/mascot/sagas-storage';
-import { getTodayStr } from '../../lib/mascot/adventures';
+import { formatDateStr } from '../../lib/mascot/utils';
 import type { SeasonalEventProgress } from '../../lib/mascot/seasonal-events-types';
 import { getVisibleEventId, buildSeasonalEventAsSaga, drawGuaranteedSeasonalReward, SEASONAL_EVENT_BONUS_XP } from '../../lib/mascot/seasonal-events-engine';
 import { loadEventProgressList, saveEventProgress } from '../../lib/mascot/seasonal-events-storage';
@@ -463,7 +462,7 @@ export default function TreeScreen() {
   // Orchestration visiteur saga : départ après réaction aux choix (SAG-04)
   const [visitorShouldDepart, setVisitorShouldDepart] = useState(false);
   const [visitorReaction, setVisitorReaction] = useState<ReactionType | undefined>(undefined);
-  const today = getTodayStr();
+  const today = formatDateStr();
 
   // ── État visiteur événement saisonnier ──
   const [eventProgressList, setEventProgressList] = useState<SeasonalEventProgress[]>([]);

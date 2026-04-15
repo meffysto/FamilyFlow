@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback } from 'react';
+import type { AppColors } from '../../constants/colors';
 import {
   View,
   Text,
@@ -54,7 +55,7 @@ interface FamilyQuestPickerSheetProps {
   visible: boolean;
   onClose: () => void;
   onSelect: (templateId: string) => void;
-  colors: any;
+  colors: AppColors;
   primary: string;
   t: (key: string, opts?: any) => string;
 }
@@ -85,7 +86,7 @@ function FamilyQuestPickerSheetInner({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+      <View style={[styles.sheet, { backgroundColor: colors.bg }]}>
         <ModalHeader
           title="Nouvelle Quête Familiale"
           onClose={onClose}

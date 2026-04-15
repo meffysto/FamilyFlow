@@ -3,7 +3,7 @@
  */
 
 import { Task, BudgetEntry, MealItem, RDV, MoodEntry, MoodLevel, MOOD_EMOJIS, StockItem } from './types';
-import { JournalStats, parseDureeToMinutes, formatMinutes } from './journal-stats';
+import { JournalStats, parseDureeToMinutes } from './journal-stats';
 import { totalSpent } from './budget';
 
 // Re-export pour usage externe (stats.tsx importe depuis ici)

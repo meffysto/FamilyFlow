@@ -21,5 +21,6 @@ module.exports = {
     '^\\./widget-bridge$': '<rootDir>/lib/__tests__/__mocks__/widget-bridge.ts',
     '\\.(png|jpg|jpeg|gif|svg|webp)$': '<rootDir>/lib/__tests__/__mocks__/file-asset.ts',
     '^react-native$': '<rootDir>/lib/__tests__/__mocks__/react-native.ts',
+    '^expo-haptics$': '<rootDir>/lib/__tests__/__mocks__/expo-haptics.ts',
   },
 };

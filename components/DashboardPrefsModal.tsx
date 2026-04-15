@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import type { AppColors } from '../constants/colors';
 import {
   View,
   Text,
@@ -60,7 +61,7 @@ interface DraggableRowProps {
   onDragEnd: (from: number, to: number) => void;
   onToggle: (id: string) => void;
   onToggleSize: (id: string) => void;
-  colors: any;
+  colors: AppColors;
   primary: string;
   tint: string;
 }

@@ -145,10 +145,6 @@ export function parseTaskFile(relativePath: string, content: string): Task[] {
   return tasks;
 }
 
-/** @deprecated parseMénage supprimée — les tâches ménage sont désormais dans
- *  '02 - Maison/Tâches récurrentes.md' sous la section "Ménage hebdomadaire".
- *  Utiliser parseTaskFile() + filtrage par section. */
-
 // ─── Frontmatter ────────────────────────────────────────────────────────────
 
 /**

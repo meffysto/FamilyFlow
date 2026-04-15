@@ -11,6 +11,7 @@
  */
 
 import React, { useCallback } from 'react';
+import type { AppColors } from '../../constants/colors';
 import {
   View,
   Text,
@@ -34,7 +35,7 @@ import type { Profile } from '../../lib/types';
 interface FamilyQuestDetailSheetProps {
   quest: FamilyQuest;
   profiles: Profile[];
-  colors: any;
+  colors: AppColors;
   primary: string;
   t: (key: string, opts?: any) => string;
   visible: boolean;
@@ -144,7 +145,7 @@ function FamilyQuestDetailSheetInner({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+      <View style={[styles.sheet, { backgroundColor: colors.bg }]}>
         <ModalHeader
           title={`${quest.emoji} ${quest.title}`}
           onClose={onClose}

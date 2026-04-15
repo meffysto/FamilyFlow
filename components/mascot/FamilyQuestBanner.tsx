@@ -9,6 +9,7 @@
  */
 
 import React from 'react';
+import type { AppColors } from '../../constants/colors';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -54,7 +55,7 @@ export function getRewardLabel(reward: FamilyFarmReward): string {
 interface FamilyQuestBannerProps {
   quest: FamilyQuest;
   profiles: Profile[];
-  colors: any;
+  colors: AppColors;
   primary: string;
   t: (key: string, opts?: any) => string;
   onPress: () => void;

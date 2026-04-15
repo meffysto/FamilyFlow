@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import type { AppColors } from '../../constants/colors';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -16,7 +17,7 @@ const WEEKLY_REWARD = 50;
 
 interface WeeklyGoalProps {
   weeklyTaskCount: number;
-  colors: any;
+  colors: AppColors;
   t: (key: string, opts?: any) => string;
 }
 

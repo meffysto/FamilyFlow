@@ -31,7 +31,6 @@ import {
   coordinatedListDir,
   coordinatedIsDirectory,
   coordinatedFileExists,
-  downloadICloudFiles,
 } from '../modules/vault-access/src';
 import { Profile, Gender } from './types';
 import { format, addDays, parseISO } from 'date-fns';

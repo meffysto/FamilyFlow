@@ -15,8 +15,6 @@ import { format, addDays, parseISO } from 'date-fns';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
-const STATIC_TASK_FILES = ['02 - Maison/Tâches récurrentes.md'];
-
 function warnUnexpected(context: string, e: unknown) {
   const msg = String(e);
   const isNotFound = msg.includes('cannot read') || msg.includes('not exist') || msg.includes('no such') || msg.includes('ENOENT');

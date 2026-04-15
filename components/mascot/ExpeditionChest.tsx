@@ -10,6 +10,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import type { AppColors } from '../../constants/colors';
 import {
   Modal,
   StyleSheet,
@@ -58,7 +59,7 @@ function outcomeTitle(outcome: ExpeditionOutcome): string {
   return 'Découverte rare !';
 }
 
-function outcomeColor(outcome: ExpeditionOutcome, colors: any): string {
+function outcomeColor(outcome: ExpeditionOutcome, colors: AppColors): string {
   if (outcome === 'success') return colors.success;
   if (outcome === 'partial') return colors.warning;
   if (outcome === 'failure') return colors.error;
