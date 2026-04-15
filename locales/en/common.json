@@ -4038,7 +4038,11 @@
       "truffe": "Truffle",
       "truffe_desc": "A legendary mushroom. Long growth, exceptional reward.",
       "fruit_dragon": "Dragon Fruit",
-      "fruit_dragon_desc": "A mythical fruit. Very rare, found in any harvest."
+      "fruit_dragon_desc": "A mythical fruit. Very rare, found in any harvest.",
+      "fleur_lave": "Lava Flower",
+      "fleur_lave_desc": "An exclusive volcanic flower. Only obtained through expeditions.",
+      "cristal_noir": "Black Crystal",
+      "cristal_noir_desc": "A legendary crystal from the depths. Reserved for the most valiant explorers."
     },
     "building": {
       "poulailler": "Chicken Coop",

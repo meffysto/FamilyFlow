@@ -4048,7 +4048,11 @@
       "truffe": "Truffe",
       "truffe_desc": "Champignon légendaire. Longue pousse, récompense exceptionnelle.",
       "fruit_dragon": "Fruit du dragon",
-      "fruit_dragon_desc": "Fruit mythique. Très rare, trouvé dans n'importe quelle récolte."
+      "fruit_dragon_desc": "Fruit mythique. Très rare, trouvé dans n'importe quelle récolte.",
+      "fleur_lave": "Fleur de Lave",
+      "fleur_lave_desc": "Fleur volcanique exclusive. Obtenue uniquement via les expéditions.",
+      "cristal_noir": "Cristal Noir",
+      "cristal_noir_desc": "Cristal légendaire des profondeurs. Réservé aux explorateurs les plus valeureux."
     },
     "building": {
       "poulailler": "Poulailler",
