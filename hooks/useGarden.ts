@@ -1064,7 +1064,17 @@ export function useGarden(): UseGardenReturn {
       const farmData = parseFarmProfile(content);
 
       // Guard anti-double-claim (D-08) — village_claimed_week persisté dans farm-{id}.md
-      if (farmData.village_claimed_week === gardenData.currentWeekStart) return false;
+      if (farmData.village_claimed_week === gardenData.currentWeekStart) {
+        // Réparer la désync : farm dit "déjà réclamé" mais gardenData.rewardClaimed est false
+        // → le bouton reste visible indéfiniment. On corrige le flag garden.
+        if (!gardenData.rewardClaimed) {
+          const fixedData: VillageData = { ...gardenData, rewardClaimed: true };
+          const fixedContent = serializeGardenFile(fixedData);
+          await vault.writeFile(VILLAGE_FILE, fixedContent);
+          setGardenRaw(fixedContent);
+        }
+        return false;
+      }
 
       // Écrire le flag anti-double-claim dans farm-{id}.md
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
