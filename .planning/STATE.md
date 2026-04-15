@@ -28,7 +28,7 @@ Phase: 33 (exp-ditions) — EXECUTING
 Plan: 3 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
-Last activity: 2026-04-14
+Last activity: 2026-04-15 - Completed quick task 260415-lyp: Mouvement naturel compagnon ferme
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
@@ -51,6 +51,7 @@ Status: Phase complete — ready for verification
 | 260414-l12 | Améliorer le visuel des modals BuildingShopSheet et BuildingDetailSheet pour un look cozy/farm game | 2026-04-14 | 5139e70 | [260414-l12-am-liorer-le-visuel-des-modals-buildings](./quick/260414-l12-am-liorer-le-visuel-des-modals-buildings/) |
 | 260415-egg | Augmenter la taille des inhabitants dans Mon jardin (animaux x2, items +50%, emojis +30%) | 2026-04-15 | 5aebf7b | [260415-egg-augmenter-la-taille-des-inhabitants-dans](./quick/260415-egg-augmenter-la-taille-des-inhabitants-dans/) |
 | 260415-j0b | Afficher les gains dans les expéditions | 2026-04-15 | ae37ebf | [260415-j0b-afficher-les-gains-dans-les-exp-ditions](./quick/260415-j0b-afficher-les-gains-dans-les-exp-ditions/) |
+| 260415-lyp | Mouvement naturel compagnon ferme | 2026-04-15 | d7d5148 | [260415-lyp-mouvement-naturel-compagnon-ferme](./quick/260415-lyp-mouvement-naturel-compagnon-ferme/) |
 
 ## Performance Metrics
 
