@@ -31,7 +31,7 @@ import type { ActiveExpedition } from '../lib/types';
 // ─── Helpers chemin fichier ──────────────────────────────────────────────────
 
 function farmFilePath(profileId: string): string {
-  return `04 - Gamification/farm-${profileId}.md`;
+  return `farm-${profileId}.md`;
 }
 
 function gamiFilePath(profileId: string): string {

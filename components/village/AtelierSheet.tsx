@@ -41,6 +41,7 @@ interface AtelierSheetProps {
   atelierCrafts: VillageAtelierCraft[];
   unlockedRecipeTier: number;
   profileId: string;
+  coins?: number;
   onCraft: (recipeId: string, profileId: string) => Promise<boolean>;
   onClose: () => void;
 }
@@ -470,6 +471,7 @@ export function AtelierSheet({
   atelierCrafts,
   unlockedRecipeTier,
   profileId,
+  coins = 0,
   onCraft,
   onClose,
 }: AtelierSheetProps) {
@@ -522,8 +524,11 @@ export function AtelierSheet({
 
             {/* Parchment content area */}
             <View style={styles.parchment}>
-              {/* Handle */}
-              <View style={styles.handle} />
+              {/* Handle + total feuilles */}
+              <View style={styles.handleRow}>
+                <View style={styles.handle} />
+                <Text style={styles.handleCoins}>🍃 {coins}</Text>
+              </View>
 
               {/* Header */}
               <View style={styles.header}>
@@ -654,14 +659,22 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },
+  handleRow: {
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.lg,
+    gap: 4,
+  },
   handle: {
     width: 36,
     height: 4,
     borderRadius: 2,
     backgroundColor: Farm.woodHighlight,
-    alignSelf: 'center',
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.lg,
+  },
+  handleCoins: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
   },
   header: {
     flexDirection: 'row',

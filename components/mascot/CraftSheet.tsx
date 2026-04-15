@@ -902,17 +902,22 @@ export function CraftSheet({
           >
             <Text style={styles.closeBtnText}>{'✕'}</Text>
           </TouchableOpacity>
-              {/* Handle */}
-              <View style={styles.handle} />
+              {/* Handle + coins */}
+              <View style={styles.handleRow}>
+                <View style={styles.handleBadge}>
+                  <View style={styles.handle} />
+                  <View style={styles.handleCoinsRow}>
+                    <Text style={styles.handleCoins}>{coins}</Text>
+                    <Text style={styles.handleCoinsEmoji}>🍃</Text>
+                  </View>
+                </View>
+              </View>
 
-              {/* Titre + coins */}
+              {/* Titre */}
               <View style={styles.headerRow}>
                 <Text style={styles.title}>
                   {'🔨 ' + t('craft.atelier')}
                 </Text>
-                <View style={styles.coinsBadge}>
-                  <Text style={styles.coinsText}>{coins} 🍃</Text>
-                </View>
                 {/* Espace pour le bouton close */}
                 <View style={{ width: 36 }} />
               </View>
@@ -989,18 +994,47 @@ const styles = StyleSheet.create({
     backgroundColor: Farm.parchmentDark,
   },
 
-  // ── Handle ──
+  // ── Handle + coins ──
+  handleRow: {
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  handleBadge: {
+    alignItems: 'center',
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.xs,
+    gap: 4,
+  },
   handle: {
     width: 36,
     height: 4,
     backgroundColor: Farm.woodHighlight,
     borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
+  },
+  handleCoinsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  handleCoins: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
+    lineHeight: FontSize.caption * 1.2,
+  },
+  handleCoinsEmoji: {
+    fontSize: FontSize.caption,
+    lineHeight: FontSize.caption * 1.2,
+    marginTop: 1,
   },
 
-  // ── Header row (titre + coins) ──
+  // ── Header row (titre) ──
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1016,20 +1050,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
   },
-  coinsBadge: {
-    backgroundColor: Farm.parchmentDark,
-    borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  coinsText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
-  },
-
   // ── Onglets ──
   tabsRow: {
     flexDirection: 'row',
@@ -1098,10 +1118,12 @@ const styles = StyleSheet.create({
   catSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.md,
     paddingHorizontal: Spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: Farm.woodHighlight,
+    marginBottom: Spacing.sm,
   },
   catSectionEmoji: {
     fontSize: FontSize.body,

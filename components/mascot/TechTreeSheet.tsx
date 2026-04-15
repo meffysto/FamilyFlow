@@ -263,7 +263,7 @@ const TechNodeView = React.memo(function TechNodeView({
         )}
 
         {/* Prerequis */}
-        {status === 'locked' && node.requires && (
+        {status === 'locked' && node.requires && prereqMissing && (
           <Text style={styles.nodeRequires} numberOfLines={1}>
             {(() => {
               const reqNode = TECH_TREE.find(n => n.id === node.requires);
@@ -283,11 +283,11 @@ const TechNodeView = React.memo(function TechNodeView({
               highlightColor={btnHighlight}
             />
           ) : (
-            <Text style={styles.lockedLabel}>
-              {prereqMissing
-                ? `🔒 ${t('tech.requires', { name: '' })}`.trim()
-                : canUnlockResult.reason ?? t('tech.not_enough_coins')}
-            </Text>
+            prereqMissing ? (
+              <Text style={styles.lockedLabel}>
+                {`🔒 ${t('tech.requires', { name: '' })}`.trim()}
+              </Text>
+            ) : null
           )
         )}
       </Animated.View>

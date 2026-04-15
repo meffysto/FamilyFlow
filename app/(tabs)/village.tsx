@@ -1038,6 +1038,7 @@ export default function VillageScreen() {
         atelierCrafts={atelierCrafts}
         unlockedRecipeTier={villageTechBonuses.unlockedRecipeTier}
         profileId={activeProfile?.id ?? ''}
+        coins={activeProfile?.coins ?? 0}
         onCraft={craftVillageItem}
         onClose={() => setShowAtelier(false)}
       />
