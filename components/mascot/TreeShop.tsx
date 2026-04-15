@@ -202,6 +202,9 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
       const aOwned = ownedInhabitants.includes(a.id);
       const bOwned = ownedInhabitants.includes(b.id);
       if (aOwned !== bOwned) return aOwned ? 1 : -1;
+      const aExpedition = a.expeditionExclusive === true && !aOwned;
+      const bExpedition = b.expeditionExclusive === true && !bOwned;
+      if (aExpedition !== bExpedition) return aExpedition ? 1 : -1;
       const aMinIdx = TREE_STAGES.findIndex((s) => s.stage === a.minStage);
       const bMinIdx = TREE_STAGES.findIndex((s) => s.stage === b.minStage);
       const aLocked = stageIdx < aMinIdx;
@@ -236,6 +239,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
     const owned = ownedList.includes(item.id);
     const minStageIdx = TREE_STAGES.findIndex((s) => s.stage === item.minStage);
     const locked = stageIdx < minStageIdx;
+    const expeditionOnly = 'expeditionExclusive' in item && (item as MascotInhabitant).expeditionExclusive === true && !owned;
     const rarityColor = RARITY_COLORS[item.rarity] || RARITY_COLORS.commun;
     const rarityBg = RARITY_BG[item.rarity] || RARITY_BG.commun;
 
@@ -247,7 +251,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
         <TouchableOpacity
           style={[
             styles.itemCard,
-            locked && styles.itemCardLocked,
+            (locked || expeditionOnly) && styles.itemCardLocked,
           ]}
           onPress={() => setSelectedItem(item)}
           activeOpacity={0.75}
@@ -260,7 +264,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
               <Text style={styles.itemEmoji}>{item.emoji}</Text>
             )}
             <View style={styles.itemInfo}>
-              <Text style={[styles.itemName, locked && styles.itemNameLocked]}>
+              <Text style={[styles.itemName, (locked || expeditionOnly) && styles.itemNameLocked]}>
                 {t(item.labelKey)}
               </Text>
               <Text style={styles.itemDesc} numberOfLines={1}>
@@ -272,7 +276,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                     {t(`mascot.shop.rarity.${item.rarity}`)}
                   </Text>
                 </View>
-                {!owned && (
+                {!owned && !expeditionOnly && (
                   <Text style={styles.itemCost}>
                     {t('mascot.shop.leaves', { count: item.cost })}
                   </Text>
@@ -286,6 +290,12 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
             <View style={styles.ownedBadge}>
               <Text style={styles.ownedText}>
                 {t('mascot.shop.owned')}
+              </Text>
+            </View>
+          ) : expeditionOnly ? (
+            <View style={styles.expeditionBadge}>
+              <Text style={styles.expeditionText} numberOfLines={1}>
+                {t('mascot.shop.expedition')}
               </Text>
             </View>
           ) : locked ? (
@@ -310,6 +320,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
     const owned = ownedList.includes(selectedItem.id);
     const minStageIdx = TREE_STAGES.findIndex((s) => s.stage === selectedItem.minStage);
     const locked = stageIdx < minStageIdx;
+    const expeditionOnly = 'expeditionExclusive' in selectedItem && (selectedItem as MascotInhabitant).expeditionExclusive === true && !owned;
     const canAfford = coins >= selectedItem.cost;
     const rarityColor = RARITY_COLORS[selectedItem.rarity] || RARITY_COLORS.commun;
     const rarityBg = RARITY_BG[selectedItem.rarity] || RARITY_BG.commun;
@@ -399,6 +410,12 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                       <View style={styles.detailOwnedBadge}>
                         <Text style={styles.detailOwnedText}>
                           {t('mascot.shop.owned')}
+                        </Text>
+                      </View>
+                    ) : expeditionOnly ? (
+                      <View style={styles.detailExpeditionBadge}>
+                        <Text style={styles.detailExpeditionText}>
+                          {t('mascot.shop.expeditionOnly')}
                         </Text>
                       </View>
                     ) : locked ? (
@@ -826,6 +843,17 @@ const styles = StyleSheet.create({
     color: Farm.brownTextSub,
     fontStyle: 'italic',
   },
+  expeditionBadge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(59,130,246,0.15)',
+  },
+  expeditionText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: '#2563EB',
+  },
   costBadge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
@@ -1041,5 +1069,18 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
     color: Farm.brownTextSub,
     fontStyle: 'italic',
+  },
+  detailExpeditionBadge: {
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    backgroundColor: 'rgba(59,130,246,0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(59,130,246,0.35)',
+  },
+  detailExpeditionText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+    color: '#2563EB',
   },
 });

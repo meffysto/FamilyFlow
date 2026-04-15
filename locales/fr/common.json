@@ -3454,7 +3454,15 @@
       "cochon": "Cochon",
       "cochon_desc": "Un petit cochon rose qui grogne de bonheur. Il retourne la terre pour trouver des truffes.",
       "vache": "Vache",
-      "vache_desc": "Une vache paisible qui broute au pied de l'arbre. Sa présence apporte calme et sérénité."
+      "vache_desc": "Une vache paisible qui broute au pied de l'arbre. Sa présence apporte calme et sérénité.",
+      "renardArctique": "Renard arctique",
+      "renardArctique_desc": "Un renard des neiges aux reflets argentés, ramené des contrées glacées. Sa fourrure scintille comme du givre.",
+      "aigleDore": "Aigle doré",
+      "aigleDore_desc": "Un aigle majestueux aux plumes dorées, compagnon des sommets. Son regard perçant veille sur tout le jardin.",
+      "lynxMystere": "Lynx mystère",
+      "lynxMystere_desc": "Un lynx insaisissable qui apparaît et disparaît comme une ombre. Il porte bonheur à ceux qui l'aperçoivent.",
+      "dragonGlace": "Dragon de glace",
+      "dragonGlace_desc": "Un dragon cristallin venu des montagnes enneigées. Son souffle givrant pare l'arbre de dentelles de glace."
     },
     "shop": {
       "title": "Boutique de l'arbre",
@@ -3466,6 +3474,8 @@
       "locked": "Débloqué au stade {{stage}}",
       "notEnoughPoints": "Points insuffisants",
       "notEnoughPoints_enfant": "Oh non, pas assez de points !",
+      "expedition": "Expédition",
+      "expeditionOnly": "Obtenu via expédition uniquement",
       "notEnoughLeaves": "Pas assez de feuilles 🍃",
       "notEnoughLeaves_enfant": "Oh non, pas assez de feuilles ! 🍃",
       "buyConfirm": "Acheter pour {{cost}} 🍃 ?",
