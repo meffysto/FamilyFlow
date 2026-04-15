@@ -1,0 +1,36 @@
+# ── EAS Build — fichiers exclus de l'upload ──────────────────────────────
+# Sans ce fichier, EAS upload tout le repo (sauf .gitignore).
+# Réduit le bundle upload de ~800 MB à ~40 MB.
+
+# Vidéos / screenshots / docs (marketing, pas runtime)
+video/
+screenshots/
+docs/
+
+# Planning et artifacts Claude
+.planning/
+.claude/
+.agents/
+.kiro/
+notes.md
+
+# App desktop Tauri (workspace séparé)
+apps/
+
+# Build artifacts
+dist/
+*.ipa
+
+# IDE / tooling
+.mcp.json
+skills-lock.json
+*.tsbuildinfo
+
+# Tests et scripts (pas nécessaires au runtime)
+scripts/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+
+# Patches appliquées au postinstall (déjà dans node_modules)
+# patches/ — garder, postinstall en a besoin
