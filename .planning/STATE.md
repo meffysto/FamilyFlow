@@ -28,7 +28,7 @@ Phase: 33 (exp-ditions) — EXECUTING
 Plan: 3 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
-Last activity: 2026-04-15 - Completed quick task 260415-wnf: Reward card toast animée à la validation de tâche
+Last activity: 2026-04-15 - Completed quick task 260415-xak: HarvestCardToast — carte récolte animée + accumulation live dans ToastContext
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
@@ -56,6 +56,7 @@ Status: Phase complete — ready for verification
 | 260415-pdq | Aligner calcul pending items village avec productionRateMultiplier | 2026-04-15 | 94cd0e8 | [260415-pdq-aligner-calcul-pending-items-village-ave](./quick/260415-pdq-aligner-calcul-pending-items-village-ave/) |
 | 260415-tbr | Fix désync claimReward village rewardClaimed | 2026-04-15 | 25c593a | [260415-tbr-fix-d-sync-claimreward-village-rewardcla](./quick/260415-tbr-fix-d-sync-claimreward-village-rewardcla/) |
 | 260415-wnf | Reward card toast animée à la validation de tâche | 2026-04-15 | 5db78d5 | [260415-wnf-impl-menter-option-b-reward-card-toast-p](./quick/260415-wnf-impl-menter-option-b-reward-card-toast-p/) |
+| 260415-xak | HarvestCardToast — carte récolte animée + accumulation live dans ToastContext | 2026-04-15 | 4696862 | [260415-xak-cr-er-harvestcardtoast-brancher-dans-toa](./quick/260415-xak-cr-er-harvestcardtoast-brancher-dans-toa/) |
 
 ## Performance Metrics
 
