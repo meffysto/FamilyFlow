@@ -16,7 +16,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  Dimensions,
+  useWindowDimensions,
   Image,
   ImageSourcePropType,
   Alert,
@@ -150,19 +150,8 @@ const TERRAIN_IMAGES: Record<Season, any> = {
   hiver: require('../../assets/terrain/ground_hiver.png'),
 };
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
-
-/** Hauteur du conteneur diorama — calée sur le ratio 2:1 du tileset terrain (800×1600) */
-const TERRAIN_HEIGHT = SCREEN_W * 2;
-const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
-  0: TERRAIN_HEIGHT,  // graine
-  1: TERRAIN_HEIGHT,  // pousse
-  2: TERRAIN_HEIGHT,  // arbuste
-  3: TERRAIN_HEIGHT,  // arbre
-  4: TERRAIN_HEIGHT,  // majestueux
-  5: TERRAIN_HEIGHT,  // légendaire
-};
+// SCREEN_W, SCREEN_H, TREE_SIZE, TERRAIN_HEIGHT, DIORAMA_HEIGHT_BY_STAGE
+// sont calculés dans les composants via useWindowDimensions()
 
 const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
   printemps: require('../../assets/illustrations/tree-spring.jpg'),
@@ -212,6 +201,12 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses }: {
 }) {
   const { colors } = useThemeColors();
   const { t } = useTranslation();
+  const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
+  const TERRAIN_HEIGHT = SCREEN_W * 2;
+  const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
+    0: TERRAIN_HEIGHT, 1: TERRAIN_HEIGHT, 2: TERRAIN_HEIGHT,
+    3: TERRAIN_HEIGHT, 4: TERRAIN_HEIGHT, 5: TERRAIN_HEIGHT,
+  };
   const cells = techBonuses
     ? getExpandedCropCells(stageInfo.stage, techBonuses)
     : getUnlockedCropCells(stageInfo.stage);
@@ -317,6 +312,13 @@ export default function TreeScreen() {
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
+  const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
+  const TERRAIN_HEIGHT = SCREEN_W * 2;
+  const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
+    0: TERRAIN_HEIGHT, 1: TERRAIN_HEIGHT, 2: TERRAIN_HEIGHT,
+    3: TERRAIN_HEIGHT, 4: TERRAIN_HEIGHT, 5: TERRAIN_HEIGHT,
+  };
   const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();

@@ -260,6 +260,7 @@ export function ExpeditionsSheet({
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="automatic"
         >
           {/* ── Onglet Catalogue ── */}
           {activeTab === 'catalogue' && (
@@ -454,7 +455,7 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
         ]}
         activeOpacity={0.8}
       >
-        <Text style={[styles.launchBtnText, { color: canLaunch ? '#FFFFFF' : colors.textMuted }]}>
+        <Text style={[styles.launchBtnText, { color: canLaunch ? colors.onPrimary : colors.textMuted }]}>
           {canLaunch ? "Lancer l'expédition" : 'Complet'}
         </Text>
       </TouchableOpacity>
@@ -511,7 +512,7 @@ const ActiveExpeditionRow = React.memo(function ActiveExpeditionRow({
           style={[styles.collectBtn, { backgroundColor: primary }]}
           activeOpacity={0.8}
         >
-          <Text style={styles.collectBtnText}>{'Collecter'}</Text>
+          <Text style={[styles.collectBtnText, { color: colors.onPrimary }]}>{'Collecter'}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -692,6 +693,7 @@ const styles = StyleSheet.create({
   // ── ExpeditionCard ────────────────────────────────
   card: {
     borderRadius: Radius.lg,
+    borderCurve: 'continuous',
     borderWidth: 1,
     padding: Spacing['2xl'],
     gap: Spacing.md,
@@ -728,6 +730,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     borderWidth: 1,
   },
   diffBadgeText: {
@@ -743,6 +746,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
   },
   chipText: {
     fontSize: FontSize.label,
@@ -755,6 +759,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     gap: Spacing.xs,
   },
   costChipEmoji: {
@@ -786,6 +791,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
     borderRadius: Radius.sm,
+    borderCurve: 'continuous',
     borderWidth: 1,
     gap: Spacing.xs,
   },
@@ -800,6 +806,7 @@ const styles = StyleSheet.create({
   launchBtn: {
     height: 44,
     borderRadius: Radius.md,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.xs,
@@ -838,6 +845,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: 2,
     borderRadius: Radius.xs,
+    borderCurve: 'continuous',
     borderWidth: 1,
   },
   diffBadgeSmallText: {
@@ -855,13 +863,13 @@ const styles = StyleSheet.create({
     height: 44,
     paddingHorizontal: Spacing['2xl'],
     borderRadius: Radius.md,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   collectBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: '#FFFFFF',
   },
   // ── ResultRow ─────────────────────────────────────
   resultRow: {
@@ -877,6 +885,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.xs,
+    borderCurve: 'continuous',
     borderWidth: 1,
   },
   outcomeBadgeText: {

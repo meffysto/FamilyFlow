@@ -36,7 +36,7 @@ import { parseCrops, hasCropSeasonalBonus, getMainPlotIndex, getPlotLevel, getPl
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 import { type WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing } from '../../constants/spacing';
-import { FontSize } from '../../constants/typography';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 interface WorldGridViewProps {
   treeStage: TreeStage;
@@ -906,7 +906,7 @@ export function FarmStats({ farmCropsCSV, colors, t }: { farmCropsCSV: string; c
         </Text>
       )}
       {matureCount > 0 && (
-        <Text style={[statsStyles.text, { color: '#4ADE80' }]}>
+        <Text style={[statsStyles.text, { color: colors.success }]}>
           {t('farm.stats.ready', { count: matureCount })}
         </Text>
       )}
@@ -915,8 +915,8 @@ export function FarmStats({ farmCropsCSV, colors, t }: { farmCropsCSV: string; c
 }
 
 const statsStyles = StyleSheet.create({
-  container: { flexDirection: 'row', justifyContent: 'center', gap: 12, paddingVertical: 6 },
-  text: { fontSize: 13, fontWeight: '600' },
+  container: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.xl, paddingVertical: Spacing.sm },
+  text: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
 });
 
 const styles = StyleSheet.create({
@@ -925,6 +925,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   dirtBg: {
@@ -958,12 +959,12 @@ const styles = StyleSheet.create({
   cropBubble: {
     position: 'absolute',
     top: -20,
-    left: '50%' as any,
-    transform: [{ translateX: -20 }],
+    alignSelf: 'center',
     backgroundColor: 'rgba(255,255,255,0.9)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
+    borderCurve: 'continuous',
     minWidth: 40,
     alignItems: 'center' as const,
     zIndex: 15,
@@ -974,6 +975,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(139, 92, 246, 0.15)',
     borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     borderColor: 'rgba(139, 92, 246, 0.3)',
     overflow: 'hidden',
@@ -998,6 +1000,7 @@ const styles = StyleSheet.create({
     right: -4,
     backgroundColor: '#EF4444',
     borderRadius: 10,
+    borderCurve: 'continuous',
     minWidth: 20,
     height: 20,
     justifyContent: 'center',
@@ -1023,6 +1026,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.2)',
     borderStyle: 'dashed',
@@ -1036,6 +1040,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     backgroundColor: '#FFD700',
     borderRadius: 8,
+    borderCurve: 'continuous',
     paddingHorizontal: 4,
     paddingVertical: 1,
     zIndex: 10,
