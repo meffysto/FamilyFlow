@@ -10,8 +10,8 @@ import { Image, Text, StyleSheet } from 'react-native';
 import { SCENE_SLOTS, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS } from '../../lib/mascot/types';
 import { ANIMAL_IDLE_FRAMES } from './TreeView';
 
-const ITEM_SIZE = 32;
-const ANIMAL_SIZE = 20;
+const ITEM_SIZE = 48;
+const ANIMAL_SIZE = 40;
 
 function getItemEmoji(itemId: string): string | null {
   const deco = DECORATIONS.find(d => d.id === itemId);
@@ -86,8 +86,8 @@ export function NativePlacedItems({ placements, containerWidth, containerHeight 
           <Text
             key={slotId}
             style={[styles.emoji, {
-              left: x - 12,
-              top: y - 12,
+              left: x - 16,
+              top: y - 16,
             }]}
           >
             {emoji}
@@ -104,9 +104,9 @@ const styles = StyleSheet.create({
   },
   emoji: {
     position: 'absolute',
-    fontSize: 20,
+    fontSize: 26,
     textAlign: 'center',
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
   },
 });
