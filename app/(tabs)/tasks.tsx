@@ -43,8 +43,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { EmptyState } from '../../components/EmptyState';
 import { AllDoneOverlay } from '../../components/AllDoneOverlay';
-import { getTheme } from '../../constants/themes';
-import { POINTS_PER_TASK } from '../../lib/gamification';
+import { POINTS_PER_TASK, calculateLevel, levelProgress, xpForLevel } from '../../lib/gamification';
 import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
@@ -200,7 +199,7 @@ export default function TasksScreen() {
   const { addContribution } = useGarden();
   const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest, onContribution: addContribution });
   const { primary, tint, colors } = useThemeColors();
-  const { showToast } = useToast();
+  const { showToast, showRewardCard } = useToast();
   const { t } = useTranslation();
 
   const { filter: filterParam, addNew } = useLocalSearchParams<{ filter?: string; addNew?: string }>();
@@ -314,14 +313,24 @@ export default function TasksScreen() {
               { tags: task.tags, section: task.section, sourceFile: task.sourceFile }
             );
             await refreshGamification();
-            const themeEmoji = getTheme(activeProfile.theme).emoji;
             const name = activeProfile.name;
-            const taskShort = task.text.length > 25 ? task.text.slice(0, 25) + '…' : task.text;
-            if (lootAwarded) {
-              showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts + 🎁`);
-            } else {
-              showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts`);
-            }
+            // Calcul des données pour la reward card
+            const newPoints = (activeProfile.points ?? 0) + pointsGained;
+            const newLevel = calculateLevel(newPoints);
+            const progress = levelProgress(newPoints);
+            const nextLevelXP = xpForLevel(newLevel);
+
+            showRewardCard({
+              profileEmoji: activeProfile.avatar,
+              profileName: name,
+              taskTitle: task.text,
+              xpGained: pointsGained,
+              currentXP: newPoints,
+              levelProgress: progress,
+              level: newLevel,
+              xpForNextLevel: nextLevelXP,
+              hasLoot: lootAwarded,
+            });
             // Phase 21 — HarvestBurst variant au centre-ecran (FEEDBACK-03)
             if (effectCategoryId) {
               const variant = CATEGORY_VARIANT[effectCategoryId];
@@ -353,7 +362,7 @@ export default function TasksScreen() {
         await refresh();
       }
     },
-    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification, showToast]
+    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification, showToast, showRewardCard]
   );
 
   const handleTaskSkip = useCallback(async (task: Task) => {
