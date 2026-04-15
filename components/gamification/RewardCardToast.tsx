@@ -30,8 +30,8 @@ import { FontSize, FontWeight } from '../../constants/typography';
 
 // ─── Constantes animations ────────────────────────────────────────────────────
 
-const SPRING_IN = { damping: 14, stiffness: 160 } as const;
-const SPRING_OUT = { damping: 18, stiffness: 140 } as const;
+const SPRING_IN = { damping: 26, stiffness: 200 } as const;
+const SPRING_OUT = { damping: 28, stiffness: 180 } as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -276,7 +276,7 @@ export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastPro
       <View style={[
         styles.card,
         {
-          backgroundColor: colors.successBg,
+          backgroundColor: primary + '18',
           borderColor: primary + '33',
         },
       ]}>
@@ -297,7 +297,7 @@ export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastPro
             visible={visible}
             targetValue={data.xpGained}
             reduceMotion={reduceMotion ?? false}
-            color={colors.success}
+            color={primary}
           />
           <XPBar
             visible={visible}
