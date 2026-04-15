@@ -33,6 +33,7 @@ import { Farm } from '../../constants/farm-theme';
 import {
   getExpeditionRemainingMinutes,
   isExpeditionComplete,
+  EXPEDITION_DROP_RATES,
   type ExpeditionMission,
 } from '../../lib/mascot/expedition-engine';
 import { CROP_CATALOG, type HarvestInventory } from '../../lib/mascot/types';
@@ -358,6 +359,8 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
   };
 
   const diffColor = difficultyColor(mission.difficulty, colors);
+  const failureRate = EXPEDITION_DROP_RATES[mission.difficulty].failure;
+  const failurePct = Math.round(failureRate * 100);
 
   return (
     <Animated.View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderLight }, cardAnim]}>
@@ -372,9 +375,14 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
             {`${mission.durationHours}h · ${mission.description.slice(0, 50)}...`}
           </Text>
         </View>
-        <View style={[styles.diffBadge, { backgroundColor: diffColor + '22', borderColor: diffColor }]}>
-          <Text style={[styles.diffBadgeText, { color: diffColor }]}>
-            {difficultyLabel(mission.difficulty)}
+        <View style={styles.diffColumn}>
+          <View style={[styles.diffBadge, { backgroundColor: diffColor + '22', borderColor: diffColor }]}>
+            <Text style={[styles.diffBadgeText, { color: diffColor }]}>
+              {difficultyLabel(mission.difficulty)}
+            </Text>
+          </View>
+          <Text style={[styles.failureRate, { color: colors.error }]}>
+            {`${failurePct}% d'échec`}
           </Text>
         </View>
       </View>
@@ -664,6 +672,14 @@ const styles = StyleSheet.create({
   missionDuration: {
     fontSize: FontSize.label,
     lineHeight: 18,
+  },
+  diffColumn: {
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  failureRate: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   diffBadge: {
     paddingHorizontal: Spacing.md,

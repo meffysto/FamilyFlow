@@ -408,11 +408,15 @@ export default function TreeScreen() {
     loot?: ExpeditionLoot;
     missionName: string;
   }>({ visible: false, outcome: 'failure', missionName: '' });
+  const expeditionTreeStage = useMemo(
+    () => getTreeStageInfo(calculateLevel(profile?.points ?? 0)).stage,
+    [profile?.points]
+  );
   const {
     dailyPool, activeExpeditions, completedExpeditions, pendingResults,
     activeCount, canLaunch, pityCount, harvestInventory: expeditionHarvestInventory,
     launchExpedition, collectExpedition, dismissExpedition,
-  } = useExpeditions();
+  } = useExpeditions(expeditionTreeStage);
 
   // Cadeaux — envoi
   const [giftOffer, setGiftOffer] = useState<{ itemType: string; itemId: string; maxQty: number; itemName: string } | null>(null);
@@ -2262,14 +2266,6 @@ export default function TreeScreen() {
           </TouchableOpacity>
         ) : null}
 
-        {/* Objectif hebdomadaire */}
-        {gamiData && profile && (
-          <WeeklyGoal
-            weeklyTaskCount={countWeeklyTasks(gamiData.history ?? [], profile.id)}
-            colors={colors}
-            t={t}
-          />
-        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>

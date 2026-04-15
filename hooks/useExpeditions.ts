@@ -16,6 +16,7 @@ import { parseFarmProfile, serializeFarmProfile, parseGamification, serializeGam
 import {
   MAX_ACTIVE_EXPEDITIONS,
   getDailyExpeditionPool,
+  filterExpeditionsByTreeStage,
   canAffordExpedition,
   getExpeditionCostDescription,
   isExpeditionComplete,
@@ -24,6 +25,7 @@ import {
   type ExpeditionMission,
   type ExpeditionLoot,
 } from '../lib/mascot/expedition-engine';
+import { type TreeStage } from '../lib/mascot/types';
 import type { ActiveExpedition } from '../lib/types';
 
 // ─── Helpers chemin fichier ──────────────────────────────────────────────────
@@ -38,7 +40,7 @@ function gamiFilePath(profileId: string): string {
 
 // ─── Hook principal ──────────────────────────────────────────────────────────
 
-export function useExpeditions() {
+export function useExpeditions(treeStage: TreeStage = 'graine') {
   const { vault, profiles, refreshFarm } = useVault();
 
   // Profil actif — utilise le premier profil adulte par défaut
@@ -50,10 +52,9 @@ export function useExpeditions() {
   // ─── Pool quotidien ────────────────────────────────────────────────────────
 
   const dailyPool: ExpeditionMission[] = useMemo(
-    () => getDailyExpeditionPool(),
-    // Pool recalculé au montage — déterministe pour la journée
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    () => filterExpeditionsByTreeStage(getDailyExpeditionPool(), treeStage),
+    // Pool filtré par stade d'arbre du profil courant
+    [treeStage]
   );
 
   // ─── Données ferme en temps réel ──────────────────────────────────────────

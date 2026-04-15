@@ -7,6 +7,7 @@
  */
 
 import type { ActiveExpedition, ExpeditionDifficulty, ExpeditionOutcome } from '../types';
+import { type TreeStage, TREE_STAGE_ORDER } from './types';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -23,6 +24,7 @@ export interface ExpeditionMission {
   costCoins: number;            // feuilles
   costCrops: { cropId: string; quantity: number }[];
   description: string;
+  minTreeStage: TreeStage;      // stade d'arbre minimum pour voir cette mission
 }
 
 export interface ExpeditionLoot {
@@ -35,7 +37,7 @@ export interface ExpeditionLoot {
 // ─── Catalogue (9 missions statiques) ────────────────────────────────────────
 
 export const EXPEDITION_CATALOG: ExpeditionMission[] = [
-  // ─ Facile (4h) ─────────────────────────────────────────────────
+  // ─ Facile (4h) — accessible dès 'graine' ───────────────────────
   {
     id: 'foret_facile',
     name: 'Forêt Ancienne',
@@ -43,8 +45,9 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     difficulty: 'easy',
     durationHours: 4,
     costCoins: 40,
-    costCrops: [{ cropId: 'strawberry', quantity: 2 }],
+    costCrops: [{ cropId: 'carrot', quantity: 3 }],
     description: 'Une balade à travers les vieux chênes. Risque modéré, butin possible.',
+    minTreeStage: 'graine',
   },
   {
     id: 'riviere_facile',
@@ -55,6 +58,7 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     costCoins: 45,
     costCrops: [{ cropId: 'wheat', quantity: 2 }],
     description: 'Suivre le courant jusqu\'aux sources cachées de la vallée.',
+    minTreeStage: 'graine',
   },
   {
     id: 'prairie_facile',
@@ -63,11 +67,12 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     difficulty: 'easy',
     durationHours: 4,
     costCoins: 50,
-    costCrops: [{ cropId: 'sunflower', quantity: 2 }],
+    costCrops: [{ cropId: 'potato', quantity: 2 }],
     description: 'Explorer les prairies sauvages à la recherche de fleurs rares.',
+    minTreeStage: 'graine',
   },
 
-  // ─ Moyen (12h) ─────────────────────────────────────────────────
+  // ─ Moyen (12h) — accessible dès 'arbuste' ──────────────────────
   {
     id: 'montagne_moyen',
     name: 'Sommets Brumeux',
@@ -80,6 +85,7 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
       { cropId: 'carrot', quantity: 3 },
     ],
     description: 'Escalader jusqu\'aux crêtes enneigées pour découvrir des trésors alpins.',
+    minTreeStage: 'arbuste',
   },
   {
     id: 'ocean_moyen',
@@ -89,10 +95,11 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     durationHours: 12,
     costCoins: 175,
     costCrops: [
-      { cropId: 'corn', quantity: 4 },
+      { cropId: 'cabbage', quantity: 4 },
       { cropId: 'tomato', quantity: 3 },
     ],
     description: 'Plonger vers les épaves et les récifs coralliens de l\'océan lointain.',
+    minTreeStage: 'arbuste',
   },
   {
     id: 'caverne_moyen',
@@ -102,13 +109,14 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     durationHours: 12,
     costCoins: 200,
     costCrops: [
-      { cropId: 'blueberry', quantity: 5 },
-      { cropId: 'pumpkin', quantity: 3 },
+      { cropId: 'cucumber', quantity: 5 },
+      { cropId: 'cabbage', quantity: 3 },
     ],
     description: 'S\'enfoncer dans les grottes illuminées de gemmes phosphorescentes.',
+    minTreeStage: 'arbuste',
   },
 
-  // ─ Dur (24h) ────────────────────────────────────────────────────
+  // ─ Dur (24h) — accessible dès 'arbre' ──────────────────────────
   {
     id: 'volcan_dur',
     name: 'Cratère Ardent',
@@ -117,11 +125,12 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     durationHours: 24,
     costCoins: 400,
     costCrops: [
-      { cropId: 'chili', quantity: 7 },
+      { cropId: 'strawberry', quantity: 7 },
       { cropId: 'tomato', quantity: 6 },
       { cropId: 'corn', quantity: 5 },
     ],
     description: 'Traverser les coulées de lave pour atteindre le cœur du volcan.',
+    minTreeStage: 'arbre',
   },
   {
     id: 'toundra_dur',
@@ -131,11 +140,12 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     durationHours: 24,
     costCoins: 450,
     costCrops: [
-      { cropId: 'beet', quantity: 8 },
+      { cropId: 'beetroot', quantity: 8 },
       { cropId: 'potato', quantity: 6 },
       { cropId: 'wheat', quantity: 6 },
     ],
     description: 'Survivre aux tempêtes polaires pour découvrir les secrets du Grand Nord.',
+    minTreeStage: 'arbre',
   },
   {
     id: 'nuages_dur',
@@ -146,10 +156,11 @@ export const EXPEDITION_CATALOG: ExpeditionMission[] = [
     costCoins: 500,
     costCrops: [
       { cropId: 'sunflower', quantity: 8 },
-      { cropId: 'blueberry', quantity: 7 },
+      { cropId: 'corn', quantity: 7 },
       { cropId: 'strawberry', quantity: 7 },
     ],
     description: 'Atteindre les îles flottantes au-dessus des nuages. Destination légendaire.',
+    minTreeStage: 'arbre',
   },
 ];
 
@@ -331,6 +342,18 @@ export function getDailyExpeditionPool(date?: string): ExpeditionMission[] {
   }
 
   return result;
+}
+
+/**
+ * Filtre un pool d'expéditions selon le stade d'arbre du profil.
+ * Seules les missions dont minTreeStage ≤ treeStage sont retournées.
+ */
+export function filterExpeditionsByTreeStage(
+  pool: ExpeditionMission[],
+  treeStage: TreeStage
+): ExpeditionMission[] {
+  const viewerIdx = TREE_STAGE_ORDER.indexOf(treeStage);
+  return pool.filter(m => TREE_STAGE_ORDER.indexOf(m.minTreeStage) <= viewerIdx);
 }
 
 // ─── Helpers coût ─────────────────────────────────────────────────────────────
