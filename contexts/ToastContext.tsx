@@ -24,6 +24,10 @@ import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { RewardCardToast } from '../components/gamification/RewardCardToast';
 import type { RewardCardData } from '../components/gamification/RewardCardToast';
+import { HarvestCardToast } from '../components/gamification/HarvestCardToast';
+import type { HarvestItem } from '../components/gamification/HarvestCardToast';
+
+export type { HarvestItem } from '../components/gamification/HarvestCardToast';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -42,9 +46,10 @@ interface ToastOptions {
 interface ToastContextValue {
   showToast: (message: string, type?: ToastType, action?: ToastAction, options?: ToastOptions) => void;
   showRewardCard: (data: RewardCardData) => void;
+  showHarvestCard: (item: HarvestItem, hasLoot?: boolean) => void;
 }
 
-const ToastContext = createContext<ToastContextValue>({ showToast: () => {}, showRewardCard: () => {} });
+const ToastContext = createContext<ToastContextValue>({ showToast: () => {}, showRewardCard: () => {}, showHarvestCard: () => {} });
 
 const TYPE_ICON: Record<ToastType, string> = {
   success: '✅',
@@ -70,6 +75,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   // ─── Reward Card ─────────────────────────────────────────────────────────
   const [rewardCard, setRewardCard] = useState<RewardCardData | null>(null);
   const rewardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ─── Harvest Card ─────────────────────────────────────────────────────────
+  const [harvestItems, setHarvestItems] = useState<HarvestItem[]>([]);
+  const [harvestVisible, setHarvestVisible] = useState(false);
+  const [harvestHasLoot, setHarvestHasLoot] = useState(false);
+  const [harvestSparkleKey, setHarvestSparkleKey] = useState(0);
+  const harvestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const harvestVisibleRef = useRef(false);
 
   const hide = useCallback(() => {
     if (reduceMotion) {
@@ -138,6 +151,54 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }, 3000);
   }, [hideRewardCard]);
 
+  const hideHarvestCard = useCallback(() => {
+    if (harvestTimerRef.current) {
+      clearTimeout(harvestTimerRef.current);
+      harvestTimerRef.current = null;
+    }
+    harvestVisibleRef.current = false;
+    setHarvestVisible(false);
+    // Délai pour laisser l'animation de sortie se terminer
+    setTimeout(() => {
+      setHarvestItems([]);
+      setHarvestHasLoot(false);
+    }, 400);
+  }, []);
+
+  const showHarvestCard = useCallback((item: HarvestItem, hasLoot?: boolean) => {
+    // Clear timer précédent
+    if (harvestTimerRef.current) {
+      clearTimeout(harvestTimerRef.current);
+      harvestTimerRef.current = null;
+    }
+
+    // Merge items : même emoji = additionner qty, sinon nouveau chip
+    setHarvestItems(prev => {
+      const existing = prev.find(i => i.emoji === item.emoji);
+      if (existing) {
+        return prev.map(i => i.emoji === item.emoji ? { ...i, qty: i.qty + item.qty } : i);
+      }
+      return [...prev, item];
+    });
+
+    if (hasLoot) setHarvestHasLoot(true);
+
+    // Afficher si pas encore visible
+    if (!harvestVisibleRef.current) {
+      harvestVisibleRef.current = true;
+      setHarvestVisible(true);
+    }
+
+    // Incrémenter sparkleKey pour re-trigger sparkles + pulse
+    setHarvestSparkleKey(k => k + 1);
+
+    // Reset timer 3s
+    harvestTimerRef.current = setTimeout(() => {
+      hideHarvestCard();
+      harvestTimerRef.current = null;
+    }, 3000);
+  }, [hideHarvestCard]);
+
   const handleActionPress = useCallback(() => {
     if (toast?.action) {
       toast.action.onPress();
@@ -166,7 +227,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const icon = toast?.options?.icon ?? (toast ? TYPE_ICON[toast.type] : '');
 
   return (
-    <ToastContext.Provider value={{ showToast, showRewardCard }}>
+    <ToastContext.Provider value={{ showToast, showRewardCard, showHarvestCard }}>
       {children}
       {toast && toastColors && (
         <Animated.View
@@ -213,6 +274,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         visible={!!rewardCard}
         data={rewardCard}
         onDismiss={hideRewardCard}
+      />
+      <HarvestCardToast
+        visible={harvestVisible}
+        items={harvestItems}
+        onDismiss={hideHarvestCard}
+        hasLoot={harvestHasLoot}
+        sparkleKey={harvestSparkleKey}
       />
     </ToastContext.Provider>
   );
