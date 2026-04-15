@@ -3,6 +3,8 @@
  *
  * Affiche le compagnon pixel art à une position fixe dans la scène,
  * avec animation idle (frame swap), tap (saut + haptic) et bulles de message.
+ * Le compagnon se déplace de façon organique entre des zones marchables aléatoires
+ * avec pauses variables — plus de circuit séquentiel rigide.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -28,68 +30,27 @@ import { COMPANION_SPRITES } from '../../lib/mascot/companion-sprites';
 /** Taille du sprite du compagnon (logical pixels) */
 const COMPANION_SIZE = 48;
 
+/** Point de repos du compagnon (position fractionnelle dans le container) */
+const HOME_FX = 0.42;
+const HOME_FY = 0.55;
+
+// ── Type zone marchable ───────────────────────────────
+
 /**
- * Circuit de patrouille séquentiel aligné sur le chemin beige du tileset.
- * Le compagnon suit ce circuit en boucle :
- *   repos → chemin ↑ → potager (zig-zag) → chemin ↓ → bâtiments → chemin → arbre → repos
- *
- * pause = durée d'arrêt à ce point (ms). 0 = passage sans arrêt.
+ * Une zone rectangulaire dans laquelle le compagnon peut se déplacer librement.
+ * Le compagnon choisit un point aléatoire dans la zone, attend une pause
+ * aléatoire entre pauseMin et pauseMax, puis choisit une nouvelle zone.
  */
-const PATROL_ROUTE: { fx: number; fy: number; label: string; pause: number }[] = [
-  // ══ Départ : sur le chemin, au centre ══
-  { fx: 0.42, fy: 0.55, label: 'home',             pause: 3000 },
-
-  // ══ 1. Monter le chemin vers le potager ══
-  { fx: 0.42, fy: 0.45, label: 'path-up-1',        pause: 0 },
-  { fx: 0.42, fy: 0.38, label: 'path-potager',     pause: 500 },
-
-  // ══ 2. Entrer dans le potager (zig-zag rang 3 → 1) ══
-  { fx: 0.28, fy: 0.23, label: 'crops-r3-left',    pause: 2000 },
-  { fx: 0.56, fy: 0.23, label: 'crops-r3-right',   pause: 1500 },
-  { fx: 0.42, fy: 0.14, label: 'crops-r2-mid',     pause: 2000 },
-  { fx: 0.14, fy: 0.05, label: 'crops-r1-left',    pause: 1500 },
-  { fx: 0.70, fy: 0.05, label: 'crops-r1-right',   pause: 2000 },
-
-  // ══ 3. Sortir du potager par le chemin ══
-  { fx: 0.42, fy: 0.14, label: 'crops-exit-1',     pause: 0 },
-  { fx: 0.42, fy: 0.38, label: 'crops-exit-2',     pause: 500 },
-
-  // ══ 4. Descendre au croisement, puis tourner vers les bâtiments ══
-  { fx: 0.42, fy: 0.45, label: 'path-junction',    pause: 300 },
-  { fx: 0.55, fy: 0.45, label: 'path-to-build-1',  pause: 0 },
-  { fx: 0.70, fy: 0.45, label: 'path-to-build-2',  pause: 0 },
-  { fx: 0.85, fy: 0.45, label: 'path-to-build-3',  pause: 0 },
-
-  // ══ 5. Visiter les bâtiments (longer la zone pavée) ══
-  { fx: 0.90, fy: 0.45, label: 'building-entry',   pause: 0 },
-  { fx: 0.90, fy: 0.52, label: 'building-1',       pause: 3000 },
-  { fx: 0.90, fy: 0.62, label: 'building-2',       pause: 2500 },
-  { fx: 0.90, fy: 0.78, label: 'building-3',       pause: 2000 },
-
-  // ══ 6. Retour : remonter les bâtiments, puis chemin horizontal ══
-  { fx: 0.90, fy: 0.45, label: 'build-return-0',   pause: 0 },
-  { fx: 0.70, fy: 0.45, label: 'build-return-1',   pause: 0 },
-  { fx: 0.42, fy: 0.45, label: 'build-return-2',   pause: 800 },
-
-  // ══ 7. Descendre le chemin vertical ══
-  { fx: 0.42, fy: 0.55, label: 'path-mid',         pause: 500 },
-  { fx: 0.42, fy: 0.65, label: 'path-down-1',      pause: 300 },
-
-  // ══ 8. Tourner à gauche vers le lac (rester sur le chemin) ══
-  { fx: 0.30, fy: 0.65, label: 'path-lake-1',      pause: 0 },
-  { fx: 0.17, fy: 0.65, label: 'path-lake-2',      pause: 300 },
-  { fx: 0.17, fy: 0.75, label: 'path-lake-3',      pause: 0 },
-
-  // ══ 9. Contempler le lac ══
-  { fx: 0.17, fy: 0.80, label: 'lake-shore',       pause: 4000 },
-
-  // ══ 10. Retour vers le chemin principal ══
-  { fx: 0.17, fy: 0.65, label: 'lake-return-1',    pause: 0 },
-  { fx: 0.42, fy: 0.65, label: 'lake-return-2',    pause: 0 },
-  { fx: 0.42, fy: 0.55, label: 'lake-return-3',    pause: 500 },
-];
-
-const HOME_IDX = 0;
+type WalkableZone = {
+  id: string;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  weight: number;     // probabilité relative de choisir cette zone
+  pauseMin: number;   // pause min en ms à l'arrivée
+  pauseMax: number;   // pause max en ms à l'arrivée
+};
 
 // ── Sprites Mana Seed ─────────────────────────────────
 // Phase 29 : COMPANION_SPRITES extrait dans `lib/mascot/companion-sprites.ts`
@@ -617,86 +578,103 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const harvestablesRef = React.useRef(harvestables);
   useEffect(() => { harvestablesRef.current = harvestables; }, [harvestables]);
 
-  // Construire la route dynamique selon l'état réel de la ferme
-  const activeRoute = React.useMemo(() => {
-    type WP = { fx: number; fy: number; label: string; pause: number };
-    const route: WP[] = [];
+  // Construire les zones marchables selon l'état réel de la ferme
+  const activeZones = React.useMemo((): WalkableZone[] => {
+    const zones: WalkableZone[] = [];
 
-    // Toujours : point de départ sur le chemin
-    route.push({ fx: 0.42, fy: 0.55, label: 'home', pause: 3000 });
+    // ── Zones statiques (toujours présentes) ──
 
-    // ── Potager : ne visiter que les rangées avec des crops ──
-    // Rangées possibles : y=0.05 (r1), y=0.14 (r2), y=0.23 (r3), y=0.32 (r4 expansion)
-    const cropYsSorted = [...plantedCropYs].sort((a, b) => b - a); // du bas vers le haut
-    if (cropYsSorted.length > 0) {
-      // Monter vers le potager via le chemin
-      route.push({ fx: 0.42, fy: 0.45, label: 'path-up-1', pause: 0 });
-      route.push({ fx: 0.42, fy: 0.38, label: 'path-potager', pause: 500 });
+    // Zone repos près de l'arbre — favorite du compagnon
+    zones.push({
+      id: 'home-area',
+      xMin: 0.38, xMax: 0.48,
+      yMin: 0.50, yMax: 0.60,
+      weight: 4,
+      pauseMin: 2000, pauseMax: 6000,
+    });
 
-      // Visiter chaque rangée occupée — passer ENTRE les lignes (fy + 0.04)
-      // pour ne jamais marcher sur les crops
-      let goLeft = true;
-      for (const fy of cropYsSorted) {
-        const walkY = fy + 0.04; // entre cette rangée et la suivante
-        if (goLeft) {
-          route.push({ fx: 0.14, fy: walkY, label: `crops-${fy}-left`, pause: 1500 });
-          route.push({ fx: 0.70, fy: walkY, label: `crops-${fy}-right`, pause: 1500 });
-        } else {
-          route.push({ fx: 0.70, fy: walkY, label: `crops-${fy}-right`, pause: 1500 });
-          route.push({ fx: 0.14, fy: walkY, label: `crops-${fy}-left`, pause: 1500 });
-        }
-        goLeft = !goLeft;
-      }
+    // Chemin vertical principal
+    zones.push({
+      id: 'path-central',
+      xMin: 0.38, xMax: 0.46,
+      yMin: 0.38, yMax: 0.65,
+      weight: 3,
+      pauseMin: 1000, pauseMax: 4000,
+    });
 
-      // Redescendre vers le chemin (passer par le centre)
-      route.push({ fx: 0.42, fy: 0.36, label: 'crops-exit-1', pause: 0 });
-      route.push({ fx: 0.42, fy: 0.38, label: 'crops-exit-2', pause: 500 });
+    // Bifurcation sud
+    zones.push({
+      id: 'path-south',
+      xMin: 0.30, xMax: 0.46,
+      yMin: 0.60, yMax: 0.68,
+      weight: 1,
+      pauseMin: 500, pauseMax: 2000,
+    });
+
+    // ── Zones dynamiques : potager ──
+    // Une zone par rangée de crops, positionnée ENTRE les rangées
+    // pour que le compagnon ne marche jamais sur les cultures
+    const cropYsSorted = [...plantedCropYs].sort((a, b) => b - a);
+    for (const fy of cropYsSorted) {
+      const walkY = fy + 0.04; // passer entre les rangées
+      zones.push({
+        id: `crops-${fy}`,
+        xMin: 0.14, xMax: 0.70,
+        yMin: walkY - 0.02, yMax: walkY + 0.02,
+        weight: 2,
+        pauseMin: 1000, pauseMax: 3000,
+      });
     }
 
-    // ── Bâtiments : ne visiter que ceux construits ──
-    const buildYsSorted = [...builtBuildingYs].sort((a, b) => a - b); // du haut vers le bas
+    // ── Zones dynamiques : bâtiments ──
+    const buildYsSorted = [...builtBuildingYs].sort((a, b) => a - b);
     if (buildYsSorted.length > 0) {
-      route.push({ fx: 0.42, fy: 0.45, label: 'path-junction', pause: 300 });
-      route.push({ fx: 0.55, fy: 0.45, label: 'path-to-build-1', pause: 0 });
-      route.push({ fx: 0.70, fy: 0.45, label: 'path-to-build-2', pause: 0 });
-      route.push({ fx: 0.85, fy: 0.45, label: 'path-to-build-3', pause: 0 });
-      route.push({ fx: 0.90, fy: 0.45, label: 'building-entry', pause: 0 });
+      const minY = buildYsSorted[0];
+      const maxY = buildYsSorted[buildYsSorted.length - 1];
 
-      // Descendre seulement jusqu'au dernier bâtiment construit
-      for (let i = 0; i < buildYsSorted.length; i++) {
-        route.push({ fx: 0.90, fy: buildYsSorted[i], label: `building-${i}`, pause: 2500 });
-      }
+      // Chemin d'accès vers les bâtiments
+      zones.push({
+        id: 'path-to-buildings',
+        xMin: 0.46, xMax: 0.90,
+        yMin: 0.43, yMax: 0.47,
+        weight: 1,
+        pauseMin: 0, pauseMax: 500,
+      });
 
-      // Remonter et retour
-      route.push({ fx: 0.90, fy: 0.45, label: 'build-return-0', pause: 0 });
-      route.push({ fx: 0.70, fy: 0.45, label: 'build-return-1', pause: 0 });
-      route.push({ fx: 0.42, fy: 0.45, label: 'build-return-2', pause: 800 });
+      // Zone devant les bâtiments construits
+      zones.push({
+        id: 'buildings-area',
+        xMin: 0.85, xMax: 0.92,
+        yMin: Math.max(0.40, minY - 0.02),
+        yMax: Math.min(0.90, maxY + 0.05),
+        weight: 2,
+        pauseMin: 2000, pauseMax: 4000,
+      });
     }
 
-    // Retour au centre du chemin
-    route.push({ fx: 0.42, fy: 0.55, label: 'path-mid', pause: 500 });
-
-    // ── Lac ──
+    // ── Zone dynamique : lac ──
     if (hasLake) {
-      route.push({ fx: 0.42, fy: 0.65, label: 'path-down-1', pause: 300 });
-      route.push({ fx: 0.30, fy: 0.65, label: 'path-lake-1', pause: 0 });
-      route.push({ fx: 0.17, fy: 0.65, label: 'path-lake-2', pause: 300 });
-      route.push({ fx: 0.17, fy: 0.74, label: 'lake-shore', pause: 4000 });
-      route.push({ fx: 0.17, fy: 0.65, label: 'lake-return-1', pause: 0 });
-      route.push({ fx: 0.42, fy: 0.65, label: 'lake-return-2', pause: 0 });
-      route.push({ fx: 0.42, fy: 0.55, label: 'lake-return-3', pause: 500 });
+      zones.push({
+        id: 'lake-shore',
+        xMin: 0.14, xMax: 0.22,
+        yMin: 0.63, yMax: 0.78,
+        weight: 2,
+        pauseMin: 3000, pauseMax: 6000,
+      });
     }
 
-    return route;
+    return zones;
   }, [plantedCropYs, builtBuildingYs, hasLake]);
 
-  // Patrouille séquentielle — suit la route active en boucle
-  // Stoppée quand paused (app en background) — reprend au retour
+  // Référence à la dernière zone visitée (pour éviter 2 fois de suite la même)
+  const lastZoneIdRef = React.useRef<string | null>(null);
+
+  // Mouvement organique — choisit des destinations aléatoires dans les zones marchables
+  // Stoppé quand paused (app en background) — reprend au retour
   useEffect(() => {
     if (paused) return;
     let mounted = true;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
-    let routeIdx = 0;
     let visitedHarvestThisCycle = false;
 
     const walkTo = (targetFx: number, targetFy: number, onArrive?: () => void) => {
@@ -710,10 +688,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       setIsHorizontal(Math.abs(dfx) > Math.abs(dfy));
       setIsWalking(true);
 
-      const homeFx = activeRoute[HOME_IDX].fx;
-      const homeFy = activeRoute[HOME_IDX].fy;
-      posX.value = withTiming((targetFx - homeFx) * containerWidth, { duration, easing: Easing.inOut(Easing.sin) });
-      posY.value = withTiming((targetFy - homeFy) * containerHeight, { duration, easing: Easing.inOut(Easing.sin) });
+      posX.value = withTiming((targetFx - HOME_FX) * containerWidth, { duration, easing: Easing.inOut(Easing.sin) });
+      posY.value = withTiming((targetFy - HOME_FY) * containerHeight, { duration, easing: Easing.inOut(Easing.sin) });
       currentFx.current = targetFx;
       currentFy.current = targetFy;
 
@@ -726,17 +702,48 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       return duration;
     };
 
+    /** Sélection aléatoire pondérée parmi les zones disponibles */
+    const pickZone = (): WalkableZone => {
+      const zones = activeZones;
+      // Si plusieurs zones disponibles, exclure la dernière visitée
+      const candidates = zones.length > 1
+        ? zones.filter(z => z.id !== lastZoneIdRef.current)
+        : zones;
+
+      const totalWeight = candidates.reduce((sum, z) => sum + z.weight, 0);
+      let rand = Math.random() * totalWeight;
+      for (const zone of candidates) {
+        rand -= zone.weight;
+        if (rand <= 0) return zone;
+      }
+      return candidates[candidates.length - 1];
+    };
+
+    /** Générer un point aléatoire dans une zone avec micro-variation */
+    const randomPointInZone = (zone: WalkableZone): { fx: number; fy: number } => {
+      const fx = zone.xMin + Math.random() * (zone.xMax - zone.xMin);
+      const fy = zone.yMin + Math.random() * (zone.yMax - zone.yMin);
+      // Micro-variation ±0.015 pour éviter les arrêts exactement au même point
+      const microFx = Math.max(zone.xMin, Math.min(zone.xMax, fx + (Math.random() - 0.5) * 0.03));
+      const microFy = Math.max(zone.yMin, Math.min(zone.yMax, fy + (Math.random() - 0.5) * 0.03));
+      return { fx: microFx, fy: microFy };
+    };
+
     const walkNext = () => {
       if (!mounted) return;
 
-      const step = activeRoute[routeIdx];
+      const zone = pickZone();
+      lastZoneIdRef.current = zone.id;
 
-      // Détour récolte — une seule fois par cycle, quand on passe dans le potager
+      // Reset le cycle harvest quand on revient dans la zone home-area
+      if (zone.id === 'home-area') visitedHarvestThisCycle = false;
+
+      // Détour récolte — une seule fois par cycle, quand on passe dans une zone crops
       const readyCrops = harvestablesRef.current;
       if (
         readyCrops.length > 0 &&
         !visitedHarvestThisCycle &&
-        step.label.startsWith('crops-')
+        zone.id.startsWith('crops-')
       ) {
         visitedHarvestThisCycle = true;
         const crop = readyCrops[Math.floor(Math.random() * readyCrops.length)];
@@ -747,22 +754,19 @@ export const CompanionSlot = React.memo(function CompanionSlot({
             timeouts.push(hideHint);
           }
         });
-        // Après le détour, continuer le circuit normal (sans avancer routeIdx)
+        // Après le détour, reprendre le mouvement aléatoire normal
         const t = setTimeout(walkNext, duration + 4000);
         timeouts.push(t);
         return;
       }
 
-      // Avancer au point suivant du circuit
-      const duration = walkTo(step.fx, step.fy);
+      // Se déplacer vers un point aléatoire dans la zone choisie
+      const { fx, fy } = randomPointInZone(zone);
+      const duration = walkTo(fx, fy);
 
-      // Reset le cycle harvest quand on revient au home
-      if (step.label === 'home') visitedHarvestThisCycle = false;
-
-      // Prochain point (boucle)
-      routeIdx = (routeIdx + 1) % activeRoute.length;
-
-      const t = setTimeout(walkNext, duration + step.pause);
+      // Pause variable selon la zone, puis prochaine destination
+      const pause = zone.pauseMin + Math.random() * (zone.pauseMax - zone.pauseMin);
+      const t = setTimeout(walkNext, duration + pause);
       timeouts.push(t);
     };
 
@@ -774,7 +778,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       mounted = false;
       timeouts.forEach(t => clearTimeout(t));
     };
-  }, [containerWidth, containerHeight, activeRoute, paused]);
+  }, [containerWidth, containerHeight, activeZones, paused]);
 
   // Animer la bulle de message ou harvest hint
   useEffect(() => {
@@ -822,9 +826,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   }));
 
   // Position pixel dans le container (point de repos)
-  const home = activeRoute[HOME_IDX];
-  const px = home.fx * containerWidth;
-  const py = home.fy * containerHeight;
+  const px = HOME_FX * containerWidth;
+  const py = HOME_FY * containerHeight;
 
   // Sprite courant — walk frames si disponibles, sinon idle
   const sprites = COMPANION_SPRITES[species][stage];
