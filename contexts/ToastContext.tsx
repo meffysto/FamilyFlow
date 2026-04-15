@@ -22,6 +22,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from './ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { RewardCardToast } from '../components/gamification/RewardCardToast';
+import type { RewardCardData } from '../components/gamification/RewardCardToast';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -39,9 +41,10 @@ interface ToastOptions {
 
 interface ToastContextValue {
   showToast: (message: string, type?: ToastType, action?: ToastAction, options?: ToastOptions) => void;
+  showRewardCard: (data: RewardCardData) => void;
 }
 
-const ToastContext = createContext<ToastContextValue>({ showToast: () => {} });
+const ToastContext = createContext<ToastContextValue>({ showToast: () => {}, showRewardCard: () => {} });
 
 const TYPE_ICON: Record<ToastType, string> = {
   success: '✅',
@@ -63,6 +66,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const [toast, setToast] = useState<{ message: string; type: ToastType; action?: ToastAction; options?: ToastOptions } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ─── Reward Card ─────────────────────────────────────────────────────────
+  const [rewardCard, setRewardCard] = useState<RewardCardData | null>(null);
+  const rewardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hide = useCallback(() => {
     if (reduceMotion) {
@@ -110,6 +117,27 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [translateY, opacity, scale, reduceMotion, hide],
   );
 
+  const hideRewardCard = useCallback(() => {
+    if (rewardTimerRef.current) {
+      clearTimeout(rewardTimerRef.current);
+      rewardTimerRef.current = null;
+    }
+    // L'animation de sortie est gérée dans RewardCardToast via la prop visible=false
+    setTimeout(() => setRewardCard(null), 400);
+  }, []);
+
+  const showRewardCard = useCallback((data: RewardCardData) => {
+    if (rewardTimerRef.current) {
+      clearTimeout(rewardTimerRef.current);
+      rewardTimerRef.current = null;
+    }
+    setRewardCard(data);
+    rewardTimerRef.current = setTimeout(() => {
+      hideRewardCard();
+      rewardTimerRef.current = null;
+    }, 3000);
+  }, [hideRewardCard]);
+
   const handleActionPress = useCallback(() => {
     if (toast?.action) {
       toast.action.onPress();
@@ -138,7 +166,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const icon = toast?.options?.icon ?? (toast ? TYPE_ICON[toast.type] : '');
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, showRewardCard }}>
       {children}
       {toast && toastColors && (
         <Animated.View
@@ -181,6 +209,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           </View>
         </Animated.View>
       )}
+      <RewardCardToast
+        visible={!!rewardCard}
+        data={rewardCard}
+        onDismiss={hideRewardCard}
+      />
     </ToastContext.Provider>
   );
 }
