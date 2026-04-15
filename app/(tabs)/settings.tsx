@@ -16,7 +16,8 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Spacing, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { calculateLevel } from '../../lib/gamification';
+import { calculateLevel, levelProgress, xpForLevel } from '../../lib/gamification';
+import { useToast } from '../../contexts/ToastContext';
 import { useAI } from '../../contexts/AIContext';
 
 import { SettingsRow, SettingsSectionHeader } from '../../components/settings/SettingsRow';
@@ -64,6 +65,7 @@ export default function SettingsScreen() {
     tasks, rdvs, stock,
   } = useVault();
   const { colors, darkModePreference } = useThemeColors();
+  const { showRewardCard, showHarvestCard } = useToast();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
@@ -306,6 +308,44 @@ export default function SettingsScreen() {
               title="Revoir la config vault"
               subtitle="Wizard parents / enfants / templates"
               onPress={() => router.replace('/setup' as any)}
+            />
+            <SettingsRow
+              emoji="🎁"
+              title="Tester Reward Card"
+              subtitle="Déclenche le toast de validation de tâche"
+              onPress={() => {
+                const pts = activeProfile?.points ?? 420;
+                const lvl = calculateLevel(pts);
+                const prog = levelProgress(pts);
+                const nextXP = xpForLevel(lvl);
+                showRewardCard({
+                  profileEmoji: activeProfile?.avatar ?? '🧑',
+                  profileName: activeProfile?.name ?? 'Profil test',
+                  taskTitle: 'Ranger la cuisine',
+                  xpGained: 15,
+                  currentXP: pts,
+                  levelProgress: prog,
+                  level: lvl,
+                  xpForNextLevel: nextXP,
+                  hasLoot: true,
+                });
+              }}
+            />
+            <SettingsRow
+              emoji="🌾"
+              title="Tester Harvest Card"
+              subtitle="Accumulation live — tape plusieurs fois"
+              onPress={() => {
+                const crops = [
+                  { emoji: '🍅', label: 'Tomate récoltée !', qty: 12 },
+                  { emoji: '🥕', label: 'Carotte récoltée !', qty: 8 },
+                  { emoji: '🌽', label: 'Maïs récolté !', qty: 20 },
+                  { emoji: '🍓', label: '✨ Fraise dorée récoltée !', qty: 60 },
+                  { emoji: '🌾', label: 'Blé récolté !', qty: 5 },
+                ];
+                const crop = crops[Math.floor(Math.random() * crops.length)];
+                showHarvestCard({ emoji: crop.emoji, label: crop.label, qty: crop.qty }, crop.emoji === '🍓');
+              }}
               isLast
             />
           </>
