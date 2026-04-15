@@ -745,7 +745,9 @@ export default function VillageScreen() {
             const catalogEntry = BUILDINGS_CATALOG.find(b => b.id === ub.buildingId);
             const consumed = productionState[ub.buildingId] ?? 0;
             const available = Math.max(0, lifetimeContributions - consumed);
-            const pending = catalogEntry?.production ? Math.floor(available / catalogEntry.production.ratePerItem) : 0;
+            const multiplier = villageTechBonuses.productionRateMultiplier[ub.buildingId] ?? 1;
+            const effectiveRate = Math.max(1, Math.floor((catalogEntry?.production?.ratePerItem ?? 1) * multiplier));
+            const pending = catalogEntry?.production ? Math.floor(available / effectiveRate) : 0;
             return (
               <BuildingSprite
                 key={ub.buildingId}
@@ -1028,6 +1030,7 @@ export default function VillageScreen() {
           onCollect={handleBuildingCollect}
           onClose={() => setSelectedBuilding(null)}
           onOpenTrade={selectedBuilding?.buildingId === 'port' ? handleOpenPortTrade : undefined}
+          techMultiplier={villageTechBonuses.productionRateMultiplier[selectedBuilding.buildingId] ?? 1}
         />
       )}
 

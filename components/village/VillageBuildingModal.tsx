@@ -46,6 +46,8 @@ interface VillageBuildingModalProps {
   onClose: () => void;
   /** Port uniquement — ouvre la modal d'échange inter-familles */
   onOpenTrade?: () => void;
+  /** Multiplicateur tech (villageTechBonuses.productionRateMultiplier[buildingId]) — default 1 */
+  techMultiplier?: number;
 }
 
 // ── Sous-composant : auvent rayé ────────────────────────────────
@@ -158,6 +160,7 @@ export function VillageBuildingModal({
   onCollect,
   onClose,
   onOpenTrade,
+  techMultiplier = 1,
 }: VillageBuildingModalProps) {
   // kept for potential theme-aware overrides in future
   const { colors } = useThemeColors();
@@ -172,10 +175,11 @@ export function VillageBuildingModal({
   const { production } = entry;
   const consumed = productionState[building.buildingId] ?? 0;
   const available = Math.max(0, lifetimeContributions - consumed);
-  const pendingItems = Math.floor(available / production.ratePerItem);
-  const progressInCycle = available % production.ratePerItem;
-  const progressRatio = production.ratePerItem > 0 ? progressInCycle / production.ratePerItem : 0;
-  const contribsUntilNext = production.ratePerItem - progressInCycle;
+  const effectiveRate = Math.max(1, Math.floor(production.ratePerItem * techMultiplier));
+  const pendingItems = Math.floor(available / effectiveRate);
+  const progressInCycle = available % effectiveRate;
+  const progressRatio = effectiveRate > 0 ? progressInCycle / effectiveRate : 0;
+  const contribsUntilNext = effectiveRate - progressInCycle;
   const currentStock = inventory[production.itemId] ?? 0;
 
   const handleCollect = () => {
