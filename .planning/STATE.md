@@ -49,6 +49,7 @@ Status: Phase complete — ready for verification
 | 260412-gf5 | Fish Audio comme 3e moteur TTS histoires + clonage vocal | 2026-04-12 | 4aaa6cb | [260412-gf5-ajouter-fish-audio-comme-3-me-moteur-tts](./quick/260412-gf5-ajouter-fish-audio-comme-3-me-moteur-tts/) |
 | 260412-q49 | Échange inter-familles via le Port du village | 2026-04-12 | c6e90ce | [260412-q49-change-inter-familles-via-le-port-du-vil](./quick/260412-q49-change-inter-familles-via-le-port-du-vil/) |
 | 260414-l12 | Améliorer le visuel des modals BuildingShopSheet et BuildingDetailSheet pour un look cozy/farm game | 2026-04-14 | 5139e70 | [260414-l12-am-liorer-le-visuel-des-modals-buildings](./quick/260414-l12-am-liorer-le-visuel-des-modals-buildings/) |
+| 260415-egg | Augmenter la taille des inhabitants dans Mon jardin (animaux x2, items +50%, emojis +30%) | 2026-04-15 | 5aebf7b | [260415-egg-augmenter-la-taille-des-inhabitants-dans](./quick/260415-egg-augmenter-la-taille-des-inhabitants-dans/) |
 
 ## Performance Metrics
 
