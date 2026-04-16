@@ -1601,19 +1601,57 @@ export default function TreeScreen() {
           </Animated.View>
         )}
 
-        {/* Modal sélection d'item à placer — pageSheet */}
+        {/* Modal Embellir — pageSheet cozy */}
         <Modal
           visible={showItemPicker}
           animationType="slide"
           presentationStyle="pageSheet"
           onRequestClose={() => setShowItemPicker(false)}
         >
-          <View style={[styles.pickerSheetContainer, { backgroundColor: colors.bg }]}>
-            <ModalHeader
-              title={t('mascot.placement.choose')}
-              onClose={() => setShowItemPicker(false)}
-              closeLeft
-            />
+          <View style={styles.cozyContainer}>
+            {/* En-tête parchemin */}
+            <View style={styles.cozyHeader}>
+              <View style={styles.cozyHeaderLeft}>
+                <Image source={ACTION_SPRITES.embellir} style={styles.cozyHeaderSprite} />
+                <Text style={styles.cozyHeaderTitle}>{t('mascot.placement.choose')}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowItemPicker(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close', 'Fermer')}
+              >
+                <Text style={styles.cozyHeaderClose}>{'✕'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Bande auvent */}
+            <View style={styles.cozyAwning}>
+              <View style={styles.cozyAwningStripes}>
+                {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.cozyAwningStripe,
+                      { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+                    ]}
+                  />
+                ))}
+              </View>
+              <View style={styles.cozyAwningShadow} />
+              <View style={styles.cozyAwningScallop}>
+                {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.cozyAwningScallopDot,
+                      { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+
             {(() => {
               const handlePickerTap = async (itemId: string) => {
                 Haptics.selectionAsync();
@@ -1635,45 +1673,39 @@ export default function TreeScreen() {
                 cat: { labelKey: string; emoji: string; rarity: string },
               ) => {
                 const isPlaced = placedItemIds.has(id);
-                const rarityColor = PICKER_RARITY_COLORS[cat.rarity] ?? colors.textFaint;
+                const rarityColor = PICKER_RARITY_COLORS[cat.rarity] ?? Farm.brownTextSub;
                 return (
                   <TouchableOpacity
                     key={id}
                     onPress={() => handlePickerTap(id)}
-                    activeOpacity={0.7}
+                    activeOpacity={0.75}
                     style={[
-                      styles.pickerRow,
-                      {
-                        backgroundColor: colors.cardAlt,
-                        borderColor: isPlaced ? colors.success : colors.borderLight,
-                      },
-                      isPlaced && { borderWidth: 1.5 },
+                      styles.cozyRow,
+                      isPlaced && styles.cozyRowPlaced,
                     ]}
                   >
                     {ITEM_ILLUSTRATIONS[id] ? (
-                      <Image source={ITEM_ILLUSTRATIONS[id]} style={styles.pickerRowSprite} />
+                      <Image source={ITEM_ILLUSTRATIONS[id]} style={styles.cozyRowSprite} />
                     ) : (
-                      <View style={styles.pickerRowEmojiWrap}>
-                        <Text style={styles.pickerRowEmoji}>{cat.emoji}</Text>
+                      <View style={styles.cozyRowEmojiWrap}>
+                        <Text style={styles.cozyRowEmoji}>{cat.emoji}</Text>
                       </View>
                     )}
-                    <View style={styles.pickerRowInfo}>
-                      <Text style={[styles.pickerRowName, { color: colors.text }]}>
-                        {t(cat.labelKey)}
-                      </Text>
-                      <View style={styles.pickerRowMeta}>
-                        <View style={[styles.pickerRarityDot, { backgroundColor: rarityColor }]} />
-                        <Text style={[styles.pickerRarityText, { color: rarityColor }]}>
+                    <View style={styles.cozyRowInfo}>
+                      <Text style={styles.cozyRowName}>{t(cat.labelKey)}</Text>
+                      <View style={styles.cozyRowMeta}>
+                        <View style={[styles.cozyRarityDot, { backgroundColor: rarityColor }]} />
+                        <Text style={[styles.cozyRarityText, { color: rarityColor }]}>
                           {cat.rarity}
                         </Text>
                       </View>
                     </View>
                     {isPlaced ? (
-                      <View style={[styles.pickerStatusChip, { backgroundColor: colors.success }]}>
-                        <Text style={styles.pickerStatusChipText}>{'✓ Placé'}</Text>
+                      <View style={styles.cozyStatusChip}>
+                        <Text style={styles.cozyStatusChipText}>{'✓ Placé'}</Text>
                       </View>
                     ) : (
-                      <Text style={[styles.pickerRowChevron, { color: colors.textFaint }]}>{'›'}</Text>
+                      <Text style={styles.cozyRowChevron}>{'›'}</Text>
                     )}
                   </TouchableOpacity>
                 );
@@ -1683,19 +1715,19 @@ export default function TreeScreen() {
 
               return (
                 <ScrollView
-                  style={styles.pickerSheetScroll}
-                  contentContainerStyle={styles.pickerSheetContent}
+                  style={styles.cozyScroll}
+                  contentContainerStyle={styles.cozyScrollContent}
                   showsVerticalScrollIndicator={false}
                 >
                   {isEmpty && (
-                    <Text style={[styles.pickerEmptyText, { color: colors.textMuted }]}>
+                    <Text style={styles.cozyEmptyText}>
                       {t('mascot.shop.empty', 'Aucun item à placer pour l\'instant.')}
                     </Text>
                   )}
 
                   {ownedInhabitants.length > 0 && (
                     <>
-                      <Text style={[styles.pickerSectionTitle, { color: colors.textSub }]}>
+                      <Text style={styles.cozySectionTitle}>
                         {t('mascot.shop.inhabitants')}
                       </Text>
                       {ownedInhabitants.map(({ id, cat }) => renderRow(id, cat))}
@@ -1704,7 +1736,7 @@ export default function TreeScreen() {
 
                   {ownedDecorations.length > 0 && (
                     <>
-                      <Text style={[styles.pickerSectionTitle, { color: colors.textSub }]}>
+                      <Text style={styles.cozySectionTitle}>
                         {t('mascot.shop.decorations')}
                       </Text>
                       {ownedDecorations.map(({ id, cat }) => renderRow(id, cat))}
@@ -3130,90 +3162,182 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
-  // Inhabitant/decoration picker — pageSheet
-  pickerSheetContainer: {
+  // ── Modal Embellir (picker cozy) ─────────────────────────────────────────
+  cozyContainer: {
+    flex: 1,
+    backgroundColor: Farm.parchment,
+  },
+  cozyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.xl,
+    backgroundColor: Farm.parchmentDark,
+    borderBottomWidth: 2,
+    borderBottomColor: Farm.woodHighlight,
+  },
+  cozyHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
     flex: 1,
   },
-  pickerSheetScroll: {
+  cozyHeaderSprite: {
+    width: 26,
+    height: 26,
+    resizeMode: 'contain',
+  },
+  cozyHeaderTitle: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+    flexShrink: 1,
+  },
+  cozyHeaderClose: {
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  // Auvent
+  cozyAwning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  cozyAwningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  cozyAwningStripe: {
     flex: 1,
   },
-  pickerSheetContent: {
+  cozyAwningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
+  cozyAwningScallop: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 4,
+    left: 0,
+    right: 0,
+  },
+  cozyAwningScallopDot: {
+    flex: 1,
+    height: 8,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  // Scroll
+  cozyScroll: {
+    flex: 1,
+  },
+  cozyScrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing['2xl'],
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing['3xl'],
     gap: Spacing.sm,
   },
-  pickerSectionTitle: {
+  cozySectionTitle: {
     fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
-  pickerRow: {
+  // Rows
+  cozyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchment,
     gap: Spacing.md,
+    shadowColor: Farm.woodLight,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 1,
   },
-  pickerRowSprite: {
+  cozyRowPlaced: {
+    borderColor: Farm.greenBtnShadow,
+    backgroundColor: '#F0EFE0',
+  },
+  cozyRowSprite: {
     width: 48,
     height: 48,
     resizeMode: 'contain',
   },
-  pickerRowEmojiWrap: {
+  cozyRowEmojiWrap: {
     width: 48,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pickerRowEmoji: {
+  cozyRowEmoji: {
     fontSize: 32,
   },
-  pickerRowInfo: {
+  cozyRowInfo: {
     flex: 1,
     gap: 4,
   },
-  pickerRowName: {
+  cozyRowName: {
     fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
-  pickerRowMeta: {
+  cozyRowMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  pickerRarityDot: {
+  cozyRarityDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
   },
-  pickerRarityText: {
+  cozyRarityText: {
     fontSize: FontSize.micro,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
     textTransform: 'capitalize' as const,
   },
-  pickerRowChevron: {
+  cozyRowChevron: {
     fontSize: 24,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
+    color: Farm.woodHighlight,
   },
-  pickerStatusChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  cozyStatusChip: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
-    borderRadius: Radius.md,
+    borderRadius: 10,
+    backgroundColor: Farm.greenBtn,
+    borderWidth: 1,
+    borderColor: Farm.greenBtnShadow,
   },
-  pickerStatusChipText: {
+  cozyStatusChipText: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.bold,
     color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
   },
-  pickerEmptyText: {
+  cozyEmptyText: {
     fontSize: FontSize.body,
     textAlign: 'center',
-    marginTop: Spacing['2xl'],
+    marginTop: Spacing['3xl'],
+    color: Farm.brownTextSub,
+    fontStyle: 'italic',
+    lineHeight: 22,
   },
   // Seed picker — pageSheet
   seedSheetContainer: {
