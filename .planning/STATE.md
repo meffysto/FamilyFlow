@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: Village Vivant
-status: verifying
-last_updated: "2026-04-15T12:00:14.449Z"
-last_activity: 2026-04-15
+milestone: v1.6
+milestone_name: Love Notes
+status: defining_requirements
+last_updated: "2026-04-16T12:00:00.000Z"
+last_activity: 2026-04-16
 progress:
-  total_phases: 5
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 8
-  percent: 25
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 33 — exp-ditions
+**Current focus:** v1.6 Love Notes — Defining requirements
 
 ## Current Position
 
-Phase: 33 (exp-ditions) — EXECUTING
-Plan: 3 of 3
-Milestone: v1.5 Village Vivant (Phases 29-32)
-Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
-Last activity: 2026-04-16 - Completed quick task 260416-pct: Deal du jour stock séparé marché + quota 2 achats/profil/jour
+Phase: Not started (defining requirements)
+Plan: —
+Milestone: v1.6 Love Notes
+Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
+Last activity: 2026-04-16 — Milestone v1.6 Love Notes started
 
-Progress: [██▌░░░░░░░] 25% (1/4 phases)
+Progress: [░░░░░░░░░░] 0%
 
-Status: Phase complete — ready for verification
+Status: Defining requirements
 
 ### Quick Tasks Completed
 

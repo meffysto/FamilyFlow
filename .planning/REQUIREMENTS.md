@@ -1,83 +1,72 @@
-# Requirements: v1.5 Village Vivant
+# Requirements: v1.6 Love Notes
 
-**Milestone goal:** Transformer la Place du Village statique en espace vivant et personnalisé — avatars de la famille, décorations persistantes par semaine réussie, ambiance dynamique (jour/nuit + saisons), arbre familial commun, portail retour bidirectionnel.
+**Milestone goal :** Permettre aux membres de la famille d'échanger des messages privés programmés ("love notes") qui apparaissent à une date future, avec une boîte aux lettres visualisée en carte enveloppe pinned en tête du dashboard — renforcer le lien affectif familial via des micro-moments de surprise asynchrones.
 
-**Scope constraint (hérité CLAUDE.md + v1.4) :** Aucune nouvelle dépendance npm. Backward compat Obsidian vault. Réutilisation stricte de l'infra existante (`ReactiveAvatar`, `TileMapRenderer`, `useGarden`, `FarmProfileData`).
+**Scope constraint (hérité CLAUDE.md) :**
+- Aucune nouvelle dépendance npm (`expo-notifications`, `expo-haptics`, `react-native-reanimated` déjà installés)
+- Backward compat Obsidian vault obligatoire (fichiers markdown lisibles/éditables manuellement)
+- Stack inchangée : React Native + Expo SDK 54, reanimated ~4.1
+- Pattern hook à répliquer : `useVaultNotes.ts` / `useVaultGratitude.ts`
+- UI/commits/commentaires en français
+- Couleurs via `useThemeColors()` — jamais de hardcoded
 
 ---
 
 ## v1 Requirements
 
-### Catégorie AVATARS — Présence dynamique des membres
+### Catégorie DONNÉES — Fondation persistance & hook domaine
 
-- [x] **VILL-01**: User voit un avatar par profil actif (photo/ReactiveAvatar) positionné sur la carte village, à un emplacement fixe par profil
-- [x] **VILL-02**: User voit chaque avatar avec un indicateur visuel de l'activité hebdo (contribué cette semaine vs inactif) — halo coloré ou opacité différenciée
-- [x] **VILL-03**: User voit un tap sur un avatar ouvrir une bulle rapide "[Prénom] — X contributions cette semaine" avec dismiss automatique
+- [ ] **LOVE-01**: User voit ses love notes persister dans le vault Obsidian au chemin `03 - Famille/LoveNotes/{to-profileId}/{YYYY-MM-DD-slug}.md` (un fichier = une note, classé par destinataire)
+- [ ] **LOVE-02**: User voit chaque love note conserver ses métadonnées critiques (`from`, `to`, `createdAt`, `revealAt`, `status`, `readAt?`) dans un frontmatter YAML lisible manuellement dans Obsidian desktop
+- [ ] **LOVE-03**: User voit les love notes hydratées en mémoire au démarrage de l'app via un hook `useVaultLoveNotes` exposé dans `VaultContext` (pattern identique aux 21 hooks domaine existants)
+- [ ] **LOVE-04**: User voit les love notes survivre à un restart à froid de l'app (cachables dans `lib/vault-cache.ts`, `CACHE_VERSION` bumpé pour éviter invalidation silencieuse)
 
-### Catégorie DÉCORATIONS — Progression visuelle persistante
+### Catégorie BOÎTE AUX LETTRES — UI dashboard & écran dédié
 
-- [x] **VILL-04**: User voit une nouvelle décoration ajoutée au village chaque semaine où l'objectif collectif est atteint (guirlande, fanion, lanterne, banc, etc.)
-- [x] **VILL-05**: User retrouve toutes les décorations accumulées après un restart de l'app (persistance append-only dans `jardin-familial.md`)
-- [x] **VILL-06**: User voit un catalogue (écran ou modal) listant les ~8 décorations débloquables par palier de streak collectif (1, 3, 5, 10, 15, 20, 25, 30 semaines réussies)
+- [ ] **LOVE-05**: User voit une carte "enveloppe" distinctive (format paysage ≈ 2:1.15, papier ivoire, rabat triangulaire, cachet de cire rouge animé pulse, tilt -1.5°) pinned tout en haut du dashboard — rendue uniquement si au moins 1 love note destinée au profil actif est non lue ou prête à être révélée
+- [ ] **LOVE-06**: User voit un compteur (badge sur cachet) et un effet stack visuel (enveloppes empilées derrière) quand ≥2 notes sont en attente
+- [ ] **LOVE-07**: User peut accéder à sa boîte aux lettres complète (écran `/lovenotes`) depuis la carte enveloppe ET depuis une tuile permanente dans l'écran `more.tsx`
+- [ ] **LOVE-08**: User voit l'écran Boîte organisé en 3 segments : "Reçues" (non lues en priorité), "Envoyées" (programmées en attente de révélation côté destinataire), "Archivées" (reçues déjà lues + envoyées révélées)
 
-### Catégorie AMBIANCE — Cycle jour/nuit + saisons
+### Catégorie COMPOSITION & RÉVÉLATION — Écriture et timing
 
-- [ ] **VILL-07**: User voit une luminosité globale du village qui change selon l'heure réelle (jour clair, couchant tiède, nuit avec lanternes allumées)
-- [ ] **VILL-08**: User voit des effets saisonniers spécifiques village qui se superposent à la carte (pétales de fleurs au printemps, feuilles mortes en automne, flocons en hiver, insectes/papillons en été)
+- [ ] **LOVE-09**: User peut composer une nouvelle love note via un éditeur modal (`pageSheet` + drag-to-dismiss) comprenant : sélection destinataire (chip par profil famille, exclut l'auteur), zone texte markdown avec preview, picker date/heure de révélation
+- [ ] **LOVE-10**: User peut choisir des presets rapides pour le moment de révélation ("Demain matin", "Dimanche soir", "Dans 1 mois", date custom)
+- [ ] **LOVE-11**: User voit une notification locale silencieuse planifiée au `revealAt` via `expo-notifications` qui déclenche le basculement de statut `pending` → `revealed`
+- [ ] **LOVE-12**: User voit les love notes `pending` dont `revealAt <= now` basculer automatiquement en `revealed` à chaque retour app foreground (`AppState` → `active`)
+- [ ] **LOVE-13**: User voit une animation "unfold" Reanimated (rotation X du rabat ≥175°, cachet qui saute, contenu dévoilé) au tap sur une enveloppe `revealed`, accompagnée d'un haptic `notificationAsync('success')` — la note passe ensuite en `read`
 
-### Catégorie ARBRE FAMILIAL — Cœur symbolique du village
+### Catégorie GARDE-PARENT — Sécurité familiale
 
-- [ ] **VILL-09**: User voit un arbre familial commun planté au centre du village (sprite distinct de l'arbre ferme perso)
-- [ ] **VILL-10**: User voit l'arbre familial évoluer visuellement selon le streak de semaines réussies collectives (graine → pousse → arbuste → arbre → arbre majestueux)
+- [ ] **LOVE-14**: User parent peut activer/désactiver la fonctionnalité Love Notes par profil enfant depuis l'écran `ParentalControls` (défault ON)
+- [ ] **LOVE-15**: User parent peut consulter un mode modérateur listant toutes les love notes envoyées PAR ses enfants (protection anti-bullying) — les notes REÇUES par les enfants restent privées pour préserver la surprise parent→enfant
 
-### Catégorie NAVIGATION — Portail bidirectionnel
+### Catégorie QUALITÉ — Non-régression et tests
 
-- [x] **VILL-11**: User peut revenir à la ferme perso depuis le village via un portail de retour visuel (symétrique au portail ferme → village de la phase 28)
-- [x] **VILL-12**: User voit une transition fade cross-dissolve Reanimated (~400ms) lors du retour village → ferme, cohérente avec l'aller
+- [ ] **LOVE-16**: User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes) ni aucune régression Jest (`npx jest --no-coverage` clean) après chaque phase
+- [ ] **LOVE-17**: User a un parser love notes testé par suite Jest (`lib/__tests__/parser-lovenotes.test.ts`) couvrant parse/serialize roundtrip, gestion frontmatter invalide, et listing par destinataire
 
 ---
 
-### Catégorie EXPÉDITIONS — Missions avec risque et récompense
+## Future Requirements (deferred)
 
-- [x] **VILL-16**: User peut lancer une expédition depuis la ferme en misant des feuilles et/ou des récoltes du stock
-- [x] **VILL-17**: User voit un timer d'expédition en cours avec la durée restante et la difficulté choisie
-- [x] **VILL-18**: User reçoit un résultat aléatoire pondéré à la fin de l'expédition (réussite, partielle, échec, découverte rare) avec feedback visuel
-- [x] **VILL-19**: User peut consulter un catalogue d'expéditions disponibles avec coûts, durées et niveaux de difficulté
-- [x] **VILL-20**: User retrouve les résultats d'expéditions et les objets découverts après un restart (persistance)
+- **LOVE-F01**: Déclencheurs contextuels au lieu de dates (`trigger: 'level_up' | 'birthday' | 'rainy_day' | ...`)
+- **LOVE-F02**: Capsule audio 10s attachée à la note (via `expo-av`)
+- **LOVE-F03**: Chaîne de gratitude — répondre à une love note crée une nouvelle note en retour
+- **LOVE-F04**: Notifications push distantes (nécessiterait un backend — hors scope core value "100% local + iCloud")
+- **LOVE-F05**: Bibliothèque de templates ("félicitations contrôle", "bravo premier pas", etc.)
 
-## Future Requirements (Deferred)
-
-- [ ] **VILL-13**: Météo dynamique village (pluie, vent, soleil) indépendante des saisons
-- [ ] **VILL-14**: Interactions inter-avatars (membres qui "se croisent" animé)
-- [ ] **VILL-15**: Personnalisation manuelle du village par les enfants (placement libre de décorations débloquées)
+---
 
 ## Out of Scope
 
-- **Multijoueur temps réel** — L'app reste asynchrone, pas de présence temps réel
-- **Avatars 3D ou customisation poussée** — Réutilisation stricte de `ReactiveAvatar` existant
-- **Animations de marche libre des avatars** — Positions fixes, pas de pathfinding
-- **Chat ou messagerie village** — Hors scope (canal existant = messages familiaux Obsidian)
-- **Nouveau backend** — 100% local + iCloud comme constraint projet
+- **Backend serveur** — les love notes restent 100% locales + iCloud sync (core value)
+- **Chiffrement fort** — les notes ne sont pas sensibles au point de justifier un chiffrement E2E ; la confidentialité vient du fait que le vault est privé famille
+- **Messagerie instantanée** — Love Notes ≠ chat ; la proposition de valeur est justement l'asynchrone et la surprise, pas la communication temps réel
+- **Notifications push distantes** — même principe que backend, exclu par core value
 
 ---
 
 ## Traceability
 
-| REQ-ID | Category | Phase | Status |
-|--------|----------|-------|--------|
-| VILL-01 | AVATARS | Phase 29 | Done |
-| VILL-02 | AVATARS | Phase 29 | Done |
-| VILL-03 | AVATARS | Phase 29 | Done |
-| VILL-04 | DÉCORATIONS | Phase 30 | Pending |
-| VILL-05 | DÉCORATIONS | Phase 30 | Pending |
-| VILL-06 | DÉCORATIONS | Phase 30 | Pending |
-| VILL-07 | AMBIANCE | Phase 31 | Pending |
-| VILL-08 | AMBIANCE | Phase 31 | Pending |
-| VILL-09 | ARBRE FAMILIAL | Phase 32 | Pending |
-| VILL-10 | ARBRE FAMILIAL | Phase 32 | Pending |
-| VILL-11 | NAVIGATION | Phase 29 | Done |
-| VILL-12 | NAVIGATION | Phase 29 | Done |
-
-**Coverage:** 12/12 requirements mapped ✓
-
-*Traceability table mise à jour automatiquement lors de la création du roadmap.*
+*Filled by roadmapper — maps REQ-IDs to phases.*

@@ -54,11 +54,11 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 
 ### Active
 
-- [ ] (v1.5) Avatars dynamiques des membres de la famille sur la carte village
-- [ ] (v1.5) Décorations persistantes débloquées par semaine d'objectif réussie
-- [ ] (v1.5) Ambiance dynamique village (cycle jour/nuit + effets saisonniers)
-- [ ] (v1.5) Arbre familial commun au centre du village (stade évolutif collectif)
-- [ ] (v1.5) Portail retour bidirectionnel village → ferme
+- [ ] (v1.6) Love notes : messages privés programmés entre membres de la famille avec boîte aux lettres dédiée
+- [ ] (v1.6) Carte enveloppe pinned en tête du dashboard quand au moins une note à révéler/non lue
+- [ ] (v1.6) Garde-parent sur love notes (toggle par profil enfant + modération anti-bullying)
+- [ ] (Deferred v1.5) Ambiance dynamique village (cycle jour/nuit + effets saisonniers)
+- [ ] (Deferred v1.5) Arbre familial commun au centre du village (stade évolutif collectif)
 
 - [ ] (Backlog) Nettoyage code mort et fonctions dépréciées
 - [ ] (Backlog) Refacto progressive du god hook useVault (3400 lignes → hooks domaine)
@@ -76,29 +76,33 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current Milestone: v1.5 Village Vivant
+## Current Milestone: v1.6 Love Notes
 
-**Goal:** Transformer la Place du Village statique en espace vivant et personnalisé — les avatars de la famille y apparaissent, les semaines réussies laissent des traces visuelles durables, l'ambiance change selon l'heure et la saison, et l'arbre familial commun devient le cœur symbolique du village.
+**Goal:** Permettre aux membres de la famille d'échanger des messages privés programmés ("love notes") qui apparaissent à une date future, avec un système de boîte aux lettres visualisé en carte enveloppe pinned en tête du dashboard — renforcer le lien affectif familial via des micro-moments de surprise asynchrones.
 
 **Target features:**
-- Avatars des membres de la famille visibles sur la carte village (présence dynamique)
-- Décorations persistantes accumulées par semaines réussies (guirlandes, fanions, lanternes)
-- Ambiance dynamique du village : cycle jour/nuit + effets saisonniers spécifiques village
-- Arbre familial commun — centre symbolique du village évoluant avec les succès collectifs
-- Portail retour bidirectionnel village → ferme (symétrique du portail ferme → village)
+- Composer une love note destinée à un profil famille avec date/heure de révélation future
+- Boîte aux lettres dédiée (3 segments : reçues, envoyées en attente, archivées)
+- Carte enveloppe pinned en tête du dashboard — apparition conditionnelle quand au moins 1 note à révéler/non lue
+- Animation dévoilement Reanimated (rabat qui s'ouvre) + haptic success au reveal
+- Notifications locales planifiées au revealAt via `expo-notifications`
+- Garde-parent : toggle d'activation par profil enfant + modération notes envoyées par enfants (anti-bullying)
 
 **Key context:**
-- Scope hérité du deferred v1.4 (VILL-01 à VILL-05 explicitement cités dans phase 28)
-- Infra existante : `ReactiveAvatar`, `TileMapRenderer`, `FarmProfileData`, `useGarden`
-- Aucune nouvelle dépendance npm — polish visuel uniquement, pas de refonte mécanique
-- Backward compat Obsidian vault préservée (append-only, nouveaux champs optionnels)
+- Stockage markdown : `03 - Famille/LoveNotes/{to-profileId}/{YYYY-MM-DD-slug}.md` — compat Obsidian bidirectionnelle
+- Pattern hook à répliquer : `useVaultNotes.ts` / `useVaultGratitude.ts` (21 hooks domaine existants)
+- Cache : love notes cachables, bump `CACHE_VERSION` dans `lib/vault-cache.ts:41`
+- Aucune nouvelle dépendance npm — `expo-notifications`, `expo-haptics`, `react-native-reanimated` déjà installés
+- v1.5 Village Vivant : Phases 31 (ambiance dynamique) + 32 (arbre familial commun) deferred — reprise ultérieure
 
 ## Previous State
 
-**Last shipped:** v1.4 Jardin Familial (2026-04-11) — 4 phases, 8 plans, tous verified. Place du Village coopérative avec portail animé, contributions auto, objectif hebdo, récompense collective IRL.
+**Last shipped:** v1.5 Village Vivant (partiel, 2026-04-14) — 3/5 phases livrées (avatars vivants, décorations persistantes, expéditions). Phases 31-32 différées pour prioriser Love Notes.
+**Previously shipped:** v1.4 Jardin Familial (2026-04-11) — Place du Village coopérative avec portail animé, contributions auto, objectif hebdo, récompense collective IRL.
 
 ## Previous Milestones
 
+- 🟡 **v1.5 Village Vivant** — Partiel (2026-04-14). Phases 29 Avatars, 30 Décorations, 33 Expéditions livrées. Phases 31 Ambiance dynamique + 32 Arbre familial deferred.
 - ✅ **v1.4 Jardin Familial** — Shipped 2026-04-11. Place du Village coopérative (carte tilemap, contributions auto, objectif hebdo, récompense collective IRL). Phases 25-28. Voir `.planning/milestones/v1.4-ROADMAP.md`.
 - ✅ **v1.3 Seed** — Shipped 2026-04-10. Couplage sémantique tâches↔ferme (10 catégories, effets wow, anti-abus, musée des effets, compagnon étendu 4 event types). Phases 19-24.
 - ✅ **v1.2 Confort & Découverte** — Shipped 2026-04-08. Préférences alimentaires famille/invités + détection conflits recettes, codex ferme 111 entrées sur 11 catégories, tutoriel immersif 5 étapes. Voir `.planning/milestones/v1.2-ROADMAP.md`.
@@ -155,4 +159,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-11 — v1.4 Jardin Familial milestone shipped*
+*Last updated: 2026-04-16 — v1.6 Love Notes milestone started*
