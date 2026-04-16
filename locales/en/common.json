@@ -4071,7 +4071,13 @@
       "fleur_lave": "Lava Flower",
       "fleur_lave_desc": "An exclusive volcanic flower. Only obtained through expeditions.",
       "cristal_noir": "Black Crystal",
-      "cristal_noir_desc": "A legendary crystal from the depths. Reserved for the most valiant explorers."
+      "cristal_noir_desc": "A legendary crystal from the depths. Reserved for the most valiant explorers.",
+      "mousse_etoile": "Starry Moss",
+      "mousse_etoile_desc": "Shimmering moss from forgotten glades. Brought back from expeditions.",
+      "racine_geante": "Giant Root",
+      "racine_geante_desc": "An ancient root bursting with sap. Exclusive to the deepest expeditions.",
+      "fleur_celeste": "Celestial Flower",
+      "fleur_celeste_desc": "Petals of stars and the scent of dawn. The ultimate expedition treasure."
     },
     "building": {
       "poulailler": "Chicken Coop",

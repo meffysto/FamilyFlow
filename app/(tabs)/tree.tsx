@@ -1646,7 +1646,84 @@ export default function TreeScreen() {
               contentContainerStyle={styles.seedSheetContent}
               showsVerticalScrollIndicator={false}
             >
-              {/* ── Graines rares (possedees + decouverte) ── */}
+              {/* ── Graines normales (achetables) — affichées en premier ── */}
+              <Text style={[styles.seedSectionTitle, { color: colors.textSub }]}>
+                {t('farm.regularSeeds')}
+              </Text>
+              {CROP_CATALOG.filter(c => !c.dropOnly).map(crop => {
+                const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+                const stageUnlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
+                const availableCrops = getAvailableCrops(stageInfo.stage, profile?.farmTech ?? []);
+                const unlocked = stageUnlocked && availableCrops.some(c => c.id === crop.id);
+                const stageName = t(`mascot.stages.${crop.minTreeStage}`);
+                const isSeasonal = hasCropSeasonalBonus(crop.id);
+                const effectiveTasksPerStage = Math.max(1, crop.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+                const totalTasks = effectiveTasksPerStage * 4;
+                const effectiveTasks = isSeasonal ? Math.ceil(totalTasks / 2) : totalTasks;
+                const canAfford = (profile?.coins ?? 0) >= crop.cost;
+                return (
+                  <TouchableOpacity
+                    key={crop.id}
+                    onPress={unlocked && canAfford ? () => handleSeedSelect(crop.id) : undefined}
+                    activeOpacity={unlocked && canAfford ? 0.7 : 1}
+                    style={[
+                      styles.seedRow,
+                      { backgroundColor: colors.cardAlt, borderColor: isSeasonal ? '#F59E0B' : colors.borderLight },
+                      isSeasonal && { borderWidth: 1.5 },
+                      !unlocked && { opacity: 0.4 },
+                    ]}
+                  >
+                    <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
+                    {unlocked ? (
+                      <View style={styles.seedRowInfo}>
+                        <View style={styles.seedRowHeader}>
+                          <Text style={[styles.seedRowName, { color: colors.text }]}>
+                            {t(`farm.crop.${crop.id}`)}
+                          </Text>
+                          {isSeasonal && (
+                            <View style={styles.seedSeasonBadge}>
+                              <Text style={styles.seedSeasonBadgeText}>
+                                {t('farm.inSeason')}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={[styles.seedRowDesc, { color: colors.textMuted }]} numberOfLines={2}>
+                          {t(`farm.crop.${crop.id}_desc`)}
+                        </Text>
+                        <View style={styles.seedRowStats}>
+                          <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
+                            {t('farm.taskCount', { count: effectiveTasks })}
+                            {isSeasonal && (
+                              <Text style={{ color: '#F59E0B', fontWeight: FontWeight.semibold }}>
+                                {' '}({t('farm.seasonSpeed', { normal: totalTasks })})
+                              </Text>
+                            )}
+                          </Text>
+                          <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
+                            {crop.cost} 🍃 → {crop.harvestReward} 🍃
+                          </Text>
+                        </View>
+                        {!canAfford && (
+                          <Text style={[styles.seedRowWarn, { color: colors.error }]}>
+                            {t('farm.notEnoughLeaves')}
+                          </Text>
+                        )}
+                      </View>
+                    ) : (
+                      <View style={styles.seedRowInfo}>
+                        <Text style={[styles.seedRowName, { color: colors.textMuted }]}>
+                          {t(`farm.crop.${crop.id}`)}
+                        </Text>
+                        <Text style={{ color: colors.textMuted, fontSize: FontSize.caption }}>
+                          🔒 {t('farm.unlocksAt', { stage: stageName })}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+              {/* ── Graines rares (possedees + decouverte) — affichées en dernier ── */}
               {(() => {
                 const rareSeeds = profile?.farmRareSeeds ?? {};
                 const allRare = CROP_CATALOG.filter(c => c.dropOnly);
@@ -1672,6 +1749,7 @@ export default function TreeScreen() {
 
                 return (
                   <>
+                    <View style={{ height: Spacing.md }} />
                     <Text style={[styles.seedSectionTitle, { color: primary }]}>
                       {t('farm.rareSeedsTitle')} ✨
                     </Text>
@@ -1775,87 +1853,9 @@ export default function TreeScreen() {
                         </View>
                       );
                     })}
-                    <View style={{ height: Spacing.md }} />
-                    <Text style={[styles.seedSectionTitle, { color: colors.textSub }]}>
-                      {t('farm.regularSeeds')}
-                    </Text>
                   </>
                 );
               })()}
-              {/* ── Graines normales (achetables) ── */}
-              {CROP_CATALOG.filter(c => !c.dropOnly).map(crop => {
-                const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
-                const stageUnlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
-                const availableCrops = getAvailableCrops(stageInfo.stage, profile?.farmTech ?? []);
-                const unlocked = stageUnlocked && availableCrops.some(c => c.id === crop.id);
-                const stageName = t(`mascot.stages.${crop.minTreeStage}`);
-                const isSeasonal = hasCropSeasonalBonus(crop.id);
-                const effectiveTasksPerStage = Math.max(1, crop.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
-                const totalTasks = effectiveTasksPerStage * 4;
-                const effectiveTasks = isSeasonal ? Math.ceil(totalTasks / 2) : totalTasks;
-                const canAfford = (profile?.coins ?? 0) >= crop.cost;
-                return (
-                  <TouchableOpacity
-                    key={crop.id}
-                    onPress={unlocked && canAfford ? () => handleSeedSelect(crop.id) : undefined}
-                    activeOpacity={unlocked && canAfford ? 0.7 : 1}
-                    style={[
-                      styles.seedRow,
-                      { backgroundColor: colors.cardAlt, borderColor: isSeasonal ? '#F59E0B' : colors.borderLight },
-                      isSeasonal && { borderWidth: 1.5 },
-                      !unlocked && { opacity: 0.4 },
-                    ]}
-                  >
-                    <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
-                    {unlocked ? (
-                      <View style={styles.seedRowInfo}>
-                        <View style={styles.seedRowHeader}>
-                          <Text style={[styles.seedRowName, { color: colors.text }]}>
-                            {t(`farm.crop.${crop.id}`)}
-                          </Text>
-                          {isSeasonal && (
-                            <View style={styles.seedSeasonBadge}>
-                              <Text style={styles.seedSeasonBadgeText}>
-                                {t('farm.inSeason')}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text style={[styles.seedRowDesc, { color: colors.textMuted }]} numberOfLines={2}>
-                          {t(`farm.crop.${crop.id}_desc`)}
-                        </Text>
-                        <View style={styles.seedRowStats}>
-                          <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
-                            {t('farm.taskCount', { count: effectiveTasks })}
-                            {isSeasonal && (
-                              <Text style={{ color: '#F59E0B', fontWeight: FontWeight.semibold }}>
-                                {' '}({t('farm.seasonSpeed', { normal: totalTasks })})
-                              </Text>
-                            )}
-                          </Text>
-                          <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
-                            {crop.cost} 🍃 → {crop.harvestReward} 🍃
-                          </Text>
-                        </View>
-                        {!canAfford && (
-                          <Text style={[styles.seedRowWarn, { color: colors.error }]}>
-                            {t('farm.notEnoughLeaves')}
-                          </Text>
-                        )}
-                      </View>
-                    ) : (
-                      <View style={styles.seedRowInfo}>
-                        <Text style={[styles.seedRowName, { color: colors.textMuted }]}>
-                          {t(`farm.crop.${crop.id}`)}
-                        </Text>
-                        <Text style={{ color: colors.textMuted, fontSize: FontSize.caption }}>
-                          🔒 {t('farm.unlocksAt', { stage: stageName })}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
               <View style={{ height: Spacing['3xl'] }} />
             </ScrollView>
           </View>

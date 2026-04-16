@@ -4074,10 +4074,16 @@
       "truffe_desc": "Champignon légendaire. Longue pousse, récompense exceptionnelle.",
       "fruit_dragon": "Fruit du dragon",
       "fruit_dragon_desc": "Fruit mythique. Très rare, trouvé dans n'importe quelle récolte.",
-      "fleur_lave": "Fleur de Lave",
+      "fleur_lave": "Fleur de lave",
       "fleur_lave_desc": "Fleur volcanique exclusive. Obtenue uniquement via les expéditions.",
-      "cristal_noir": "Cristal Noir",
-      "cristal_noir_desc": "Cristal légendaire des profondeurs. Réservé aux explorateurs les plus valeureux."
+      "cristal_noir": "Cristal noir",
+      "cristal_noir_desc": "Cristal légendaire des profondeurs. Réservé aux explorateurs les plus valeureux.",
+      "mousse_etoile": "Mousse étoilée",
+      "mousse_etoile_desc": "Mousse scintillante des clairières oubliées. Ramenée des expéditions.",
+      "racine_geante": "Racine géante",
+      "racine_geante_desc": "Racine ancestrale gorgée de sève. Exclusive aux expéditions les plus profondes.",
+      "fleur_celeste": "Fleur céleste",
+      "fleur_celeste_desc": "Pétales d'étoiles et parfum d'aurore. Trésor ultime des expéditions."
     },
     "building": {
       "poulailler": "Poulailler",
