@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test overlays niveaux de parcelle</title>
+<style>
+  body {
+    background: #2d5a27;
+    font-family: system-ui, sans-serif;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    gap: 40px;
+  }
+  h1 { font-size: 20px; margin: 0; }
+  .row {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .plot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .plot-cell {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    image-rendering: pixelated;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .plot-cell img {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    display: block;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .label {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .sublabel {
+    font-size: 11px;
+    opacity: 0.7;
+    text-align: center;
+    max-width: 100px;
+  }
+  .cost {
+    font-size: 11px;
+    color: #a3e635;
+    font-weight: 500;
+  }
+  .section { text-align: center; }
+  .section h2 { font-size: 16px; margin: 0 0 20px; opacity: 0.8; }
+
+  /* Particles for levels 4-5 */
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+  .sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  /* Arrow hint */
+  @keyframes arrow-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+  }
+  .upgrade-hint {
+    position: absolute;
+    bottom: 2px;
+    right: 3px;
+    font-size: 14px;
+    animation: arrow-pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
+  }
+
+  /* Option B styles */
+  .border-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  hr {
+    width: 100%;
+    max-width: 600px;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+
+  /* Crop preview */
+  .crop-emoji {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    font-size: 28px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  }
+  .stage-dots {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 3px;
+  }
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+  }
+  .dot.filled { background: #a3e635; }
+</style>
+</head>
+<body>
+
+<h1>Niveaux de parcelle - Test overlays</h1>
+
+<!-- ====== OPTION A : Overlay couleur simple ====== -->
+<div class="section">
+  <h2>Option A - Overlay couleur</h2>
+  <div class="row">
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="crop-emoji">🥕</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+      <div class="label">Niveau 1</div>
+      <div class="sublabel">Terre simple</div>
+      <div class="cost">Gratuit</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(60, 30, 0, 0.18);"></div>
+        <div class="crop-emoji">🥕</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+      <div class="label">Niveau 2</div>
+      <div class="sublabel">Terre enrichie</div>
+      <div class="cost">500 🍃</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(20, 80, 20, 0.22);"></div>
+        <div class="crop-emoji">🌾</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div></div>
+      </div>
+      <div class="label">Niveau 3</div>
+      <div class="sublabel">Terre fertile</div>
+      <div class="cost">1 500 🍃</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(200, 170, 0, 0.25);"></div>
+        <div class="sparkle" style="top: 15px; left: 20px; background: #ffd700; animation-delay: 0s;"></div>
+        <div class="sparkle" style="top: 45px; left: 55px; background: #ffec8b; animation-delay: 0.7s;"></div>
+        <div class="sparkle" style="top: 30px; left: 40px; background: #ffd700; animation-delay: 1.2s;"></div>
+        <div class="crop-emoji">🍅</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+      <div class="label">Niveau 4</div>
+      <div class="sublabel">Terre doree</div>
+      <div class="cost">4 000 🍃</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(0, 180, 220, 0.2);"></div>
+        <div class="sparkle" style="top: 12px; left: 18px; background: #67e8f9; animation-delay: 0s; width: 5px; height: 5px;"></div>
+        <div class="sparkle" style="top: 50px; left: 52px; background: #a5f3fc; animation-delay: 0.5s; width: 5px; height: 5px;"></div>
+        <div class="sparkle" style="top: 28px; left: 60px; background: #22d3ee; animation-delay: 1s; width: 4px; height: 4px;"></div>
+        <div class="sparkle" style="top: 55px; left: 25px; background: #67e8f9; animation-delay: 1.5s; width: 4px; height: 4px;"></div>
+        <div class="crop-emoji">🌽</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div></div>
+      </div>
+      <div class="label">Niveau 5</div>
+      <div class="sublabel">Terre cristalline</div>
+      <div class="cost">10 000 🍃</div>
+    </div>
+
+  </div>
+</div>
+
+<hr />
+
+<!-- ====== OPTION B : Bordure coloree ====== -->
+<div class="section">
+  <h2>Option B - Bordure + teinte subtile</h2>
+  <div class="row">
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="crop-emoji">🥕</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+      <div class="label">Niveau 1</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(60, 30, 0, 0.15);"></div>
+        <div class="border-glow" style="box-shadow: inset 0 0 0 2px rgba(139, 90, 43, 0.6);"></div>
+        <div class="crop-emoji">🥕</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+      <div class="label">Niveau 2</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(20, 80, 20, 0.18);"></div>
+        <div class="border-glow" style="box-shadow: inset 0 0 0 2px rgba(34, 197, 94, 0.5);"></div>
+        <div class="crop-emoji">🌾</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div></div>
+      </div>
+      <div class="label">Niveau 3</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(200, 170, 0, 0.2);"></div>
+        <div class="border-glow" style="box-shadow: inset 0 0 0 2px rgba(234, 179, 8, 0.6), 0 0 8px rgba(234, 179, 8, 0.3);"></div>
+        <div class="sparkle" style="top: 15px; left: 20px; background: #ffd700; animation-delay: 0s;"></div>
+        <div class="sparkle" style="top: 48px; left: 55px; background: #ffec8b; animation-delay: 0.8s;"></div>
+        <div class="crop-emoji">🍅</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+      <div class="label">Niveau 4</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(0, 180, 220, 0.18);"></div>
+        <div class="border-glow" style="box-shadow: inset 0 0 0 2px rgba(34, 211, 238, 0.6), 0 0 12px rgba(34, 211, 238, 0.35);"></div>
+        <div class="sparkle" style="top: 12px; left: 18px; background: #67e8f9; animation-delay: 0s; width: 5px; height: 5px;"></div>
+        <div class="sparkle" style="top: 50px; left: 52px; background: #a5f3fc; animation-delay: 0.5s; width: 5px; height: 5px;"></div>
+        <div class="sparkle" style="top: 28px; left: 60px; background: #22d3ee; animation-delay: 1s;"></div>
+        <div class="sparkle" style="top: 58px; left: 25px; background: #67e8f9; animation-delay: 1.5s;"></div>
+        <div class="crop-emoji">🌽</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div></div>
+      </div>
+      <div class="label">Niveau 5</div>
+    </div>
+
+  </div>
+</div>
+
+<hr />
+
+<!-- ====== Hint upgrade ====== -->
+<div class="section">
+  <h2>Hint "upgrade dispo" (chevron)</h2>
+  <div class="row">
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="crop-emoji">🥕</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="upgrade-hint">⬆</div>
+      </div>
+      <div class="label">Upgrade dispo</div>
+      <div class="sublabel">Pulse doux quand le joueur a assez de 🍃</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(200, 170, 0, 0.2);"></div>
+        <div class="border-glow" style="box-shadow: inset 0 0 0 2px rgba(234, 179, 8, 0.6), 0 0 8px rgba(234, 179, 8, 0.3);"></div>
+        <div class="sparkle" style="top: 15px; left: 20px; background: #ffd700; animation-delay: 0s;"></div>
+        <div class="sparkle" style="top: 48px; left: 55px; background: #ffec8b; animation-delay: 0.8s;"></div>
+        <div class="crop-emoji">🍅</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="upgrade-hint">⬆</div>
+      </div>
+      <div class="label">Niv 4 + upgrade dispo</div>
+      <div class="sublabel">Chevron visible meme sur parcelle upgraee</div>
+    </div>
+
+    <div class="plot">
+      <div class="plot-cell">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABLklEQVR4nO2ZsQ2DMBBFvVp0E1hynYYmoskW2YCC+oa4AagtZSOnDlKwUCBHzCt+ZRDnr//O4hxEUzmzgncB3greBXgreBcgZzdguHSLsntcVO19DFASUEBAv+gBw86Mzp/P4+1Na9dr38cAJQEFBHShB1iFqa2Z3Xt9dQ8wDIgkwEAg/i3ztfWve0A++AYxYCQBZVME8szRo6uGMAYoCSggoA33gLz1KZAPsAkMGElA2Q2B/tmVJTWPQI8BHQnoQaD7aML0uL7pdD1gwoArCZhaRkAqd4HNIyAYkEiAgEDid1iYByQGIsJEKDESM2aCkaGoMRWOjMWNe4HIxYhxMxTd/+d/Pg8wjsHIMWhnPgblz5GobRgDlAQUENAVPUAaV/AuwFvBuwBvBe8CvPUCrj34KVp6eFsAAAAASUVORK5CYII=" />
+        <div class="overlay" style="background: rgba(0, 180, 220, 0.18);"></div>
+        <div class="border-glow" style="box-shadow: inset 0 0 0 2px rgba(34, 211, 238, 0.6), 0 0 12px rgba(34, 211, 238, 0.35);"></div>
+        <div class="sparkle" style="top: 12px; left: 18px; background: #67e8f9; animation-delay: 0s; width: 5px; height: 5px;"></div>
+        <div class="sparkle" style="top: 50px; left: 52px; background: #a5f3fc; animation-delay: 0.5s; width: 5px; height: 5px;"></div>
+        <div class="sparkle" style="top: 28px; left: 60px; background: #22d3ee; animation-delay: 1s;"></div>
+        <div class="crop-emoji">🌽</div>
+        <div class="stage-dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div></div>
+      </div>
+      <div class="label">Niveau MAX</div>
+      <div class="sublabel">Pas de chevron = plus rien a debloquer</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

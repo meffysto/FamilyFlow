@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toast Mockups — FamilyFlow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    background: #0f0f13;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+    padding: 60px 20px;
+  }
+
+  h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .row {
+    display: flex;
+    gap: 60px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ── PHONE ── */
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+  .phone-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.3px;
+    text-align: center;
+  }
+  .phone-sublabel {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    text-align: center;
+    max-width: 240px;
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+
+  .phone {
+    width: 320px;
+    height: 620px;
+    background: #1c1c26;
+    border-radius: 44px;
+    border: 1.5px solid rgba(255,255,255,0.07);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  }
+
+  .notch {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100px; height: 28px;
+    background: #0f0f13;
+    border-radius: 0 0 16px 16px;
+    z-index: 100;
+  }
+
+  /* ── APP BG ── */
+  .app-bg {
+    position: absolute;
+    inset: 0;
+    background: #1c1c26;
+    display: flex;
+    flex-direction: column;
+    padding: 46px 16px 16px;
+  }
+
+  .app-header {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+
+  .app-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 18px;
+  }
+
+  .task-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .task-row:active { background: rgba(255,255,255,0.07); }
+
+  .task-checkbox {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    transition: all 0.2s;
+  }
+  .task-checkbox.done {
+    background: #5a9e6e;
+    border-color: #5a9e6e;
+  }
+
+  .task-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    flex: 1;
+    transition: all 0.2s;
+  }
+  .task-text.done {
+    text-decoration: line-through;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .task-pts {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 600;
+  }
+
+  .trigger-btn {
+    margin-top: 12px;
+    background: rgba(90, 158, 110, 0.15);
+    border: 1px solid rgba(90, 158, 110, 0.3);
+    border-radius: 12px;
+    color: #5a9e6e;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .trigger-btn:active { opacity: 0.7; transform: scale(0.98); }
+
+  /* ═══════════════════════════════════════
+     TOAST A — "Toast Premium" (top)
+  ═══════════════════════════════════════ */
+
+  .toast-a {
+    position: absolute;
+    top: 16px;
+    left: 12px;
+    right: 12px;
+    z-index: 200;
+    /* Spring approximation avec cubic-bezier */
+    transition:
+      transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.3s ease;
+    transform: translateY(-110px);
+    opacity: 0;
+  }
+
+  .toast-a.show {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+
+  .toast-a.hide {
+    transform: translateY(-110px);
+    opacity: 0;
+    transition:
+      transform 0.3s cubic-bezier(0.55, 0, 1, 0.45),
+      opacity 0.25s ease;
+  }
+
+  .toast-a-inner {
+    background: #1e2a1e;
+    border: 1px solid rgba(90, 200, 120, 0.25);
+    border-radius: 18px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(90,200,120,0.08);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .toast-a-emoji {
+    font-size: 28px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .toast-a-body { flex: 1; min-width: 0; }
+
+  .toast-a-task {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+
+  .toast-a-pts {
+    font-size: 20px;
+    font-weight: 800;
+    color: #6ddc90;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  .toast-a-name {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    margin-top: 1px;
+  }
+
+  .toast-a-loot {
+    background: rgba(255, 200, 60, 0.15);
+    border: 1px solid rgba(255,200,60,0.3);
+    border-radius: 10px;
+    padding: 6px 8px;
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  /* Timer bar */
+  .toast-a-bar {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 2px;
+    background: rgba(90, 200, 120, 0.5);
+    width: 100%;
+    transform-origin: left;
+    border-radius: 0 0 0 0;
+  }
+
+  .toast-a-bar.draining {
+    animation: drain-bar 2.5s linear forwards;
+  }
+
+  @keyframes drain-bar {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+  }
+
+  /* ═══════════════════════════════════════
+     TOAST B — "Reward Card" (bottom)
+  ═══════════════════════════════════════ */
+
+  .toast-b {
+    position: absolute;
+    bottom: 20px;
+    left: 12px;
+    right: 12px;
+    z-index: 200;
+    transition:
+      transform 0.55s cubic-bezier(0.34, 1.4, 0.64, 1),
+      opacity 0.3s ease;
+    transform: translateY(140px);
+    opacity: 0;
+  }
+
+  .toast-b.show {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+
+  .toast-b.hide {
+    transform: translateY(140px) scale(0.95);
+    opacity: 0;
+    transition:
+      transform 0.3s cubic-bezier(0.55, 0, 1, 0.45),
+      opacity 0.25s ease;
+  }
+
+  .toast-b-inner {
+    background: linear-gradient(135deg, #1e2a1e 0%, #162416 100%);
+    border: 1px solid rgba(90, 200, 120, 0.2);
+    border-radius: 22px;
+    padding: 18px 16px;
+    box-shadow: 0 -4px 40px rgba(90,200,120,0.08), 0 12px 32px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Glow bg */
+  .toast-b-inner::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(90,200,120,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .toast-b-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .toast-b-avatar {
+    width: 36px; height: 36px;
+    background: rgba(90,200,120,0.1);
+    border: 1px solid rgba(90,200,120,0.2);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .toast-b-who {
+    flex: 1;
+  }
+
+  .toast-b-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .toast-b-task {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    text-decoration: line-through;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toast-b-loot-badge {
+    background: rgba(255,200,60,0.12);
+    border: 1px solid rgba(255,200,60,0.25);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 14px;
+  }
+
+  .toast-b-xp-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .toast-b-xp-num {
+    font-size: 38px;
+    font-weight: 900;
+    color: #6ddc90;
+    letter-spacing: -1px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .toast-b-xp-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(109,220,144,0.6);
+    margin-bottom: 2px;
+  }
+
+  /* XP bar */
+  .toast-b-xp-bar-track {
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    height: 5px;
+    overflow: hidden;
+  }
+
+  .toast-b-xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ac070, #6ddc90);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.34, 1.2, 0.64, 1) 0.3s;
+  }
+
+  .toast-b-xp-bar-fill.fill {
+    width: 68%;
+  }
+
+  .toast-b-xp-subrow {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+  }
+
+  .toast-b-level {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 600;
+  }
+
+  /* Sparkles */
+  .sparkle {
+    position: absolute;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sparkle.pop {
+    animation: sparkle-pop 0.8s ease-out forwards;
+  }
+
+  @keyframes sparkle-pop {
+    0%   { opacity: 0; transform: translate(0,0) scale(0); }
+    30%  { opacity: 1; transform: translate(var(--tx), var(--ty)) scale(1.2); }
+    100% { opacity: 0; transform: translate(calc(var(--tx)*1.5), calc(var(--ty)*1.5 - 20px)) scale(0.5); }
+  }
+
+</style>
+</head>
+<body>
+
+<h1>Toast de validation de tâche</h1>
+
+<div class="row">
+
+  <!-- ── PHONE A ── -->
+  <div class="phone-wrap">
+    <div>
+      <div class="phone-label">Option A — Toast Premium</div>
+      <div class="phone-sublabel">Haut de l'écran · Spring bounce · Barre timer · +XP mis en avant</div>
+    </div>
+    <div class="phone" id="phoneA">
+      <div class="notch"></div>
+
+      <!-- Toast A -->
+      <div class="toast-a" id="toastA">
+        <div class="toast-a-inner" id="toastAInner">
+          <div class="toast-a-emoji" id="toastAEmoji">🌿</div>
+          <div class="toast-a-body">
+            <div class="toast-a-task" id="toastATask">Arroser les plantes</div>
+            <div class="toast-a-pts" id="toastAPts">+50 pts</div>
+            <div class="toast-a-name">Emma</div>
+          </div>
+          <div class="toast-a-loot" id="toastALoot" style="display:none">🎁</div>
+          <div class="toast-a-bar" id="toastABar"></div>
+        </div>
+      </div>
+
+      <!-- App content -->
+      <div class="app-bg">
+        <div class="app-header">Tâches</div>
+        <div class="app-sub">Mercredi 15 avril</div>
+
+        <div class="task-row" id="taskA1" onclick="toggleTaskA(1, '🌿', 'Arroser les plantes', 50, false, 'Emma')">
+          <div class="task-checkbox" id="cbA1"></div>
+          <div class="task-text" id="txtA1">Arroser les plantes</div>
+          <div class="task-pts">+50</div>
+        </div>
+        <div class="task-row" id="taskA2" onclick="toggleTaskA(2, '🎯', 'Faire les courses', 80, true, 'Lucas')">
+          <div class="task-checkbox" id="cbA2"></div>
+          <div class="task-text" id="txtA2">Faire les courses</div>
+          <div class="task-pts">+80</div>
+        </div>
+        <div class="task-row" id="taskA3" onclick="toggleTaskA(3, '📚', 'Lecture avec les enfants', 40, false, 'Lucas')">
+          <div class="task-checkbox" id="cbA3"></div>
+          <div class="task-text" id="txtA3">Lecture avec les enfants</div>
+          <div class="task-pts">+40</div>
+        </div>
+
+        <button class="trigger-btn" onclick="resetA()">↺ Réinitialiser</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHONE B ── -->
+  <div class="phone-wrap">
+    <div>
+      <div class="phone-label">Option B — Reward Card</div>
+      <div class="phone-sublabel">Bas de l'écran · Style jeu · Compteur XP animé · Barre de progression niveau</div>
+    </div>
+    <div class="phone" id="phoneB">
+      <div class="notch"></div>
+
+      <!-- Sparkles -->
+      <div class="sparkle" id="sp1" style="--tx: -30px; --ty: -40px; top:60%; left:20%">✨</div>
+      <div class="sparkle" id="sp2" style="--tx:  30px; --ty: -50px; top:60%; left:70%">⭐</div>
+      <div class="sparkle" id="sp3" style="--tx: -20px; --ty: -60px; top:65%; left:50%">✦</div>
+      <div class="sparkle" id="sp4" style="--tx:  40px; --ty: -35px; top:55%; left:30%">✨</div>
+
+      <!-- Toast B -->
+      <div class="toast-b" id="toastB">
+        <div class="toast-b-inner">
+          <div class="toast-b-top">
+            <div class="toast-b-avatar" id="toastBAvatar">🌿</div>
+            <div class="toast-b-who">
+              <div class="toast-b-name" id="toastBName">Emma</div>
+              <div class="toast-b-task" id="toastBTask">Arroser les plantes</div>
+            </div>
+            <div class="toast-b-loot-badge" id="toastBLoot" style="visibility:hidden">🎁</div>
+          </div>
+
+          <div class="toast-b-xp-row">
+            <div class="toast-b-xp-num" id="toastBXp">0</div>
+            <div class="toast-b-xp-label">pts gagnés</div>
+          </div>
+
+          <div class="toast-b-xp-bar-track">
+            <div class="toast-b-xp-bar-fill" id="toastBBar"></div>
+          </div>
+          <div class="toast-b-xp-subrow">
+            <div class="toast-b-level">Niveau 4 — Emma</div>
+            <div class="toast-b-level" id="toastBTotal">420 / 600 XP</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App content -->
+      <div class="app-bg">
+        <div class="app-header">Tâches</div>
+        <div class="app-sub">Mercredi 15 avril</div>
+
+        <div class="task-row" id="taskB1" onclick="toggleTaskB(1, '🌿', 'Arroser les plantes', 50, false, 'Emma')">
+          <div class="task-checkbox" id="cbB1"></div>
+          <div class="task-text" id="txtB1">Arroser les plantes</div>
+          <div class="task-pts">+50</div>
+        </div>
+        <div class="task-row" id="taskB2" onclick="toggleTaskB(2, '🎯', 'Faire les courses', 80, true, 'Lucas')">
+          <div class="task-checkbox" id="cbB2"></div>
+          <div class="task-text" id="txtB2">Faire les courses</div>
+          <div class="task-pts">+80</div>
+        </div>
+        <div class="task-row" id="taskB3" onclick="toggleTaskB(3, '📚', 'Lecture avec les enfants', 40, false, 'Lucas')">
+          <div class="task-checkbox" id="cbB3"></div>
+          <div class="task-text" id="txtB3">Lecture avec les enfants</div>
+          <div class="task-pts">+40</div>
+        </div>
+
+        <button class="trigger-btn" onclick="resetB()">↺ Réinitialiser</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── TOAST A ──
+let timerA = null;
+let doneA = new Set();
+
+function toggleTaskA(id, emoji, text, pts, loot, name) {
+  if (doneA.has(id)) return;
+  doneA.add(id);
+
+  const cb = document.getElementById('cbA' + id);
+  const txt = document.getElementById('txtA' + id);
+  cb.classList.add('done');
+  cb.textContent = '✓';
+  txt.classList.add('done');
+
+  // Update toast content
+  document.getElementById('toastAEmoji').textContent = emoji;
+  document.getElementById('toastATask').textContent = text;
+  document.getElementById('toastAPts').textContent = '+' + pts + ' pts';
+  document.getElementById('toastALoot').style.display = loot ? 'flex' : 'none';
+
+  showToastA();
+}
+
+function showToastA() {
+  const el = document.getElementById('toastA');
+  const bar = document.getElementById('toastABar');
+
+  if (timerA) { clearTimeout(timerA); timerA = null; }
+
+  el.classList.remove('hide');
+  void el.offsetWidth; // reflow
+  el.classList.add('show');
+
+  bar.classList.remove('draining');
+  void bar.offsetWidth;
+  bar.classList.add('draining');
+
+  timerA = setTimeout(() => {
+    el.classList.remove('show');
+    el.classList.add('hide');
+  }, 2600);
+}
+
+function resetA() {
+  doneA.clear();
+  const el = document.getElementById('toastA');
+  el.classList.remove('show', 'hide');
+  document.getElementById('toastABar').classList.remove('draining');
+  if (timerA) { clearTimeout(timerA); timerA = null; }
+  [1,2,3].forEach(i => {
+    document.getElementById('cbA'+i).classList.remove('done');
+    document.getElementById('cbA'+i).textContent = '';
+    document.getElementById('txtA'+i).classList.remove('done');
+  });
+}
+
+// ── TOAST B ──
+let timerB = null;
+let counterIntervalB = null;
+let doneB = new Set();
+
+function toggleTaskB(id, emoji, text, pts, loot, name) {
+  if (doneB.has(id)) return;
+  doneB.add(id);
+
+  const cb = document.getElementById('cbB' + id);
+  const txt = document.getElementById('txtB' + id);
+  cb.classList.add('done');
+  cb.textContent = '✓';
+  txt.classList.add('done');
+
+  // Update toast content
+  document.getElementById('toastBAvatar').textContent = emoji;
+  document.getElementById('toastBName').textContent = name;
+  document.getElementById('toastBTask').textContent = text;
+  document.getElementById('toastBLoot').style.visibility = loot ? 'visible' : 'hidden';
+
+  showToastB(pts);
+}
+
+function showToastB(pts) {
+  const el = document.getElementById('toastB');
+  const bar = document.getElementById('toastBBar');
+  const xpNum = document.getElementById('toastBXp');
+
+  if (timerB) { clearTimeout(timerB); timerB = null; }
+  if (counterIntervalB) { clearInterval(counterIntervalB); counterIntervalB = null; }
+
+  el.classList.remove('hide');
+  void el.offsetWidth;
+  el.classList.add('show');
+
+  // Trigger sparkles
+  ['sp1','sp2','sp3','sp4'].forEach((id, i) => {
+    const sp = document.getElementById(id);
+    sp.classList.remove('pop');
+    void sp.offsetWidth;
+    setTimeout(() => sp.classList.add('pop'), i * 80);
+  });
+
+  // Animate XP counter
+  xpNum.textContent = '0';
+  let current = 0;
+  const step = Math.ceil(pts / 20);
+  counterIntervalB = setInterval(() => {
+    current = Math.min(current + step, pts);
+    xpNum.textContent = '+' + current;
+    if (current >= pts) {
+      clearInterval(counterIntervalB);
+      counterIntervalB = null;
+    }
+  }, 30);
+
+  // Animate XP bar
+  bar.classList.remove('fill');
+  void bar.offsetWidth;
+  setTimeout(() => bar.classList.add('fill'), 50);
+
+  timerB = setTimeout(() => {
+    el.classList.remove('show');
+    el.classList.add('hide');
+  }, 3200);
+}
+
+function resetB() {
+  doneB.clear();
+  const el = document.getElementById('toastB');
+  el.classList.remove('show', 'hide');
+  document.getElementById('toastBBar').classList.remove('fill');
+  document.getElementById('toastBXp').textContent = '0';
+  if (timerB) { clearTimeout(timerB); timerB = null; }
+  if (counterIntervalB) { clearInterval(counterIntervalB); counterIntervalB = null; }
+  ['sp1','sp2','sp3','sp4'].forEach(id => {
+    document.getElementById(id).classList.remove('pop');
+  });
+  [1,2,3].forEach(i => {
+    document.getElementById('cbB'+i).classList.remove('done');
+    document.getElementById('cbB'+i).textContent = '';
+    document.getElementById('txtB'+i).classList.remove('done');
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harvest Card — Option A (accumulation live)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    background: #0f1410;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 60px 20px;
+  }
+
+  h1 {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  /* ── PHONE ── */
+  .phone {
+    width: 320px;
+    height: 580px;
+    background: #1a1f1b;
+    border-radius: 40px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+
+  /* fake farm bg */
+  .phone-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #1e3a1e 0%, #2d5a2d 40%, #3a7a3a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 36px;
+  }
+  .phone-bg .farm-row { display: flex; gap: 10px; }
+
+  /* status bar */
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 10;
+  }
+  .status-bar span {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* ── HARVEST CARD ── */
+  .harvest-card {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 24px;
+    background: rgba(18, 28, 18, 0.96);
+    border: 1px solid rgba(100, 200, 80, 0.25);
+    border-radius: 20px;
+    padding: 14px 16px;
+    backdrop-filter: blur(20px);
+    box-shadow:
+      0 -4px 30px rgba(80, 200, 60, 0.12),
+      0 8px 32px rgba(0,0,0,0.5);
+    transform: translateY(140px);
+    opacity: 0;
+    transition: transform 0s, opacity 0s;
+    z-index: 20;
+  }
+
+  .harvest-card.visible {
+    transform: translateY(0);
+    opacity: 1;
+    transition:
+      transform 360ms cubic-bezier(0.17, 0.84, 0.44, 1),
+      opacity 220ms ease;
+  }
+
+  .harvest-card.hiding {
+    transform: translateY(140px);
+    opacity: 0;
+    transition:
+      transform 320ms cubic-bezier(0.36, 0, 0.66, 0),
+      opacity 200ms ease;
+  }
+
+  /* header ligne */
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .building-emoji {
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .card-title-group {
+    flex: 1;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.2;
+  }
+
+  .card-subtitle {
+    font-size: 11px;
+    color: rgba(160, 220, 140, 0.7);
+    margin-top: 1px;
+  }
+
+  .loot-badge {
+    font-size: 16px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 200ms, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .loot-badge.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* items grid */
+  .items-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 32px;
+  }
+
+  .item-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(100, 200, 80, 0.12);
+    border: 1px solid rgba(100, 200, 80, 0.2);
+    border-radius: 10px;
+    padding: 5px 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease;
+  }
+
+  .item-chip.visible {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .item-chip .qty {
+    color: #8de87a;
+    font-weight: 700;
+  }
+
+  /* pulse ring quand un item est mis à jour */
+  .item-chip.pulse {
+    animation: chipPulse 300ms ease;
+  }
+  @keyframes chipPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(100, 200, 80, 0.5); }
+    50%  { box-shadow: 0 0 0 5px rgba(100, 200, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(100, 200, 80, 0); }
+  }
+
+  /* timer bar */
+  .timer-bar {
+    height: 2px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-top: 11px;
+    overflow: hidden;
+  }
+  .timer-fill {
+    height: 100%;
+    background: rgba(100, 200, 80, 0.45);
+    border-radius: 2px;
+    width: 100%;
+    transform-origin: left;
+    transition: none;
+  }
+  .timer-fill.running {
+    transition: transform linear;
+    transform: scaleX(0);
+  }
+
+  /* ── SPARKLES ── */
+  .sparkle {
+    position: absolute;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 30;
+  }
+
+  /* ── CONTROLS ── */
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 320px;
+  }
+
+  .controls-title {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: 9px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.85);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 150ms, transform 100ms;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  button:active { transform: scale(0.96); background: rgba(255,255,255,0.1); }
+
+  button.primary {
+    background: rgba(100, 200, 80, 0.18);
+    border-color: rgba(100, 200, 80, 0.35);
+    color: #a0e890;
+  }
+
+  .log {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    font-family: 'SF Mono', monospace;
+    line-height: 1.6;
+    min-height: 48px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+
+  .legend {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    text-align: center;
+    max-width: 320px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<h1>Harvest Card — Option A · Accumulation live</h1>
+
+<div class="phone" id="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>●●●</span>
+  </div>
+
+  <div class="phone-bg">
+    <div class="farm-row">🌾🌾🌽🌾🌾</div>
+    <div class="farm-row">🐔🏚️🐄🌻🌾</div>
+    <div class="farm-row">🌽🌾🌾🐓🌾</div>
+  </div>
+
+  <!-- Sparkles -->
+  <div class="sparkle" id="s1">✨</div>
+  <div class="sparkle" id="s2">✨</div>
+  <div class="sparkle" id="s3">✨</div>
+  <div class="sparkle" id="s4">✨</div>
+
+  <!-- Harvest Card -->
+  <div class="harvest-card" id="card">
+    <div class="card-header">
+      <div class="building-emoji" id="buildingEmoji">🌾</div>
+      <div class="card-title-group">
+        <div class="card-title" id="cardTitle">Champ de blé</div>
+        <div class="card-subtitle" id="cardSubtitle">Récolte prête !</div>
+      </div>
+      <div class="loot-badge" id="lootBadge">🎁</div>
+    </div>
+    <div class="items-list" id="itemsList"></div>
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="controls-title">Simuler des récoltes</div>
+  <div class="btn-row">
+    <button class="primary" onclick="harvest('🌾', 'Blé', 8)">🌾 Blé ×8</button>
+    <button class="primary" onclick="harvest('🌽', 'Maïs', 4)">🌽 Maïs ×4</button>
+    <button class="primary" onclick="harvest('🥕', 'Carotte', 6)">🥕 Carotte ×6</button>
+  </div>
+  <div class="btn-row">
+    <button onclick="harvest('🥚', 'Œuf', 3)">🥚 Œuf ×3</button>
+    <button onclick="harvest('🥛', 'Lait', 2)">🥛 Lait ×2</button>
+    <button onclick="harvest('🍓', 'Fraise', 5, true)">🍓 Fraise ×5 🎁</button>
+  </div>
+  <div class="btn-row">
+    <button onclick="rapidFire()">⚡ Rafale ×5 rapidement</button>
+    <button onclick="dismissNow()">✕ Dismiss</button>
+  </div>
+  <div class="log" id="log">En attente…</div>
+</div>
+
+<div class="legend">
+  La carte pop au 1er tap, les items suivants s'accumulent en live.<br>
+  Le timer se remet à zéro à chaque nouveau tap.
+</div>
+
+<script>
+  const card = document.getElementById('card');
+  const itemsList = document.getElementById('itemsList');
+  const buildingEmoji = document.getElementById('buildingEmoji');
+  const cardTitle = document.getElementById('cardTitle');
+  const cardSubtitle = document.getElementById('cardSubtitle');
+  const lootBadge = document.getElementById('lootBadge');
+  const timerFill = document.getElementById('timerFill');
+  const logEl = document.getElementById('log');
+  const phone = document.getElementById('phone');
+
+  const DISMISS_DELAY = 3000; // ms
+
+  let isVisible = false;
+  let dismissTimer = null;
+  let items = {}; // emoji → { label, qty, chipEl }
+  let harvestCount = 0;
+  let hasLoot = false;
+  let firstItem = null;
+  let logLines = [];
+
+  function log(msg) {
+    logLines.unshift(msg);
+    if (logLines.length > 4) logLines.pop();
+    logEl.textContent = logLines.join('\n');
+  }
+
+  function startTimer() {
+    // Reset la barre
+    timerFill.classList.remove('running');
+    timerFill.style.transition = 'none';
+    timerFill.style.transform = 'scaleX(1)';
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      timerFill.style.transition = `transform ${DISMISS_DELAY}ms linear`;
+      timerFill.classList.add('running');
+    }));
+
+    if (dismissTimer) clearTimeout(dismissTimer);
+    dismissTimer = setTimeout(() => dismissCard(), DISMISS_DELAY);
+  }
+
+  function showCard(emoji, title) {
+    buildingEmoji.textContent = emoji;
+    cardTitle.textContent = title;
+    cardSubtitle.textContent = 'Récolte !';
+
+    card.classList.remove('hiding');
+    card.classList.add('visible');
+    isVisible = true;
+    popSparkles();
+  }
+
+  function dismissCard() {
+    card.classList.remove('visible');
+    card.classList.add('hiding');
+    isVisible = false;
+    lootBadge.classList.remove('show');
+
+    setTimeout(() => {
+      card.classList.remove('hiding');
+      itemsList.innerHTML = '';
+      items = {};
+      harvestCount = 0;
+      hasLoot = false;
+      firstItem = null;
+    }, 360);
+  }
+
+  function dismissNow() {
+    if (dismissTimer) clearTimeout(dismissTimer);
+    dismissCard();
+    log('→ dismiss manuel');
+  }
+
+  function addOrUpdateItem(emoji, label, qty) {
+    if (items[emoji]) {
+      // Update qty
+      const prev = items[emoji].qty;
+      items[emoji].qty += qty;
+      const chip = items[emoji].chipEl;
+      chip.querySelector('.qty').textContent = `×${items[emoji].qty}`;
+
+      // pulse
+      chip.classList.remove('pulse');
+      void chip.offsetWidth;
+      chip.classList.add('pulse');
+
+      log(`  ↑ ${emoji} ${prev} → ${items[emoji].qty}`);
+    } else {
+      // New chip
+      const chip = document.createElement('div');
+      chip.className = 'item-chip';
+      chip.innerHTML = `<span>${emoji}</span><span class="qty">×${qty}</span>`;
+      itemsList.appendChild(chip);
+      items[emoji] = { label, qty, chipEl: chip };
+
+      // Animate in
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        chip.classList.add('visible');
+      }));
+
+      log(`  + ${emoji} ${label} ×${qty}`);
+    }
+  }
+
+  function popSparkles() {
+    const cardRect = card.getBoundingClientRect();
+    const phoneRect = phone.getBoundingClientRect();
+
+    const cx = cardRect.left - phoneRect.left + cardRect.width / 2;
+    const cy = cardRect.top - phoneRect.top + 20;
+
+    const offsets = [
+      { x: -55, y: -40 }, { x: 55, y: -50 },
+      { x: -35, y: -65 }, { x: 45, y: -35 },
+    ];
+
+    ['s1','s2','s3','s4'].forEach((id, i) => {
+      const s = document.getElementById(id);
+      s.style.left = cx + 'px';
+      s.style.top = cy + 'px';
+      s.style.opacity = '0';
+      s.style.transform = 'translate(-50%,-50%) scale(1)';
+      s.style.transition = 'none';
+
+      const delay = i * 60;
+      setTimeout(() => {
+        s.style.opacity = '1';
+        s.style.transition = `transform 650ms cubic-bezier(0.2,0,0.4,1), opacity 650ms ease`;
+        s.style.transform = `translate(calc(-50% + ${offsets[i].x}px), calc(-50% + ${offsets[i].y}px)) scale(0.3)`;
+        setTimeout(() => { s.style.opacity = '0'; }, 400);
+      }, delay);
+    });
+  }
+
+  function harvest(emoji, label, qty, loot = false) {
+    harvestCount++;
+
+    if (loot && !hasLoot) {
+      hasLoot = true;
+      lootBadge.classList.add('show');
+    }
+
+    if (!isVisible) {
+      // Première récolte — afficher la carte
+      firstItem = { emoji, label };
+      cardSubtitle.textContent = `Récolte !`;
+      showCard(emoji, label);
+      addOrUpdateItem(emoji, label, qty);
+      log(`[tap ${harvestCount}] Carte affichée — ${emoji} ${label} ×${qty}`);
+    } else {
+      // Accumulation live
+      if (harvestCount === 2) {
+        cardSubtitle.textContent = 'Récoltes en cours…';
+      }
+      addOrUpdateItem(emoji, label, qty);
+      popSparkles();
+      log(`[tap ${harvestCount}] Ajout — ${emoji} ${label} ×${qty}`);
+    }
+
+    // Reset timer dans tous les cas
+    startTimer();
+  }
+
+  function rapidFire() {
+    const items = [
+      ['🌾', 'Blé', 8],
+      ['🌽', 'Maïs', 4],
+      ['🥚', 'Œuf', 3],
+      ['🥕', 'Carotte', 6],
+      ['🥛', 'Lait', 2],
+    ];
+    logLines = [];
+    log('⚡ Rafale démarrée…');
+    items.forEach(([e, l, q], i) => {
+      setTimeout(() => harvest(e, l, q), i * 180);
+    });
+  }
+</script>
+</body>
+</html>

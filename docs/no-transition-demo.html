@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sans Transition — Demo FamilyFlow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    background: #0f0f13;
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: #1a1a24;
+    border-radius: 52px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .notch {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #0f0f13;
+    border-radius: 0 0 20px 20px;
+    z-index: 100;
+  }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 52px;
+  }
+
+  /* LIST */
+  .list-screen {
+    background: #1a1a24;
+    padding: 60px 20px 20px;
+    z-index: 1;
+    transition: opacity 0.22s ease;
+  }
+
+  .screen-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  .screen-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 24px;
+  }
+
+  .cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card {
+    border-radius: 20px;
+    padding: 16px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s ease;
+  }
+
+  .card:active { transform: scale(0.97); }
+
+  .card-1 { background: linear-gradient(135deg, #2d1f4e 0%, #3d2a6b 100%); }
+  .card-2 { background: linear-gradient(135deg, #1f3a2d 0%, #1a4d35 100%); }
+  .card-3 { background: linear-gradient(135deg, #3a2010 0%, #5c3418 100%); }
+  .card-4 { background: linear-gradient(135deg, #1a2a3f 0%, #1e3a55 100%); }
+
+  .card-emoji { font-size: 32px; margin-bottom: 10px; display: block; }
+  .card-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .card-meta { font-size: 12px; color: rgba(255,255,255,0.45); display: flex; gap: 10px; }
+  .card-badge {
+    position: absolute;
+    top: 14px; right: 14px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* DETAIL */
+  .detail-screen {
+    background: #1a1a24;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    border-radius: 52px;
+    overflow: hidden;
+    /* Standard slide from right — no morphing */
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+
+  .detail-screen.visible {
+    transform: translateX(0);
+  }
+
+  .detail-hero {
+    height: 260px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 24px;
+  }
+
+  .detail-hero-1 { background: linear-gradient(160deg, #2d1f4e 0%, #3d2a6b 60%, #5a3a8a 100%); }
+  .detail-hero-2 { background: linear-gradient(160deg, #1f3a2d 0%, #1a4d35 60%, #267a4d 100%); }
+  .detail-hero-3 { background: linear-gradient(160deg, #3a2010 0%, #5c3418 60%, #8a5022 100%); }
+  .detail-hero-4 { background: linear-gradient(160deg, #1a2a3f 0%, #1e3a55 60%, #2a5080 100%); }
+
+  .detail-back {
+    position: absolute;
+    top: 52px; left: 20px;
+    width: 36px; height: 36px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s;
+  }
+  .detail-back:active { transform: scale(0.9); }
+
+  .detail-big-emoji {
+    font-size: 64px;
+    position: absolute;
+    right: 24px; bottom: 24px;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
+  }
+
+  .detail-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+
+  .detail-body {
+    padding: 24px 20px;
+    overflow-y: auto;
+    height: calc(100% - 260px);
+  }
+
+  .detail-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+
+  .tag {
+    background: rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 500;
+  }
+
+  .detail-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .detail-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 20px;
+  }
+
+  .detail-action {
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 16px;
+    width: 100%;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: transform 0.15s, opacity 0.15s;
+    font-family: inherit;
+  }
+  .detail-action:active { transform: scale(0.97); opacity: 0.9; }
+
+  .hint {
+    position: absolute;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+    animation: pulse 2s ease-in-out infinite;
+    transition: opacity 0.3s;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .demo-label {
+    position: absolute;
+    bottom: -48px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 13px;
+    color: rgba(255,100,100,0.7);
+    letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+
+<div style="position:relative">
+  <div class="phone" id="phone">
+    <div class="notch"></div>
+
+    <!-- LIST SCREEN -->
+    <div class="screen list-screen" id="listScreen">
+      <div class="screen-title">FamilyFlow</div>
+      <div class="screen-sub">Appuie sur une carte 👇</div>
+      <div class="cards-list">
+        <div class="card card-1" data-id="1" onclick="openDetail(1)">
+          <span class="card-emoji">🎯</span>
+          <div class="card-name">Faire les courses</div>
+          <div class="card-meta"><span>Aujourd'hui</span><span>Lucas</span></div>
+          <div class="card-badge">En cours</div>
+        </div>
+        <div class="card card-2" data-id="2" onclick="openDetail(2)">
+          <span class="card-emoji">🌿</span>
+          <div class="card-name">Jardin — arroser</div>
+          <div class="card-meta"><span>Demain</span><span>Emma</span></div>
+          <div class="card-badge">+50 XP</div>
+        </div>
+        <div class="card card-3" data-id="3" onclick="openDetail(3)">
+          <span class="card-emoji">🍕</span>
+          <div class="card-name">Pizza maison vendredi</div>
+          <div class="card-meta"><span>Recette</span><span>45 min</span></div>
+          <div class="card-badge">Favori</div>
+        </div>
+        <div class="card card-4" data-id="4" onclick="openDetail(4)">
+          <span class="card-emoji">🚀</span>
+          <div class="card-name">Expédition — Côte Nord</div>
+          <div class="card-meta"><span>3 jours restants</span><span>+200 XP</span></div>
+          <div class="card-badge">Actif</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETAIL SCREENS -->
+    <div class="detail-screen" id="detail-1">
+      <div class="detail-hero detail-hero-1">
+        <div class="detail-back" onclick="closeDetail()">←</div>
+        <div><div class="detail-title">Faire les courses</div></div>
+        <div class="detail-big-emoji">🎯</div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-tags">
+          <span class="tag">Aujourd'hui</span><span class="tag">Lucas</span>
+          <span class="tag">En cours</span><span class="tag">Priorité haute</span>
+        </div>
+        <div class="detail-section-title">Description</div>
+        <div class="detail-text">Courses hebdomadaires pour la famille. Ne pas oublier les fruits et légumes, le pain et les produits laitiers.</div>
+        <div class="detail-section-title">Liste (5 items)</div>
+        <div class="detail-text">🥦 Brocolis · 🥛 Lait · 🍎 Pommes · 🧀 Fromage · 🥖 Pain</div>
+        <button class="detail-action" style="background: linear-gradient(135deg, #7c5cbf, #5a3a9a)">✓ Marquer terminé</button>
+      </div>
+    </div>
+
+    <div class="detail-screen" id="detail-2">
+      <div class="detail-hero detail-hero-2">
+        <div class="detail-back" onclick="closeDetail()">←</div>
+        <div><div class="detail-title">Jardin — arroser</div></div>
+        <div class="detail-big-emoji">🌿</div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-tags">
+          <span class="tag">Demain</span><span class="tag">Emma</span><span class="tag">+50 XP</span>
+        </div>
+        <div class="detail-section-title">Description</div>
+        <div class="detail-text">Arroser toutes les plantes, particulièrement les tomates et les herbes aromatiques en cette saison.</div>
+        <div class="detail-section-title">Zones concernées</div>
+        <div class="detail-text">🪴 Herbes aromatiques · 🍅 Tomates · 🌸 Massif de fleurs</div>
+        <button class="detail-action" style="background: linear-gradient(135deg, #3a8a5a, #267a4d)">✓ Marquer terminé (+50 XP)</button>
+      </div>
+    </div>
+
+    <div class="detail-screen" id="detail-3">
+      <div class="detail-hero detail-hero-3">
+        <div class="detail-back" onclick="closeDetail()">←</div>
+        <div><div class="detail-title">Pizza maison</div></div>
+        <div class="detail-big-emoji">🍕</div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-tags">
+          <span class="tag">45 min</span><span class="tag">4 personnes</span><span class="tag">Favori</span>
+        </div>
+        <div class="detail-section-title">Ingrédients</div>
+        <div class="detail-text">Farine T55, levure, eau tiède, huile d'olive, passata, mozzarella, basilic frais, sel.</div>
+        <div class="detail-section-title">Instructions</div>
+        <div class="detail-text">Préparer la pâte 2h à l'avance. Préchauffer le four à 250°C. Étaler et garnir selon les goûts.</div>
+        <button class="detail-action" style="background: linear-gradient(135deg, #c06030, #8a4020)">👨‍🍳 Commencer la recette</button>
+      </div>
+    </div>
+
+    <div class="detail-screen" id="detail-4">
+      <div class="detail-hero detail-hero-4">
+        <div class="detail-back" onclick="closeDetail()">←</div>
+        <div><div class="detail-title">Expédition — Côte Nord</div></div>
+        <div class="detail-big-emoji">🚀</div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-tags">
+          <span class="tag">3 jours</span><span class="tag">Actif</span><span class="tag">+200 XP</span>
+        </div>
+        <div class="detail-section-title">Progression</div>
+        <div style="background:rgba(255,255,255,0.06);border-radius:8px;height:8px;margin-bottom:20px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#5a80c0,#7aa0e0);width:62%;height:100%;border-radius:8px;"></div>
+        </div>
+        <div class="detail-section-title">Récompenses à débloquer</div>
+        <div class="detail-text">🪙 200 XP · 🌟 Badge "Explorateur" · 🌾 Ressources rares x3</div>
+        <button class="detail-action" style="background: linear-gradient(135deg, #3a60a0, #1e4a80)">⚡ Accélérer l'expédition</button>
+      </div>
+    </div>
+
+    <div class="hint" id="hint">Tape une carte pour voir</div>
+  </div>
+
+  <div class="demo-label">❌ Transition classique (slide)</div>
+</div>
+
+<script>
+let current = null;
+
+function openDetail(id) {
+  if (current) return;
+  const detail = document.getElementById('detail-' + id);
+  detail.classList.add('visible');
+  current = id;
+  document.getElementById('hint').style.opacity = '0';
+}
+
+function closeDetail() {
+  if (!current) return;
+  const detail = document.getElementById('detail-' + current);
+  detail.classList.remove('visible');
+  current = null;
+  setTimeout(() => {
+    document.getElementById('hint').style.opacity = '1';
+  }, 300);
+}
+</script>
+</body>
+</html>
