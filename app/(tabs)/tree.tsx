@@ -178,6 +178,15 @@ const VISITOR_IDLE_FRAMES: Record<string, number> = {
 };
 const DEFAULT_VISITOR_IDLE = VISITOR_IDLE_FRAMES.voyageur_argent;
 
+/** Couleurs de rareté pour le picker de décoration */
+const PICKER_RARITY_COLORS: Record<string, string> = {
+  commun: '#9CA3AF',
+  rare: '#3B82F6',
+  'épique': '#8B5CF6',
+  'légendaire': '#F59E0B',
+  prestige: '#EC4899',
+};
+
 /** Sprite idle des visiteurs saisonniers — eventId → sprite */
 const SEASONAL_VISITOR_IDLE: Record<string, number> = {
   'nouvel-an': require('../../assets/garden/animals/lutin_minuit/idle_1.png'),
@@ -1081,6 +1090,25 @@ export default function TreeScreen() {
     return new Set(Object.values(profile.mascotPlacements ?? {}));
   }, [profile?.mascotPlacements]);
 
+  // Items possédés groupés par type (pour le picker)
+  const ownedInhabitants = useMemo(() => {
+    return allHabIds
+      .map(id => {
+        const cat = INHABITANTS.find(h => h.id === id);
+        return cat ? { id, cat } : null;
+      })
+      .filter((x): x is { id: string; cat: typeof INHABITANTS[number] } => x !== null);
+  }, [allHabIds]);
+
+  const ownedDecorations = useMemo(() => {
+    return allDecoIds
+      .map(id => {
+        const cat = DECORATIONS.find(d => d.id === id);
+        return cat ? { id, cat } : null;
+      })
+      .filter((x): x is { id: string; cat: typeof DECORATIONS[number] } => x !== null);
+  }, [allDecoIds]);
+
   // Emoji de l'item en cours de placement (pour le bandeau)
   const placingItemEmoji = useMemo(() => {
     if (!placingItem) return '';
@@ -1562,70 +1590,119 @@ export default function TreeScreen() {
           </Animated.View>
         )}
 
-        {/* Modal sélection d'item à placer */}
+        {/* Modal sélection d'item à placer — pageSheet */}
         <Modal
           visible={showItemPicker}
-          transparent
-          animationType="fade"
+          animationType="slide"
+          presentationStyle="pageSheet"
           onRequestClose={() => setShowItemPicker(false)}
         >
-          <TouchableOpacity
-            style={styles.pickerOverlay}
-            activeOpacity={1}
-            onPress={() => setShowItemPicker(false)}
-          >
-            <View style={[styles.pickerCard, { backgroundColor: colors.card }, Shadows.lg]}>
-              <Text style={[styles.pickerTitle, { color: colors.text }]}>
-                {t('mascot.placement.choose')}
-              </Text>
-              <View style={styles.pickerGrid}>
-                {allOwnedItems.map(item => {
-                  const isPlaced = placedItemIds.has(item.id);
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      onPress={async () => {
-                        if (isPlaced && profile) {
-                          // Retirer l'item placé
-                          const slot = Object.entries(profile.mascotPlacements ?? {}).find(([, v]) => v === item.id)?.[0];
-                          if (slot) {
-                            await unplaceMascotItem(profile.id, slot);
-                            showToast(t('mascot.placement.removed'));
-                          }
-                        } else {
-                          setPlacingItem(item.id);
-                          setShowItemPicker(false);
-                        }
-                      }}
-                      activeOpacity={0.7}
-                      style={[
-                        styles.pickerItem,
-                        { backgroundColor: colors.cardAlt, borderColor: isPlaced ? colors.error : colors.borderLight },
-                      ]}
-                    >
-                      {ITEM_ILLUSTRATIONS[item.id] ? (
-                        <Image source={ITEM_ILLUSTRATIONS[item.id]} style={styles.pickerIllustration} />
-                      ) : (
-                        <Text style={styles.pickerEmoji}>{item.emoji}</Text>
-                      )}
-                      {isPlaced && (
-                        <Text style={styles.pickerRemoveLabel}>{'✕'}</Text>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              <TouchableOpacity
-                onPress={() => setShowItemPicker(false)}
-                style={[styles.pickerCloseBtn, { borderColor: colors.borderLight }]}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.pickerCloseText, { color: colors.textSub }]}>
-                  {t('mascot.shop.close')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
+          <View style={[styles.pickerSheetContainer, { backgroundColor: colors.bg }]}>
+            <ModalHeader
+              title={t('mascot.placement.choose')}
+              onClose={() => setShowItemPicker(false)}
+              closeLeft
+            />
+            {(() => {
+              const handlePickerTap = async (itemId: string) => {
+                Haptics.selectionAsync();
+                const isPlaced = placedItemIds.has(itemId);
+                if (isPlaced && profile) {
+                  const slot = Object.entries(profile.mascotPlacements ?? {}).find(([, v]) => v === itemId)?.[0];
+                  if (slot) {
+                    await unplaceMascotItem(profile.id, slot);
+                    showToast(t('mascot.placement.removed'));
+                  }
+                } else {
+                  setPlacingItem(itemId);
+                  setShowItemPicker(false);
+                }
+              };
+
+              const renderRow = (
+                id: string,
+                cat: { labelKey: string; emoji: string; rarity: string },
+              ) => {
+                const isPlaced = placedItemIds.has(id);
+                const rarityColor = PICKER_RARITY_COLORS[cat.rarity] ?? colors.textFaint;
+                return (
+                  <TouchableOpacity
+                    key={id}
+                    onPress={() => handlePickerTap(id)}
+                    activeOpacity={0.7}
+                    style={[
+                      styles.pickerRow,
+                      {
+                        backgroundColor: colors.cardAlt,
+                        borderColor: isPlaced ? colors.success : colors.borderLight,
+                      },
+                      isPlaced && { borderWidth: 1.5 },
+                    ]}
+                  >
+                    {ITEM_ILLUSTRATIONS[id] ? (
+                      <Image source={ITEM_ILLUSTRATIONS[id]} style={styles.pickerRowSprite} />
+                    ) : (
+                      <View style={styles.pickerRowEmojiWrap}>
+                        <Text style={styles.pickerRowEmoji}>{cat.emoji}</Text>
+                      </View>
+                    )}
+                    <View style={styles.pickerRowInfo}>
+                      <Text style={[styles.pickerRowName, { color: colors.text }]}>
+                        {t(cat.labelKey)}
+                      </Text>
+                      <View style={styles.pickerRowMeta}>
+                        <View style={[styles.pickerRarityDot, { backgroundColor: rarityColor }]} />
+                        <Text style={[styles.pickerRarityText, { color: rarityColor }]}>
+                          {cat.rarity}
+                        </Text>
+                      </View>
+                    </View>
+                    {isPlaced ? (
+                      <View style={[styles.pickerStatusChip, { backgroundColor: colors.success }]}>
+                        <Text style={styles.pickerStatusChipText}>{'✓ Placé'}</Text>
+                      </View>
+                    ) : (
+                      <Text style={[styles.pickerRowChevron, { color: colors.textFaint }]}>{'›'}</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              };
+
+              const isEmpty = ownedInhabitants.length === 0 && ownedDecorations.length === 0;
+
+              return (
+                <ScrollView
+                  style={styles.pickerSheetScroll}
+                  contentContainerStyle={styles.pickerSheetContent}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {isEmpty && (
+                    <Text style={[styles.pickerEmptyText, { color: colors.textMuted }]}>
+                      {t('mascot.shop.empty', 'Aucun item à placer pour l\'instant.')}
+                    </Text>
+                  )}
+
+                  {ownedInhabitants.length > 0 && (
+                    <>
+                      <Text style={[styles.pickerSectionTitle, { color: colors.textSub }]}>
+                        {t('mascot.shop.inhabitants')}
+                      </Text>
+                      {ownedInhabitants.map(({ id, cat }) => renderRow(id, cat))}
+                    </>
+                  )}
+
+                  {ownedDecorations.length > 0 && (
+                    <>
+                      <Text style={[styles.pickerSectionTitle, { color: colors.textSub }]}>
+                        {t('mascot.shop.decorations')}
+                      </Text>
+                      {ownedDecorations.map(({ id, cat }) => renderRow(id, cat))}
+                    </>
+                  )}
+                </ScrollView>
+              );
+            })()}
+          </View>
         </Modal>
 
         {/* Modal choix de graine — pageSheet */}
@@ -2937,75 +3014,90 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
-  pickerOverlay: {
+  // Inhabitant/decoration picker — pageSheet
+  pickerSheetContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
   },
-  pickerCard: {
-    borderRadius: Radius['2xl'],
-    padding: Spacing.xl,
-    marginHorizontal: Spacing['2xl'],
-    maxWidth: 320,
-    width: '85%',
+  pickerSheetScroll: {
+    flex: 1,
   },
-  pickerTitle: {
-    fontSize: FontSize.lg,
+  pickerSheetContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing['2xl'],
+    gap: Spacing.sm,
+  },
+  pickerSectionTitle: {
+    fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
   },
-  pickerGrid: {
+  pickerRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  pickerItem: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  pickerEmoji: {
-    fontSize: 28,
-  },
-  pickerIllustration: {
-    width: 40,
-    height: 40,
-    resizeMode: 'contain',
-  },
-  pickerRemoveLabel: {
-    position: 'absolute',
-    top: -6,
-    right: -4,
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: '#EF4444',
-  },
-  pickerDot: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-  },
-  pickerCloseBtn: {
-    paddingVertical: Spacing.sm,
+    padding: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    alignItems: 'center',
+    gap: Spacing.md,
   },
-  pickerCloseText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
+  pickerRowSprite: {
+    width: 48,
+    height: 48,
+    resizeMode: 'contain',
+  },
+  pickerRowEmojiWrap: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickerRowEmoji: {
+    fontSize: 32,
+  },
+  pickerRowInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  pickerRowName: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  pickerRowMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pickerRarityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  pickerRarityText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.semibold,
+    textTransform: 'capitalize' as const,
+  },
+  pickerRowChevron: {
+    fontSize: 24,
+    fontWeight: FontWeight.semibold,
+  },
+  pickerStatusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.md,
+  },
+  pickerStatusChipText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
+  },
+  pickerEmptyText: {
+    fontSize: FontSize.body,
+    textAlign: 'center',
+    marginTop: Spacing['2xl'],
   },
   // Seed picker — pageSheet
   seedSheetContainer: {
