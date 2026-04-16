@@ -531,13 +531,13 @@ export const EXPEDITION_LOOT_TABLE: Record<ExpeditionDifficulty, ExpeditionLoot[
     { itemId: 'boost_recolte_2x', type: 'booster', label: 'Boost Récolte ×2', emoji: '🌾' },
   ],
   medium: [
-    { itemId: 'renard_expedition', type: 'inhabitant', label: 'Renard Explorateur', emoji: '🦊' },
+    { itemId: 'renard_arctique', type: 'inhabitant', label: 'Renard Explorateur', emoji: '🦊' },
     { itemId: 'fleur_de_lave', type: 'seed', label: 'Fleur de Lave', emoji: '🌺' },
     { itemId: 'boost_recolte_2x', type: 'booster', label: 'Boost Récolte ×2', emoji: '🌾' },
     { itemId: 'boost_production_2x', type: 'booster', label: 'Boost Production ×2', emoji: '⚙️' },
   ],
   hard: [
-    { itemId: 'aigle_expedition', type: 'inhabitant', label: 'Aigle Légendaire', emoji: '🦅' },
+    { itemId: 'aigle_dore', type: 'inhabitant', label: 'Aigle Légendaire', emoji: '🦅' },
     { itemId: 'graine_celeste', type: 'seed', label: 'Graine Céleste', emoji: '✨' },
     { itemId: 'fleur_de_lave', type: 'seed', label: 'Fleur de Lave', emoji: '🌺' },
     { itemId: 'boost_chance_doree', type: 'booster', label: 'Boost Chance Dorée', emoji: '🌟' },
