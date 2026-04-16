@@ -146,14 +146,14 @@ function ItemChip({ item, index, isNew, pulseKey, reduceMotion, primaryColor }: 
       style={[
         styles.chip,
         {
-          backgroundColor: primaryColor + '18',
-          borderColor: primaryColor + '30',
+          backgroundColor: 'rgba(255,255,255,0.18)',
+          borderColor: 'rgba(255,255,255,0.35)',
         },
         chipStyle,
       ]}
     >
       <Text style={styles.chipEmoji}>{item.emoji}</Text>
-      <Text style={[styles.chipQty, { color: primaryColor }]}>×{item.qty}</Text>
+      <Text style={[styles.chipQty, { color: '#FFFFFF' }]}>×{item.qty}</Text>
     </Animated.View>
   );
 }
@@ -193,7 +193,7 @@ function TimerBar({ timerKey, reduceMotion, primaryColor }: TimerBarProps) {
       <Animated.View
         style={[
           styles.timerFill,
-          { backgroundColor: primaryColor + '70' },
+          { backgroundColor: 'rgba(255,255,255,0.6)' },
           fillStyle,
         ]}
       />
@@ -211,7 +211,7 @@ export function HarvestCardToast({
   sparkleKey = 0,
 }: HarvestCardToastProps) {
   const insets = useSafeAreaInsets();
-  const { primary, colors } = useThemeColors();
+  const { primary } = useThemeColors();
   const reduceMotion = useReducedMotion();
 
   const translateY = useSharedValue(200);
@@ -328,7 +328,7 @@ export function HarvestCardToast({
         style={[
           styles.card,
           {
-            backgroundColor: colors.card,
+            backgroundColor: primary + 'F0',
             borderColor: primary + '33',
           },
         ]}
@@ -337,8 +337,8 @@ export function HarvestCardToast({
         <View style={styles.header}>
           <Text style={styles.mainEmoji}>{mainEmoji}</Text>
           <View style={styles.titleGroup}>
-            <Text style={[styles.title, { color: colors.text }]}>Récolte !</Text>
-            <Text style={[styles.subtitle, { color: primary }]} numberOfLines={1}>
+            <Text style={[styles.title, { color: '#FFFFFF' }]}>Récolte !</Text>
+            <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.85)' }]} numberOfLines={1}>
               {subtitle}
             </Text>
           </View>
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   },
   timerTrack: {
     height: 2,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: Radius.xxs,
     overflow: 'hidden',
   },

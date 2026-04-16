@@ -209,7 +209,7 @@ function XPBar({ visible, progress, level, reduceMotion, primaryColor, trackColo
           style={[styles.xpBarFill, { backgroundColor: primaryColor }, fillStyle]}
         />
       </View>
-      <Text style={styles.levelLabel}>Niv. {level}</Text>
+      <Text style={[styles.levelLabel, { color: 'rgba(255,255,255,0.9)' }]}>Niv. {level}</Text>
     </View>
   );
 }
@@ -218,7 +218,7 @@ function XPBar({ visible, progress, level, reduceMotion, primaryColor, trackColo
 
 export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastProps) {
   const insets = useSafeAreaInsets();
-  const { primary, colors } = useThemeColors();
+  const { primary } = useThemeColors();
   const reduceMotion = useReducedMotion();
 
   const translateY = useSharedValue(200);
@@ -276,36 +276,36 @@ export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastPro
       <View style={[
         styles.card,
         {
-          backgroundColor: primary + '18',
+          backgroundColor: primary + 'F0',
           borderColor: primary + '33',
         },
       ]}>
         {/* Gauche : avatar + nom */}
         <View style={styles.avatarCol}>
           <Text style={styles.avatarEmoji}>{data.profileEmoji}</Text>
-          <Text style={[styles.profileName, { color: colors.textSub }]} numberOfLines={1}>
+          <Text style={[styles.profileName, { color: 'rgba(255,255,255,0.9)' }]} numberOfLines={1}>
             {data.profileName}
           </Text>
         </View>
 
         {/* Centre : tâche + XP + barre */}
         <View style={styles.centerCol}>
-          <Text style={[styles.taskTitle, { color: colors.textMuted }]} numberOfLines={1}>
+          <Text style={[styles.taskTitle, { color: 'rgba(255,255,255,0.85)' }]} numberOfLines={1}>
             {taskShort}
           </Text>
           <AnimatedCounter
             visible={visible}
             targetValue={data.xpGained}
             reduceMotion={reduceMotion ?? false}
-            color={primary}
+            color="#FFFFFF"
           />
           <XPBar
             visible={visible}
             progress={data.levelProgress}
             level={data.level}
             reduceMotion={reduceMotion ?? false}
-            primaryColor={primary}
-            trackColor={colors.border}
+            primaryColor="#FFFFFF"
+            trackColor="rgba(255,255,255,0.25)"
           />
         </View>
 
