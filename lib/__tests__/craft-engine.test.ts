@@ -10,6 +10,7 @@ import {
   BUILDING_RESOURCE_VALUE,
   canCraft,
   craftItem,
+  maxCraftableQty,
   sellCraftedItem,
   sellRawHarvest,
   serializeHarvestInventory,
@@ -91,7 +92,7 @@ describe('canCraft', () => {
 // ─── craftItem ────────────────────────────────────────────────────────────────
 
 describe('craftItem', () => {
-  it('retourne item crafte + deduit ingredients (confiture)', () => {
+  it('retourne items crafte + deduit ingredients (confiture)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
     const harvestInv: HarvestInventory = { strawberry: 3 };
     const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
@@ -99,8 +100,9 @@ describe('craftItem', () => {
     const result = craftItem(recipe, harvestInv, farmInv);
     expect(result).not.toBeNull();
     expect(result!.harvestInv.strawberry).toBe(1); // 3 - 2
-    expect(result!.item.recipeId).toBe('confiture');
-    expect(result!.item.craftedAt).toBeTruthy();
+    expect(result!.items).toHaveLength(1);
+    expect(result!.items[0].recipeId).toBe('confiture');
+    expect(result!.items[0].craftedAt).toBeTruthy();
   });
 
   it('retourne null si ingredients insuffisants', () => {
@@ -133,7 +135,7 @@ describe('craftItem', () => {
     expect(result!.harvestInv.strawberry).toBe(1);
     expect(result!.farmInv.oeuf).toBe(2);
     expect(result!.farmInv.farine).toBe(1);
-    expect(result!.item.recipeId).toBe('gateau');
+    expect(result!.items[0].recipeId).toBe('gateau');
   });
 
   it('deduit les ingredients crop et building (omelette)', () => {
@@ -145,6 +147,66 @@ describe('craftItem', () => {
     expect(result).not.toBeNull();
     expect(result!.harvestInv.tomato).toBe(0);
     expect(result!.farmInv.oeuf).toBe(0);
+  });
+
+  it('crafte N items en une fois (qty=3) — deduit qty × ingredients', () => {
+    const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!; // 2 strawberry / craft
+    const harvestInv: HarvestInventory = { strawberry: 8 };
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
+
+    const result = craftItem(recipe, harvestInv, farmInv, 3);
+    expect(result).not.toBeNull();
+    expect(result!.harvestInv.strawberry).toBe(2); // 8 - 2*3
+    expect(result!.items).toHaveLength(3);
+    expect(result!.items.every(i => i.recipeId === 'confiture')).toBe(true);
+  });
+
+  it('retourne null si qty depasse les ingredients disponibles', () => {
+    const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!; // 2 strawberry / craft
+    const harvestInv: HarvestInventory = { strawberry: 5 }; // max 2 craftables
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
+
+    const result = craftItem(recipe, harvestInv, farmInv, 3);
+    expect(result).toBeNull();
+    // Originaux non mutes
+    expect(harvestInv.strawberry).toBe(5);
+  });
+
+  it('clamp qty < 1 a 1 (qty=0 traite comme qty=1)', () => {
+    const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
+    const harvestInv: HarvestInventory = { strawberry: 3 };
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
+
+    const result = craftItem(recipe, harvestInv, farmInv, 0);
+    expect(result).not.toBeNull();
+    expect(result!.items).toHaveLength(1);
+    expect(result!.harvestInv.strawberry).toBe(1);
+  });
+});
+
+// ─── maxCraftableQty ──────────────────────────────────────────────────────────
+
+describe('maxCraftableQty', () => {
+  it('retourne le min sur tous les ingredients (confiture: 2 strawberry)', () => {
+    const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
+    const harvestInv: HarvestInventory = { strawberry: 7 }; // floor(7/2) = 3
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
+    expect(maxCraftableQty(recipe, harvestInv, farmInv)).toBe(3);
+  });
+
+  it('retourne 0 si un ingredient manque', () => {
+    const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
+    const harvestInv: HarvestInventory = { strawberry: 1 }; // < 2
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
+    expect(maxCraftableQty(recipe, harvestInv, farmInv)).toBe(0);
+  });
+
+  it('combine crop + building resource (gateau: 1 strawberry + 1 oeuf + 1 farine)', () => {
+    const recipe = CRAFT_RECIPES.find(r => r.id === 'gateau')!;
+    const harvestInv: HarvestInventory = { strawberry: 5 };
+    const farmInv: FarmInventory = { oeuf: 2, lait: 0, farine: 4, miel: 0 };
+    // min(5, 2, 4) = 2
+    expect(maxCraftableQty(recipe, harvestInv, farmInv)).toBe(2);
   });
 });
 

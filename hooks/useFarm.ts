@@ -392,9 +392,10 @@ export function useFarm(
   }, [vault, writeProfileField, addCoins, refreshFarm, refreshGamification]);
 
   /** Crafter un item a partir des ingredients */
-  const craft = useCallback(async (profileId: string, recipeId: string): Promise<CraftedItem | null> => {
+  const craft = useCallback(async (profileId: string, recipeId: string, qty: number = 1): Promise<CraftedItem[] | null> => {
     if (!vault) return null;
 
+    const safeQty = Math.max(1, Math.floor(qty));
 
     const content = await vault.readFile(farmFile(profileId)).catch(() => '');
     const profile = parseFarmProfile(content);
@@ -405,12 +406,12 @@ export function useFarm(
     const harvestInv = profile.harvestInventory ?? {};
     const farmInv: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
-    const result = craftItemFn(recipe, harvestInv, farmInv);
+    const result = craftItemFn(recipe, harvestInv, farmInv, safeQty);
     if (!result) throw new Error('Ingredients insuffisants');
 
-    // Ajouter l'item crafte
+    // Ajouter les items craftes
     const craftedItems = profile.craftedItems ?? [];
-    const updatedCraftedItems = [...craftedItems, result.item];
+    const updatedCraftedItems = [...craftedItems, ...result.items];
 
 
     await writeProfileFields(profileId, {
@@ -418,19 +419,23 @@ export function useFarm(
       farm_inventory: serializeInventory(result.farmInv),
       farm_crafted_items: serializeCraftedItems(updatedCraftedItems),
     });
-    // Bonus XP pour le craft
+    // Bonus XP pour le craft (multiplie par qty)
     if (recipe.xpBonus > 0) {
-      await addCoins(profileId, recipe.xpBonus, `✨ Bonus craft : ${recipeId}`);
+      const totalXp = recipe.xpBonus * safeQty;
+      const reason = safeQty > 1
+        ? `✨ Bonus craft : ${recipeId} ×${safeQty}`
+        : `✨ Bonus craft : ${recipeId}`;
+      await addCoins(profileId, totalXp, reason);
     }
     await refreshFarm(profileId);
     await refreshGamification();
 
-    // Progression quêtes coopératives (craft)
+    // Progression quêtes coopératives (craft) — delta = qty
     if (onQuestProgress) {
-      try { await onQuestProgress(profileId, 'craft', 1); } catch { /* Quest — non-critical */ }
+      try { await onQuestProgress(profileId, 'craft', safeQty); } catch { /* Quest — non-critical */ }
     }
 
-    return result.item;
+    return result.items;
   }, [vault, writeProfileFields, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Vendre des items craftés (qty = nombre d'unités à vendre) */

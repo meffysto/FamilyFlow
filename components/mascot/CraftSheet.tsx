@@ -35,6 +35,7 @@ import { useToast } from '../../contexts/ToastContext';
 import {
   CRAFT_RECIPES,
   canCraft,
+  maxCraftableQty,
 } from '../../lib/mascot/craft-engine';
 import { parseGiftHistory } from '../../lib/mascot/gift-engine';
 import type { GiftHistoryEntry } from '../../lib/mascot/gift-engine';
@@ -68,7 +69,7 @@ interface CraftSheetProps {
   farmInventory: FarmInventory;
   craftedItems: CraftedItem[];
   treeStage: TreeStage;
-  onCraft: (recipeId: string) => Promise<CraftedItem | null>;
+  onCraft: (recipeId: string, qty?: number) => Promise<CraftedItem[] | CraftedItem | null>;
   onSellHarvest: (cropId: string, qty: number) => Promise<number>;
   onSellCrafted: (recipeId: string, qty: number) => Promise<number>;
   onOfferItem?: (itemType: string, itemId: string, maxQty: number, itemName: string) => void;
@@ -198,6 +199,7 @@ export function CraftSheet({
   const [selling, setSelling] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [selectedRecipe, setSelectedRecipe] = useState<CraftRecipe | null>(null);
+  const [craftQty, setCraftQty] = useState<number>(1);
 
   // Animation bounce sur le bouton craft
   const craftBtnScale = useSharedValue(1);
@@ -213,11 +215,12 @@ export function CraftSheet({
 
   // ── Handlers ──────────────────────────────────
 
-  const handleCraft = useCallback(async (recipe: CraftRecipe) => {
+  const handleCraft = useCallback(async (recipe: CraftRecipe, qty: number = 1) => {
     setCrafting(recipe.id);
     try {
-      const result = await onCraft(recipe.id);
-      if (result) {
+      const result = await onCraft(recipe.id, qty);
+      const success = Array.isArray(result) ? result.length > 0 : !!result;
+      if (success) {
         craftBtnScale.value = withSequence(
           withSpring(0.85, { damping: 8, stiffness: 300 }),
           withSpring(1, { damping: 6, stiffness: 200 }),
@@ -225,7 +228,9 @@ export function CraftSheet({
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
-        showToast(t('craft.craftReussi', { emoji: recipe.emoji, name: t(recipe.labelKey) }));
+        const name = t(recipe.labelKey);
+        const displayName = qty > 1 ? `${name} ×${qty}` : name;
+        showToast(t('craft.craftReussi', { emoji: recipe.emoji, name: displayName }));
       }
     } catch {
       showToast(t('common.error'), 'error');
@@ -396,7 +401,7 @@ export function CraftSheet({
                         !craftable && !locked && { borderColor: Farm.woodHighlight, borderWidth: 1.5 },
                         locked && { opacity: 0.5, borderColor: Farm.woodHighlight, borderWidth: 1.5 },
                       ]}
-                      onPress={locked ? undefined : () => setSelectedRecipe(recipe)}
+                      onPress={locked ? undefined : () => { setCraftQty(1); setSelectedRecipe(recipe); }}
                       activeOpacity={locked ? 1 : 0.7}
                       disabled={locked}
                     >
@@ -570,59 +575,96 @@ export function CraftSheet({
                 })}
               </ScrollView>
 
-              {/* Bouton Crafter — FarmButton 3D */}
+              {/* Selector qty + Bouton Crafter — FarmButton 3D */}
               {(() => {
-                const craftable = canCraft(selectedRecipe, harvestInventory, farmInventory);
+                const maxQty = maxCraftableQty(selectedRecipe, harvestInventory, farmInventory);
+                const craftable = maxQty >= 1;
                 const isCurrentlyCrafting = crafting === selectedRecipe.id;
+                const clampedQty = Math.min(Math.max(1, craftQty), Math.max(1, maxQty));
+                const adjustQty = (delta: number) => {
+                  setCraftQty((prev) => {
+                    const base = Math.min(Math.max(1, prev), Math.max(1, maxQty));
+                    const next = Math.max(1, Math.min(maxQty, base + delta));
+                    return next;
+                  });
+                  if (Platform.OS !== 'web') Haptics.selectionAsync();
+                };
                 return (
-                  <Animated.View style={[craftable ? craftBtnAnimStyle : undefined, craftBtnYStyle]}>
-                    <Pressable
-                      onPressIn={() => {
-                        if (craftable && !isCurrentlyCrafting) {
-                          craftBtnY.value = withSpring(4, SPRING_CONFIG);
-                          if (Platform.OS !== 'web') {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          }
-                        }
-                      }}
-                      onPressOut={() => {
-                        craftBtnY.value = withSpring(0, SPRING_CONFIG);
-                      }}
-                      onPress={craftable && !isCurrentlyCrafting
-                        ? async () => {
-                            const r = selectedRecipe;
-                            setSelectedRecipe(null);
-                            await handleCraft(r);
-                          }
-                        : undefined}
-                      disabled={!craftable || isCurrentlyCrafting}
-                      style={({ pressed }) => [
-                        styles.craftBtnOuter,
-                        craftable
-                          ? { backgroundColor: Farm.greenBtnShadow }
-                          : { backgroundColor: '#D0CBC3' },
-                      ]}
-                    >
-                      <View style={[
-                        styles.craftBtnInner,
-                        craftable
-                          ? { backgroundColor: Farm.greenBtn }
-                          : { backgroundColor: Farm.parchmentDark },
-                        isCurrentlyCrafting && { opacity: 0.6 },
-                      ]}>
-                        {/* Gloss highlight */}
-                        {craftable && (
-                          <View style={styles.craftBtnGloss} pointerEvents="none" />
-                        )}
-                        <Text style={[
-                          styles.craftBtnText,
-                          { color: craftable ? Farm.parchment : Farm.brownTextSub },
-                        ]}>
-                          {t('craft.crafter')}
-                        </Text>
+                  <View style={styles.craftActionRow}>
+                    {craftable && maxQty > 1 && (
+                      <View style={styles.qtySelector}>
+                        <TouchableOpacity
+                          onPress={() => adjustQty(-1)}
+                          style={styles.qtyBtn}
+                          activeOpacity={0.7}
+                          disabled={clampedQty <= 1}
+                        >
+                          <Text style={[styles.qtyBtnText, clampedQty <= 1 && { opacity: 0.3 }]}>−</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.qtyValue}>{clampedQty}</Text>
+                        <TouchableOpacity
+                          onPress={() => adjustQty(1)}
+                          style={styles.qtyBtn}
+                          activeOpacity={0.7}
+                          disabled={clampedQty >= maxQty}
+                        >
+                          <Text style={[styles.qtyBtnText, clampedQty >= maxQty && { opacity: 0.3 }]}>+</Text>
+                        </TouchableOpacity>
                       </View>
-                    </Pressable>
-                  </Animated.View>
+                    )}
+                    <Animated.View style={[styles.craftBtnFlex, craftable ? craftBtnAnimStyle : undefined, craftBtnYStyle]}>
+                      <Pressable
+                        onPressIn={() => {
+                          if (craftable && !isCurrentlyCrafting) {
+                            craftBtnY.value = withSpring(4, SPRING_CONFIG);
+                            if (Platform.OS !== 'web') {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            }
+                          }
+                        }}
+                        onPressOut={() => {
+                          craftBtnY.value = withSpring(0, SPRING_CONFIG);
+                        }}
+                        onPress={craftable && !isCurrentlyCrafting
+                          ? async () => {
+                              const r = selectedRecipe;
+                              const qtyToCraft = clampedQty;
+                              setSelectedRecipe(null);
+                              setCraftQty(1);
+                              await handleCraft(r, qtyToCraft);
+                            }
+                          : undefined}
+                        disabled={!craftable || isCurrentlyCrafting}
+                        style={[
+                          styles.craftBtnOuter,
+                          craftable
+                            ? { backgroundColor: Farm.greenBtnShadow }
+                            : { backgroundColor: '#D0CBC3' },
+                        ]}
+                      >
+                        <View style={[
+                          styles.craftBtnInner,
+                          craftable
+                            ? { backgroundColor: Farm.greenBtn }
+                            : { backgroundColor: Farm.parchmentDark },
+                          isCurrentlyCrafting && { opacity: 0.6 },
+                        ]}>
+                          {/* Gloss highlight */}
+                          {craftable && (
+                            <View style={styles.craftBtnGloss} pointerEvents="none" />
+                          )}
+                          <Text style={[
+                            styles.craftBtnText,
+                            { color: craftable ? Farm.parchment : Farm.brownTextSub },
+                          ]}>
+                            {craftable && clampedQty > 1
+                              ? `${t('craft.crafter')} ×${clampedQty}`
+                              : t('craft.crafter')}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    </Animated.View>
+                  </View>
                 );
               })()}
             </TouchableOpacity>
@@ -1384,6 +1426,16 @@ const styles = StyleSheet.create({
   ingredientQty: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+
+  // ── Action row (selector + bouton craft) ──
+  craftActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  craftBtnFlex: {
+    flex: 1,
   },
 
   // ── Bouton craft 3D ──

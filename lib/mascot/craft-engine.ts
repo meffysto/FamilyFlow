@@ -454,13 +454,36 @@ export function canCraft(
   return true;
 }
 
-/** Crafter un item — retourne les inventaires mis a jour + l'item crafte, ou null si impossible */
+/** Quantité maximale craftable d'une recette en fonction des inventaires disponibles */
+export function maxCraftableQty(
+  recipe: CraftRecipe,
+  harvestInv: HarvestInventory,
+  farmInv: FarmInventory,
+): number {
+  if (recipe.ingredients.length === 0) return 0;
+  let max = Infinity;
+  for (const ing of recipe.ingredients) {
+    if (ing.quantity <= 0) continue;
+    const have = ing.source === 'crop'
+      ? (harvestInv[ing.itemId] ?? 0)
+      : (farmInv[ing.itemId as ResourceType] ?? 0);
+    max = Math.min(max, Math.floor(have / ing.quantity));
+  }
+  return Number.isFinite(max) ? Math.max(0, max) : 0;
+}
+
+/**
+ * Crafter N items en une opération atomique — retourne inventaires mis a jour + items craftes,
+ * ou null si ingredients insuffisants pour la quantite demandee.
+ */
 export function craftItem(
   recipe: CraftRecipe,
   harvestInv: HarvestInventory,
   farmInv: FarmInventory,
-): { harvestInv: HarvestInventory; farmInv: FarmInventory; item: CraftedItem } | null {
-  if (!canCraft(recipe, harvestInv, farmInv)) return null;
+  qty: number = 1,
+): { harvestInv: HarvestInventory; farmInv: FarmInventory; items: CraftedItem[] } | null {
+  const safeQty = Math.max(1, Math.floor(qty));
+  if (maxCraftableQty(recipe, harvestInv, farmInv) < safeQty) return null;
 
   // Copier les inventaires pour ne pas muter les originaux
   const newHarvestInv: HarvestInventory = { ...harvestInv };
@@ -468,19 +491,20 @@ export function craftItem(
 
   for (const ing of recipe.ingredients) {
     if (ing.source === 'crop') {
-      newHarvestInv[ing.itemId] = (newHarvestInv[ing.itemId] ?? 0) - ing.quantity;
+      newHarvestInv[ing.itemId] = (newHarvestInv[ing.itemId] ?? 0) - ing.quantity * safeQty;
     } else {
       const key = ing.itemId as ResourceType;
-      newFarmInv[key] = (newFarmInv[key] ?? 0) - ing.quantity;
+      newFarmInv[key] = (newFarmInv[key] ?? 0) - ing.quantity * safeQty;
     }
   }
 
-  const item: CraftedItem = {
+  const nowIso = new Date().toISOString();
+  const items: CraftedItem[] = Array.from({ length: safeQty }, () => ({
     recipeId: recipe.id,
-    craftedAt: new Date().toISOString(),
-  };
+    craftedAt: nowIso,
+  }));
 
-  return { harvestInv: newHarvestInv, farmInv: newFarmInv, item };
+  return { harvestInv: newHarvestInv, farmInv: newFarmInv, items };
 }
 
 /** Vendre un item crafte — retourne le nombre de feuilles */
