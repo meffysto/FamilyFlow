@@ -36,7 +36,17 @@
 - `components/dashboard/` — sections dashboard + types (DashboardSectionProps)
 - `lib/gamification/` — engine XP/levels/rewards (barrel index.ts)
 - `lib/mascot/` — moteur arbre mascotte + ferme (barrel index.ts)
+- `lib/vault-cache.ts` — cache mémoire persistant pour re-launch instantané (voir section Cache)
 - Vault recettes: `03 - Cuisine/Recettes/{Category}/{Name}.cook`
+
+### Cache (lib/vault-cache.ts)
+Snapshot JSON des domaines stables réhydraté au boot → dashboard visible en ~50ms au re-launch.
+**Exclusions volontaires** (toujours chargés frais depuis le vault) : jardin, ferme, mascotte, companion, gamification (points/coins/XP), défis, skill-trees, quêtes coop, champs farm/mascot des profils.
+**Bumper `CACHE_VERSION`** (lib/vault-cache.ts:41) quand :
+- Shape d'un type caché change (Task, MealItem, Profile base, CourseItem, StockItem, RDV, Memory, HealthRecord, Routine, Note, Anniversary, WishlistItem, GratitudeDay, ChildQuote, MoodEntry, NotificationPreferences, VacationConfig, JournalSummaryEntry)
+- Ajout/retrait d'un domaine dans `VaultCacheState`
+Pas besoin de bumper pour des modifs de parsers, composants UI, ou domaines non cachés.
+Debug : `clearCache()` exporté pour forcer un reset.
 
 ### Hiérarchie providers (app/_layout.tsx)
 SafeAreaProvider > GestureHandler > VaultProvider > ThemeProvider > AIProvider > HelpProvider > ParentalControls > ToastProvider
