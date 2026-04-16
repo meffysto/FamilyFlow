@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Love Notes
-status: defining_requirements
-last_updated: "2026-04-16T12:00:00.000Z"
+status: planning
+last_updated: "2026-04-16T14:00:00.000Z"
 last_activity: 2026-04-16
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** v1.6 Love Notes — Defining requirements
+**Current focus:** v1.6 Love Notes — Phase 34 (Fondation données & hook domaine) à planifier
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 34 — Fondation données & hook domaine (not started)
 Plan: —
 Milestone: v1.6 Love Notes
 Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
-Last activity: 2026-04-16 — Milestone v1.6 Love Notes started
+Last activity: 2026-04-16 — Roadmap v1.6 créé (Phases 34-37)
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Defining requirements
+Status: Planning (roadmap approuvé, plans à générer)
 
 ### Quick Tasks Completed
 
@@ -63,7 +63,7 @@ Status: Defining requirements
 
 **Velocity:**
 
-- Total plans completed: 0 (milestone v1.5)
+- Total plans completed: 0 (milestone v1.6)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -75,7 +75,7 @@ Status: Defining requirements
 
 *Updated after each plan completion*
 
---- v1.1-v1.4 history preserved below ---
+--- v1.1-v1.5 history preserved below ---
 
 | Phase 05-visuels-ferme P01 | 2 | 1 tasks | 1 files |
 | Phase 05-visuels-ferme P05-02 | 3 | 2 tasks | 103 files |
@@ -159,12 +159,21 @@ Status: Defining requirements
 - v1.2 roadmap created 2026-04-07: Phases 15-18 (préférences alimentaires, codex contenu, codex UI, tutoriel ferme)
 - v1.4 roadmap created 2026-04-10: Phases 25-28 (fondation données village, hook domaine jardin, écran village, portail + contributions)
 - v1.5 roadmap created 2026-04-11: Phases 29-32 (avatars + portail retour, décorations persistantes, ambiance dynamique, arbre familial commun)
+- v1.5 partial shipped 2026-04-14: Phases 29, 30, 33 livrées — Phases 31 (ambiance dynamique) + 32 (arbre familial commun) deferred pour prioriser Love Notes
+- v1.6 roadmap created 2026-04-16: Phases 34-37 (fondation données, carte enveloppe + écran boîte, composition + reveal, garde-parent + polish)
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Init v1.6]: Phase 34 (fondation données) isolée de toute UI — livre type + parser + hook + cache + tests en invisible avant toute vue, minimise le risque de régression
+- [Init v1.6]: Phase 35 livre d'abord la visibilité (carte enveloppe + écran) AVANT la composition — l'utilisateur peut voir l'état du domaine avant de pouvoir écrire, permet test sur données seed manuelles
+- [Init v1.6]: Phase 36 regroupe composition + reveal + notifications — cohérence UX d'une boucle complète d'écriture-programmation-révélation en une seule phase
+- [Init v1.6]: Phase 37 garde-parent en dernier — la modération ne peut s'exercer que sur un flux Love Notes déjà fonctionnel
+- [Init v1.6]: Zéro nouvelle dépendance npm reconduit — expo-notifications, expo-haptics, react-native-reanimated déjà installés
+- [Init v1.6]: Chemin vault `03 - Famille/LoveNotes/{to-profileId}/{YYYY-MM-DD-slug}.md` — classement par destinataire pour simplifier le scan et respecter le pattern Obsidian par dossier
+- [Init v1.6]: Bump CACHE_VERSION dans lib/vault-cache.ts — évite invalidation silencieuse au premier boot post-migration
 - [Init v1.5]: Phase 29 regroupe avatars + portail retour — livre une première boucle UX complète (présence dynamique + navigation bouclée) avant d'attaquer la persistance
 - [Init v1.5]: Décorations (Phase 30) avant ambiance (Phase 31) — les lanternes doivent exister comme décorations placées avant de pouvoir s'allumer la nuit
 - [Init v1.5]: Arbre familial commun (Phase 32) en dernier — dépend de l'ambiance pour recevoir la lumière jour/nuit, stade évolutif réutilise le pattern TREE_STAGES existant
@@ -271,7 +280,7 @@ Recent decisions affecting current work:
 
 ### Todos
 
-- Plan Phase 29 next: `/gsd:plan-phase 29`
+- Plan Phase 34 next: `/gsd:plan-phase 34`
 
 ### Blockers
 
@@ -279,5 +288,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-15T12:00:14.440Z
-Next: Plan Phase 29 (Avatars vivants + portail retour)
+Last session: 2026-04-16T14:00:00.000Z
+Next: Plan Phase 34 (Fondation données & hook domaine)

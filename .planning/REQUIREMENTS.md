@@ -69,4 +69,36 @@
 
 ## Traceability
 
-*Filled by roadmapper — maps REQ-IDs to phases.*
+Mapping REQ-ID → Phase (100% coverage des 17 REQ-IDs v1).
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| LOVE-01 | Phase 34 — Fondation données & hook domaine | Pending |
+| LOVE-02 | Phase 34 — Fondation données & hook domaine | Pending |
+| LOVE-03 | Phase 34 — Fondation données & hook domaine | Pending |
+| LOVE-04 | Phase 34 — Fondation données & hook domaine | Pending |
+| LOVE-05 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
+| LOVE-06 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
+| LOVE-07 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
+| LOVE-08 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
+| LOVE-09 | Phase 36 — Composition & programmation reveal | Pending |
+| LOVE-10 | Phase 36 — Composition & programmation reveal | Pending |
+| LOVE-11 | Phase 36 — Composition & programmation reveal | Pending |
+| LOVE-12 | Phase 36 — Composition & programmation reveal | Pending |
+| LOVE-13 | Phase 36 — Composition & programmation reveal | Pending |
+| LOVE-14 | Phase 37 — Garde-parent & polish | Pending |
+| LOVE-15 | Phase 37 — Garde-parent & polish | Pending |
+| LOVE-16 | Phase 37 — Garde-parent & polish | Pending |
+| LOVE-17 | Phase 34 — Fondation données & hook domaine | Pending |
+
+**Coverage check :** 17/17 REQ-IDs mappés ✓ — zéro orphelin, zéro duplicate.
+
+### Breakdown par phase
+
+| Phase | REQ-IDs | Count |
+|-------|---------|-------|
+| 34 — Fondation données & hook domaine | LOVE-01, LOVE-02, LOVE-03, LOVE-04, LOVE-17 | 5 |
+| 35 — Carte enveloppe + écran boîte | LOVE-05, LOVE-06, LOVE-07, LOVE-08 | 4 |
+| 36 — Composition & reveal | LOVE-09, LOVE-10, LOVE-11, LOVE-12, LOVE-13 | 5 |
+| 37 — Garde-parent & polish | LOVE-14, LOVE-15, LOVE-16 | 3 |
+| **Total** | | **17** |
