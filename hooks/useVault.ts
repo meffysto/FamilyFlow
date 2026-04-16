@@ -103,6 +103,12 @@ import { useVaultProfiles, ACTIVE_PROFILE_KEY } from './useVaultProfiles';
 import { useVaultDietary } from './useVaultDietary';
 import type { VaultDietaryState } from './useVaultDietary';
 import { VILLAGE_FILE } from '../lib/village';
+import {
+  hydrateFromCache,
+  hydrateProfileFromCache,
+  saveCache,
+  stripProfileForCache,
+} from '../lib/vault-cache';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export { ACTIVE_PROFILE_KEY } from './useVaultProfiles';
@@ -648,6 +654,41 @@ export function useVaultInternal(): VaultState {
           }
           setVaultPathState(stored);
           vaultRef.current = new VaultManager(stored);
+
+          // Hydrate depuis le cache local — dashboard visible immédiatement.
+          // loadVaultData() écrasera ensuite avec les vraies données du vault.
+          // Exclut jardin/ferme/gamification : toujours chargés frais (voir vault-cache.ts).
+          const cached = await hydrateFromCache();
+          if (cached && cached.vaultPath === stored) {
+            try {
+              setProfiles(cached.profiles.map(hydrateProfileFromCache));
+              tasksHook.setTasks(cached.tasks);
+              setRoutines(cached.routines);
+              coursesHook.setCourses(cached.courses);
+              stockHook.setStock(cached.stock);
+              stockHook.setStockSections(cached.stockSections);
+              setMeals(cached.meals);
+              setRdvs(cached.rdvs);
+              setPhotoDates(cached.photoDates);
+              setMemories(cached.memories);
+              healthHook.setHealthRecords(cached.healthRecords);
+              setJournalStats(cached.journalStats);
+              setGratitudeDays(cached.gratitudeDays);
+              setWishlistItems(cached.wishlistItems);
+              setAnniversaries(cached.anniversaries);
+              setNotifPrefs(cached.notifPrefs);
+              setVacationConfig(cached.vacationConfig);
+              setVacationTasks(cached.vacationTasks);
+              notesHook.setNotes(cached.notes);
+              setQuotes(cached.quotes);
+              setMoods(cached.moods);
+              missionsHook.setSecretMissions(cached.secretMissions);
+              setIsLoading(false);
+            } catch (e) {
+              if (__DEV__) console.warn('[vault-cache] hydration apply failed:', e);
+            }
+          }
+
           await loadVaultData(vaultRef.current);
         }
       } catch (e) {
@@ -689,6 +730,9 @@ export function useVaultInternal(): VaultState {
       let familleContent = '';
       let gamiContent = '';
       let enfantNames: string[] = [];
+      // Snapshot des profils pour saveCache() en fin de fonction (évite la
+      // lecture de state React potentiellement stale dans le closure).
+      let profilesSnapshot: Profile[] = [];
       try {
         familleContent = await vault.readFile(FAMILLE_FILE);
         const baseProfiles = parseFamille(familleContent);
@@ -788,6 +832,7 @@ export function useVaultInternal(): VaultState {
           ...(farmDataByProfile[p.id] ?? { mascotDecorations: [], mascotInhabitants: [], mascotPlacements: {} }),
         }));
         setProfiles(mergedWithFarm);
+        profilesSnapshot = mergedWithFarm;
 
         // Clean up expired active rewards + sync multiplier remainingTasks
         if (gami.activeRewards?.length > 0) {
@@ -1248,6 +1293,33 @@ export function useVaultInternal(): VaultState {
       // Sync feedings du widget vers le vault markdown (fire-and-forget)
       syncWidgetFeedingsToVault(vault).catch(() => {});
 
+      // Persister un snapshot pour accélérer le prochain re-launch.
+      // Exclut volontairement jardin/ferme/gamification (toujours chargés frais).
+      saveCache({
+        vaultPath: vault.vaultPath,
+        profiles: profilesSnapshot.map(stripProfileForCache),
+        tasks: tasksResult,
+        routines: val(results[1], []) as Routine[],
+        courses: val(results[2], []) as CourseItem[],
+        stock: stockResult.items,
+        stockSections: stockResult.sections,
+        meals: val(results[4], []) as MealItem[],
+        rdvs: rdvResult,
+        photoDates: val(results[6], {}) as Record<string, string[]>,
+        memories: val(results[7], []) as Memory[],
+        healthRecords: val(results[8], []) as HealthRecord[],
+        journalStats: val(results[9], []) as JournalSummaryEntry[],
+        gratitudeDays: val(results[11], []) as GratitudeDay[],
+        wishlistItems: val(results[12], []) as WishlistItem[],
+        anniversaries: val(results[13], []) as Anniversary[],
+        notifPrefs: val(results[14], getDefaultNotificationPrefs()),
+        vacationConfig: vacResult.config,
+        vacationTasks: vacResult.vacTasks,
+        notes: val(results[16], []) as Note[],
+        quotes: val(results[17], []) as ChildQuote[],
+        moods: val(results[18], []) as MoodEntry[],
+        secretMissions: val(results[20], []) as Task[],
+      }).catch(() => { /* Cache save non-critical */ });
 
     } catch (e) {
       debugErrors.push(`global: ${e}`);
