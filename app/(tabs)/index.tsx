@@ -35,7 +35,7 @@ import { DashboardCard } from '../../components/DashboardCard';
 import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
 import type { AppRecipe } from '../../lib/cooklang';
-import { buildLeaderboard, processActiveRewards } from '../../lib/gamification';
+import { buildLeaderboard, processActiveRewards, calculateLevel, levelProgress, xpForLevel } from '../../lib/gamification';
 import { smartSortSections } from '../../lib/smart-sort';
 import { buildWeeklyRecapText, buildMonthlyRecapText, buildGrossesseUpdateText } from '../../lib/telegram';
 import { loadGrandparentContacts, sendViaChannel, CHANNEL_META, type GrandparentContact } from '../../lib/sharing';
@@ -166,7 +166,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
-  const { showToast } = useToast();
+  const { showToast, showRewardCard } = useToast();
   const {
     isLoading,
     error,
@@ -413,14 +413,21 @@ export default function DashboardScreen() {
           try {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             await refreshGamification();
-            const themeEmoji = getTheme(activeProfile.theme).emoji;
-            const name = activeProfile.name;
-            const taskShort = task.text.length > 25 ? task.text.slice(0, 25) + '…' : task.text;
-            if (lootAwarded) {
-              showToast(t('index.toast.taskCompleteLoot', { emoji: themeEmoji, name, task: taskShort, points: pointsGained }));
-            } else {
-              showToast(t('index.toast.taskComplete', { emoji: themeEmoji, name, task: taskShort, points: pointsGained }));
-            }
+            const newPoints = (activeProfile.points ?? 0) + pointsGained;
+            const newLevel = calculateLevel(newPoints);
+            const progress = levelProgress(newPoints);
+            const nextLevelXP = xpForLevel(newLevel);
+            showRewardCard({
+              profileEmoji: activeProfile.avatar,
+              profileName: activeProfile.name,
+              taskTitle: task.text,
+              xpGained: pointsGained,
+              currentXP: newPoints,
+              levelProgress: progress,
+              level: newLevel,
+              xpForNextLevel: nextLevelXP,
+              hasLoot: lootAwarded,
+            });
           } catch {
             // Gamification error — non-critical
           }
@@ -430,7 +437,7 @@ export default function DashboardScreen() {
         await refresh();
       }
     },
-    [toggleTask, activeProfile, completeTask, refresh, refreshGamification]
+    [toggleTask, activeProfile, completeTask, refresh, refreshGamification, showRewardCard, showToast, t]
   );
 
   const handleTaskSkip = useCallback(async (task: Task) => {

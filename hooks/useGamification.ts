@@ -52,7 +52,6 @@ import type { SagaTrait } from '../lib/mascot/sagas-types';
 import { EFFECT_TOASTS, CATEGORY_HAPTIC_FN } from '../lib/semantic/effect-toasts';
 import { appendMuseumEntryToVault, extractMuseumSection } from '../lib/museum/engine';
 import type { MuseumEntry } from '../lib/museum/engine';
-import { useToast } from '../contexts/ToastContext';
 import i18n from '../lib/i18n';
 import * as SecureStore from 'expo-secure-store';
 
@@ -93,7 +92,6 @@ function farmFile(profileId: string): string {
 
 export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgress, onContribution }: UseGamificationArgs): UseGamificationResult {
   const [isProcessing, setIsProcessing] = useState(false);
-  const { showToast } = useToast();
 
   // Charger la config gamification au montage (remplit le cache synchrone)
   useEffect(() => { loadGamiConfig(); }, []);
@@ -275,20 +273,10 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         }
 
         // Phase 21 : Feedback visuel + haptique (FEEDBACK-01, FEEDBACK-02)
-        // Toast + haptic immediat en parallele (D-02), silencieux si cappe (D-03)
+        // Toast remplacé par RewardCardToast dans tasks.tsx — seul le haptic reste ici
         if (effectResult?.effectApplied && derivedCategory) {
           try {
             const catId = derivedCategory.id;
-            const toastDef = EFFECT_TOASTS[catId];
-            if (toastDef) {
-              const lang = i18n.language?.startsWith('en') ? 'en' : 'fr';
-              showToast(
-                lang === 'en' ? toastDef.en : toastDef.fr,
-                toastDef.type,
-                undefined,
-                { icon: toastDef.icon, subtitle: lang === 'en' ? toastDef.subtitle_en : toastDef.subtitle_fr }
-              );
-            }
             // Haptic fire-and-forget (non-critical)
             try { CATEGORY_HAPTIC_FN[catId]?.(); } catch { /* haptic — non-critical */ }
             // Phase 21 FEEDBACK-04 : Bridge SecureStore pour subType compagnon (tree.tsx le lira)
@@ -352,7 +340,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         setIsProcessing(false);
       }
     },
-    [vault, notifPrefs, onDataChange, onQuestProgress, onContribution, showToast]
+    [vault, notifPrefs, onDataChange, onQuestProgress, onContribution]
   );
 
   const openLootBox = useCallback(
