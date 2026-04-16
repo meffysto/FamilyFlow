@@ -106,7 +106,6 @@ import { isExpeditionComplete, getExpeditionRemainingMinutes } from '../../lib/m
 import type { ExpeditionOutcome } from '../../lib/types';
 import type { ExpeditionLoot } from '../../lib/mascot/expedition-engine';
 import { getTechBonuses, type TechBonuses } from '../../lib/mascot/tech-engine';
-import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
 import { HarvestEventOverlay, SeedDropOverlay } from '../../components/mascot/HarvestEventOverlay';
 import type { HarvestEvent, RareSeedDrop } from '../../lib/mascot/farm-engine';
 import { ModalHeader } from '../../components/ui/ModalHeader';
@@ -387,7 +386,6 @@ export default function TreeScreen() {
   const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction } = useFarm(contributeFamilyQuest, addContribution);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
-  const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
   const [harvestEvent, setHarvestEvent] = useState<HarvestEvent | null>(null);
   const [seedDropEvent, setSeedDropEvent] = useState<RareSeedDrop | null>(null);
   // Sunrise report
@@ -1219,23 +1217,16 @@ export default function TreeScreen() {
     if (cellIdx < 0) return;
 
     if (crop && crop.currentStage >= 4) {
-      // Recolte avec burst anime
-      const cell = cells[cellIdx];
-      const burstX = cell.x * SCREEN_W;
-      const burstY = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60);
-      const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
+      // Recolte → feedback unique via HarvestCardToast (carte en bas)
       harvest(profile.id, crop.plotIndex).then((result) => {
         if (result) {
           const harvestedCropDef = CROP_CATALOG.find(c => c.id === result.cropId);
-          const displayReward = harvestedCropDef?.harvestReward ?? 0;
-          setHarvestBurst({ x: burstX, y: burstY, reward: displayReward, cropId: result.cropId });
           const emoji = harvestedCropDef?.emoji ?? '🌾';
           const cropLabel = harvestedCropDef ? t(harvestedCropDef.labelKey) : result.cropId;
           const accord = FEMININE_CROPS.has(result.cropId) ? 'récoltée' : 'récolté';
-          const finalReward = displayReward * (result.isGolden ? 5 : 1);
           const harvestLabel = `${result.isGolden ? '✨ ' : ''}${cropLabel} ${accord} !`;
           showHarvestCard(
-            { emoji, label: harvestLabel, qty: finalReward },
+            { emoji, label: harvestLabel, qty: 1 },
             result.isGolden,
           );
           // Animation graine rare avec délai pour ne pas chevaucher le toast récolte
@@ -2021,17 +2012,6 @@ export default function TreeScreen() {
             <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 5 }} pointerEvents="none">
               <AmbientParticles containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60} paused={animationsPaused} />
             </View>
-
-            {/* Harvest Burst animation */}
-            {harvestBurst && (
-              <HarvestBurst
-                x={harvestBurst.x}
-                y={harvestBurst.y}
-                reward={harvestBurst.reward}
-                cropColor={CROP_COLORS[harvestBurst.cropId] ?? '#FFD700'}
-                onComplete={() => setHarvestBurst(null)}
-              />
-            )}
 
             {/* Tooltip info culture */}
             {tooltipInfo && <CropTooltip tooltipInfo={tooltipInfo} stageInfo={stageInfo} stageIdx={stageIdx} techBonuses={techBonuses} />}
