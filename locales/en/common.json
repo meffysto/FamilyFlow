@@ -900,6 +900,16 @@
       "emojiA11y": "Choose an emoji",
       "addBtn": "Add"
     },
+    "cookSuggest": {
+      "title": "What to cook tonight?",
+      "loading": "Searching ideas in your stock…",
+      "generating": "Generating…",
+      "empty": "No suggestion yet.",
+      "refineLabel": "Refine my request",
+      "refinePlaceholder": "E.g. faster, no rice, for 5 people…",
+      "regenerate": "🎲 Another suggestion",
+      "close": "Close"
+    },
     "alert": {
       "error": "Error",
       "stockUpToDate": "Stock already up to date",

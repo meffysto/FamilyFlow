@@ -742,13 +742,43 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
 /**
  * Parse une valeur brute en tableau de chaînes.
  * Gère le format CSV (`gluten,lait`) ET le format YAML liste (Array natif).
+ * Échappement : `\,` = virgule littérale dans un item, `\\` = backslash littéral.
+ * Permet aux items de contenir des virgules (ex: "lait, fromages au lait cru").
  * Utilisé par parseFamille (food_*) et parseInvites.
  */
 function parseFoodCsv(raw: unknown): string[] {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw.map(v => String(v).trim()).filter(Boolean);
-  if (typeof raw === 'string') return raw.split(',').map(s => s.trim()).filter(Boolean);
-  return [];
+  if (typeof raw !== 'string') return [];
+  const items: string[] = [];
+  let buf = '';
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (ch === '\\' && i + 1 < raw.length) {
+      buf += raw[i + 1];
+      i++;
+      continue;
+    }
+    if (ch === ',') {
+      items.push(buf.trim());
+      buf = '';
+      continue;
+    }
+    buf += ch;
+  }
+  items.push(buf.trim());
+  return items.filter(Boolean);
+}
+
+/**
+ * Sérialise un tableau d'items food_* en chaîne CSV échappée.
+ * Échappe les backslashes et les virgules pour préserver les items multi-mots
+ * contenant des virgules (ex: "lait, fromages au lait cru" reste 1 seul item).
+ */
+export function serializeFoodCsv(items: string[]): string {
+  return items
+    .map(s => s.replace(/\\/g, '\\\\').replace(/,/g, '\\,'))
+    .join(',');
 }
 
 /**
@@ -865,16 +895,16 @@ export function serializeFamille(
     if (profile.sagaTitle) lines.push(`sagaTitle: ${profile.sagaTitle}`);
     // Préférences alimentaires — omises si vides (lisibilité Obsidian)
     if (profile.foodAllergies && profile.foodAllergies.length > 0) {
-      lines.push(`food_allergies: ${profile.foodAllergies.join(',')}`);
+      lines.push(`food_allergies: ${serializeFoodCsv(profile.foodAllergies)}`);
     }
     if (profile.foodIntolerances && profile.foodIntolerances.length > 0) {
-      lines.push(`food_intolerances: ${profile.foodIntolerances.join(',')}`);
+      lines.push(`food_intolerances: ${serializeFoodCsv(profile.foodIntolerances)}`);
     }
     if (profile.foodRegimes && profile.foodRegimes.length > 0) {
-      lines.push(`food_regimes: ${profile.foodRegimes.join(',')}`);
+      lines.push(`food_regimes: ${serializeFoodCsv(profile.foodRegimes)}`);
     }
     if (profile.foodAversions && profile.foodAversions.length > 0) {
-      lines.push(`food_aversions: ${profile.foodAversions.join(',')}`);
+      lines.push(`food_aversions: ${serializeFoodCsv(profile.foodAversions)}`);
     }
     sections.push(lines.join('\n'));
   }
@@ -2971,16 +3001,16 @@ export function serializeInvites(guests: GuestProfile[]): string {
   for (const guest of guests) {
     const lines: string[] = [`## ${guest.name}`];
     if (guest.foodAllergies.length > 0) {
-      lines.push(`food_allergies: ${guest.foodAllergies.join(',')}`);
+      lines.push(`food_allergies: ${serializeFoodCsv(guest.foodAllergies)}`);
     }
     if (guest.foodIntolerances.length > 0) {
-      lines.push(`food_intolerances: ${guest.foodIntolerances.join(',')}`);
+      lines.push(`food_intolerances: ${serializeFoodCsv(guest.foodIntolerances)}`);
     }
     if (guest.foodRegimes.length > 0) {
-      lines.push(`food_regimes: ${guest.foodRegimes.join(',')}`);
+      lines.push(`food_regimes: ${serializeFoodCsv(guest.foodRegimes)}`);
     }
     if (guest.foodAversions.length > 0) {
-      lines.push(`food_aversions: ${guest.foodAversions.join(',')}`);
+      lines.push(`food_aversions: ${serializeFoodCsv(guest.foodAversions)}`);
     }
     parts.push(lines.join('\n'));
     parts.push('');

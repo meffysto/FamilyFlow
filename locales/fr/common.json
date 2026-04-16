@@ -900,6 +900,16 @@
       "emojiA11y": "Choisir un emoji",
       "addBtn": "Ajouter"
     },
+    "cookSuggest": {
+      "title": "Que cuisiner ce soir ?",
+      "loading": "Recherche d'idées dans ton stock…",
+      "generating": "Génération…",
+      "empty": "Aucune suggestion pour le moment.",
+      "refineLabel": "Affiner ma demande",
+      "refinePlaceholder": "Ex : plus rapide, sans riz, pour 5 personnes…",
+      "regenerate": "🎲 Autre suggestion",
+      "close": "Fermer"
+    },
     "alert": {
       "error": "Erreur",
       "stockUpToDate": "Stock déjà à jour",

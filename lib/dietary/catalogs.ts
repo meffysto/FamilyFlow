@@ -336,6 +336,11 @@ export const COMMON_REGIMES: DietaryItem[] = [
     label: 'Sans bœuf',
     aliases: ['sans boeuf'],
   },
+  {
+    id: 'femme_enceinte',
+    label: 'Femme enceinte',
+    aliases: ['enceinte', 'grossesse', 'pregnant'],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

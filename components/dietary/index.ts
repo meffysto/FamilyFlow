@@ -15,3 +15,5 @@ export { MealConflictRecap } from './MealConflictRecap';
 export type { MealConflictRecapProps } from './MealConflictRecap';
 export { VoicePreviewModal } from './VoicePreviewModal';
 export type { VoicePreviewModalProps } from './VoicePreviewModal';
+export { CookSuggestModal, extractRecipeTitlesFromMarkdown } from './CookSuggestModal';
+export type { CookSuggestModalProps } from './CookSuggestModal';

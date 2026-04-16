@@ -18,7 +18,7 @@ import { Alert } from 'react-native';
 import type { VaultManager } from '../lib/vault';
 import type { Profile } from '../lib/types';
 import type { GuestProfile } from '../lib/dietary/types';
-import { parseInvites, serializeInvites, INVITES_FILE } from '../lib/parser';
+import { parseInvites, serializeInvites, serializeFoodCsv, INVITES_FILE } from '../lib/parser';
 import { enqueueWrite } from '../lib/famille-queue';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ export function useVaultDietary(
             lines.splice(keyLineIdx, 1);
           }
         } else {
-          const newLine = `${foodKey}: ${items.join(',')}`;
+          const newLine = `${foodKey}: ${serializeFoodCsv(items)}`;
           if (keyLineIdx !== -1) {
             // Mettre à jour la ligne existante
             lines[keyLineIdx] = newLine;

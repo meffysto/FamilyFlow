@@ -30,6 +30,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import type { Profile } from '../../lib/types';
 import type { GuestProfile, DietarySeverity } from '../../lib/dietary/types';
 import { EU_ALLERGENS, COMMON_INTOLERANCES, COMMON_REGIMES } from '../../lib/dietary/catalogs';
+import { getPresetItemsToAdd, REGIME_PRESET_ITEMS } from '../../lib/dietary/presets';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -211,6 +212,53 @@ export const ProfileFoodCard = React.memo(function ProfileFoodCard({
   // Nom affiché : Profile a .name, GuestProfile aussi
   const displayName = profile.name;
 
+  // Intercepte les ajouts de régimes à preset (ex: femme_enceinte)
+  // pour proposer l'auto-remplissage des restrictions associées
+  // dans la même catégorie Régimes alimentaires.
+  const handleCategoryUpdate = useCallback(
+    (
+      category: 'allergies' | 'intolerances' | 'regimes' | 'aversions',
+      items: string[],
+    ) => {
+      if (category !== 'regimes') {
+        onUpdate(category, items);
+        return;
+      }
+
+      const previous = getItems(profile, 'foodRegimes');
+      const newlyAdded = items.find(
+        (i) => !previous.includes(i) && REGIME_PRESET_ITEMS[i],
+      );
+      if (!newlyAdded) {
+        onUpdate(category, items);
+        return;
+      }
+
+      const toAdd = getPresetItemsToAdd(newlyAdded, items);
+      if (toAdd.length === 0) {
+        onUpdate(category, items);
+        return;
+      }
+
+      Alert.alert(
+        'Ajouter les restrictions associées ?',
+        `Le régime « Femme enceinte » s'accompagne de restrictions usuelles (lait cru, charcuterie crue, poisson cru, alcool, etc.). Les ajouter aux régimes ?`,
+        [
+          {
+            text: 'Non, juste le régime',
+            style: 'cancel',
+            onPress: () => onUpdate(category, items),
+          },
+          {
+            text: 'Ajouter',
+            onPress: () => onUpdate(category, [...items, ...toAdd]),
+          },
+        ],
+      );
+    },
+    [profile, onUpdate],
+  );
+
   // Avatar : uniquement disponible sur Profile (les invités n'en ont pas)
   const avatar = (profile as Profile).avatar ?? null;
 
@@ -260,7 +308,7 @@ export const ProfileFoodCard = React.memo(function ProfileFoodCard({
               profileId={profile.id}
               category={cat}
               items={getItems(profile, cat.foodField)}
-              onUpdate={onUpdate}
+              onUpdate={handleCategoryUpdate}
             />
           </View>
         ))}

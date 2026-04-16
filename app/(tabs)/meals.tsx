@@ -49,7 +49,7 @@ import { computeMissingIngredients, computeStockDecrements, resolveStockAction, 
 import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag } from '../../lib/automation-config';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
-import { MealConflictRecap } from '../../components/dietary';
+import { MealConflictRecap, CookSuggestModal, extractRecipeTitlesFromMarkdown } from '../../components/dietary';
 import { checkAllergens } from '../../lib/dietary';
 import type { Profile } from '../../lib/types';
 import type { GuestProfile } from '../../lib/dietary/types';
@@ -420,23 +420,60 @@ export default function MealsScreen() {
   // ─── Suggestion IA : que cuisiner avec le stock ? ───────────────
 
   const [suggestingRecipes, setSuggestingRecipes] = useState(false);
+  const [cookSuggestVisible, setCookSuggestVisible] = useState(false);
+  const [cookSuggestText, setCookSuggestText] = useState<string | null>(null);
+  const [cookSuggestError, setCookSuggestError] = useState<string | null>(null);
+  const [cookRefine, setCookRefine] = useState('');
+  const [previousSuggestions, setPreviousSuggestions] = useState<string[]>([]);
 
-  const handleSuggestFromStock = useCallback(async () => {
+  const runSuggest = useCallback(async (opts: { reset: boolean }) => {
     if (!aiConfig?.apiKey) return;
     setSuggestingRecipes(true);
+    setCookSuggestError(null);
+    if (opts.reset) {
+      setCookSuggestText(null);
+      setPreviousSuggestions([]);
+    }
     try {
-      const resp = await suggestRecipesFromStock(aiConfig, stock, recipes, profiles, meals, healthRecords);
+      const resp = await suggestRecipesFromStock(aiConfig, {
+        stock,
+        recipes,
+        profiles,
+        guests: dietary.guests,
+        meals,
+        healthRecords,
+        refine: cookRefine,
+        previousSuggestions: opts.reset ? [] : previousSuggestions,
+      });
       if (resp.error) {
-        Alert.alert(t('meals.alert.aiError'), resp.error);
+        setCookSuggestError(resp.error);
       } else {
-        Alert.alert(t('meals.alert.aiSuggestTitle'), resp.text);
+        setCookSuggestText(resp.text);
+        const titles = extractRecipeTitlesFromMarkdown(resp.text);
+        setPreviousSuggestions(prev =>
+          opts.reset ? titles : Array.from(new Set([...prev, ...titles])),
+        );
       }
     } catch (e) {
-      Alert.alert(t('meals.alert.error'), String(e));
+      setCookSuggestError(String(e));
     } finally {
       setSuggestingRecipes(false);
     }
-  }, [aiConfig, stock, recipes, profiles]);
+  }, [aiConfig, stock, recipes, profiles, dietary.guests, meals, healthRecords, cookRefine, previousSuggestions]);
+
+  const handleSuggestFromStock = useCallback(() => {
+    setCookSuggestVisible(true);
+    setCookRefine('');
+    runSuggest({ reset: true });
+  }, [runSuggest]);
+
+  const handleCookSuggestRegenerate = useCallback(() => {
+    runSuggest({ reset: false });
+  }, [runSuggest]);
+
+  const handleCookSuggestClose = useCallback(() => {
+    setCookSuggestVisible(false);
+  }, []);
 
   // ─── Weekly shopping list generation ─────────────────────────────
 
@@ -1472,6 +1509,18 @@ export default function MealsScreen() {
       )}
 
       {/* ═════════════ Modals ═════════════ */}
+
+      {/* Suggestion IA "Que cuisiner ce soir ?" — itérative avec refine + régénérer */}
+      <CookSuggestModal
+        visible={cookSuggestVisible}
+        text={cookSuggestText}
+        loading={suggestingRecipes}
+        error={cookSuggestError}
+        refineValue={cookRefine}
+        onRefineChange={setCookRefine}
+        onRegenerate={handleCookSuggestRegenerate}
+        onClose={handleCookSuggestClose}
+      />
 
       {/* Recipe viewer modal (from Recettes tab) */}
       {selectedRecipe && (

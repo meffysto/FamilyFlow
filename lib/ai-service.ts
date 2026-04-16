@@ -16,8 +16,9 @@ import type { Task, RDV, StockItem, MealItem, CourseItem, Memory, Defi, Profile,
 import type { AppRecipe } from './cooklang';
 import type { JournalStats } from './journal-stats';
 import { buildAnonymizationMap, anonymize, deanonymize, type AnonymizationMap } from './anonymizer';
-import type { DietaryExtraction, DietarySeverity } from './dietary/types';
+import type { DietaryExtraction, DietarySeverity, GuestProfile } from './dietary/types';
 import { EU_ALLERGENS, COMMON_INTOLERANCES, COMMON_REGIMES } from './dietary/catalogs';
+import { buildCookSuggestPrompt, type CookSuggestInput } from './ai/prompts/cuisiner-ce-soir';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -705,52 +706,24 @@ export async function generateAISuggestions(
 
 // ─── Suggestion de recettes à partir du stock ───────────────────────────────
 
-/** Suggère des recettes réalisables avec le stock actuel */
+/**
+ * Suggère des recettes réalisables avec le stock actuel.
+ *
+ * Le prompt vit dans `lib/ai/prompts/cuisiner-ce-soir.ts` — toute itération
+ * sur le wording, les sections ou la structure se fait là-bas.
+ *
+ * Les anciens paramètres positionnels (stock, recipes, profiles, meals, healthRecords)
+ * sont conservés via `CookSuggestInput` qui ajoute `guests`, `refine`,
+ * `previousSuggestions` et `maxCandidates` pour l'itération côté UI.
+ */
 export async function suggestRecipesFromStock(
   config: AIConfig,
-  stock: StockItem[],
-  recipes: AppRecipe[],
-  profiles: Profile[],
-  meals?: MealItem[],
-  healthRecords?: HealthRecord[],
+  input: CookSuggestInput,
 ): Promise<AIResponse> {
-  const available = stock
-    .filter(s => s.quantite > 0)
-    .map(s => `${s.produit} (${s.quantite})`)
-    .join(', ');
-
-  const recipeList = recipes
-    .slice(0, 50)
-    .map(r => `- ${r.title} (${r.ingredients.map(i => i.name).join(', ')})`)
-    .join('\n');
-
-  const family = profiles
-    .filter(p => p.statut !== 'grossesse')
-    .map(p => `${p.name} (${p.role})`)
-    .join(', ');
-
-  // Repas récents (7 derniers jours) pour éviter les doublons
-  const recentMeals = (meals || [])
-    .filter(m => m.text.trim().length > 0)
-    .map(m => `${m.day} ${m.mealType}: ${m.text}`)
-    .join('\n');
-
-  // Allergies de toute la famille
-  const allergies = (healthRecords || [])
-    .filter(h => h.allergies.length > 0)
-    .map(h => `${h.enfant}: ${h.allergies.join(', ')}`)
-    .join('; ');
-
-  let systemPrompt = `Tu es un assistant cuisine familial. La famille : ${family}.`;
-  if (allergies) systemPrompt += `\n⚠️ Allergies/restrictions : ${allergies}. Ne suggère JAMAIS de recettes contenant ces allergènes.`;
-
-  let userContent = `Voici mon stock actuel :\n${available}\n\nVoici mes recettes disponibles :\n${recipeList}`;
-  if (recentMeals) userContent += `\n\nRepas déjà planifiés cette semaine (évite les doublons) :\n${recentMeals}`;
-  userContent += `\n\nSuggère 2-3 recettes que je peux faire avec ce que j'ai en stock (ou presque). Pour chaque suggestion :\n- Nom de la recette\n- Ce que j'ai déjà\n- Ce qu'il manque éventuellement (1-2 ingrédients max)\n\nFormat court, une recette par paragraphe, emoji en début de ligne. Si aucune recette ne colle, suggère une recette simple faisable avec le stock.`;
-
+  const { systemPrompt, userContent } = buildCookSuggestPrompt(input);
   const messages: AIMessage[] = [{ role: 'user', content: userContent }];
-
-  return callClaude(config, systemPrompt, messages);
+  // 800 tokens : 2-3 cartes de suggestion avec listes courtes tiennent confortablement
+  return callClaude(config, systemPrompt, messages, 800);
 }
 
 // ─── Scan ticket de caisse (Vision) ──────────────────────────────────────────
