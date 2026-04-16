@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variant C — labels + emojis cozy</title>
+<style>
+  :root {
+    --wood-dark:       #6B4226;
+    --wood-med:        #8B6914;
+    --wood-light:      #A0784C;
+    --wood-highlight:  #C4A265;
+    --parchment:       #FFF8EC;
+    --parchment-dark:  #F5E6C8;
+    --awning-green:    #6B9E4C;
+    --awning-cream:    #F5E6C8;
+    --brown-text:      #5C3D1A;
+    --brown-text-sub:  #7B5B35;
+    --green-btn:       #6AAE4E;
+    --green-btn-shd:   #4E8A3A;
+    --green-btn-hi:    #8BC86A;
+    --wood-btn:        #A0784C;
+    --wood-btn-shd:    #6B4226;
+    --wood-btn-hi:     #C4A265;
+    --gold:            #FFD700;
+    --gold-text:       #7B5300;
+    --orange:          #E8943A;
+    --orange-shd:      #B86E20;
+    --progress-gold:   #E8C858;
+    --progress-bg:     #E8DCC8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #3d2a18 0%, #1f140a 100%);
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+    padding: 48px 24px 80px;
+    color: #f5e6c8;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #f5e6c8;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.3);
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #d4bc92;
+    margin-bottom: 40px;
+    line-height: 1.5;
+    max-width: 780px;
+  }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: flex-start;
+    margin-bottom: 48px;
+  }
+  @media (max-width: 900px) { .compare { grid-template-columns: 1fr; } }
+
+  .col-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .col-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--parchment);
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    background: #1a130a;
+    border-radius: 42px;
+    padding: 12px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    border: 2px solid #0e0a05;
+  }
+  .screen {
+    border-radius: 32px;
+    overflow: hidden;
+    background: var(--parchment);
+    min-height: 560px;
+    position: relative;
+    padding-bottom: 16px;
+  }
+  .tree-area {
+    height: 200px;
+    background: radial-gradient(circle at 50% 60%, #c8e8b5 0%, #a7d088 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .tree-area::before {
+    content: '🌳';
+    position: absolute;
+    font-size: 110px;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
+  }
+  .hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    background: rgba(255,248,236,0.88);
+    border: 1.5px solid var(--wood-highlight);
+    border-radius: 10px;
+    padding: 5px 10px;
+    display: flex;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brown-text);
+    align-items: center;
+  }
+  .hud > span { display: flex; align-items: center; gap: 3px; }
+
+  .btn-3d {
+    position: relative;
+    border-radius: 10px;
+    border: 1.5px solid var(--wood-btn-shd);
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: linear-gradient(180deg, var(--wood-btn-hi) 0%, var(--wood-btn) 60%, var(--wood-btn) 100%);
+    box-shadow: 0 2px 0 var(--wood-btn-shd);
+  }
+  .btn-3d .btn-icon {
+    font-size: 20px;
+    line-height: 1;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.15));
+  }
+  .btn-3d .btn-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+  }
+  .btn-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: var(--orange);
+    border: 1.5px solid var(--orange-shd);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  }
+  .signpost {
+    margin: -20px 12px 0;
+    position: relative;
+    z-index: 10;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--parchment);
+    border: 2px solid var(--wood-highlight);
+    box-shadow: 0 2px 0 var(--wood-light), 0 4px 10px rgba(0,0,0,0.12);
+  }
+  .signpost-body {
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .signpost-more {
+    padding: 8px 10px 10px;
+    background: var(--parchment-dark);
+    border-top: 1px dashed var(--wood-highlight);
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+  }
+  .chip-cozy {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px 6px;
+    border-radius: 16px;
+    background: var(--parchment);
+    border: 1.5px solid var(--wood-highlight);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brown-text);
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 1px 0 var(--wood-light);
+  }
+  .chip-cozy .chip-count {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--parchment-dark);
+    color: var(--gold-text);
+    border: 1px solid var(--wood-highlight);
+  }
+  .chip-cozy.companion {
+    background: linear-gradient(135deg, #fce7f3 0%, #fed7aa 100%);
+    border-color: var(--orange-shd);
+  }
+
+  .hero-gold {
+    margin: 10px 12px 0;
+    padding: 2px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffd700 0%, #e8c858 50%, #b8941c 100%);
+    box-shadow: 0 2px 0 var(--wood-btn-shd), 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .hero-gold-inner {
+    background: linear-gradient(135deg, #FFF8EC 0%, #FFEDC0 100%);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .hero-gold-sprite {
+    font-size: 40px;
+    filter: drop-shadow(0 2px 3px rgba(107,66,38,0.3));
+  }
+  .hero-gold-info { flex: 1; min-width: 0; }
+  .hero-gold-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .hero-gold-stage {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--brown-text);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .hero-gold-level {
+    font-size: 10px;
+    font-weight: 800;
+    color: white;
+    background: linear-gradient(180deg, var(--orange) 0%, var(--orange-shd) 100%);
+    padding: 2px 9px;
+    border-radius: 11px;
+    border: 1px solid var(--orange-shd);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  }
+  .hero-gold-bar {
+    height: 10px;
+    border-radius: 5px;
+    background: rgba(107,66,38,0.2);
+    overflow: hidden;
+    border: 1px solid var(--wood-light);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .hero-gold-bar-fill {
+    height: 100%;
+    background: linear-gradient(180deg, #f5d878 0%, var(--progress-gold) 50%, #a8831e 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .hero-gold-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--brown-text-sub);
+  }
+
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: #FFFFFF;
+    border-top: 1px solid #DDD8D0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 6px 0 16px;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 9px;
+    color: #6B7280;
+  }
+  .tab-item .ti { font-size: 16px; }
+  .tab-item.active { color: #16A34A; }
+
+  /* ─── Comparatif ─── */
+  .rename-table {
+    background: rgba(255,248,236,0.06);
+    border: 1.5px solid rgba(196,162,101,0.4);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-top: 32px;
+  }
+  .rename-table h2 {
+    font-size: 18px;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    text-align: left;
+    color: var(--gold);
+    font-weight: 700;
+    padding: 8px 12px;
+    border-bottom: 1.5px solid rgba(196,162,101,0.4);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px dashed rgba(196,162,101,0.2);
+    color: #f5e6c8;
+  }
+  td.old { color: #a89078; }
+  td.new { font-weight: 700; color: var(--parchment); }
+  td.rationale { color: #d4bc92; font-size: 13px; font-style: italic; }
+  .emoji-lg { font-size: 18px; margin-right: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏕️ Variant C — naming cozy</h1>
+  <p class="subtitle">
+    Variant C validé. À gauche les labels actuels, à droite la proposition avec des termes plus
+    immersifs (univers village/ferme). Les emojis changent aussi pour sortir du registre
+    « appli pro » et coller au ton cozy.
+  </p>
+
+  <div class="compare">
+
+    <!-- ACTUEL -->
+    <div>
+      <div class="col-label">Actuel</div>
+      <div class="col-title">Labels app pro</div>
+      <div class="phone"><div class="screen">
+        <div class="tree-area">
+          <div class="hud">
+            <span>🌿 2275</span><span>🔥 3</span><span>🍃 13</span><span>🌸 Printemps</span>
+          </div>
+        </div>
+        <div class="signpost">
+          <div class="signpost-body">
+            <div class="btn-3d"><div class="btn-icon">🛒</div><div class="btn-label">Boutique</div></div>
+            <div class="btn-3d" style="position:relative"><div class="btn-icon">🔨</div><div class="btn-label">Atelier</div><div class="btn-badge">2</div></div>
+            <div class="btn-3d"><div class="btn-icon">🔬</div><div class="btn-label">Techs</div></div>
+            <div class="btn-3d"><div class="btn-icon">🎨</div><div class="btn-label">Décorer</div></div>
+          </div>
+          <div class="signpost-more">
+            <div class="chip-cozy">🏅 Badges <span class="chip-count">12</span></div>
+            <div class="chip-cozy">🏛️ Musée</div>
+            <div class="chip-cozy companion">🐾 Filou</div>
+          </div>
+        </div>
+        <div class="hero-gold">
+          <div class="hero-gold-inner">
+            <div class="hero-gold-sprite">🌳</div>
+            <div class="hero-gold-info">
+              <div class="hero-gold-top">
+                <div class="hero-gold-stage">Arbre · Printemps</div>
+                <div class="hero-gold-level">Niv. 11</div>
+              </div>
+              <div class="hero-gold-bar"><div class="hero-gold-bar-fill" style="width:40%"></div></div>
+              <div class="hero-gold-meta">
+                <span>440 / 1100 XP</span>
+                <span>→ Majestueux · 5 niv.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item"><div class="ti">🏠</div>Aujourd'hui</div>
+          <div class="tab-item"><div class="ti">📋</div>Tâches</div>
+          <div class="tab-item active"><div class="ti">📖</div>Journal</div>
+          <div class="tab-item"><div class="ti">📅</div>Calendrier</div>
+          <div class="tab-item"><div class="ti">🗂️</div>Menu</div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- PROPOSITION -->
+    <div>
+      <div class="col-label">Proposition</div>
+      <div class="col-title">Labels village cozy</div>
+      <div class="phone"><div class="screen">
+        <div class="tree-area">
+          <div class="hud">
+            <span>🌿 2275</span><span>🔥 3</span><span>🍃 13</span><span>🌸 Printemps</span>
+          </div>
+        </div>
+        <div class="signpost">
+          <div class="signpost-body">
+            <div class="btn-3d"><div class="btn-icon">🧺</div><div class="btn-label">Marché</div></div>
+            <div class="btn-3d" style="position:relative"><div class="btn-icon">🛠️</div><div class="btn-label">Atelier</div><div class="btn-badge">2</div></div>
+            <div class="btn-3d"><div class="btn-icon">📜</div><div class="btn-label">Savoirs</div></div>
+            <div class="btn-3d"><div class="btn-icon">🌼</div><div class="btn-label">Embellir</div></div>
+          </div>
+          <div class="signpost-more">
+            <div class="chip-cozy">🏆 Trophées <span class="chip-count">12</span></div>
+            <div class="chip-cozy">🖼️ Galerie</div>
+            <div class="chip-cozy companion">🐾 Filou</div>
+          </div>
+        </div>
+        <div class="hero-gold">
+          <div class="hero-gold-inner">
+            <div class="hero-gold-sprite">🌳</div>
+            <div class="hero-gold-info">
+              <div class="hero-gold-top">
+                <div class="hero-gold-stage">Arbre · Printemps</div>
+                <div class="hero-gold-level">Niv. 11</div>
+              </div>
+              <div class="hero-gold-bar"><div class="hero-gold-bar-fill" style="width:40%"></div></div>
+              <div class="hero-gold-meta">
+                <span>440 / 1100 XP</span>
+                <span>→ Majestueux · 5 niv.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item"><div class="ti">🏠</div>Aujourd'hui</div>
+          <div class="tab-item"><div class="ti">📋</div>Tâches</div>
+          <div class="tab-item active"><div class="ti">📖</div>Journal</div>
+          <div class="tab-item"><div class="ti">📅</div>Calendrier</div>
+          <div class="tab-item"><div class="ti">🗂️</div>Menu</div>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+
+  <div class="rename-table">
+    <h2>Détail du renommage</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fonction</th>
+          <th>Actuel</th>
+          <th>Proposition</th>
+          <th>Pourquoi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Boutique</td>
+          <td class="old"><span class="emoji-lg">🛒</span>Boutique</td>
+          <td class="new"><span class="emoji-lg">🧺</span>Marché</td>
+          <td class="rationale">Panier tressé = village, foire, récoltes. « Boutique » sonne supermarché.</td>
+        </tr>
+        <tr>
+          <td>Craft</td>
+          <td class="old"><span class="emoji-lg">🔨</span>Atelier</td>
+          <td class="new"><span class="emoji-lg">🛠️</span>Atelier</td>
+          <td class="rationale">« Atelier » reste bon. Marteau+clé = boîte à outils, plus riche qu'un simple marteau.</td>
+        </tr>
+        <tr>
+          <td>Tech tree</td>
+          <td class="old"><span class="emoji-lg">🔬</span>Techs</td>
+          <td class="new"><span class="emoji-lg">📜</span>Savoirs</td>
+          <td class="rationale">Microscope = labo moderne. Parchemin = arbre de connaissances/secrets ancestraux.</td>
+        </tr>
+        <tr>
+          <td>Placer décos</td>
+          <td class="old"><span class="emoji-lg">🎨</span>Décorer</td>
+          <td class="new"><span class="emoji-lg">🌼</span>Embellir</td>
+          <td class="rationale">Fleur > palette : on décore son jardin, pas une toile. Verbe plus chaleureux.</td>
+        </tr>
+        <tr>
+          <td>Badges</td>
+          <td class="old"><span class="emoji-lg">🏅</span>Badges</td>
+          <td class="new"><span class="emoji-lg">🏆</span>Trophées</td>
+          <td class="rationale">Coupe = fierté/récompense familiale. Médaille = compétition scolaire.</td>
+        </tr>
+        <tr>
+          <td>Musée</td>
+          <td class="old"><span class="emoji-lg">🏛️</span>Musée</td>
+          <td class="new"><span class="emoji-lg">🖼️</span>Galerie</td>
+          <td class="rationale">Le bâtiment grec ne matche pas. Galerie = exposition intime de souvenirs.</td>
+        </tr>
+        <tr>
+          <td>Compagnon</td>
+          <td class="old"><span class="emoji-lg">🐾</span>Filou</td>
+          <td class="new"><span class="emoji-lg">🐾</span>Filou</td>
+          <td class="rationale">Déjà personnalisé. Nom dynamique du compagnon du joueur.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top: 18px; font-size: 13px; color: #d4bc92; line-height: 1.6">
+      <b style="color:var(--gold)">Alternatives si tu préfères autre chose :</b><br>
+      • Marché → <b>Étal</b> 🧺 / <b>Échoppe</b> 🏪<br>
+      • Savoirs → <b>Grimoire</b> 📖 / <b>Connaissances</b> 🌿 (lien ferme)<br>
+      • Embellir → <b>Jardiner</b> 🌼 / <b>Décors</b> 🌺<br>
+      • Trophées → <b>Exploits</b> 🏆 / <b>Succès</b> ⭐<br>
+      • Galerie → <b>Archives</b> 📜 / <b>Souvenirs</b> 🖼️
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

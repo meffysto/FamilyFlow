@@ -140,6 +140,7 @@ import { Spacing, Radius, Layout } from '../../constants/spacing';
 
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
 
 // Terrain tileset images (pré-rendues par saison)
 const TERRAIN_IMAGES: Record<Season, any> = {
@@ -148,6 +149,16 @@ const TERRAIN_IMAGES: Record<Season, any> = {
   automne: require('../../assets/terrain/ground_automne.png'),
   hiver: require('../../assets/terrain/ground_hiver.png'),
 };
+
+// Sprites des actions cozy (variante C — panneau de ferme)
+const ACTION_SPRITES = {
+  echoppe:  require('../../assets/ui/actions/echoppe.png'),
+  atelier:  require('../../assets/ui/actions/atelier.png'),
+  savoirs:  require('../../assets/ui/actions/savoirs.png'),
+  embellir: require('../../assets/ui/actions/embellir.png'),
+  trophees: require('../../assets/ui/actions/trophees.png'),
+  galerie:  require('../../assets/ui/actions/galerie.png'),
+} as const;
 
 // SCREEN_W, SCREEN_H, TREE_SIZE, TERRAIN_HEIGHT, DIORAMA_HEIGHT_BY_STAGE
 // sont calculés dans les composants via useWindowDimensions()
@@ -2246,26 +2257,58 @@ export default function TreeScreen() {
         </Animated.View>
 
 
-        {/* Carte 1 — Actions */}
+        {/* Carte 1 — Actions (panneau cozy "signpost") */}
         {isOwnTree && (
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={{ marginTop: -22, zIndex: 10, position: 'relative' }}>
-          <View style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
-            <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.actionItem} onPress={() => setShowShop(true)} activeOpacity={0.7}>
-                <Text style={styles.actionItemIcon}>{'🛒'}</Text>
-                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{t('mascot.shop.shortTitle', 'Boutique')}</Text>
+          <View style={styles.signpost}>
+            {/* 4 actions primaires — boutons bois 3D */}
+            <View style={styles.signpostBody}>
+              <TouchableOpacity style={styles.btn3dWood} onPress={() => { Haptics.selectionAsync(); setShowShop(true); }} activeOpacity={0.8}>
+                <Image source={ACTION_SPRITES.echoppe} style={styles.btn3dSprite} />
+                <Text style={styles.btn3dLabel}>{t('mascot.shop.shortTitle', 'Échoppe')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem} onPress={() => setShowCraftSheet(true)} activeOpacity={0.7}>
-                <Text style={styles.actionItemIcon}>{'🔨'}</Text>
-                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{t('craft.atelier')}</Text>
+              <TouchableOpacity style={styles.btn3dWood} onPress={() => { Haptics.selectionAsync(); setShowCraftSheet(true); }} activeOpacity={0.8}>
+                <Image source={ACTION_SPRITES.atelier} style={styles.btn3dSprite} />
+                <Text style={styles.btn3dLabel}>{t('craft.atelier')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem} onPress={() => setShowTechTree(true)} activeOpacity={0.7}>
-                <Text style={styles.actionItemIcon}>{'🔬'}</Text>
-                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Techs'}</Text>
+              <TouchableOpacity style={styles.btn3dWood} onPress={() => { Haptics.selectionAsync(); setShowTechTree(true); }} activeOpacity={0.8}>
+                <Image source={ACTION_SPRITES.savoirs} style={styles.btn3dSprite} />
+                <Text style={styles.btn3dLabel}>{t('mascot.actions.savoirs', 'Savoirs')}</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.btn3dWood, (allDecoIds.length + allHabIds.length) === 0 && { opacity: 0.5 }]}
+                onPress={() => {
+                  if ((allDecoIds.length + allHabIds.length) === 0 || placingItem) return;
+                  Haptics.selectionAsync();
+                  setShowItemPicker(true);
+                }}
+                activeOpacity={0.8}
+                disabled={(allDecoIds.length + allHabIds.length) === 0 || !!placingItem}
+              >
+                <Image source={ACTION_SPRITES.embellir} style={styles.btn3dSprite} />
+                <Text style={styles.btn3dLabel}>{t('mascot.actions.embellir', 'Embellir')}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Rangée secondaire — chips parchemin foncé */}
+            <View style={styles.signpostMore}>
+              <TouchableOpacity style={styles.chipCozy} onPress={() => { Haptics.selectionAsync(); setShowBadges(true); }} activeOpacity={0.7}>
+                <Image source={ACTION_SPRITES.trophees} style={styles.chipCozySprite} />
+                <Text style={styles.chipCozyLabel}>{t('mascot.actions.trophees', 'Trophées')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.chipCozy} onPress={() => { Haptics.selectionAsync(); setShowMuseum(true); }} activeOpacity={0.7}>
+                <Image source={ACTION_SPRITES.galerie} style={styles.chipCozySprite} />
+                <Text style={styles.chipCozyLabel}>{t('mascot.actions.galerie', 'Galerie')}</Text>
+              </TouchableOpacity>
+              {companion && (
+                <TouchableOpacity style={[styles.chipCozy, styles.chipCozyCompanion]} onPress={() => { Haptics.selectionAsync(); setShowCompanionPicker(true); }} activeOpacity={0.7}>
+                  <Text style={styles.chipCozyEmoji}>{'🐾'}</Text>
+                  <Text style={styles.chipCozyLabel}>{companion.name}</Text>
+                </TouchableOpacity>
+              )}
               {__DEV__ && (
                 <TouchableOpacity
-                  style={styles.actionItem}
+                  style={styles.chipCozy}
                   onPress={() => {
                     const toasts: Array<() => void> = [
                       () => showToast('Tâche validée !', 'success'),
@@ -2279,38 +2322,14 @@ export default function TreeScreen() {
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.actionItemIcon}>{'🔔'}</Text>
-                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Toast'}</Text>
+                  <Text style={styles.chipCozyEmoji}>{'🔔'}</Text>
+                  <Text style={styles.chipCozyLabel}>{'Toast'}</Text>
                 </TouchableOpacity>
               )}
               {__DEV__ && (
-                <TouchableOpacity
-                  style={styles.actionItem}
-                  onPress={() => setShowDevEffects(true)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.actionItemIcon}>{'⚡'}</Text>
-                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Effets'}</Text>
-                </TouchableOpacity>
-              )}
-              {(allDecoIds.length + allHabIds.length) > 0 && !placingItem && (
-                <TouchableOpacity style={styles.actionItem} onPress={() => setShowItemPicker(true)} activeOpacity={0.7}>
-                  <Text style={styles.actionItemIcon}>{'🎨'}</Text>
-                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{t('mascot.shortDecorate', 'Décorer')}</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity style={styles.actionItem} onPress={() => setShowBadges(true)} activeOpacity={0.7}>
-                <Text style={styles.actionItemIcon}>{'🏅'}</Text>
-                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Badges'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem} onPress={() => setShowMuseum(true)} activeOpacity={0.7}>
-                <Text style={styles.actionItemIcon}>{'🏛️'}</Text>
-                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{t('museum.title', 'Musée')}</Text>
-              </TouchableOpacity>
-              {companion && (
-                <TouchableOpacity style={styles.actionItem} onPress={() => setShowCompanionPicker(true)} activeOpacity={0.7}>
-                  <Text style={styles.actionItemIcon}>{'🐾'}</Text>
-                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{companion.name}</Text>
+                <TouchableOpacity style={styles.chipCozy} onPress={() => setShowDevEffects(true)} activeOpacity={0.7}>
+                  <Text style={styles.chipCozyEmoji}>{'⚡'}</Text>
+                  <Text style={styles.chipCozyLabel}>{'Effets'}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -2318,42 +2337,41 @@ export default function TreeScreen() {
         </Animated.View>
         )}
 
-        {/* Carte 2 — Progression */}
+        {/* Carte 2 — Progression (hero doré) */}
         <Animated.View entering={FadeInDown.delay(300).duration(400)} style={isOwnTree ? { marginTop: Spacing.sm } : { marginTop: -22, zIndex: 10, position: 'relative' }}>
-          <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
-            {/* Header : stade + XP */}
-            <View style={styles.progressHeader}>
-              <Text style={[styles.progressTitle, { color: colors.text }]}>
-                {STAGE_EMOJI[stageInfo.stage]} {t(stageInfo.labelKey)} · {t('mascot.screen.level')} {level}
-              </Text>
-              <Text style={[styles.progressXp, { color: colors.textMuted }]}>
-                {xpInLevel} / {xpNeeded} XP
-              </Text>
-            </View>
-
-            {/* Barre XP */}
-            <View style={[styles.progressBar, { backgroundColor: colors.cardAlt }]}>
-              <View style={[styles.progressFill, { width: `${Math.round(xpPercent * 100)}%`, backgroundColor: tier.color }]} />
-            </View>
-
-            {/* Ligne evolution */}
-            {nextEvoLevel !== null ? (
-              <View style={styles.evoLine}>
-                <Text style={[styles.evoLineText, { color: colors.textSub }]}>
-                  → {t(TREE_STAGES[stageIdx + 1]?.labelKey || stageInfo.labelKey)}
-                </Text>
-                <View style={[styles.evoLineBar, { backgroundColor: colors.cardAlt }]}>
-                  <View style={[styles.evoLineFill, { width: `${Math.round(stageProgress * 100)}%`, backgroundColor: sp.accent }]} />
+          <View style={styles.heroGoldOuter}>
+            <View style={styles.heroGoldInner}>
+              <Text style={styles.heroGoldSprite}>{STAGE_EMOJI[stageInfo.stage]}</Text>
+              <View style={styles.heroGoldInfo}>
+                <View style={styles.heroGoldTop}>
+                  <Text style={styles.heroGoldStage} numberOfLines={1}>
+                    {t(stageInfo.labelKey)}
+                  </Text>
+                  <View style={styles.heroGoldLevelPill}>
+                    <Text style={styles.heroGoldLevelText}>
+                      {t('mascot.screen.level')} {level}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={[styles.evoLineHint, { color: colors.textFaint }]}>
-                  {t('mascot.screen.levelsToEvo', { count: levelsLeft })}
-                </Text>
+                <View style={styles.heroGoldBar}>
+                  <View style={[styles.heroGoldBarFill, { width: `${Math.round(xpPercent * 100)}%` }]} />
+                </View>
+                <View style={styles.heroGoldMeta}>
+                  <Text style={styles.heroGoldMetaText}>
+                    {xpInLevel} / {xpNeeded} XP
+                  </Text>
+                  {nextEvoLevel !== null ? (
+                    <Text style={styles.heroGoldMetaText} numberOfLines={1}>
+                      → {t(TREE_STAGES[stageIdx + 1]?.labelKey || stageInfo.labelKey)} · {levelsLeft} niv.
+                    </Text>
+                  ) : (
+                    <Text style={[styles.heroGoldMetaText, { color: Farm.goldText, fontWeight: FontWeight.bold }]}>
+                      {t('mascot.screen.maxStage')}
+                    </Text>
+                  )}
+                </View>
               </View>
-            ) : (
-              <Text style={{ color: '#FFD700', fontWeight: FontWeight.bold, textAlign: 'center', marginTop: Spacing.xs }}>
-                {t('mascot.screen.maxStage')}
-              </Text>
-            )}
+            </View>
           </View>
         </Animated.View>
 
@@ -2827,79 +2845,177 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: '30%',
   },
-  actionCard: {
-    borderRadius: Radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+  // ── Cozy action panel (signpost) ──────────────────────────────────────────
+  signpost: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: Farm.parchment,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    shadowColor: Farm.woodDark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  actionRow: {
+  signpostBody: {
     flexDirection: 'row',
+    padding: 10,
+    gap: 6,
   },
-  actionItem: {
+  signpostMore: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: Farm.parchmentDark,
+    borderTopWidth: 1,
+    borderTopColor: Farm.woodHighlight,
+    borderStyle: 'dashed',
+    flexDirection: 'row',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  btn3dWood: {
     flex: 1,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: Farm.woodBtnShadow,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     alignItems: 'center',
-    paddingVertical: 6,
+    gap: 3,
+    backgroundColor: Farm.woodBtn,
+    shadowColor: Farm.woodBtnShadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 2,
   },
-  actionItemIcon: {
-    fontSize: 22,
-    lineHeight: 28,
+  btn3dSprite: {
+    width: 36,
+    height: 36,
+    resizeMode: 'contain',
   },
-  actionItemLabel: {
+  btn3dLabel: {
     fontSize: 10,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
   },
-  progressCard: {
-    borderRadius: Radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    marginBottom: Spacing['2xl'],
-  },
-  progressHeader: {
+  chipCozy: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: Farm.parchment,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    shadowColor: Farm.woodLight,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 1,
   },
-  progressTitle: {
+  chipCozyCompanion: {
+    backgroundColor: '#FED7AA',
+    borderColor: Farm.orangeShadow,
+  },
+  chipCozySprite: {
+    width: 18,
+    height: 18,
+    resizeMode: 'contain',
+  },
+  chipCozyEmoji: {
+    fontSize: 14,
+  },
+  chipCozyLabel: {
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  // ── Hero doré (progression) ───────────────────────────────────────────────
+  heroGoldOuter: {
+    borderRadius: 16,
+    padding: 2,
+    backgroundColor: Farm.gold,
+    marginBottom: Spacing['2xl'],
+    shadowColor: Farm.woodBtnShadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  heroGoldInner: {
+    backgroundColor: Farm.parchment,
+    borderRadius: 14,
+    padding: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  heroGoldSprite: {
+    fontSize: 40,
+  },
+  heroGoldInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroGoldTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 8,
+  },
+  heroGoldStage: {
+    flex: 1,
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
-  progressXp: {
-    fontSize: FontSize.caption,
+  heroGoldLevelPill: {
+    backgroundColor: Farm.orange,
+    borderWidth: 1,
+    borderColor: Farm.orangeShadow,
+    borderRadius: 11,
+    paddingHorizontal: 9,
+    paddingVertical: 2,
   },
-  progressBar: {
-    height: 8,
-    borderRadius: Radius.full,
+  heroGoldLevelText: {
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
+  },
+  heroGoldBar: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Farm.progressBg,
     overflow: 'hidden',
-    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Farm.woodLight,
   },
-  progressFill: {
+  heroGoldBarFill: {
     height: '100%',
-    borderRadius: Radius.full,
+    backgroundColor: Farm.progressGold,
   },
-  evoLine: {
+  heroGoldMeta: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.xs,
+    justifyContent: 'space-between',
+    marginTop: 6,
+    gap: 8,
   },
-  evoLineText: {
-    fontSize: FontSize.caption,
-    flexShrink: 0,
-  },
-  evoLineBar: {
-    flex: 1,
-    height: 4,
-    borderRadius: Radius.full,
-    overflow: 'hidden',
-  },
-  evoLineFill: {
-    height: '100%',
-  },
-  evoLineHint: {
-    fontSize: FontSize.caption,
-    flexShrink: 0,
+  heroGoldMetaText: {
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownTextSub,
+    flexShrink: 1,
   },
   profileRow: {
     flexDirection: 'row',

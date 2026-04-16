@@ -3489,9 +3489,17 @@
       "loupEtoile": "Loup des étoiles",
       "loupEtoile_desc": "Un loup légendaire dont le pelage reflète la voûte céleste. Il guide les voyageurs perdus et veille sur les siens la nuit."
     },
+    "actions": {
+      "echoppe": "Échoppe",
+      "savoirs": "Savoirs",
+      "embellir": "Embellir",
+      "trophees": "Trophées",
+      "galerie": "Galerie"
+    },
     "shop": {
       "title": "Boutique de l'arbre",
       "title_enfant": "La boutique magique !",
+      "shortTitle": "Échoppe",
       "decorations": "Décorations",
       "inhabitants": "Habitants",
       "buy": "Acheter",

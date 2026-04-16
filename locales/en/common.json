@@ -3485,9 +3485,17 @@
       "loupEtoile": "Star wolf",
       "loupEtoile_desc": "A legendary wolf whose coat reflects the night sky. It guides lost travellers and watches over its own through the night."
     },
+    "actions": {
+      "echoppe": "Shop",
+      "savoirs": "Lore",
+      "embellir": "Beautify",
+      "trophees": "Trophies",
+      "galerie": "Gallery"
+    },
     "shop": {
       "title": "Tree Shop",
       "title_enfant": "The Magic Shop!",
+      "shortTitle": "Shop",
       "decorations": "Decorations",
       "inhabitants": "Inhabitants",
       "buy": "Buy",
