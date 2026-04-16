@@ -32,6 +32,7 @@ import {
   transactionsRemainingToday,
   getDailyDeal,
   MAX_MARKET_TXN_PER_DAY,
+  DAILY_DEAL_STOCK_PER_PROFILE,
 } from '../../lib/village/market-engine';
 import type { MarketItemSummary, DailyDeal } from '../../lib/village/market-engine';
 import type { MarketStock, MarketTransaction } from '../../lib/village/types';
@@ -71,6 +72,10 @@ interface MarketSheetProps {
   onBuy: (itemId: string, quantity: number, priceOverride?: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
   onSell: (itemId: string, quantity: number) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
   onClose: () => void;
+  /** Flux deal du jour — séparé du marché (quota per-profil, stock indépendant) */
+  onBuyDeal: (itemId: string, qty: number, unitPrice: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
+  /** Compteur d'achats du deal du jour pour le profil courant (lu depuis farm-{id}.md) */
+  profileDealPurchases?: { dateKey: string; itemId: string; purchased: number };
 }
 
 // ── Constantes ────────────────────────────────────────────────────────────
@@ -349,7 +354,9 @@ const DailyDealCard = React.memo(function DailyDealCard({
           onPress={() => onBuy(deal.def.itemId, 1)}
         />
       </View>
-      <Text style={styles.dealTimer}>Offre valable aujourd'hui uniquement</Text>
+      <Text style={styles.dealTimer}>
+        Offre valable aujourd'hui · {deal.remaining}/{DAILY_DEAL_STOCK_PER_PROFILE} restant{deal.remaining > 1 ? 's' : ''}
+      </Text>
     </Animated.View>
   );
 });
@@ -369,6 +376,8 @@ export function MarketSheet({
   onBuy,
   onSell,
   onClose,
+  onBuyDeal,
+  profileDealPurchases,
 }: MarketSheetProps) {
   const { colors, primary } = useThemeColors();
   const [tab, setTab] = useState<MarketTab>('acheter');
@@ -387,14 +396,14 @@ export function MarketSheet({
   );
 
   const dailyDeal = useMemo(
-    () => getDailyDeal(marketStock),
-    [marketStock],
+    () => getDailyDeal(marketStock, new Date(), profileDealPurchases),
+    [marketStock, profileDealPurchases],
   );
 
   const handleBuyDeal = useCallback(async (itemId: string, qty: number) => {
     if (!dailyDeal) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const result = await onBuy(itemId, qty, dailyDeal.discountedPrice);
+    const result = await onBuyDeal(itemId, qty, dailyDeal.discountedPrice);
     if (result.success) {
       flashOpacity.value = withSequence(
         withTiming(1, { duration: 100 }),
@@ -404,7 +413,7 @@ export function MarketSheet({
     } else {
       Alert.alert('Achat impossible', result.error ?? 'Erreur inconnue');
     }
-  }, [onBuy, flashOpacity, dailyDeal]);
+  }, [onBuyDeal, flashOpacity, dailyDeal]);
 
   const txnsRemaining = useMemo(
     () => transactionsRemainingToday(marketTransactions, profileId),

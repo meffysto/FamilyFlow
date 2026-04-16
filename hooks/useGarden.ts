@@ -62,7 +62,7 @@ import type {
   MarketTransaction,
 } from '../lib/village';
 import type { VillageTechBonuses } from '../lib/village/atelier-engine';
-import { MARKET_ITEMS } from '../lib/village/market-engine';
+import { MARKET_ITEMS, DAILY_DEAL_STOCK_PER_PROFILE } from '../lib/village/market-engine';
 import { parseGamification, serializeGamification } from '../lib/parser';
 import type { VaultManager } from '../lib/vault';
 
@@ -84,6 +84,14 @@ function getMondayISO(date: Date): string {
  */
 function pickTemplate(weekIndex: number): ObjectiveTemplate {
   return OBJECTIVE_TEMPLATES[weekIndex % OBJECTIVE_TEMPLATES.length];
+}
+
+/** Formate une date en YYYY-MM-DD (timezone locale) */
+function formatDateYMD(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /** Retourne la catégorie marché d'un item */
@@ -157,6 +165,8 @@ export interface UseGardenReturn {
   marketTransactions: MarketTransaction[];
   buyFromMarket: (itemId: string, quantity: number, profileId: string, priceOverride?: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
   sellToMarket: (itemId: string, quantity: number, profileId: string) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
+  // Deal du jour — flux séparé (stock indépendant du marché, quota per-profil)
+  buyDailyDeal: (itemId: string, unitPrice: number, profileId: string) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
 }
 
 /**
@@ -711,6 +721,117 @@ export function useGarden(): UseGardenReturn {
   );
 
   // ---------------------------------------------------------------------------
+  // buyDailyDeal — Deal du jour (stock séparé du marché, quota per-profil)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Achète l'item du deal du jour pour un profil.
+   * Contrairement à buyFromMarket, NE décrémente PAS marketStock — le deal a un stock propre
+   * limité à DAILY_DEAL_STOCK_PER_PROFILE achats par profil par jour.
+   * Le compteur est persisté dans farm-{profileId}.md (champ dailyDealPurchases).
+   */
+  const buyDailyDeal = useCallback(
+    async (itemId: string, unitPrice: number, profileId: string): Promise<{ success: boolean; totalCost?: number; error?: string }> => {
+      if (!vault) return { success: false, error: 'Vault non disponible' };
+
+      // Rate-limit global (10 transactions/jour)
+      if (!canTransactToday(marketTransactions, profileId)) {
+        return { success: false, error: 'Limite de 10 transactions/jour atteinte' };
+      }
+
+      // Vérifier les coins du profil
+      const profile = profiles.find(p => p.id === profileId);
+      if (!profile) return { success: false, error: 'Profil introuvable' };
+      if ((profile.coins ?? 0) < unitPrice) {
+        return { success: false, error: `Pas assez de 🍃 (${profile.coins ?? 0} / ${unitPrice})` };
+      }
+
+      const category = findMarketItemCategory(itemId);
+      if (!category) return { success: false, error: 'Article introuvable' };
+
+      // Charger farm profil → calculer nouveau dailyDealPurchases
+      const farmPath = `farm-${profileId}.md`;
+      const farmRaw = await vault.readFile(farmPath).catch(() => '');
+      const farmData = parseFarmProfile(farmRaw);
+
+      const today = formatDateYMD(new Date());
+      const current = farmData.dailyDealPurchases;
+      const nextPurchased =
+        current && current.dateKey === today && current.itemId === itemId
+          ? current.purchased + 1
+          : 1;
+      if (nextPurchased > DAILY_DEAL_STOCK_PER_PROFILE) {
+        return { success: false, error: "Deal épuisé pour aujourd'hui" };
+      }
+      const nextDailyDealPurchases = { dateKey: today, itemId, purchased: nextPurchased };
+
+      // Transaction logée dans le log marché (marketStock INTACT)
+      const now = new Date();
+      const transaction: MarketTransaction = {
+        timestamp: now.toISOString().replace('Z', '').split('.')[0],
+        profileId,
+        action: 'buy',
+        itemId,
+        quantity: 1,
+        unitPrice,
+        totalPrice: unitPrice,
+      };
+      const updatedTxns = pruneTransactionLog([...marketTransactions, transaction]);
+
+      const isCollective = category === 'village' || category === 'village_craft';
+      const updatedData: VillageData = {
+        ...gardenData,
+        inventory: isCollective
+          ? { ...inventory, [itemId]: (inventory[itemId] ?? 0) + 1 }
+          : inventory,
+        // marketStock inchangé — le deal a son propre stock
+        marketTransactions: updatedTxns,
+      };
+      const newContent = serializeGardenFile(updatedData);
+      await vault.writeFile(VILLAGE_FILE, newContent);
+      setGardenRaw(newContent);
+
+      // Déduire les coins du profil via gami-{id}.md
+      try {
+        const gamiPath = `gami-${profileId}.md`;
+        const gamiRaw = await vault.readFile(gamiPath).catch(() => '');
+        if (gamiRaw) {
+          const gami = parseGamificationForMarket(gamiRaw);
+          if (gami) {
+            gami.coins = Math.max(0, (gami.coins ?? 0) - unitPrice);
+            await writeGamiCoins(vault, gamiPath, gamiRaw, gami.coins);
+          }
+        }
+        refreshGamification();
+      } catch { /* Gamification — non-critical */ }
+
+      // Persister farm-{id}.md : dailyDealPurchases + distribution item
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      let updatedFarm = { ...farmData, dailyDealPurchases: nextDailyDealPurchases };
+      if (category === 'farm') {
+        const farmInvObj = { ...(farmData.farmInventory ?? {}) } as any;
+        farmInvObj[itemId] = (farmInvObj[itemId] ?? 0) + 1;
+        updatedFarm = { ...updatedFarm, farmInventory: farmInvObj };
+      } else if (category === 'harvest') {
+        const harvestInvObj = { ...(farmData.harvestInventory ?? {}) } as any;
+        harvestInvObj[itemId] = (harvestInvObj[itemId] ?? 0) + 1;
+        updatedFarm = { ...updatedFarm, harvestInventory: harvestInvObj };
+      } else if (category === 'crafted') {
+        const craftedItems = [...(farmData.craftedItems ?? [])];
+        craftedItems.push({ recipeId: itemId, craftedAt: now.toISOString() });
+        updatedFarm = { ...updatedFarm, craftedItems };
+      }
+      try {
+        await vault.writeFile(farmPath, serializeFarmProfile(profileName, updatedFarm));
+        await refreshFarm(profileId);
+      } catch { /* non-critical */ }
+
+      return { success: true, totalCost: unitPrice };
+    },
+    [vault, gardenData, inventory, marketTransactions, profiles, setGardenRaw, refreshGamification, refreshFarm],
+  );
+
+  // ---------------------------------------------------------------------------
   // craftVillageItem — Phase 31+
   // ---------------------------------------------------------------------------
 
@@ -1130,5 +1251,7 @@ export function useGarden(): UseGardenReturn {
     marketTransactions,
     buyFromMarket,
     sellToMarket,
+    // Deal du jour
+    buyDailyDeal,
   };
 }

@@ -77,6 +77,7 @@ import { TradeReceiptModal } from '../../components/village/TradeReceiptModal';
 import { MarketSheet } from '../../components/village/MarketSheet';
 import { parseFarmProfile } from '../../lib/parser';
 import type { FarmInventory, HarvestInventory } from '../../lib/mascot/types';
+import type { FarmProfileData } from '../../lib/types';
 
 // ── Constantes module ──────────────────────────────────────────────────────
 
@@ -365,6 +366,7 @@ export default function VillageScreen() {
     marketTransactions,
     buyFromMarket,
     sellToMarket,
+    buyDailyDeal,
   } = useGarden();
 
   const [showAllFeed, setShowAllFeed] = useState(false);
@@ -391,6 +393,7 @@ export default function VillageScreen() {
   const [farmInv, setFarmInv] = useState<FarmInventory>({ oeuf: 0, lait: 0, farine: 0, miel: 0 });
   const [harvestInv, setHarvestInv] = useState<HarvestInventory>({});
   const [craftedItems, setCraftedItems] = useState<import('../../lib/mascot/types').CraftedItem[]>([]);
+  const [dailyDealPurchases, setDailyDealPurchases] = useState<FarmProfileData['dailyDealPurchases']>(undefined);
   const season = getCurrentSeason();
 
   // ── Pause animations (background + onglet pas visible) ───────────────
@@ -547,6 +550,7 @@ export default function VillageScreen() {
       setFarmInv(farmData.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 });
       setHarvestInv(farmData.harvestInventory ?? {});
       setCraftedItems(farmData.craftedItems ?? []);
+      setDailyDealPurchases(farmData.dailyDealPurchases);
     } catch {
       /* non-critique */
     }
@@ -1137,6 +1141,13 @@ export default function VillageScreen() {
           if (result.success) await loadFarmInventories();
           return result;
         }}
+        onBuyDeal={async (itemId, qty, unitPrice) => {
+          if (!activeProfile) return { success: false, error: 'Profil introuvable' };
+          const result = await buyDailyDeal(itemId, unitPrice, activeProfile.id);
+          if (result.success) await loadFarmInventories();
+          return result;
+        }}
+        profileDealPurchases={dailyDealPurchases}
         onClose={() => setShowMarket(false)}
       />
     </Animated.View>
