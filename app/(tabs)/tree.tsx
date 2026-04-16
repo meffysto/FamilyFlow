@@ -95,7 +95,7 @@ import { loadCompanionMessages, saveCompanionMessages, hasNudgeShownToday, markN
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import type { GiftEntry } from '../../lib/mascot/gift-engine';
-import { hasCropSeasonalBonus, parseCrops, getAvailableCrops, RARE_SEED_DROP_RULES } from '../../lib/mascot/farm-engine';
+import { hasCropSeasonalBonus, parseCrops, getAvailableCrops, RARE_SEED_DROP_RULES, PLOT_LEVEL_BONUSES, getPlotLevel, getMainPlotIndex } from '../../lib/mascot/farm-engine';
 import { CROP_ICONS } from '../../lib/mascot/crop-sprites';
 import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL, CAMP_EXPLORATION_CELL } from '../../lib/mascot/world-grid';
 import { useExpeditions } from '../../hooks/useExpeditions';
@@ -192,11 +192,14 @@ const SEASONAL_VISITOR_IDLE: Record<string, number> = {
 
 /** Tooltip whisper quand on tap une culture en croissance */
 /** Tooltip info quand on tap une culture en croissance — emoji + nom + tâches restantes */
-function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses }: {
-  tooltipInfo: { cellId: string; cropId: string; tasksCompleted: number };
+function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses, plotLevels, growthSprintActive, mainPlotIndex }: {
+  tooltipInfo: { cellId: string; cropId: string; tasksCompleted: number; plotIndex: number };
   stageInfo: any;
   stageIdx: number;
   techBonuses?: TechBonuses;
+  plotLevels?: number[];
+  growthSprintActive?: boolean;
+  mainPlotIndex?: number | null;
 }) {
   const { colors } = useThemeColors();
   const { t } = useTranslation();
@@ -216,11 +219,24 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses }: {
   if (!cropDef) return null;
   const cropEmoji = cropDef.emoji;
   const cropName = t(`farm.crop.${cropDef.id}`);
-  const effectiveTasksPerStage = Math.max(1, cropDef.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+  // Bonus identiques à advanceFarmCrops dans farm-engine.ts:174-175
+  const plotBonus = PLOT_LEVEL_BONUSES[getPlotLevel(plotLevels, tooltipInfo.plotIndex)]?.tasksPerStageReduction ?? 0;
+  const sprintBonus = growthSprintActive ? 1 : 0;
+  const effectiveTasksPerStage = Math.max(
+    1,
+    cropDef.tasksPerStage
+      - (techBonuses?.tasksPerStageReduction ?? 0)
+      - plotBonus
+      - sprintBonus
+  );
   const totalPoints = effectiveTasksPerStage * 4;
   const isSeasonal = hasCropSeasonalBonus(cropDef.id);
   const pointsRemaining = Math.max(0, totalPoints - tooltipInfo.tasksCompleted);
-  const remaining = isSeasonal ? Math.ceil(pointsRemaining / 2) : pointsRemaining;
+  // Vitesse par tâche : main plot = seasonBonus, autres plots = seasonBonus * 0.5
+  const seasonBonus = isSeasonal ? 2 : 1;
+  const isMainPlot = mainPlotIndex === tooltipInfo.plotIndex;
+  const incrementPerTask = isMainPlot ? seasonBonus : seasonBonus * 0.5;
+  const remaining = Math.ceil(pointsRemaining / incrementPerTask);
 
   const TOOLTIP_W = 160;
   const TOOLTIP_H = 44;
@@ -395,7 +411,7 @@ export default function TreeScreen() {
     yesterdayTasks: number;
     hasBonus: boolean;
   } | null>(null);
-  const [tooltipInfo, setTooltipInfo] = useState<{ cellId: string; cropId: string; tasksCompleted: number } | null>(null);
+  const [tooltipInfo, setTooltipInfo] = useState<{ cellId: string; cropId: string; tasksCompleted: number; plotIndex: number } | null>(null);
 
   // Craft
   const [showCraftSheet, setShowCraftSheet] = useState(false);
@@ -1240,12 +1256,21 @@ export default function TreeScreen() {
         }
       });
     } else if (crop) {
-      // Tooltip info sur culture en croissance
+      // Tooltip info sur culture en croissance — calcul aligné sur farm-engine.ts:174-175
       const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
       const stagesDone = crop.currentStage;
-      const effectiveTpS = Math.max(1, (cropDef?.tasksPerStage ?? 0) - (techBonuses?.tasksPerStageReduction ?? 0));
+      const plotBonus = PLOT_LEVEL_BONUSES[getPlotLevel(profile.plotLevels, crop.plotIndex)]?.tasksPerStageReduction ?? 0;
+      const sprintActive = !!(profile.growthSprintUntil && new Date(profile.growthSprintUntil) > new Date());
+      const sprintBonus = sprintActive ? 1 : 0;
+      const effectiveTpS = Math.max(
+        1,
+        (cropDef?.tasksPerStage ?? 0)
+          - (techBonuses?.tasksPerStageReduction ?? 0)
+          - plotBonus
+          - sprintBonus
+      );
       const totalCompleted = stagesDone * effectiveTpS + crop.tasksCompleted;
-      setTooltipInfo({ cellId, cropId: crop.cropId, tasksCompleted: totalCompleted });
+      setTooltipInfo({ cellId, cropId: crop.cropId, tasksCompleted: totalCompleted, plotIndex: crop.plotIndex });
       setTimeout(() => setTooltipInfo(null), 3000);
     } else {
       setSelectedPlotIndex(cellIdx);
@@ -2014,7 +2039,17 @@ export default function TreeScreen() {
             </View>
 
             {/* Tooltip info culture */}
-            {tooltipInfo && <CropTooltip tooltipInfo={tooltipInfo} stageInfo={stageInfo} stageIdx={stageIdx} techBonuses={techBonuses} />}
+            {tooltipInfo && (
+              <CropTooltip
+                tooltipInfo={tooltipInfo}
+                stageInfo={stageInfo}
+                stageIdx={stageIdx}
+                techBonuses={techBonuses}
+                plotLevels={profile?.plotLevels}
+                growthSprintActive={!!(profile?.growthSprintUntil && new Date(profile.growthSprintUntil) > new Date())}
+                mainPlotIndex={getMainPlotIndex(parseCrops(profile?.farmCrops ?? ''))}
+              />
+            )}
 
             {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay} pointerEvents="box-none">
