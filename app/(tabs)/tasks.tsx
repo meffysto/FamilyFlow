@@ -170,11 +170,15 @@ function buildFilters(profiles: Profile[], activeProfile: Profile | null, t: (ke
     label: p.name,
     emoji: p.avatar,
   }));
-  const staticFilters = STATIC_FILTER_IDS.map((f) => ({ id: f.id, label: t(f.labelKey), emoji: f.emoji }));
+  const [tousFilter, retardFilter, maisonFilter] = STATIC_FILTER_IDS.map((f) => ({
+    id: f.id,
+    label: t(f.labelKey),
+    emoji: f.emoji,
+  }));
   const mesTaches: FilterDef[] = activeProfile
     ? [{ id: 'mes-taches', label: t('tasks.filters.myTasks'), emoji: activeProfile.avatar }]
     : [];
-  return [staticFilters[0], ...mesTaches, ...enfantFilters, ...staticFilters.slice(1)];
+  return [tousFilter, retardFilter, ...mesTaches, ...enfantFilters, maisonFilter];
 }
 
 interface TaskSection {
