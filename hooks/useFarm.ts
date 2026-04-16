@@ -77,6 +77,16 @@ function farmFile(profileId: string): string {
 }
 
 /** Applique une valeur de champ sur un objet FarmProfileData (mapper fieldKey → propriété) */
+// Migration: anciens itemId de loot d'expédition → IDs réels dans INHABITANTS
+const INHABITANT_ID_MIGRATIONS: Record<string, string> = {
+  aigle_expedition: 'aigle_dore',
+  renard_expedition: 'renard_arctique',
+};
+
+function migrateInhabitantId(id: string): string {
+  return INHABITANT_ID_MIGRATIONS[id] ?? id;
+}
+
 function applyFarmField(data: FarmProfileData, fieldKey: string, value: string): void {
   switch (fieldKey) {
     case 'tree_species':
@@ -86,14 +96,16 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
       data.mascotDecorations = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
       break;
     case 'mascot_inhabitants':
-      data.mascotInhabitants = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+      data.mascotInhabitants = value
+        ? value.split(',').map(s => migrateInhabitantId(s.trim())).filter(Boolean)
+        : [];
       break;
     case 'mascot_placements': {
       const placements: Record<string, string> = {};
       if (value) {
         value.split(',').forEach(pair => {
           const [slotId, itemId] = pair.split(':').map(s => s.trim());
-          if (slotId && itemId) placements[slotId] = itemId;
+          if (slotId && itemId) placements[slotId] = migrateInhabitantId(itemId);
         });
       }
       data.mascotPlacements = placements;
