@@ -610,6 +610,8 @@ export interface FarmProfileData {
   expeditionPity?: number;
   // Amélioration des parcelles (sink feuilles)
   plotLevels?: number[];  // niveau 1-5 par plotIndex (absent = tout niveau 1)
+  // Deal du jour — quota per-profil (stock séparé du marché)
+  dailyDealPurchases?: { dateKey: string; itemId: string; purchased: number };
 }
 
 // ─── Phase 33 — Expeditions ──────────────────────────────────────────────────

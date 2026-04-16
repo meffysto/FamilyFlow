@@ -179,17 +179,21 @@ export const MARKET_ITEMS: MarketItemDef[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Deal du jour — FOMO quotidien
+// Deal du jour — FOMO quotidien (stock séparé du marché, quota per-profil)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Réduction appliquée au deal du jour (50% du prix d'achat courant) */
 const DAILY_DEAL_DISCOUNT = 0.5;
+
+/** Quota d'achats du deal du jour par profil et par jour */
+export const DAILY_DEAL_STOCK_PER_PROFILE = 2;
 
 export interface DailyDeal {
   def: MarketItemDef;
   discountedPrice: number;
   originalPrice: number;
   dateKey: string;           // YYYY-MM-DD — change chaque jour
+  remaining: number;         // Achats restants pour ce profil aujourd'hui
 }
 
 /**
@@ -205,24 +209,49 @@ function hashDateString(s: string): number {
 }
 
 /**
- * Retourne le deal du jour — un item aléatoire (déterministe par date) à -50%.
- * Exclut les items avec stock 0 (rupture totale).
- * Le deal change à minuit.
+ * Retourne le deal du jour — un item tiré d'un pool STABLE (initialStock > 0) à -50%.
+ *
+ * Pool stable : on filtre sur `initialStock > 0` (pas sur le stock courant) donc
+ *  - L'item ne disparaît jamais quand marketStock tombe à 0 (stock séparé du marché)
+ *  - Exclut tresor_familial et grand_festin (initialStock=0, unlocks spéciaux)
+ *
+ * Quota per-profil : si profileDealPurchases est fourni ET concerne le même
+ * itemId + dateKey, on calcule remaining. Au-delà du quota (>= DAILY_DEAL_STOCK_PER_PROFILE),
+ * retourne null (la carte disparaît côté UI).
+ *
+ * Le deal change à minuit (nouveau dateKey) OU quand l'itemId change (reset compteur).
  */
-export function getDailyDeal(marketStock: MarketStock, now: Date = new Date()): DailyDeal | null {
+export function getDailyDeal(
+  marketStock: MarketStock,
+  now: Date = new Date(),
+  profileDealPurchases?: { dateKey: string; itemId: string; purchased: number },
+): DailyDeal | null {
   const dateKey = formatDateYMD(now);
   const hash = hashDateString(`deal-${dateKey}`);
 
-  // Items éligibles : stock > 0
-  const eligible = MARKET_ITEMS.filter(item => (marketStock[item.itemId] ?? 0) > 0);
+  // Pool STABLE basé sur initialStock > 0 (exclut tresor_familial, grand_festin)
+  // → l'item du deal ne disparaît pas quand marketStock[item] tombe à 0
+  const eligible = MARKET_ITEMS.filter(item => item.initialStock > 0);
   if (eligible.length === 0) return null;
 
   const picked = eligible[hash % eligible.length];
-  const stock = marketStock[picked.itemId] ?? 0;
-  const originalPrice = getBuyPrice(picked, stock);
+  // Prix calculé sur le stock marché courant (ou referenceStock si rupture)
+  // — pour garder un prix cohérent même si le marché est à 0
+  const stockForPrice = Math.max(1, marketStock[picked.itemId] ?? picked.referenceStock);
+  const originalPrice = getBuyPrice(picked, stockForPrice);
   const discountedPrice = Math.max(1, Math.round(originalPrice * DAILY_DEAL_DISCOUNT));
 
-  return { def: picked, discountedPrice, originalPrice, dateKey };
+  // Calcul du remaining : seulement si même date ET même item
+  const purchasedToday =
+    profileDealPurchases &&
+    profileDealPurchases.dateKey === dateKey &&
+    profileDealPurchases.itemId === picked.itemId
+      ? profileDealPurchases.purchased
+      : 0;
+  const remaining = DAILY_DEAL_STOCK_PER_PROFILE - purchasedToday;
+  if (remaining <= 0) return null;
+
+  return { def: picked, discountedPrice, originalPrice, dateKey, remaining };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

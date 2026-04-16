@@ -677,6 +677,15 @@ export function parseFarmProfile(content: string): FarmProfileData {
     plotLevels: props.plot_levels
       ? props.plot_levels.split(',').map(s => parseInt(s, 10) || 1)
       : undefined,
+    dailyDealPurchases: (() => {
+      if (!props.daily_deal_purchases) return undefined;
+      const parts = props.daily_deal_purchases.split('|');
+      if (parts.length !== 3) return undefined;
+      const [dateKey, itemId, countRaw] = parts.map(s => s.trim());
+      const purchased = parseInt(countRaw, 10);
+      if (!dateKey || !itemId || isNaN(purchased)) return undefined;
+      return { dateKey, itemId, purchased };
+    })(),
   };
 }
 
@@ -734,6 +743,10 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   }
   if (data.plotLevels && data.plotLevels.some(l => l > 1)) {
     lines.push(`plot_levels: ${data.plotLevels.join(',')}`);
+  }
+  if (data.dailyDealPurchases) {
+    const { dateKey, itemId, purchased } = data.dailyDealPurchases;
+    lines.push(`daily_deal_purchases: ${dateKey}|${itemId}|${purchased}`);
   }
 
   return lines.join('\n') + '\n';
