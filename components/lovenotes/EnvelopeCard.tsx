@@ -38,6 +38,18 @@ const STACK_BACK_1 = '#e8d5a8';
 const STACK_BACK_2 = '#dfc898';
 const TILT_DEG = '-1.5deg';
 const SEAL_SIZE = 72;
+// Timbre cœur — couleurs identitaires (hors thème, cohérent avec mockup lovenote-envelope.html)
+const STAMP_RED = '#c94a5c';
+const STAMP_RED_DARK = '#9d2737';
+const POSTMARK_INK = 'rgba(68,36,52,0.35)';
+const POSTMARK_TEXT = 'rgba(68,36,52,0.55)';
+
+/** Format postmark date `·DD·MM·` */
+function formatPostmarkDate(d: Date = new Date()): string {
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `·${dd}·${mm}·`;
+}
 
 interface EnvelopeCardProps {
   count: number;
@@ -129,6 +141,18 @@ function EnvelopeCardBase({ count, recipientName, onPress }: EnvelopeCardProps) 
               {recipientName}
             </Text>
           </View>
+
+          {/* Timbre cœur (haut-droit, légère rotation) */}
+          <View style={styles.stamp}>
+            <Text style={styles.stampEmoji}>💕</Text>
+          </View>
+
+          {/* Postmark circulaire "POUR TOI" + date (gauche du timbre) */}
+          <View style={styles.postmark}>
+            <Text style={styles.postmarkText}>POUR</Text>
+            <Text style={styles.postmarkText}>TOI</Text>
+            <Text style={styles.postmarkDate}>{formatPostmarkDate()}</Text>
+          </View>
         </View>
       </PressableScale>
     </View>
@@ -150,12 +174,12 @@ const styles = StyleSheet.create({
     backgroundColor: PAPER_LIGHT,
     borderRadius: 8,
     overflow: 'hidden',
-    // Multi-couche shadow simulant l'inset paper
+    // Ombre profonde — feel "posé sur la table" relief marqué
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.45,
+    shadowRadius: 32,
+    elevation: 16,
     borderWidth: 1,
     borderColor: PAPER_SHADOW,
   },
@@ -192,18 +216,68 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 24,
   },
+  stamp: {
+    position: 'absolute',
+    top: 10,
+    right: 12,
+    width: 46,
+    height: 52,
+    backgroundColor: STAMP_RED,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '4deg' }],
+    zIndex: 2,
+    shadowColor: STAMP_RED_DARK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  stampEmoji: {
+    fontSize: 22,
+  },
+  postmark: {
+    position: 'absolute',
+    top: 28,
+    right: 68,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1.5,
+    borderColor: POSTMARK_INK,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '-6deg' }],
+    zIndex: 2,
+  },
+  postmarkText: {
+    fontSize: 8,
+    color: POSTMARK_TEXT,
+    letterSpacing: 0.5,
+    lineHeight: 10,
+    fontWeight: '700',
+  },
+  postmarkDate: {
+    fontSize: 8,
+    color: POSTMARK_TEXT,
+    letterSpacing: 0.3,
+    marginTop: 1,
+  },
   stackBack: {
     position: 'absolute',
     left: 8,
     right: 8,
     height: '100%',
     borderRadius: 8,
-    // Ombre légère sur les enveloppes empilées
+    // Ombre moyenne sur les enveloppes empilées (renforcée pour relief stack)
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
   },
 });
 
