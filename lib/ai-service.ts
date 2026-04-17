@@ -1089,27 +1089,40 @@ export async function improveLoveNote(
 ): Promise<AIResponse> {
   const trimmed = body.trim();
   if (!trimmed) return { text: '', error: 'Texte vide' };
-  const haikuConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  // Sonnet 4.6 > Haiku sur le respect strict d'instructions de reformulation
+  const sonnetConfig = { ...config, model: 'claude-sonnet-4-6' };
   const styleInstr = style
-    ? `Style demande : ${STYLE_DIRECTIVES[style]}`
-    : 'Style : ton chaleureux et sincere.';
+    ? `Style demandé : ${STYLE_DIRECTIVES[style]}`
+    : 'Style : ton chaleureux et sincère.';
   const lengthRule = style === 'concis'
-    ? 'Reduis au strict essentiel — une ou deux phrases max.'
-    : 'Garde la longueur proche de l\'original (max +20%).';
+    ? 'Réduis au strict essentiel — une ou deux phrases max.'
+    : 'Garde la longueur proche de l\'original (entre -10% et +20%).';
   const systemPrompt = [
-    "Tu aides a ameliorer une petite note tendre (love note) ecrite en francais au sein d'une famille.",
-    'Objectifs : corriger les fautes, affiner les tournures, preserver STRICTEMENT l\'intention et la voix originale.',
-    styleInstr,
-    'Contraintes :',
-    '- Reponds UNIQUEMENT avec le texte ameliore, sans guillemets, sans introduction, sans commentaire.',
-    "- Ne rajoute jamais de nom propre, de signature, ni d'emoji si l'original n'en contient pas.",
-    `- ${lengthRule}`,
-    '- Reste en francais.',
+    'Tu es un correcteur-rédacteur. Tu REFORMULES une petite note personnelle en français.',
+    '',
+    'RÈGLES ABSOLUES (ne les viole JAMAIS) :',
+    "1. Tu ne changes PAS le sens, les faits, les références ni les noms mentionnés dans la note.",
+    "2. Tu gardes la MÊME personne (tu/vous), le MÊME destinataire implicite, le MÊME contexte.",
+    "3. Tu NE RÉPONDS PAS au message, tu le RÉÉCRIS. Tu n'ajoutes JAMAIS d'information externe.",
+    "4. Si le message est déjà bon, tu fais juste une correction minimale (orthographe/ponctuation).",
+    "5. Tu ne commentes pas, tu ne te présentes pas, tu n'es jamais « une IA » dans la sortie.",
+    '',
+    `PARAMÈTRE DE STYLE : ${styleInstr}`,
+    `LONGUEUR : ${lengthRule}`,
+    '',
+    'FORMAT DE SORTIE :',
+    "- UNIQUEMENT le texte réécrit. Rien d'autre. Pas de préambule. Pas de guillemets autour.",
+    "- N'ajoute pas d'emoji si l'original n'en contient pas. N'ajoute pas de signature.",
+    '- Markdown simple conservé si présent (**gras**, *italique*).',
+    '- Reste en français.',
+    '',
+    'La note te sera fournie entre <note>…</note>. Ta réponse = UNIQUEMENT le texte réécrit.',
   ].join('\n');
+  const userPrompt = `<note>\n${trimmed}\n</note>`;
   return callClaude(
-    haikuConfig,
+    sonnetConfig,
     systemPrompt,
-    [{ role: 'user', content: trimmed }],
-    600,
+    [{ role: 'user', content: userPrompt }],
+    800,
   );
 }
