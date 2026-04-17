@@ -19,12 +19,13 @@ Sentry.init({
 });
 
 import React, { useEffect, useState } from 'react';
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { VaultProvider, useVault } from '../contexts/VaultContext';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
@@ -129,10 +130,33 @@ function RootLayout() {
   useEffect(() => {
     configureNotifications();
 
+    // Cold start : récupérer la dernière notif tappée si l'app a été lancée par notif (Pitfall 7)
+    Notifications.getLastNotificationResponseAsync()
+      .then((resp) => {
+        const route = resp?.notification.request.content.data?.route;
+        if (typeof route === 'string') {
+          // Délai léger pour laisser expo-router monter le Stack
+          setTimeout(() => router.push(route as any), 0);
+        }
+      })
+      .catch(() => {
+        /* idempotent — silent */
+      });
+
+    // Warm start : listener pour notifs reçues pendant que l'app est vivante
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const route = response.notification.request.content.data?.route;
+      if (typeof route === 'string') {
+        router.push(route as any);
+      }
+    });
+
     (async () => {
       await loadSavedLanguage();
       setLangReady(true);
     })();
+
+    return () => sub.remove();
   }, []);
 
   // Le Stack monte TOUJOURS dès le premier rendu pour que
