@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Love Notes
-status: verifying
-last_updated: "2026-04-17T07:31:36.434Z"
+status: executing
+last_updated: "2026-04-17T08:10:43.788Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 9
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 11
+  total_plans: 12
+  completed_plans: 12
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 34 — fondation-donn-es-hook-domaine
+**Current focus:** Phase 35 — carte-enveloppe-dashboard-cran-bo-te-aux-lettres
 
 ## Current Position
 
-Phase: 35
-Plan: Not started
+Phase: 35 (carte-enveloppe-dashboard-cran-bo-te-aux-lettres) — EXECUTING
+Plan: 2 of 3
 Milestone: v1.6 Love Notes
 Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
-Last activity: 2026-04-17 - Completed quick task 260417-dp6: Migration ID habitants parseFarmProfile
+Last activity: 2026-04-17
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Phase complete — ready for verification
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -153,6 +153,7 @@ Status: Phase complete — ready for verification
 | Phase 34 P01 | 5min | 3 tasks | 4 files |
 | Phase 34 P02 | 3min | 1 tasks | 1 files |
 | Phase 34 P03 | 4min | 2 tasks | 2 files |
+| Phase 35 P01 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -288,6 +289,8 @@ Recent decisions affecting current work:
 - [Phase 34]: [Phase 34-03]: useVaultLoveNotes pattern useVaultNotes replique — 126 lignes, aucune divergence structurelle
 - [Phase 34]: [Phase 34-03]: updateLoveNoteStatus relit le fichier avant patch (source of truth = disque, preserve body/from/to)
 - [Phase 34]: [Phase 34-03]: Placeholder Plan 01 loveNotes:[] remplace par val(results[23]) — persist effectif, Known Stub resolu
+- [Phase 35]: isRevealed compare en heure locale (pad manuel) — LoveNote.revealAt est local-ISO sans Z, toISOString() shift en UTC et casse les comparaisons sur machines non-UTC
+- [Phase 35]: receivedForProfile tri 3-tier (revealed-unread > read > pending-futur) — preserve la surprise des notes programmees futures
 
 ### Todos
 
@@ -299,5 +302,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-17T07:27:42.454Z
+Last session: 2026-04-17T08:10:43.785Z
 Next: Plan Phase 34 (Fondation données & hook domaine)

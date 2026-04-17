@@ -24,9 +24,9 @@
 ### Catégorie BOÎTE AUX LETTRES — UI dashboard & écran dédié
 
 - [ ] **LOVE-05**: User voit une carte "enveloppe" distinctive (format paysage ≈ 2:1.15, papier ivoire, rabat triangulaire, cachet de cire rouge animé pulse, tilt -1.5°) pinned tout en haut du dashboard — rendue uniquement si au moins 1 love note destinée au profil actif est non lue ou prête à être révélée
-- [ ] **LOVE-06**: User voit un compteur (badge sur cachet) et un effet stack visuel (enveloppes empilées derrière) quand ≥2 notes sont en attente
-- [ ] **LOVE-07**: User peut accéder à sa boîte aux lettres complète (écran `/lovenotes`) depuis la carte enveloppe ET depuis une tuile permanente dans l'écran `more.tsx`
-- [ ] **LOVE-08**: User voit l'écran Boîte organisé en 3 segments : "Reçues" (non lues en priorité), "Envoyées" (programmées en attente de révélation côté destinataire), "Archivées" (reçues déjà lues + envoyées révélées)
+- [x] **LOVE-06**: User voit un compteur (badge sur cachet) et un effet stack visuel (enveloppes empilées derrière) quand ≥2 notes sont en attente
+- [x] **LOVE-07**: User peut accéder à sa boîte aux lettres complète (écran `/lovenotes`) depuis la carte enveloppe ET depuis une tuile permanente dans l'écran `more.tsx`
+- [x] **LOVE-08**: User voit l'écran Boîte organisé en 3 segments : "Reçues" (non lues en priorité), "Envoyées" (programmées en attente de révélation côté destinataire), "Archivées" (reçues déjà lues + envoyées révélées)
 
 ### Catégorie COMPOSITION & RÉVÉLATION — Écriture et timing
 
@@ -78,9 +78,9 @@ Mapping REQ-ID → Phase (100% coverage des 17 REQ-IDs v1).
 | LOVE-03 | Phase 34 — Fondation données & hook domaine | Complete |
 | LOVE-04 | Phase 34 — Fondation données & hook domaine | Complete |
 | LOVE-05 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
-| LOVE-06 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
-| LOVE-07 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
-| LOVE-08 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
+| LOVE-06 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Complete |
+| LOVE-07 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Complete |
+| LOVE-08 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Complete |
 | LOVE-09 | Phase 36 — Composition & programmation reveal | Pending |
 | LOVE-10 | Phase 36 — Composition & programmation reveal | Pending |
 | LOVE-11 | Phase 36 — Composition & programmation reveal | Pending |

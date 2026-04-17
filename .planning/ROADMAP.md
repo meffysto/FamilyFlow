@@ -194,9 +194,9 @@ Plans:
   3. User peut accéder à sa boîte aux lettres complète (`/lovenotes`) en tappant la carte enveloppe OU via une tuile permanente dans l'écran `more.tsx`
   4. User voit l'écran Boîte aux lettres organisé en 3 segments segmented control : "Reçues" (non lues en priorité), "Envoyées" (programmées en attente), "Archivées" (lues + révélées) — chaque segment affiche sa propre liste virtualisée de `LoveNoteCard` mémoïsés
   5. User voit la carte enveloppe disparaître automatiquement du dashboard quand plus aucune note reçue n'est pending/unread pour le profil actif (pas de flash, render conditionnel propre)
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 35-01-PLAN.md — Selectors dérivés purs + route skeleton /(tabs)/lovenotes + _layout href:null (LOVE-06, LOVE-07, LOVE-08)
+- [x] 35-01-PLAN.md — Selectors dérivés purs + route skeleton /(tabs)/lovenotes + _layout href:null (LOVE-06, LOVE-07, LOVE-08)
 - [ ] 35-02-PLAN.md — Composants visuels : WaxSeal + EnvelopeFlap + EnvelopeCard + LoveNoteCard + câblage écran (LOVE-05, LOVE-06, LOVE-08)
 - [ ] 35-03-PLAN.md — Injection dashboard pinned + tuile permanente more.tsx (LOVE-05, LOVE-07)
 **UI hint**: yes
@@ -237,7 +237,7 @@ Plans:
 | 32. Arbre familial commun | 0/TBD | Deferred | - |
 | 33. Expéditions | 3/3 | Complete   | 2026-04-14 |
 | 34. Fondation données & hook domaine | 3/3 | Complete    | 2026-04-17 |
-| 35. Carte enveloppe dashboard + écran boîte aux lettres | 0/TBD | Not started | - |
+| 35. Carte enveloppe dashboard + écran boîte aux lettres | 1/3 | In Progress|  |
 | 36. Composition & programmation reveal | 0/TBD | Not started | - |
 | 37. Garde-parent & polish | 0/TBD | Not started | - |
 
