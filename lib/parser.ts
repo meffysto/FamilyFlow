@@ -37,6 +37,8 @@ import {
   WishOccasion,
   Anniversary,
   Note,
+  LoveNote,
+  LoveNoteStatus,
   ChildQuote,
   MoodEntry,
   MoodLevel,
@@ -2747,6 +2749,83 @@ export function serializeNote(note: Omit<Note, 'sourceFile'>): string {
   lines.push(note.content);
   lines.push('');
 
+  return lines.join('\n');
+}
+
+// ─── Love Notes (messages affectifs programmes — Phase 34) ──────────────────
+
+/** Repertoire racine des love notes dans le vault (classement par destinataire) */
+export const LOVENOTES_DIR = '03 - Famille/LoveNotes';
+
+/**
+ * Genere un nom de fichier slug a partir d'un timestamp createdAt ISO.
+ * Format : YYYY-MM-DD-{suffix}.md ou suffix est le base36 des 9 caracteres HHMMSSmmm
+ * (heure:minute:seconde:ms sans separateurs). Collision-safe a la milliseconde pres.
+ * Ex: createdAt='2026-04-16T14:32:17.123' -> '2026-04-16-8bzn7f.md' (deterministe).
+ */
+export function loveNoteFileName(createdAt: string): string {
+  const datePart = createdAt.slice(0, 10); // YYYY-MM-DD
+  // Hash base36 des caracteres HH:mm:ss.mmm (9 chiffres apres slice+replace)
+  const timePart = createdAt.slice(11).replace(/[:.]/g, '').slice(0, 9);
+  const digits = timePart.padEnd(9, '0'); // garantit au moins 9 chiffres si ms manquant
+  const suffix = Number(digits).toString(36);
+  return `${datePart}-${suffix}.md`;
+}
+
+/**
+ * Construit le chemin relatif complet d'une love note pour un destinataire donne.
+ * Pattern : 03 - Famille/LoveNotes/{toProfileId}/{YYYY-MM-DD-suffix}.md (LOVE-01).
+ */
+export function loveNotePath(toProfileId: string, createdAt: string): string {
+  return `${LOVENOTES_DIR}/${toProfileId}/${loveNoteFileName(createdAt)}`;
+}
+
+/**
+ * Parse une love note markdown avec frontmatter YAML.
+ * Retourne null si un champ requis manque ou si le statut est invalide.
+ */
+export function parseLoveNote(relativePath: string, content: string): LoveNote | null {
+  const { data, content: body } = parseFrontmatter(content);
+
+  // Validation stricte — tous les champs requis doivent etre presents
+  if (!data.from || !data.to || !data.createdAt || !data.revealAt || !data.status) return null;
+
+  const status = String(data.status);
+  if (status !== 'pending' && status !== 'revealed' && status !== 'read') return null;
+
+  return {
+    from: String(data.from),
+    to: String(data.to),
+    createdAt: String(data.createdAt),
+    revealAt: String(data.revealAt),
+    status: status as LoveNoteStatus,
+    readAt: data.readAt ? String(data.readAt) : undefined,
+    body: body.trim(),
+    sourceFile: relativePath,
+  };
+}
+
+/**
+ * Serialise une love note en markdown avec frontmatter YAML propre.
+ * Construction manuelle (PAS matter.stringify — Pitfall: coerce les dates ISO en Date).
+ * readAt n'est emis que si defini (pas de string 'undefined' literal — Pitfall 7).
+ */
+export function serializeLoveNote(note: Omit<LoveNote, 'sourceFile'>): string {
+  const lines = [
+    '---',
+    `from: "${note.from}"`,
+    `to: "${note.to}"`,
+    `createdAt: "${note.createdAt}"`,
+    `revealAt: "${note.revealAt}"`,
+    `status: "${note.status}"`,
+  ];
+  if (note.readAt) {
+    lines.push(`readAt: "${note.readAt}"`);
+  }
+  lines.push('---');
+  lines.push('');
+  lines.push(note.body);
+  lines.push('');
   return lines.join('\n');
 }
 
