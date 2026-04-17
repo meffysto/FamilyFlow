@@ -74,6 +74,11 @@
     .container{padding:0 20px}
     .nav-links{display:none !important}
   }
+  .lang-mobile{display:none}
+  @media (max-width:720px){
+    .lang-mobile{display:inline-flex}
+    .lang-desktop{display:none}
+  }
 </style>
 </head>
 <body>
@@ -363,14 +368,55 @@ function Nav({ accent }) {
           ].map(l => (
             <a key={l.label} href={l.href} style={{ fontSize:14, fontWeight:500, color:'var(--text-sub)' }}>{l.label}</a>
           ))}
-          <a href="https://apps.apple.com/fr/app/family-flow/id6760829141" target="_blank" rel="noopener" style={{
+          <LangSwitch current="en" />
+          <a href="https://apps.apple.com/us/app/family-flow/id6760829141" target="_blank" rel="noopener" style={{
             padding:'10px 18px', borderRadius:12, background:accent.primary, color:'#fff',
             fontWeight:600, fontSize:14, boxShadow:`0 6px 14px ${accent.glow}`,
             display:'inline-block'
           }}>Download · Free</a>
         </div>
+        <LangSwitch current="en" mobile />
       </div>
     </nav>
+  );
+}
+
+function LangSwitch({ current, mobile }){
+  const opts = [
+    { code:'fr', label:'FR', flag:'🇫🇷', href: current === 'en' ? '../' : './' },
+    { code:'en', label:'EN', flag:'🇬🇧', href:'./' },
+  ];
+  return (
+    <div
+      className={mobile ? 'lang-mobile' : 'lang-desktop'}
+      style={{
+        display:'inline-flex', alignItems:'center', gap:2,
+        padding:3, borderRadius:999,
+        background:'rgba(255,255,255,0.7)', border:'1px solid rgba(221,216,208,0.7)',
+        backdropFilter:'blur(10px)'
+      }}
+    >
+      {opts.map(o => {
+        const active = o.code === current;
+        return (
+          <a key={o.code}
+            href={active ? undefined : o.href}
+            aria-current={active ? 'page' : undefined}
+            style={{
+              display:'inline-flex', alignItems:'center', gap:4,
+              padding:'5px 10px', borderRadius:999,
+              fontSize:12, fontWeight:700,
+              background: active ? 'var(--text)' : 'transparent',
+              color: active ? '#fff' : 'var(--text-sub)',
+              cursor: active ? 'default' : 'pointer',
+              transition:'all 200ms ease'
+            }}
+          >
+            <span style={{ fontSize:11 }}>{o.flag}</span>{o.label}
+          </a>
+        );
+      })}
+    </div>
   );
 }
 
