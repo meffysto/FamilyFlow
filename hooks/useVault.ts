@@ -1319,6 +1319,7 @@ export function useVaultInternal(): VaultState {
         quotes: val(results[17], []) as ChildQuote[],
         moods: val(results[18], []) as MoodEntry[],
         secretMissions: val(results[20], []) as Task[],
+        loveNotes: [], // Phase 34 Plan 03 : sera remplace par le vrai load
       }).catch(() => { /* Cache save non-critical */ });
 
     } catch (e) {

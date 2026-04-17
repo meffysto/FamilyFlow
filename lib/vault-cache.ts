@@ -23,6 +23,7 @@ import type {
   CourseItem,
   GratitudeDay,
   HealthRecord,
+  LoveNote,
   MealItem,
   Memory,
   MoodEntry,
@@ -41,8 +42,8 @@ import type {
 } from './types';
 import type { JournalSummaryEntry } from './ai-service';
 
-const CACHE_VERSION = 1;
-const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v1.json';
+const CACHE_VERSION = 2;
+const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v2.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {
@@ -93,6 +94,7 @@ export interface VaultCacheState {
   quotes: ChildQuote[];
   moods: MoodEntry[];
   secretMissions: Task[];
+  loveNotes: LoveNote[];
 }
 
 /** Payload fourni par useVault — version et savedAt sont ajoutés lors du save. */
