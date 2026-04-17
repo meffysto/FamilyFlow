@@ -30,8 +30,8 @@
 
 ### Catégorie COMPOSITION & RÉVÉLATION — Écriture et timing
 
-- [ ] **LOVE-09**: User peut composer une nouvelle love note via un éditeur modal (`pageSheet` + drag-to-dismiss) comprenant : sélection destinataire (chip par profil famille, exclut l'auteur), zone texte markdown avec preview, picker date/heure de révélation
-- [ ] **LOVE-10**: User peut choisir des presets rapides pour le moment de révélation ("Demain matin", "Dimanche soir", "Dans 1 mois", date custom)
+- [x] **LOVE-09**: User peut composer une nouvelle love note via un éditeur modal (`pageSheet` + drag-to-dismiss) comprenant : sélection destinataire (chip par profil famille, exclut l'auteur), zone texte markdown avec preview, picker date/heure de révélation
+- [x] **LOVE-10**: User peut choisir des presets rapides pour le moment de révélation ("Demain matin", "Dimanche soir", "Dans 1 mois", date custom)
 - [x] **LOVE-11**: User voit une notification locale silencieuse planifiée au `revealAt` via `expo-notifications` qui déclenche le basculement de statut `pending` → `revealed`
 - [x] **LOVE-12**: User voit les love notes `pending` dont `revealAt <= now` basculer automatiquement en `revealed` à chaque retour app foreground (`AppState` → `active`)
 - [ ] **LOVE-13**: User voit une animation "unfold" Reanimated (rotation X du rabat ≥175°, cachet qui saute, contenu dévoilé) au tap sur une enveloppe `revealed`, accompagnée d'un haptic `notificationAsync('success')` — la note passe ensuite en `read`
@@ -81,8 +81,8 @@ Mapping REQ-ID → Phase (100% coverage des 17 REQ-IDs v1).
 | LOVE-06 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Complete |
 | LOVE-07 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Complete |
 | LOVE-08 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Complete |
-| LOVE-09 | Phase 36 — Composition & programmation reveal | Pending |
-| LOVE-10 | Phase 36 — Composition & programmation reveal | Pending |
+| LOVE-09 | Phase 36 — Composition & programmation reveal | Complete |
+| LOVE-10 | Phase 36 — Composition & programmation reveal | Complete |
 | LOVE-11 | Phase 36 — Composition & programmation reveal | Complete |
 | LOVE-12 | Phase 36 — Composition & programmation reveal | Complete |
 | LOVE-13 | Phase 36 — Composition & programmation reveal | Pending |
