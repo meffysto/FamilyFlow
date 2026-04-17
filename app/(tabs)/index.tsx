@@ -52,6 +52,9 @@ import { getCardTemplate } from '../../lib/card-templates';
 import { getFruitForWeek, getSizeForWeek, getFruitLabel } from '../../lib/pregnancy';
 import { GlassView } from '../../components/ui/GlassView';
 import { SectionErrorBoundary } from '../../components/SectionErrorBoundary';
+import * as Haptics from 'expo-haptics';
+import { EnvelopeCard } from '../../components/lovenotes';
+import { unreadForProfile } from '../../lib/lovenotes/selectors';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Layout } from '../../constants/spacing';
 import type { CardTemplateContext } from '../../lib/card-templates';
@@ -209,6 +212,7 @@ export default function DashboardScreen() {
     secretMissions,
     setActiveProfile,
     contributeFamilyQuest,
+    loveNotes,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -513,6 +517,12 @@ export default function DashboardScreen() {
     return generateInsights(input);
   }, [tasks, courses, stock, meals, rdvs, profiles, activeProfile,
     defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates, anniversaries, skillTrees]);
+
+  // Love notes en attente pour le profil actif (carte enveloppe pinned)
+  const pendingLoveNotes = useMemo(
+    () => (activeProfile ? unreadForProfile(loveNotes, activeProfile.id) : []),
+    [loveNotes, activeProfile?.id]
+  );
 
   // Tri intelligent
   const sortedSections = useMemo(() => {
@@ -1033,6 +1043,19 @@ export default function DashboardScreen() {
             isChildMode={isChildMode}
             tomorrow={tomorrowPreview}
           />
+        )}
+
+        {pendingLoveNotes.length > 0 && activeProfile && (
+          <SectionErrorBoundary key="lovenotes-envelope" name="Love Notes">
+            <EnvelopeCard
+              count={pendingLoveNotes.length}
+              recipientName={activeProfile.name}
+              onPress={() => {
+                Haptics.selectionAsync().catch(() => {});
+                router.push('/(tabs)/lovenotes' as any);
+              }}
+            />
+          </SectionErrorBoundary>
         )}
 
         {(() => {
