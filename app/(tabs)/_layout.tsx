@@ -275,6 +275,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="anniversaires" options={{ href: null }} />
         <Tabs.Screen name="compare" options={{ href: null }} />
         <Tabs.Screen name="notes" options={{ href: null }} />
+        <Tabs.Screen name="lovenotes" options={{ href: null }} />
         <Tabs.Screen name="quotes" options={{ href: null }} />
         <Tabs.Screen name="moods" options={{ href: null }} />
         <Tabs.Screen name="photos" options={{ href: null }} />
