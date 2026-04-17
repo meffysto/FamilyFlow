@@ -76,8 +76,9 @@ export default function LoveNotesScreen() {
   );
 
   // Destinataires : tous profils sauf auteur (Pitfall 9).
+  // Dev : inclut soi-meme pour test rapide (note a soi-meme).
   const recipientProfiles = useMemo(
-    () => profiles.filter((p) => p.id !== profileId),
+    () => (__DEV__ ? profiles : profiles.filter((p) => p.id !== profileId)),
     [profiles, profileId],
   );
 
