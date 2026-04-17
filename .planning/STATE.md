@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Love Notes
 status: executing
-last_updated: "2026-04-17T09:27:10.045Z"
+last_updated: "2026-04-17T12:02:02.096Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 9
   completed_phases: 4
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
   percent: 0
 ---
 
@@ -157,6 +157,7 @@ Status: Ready to execute
 | Phase 35 P02 | 6min | 2 tasks | 6 files |
 | Phase 35 P03 | 3min | 2 tasks | 2 files |
 | Phase 36 P01 | 12min | 4 tasks | 6 files |
+| Phase 36 P02 | 3min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -301,6 +302,7 @@ Recent decisions affecting current work:
 - [Phase 35]: Plan 35-03 : injection EnvelopeCard pinned dans dashboard (avant IIFE sortedSections.filter, hors config user) + tuile permanente 💌 Love Notes dans more.tsx famille — pure composition réutilisant Plans 01+02
 - [Phase 36]: addLoveNote retourne Promise<string> (sourceFile resolu) — source unique de verite pour Plan 03, elimine reconstruction fragile de loveNotePath cote ecran
 - [Phase 36]: Notif love note silencieuse (sound: false) — reveal doit rester surprise douce, pas ping bruyant
+- [Phase 36]: Plan 02 : useEffect RootLayout étendu (pas dupliqué) + setTimeout(..., 0) sur cold start pour gérer la race condition Stack mount avant router.push
 
 ### Todos
 
@@ -312,5 +314,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-17T09:27:10.042Z
+Last session: 2026-04-17T12:01:54.022Z
 Next: Plan Phase 34 (Fondation données & hook domaine)
