@@ -211,7 +211,12 @@ Plans:
   3. User voit une notification locale silencieuse planifiée au `revealAt` via `expo-notifications` — le tap sur la notif ouvre l'écran boîte aux lettres
   4. User voit les love notes `pending` dont `revealAt <= now` basculer automatiquement en `revealed` à chaque retour app foreground (`AppState` change → `active` → `revealPendingNotes()` appelé)
   5. User voit une animation "unfold" Reanimated (rotation X du rabat ≥175°, cachet qui saute, contenu dévoilé) au tap sur une enveloppe `revealed`, accompagnée d'un haptic `notificationAsync('success')` — la note passe ensuite en `read` avec `readAt` horodaté
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 36-01-PLAN.md — Reveal engine fondations (presets reveal-engine.ts + scheduleLoveNoteReveal/cancel + useRevealOnForeground hook) (LOVE-11, LOVE-12)
+- [ ] 36-02-PLAN.md — Notification routing app/_layout.tsx (warm + cold start) (LOVE-11)
+- [ ] 36-03-PLAN.md — LoveNoteEditor modal + FAB Écrire + useRevealOnForeground branché (LOVE-09, LOVE-10, LOVE-12)
+- [ ] 36-04-PLAN.md — EnvelopeUnfoldModal animation Reanimated + câblage tap LoveNoteCard (LOVE-13)
 **UI hint**: yes
 
 ### Phase 37: Garde-parent & polish
