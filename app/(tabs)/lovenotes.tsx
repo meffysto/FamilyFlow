@@ -111,7 +111,6 @@ export default function LoveNotesScreen() {
   const handleUnfoldComplete = useCallback(async () => {
     if (!unfoldNote) return;
     // Dev test note : pas d'écriture vault (sourceFile factice)
-    if (__DEV__ && unfoldNote.sourceFile === '__dev_test__') return;
     try {
       await updateLoveNoteStatus(unfoldNote.sourceFile, 'read');
     } catch (e) {
@@ -224,65 +223,6 @@ export default function LoveNotesScreen() {
         </Pressable>
       )}
 
-      {/* DEV only — boutons iteration */}
-      {__DEV__ && (
-        <>
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-              setUnfoldNote({
-                sourceFile: '__dev_test__',
-                from: activeProfile?.id ?? 'dev',
-                to: activeProfile?.id ?? 'dev',
-                body: 'Ceci est une note de test pour itérer sur l\'animation unfold. ✨\n\nBody en **markdown** avec une *seconde ligne* pour voir le rendu complet.',
-                revealAt: localIso(new Date()),
-                createdAt: localIso(new Date()),
-                status: 'revealed',
-              });
-            }}
-            style={[
-              styles.fabDev,
-              { backgroundColor: colors.cardAlt, bottom: tabBarHeight + Spacing['2xl'] },
-              Shadows.md,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Rejouer animation unfold (dev)"
-          >
-            <Text style={[styles.fabText, { color: colors.text }]}>🧪 Test anim</Text>
-          </Pressable>
-
-          {activeProfile && (
-            <Pressable
-              onPress={async () => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-                try {
-                  const createdAt = localIso(new Date());
-                  const revealAt = localIso(new Date(Date.now() - 60_000));
-                  await addLoveNote({
-                    from: activeProfile.id,
-                    to: activeProfile.id,
-                    body: `Note injectée en DEV à ${new Date().toLocaleTimeString('fr-FR')}.\n\nTape la carte pour voir l'animation sur une vraie note.`,
-                    revealAt,
-                    createdAt,
-                    status: 'revealed',
-                  });
-                } catch (e) {
-                  if (__DEV__) console.warn('[dev inject note]', e);
-                }
-              }}
-              style={[
-                styles.fabDev2,
-                { backgroundColor: colors.cardAlt, bottom: tabBarHeight + Spacing['2xl'] + 56 },
-                Shadows.md,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Injecter une note revealed (dev)"
-            >
-              <Text style={[styles.fabText, { color: colors.text }]}>💌 Inject note</Text>
-            </Pressable>
-          )}
-        </>
-      )}
       {activeProfile && (
         <LoveNoteEditor
           visible={editorVisible}
@@ -323,20 +263,6 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: Spacing['2xl'],
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: 999,
-  },
-  fabDev: {
-    position: 'absolute',
-    left: Spacing['2xl'],
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: 999,
-  },
-  fabDev2: {
-    position: 'absolute',
-    left: Spacing['2xl'],
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
     borderRadius: 999,
