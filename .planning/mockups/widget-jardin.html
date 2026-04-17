@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Widgets Mon Jardin — FamilyFlow</title>
+<style>
+  :root {
+    --sky-top: #597dce;
+    --sky-bot: #6dc2ca;
+    --grass: #346524;
+    --grass-light: #5a8a3a;
+    --earth: #854c30;
+    --earth-dark: #442434;
+    --wood: #d27d2c;
+    --gold: #dad45e;
+    --cream: #deeed6;
+    --white: #ffffff;
+    --text: #1a1a2e;
+    --text-soft: #4e4a4e;
+    --red: #d04648;
+    --peach: #d2aa99;
+    --widget-bg: rgba(255,255,255,0.95);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 20% 10%, #ffd89b 0%, transparent 40%),
+      radial-gradient(circle at 80% 30%, #ff6a88 0%, transparent 40%),
+      linear-gradient(160deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+    padding: 48px 24px;
+    color: white;
+  }
+
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  .subtitle {
+    font-size: 15px;
+    opacity: 0.85;
+    margin-bottom: 48px;
+  }
+
+  .section {
+    margin-bottom: 56px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.7;
+    margin-bottom: 16px;
+    padding-left: 4px;
+  }
+
+  .widget-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  /* ========== WIDGET BASE ========== */
+  .widget {
+    background: var(--widget-bg);
+    border-radius: 22px;
+    box-shadow:
+      0 10px 40px rgba(0,0,0,0.25),
+      0 2px 8px rgba(0,0,0,0.15),
+      inset 0 1px 0 rgba(255,255,255,0.5);
+    position: relative;
+    overflow: hidden;
+    color: var(--text);
+    backdrop-filter: blur(20px);
+  }
+
+  /* ========== SMALL 170x170 ========== */
+  .widget-small {
+    width: 170px;
+    height: 170px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #bde4f5 0%, #e8f4dc 60%, #9bc67a 100%);
+  }
+
+  .ws-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-soft);
+  }
+  .ws-level {
+    background: rgba(255,255,255,0.7);
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 9px;
+  }
+
+  .ws-scene {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    margin-top: 4px;
+  }
+
+  .sun {
+    position: absolute;
+    top: -4px;
+    left: 10px;
+    width: 20px;
+    height: 20px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(218,212,94,0.7);
+  }
+
+  /* Pixel dog — grid-based */
+  .pixel-dog {
+    image-rendering: pixelated;
+    display: grid;
+    grid-template-columns: repeat(10, 6px);
+    grid-template-rows: repeat(8, 6px);
+    gap: 0;
+    margin-bottom: 8px;
+  }
+  .pixel-dog div { width: 6px; height: 6px; }
+  .px-b { background: #442434; }     /* outline */
+  .px-b1 { background: #854c30; }    /* body dark */
+  .px-b2 { background: #d27d2c; }    /* body */
+  .px-b3 { background: #d2aa99; }    /* body light */
+  .px-e { background: #140c1c; }     /* eye */
+  .px-p { background: #d04648; }     /* tongue */
+
+  .ws-xp-bar {
+    height: 6px;
+    background: rgba(68,36,52,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+    position: relative;
+  }
+  .ws-xp-fill {
+    width: 68%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--wood));
+    border-radius: 3px;
+  }
+  .ws-xp-label {
+    font-size: 9px;
+    color: var(--text-soft);
+    margin-top: 3px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ws-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    background: rgba(208,70,72,0.95);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(208,70,72,0.4);
+  }
+
+  /* ========== MEDIUM 364x170 ========== */
+  .widget-medium {
+    width: 364px;
+    height: 170px;
+    display: flex;
+    padding: 14px;
+    gap: 12px;
+    background: linear-gradient(180deg, #f5ecd5 0%, #e6d8b5 100%);
+  }
+
+  .wm-left {
+    flex: 1.3;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .wm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .wm-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--earth-dark);
+  }
+  .wm-streak {
+    font-size: 10px;
+    background: linear-gradient(90deg, #ff9a56, #ff6b6b);
+    color: white;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  .plots {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+  .plot {
+    flex: 1;
+    height: 70px;
+    background: linear-gradient(180deg, #8b5a3c 0%, #5c3820 100%);
+    border-radius: 8px;
+    border: 2px solid #442434;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 6px;
+    position: relative;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
+  }
+  .plot-icon {
+    font-size: 22px;
+    line-height: 1;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+  }
+  .plot-timer {
+    position: absolute;
+    top: -6px;
+    right: -4px;
+    background: var(--text);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .plot.ready .plot-timer {
+    background: var(--grass);
+    animation: pulse 1.5s infinite;
+  }
+  .plot.ready::after {
+    content: "✨";
+    position: absolute;
+    top: -8px;
+    left: -4px;
+    font-size: 14px;
+    animation: sparkle 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  @keyframes sparkle {
+    0%, 100% { opacity: 1; transform: rotate(0deg); }
+    50% { opacity: 0.6; transform: rotate(15deg); }
+  }
+
+  .wm-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--text-soft);
+    border-top: 1px solid rgba(68,36,52,0.15);
+    padding-top: 6px;
+    margin-top: auto;
+  }
+  .wm-avatar {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff9a56, #ff6b6b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .wm-dot {
+    width: 3px;
+    height: 3px;
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.4;
+  }
+
+  /* Deal card right side */
+  .wm-right {
+    flex: 1;
+    background: linear-gradient(160deg, #ff6b6b, #d04648);
+    border-radius: 14px;
+    padding: 10px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(208,70,72,0.3);
+  }
+  .wm-right::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+  }
+  .wm-deal-tag {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    opacity: 0.9;
+  }
+  .wm-deal-item {
+    font-size: 36px;
+    text-align: center;
+    line-height: 1;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    margin: 2px 0;
+  }
+  .wm-deal-name {
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .wm-deal-price {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: auto;
+  }
+  .wm-deal-discount {
+    background: var(--gold);
+    color: var(--earth-dark);
+    padding: 1px 5px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  /* ========== LARGE 364x382 (bonus) ========== */
+  .widget-large {
+    width: 364px;
+    height: 382px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background:
+      linear-gradient(180deg, #bde4f5 0%, #e8f4dc 45%, #9bc67a 100%);
+  }
+  .wl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .wl-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--earth-dark); }
+  .wl-farm-scene {
+    height: 140px;
+    background: linear-gradient(180deg, transparent 60%, #5a8a3a 60%, #346524 100%);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(68,36,52,0.2);
+  }
+  .wl-cloud {
+    position: absolute;
+    background: rgba(255,255,255,0.8);
+    border-radius: 20px;
+    height: 10px;
+  }
+  .wl-cloud.c1 { top: 12px; left: 30px; width: 30px; }
+  .wl-cloud.c2 { top: 24px; right: 40px; width: 22px; }
+  .wl-animal {
+    position: absolute;
+    bottom: 20px;
+    font-size: 28px;
+  }
+  .wl-animal.a1 { left: 24px; }
+  .wl-animal.a2 { left: 80px; bottom: 15px; }
+  .wl-animal.a3 { right: 30px; }
+
+  .wl-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .wl-stat {
+    background: rgba(255,255,255,0.8);
+    border-radius: 10px;
+    padding: 8px;
+    text-align: center;
+  }
+  .wl-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--earth-dark);
+    font-variant-numeric: tabular-nums;
+  }
+  .wl-stat-label {
+    font-size: 9px;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .wl-next {
+    background: rgba(255,255,255,0.85);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+  }
+  .wl-next-icon { font-size: 20px; }
+  .wl-next-text { flex: 1; color: var(--text-soft); }
+  .wl-next-time {
+    font-weight: 700;
+    color: var(--grass);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ========== LABELS ========== */
+  .tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 10px;
+  }
+
+  .notes {
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px 24px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 32px;
+  }
+  .notes h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    opacity: 0.95;
+  }
+  .notes ul { list-style: none; }
+  .notes li {
+    padding: 4px 0;
+    padding-left: 18px;
+    position: relative;
+    opacity: 0.9;
+  }
+  .notes li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    opacity: 0.6;
+  }
+  .notes code {
+    background: rgba(255,255,255,0.15);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: "SF Mono", Menlo, monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Widgets "Mon Jardin"</h1>
+  <p class="subtitle">Mockups HTML — tailles réelles iOS (WidgetKit) · FamilyFlow</p>
+
+  <!-- SMALL + MEDIUM -->
+  <div class="section">
+    <div class="section-title">Small & Medium — usage quotidien</div>
+    <div class="widget-row">
+
+      <!-- SMALL -->
+      <div>
+        <div class="widget widget-small">
+          <div class="ws-header">
+            <span>🐕 Lucas</span>
+            <span class="ws-level">⚡ Niv.12</span>
+          </div>
+
+          <div class="ws-scene">
+            <div class="sun"></div>
+
+            <!-- Pixel dog 10x8 grid -->
+            <div class="pixel-dog">
+              <!-- row 1 -->
+              <div></div><div></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div></div><div></div><div></div>
+              <!-- row 2 -->
+              <div></div><div class="px-b"></div><div class="px-b2"></div><div class="px-b3"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b"></div><div></div><div></div><div></div>
+              <!-- row 3 -->
+              <div></div><div class="px-b"></div><div class="px-b3"></div><div class="px-e"></div><div class="px-b3"></div><div class="px-e"></div><div class="px-b2"></div><div class="px-b"></div><div></div><div></div>
+              <!-- row 4 -->
+              <div></div><div class="px-b"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-p"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b"></div><div></div><div></div>
+              <!-- row 5 -->
+              <div class="px-b"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b"></div><div></div>
+              <!-- row 6 -->
+              <div class="px-b"></div><div class="px-b1"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b1"></div><div class="px-b"></div><div></div>
+              <!-- row 7 -->
+              <div class="px-b"></div><div class="px-b1"></div><div class="px-b1"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b1"></div><div class="px-b"></div><div></div>
+              <!-- row 8 -->
+              <div></div><div class="px-b"></div><div class="px-b"></div><div></div><div></div><div></div><div></div><div class="px-b"></div><div class="px-b"></div><div></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="ws-xp-bar"><div class="ws-xp-fill"></div></div>
+            <div class="ws-xp-label">340 / 500 XP</div>
+          </div>
+        </div>
+        <div class="tag">Small · 170 × 170</div>
+      </div>
+
+      <!-- SMALL avec badge récolte -->
+      <div>
+        <div class="widget widget-small">
+          <div class="ws-header">
+            <span>🐕 Lucas</span>
+            <span class="ws-level">⚡ Niv.12</span>
+          </div>
+
+          <div class="ws-scene">
+            <div class="sun"></div>
+            <div class="pixel-dog">
+              <div></div><div></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div></div><div></div><div></div>
+              <div></div><div class="px-b"></div><div class="px-b2"></div><div class="px-b3"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b"></div><div></div><div></div><div></div>
+              <div></div><div class="px-b"></div><div class="px-b3"></div><div class="px-e"></div><div class="px-b3"></div><div class="px-e"></div><div class="px-b2"></div><div class="px-b"></div><div></div><div></div>
+              <div></div><div class="px-b"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-p"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b"></div><div></div><div></div>
+              <div class="px-b"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b"></div><div></div>
+              <div class="px-b"></div><div class="px-b1"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b2"></div><div class="px-b1"></div><div class="px-b"></div><div></div>
+              <div class="px-b"></div><div class="px-b1"></div><div class="px-b1"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b"></div><div class="px-b1"></div><div class="px-b"></div><div></div>
+              <div></div><div class="px-b"></div><div class="px-b"></div><div></div><div></div><div></div><div></div><div class="px-b"></div><div class="px-b"></div><div></div>
+            </div>
+          </div>
+
+          <div class="ws-badge">🥕 2 récoltes prêtes</div>
+        </div>
+        <div class="tag">Small · variante récolte</div>
+      </div>
+
+      <!-- MEDIUM -->
+      <div>
+        <div class="widget widget-medium">
+          <div class="wm-left">
+            <div class="wm-header">
+              <span class="wm-title">Mon Jardin</span>
+              <span class="wm-streak">🔥 7j</span>
+            </div>
+
+            <div class="plots">
+              <div class="plot">
+                <div class="plot-timer">12h</div>
+                <div class="plot-icon">🌱</div>
+              </div>
+              <div class="plot ready">
+                <div class="plot-timer">PRÊT</div>
+                <div class="plot-icon">🥕</div>
+              </div>
+              <div class="plot">
+                <div class="plot-timer">3j</div>
+                <div class="plot-icon">🌾</div>
+              </div>
+            </div>
+
+            <div class="wm-footer">
+              <div class="wm-avatar">L</div>
+              <span>Lucas</span>
+              <span class="wm-dot"></span>
+              <span>340 XP</span>
+              <span class="wm-dot"></span>
+              <span>2 tâches</span>
+            </div>
+          </div>
+
+          <div class="wm-right">
+            <div class="wm-deal-tag">🎁 Deal du jour</div>
+            <div class="wm-deal-item">🍓</div>
+            <div class="wm-deal-name">Graines fraise</div>
+            <div class="wm-deal-price">
+              <span class="wm-deal-discount">-30%</span>
+              <span>45 🌰</span>
+            </div>
+          </div>
+        </div>
+        <div class="tag">Medium · 364 × 170</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LARGE -->
+  <div class="section">
+    <div class="section-title">Large — vue ferme complète (bonus)</div>
+    <div class="widget-row">
+      <div>
+        <div class="widget widget-large">
+          <div class="wl-header">
+            <span class="wl-title">🌾 Ma Ferme</span>
+            <span class="wm-streak">🔥 7j de série</span>
+          </div>
+
+          <div class="wl-farm-scene">
+            <div class="wl-cloud c1"></div>
+            <div class="wl-cloud c2"></div>
+            <div class="sun" style="top: 14px; right: 20px; left: auto;"></div>
+            <div class="wl-animal a1">🐕</div>
+            <div class="wl-animal a2">🐔</div>
+            <div class="wl-animal a3">🐄</div>
+          </div>
+
+          <div class="wl-stats">
+            <div class="wl-stat">
+              <div class="wl-stat-value">340</div>
+              <div class="wl-stat-label">XP</div>
+            </div>
+            <div class="wl-stat">
+              <div class="wl-stat-value">145</div>
+              <div class="wl-stat-label">🌰 Glands</div>
+            </div>
+            <div class="wl-stat">
+              <div class="wl-stat-value">2</div>
+              <div class="wl-stat-label">Prêts</div>
+            </div>
+          </div>
+
+          <div class="wl-next">
+            <span class="wl-next-icon">🥕</span>
+            <span class="wl-next-text">Carottes prêtes à récolter</span>
+            <span class="wl-next-time">Maintenant</span>
+          </div>
+
+          <div class="wl-next" style="background: linear-gradient(90deg, rgba(255,107,107,0.15), rgba(208,70,72,0.25));">
+            <span class="wl-next-icon">🎁</span>
+            <span class="wl-next-text"><b>Deal :</b> graines fraise -30%</span>
+            <span class="wl-next-time" style="color: var(--red);">45 🌰</span>
+          </div>
+        </div>
+        <div class="tag">Large · 364 × 382</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="notes">
+    <h3>Choix de design</h3>
+    <ul>
+      <li><b>Small</b> — glance émotionnel : mascotte + XP. Badge récolte seulement si ≥1 prête pour éviter la sur-sollicitation.</li>
+      <li><b>Medium</b> — actionnable : chaque parcelle + le deal ont leur propre <code>widgetURL()</code> deep link.</li>
+      <li><b>Large</b> — dashboard ferme complet + deal + prochaine action. Premium mais coûteux en place écran.</li>
+      <li>Palette proche de DB16 (pixel art du jeu) avec glassmorphism iOS — contraste premium / rétro.</li>
+      <li>Timers mis à jour via <code>TimelineProvider</code> à chaque minute+critique (récolte prête).</li>
+      <li>Fallback : widget vide élégant si vault pas encore initialisé (écran onboarding).</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
