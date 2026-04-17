@@ -9,7 +9,7 @@
  * - Validation : destinataire non vide, body trim non vide, revealAt > now+60s
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -23,6 +23,10 @@ import {
   Pressable,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
@@ -42,6 +46,14 @@ import {
 import type { Profile } from '../../lib/types';
 
 type PresetKey = 'tomorrow' | 'sunday' | 'month' | 'custom';
+
+/** Concatene le texte de base + la dictee avec un espacement propre. */
+function joinBase(base: string, dictated: string): string {
+  if (!dictated) return base;
+  if (!base) return dictated;
+  const needsSpace = !base.endsWith(' ') && !base.endsWith('\n');
+  return needsSpace ? `${base} ${dictated}` : `${base}${dictated}`;
+}
 
 interface LoveNoteEditorProps {
   visible: boolean;
@@ -70,6 +82,126 @@ export function LoveNoteEditor({
   const [improving, setImproving] = useState(false);
   const [showAiStyles, setShowAiStyles] = useState(false);
   const [selection, setSelection] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
+  const [dictating, setDictating] = useState(false);
+  const dictationBaseRef = useRef<string>('');
+  const dictationFinalRef = useRef<string>('');
+  const stoppingDictationRef = useRef(false);
+
+  // ── Dictaphone : reception des segments reconnus en live ──
+  useSpeechRecognitionEvent('result', (event) => {
+    if (!dictating) return;
+    const text = event.results[0]?.transcript ?? '';
+    if (event.isFinal) {
+      dictationFinalRef.current = dictationFinalRef.current
+        ? `${dictationFinalRef.current} ${text}`
+        : text;
+      setBody(joinBase(dictationBaseRef.current, dictationFinalRef.current));
+    } else {
+      const interim = dictationFinalRef.current
+        ? `${dictationFinalRef.current} ${text}`
+        : text;
+      setBody(joinBase(dictationBaseRef.current, interim));
+    }
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    // Relance silencieuse si l'utilisateur dicte toujours (iOS stoppe apres silence)
+    if (dictating && !stoppingDictationRef.current) {
+      try {
+        ExpoSpeechRecognitionModule.start({
+          lang: 'fr-FR',
+          interimResults: true,
+          continuous: true,
+          requiresOnDeviceRecognition: true,
+          addsPunctuation: true,
+          iosTaskHint: 'dictation',
+        });
+      } catch {
+        setDictating(false);
+      }
+    }
+  });
+
+  useSpeechRecognitionEvent('error', (event) => {
+    if (event.error === 'no-speech' && dictating && !stoppingDictationRef.current) {
+      try {
+        ExpoSpeechRecognitionModule.start({
+          lang: 'fr-FR',
+          interimResults: true,
+          continuous: true,
+          requiresOnDeviceRecognition: true,
+          addsPunctuation: true,
+          iosTaskHint: 'dictation',
+        });
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    if (event.error !== 'aborted' && dictating) {
+      if (__DEV__) console.warn('[lovenote dictation]', event.error, event.message);
+    }
+  });
+
+  const startDictation = useCallback(async () => {
+    try {
+      const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert(
+          'Permission refusée',
+          "Autorise l'accès au micro dans Réglages pour dicter.",
+        );
+        return;
+      }
+      dictationBaseRef.current = body;
+      dictationFinalRef.current = '';
+      stoppingDictationRef.current = false;
+      setDictating(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      ExpoSpeechRecognitionModule.start({
+        lang: 'fr-FR',
+        interimResults: true,
+        continuous: true,
+        requiresOnDeviceRecognition: true,
+        addsPunctuation: true,
+        iosTaskHint: 'dictation',
+      });
+    } catch (e) {
+      if (__DEV__) console.warn('[startDictation]', e);
+      Alert.alert('Erreur', 'Impossible de démarrer la dictée.');
+      setDictating(false);
+    }
+  }, [body]);
+
+  const stopDictation = useCallback(() => {
+    stoppingDictationRef.current = true;
+    setDictating(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    try {
+      ExpoSpeechRecognitionModule.stop();
+    } catch {
+      /* deja arrete */
+    }
+  }, []);
+
+  const handleDictateTap = useCallback(() => {
+    if (dictating) stopDictation();
+    else startDictation();
+  }, [dictating, startDictation, stopDictation]);
+
+  // Cleanup au unmount du modal
+  useEffect(() => {
+    if (!visible && dictating) {
+      stoppingDictationRef.current = true;
+      setDictating(false);
+      try { ExpoSpeechRecognitionModule.abort(); } catch { /* ignore */ }
+    }
+    return () => {
+      if (dictating) {
+        try { ExpoSpeechRecognitionModule.abort(); } catch { /* ignore */ }
+      }
+    };
+  }, [visible, dictating]);
 
   const runImprove = useCallback(async (style: LoveNoteStyle) => {
     if (!aiConfig) return;
@@ -258,6 +390,19 @@ export function LoveNoteEditor({
             <View style={styles.bodyHeader}>
               <Text style={[styles.label, { color: colors.textMuted }]}>Message</Text>
               <View style={styles.bodyActions}>
+                <Pressable
+                  onPress={handleDictateTap}
+                  accessibilityRole="button"
+                  accessibilityLabel={dictating ? 'Arrêter la dictée' : 'Dicter'}
+                >
+                  <Text style={{
+                    color: dictating ? (colors.error ?? primary) : primary,
+                    fontSize: FontSize.sm,
+                    fontWeight: dictating ? '700' : '400',
+                  }}>
+                    {dictating ? '⏹ Arrêter' : '🎤 Dicter'}
+                  </Text>
+                </Pressable>
                 {aiConfigured && (
                   <Pressable
                     onPress={handleImproveTap}
