@@ -8,7 +8,8 @@
 - ✅ **v1.3 Seed** — Phases 19-24 (shipped 2026-04-10)
 - ✅ **v1.4 Jardin Familial** — Phases 25-28 (shipped 2026-04-11)
 - 🟡 **v1.5 Village Vivant** — Phases 29-33 (partiel 2026-04-14, 3/5 livrées, 31-32 deferred)
-- 🚧 **v1.6 Love Notes** — Phases 34-37 (planning)
+- 🟡 **v1.6 Love Notes** — Phases 34-37 (partiel 2026-04-17, 3/4 livrées, 37 deferred)
+- 🚧 **v1.7 Modifiers de plants** — Phases 38-41 (planning)
 
 ## Phases
 
@@ -83,14 +84,24 @@ Détails phase-by-phase préservés ci-dessous dans `## Phase Details`.
 
 </details>
 
-### 🚧 v1.6 Love Notes (Phases 34-37) — IN PLANNING
+<details>
+<summary>🟡 v1.6 Love Notes (Phases 34-37) — PARTIEL 2026-04-17</summary>
 
-**Milestone Goal :** Permettre aux membres de la famille d'échanger des messages privés programmés ("love notes") qui apparaissent à une date future, avec un système de boîte aux lettres visualisé en carte enveloppe pinned en tête du dashboard — renforcer le lien affectif familial via des micro-moments de surprise asynchrones. Zéro nouvelle dépendance npm, backward compat Obsidian vault obligatoire, chaque phase non-cassante (app sur TestFlight).
+- [x] **Phase 34: Fondation données & hook domaine** — completed 2026-04-17
+- [x] **Phase 35: Carte enveloppe dashboard + écran boîte aux lettres** — completed 2026-04-17
+- [x] **Phase 36: Composition & programmation reveal** — completed 2026-04-17
+- [ ] **Phase 37: Garde-parent & polish** — DEFERRED
 
-- [x] **Phase 34: Fondation données & hook domaine** — Type + parser + hook + cache + tests (LOVE-01, 02, 03, 04, 17) (completed 2026-04-17)
-- [x] **Phase 35: Carte enveloppe dashboard + écran boîte aux lettres** — UI visible : enveloppe pinned + écran 3 segments + tuile more (LOVE-05, 06, 07, 08) (completed 2026-04-17)
-- [x] **Phase 36: Composition & programmation reveal** — Éditeur modal + notifications locales + animation unfold (LOVE-09, 10, 11, 12, 13) (completed 2026-04-17)
-- [ ] **Phase 37: Garde-parent & polish** — Toggle parental + modération + polish final (LOVE-14, 15, 16)
+</details>
+
+### 🚧 v1.7 Modifiers de plants (Phases 38-41) — IN PLANNING
+
+**Milestone Goal :** Introduire des objets consommables qui modifient le comportement des plants au moment de la plantation, pour créer des décisions stratégiques au-delà du cycle plant→récolte→craft classique — transformer le jardin en terrain de décisions plutôt qu'en simple timer. Scope v1.7 = Sporée de Régularité uniquement (Chimère reportée v1.8). Fondation `modifiers` conçue extensible. Zéro nouvelle dépendance npm, backward compat Obsidian vault obligatoire, chaque phase non-cassante (app sur TestFlight).
+
+- [ ] **Phase 38: Fondation modifiers + économie Sporée** — Shape `FarmCrop.modifiers` + CSV backward-compat + bump cache + drop/shop/expedition/cadeau + cap inventaire + tests Jest fondations (MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13)
+- [ ] **Phase 39: Moteur prorata + calcul famille** — Calcul cumulatif 23h30 + snapshot matinal + poids par âge + profils actifs 7j glissants + filtre strict Tasks + tests Jest (SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13)
+- [ ] **Phase 40: UI Sporée — seed picker + badge + validation** — Slot "Sceller" inline + application Sporée 3 durées + badge plant progression + validation récolte multiplier + état visuel plant mûr (MOD-03, SPOR-01, SPOR-02, SPOR-07, SPOR-11)
+- [ ] **Phase 41: Polish onboarding + codex + non-régression** — Tooltip one-shot premier drop + compteur codex `marathonWins` + non-régression TS/Jest finale (SPOR-10, SPOR-12)
 
 ## Phase Details
 
@@ -232,6 +243,55 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 38: Fondation modifiers + économie Sporée
+**Goal**: Poser l'infra `modifiers` sur `FarmCrop` (champ JSON extensible, sérialisé en CSV markdown backward-compatible) et câbler l'économie complète Sporée (drops à la récolte, entrée shop conditionnelle, loot expedition, cadeau onboarding stage 3) + cap inventaire à 10 — zéro UI nouvelle, pure fondation data/engine consommée par les phases 39-40.
+**Depends on**: Phase 36 (dernier ship v1.6, infra ferme/parser/cache stable) — aucune phase v1.7 antérieure
+**Requirements**: MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13
+**Success Criteria** (what must be TRUE):
+  1. User voit ses plants existants (pré-v1.7) rester parsables et affichables sans régression — le CSV de `FarmCrop` supporte un champ optionnel `modifiers` JSON sérialisé, l'absence reste lisible comme avant
+  2. User voit `CACHE_VERSION` bumpé dans `lib/vault-cache.ts:41` — le premier boot post-migration rehydrate proprement sans plant corrompu en cache
+  3. User peut obtenir une Sporée via 4 sources distinctes : drop à la récolte (3% tier 1-3 / 8% rare / 15% expedition), achat shop à 400 feuilles (cap 2/jour, dès Arbre stade 3), loot expedition (5% missions Pousse+), cadeau onboarding (1 gratuite à l'atteinte stade 3 arbre)
+  4. User voit son inventaire Sporée capé à 10 — tout drop au-delà affiche un toast "Inventaire Sporée plein" sans perte silencieuse
+  5. User voit la suite Jest fondations passer (round-trip CSV `modifiers`, drop rate deterministe seed-based, cap 10, backward-compat plants legacy) — `npx tsc --noEmit` et `npx jest --no-coverage` clean
+**Plans**: TBD
+
+### Phase 39: Moteur prorata + calcul famille
+**Goal**: Implémenter le moteur de calcul pur du pari Sporée — prorata cumulatif `(poids_sealeur / poids_famille_active_7j) × Tasks_pending` recalculé à 23h30 avec snapshot matinal stable, poids par âge dérivés de la date de naissance (avec override settings), filtre profils actifs 7j glissants, filtre strict domaine Tasks. Fonctions pures testables, zéro UI nouvelle.
+**Depends on**: Phase 38 (shape `FarmCrop.modifiers` stable + économie Sporée — le moteur prorata lit le wager depuis le modifier)
+**Requirements**: SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13
+**Success Criteria** (what must be TRUE):
+  1. User voit le cumul requis du pari recalculé à chaque passage 23h30 (ou au boot si app fermée) selon la formule `(poids_sealeur / poids_famille_active_7j) × Tasks_pending`, basé sur un snapshot matinal stable des tâches pending
+  2. User voit les poids par âge appliqués automatiquement (Adulte 1.0 / Ado 0.7 / Enfant 0.4 / Jeune enfant 0.15 / Bébé 0.0) dérivés de la date de naissance du profil, avec override manuel possible dans settings profil
+  3. User voit seulement les profils avec ≥1 tâche complétée sur les 7 derniers jours glissants comptés dans le diviseur famille — un ado dormant n'allège pas la charge du parent sealeur
+  4. User voit seulement les tâches du domaine Tasks comptabilisées (Courses, Repas, Routines, Anniversaires, Notes, Moods exclus) — filtre strict par type de source
+  5. User voit la suite Jest moteur passer (prorata fractionnaire, override poids, détection 7j glissants, filtre domaine Tasks, snapshot matinal stable) — `npx tsc --noEmit` et `npx jest --no-coverage` clean
+**Plans**: TBD
+
+### Phase 40: UI Sporée — seed picker + badge + validation
+**Goal**: Rendre la Sporée utilisable bout-en-bout via l'UI — slot "Sceller" inline étendant le seed picker existant (apparaît si ≥1 Sporée), application Sporée avec choix de 3 durées dérivées de la taille du plant (multipliers ×1.3 / ×1.7 / ×2.5), badge sur plant scellé affichant progression jour + cumul avec code couleur pace, état visuel "prêt à valider" sur plant mûr, validation à la récolte appliquant multiplier ou reward normale.
+**Depends on**: Phase 39 (moteur prorata + économie Sporée stables — l'UI pur consommation)
+**Requirements**: MOD-03, SPOR-01, SPOR-02, SPOR-07, SPOR-11
+**Success Criteria** (what must be TRUE):
+  1. User voit le seed picker existant étendu avec un slot "Sceller" inline qui n'apparaît QUE si ≥1 Sporée en inventaire — zéro nouvelle modale, pattern extensible pour futurs slots modifier
+  2. User peut appliquer une Sporée à la plantation en choisissant parmi 3 durées (Chill ×1.3 / Engagé ×1.7 / Sprint ×2.5) dérivées de la taille du plant, avec multiplier et prorata théorique visibles avant confirmation
+  3. User voit un badge sur chaque plant scellé affichant `X/Y tâches aujourd'hui • cumul Z/N` avec code couleur pace (vert/jaune/orange) — pas d'animation continue lourde
+  4. User voit un anneau vert "prêt à valider" sur un plant scellé déjà mûr mais pas encore récolté — distingue clairement la fenêtre de décision récolter avant ou après le cumul
+  5. User récolte un plant scellé : si cumul atteint → reward × multiplier + toast de victoire + 15% chance de drop-back d'une Sporée ; sinon reward normale, seul coût = Sporée consommée (pari bienveillant, jamais de pénalité)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 41: Polish onboarding + codex + non-régression
+**Goal**: Finaliser l'expérience Sporée par un onboarding discret (tooltip one-shot au premier drop expliquant la mécanique en 1-2 phrases) et un compteur long-terme (codex `wager.marathonWins` incrémenté sur chaque pari gagné, récompense vanité), plus garantir une sortie de milestone propre (`tsc --noEmit` clean, `jest --no-coverage` clean, privacy check commits).
+**Depends on**: Phase 40 (boucle Sporée complète jouable — onboarding et codex ne peuvent s'accrocher qu'à un flux fonctionnel)
+**Requirements**: SPOR-10, SPOR-12
+**Success Criteria** (what must be TRUE):
+  1. User voit un tooltip one-shot au premier drop/obtention d'une Sporée expliquant la mécanique en 1-2 phrases, dismissable, jamais re-triggeré (flag persisté SecureStore device-global)
+  2. User voit son compteur codex `wager.marathonWins` incrémenté de +1 à chaque pari Sporée gagné — consultable dans le codex ferme existant (FarmCodexModal), récompense vanité long terme
+  3. User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes MemoryEditor.tsx / cooklang.ts / useVault.ts) ni Jest (`npx jest --no-coverage` clean) après la phase finale
+  4. User voit les commits, docs et noms d'exemple de v1.7 respecter la privacy policy (noms génériques Lucas/Emma/Dupont uniquement — aucun nom réel dans le repo)
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -245,6 +305,10 @@ Plans:
 | 35. Carte enveloppe dashboard + écran boîte aux lettres | 3/3 | Complete   | 2026-04-17 |
 | 36. Composition & programmation reveal | 4/4 | Complete   | 2026-04-17 |
 | 37. Garde-parent & polish | 0/TBD | Deferred | - |
+| 38. Fondation modifiers + économie Sporée | 0/TBD | Not started | - |
+| 39. Moteur prorata + calcul famille | 0/TBD | Not started | - |
+| 40. UI Sporée — seed picker + badge + validation | 0/TBD | Not started | - |
+| 41. Polish onboarding + codex + non-régression | 0/TBD | Not started | - |
 
 ## Archived Milestones
 

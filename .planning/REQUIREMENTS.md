@@ -69,25 +69,32 @@
 
 ## Traceability
 
-Mapping REQ-ID → Phase (sera rempli par le roadmapper).
+Mapping REQ-ID → Phase (v1.7 Phases 38-41).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOD-01 | TBD | Pending |
-| MOD-02 | TBD | Pending |
-| MOD-03 | TBD | Pending |
-| SPOR-01 | TBD | Pending |
-| SPOR-02 | TBD | Pending |
-| SPOR-03 | TBD | Pending |
-| SPOR-04 | TBD | Pending |
-| SPOR-05 | TBD | Pending |
-| SPOR-06 | TBD | Pending |
-| SPOR-07 | TBD | Pending |
-| SPOR-08 | TBD | Pending |
-| SPOR-09 | TBD | Pending |
-| SPOR-10 | TBD | Pending |
-| SPOR-11 | TBD | Pending |
-| SPOR-12 | TBD | Pending |
-| SPOR-13 | TBD | Pending |
+| MOD-01 | Phase 38 | Pending |
+| MOD-02 | Phase 38 | Pending |
+| MOD-03 | Phase 40 | Pending |
+| SPOR-01 | Phase 40 | Pending |
+| SPOR-02 | Phase 40 | Pending |
+| SPOR-03 | Phase 39 | Pending |
+| SPOR-04 | Phase 39 | Pending |
+| SPOR-05 | Phase 39 | Pending |
+| SPOR-06 | Phase 39 | Pending |
+| SPOR-07 | Phase 40 | Pending |
+| SPOR-08 | Phase 38 | Pending |
+| SPOR-09 | Phase 38 | Pending |
+| SPOR-10 | Phase 41 | Pending |
+| SPOR-11 | Phase 40 | Pending |
+| SPOR-12 | Phase 41 | Pending |
+| SPOR-13 | Phase 38 + Phase 39 | Pending |
 
-**Coverage check :** 16 REQ-IDs à mapper (3 MOD + 13 SPOR).
+**Coverage check :** 16/16 REQ-IDs mappés ✓ (3 MOD + 13 SPOR). Aucun orphelin, aucune duplication (SPOR-13 couvre les tests Jest fondations en Phase 38 ET moteur en Phase 39 — deux suites distinctes).
+
+### Phase repartition summary
+
+- **Phase 38 — Fondation modifiers + économie Sporée (5 REQ)** : MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13 (tests fondations)
+- **Phase 39 — Moteur prorata + calcul famille (5 REQ)** : SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13 (tests moteur)
+- **Phase 40 — UI Sporée (5 REQ)** : MOD-03, SPOR-01, SPOR-02, SPOR-07, SPOR-11
+- **Phase 41 — Polish onboarding + non-régression (2 REQ)** : SPOR-10, SPOR-12

@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
-status: defining_requirements
+status: roadmap_ready
 last_updated: "2026-04-18T00:00:00.000Z"
 last_activity: 2026-04-18
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Milestone v1.7 Modifiers de plants — defining requirements
+**Current focus:** Milestone v1.7 Modifiers de plants — roadmap ready, Phase 38 next up
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 38 Fondation modifiers + économie Sporée (next up, not started)
 Plan: —
-Milestone: v1.7 Modifiers de plants
+Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
-Last activity: 2026-04-18 — Milestone v1.7 started
+Last activity: 2026-04-18 — Roadmap v1.7 créée (Phases 38-41, 16/16 REQ mappés)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Defining requirements
+Status: Roadmap ready — Phase 38 next via `/gsd:plan-phase 38`
 
 ### Quick Tasks Completed
 
@@ -172,12 +172,22 @@ Status: Defining requirements
 - v1.5 roadmap created 2026-04-11: Phases 29-32 (avatars + portail retour, décorations persistantes, ambiance dynamique, arbre familial commun)
 - v1.5 partial shipped 2026-04-14: Phases 29, 30, 33 livrées — Phases 31 (ambiance dynamique) + 32 (arbre familial commun) deferred pour prioriser Love Notes
 - v1.6 roadmap created 2026-04-16: Phases 34-37 (fondation données, carte enveloppe + écran boîte, composition + reveal, garde-parent + polish)
+- v1.6 partial shipped 2026-04-17: Phases 34, 35, 36 livrées — Phase 37 (garde-parent + polish) deferred
+- v1.7 roadmap created 2026-04-18: Phases 38-41 (fondation modifiers + économie Sporée, moteur prorata + calcul famille, UI Sporée seed picker + badge + validation, polish onboarding + codex + non-régression) — 16/16 REQ mappés
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Init v1.7]: Phase 38 (fondation modifiers + économie) isolée de toute UI — livre shape FarmCrop.modifiers, bump cache, drops/shop/expedition/cadeau, cap inventaire, tests Jest en invisible
+- [Init v1.7]: Phase 39 (moteur prorata) isolée également — fonctions pures testables (prorata cumulatif, poids par âge, détection 7j glissants, filtre domaine Tasks) avant toute UI
+- [Init v1.7]: Phase 40 consomme 38+39 pour livrer la boucle UX complète (slot "Sceller", 3 durées, badge, validation récolte) — l'UI ne peut s'accrocher qu'à un moteur déjà stable
+- [Init v1.7]: Phase 41 en dernier — tooltip onboarding et compteur codex ne peuvent se caler qu'à un flux Sporée fonctionnel
+- [Init v1.7]: Zéro nouvelle dépendance npm reconduit (6e milestone consécutif) — expo-haptics, reanimated, expo-secure-store déjà installés
+- [Init v1.7]: Bump CACHE_VERSION dans lib/vault-cache.ts:41 mandatory car shape FarmCrop change — évite invalidation silencieuse au premier boot post-migration
+- [Init v1.7]: Pari Sporée bienveillant — jamais de pénalité feuilles sur pari perdu, seul coût = Sporée consommée ; préserve la Core Value bien-être familial
+- [Init v1.7]: SPOR-13 (tests Jest) éclaté sur Phases 38 et 39 — deux suites distinctes (fondations CSV/économie en 38, moteur prorata/poids/filtre en 39) au lieu d'une phase tests en bout de chaîne
 - [Init v1.6]: Phase 34 (fondation données) isolée de toute UI — livre type + parser + hook + cache + tests en invisible avant toute vue, minimise le risque de régression
 - [Init v1.6]: Phase 35 livre d'abord la visibilité (carte enveloppe + écran) AVANT la composition — l'utilisateur peut voir l'état du domaine avant de pouvoir écrire, permet test sur données seed manuelles
 - [Init v1.6]: Phase 36 regroupe composition + reveal + notifications — cohérence UX d'une boucle complète d'écriture-programmation-révélation en une seule phase
@@ -312,7 +322,7 @@ Recent decisions affecting current work:
 
 ### Todos
 
-- Plan Phase 34 next: `/gsd:plan-phase 34`
+- Plan Phase 38 next: `/gsd:plan-phase 38` (Fondation modifiers + économie Sporée — MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13)
 
 ### Blockers
 
@@ -320,5 +330,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-17T12:10:00.434Z
-Next: Plan Phase 34 (Fondation données & hook domaine)
+Last session: 2026-04-18T00:00:00.000Z
+Next: Plan Phase 38 (Fondation modifiers + économie Sporée)
