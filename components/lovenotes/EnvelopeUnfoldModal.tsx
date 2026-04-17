@@ -208,6 +208,10 @@ export function EnvelopeUnfoldModal({
     opacity: contentOpacity.value,
     transform: [{ translateY: contentTranslate.value }],
   }));
+  // Décors exterieur (timbre, postmark, destinataire) s'estompent quand la lettre arrive
+  const exteriorStyle = useAnimatedStyle(() => ({
+    opacity: 1 - contentOpacity.value,
+  }));
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -265,25 +269,25 @@ export function EnvelopeUnfoldModal({
           </Animated.View>
 
           {/* Timbre cœur haut-droit */}
-          <View style={styles.stamp}>
+          <Animated.View style={[styles.stamp, exteriorStyle]}>
             <Text style={styles.stampEmoji}>💕</Text>
-          </View>
+          </Animated.View>
 
           {/* Postmark "POUR TOI · DD · MM ·" */}
-          <View style={styles.postmark}>
+          <Animated.View style={[styles.postmark, exteriorStyle]}>
             <Text style={styles.postmarkText}>POUR</Text>
             <Text style={styles.postmarkText}>TOI</Text>
             <Text style={styles.postmarkDate}>{formatPostmarkDate()}</Text>
-          </View>
+          </Animated.View>
 
           {/* Destinataire bas-gauche (calligraphié) */}
           {toName && (
-            <View style={styles.recipient}>
+            <Animated.View style={[styles.recipient, exteriorStyle]}>
               <Text style={styles.recipientLabel}>POUR</Text>
               <Text style={styles.recipientName} numberOfLines={1}>
                 {toName}
               </Text>
-            </View>
+            </Animated.View>
           )}
         </Animated.View>
 
