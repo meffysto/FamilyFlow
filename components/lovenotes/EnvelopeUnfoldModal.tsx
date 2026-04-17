@@ -1,21 +1,30 @@
 /**
- * EnvelopeUnfoldModal.tsx — Animation unfold full-screen (Phase 36 Plan 04)
+ * EnvelopeUnfoldModal.tsx — Animation unfold full-screen (Phase 36 Plan 04 + v2 visuel)
+ *
+ * Visuel aligné sur EnvelopeCard du dashboard : papier kraft + gradient,
+ * vignette, timbre cœur, postmark circulaire, cachet de cire avec initiale
+ * calligraphiée, destinataire en Snell Roundhand.
  *
  * Modal full-screen transparent. Au mount (visible=true) :
- *  1. Seal jump (200ms) — withSequence scale 1 → 1.4 → 0 (disparaît)
- *  2. Rabat unfold (800ms) — rotateX 0° → 175° (PAS de perspective — strict CLAUDE.md)
- *  3. Body reveal (400ms) — opacity 0 → 1
- *  4. Callback final : Haptics.notificationAsync(Success) + onUnfoldComplete()
- *
- * Parent (écran lovenotes.tsx) :
- *  - Sur unfoldComplete → updateLoveNoteStatus(sourceFile, 'read') — patch différé
- *    pour éviter flicker (Pitfall 6).
- *
- * Pitfall 5 : requestAnimationFrame wrap pour garantir le premier frame posé.
+ *  1. Entree : scale 0.85 -> 1 (spring)
+ *  2. Floating continu (translateY/rotateZ léger)
+ *  3. Cachet : wiggle -> saut 1.4x + spin 360° -> envol -260px + fade
+ *  4. Rabat unfold — rotateX 0° -> 175° (PAS de perspective — CLAUDE.md)
+ *  5. Lettre cream : slide-up + fade + haptic Success
  */
 
 import React, { useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  Dimensions,
+  Platform,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring,
   withDelay, withRepeat, runOnJS, Easing,
@@ -27,8 +36,8 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { EnvelopeFlap } from './EnvelopeFlap';
 import { WaxSeal } from './WaxSeal';
 
+// ─── Timings ───────────────────────────────────────────────────────────────
 const SPRING_ENTRANCE = { damping: 9, stiffness: 140 } as const;
-const SPRING_SEAL_JUMP = { damping: 7, stiffness: 220 } as const;
 const SPRING_FLAP = { damping: 10, stiffness: 90 } as const;
 const SPRING_CONTENT = { damping: 14, stiffness: 120 } as const;
 const SEAL_WIGGLE_MS = 90;
@@ -36,17 +45,30 @@ const SEAL_JUMP_MS = 180;
 const CONTENT_REVEAL_MS = 450;
 const FLOAT_MS = 3200;
 
-// Couleurs identitaires enveloppe — hors thème (cf Phase 35 EnvelopeFlap/WaxSeal)
-// Le papier crème + encre brune sont des constantes de design propres au domaine
-// Love Notes (lettre manuscrite). NE PAS remplacer par useThemeColors() — perdrait
-// l'identité visuelle voulue. Si refonte théming nécessaire en Phase 37+, déplacer
-// ces tokens dans constants/colors.ts namespace `envelope.*`.
-const PAPER = '#faf4e4';
-const INK = '#3d2a1a';
+// ─── Palette kraft (alignée EnvelopeCard) ──────────────────────────────────
+const PAPER_HIGHLIGHT = '#d4b388';
+const PAPER_MID = '#b89163';
+const PAPER_DARK = '#96703f';
+const PAPER_EDGE = '#6f4e2a';
+const VIGNETTE = 'rgba(52,28,12,0.45)';
+const INK = '#2a1708';
+const INK_SOFT = '#5a3820';
+// Timbre
+const STAMP_RED = '#a8384a';
+const STAMP_RED_DARK = '#7a1e2a';
+const STAMP_BORDER = 'rgba(248,236,206,0.7)';
+const POSTMARK_INK = 'rgba(61,36,24,0.45)';
+const POSTMARK_TEXT = 'rgba(61,36,24,0.7)';
+// Lettre interieure (cream, contraste kraft)
+const LETTER_LIGHT = '#fdfaf1';
+const LETTER_MID = '#f5ecd5';
+const LETTER_INK = '#3d2418';
 
 interface EnvelopeUnfoldModalProps {
   visible: boolean;
   fromName: string;
+  /** Nom du destinataire (affiché en "POUR / {toName}" calligraphié). */
+  toName?: string;
   body: string;
   onClose: () => void;
   /** Appelé à la fin de la séquence (avant que le parent patche 'read'). */
@@ -57,13 +79,20 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const ENVELOPE_W = Math.min(SCREEN_WIDTH - Spacing['2xl'] * 2, 340);
 const ENVELOPE_H = Math.round(ENVELOPE_W / (2 / 1.15));
 const FLAP_H = Math.round(ENVELOPE_H * 0.55);
+const SEAL_SIZE = 72;
 
 function triggerHaptic() {
   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 }
 
+function formatPostmarkDate(d: Date = new Date()): string {
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `·${dd}·${mm}·`;
+}
+
 export function EnvelopeUnfoldModal({
-  visible, fromName, body, onClose, onUnfoldComplete,
+  visible, fromName, toName, body, onClose, onUnfoldComplete,
 }: EnvelopeUnfoldModalProps) {
   // Anim shared values
   const envelopeScale = useSharedValue(0.85);
@@ -89,11 +118,8 @@ export function EnvelopeUnfoldModal({
       contentTranslate.value = 24;
       return;
     }
-    // Pitfall 5 : déférer d'un frame pour garantir render initial posé
     const raf = requestAnimationFrame(() => {
-      // 1. Entrée : enveloppe bondit doucement
       envelopeScale.value = withSpring(1, SPRING_ENTRANCE);
-      // Flottement continu léger une fois posée
       envelopeFloat.value = withDelay(
         500,
         withRepeat(
@@ -105,7 +131,6 @@ export function EnvelopeUnfoldModal({
           true,
         ),
       );
-      // 2. Cachet : wiggle puis saut-spin puis disparition
       sealRotate.value = withDelay(
         200,
         withSequence(
@@ -123,7 +148,6 @@ export function EnvelopeUnfoldModal({
           withTiming(1.1, { duration: 600, easing: Easing.out(Easing.quad) }),
         ),
       );
-      // Cachet s'envole vers le haut (au-dela du cadre) puis fade out
       sealTranslateY.value = withDelay(
         200 + SEAL_WIGGLE_MS * 4,
         withSequence(
@@ -135,12 +159,10 @@ export function EnvelopeUnfoldModal({
         200 + SEAL_WIGGLE_MS * 4 + SEAL_JUMP_MS + 300,
         withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }),
       );
-      // 3. Rabat : unfold avec spring rebondissant (overshoot visible)
       flapRotate.value = withDelay(
         200 + SEAL_WIGGLE_MS * 4 + SEAL_JUMP_MS,
         withSpring(175, SPRING_FLAP),
       );
-      // 4. Contenu : slide-up + fade avec spring
       contentTranslate.value = withDelay(
         200 + SEAL_WIGGLE_MS * 4 + SEAL_JUMP_MS + 200,
         withSpring(0, SPRING_CONTENT),
@@ -167,12 +189,11 @@ export function EnvelopeUnfoldModal({
     transform: [
       { scale: envelopeScale.value },
       { translateY: envelopeFloat.value * 4 },
-      { rotateZ: `${envelopeFloat.value * 0.8}deg` },
+      { rotateZ: `${-1.5 + envelopeFloat.value * 0.8}deg` },
     ],
   }));
   const flapStyle = useAnimatedStyle(() => ({
     transform: [{ rotateX: `${flapRotate.value}deg` }],
-    // Pas de perspective — conforme strict CLAUDE.md (feel 2D)
     transformOrigin: 'top',
   }));
   const sealStyle = useAnimatedStyle(() => ({
@@ -191,22 +212,89 @@ export function EnvelopeUnfoldModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Animated.View style={[styles.envelope, { width: ENVELOPE_W, height: ENVELOPE_H, backgroundColor: PAPER }, envelopeStyle]} pointerEvents="box-none">
-          {/* Rabat animé — top */}
-          <Animated.View style={[styles.flap, { width: ENVELOPE_W, height: FLAP_H }, flapStyle]}>
-            <EnvelopeFlap width={ENVELOPE_W} height={FLAP_H} />
-          </Animated.View>
-          {/* Contenu révélé */}
-          <Animated.View style={[styles.content, contentStyle]}>
-            <ScrollView contentContainerStyle={{ padding: Spacing.xl }}>
-              <Text style={[styles.from, { color: INK }]}>De {fromName}</Text>
-              <Text style={[styles.body, { color: INK }]}>{body}</Text>
+        <Animated.View
+          style={[styles.envelope, { width: ENVELOPE_W, height: ENVELOPE_H }, envelopeStyle]}
+          pointerEvents="box-none"
+        >
+          {/* Gradient papier kraft */}
+          <LinearGradient
+            colors={[PAPER_HIGHLIGHT, PAPER_MID, PAPER_DARK]}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0.15, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+          {/* Vignette bas-droit */}
+          <LinearGradient
+            colors={['transparent', VIGNETTE]}
+            start={{ x: 0.25, y: 0.3 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFillObject, { opacity: 0.7 }]}
+            pointerEvents="none"
+          />
+          {/* Highlight haut-gauche */}
+          <LinearGradient
+            colors={['rgba(255,230,190,0.22)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.7, y: 0.6 }}
+            style={[StyleSheet.absoluteFillObject, { opacity: 0.9 }]}
+            pointerEvents="none"
+          />
+
+          {/* Lettre interieure (cream) — revelee apres unfold */}
+          <Animated.View style={[styles.letter, contentStyle]}>
+            <LinearGradient
+              colors={[LETTER_LIGHT, LETTER_MID]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <ScrollView contentContainerStyle={styles.letterInner}>
+              <Text style={styles.letterFrom}>De {fromName}</Text>
+              <Text style={styles.letterBody}>{body}</Text>
             </ScrollView>
           </Animated.View>
+
+          {/* Rabat animé — top (kraft cohérent) */}
+          <Animated.View style={[styles.flap, { width: ENVELOPE_W, height: FLAP_H }, flapStyle]}>
+            <EnvelopeFlap
+              width={ENVELOPE_W}
+              height={FLAP_H}
+              colors={[PAPER_HIGHLIGHT, PAPER_MID, PAPER_DARK]}
+            />
+          </Animated.View>
+
+          {/* Timbre cœur haut-droit */}
+          <View style={styles.stamp}>
+            <Text style={styles.stampEmoji}>💕</Text>
+          </View>
+
+          {/* Postmark "POUR TOI · DD · MM ·" */}
+          <View style={styles.postmark}>
+            <Text style={styles.postmarkText}>POUR</Text>
+            <Text style={styles.postmarkText}>TOI</Text>
+            <Text style={styles.postmarkDate}>{formatPostmarkDate()}</Text>
+          </View>
+
+          {/* Destinataire bas-gauche (calligraphié) */}
+          {toName && (
+            <View style={styles.recipient}>
+              <Text style={styles.recipientLabel}>POUR</Text>
+              <Text style={styles.recipientName} numberOfLines={1}>
+                {toName}
+              </Text>
+            </View>
+          )}
         </Animated.View>
-        {/* Cachet animé — hors enveloppe (overflow:hidden) pour pouvoir s'envoler */}
+
+        {/* Cachet de cire avec initiale calligraphique — hors overflow pour s'envoler */}
         <Animated.View style={[styles.sealSlot, sealStyle]} pointerEvents="none">
-          <WaxSeal size={72} count={0} pulse={false} initial="💌" />
+          <WaxSeal
+            size={SEAL_SIZE}
+            count={0}
+            pulse={false}
+            initial={(fromName?.[0] ?? 'M').toUpperCase()}
+          />
         </Animated.View>
       </Pressable>
     </Modal>
@@ -216,15 +304,22 @@ export function EnvelopeUnfoldModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    // Backdrop modal standard — pattern universel iOS/Android, pas un token de thème
     backgroundColor: 'rgba(0,0,0,0.6)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   envelope: {
-    borderRadius: 14,
+    borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: PAPER_EDGE,
+    // Relief marqué façon carte posée
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.5,
+    shadowRadius: 36,
+    elevation: 18,
   },
   flap: {
     position: 'absolute',
@@ -234,24 +329,109 @@ const styles = StyleSheet.create({
   },
   sealSlot: {
     position: 'absolute',
-    // Centré ecran (backdrop) — env. centre enveloppe puisque enveloppe centrée
     top: '50%',
     left: '50%',
-    marginLeft: -36,
-    marginTop: -36,
+    marginLeft: -SEAL_SIZE / 2,
+    marginTop: -SEAL_SIZE / 2 + ENVELOPE_H * 0.05,
     zIndex: 10,
   },
-  content: {
-    flex: 1,
-    paddingTop: Spacing['2xl'],
+  // ─── Lettre intérieure (cream) ─────────────────────────────
+  letter: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
+    overflow: 'hidden',
   },
-  from: {
+  letterInner: {
+    paddingTop: FLAP_H + Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing['2xl'],
+  },
+  letterFrom: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold as any,
+    color: INK_SOFT,
     marginBottom: Spacing.md,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
-  body: {
-    fontSize: FontSize.body,
-    lineHeight: 22,
+  letterBody: {
+    fontSize: 17,
+    lineHeight: 24,
+    color: LETTER_INK,
+    fontStyle: 'italic',
+  },
+  // ─── Timbre cœur ───────────────────────────────────────────
+  stamp: {
+    position: 'absolute',
+    top: 10,
+    right: 12,
+    width: 46,
+    height: 52,
+    backgroundColor: STAMP_RED,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: STAMP_BORDER,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '4deg' }],
+    zIndex: 4,
+    shadowColor: STAMP_RED_DARK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  stampEmoji: {
+    fontSize: 22,
+  },
+  postmark: {
+    position: 'absolute',
+    top: 28,
+    right: 68,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1.5,
+    borderColor: POSTMARK_INK,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '-6deg' }],
+    zIndex: 4,
+  },
+  postmarkText: {
+    fontSize: 8,
+    color: POSTMARK_TEXT,
+    letterSpacing: 0.5,
+    lineHeight: 10,
+    fontWeight: '700',
+  },
+  postmarkDate: {
+    fontSize: 8,
+    color: POSTMARK_TEXT,
+    letterSpacing: 0.3,
+    marginTop: 1,
+  },
+  recipient: {
+    position: 'absolute',
+    left: Spacing.xl,
+    bottom: Spacing.xl,
+    zIndex: 4,
+  },
+  recipientLabel: {
+    fontSize: FontSize.micro,
+    color: INK_SOFT,
+    opacity: 0.7,
+    letterSpacing: 2,
+    marginBottom: 2,
+    fontWeight: '500',
+  },
+  recipientName: {
+    fontFamily: Platform.select({ ios: 'Snell Roundhand', default: undefined }),
+    fontSize: 32,
+    color: INK,
+    fontStyle: 'italic',
+    fontWeight: '600',
+    lineHeight: 34,
+    letterSpacing: 0.3,
   },
 });

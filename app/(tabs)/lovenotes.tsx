@@ -296,6 +296,7 @@ export default function LoveNotesScreen() {
         <EnvelopeUnfoldModal
           visible={!!unfoldNote}
           fromName={profiles.find((p) => p.id === unfoldNote.from)?.name ?? 'Famille'}
+          toName={profiles.find((p) => p.id === unfoldNote.to)?.name}
           body={unfoldNote.body}
           onClose={() => setUnfoldNote(null)}
           onUnfoldComplete={handleUnfoldComplete}
