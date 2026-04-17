@@ -88,7 +88,7 @@ Détails phase-by-phase préservés ci-dessous dans `## Phase Details`.
 **Milestone Goal :** Permettre aux membres de la famille d'échanger des messages privés programmés ("love notes") qui apparaissent à une date future, avec un système de boîte aux lettres visualisé en carte enveloppe pinned en tête du dashboard — renforcer le lien affectif familial via des micro-moments de surprise asynchrones. Zéro nouvelle dépendance npm, backward compat Obsidian vault obligatoire, chaque phase non-cassante (app sur TestFlight).
 
 - [x] **Phase 34: Fondation données & hook domaine** — Type + parser + hook + cache + tests (LOVE-01, 02, 03, 04, 17) (completed 2026-04-17)
-- [ ] **Phase 35: Carte enveloppe dashboard + écran boîte aux lettres** — UI visible : enveloppe pinned + écran 3 segments + tuile more (LOVE-05, 06, 07, 08)
+- [x] **Phase 35: Carte enveloppe dashboard + écran boîte aux lettres** — UI visible : enveloppe pinned + écran 3 segments + tuile more (LOVE-05, 06, 07, 08) (completed 2026-04-17)
 - [ ] **Phase 36: Composition & programmation reveal** — Éditeur modal + notifications locales + animation unfold (LOVE-09, 10, 11, 12, 13)
 - [ ] **Phase 37: Garde-parent & polish** — Toggle parental + modération + polish final (LOVE-14, 15, 16)
 
@@ -194,11 +194,11 @@ Plans:
   3. User peut accéder à sa boîte aux lettres complète (`/lovenotes`) en tappant la carte enveloppe OU via une tuile permanente dans l'écran `more.tsx`
   4. User voit l'écran Boîte aux lettres organisé en 3 segments segmented control : "Reçues" (non lues en priorité), "Envoyées" (programmées en attente), "Archivées" (lues + révélées) — chaque segment affiche sa propre liste virtualisée de `LoveNoteCard` mémoïsés
   5. User voit la carte enveloppe disparaître automatiquement du dashboard quand plus aucune note reçue n'est pending/unread pour le profil actif (pas de flash, render conditionnel propre)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 35-01-PLAN.md — Selectors dérivés purs + route skeleton /(tabs)/lovenotes + _layout href:null (LOVE-06, LOVE-07, LOVE-08)
 - [x] 35-02-PLAN.md — Composants visuels : WaxSeal + EnvelopeFlap + EnvelopeCard + LoveNoteCard + câblage écran (LOVE-05, LOVE-06, LOVE-08)
-- [ ] 35-03-PLAN.md — Injection dashboard pinned + tuile permanente more.tsx (LOVE-05, LOVE-07)
+- [x] 35-03-PLAN.md — Injection dashboard pinned + tuile permanente more.tsx (LOVE-05, LOVE-07)
 **UI hint**: yes
 
 ### Phase 36: Composition & programmation reveal
@@ -237,7 +237,7 @@ Plans:
 | 32. Arbre familial commun | 0/TBD | Deferred | - |
 | 33. Expéditions | 3/3 | Complete   | 2026-04-14 |
 | 34. Fondation données & hook domaine | 3/3 | Complete    | 2026-04-17 |
-| 35. Carte enveloppe dashboard + écran boîte aux lettres | 2/3 | In Progress|  |
+| 35. Carte enveloppe dashboard + écran boîte aux lettres | 3/3 | Complete   | 2026-04-17 |
 | 36. Composition & programmation reveal | 0/TBD | Not started | - |
 | 37. Garde-parent & polish | 0/TBD | Not started | - |
 

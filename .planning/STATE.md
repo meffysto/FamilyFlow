@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Love Notes
-status: executing
-last_updated: "2026-04-17T08:17:24.115Z"
+status: verifying
+last_updated: "2026-04-17T08:21:49.387Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 9
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -32,7 +32,7 @@ Last activity: 2026-04-17
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ### Quick Tasks Completed
 
@@ -155,6 +155,7 @@ Status: Ready to execute
 | Phase 34 P03 | 4min | 2 tasks | 2 files |
 | Phase 35 P01 | 4min | 2 tasks | 5 files |
 | Phase 35 P02 | 6min | 2 tasks | 6 files |
+| Phase 35 P03 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -296,6 +297,7 @@ Recent decisions affecting current work:
 - [Phase 35]: Pressable EXTERNE au transform rotate dans EnvelopeCard (Pitfall 8) — wrapper non-tourné préserve la hit-box rectangulaire
 - [Phase 35]: EnvelopeFlap rendu post-onLayout (size.width > 0) — évite SVG Polygon dégénéré 0×0 au premier render
 - [Phase 35]: Cosmétiques (PAPER, INK, WAX, TILT_DEG) inline en constantes module — scope Phase 35 minimal, pas de pollution constants/colors.ts
+- [Phase 35]: Plan 35-03 : injection EnvelopeCard pinned dans dashboard (avant IIFE sortedSections.filter, hors config user) + tuile permanente 💌 Love Notes dans more.tsx famille — pure composition réutilisant Plans 01+02
 
 ### Todos
 
@@ -307,5 +309,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-17T08:17:24.112Z
+Last session: 2026-04-17T08:21:49.384Z
 Next: Plan Phase 34 (Fondation données & hook domaine)
