@@ -7,7 +7,8 @@ import { FontSize, FontWeight } from '../../constants/typography';
 
 interface ModalHeaderProps {
   title: string;
-  onClose: () => void;
+  /** Optionnel — si absent, aucun bouton close (header simple d'écran). */
+  onClose?: () => void;
   /** Bouton droit (ex: "Enregistrer") */
   rightLabel?: string;
   onRight?: () => void;
@@ -27,7 +28,7 @@ export const ModalHeader = React.memo(function ModalHeader({
   const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
 
-  const closeButton = (
+  const closeButton = onClose ? (
     <TouchableOpacity
       onPress={onClose}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -36,6 +37,8 @@ export const ModalHeader = React.memo(function ModalHeader({
     >
       <Text style={[styles.close, { color: colors.textFaint }]}>✕</Text>
     </TouchableOpacity>
+  ) : (
+    <View style={styles.placeholder} />
   );
 
   const rightButton = rightLabel ? (
