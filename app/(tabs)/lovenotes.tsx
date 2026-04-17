@@ -1,38 +1,60 @@
 /**
- * app/(tabs)/lovenotes.tsx — Écran Boîte aux lettres (Phase 35 Plan 01)
+ * app/(tabs)/lovenotes.tsx — Écran Boîte aux lettres (Phase 35 Plan 01 + Phase 36 Plan 03)
  *
- * Skeleton minimal : 3 segments (Reçues / Envoyées / Archivées) + FlatList
- * virtualisées + empty state textuel. Les cartes d'items sont des stubs
- * remplacés par le vrai LoveNoteCard au Plan 02.
+ * Skeleton : 3 segments (Reçues / Envoyées / Archivées) + FlatList
+ * virtualisées + empty state textuel. Les cartes d'items sont le vrai
+ * LoveNoteCard (Plan 35-02).
+ *
+ * Phase 36 Plan 03 :
+ * - FAB "✏️ Écrire" → ouvre LoveNoteEditor (pageSheet)
+ * - handleSave consomme le sourceFile retourné par addLoveNote (Plan 01 Task 4)
+ *   puis appelle scheduleLoveNoteReveal({...note, sourceFile}) — zéro reconstruction de chemin
+ * - useRevealOnForeground branché : pending → revealed au mount + foreground
  *
  * Route hidden via href:null dans app/(tabs)/_layout.tsx — accessible
  * uniquement par router.push('/(tabs)/lovenotes').
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { ModalHeader, SegmentedControl } from '../../components/ui';
-import { LoveNoteCard } from '../../components/lovenotes';
+import { LoveNoteCard, LoveNoteEditor } from '../../components/lovenotes';
 import {
   receivedForProfile,
   sentByProfile,
   archivedForProfile,
 } from '../../lib/lovenotes/selectors';
+import { localIso } from '../../lib/lovenotes/reveal-engine';
+import { useRevealOnForeground } from '../../hooks/useRevealOnForeground';
+import { scheduleLoveNoteReveal } from '../../lib/scheduled-notifications';
 import type { LoveNote } from '../../lib/types';
 import { Spacing } from '../../constants/spacing';
+import { FontSize } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 
 type Segment = 'received' | 'sent' | 'archived';
 
 export default function LoveNotesScreen() {
-  const { loveNotes, activeProfile, profiles } = useVault();
-  const { colors } = useThemeColors();
+  const {
+    loveNotes,
+    activeProfile,
+    profiles,
+    addLoveNote,
+    updateLoveNoteStatus,
+  } = useVault();
+  const { colors, primary } = useThemeColors();
   const [segment, setSegment] = useState<Segment>('received');
+  const [editorVisible, setEditorVisible] = useState(false);
 
   const profileId = activeProfile?.id ?? '';
+
+  // Phase 36 Plan 03 — bascule auto pending → revealed (mount + foreground).
+  useRevealOnForeground(loveNotes, updateLoveNoteStatus);
 
   // Sélecteurs mémoïsés — deps explicites (loveNotes, profileId).
   const received = useMemo(
@@ -46,6 +68,12 @@ export default function LoveNotesScreen() {
   const archived = useMemo(
     () => archivedForProfile(loveNotes, profileId),
     [loveNotes, profileId],
+  );
+
+  // Destinataires : tous profils sauf auteur (Pitfall 9).
+  const recipientProfiles = useMemo(
+    () => profiles.filter((p) => p.id !== profileId),
+    [profiles, profileId],
   );
 
   const unreadCount = received.filter((n) => n.status !== 'read').length;
@@ -70,6 +98,26 @@ export default function LoveNotesScreen() {
       { id: 'archived' as Segment, label: 'Archivées' },
     ],
     [unreadCount],
+  );
+
+  // Phase 36 Plan 03 — save flow : addLoveNote retourne le sourceFile (Plan 01 Task 4).
+  // → Pas de reconstruction via loveNotePath côté écran.
+  const handleSave = useCallback(
+    async (to: string, body: string, revealAt: string) => {
+      if (!activeProfile) return;
+      const createdAt = localIso(new Date());
+      const note = {
+        from: activeProfile.id,
+        to,
+        body,
+        revealAt,
+        createdAt,
+        status: 'pending' as const,
+      };
+      const sourceFile = await addLoveNote(note);
+      await scheduleLoveNoteReveal({ ...note, sourceFile });
+    },
+    [activeProfile, addLoveNote],
   );
 
   return (
@@ -99,6 +147,30 @@ export default function LoveNotesScreen() {
           removeClippedSubviews
         />
       )}
+
+      {/* FAB Écrire — visible si activeProfile */}
+      {activeProfile && (
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+            setEditorVisible(true);
+          }}
+          style={[styles.fab, { backgroundColor: primary }, Shadows.md]}
+          accessibilityRole="button"
+          accessibilityLabel="Écrire une love note"
+        >
+          <Text style={[styles.fabText, { color: colors.onPrimary }]}>✏️ Écrire</Text>
+        </Pressable>
+      )}
+      {activeProfile && (
+        <LoveNoteEditor
+          visible={editorVisible}
+          fromProfile={activeProfile}
+          recipientProfiles={recipientProfiles}
+          onSave={handleSave}
+          onClose={() => setEditorVisible(false)}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -116,5 +188,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: Spacing['2xl'],
+    right: Spacing['2xl'],
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: 999,
+  },
+  fabText: {
+    // Couleur appliquée inline (colors.onPrimary) — pas de hardcoded ici
+    fontWeight: '600',
+    fontSize: FontSize.body,
   },
 });
