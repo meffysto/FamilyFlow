@@ -25,6 +25,8 @@ import {
 import * as Haptics from 'expo-haptics';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useAI } from '../../contexts/AIContext';
+import { improveLoveNote } from '../../lib/ai-service';
 import { ModalHeader } from '../ui/ModalHeader';
 import { Chip } from '../ui/Chip';
 import { MarkdownText } from '../ui/MarkdownText';
@@ -57,6 +59,7 @@ export function LoveNoteEditor({
   onClose,
 }: LoveNoteEditorProps) {
   const { colors, primary } = useThemeColors();
+  const { isConfigured: aiConfigured, config: aiConfig } = useAI();
   const [to, setTo] = useState<string>('');
   const [body, setBody] = useState('');
   const [revealDate, setRevealDate] = useState('');
@@ -64,6 +67,32 @@ export function LoveNoteEditor({
   const [activePreset, setActivePreset] = useState<PresetKey>('tomorrow');
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [improving, setImproving] = useState(false);
+
+  const handleImprove = useCallback(async () => {
+    if (!aiConfig) return;
+    const trimmed = body.trim();
+    if (!trimmed) {
+      Alert.alert('Rien à améliorer', 'Écris d\'abord ton message.');
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setImproving(true);
+    try {
+      const resp = await improveLoveNote(aiConfig, trimmed);
+      if (resp.error || !resp.text) {
+        Alert.alert('IA indisponible', resp.error || 'Réponse vide.');
+        return;
+      }
+      setBody(resp.text.trim());
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    } catch (e) {
+      if (__DEV__) console.warn('[improveLoveNote]', e);
+      Alert.alert('Erreur', 'Impossible d\'améliorer le message.');
+    } finally {
+      setImproving(false);
+    }
+  }, [aiConfig, body]);
 
   // Reset state au mount du Modal (préremplit preset "Demain matin")
   useEffect(() => {
@@ -183,11 +212,26 @@ export function LoveNoteEditor({
           <View>
             <View style={styles.bodyHeader}>
               <Text style={[styles.label, { color: colors.textMuted }]}>Message</Text>
-              <Pressable onPress={() => setShowPreview((v) => !v)}>
-                <Text style={{ color: primary, fontSize: FontSize.sm }}>
-                  {showPreview ? 'Éditer' : 'Aperçu'}
-                </Text>
-              </Pressable>
+              <View style={styles.bodyActions}>
+                {aiConfigured && (
+                  <Pressable
+                    onPress={handleImprove}
+                    disabled={improving}
+                    style={{ opacity: improving ? 0.5 : 1 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Améliorer avec l'IA"
+                  >
+                    <Text style={{ color: primary, fontSize: FontSize.sm }}>
+                      {improving ? '✨ …' : '✨ Améliorer'}
+                    </Text>
+                  </Pressable>
+                )}
+                <Pressable onPress={() => setShowPreview((v) => !v)}>
+                  <Text style={{ color: primary, fontSize: FontSize.sm }}>
+                    {showPreview ? 'Éditer' : 'Aperçu'}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
             {showPreview ? (
               <View
@@ -284,6 +328,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.md,
+  },
+  bodyActions: {
+    flexDirection: 'row',
+    gap: Spacing.xl,
+    alignItems: 'center',
   },
   bodyHeader: {
     flexDirection: 'row',

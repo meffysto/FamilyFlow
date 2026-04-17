@@ -1052,3 +1052,39 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
     return { text: '', error: e instanceof Error ? e.message : 'Erreur inconnue' };
   }
 }
+
+// ─── Amelioration IA d'une love note (LOVE-AI) ──────────────────────────────
+
+/**
+ * Ameliore le texte d'une love note — ton plus chaleureux, fautes corrigees,
+ * tout en preservant l'intention et la voix de l'expediteur.
+ *
+ * Anonymisation : n'envoie QUE le body brut, aucun nom (from/to), aucun
+ * contexte vault. Le modele ne sait jamais de qui ca vient ni a qui c'est
+ * adresse. Pas de cache vault, pas de prompt system avec profils.
+ */
+export async function improveLoveNote(
+  config: AIConfig,
+  body: string,
+): Promise<AIResponse> {
+  const trimmed = body.trim();
+  if (!trimmed) return { text: '', error: 'Texte vide' };
+  // Modele rapide par defaut (Haiku) — suffisant et economique pour ce cas
+  const haikuConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const systemPrompt = [
+    "Tu aides a ameliorer une petite note tendre (love note) ecrite en francais au sein d'une famille.",
+    'Objectifs : corriger les fautes, adoucir les tournures maladroites, renforcer le ton chaleureux, preserver STRICTEMENT l\'intention et la voix originale.',
+    'Contraintes :',
+    '- Reponds UNIQUEMENT avec le texte ameliore, sans guillemets, sans introduction, sans commentaire.',
+    "- Ne rajoute jamais de nom propre, de signature, ni d'emoji si l'original n'en contient pas.",
+    '- Garde la longueur proche de l\'original (max +20%).',
+    '- Reste en francais.',
+    '- Markdown simple autorise (*italique*, **gras**) si deja present.',
+  ].join('\n');
+  return callClaude(
+    haikuConfig,
+    systemPrompt,
+    [{ role: 'user', content: trimmed }],
+    600,
+  );
+}
