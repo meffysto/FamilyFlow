@@ -623,7 +623,7 @@ export default function TreeScreen() {
     if (!gamiData || !activeProfile) return 0;
     const today = new Date().toISOString().slice(0, 10);
     return (gamiData.history ?? []).filter(
-      (e: any) => e.profileId === activeProfile.id && e.timestamp?.slice(0, 10) === today
+      (e: any) => e.profileId === activeProfile.id && e.timestamp?.slice(0, 10) === today && e.note?.startsWith('Tâche:')
     ).length;
   }, [gamiData, activeProfile]);
 
