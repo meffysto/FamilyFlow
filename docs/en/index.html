@@ -84,6 +84,18 @@
   @media (max-width:720px){
     .atmo-sun{right:6%; top:80px; width:72px; height:72px}
   }
+  .preg-dot{width:36px; height:36px; font-size:16px}
+  .preg-dot-active{width:60px; height:60px; font-size:26px}
+  @media (max-width:720px){
+    .stock-grid{grid-template-columns:1fr !important}
+    .preg-card{padding:24px 16px 16px !important; border-radius:18px !important}
+    .preg-head{flex-direction:column-reverse !important; align-items:flex-start !important; gap:8px !important}
+    .preg-emoji{font-size:72px !important; align-self:center}
+    .preg-title{font-size:24px !important}
+    .preg-dot{width:22px; height:22px; font-size:11px}
+    .preg-dot-active{width:34px; height:34px; font-size:16px}
+    .preg-weeks{font-size:9px !important; padding:0 !important}
+  }
 </style>
 </head>
 <body>
@@ -2251,18 +2263,18 @@ function PregnancyTimeline({ accent, tweaks }){
           growth curve, baby journal — all in one place.
         </p>
 
-        <div style={{
+        <div className="preg-card" style={{
           background:'#fff', borderRadius:24, padding:'36px 36px 24px', border:'1px solid var(--border)',
           boxShadow:'0 20px 50px -30px rgba(0,0,0,0.2)'
         }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:20 }}>
-            <div>
+          <div className="preg-head" style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:20, gap:16 }}>
+            <div style={{ minWidth:0, flex:1 }}>
               <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.12em', color:'#BE2E74' }}>WEEK {weeks[active].w}</div>
-              <div className="serif" style={{ fontSize:34, color:'#1A1A2E', marginTop:4 }}>Baby, the size of {weeks[active].article} {weeks[active].l.toLowerCase()}</div>
+              <div className="serif preg-title" style={{ fontSize:34, color:'#1A1A2E', marginTop:4 }}>Baby, the size of {weeks[active].article} {weeks[active].l.toLowerCase()}</div>
               <div style={{ fontSize:15, color:'var(--text-sub)', marginTop:6 }}>{weeks[active].s}</div>
             </div>
-            <div style={{
-              fontSize:100,
+            <div className="preg-emoji" style={{
+              fontSize:100, flexShrink:0, lineHeight:1,
               transition:'transform 500ms ease',
               animation:'babyFloat 3s ease-in-out infinite'
             }} key={active}>{weeks[active].e}</div>
@@ -2273,20 +2285,19 @@ function PregnancyTimeline({ accent, tweaks }){
             <div style={{ position:'absolute', left:10, top:'50%', height:4, borderRadius:2,
               background:'linear-gradient(90deg, #EC4899, #F4ABC6)',
               width: `calc(${(active/(weeks.length-1))*100}% + 0px)` }}/>
-            <div style={{ display:'flex', justifyContent:'space-between', position:'relative', alignItems:'center' }}>
+            <div className="preg-dots" style={{ display:'flex', justifyContent:'space-between', position:'relative', alignItems:'center' }}>
               {weeks.map((w,i) => (
-                <button key={i} onClick={()=>setActive(i)} style={{
-                  width: i===active ? 60 : 36, height: i===active ? 60 : 36, borderRadius:'50%',
+                <button key={i} onClick={()=>setActive(i)} className={`preg-dot${i===active?' preg-dot-active':''}`} style={{
+                  borderRadius:'50%',
                   background: i<=active ? '#fff' : '#F9F8F5',
                   border: i===active ? '3px solid #EC4899' : i<active ? '2px solid #F4ABC6' : '2px solid var(--border)',
-                  fontSize: i===active ? 26 : 16,
                   boxShadow: i===active ? '0 6px 16px rgba(236,72,153,0.35)' : 'none',
-                  transition:'all 300ms ease', cursor:'pointer'
+                  transition:'all 300ms ease', cursor:'pointer', padding:0
                 }}>{w.e}</button>
               ))}
             </div>
           </div>
-          <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--text-muted)', padding:'0 4px', fontWeight:700 }}>
+          <div className="preg-weeks" style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--text-muted)', padding:'0 4px', fontWeight:700 }}>
             {weeks.map((w,i) => <span key={i} style={{ color: i===active ? '#BE2E74' : 'inherit' }}>W{w.w}</span>)}
           </div>
         </div>
@@ -2336,7 +2347,7 @@ function StockSection({ accent, tweaks }){
         <p style={{ fontSize:18, color:'var(--text-sub)', maxWidth:600, marginBottom:48 }}>
           Thresholds, categories, synced shopping list. Scan a receipt, everything fills up.
         </p>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:32, alignItems:'center' }}>
+        <div className="stock-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:32, alignItems:'center' }}>
           <div style={{
             background:'#fff', borderRadius:20, padding:24, border:'1px solid var(--border)',
             boxShadow:'0 20px 40px -25px rgba(0,0,0,0.15)'
