@@ -6,3 +6,4 @@ export { EnvelopeFlap } from './EnvelopeFlap';
 export { EnvelopeCard } from './EnvelopeCard';
 export { LoveNoteCard } from './LoveNoteCard';
 export { LoveNoteEditor } from './LoveNoteEditor';
+export { EnvelopeUnfoldModal } from './EnvelopeUnfoldModal';
