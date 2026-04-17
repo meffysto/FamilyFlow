@@ -28,7 +28,7 @@ Phase: 35
 Plan: Not started
 Milestone: v1.6 Love Notes
 Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
-Last activity: 2026-04-17
+Last activity: 2026-04-17 - Completed quick task 260417-dp6: Migration ID habitants parseFarmProfile
 
 Progress: [░░░░░░░░░░] 0%
 
