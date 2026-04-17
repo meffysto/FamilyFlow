@@ -95,6 +95,7 @@
     .preg-dot{width:22px; height:22px; font-size:11px}
     .preg-dot-active{width:34px; height:34px; font-size:16px}
     .preg-weeks{font-size:9px !important; padding:0 !important}
+    .farm-grid{grid-template-columns:1fr !important; gap:32px !important}
   }
 </style>
 </head>
@@ -1199,7 +1200,7 @@ function FarmSection({ accent, season, scrollProg, tweaks }) {
           Kids help, parents harvest, everybody wins.
         </p>
 
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1.3fr', gap:60, alignItems:'center' }}>
+        <div className="farm-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1.3fr', gap:60, alignItems:'center' }}>
           <div>
             <LoopStep n="01" title="Act in the real world" desc="Chores, routines, errands, appointments — ticked in the app in one tap." accent={accent} active={progress > 0.05} />
             <LoopStep n="02" title="Crops grow" desc="Every task moves a harvest forward. Seasonal bonuses, golden mutations, rare rain." accent={accent} active={progress > 0.28} />
