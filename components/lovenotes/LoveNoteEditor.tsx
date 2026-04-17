@@ -98,9 +98,13 @@ export function LoveNoteEditor({
   }, [aiConfig, body]);
 
   const handleImproveTap = useCallback(() => {
+    if (!body.trim()) {
+      Alert.alert('Rien à améliorer', 'Écris d\'abord ton message.');
+      return;
+    }
     Haptics.selectionAsync().catch(() => {});
-    setShowAiStyles((v) => !v);
-  }, []);
+    setShowAiStyles(true);
+  }, [body]);
 
   // Toolbar markdown : wrap la selection (ou insert au curseur si selection vide)
   const wrapSelection = useCallback(
@@ -123,13 +127,14 @@ export function LoveNoteEditor({
     [body, selection],
   );
 
-  const AI_STYLES: Array<{ id: LoveNoteStyle; label: string; emoji: string }> = [
-    { id: 'tendre', label: 'Tendre', emoji: '🫶' },
-    { id: 'poetique', label: 'Poétique', emoji: '🌸' },
-    { id: 'drole', label: 'Drôle', emoji: '😄' },
-    { id: 'encourageant', label: 'Encourageant', emoji: '💪' },
-    { id: 'concis', label: 'Concis', emoji: '✂️' },
-    { id: 'romantique', label: 'Romantique', emoji: '❤️' },
+  const AI_STYLES: Array<{ id: LoveNoteStyle; label: string; emoji: string; hint: string }> = [
+    { id: 'normal', label: 'Normal', emoji: '✍️', hint: 'Corrige fautes + fluidifie' },
+    { id: 'tendre', label: 'Tendre', emoji: '🫶', hint: 'Chaleureux et doux' },
+    { id: 'poetique', label: 'Poétique', emoji: '🌸', hint: 'Images évocatrices' },
+    { id: 'drole', label: 'Drôle', emoji: '😄', hint: 'Léger et taquin' },
+    { id: 'encourageant', label: 'Encourageant', emoji: '💪', hint: 'Positif et motivant' },
+    { id: 'concis', label: 'Concis', emoji: '✂️', hint: '1-2 phrases max' },
+    { id: 'romantique', label: 'Romantique', emoji: '❤️', hint: 'Intense, partenaire' },
   ];
 
   // Reset state au mount du Modal (préremplit preset "Demain matin")
@@ -323,25 +328,6 @@ export function LoveNoteEditor({
                 />
               </>
             )}
-            {/* Row styles IA — visible uniquement apres tap sur '✨ Améliorer' */}
-            {aiConfigured && showAiStyles && (
-              <View style={styles.aiStyleRow}>
-                <Text style={[styles.aiStyleLabel, { color: colors.textMuted }]}>
-                  Choisis un style…
-                </Text>
-                <View style={styles.chipsRow}>
-                  {AI_STYLES.map((s) => (
-                    <Chip
-                      key={s.id}
-                      label={s.label}
-                      emoji={s.emoji}
-                      selected={false}
-                      onPress={() => runImprove(s.id)}
-                    />
-                  ))}
-                </View>
-              </View>
-            )}
           </View>
 
           {/* Presets reveal */}
@@ -401,6 +387,57 @@ export function LoveNoteEditor({
           />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Popup choix du style IA */}
+      <Modal
+        visible={showAiStyles}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAiStyles(false)}
+      >
+        <Pressable style={styles.aiBackdrop} onPress={() => setShowAiStyles(false)}>
+          <Pressable
+            style={[styles.aiSheet, { backgroundColor: colors.card }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.aiSheetTitle, { color: colors.text }]}>
+              ✨ Choisis un style
+            </Text>
+            <Text style={[styles.aiSheetSub, { color: colors.textMuted }]}>
+              Ton message sera reformulé en gardant l'intention. Envoyé anonymisé.
+            </Text>
+            {AI_STYLES.map((s) => (
+              <Pressable
+                key={s.id}
+                onPress={() => runImprove(s.id)}
+                style={({ pressed }) => [
+                  styles.aiOption,
+                  {
+                    backgroundColor: pressed ? colors.cardAlt : 'transparent',
+                    borderBottomColor: colors.border,
+                  },
+                ]}
+              >
+                <Text style={styles.aiOptionEmoji}>{s.emoji}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.aiOptionLabel, { color: colors.text }]}>
+                    {s.label}
+                  </Text>
+                  <Text style={[styles.aiOptionHint, { color: colors.textMuted }]}>
+                    {s.hint}
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+            <Pressable
+              onPress={() => setShowAiStyles(false)}
+              style={styles.aiCancel}
+            >
+              <Text style={[styles.aiCancelText, { color: primary }]}>Annuler</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Modal>
   );
 }
@@ -421,13 +458,61 @@ const styles = StyleSheet.create({
     gap: Spacing.xl,
     alignItems: 'center',
   },
-  aiStyleRow: {
-    marginTop: Spacing.md,
+  // ─── AI style popup ─────────────────────────────────────
+  aiBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing['3xl'],
   },
-  aiStyleLabel: {
-    fontSize: FontSize.sm,
+  aiSheet: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 16,
+    padding: Spacing['2xl'],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  aiSheetTitle: {
+    fontSize: FontSize.title,
+    fontWeight: '700',
     marginBottom: Spacing.xs,
-    fontWeight: '500',
+  },
+  aiSheetSub: {
+    fontSize: FontSize.sm,
+    marginBottom: Spacing.xl,
+    lineHeight: 18,
+  },
+  aiOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xl,
+    paddingVertical: Spacing.xl,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  aiOptionEmoji: {
+    fontSize: 24,
+  },
+  aiOptionLabel: {
+    fontSize: FontSize.body,
+    fontWeight: '600',
+  },
+  aiOptionHint: {
+    fontSize: FontSize.sm,
+    marginTop: 2,
+  },
+  aiCancel: {
+    marginTop: Spacing.xl,
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  aiCancelText: {
+    fontSize: FontSize.body,
+    fontWeight: '600',
   },
   markdownToolbar: {
     flexDirection: 'row',

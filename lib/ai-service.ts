@@ -1064,6 +1064,7 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
  * adresse. Pas de cache vault, pas de prompt system avec profils.
  */
 export type LoveNoteStyle =
+  | 'normal'
   | 'tendre'
   | 'poetique'
   | 'drole'
@@ -1072,6 +1073,7 @@ export type LoveNoteStyle =
   | 'romantique';
 
 const STYLE_DIRECTIVES: Record<LoveNoteStyle, string> = {
+  normal: 'Simple reformulation : corrige les fautes et fluidifie les tournures, sans changer le ton.',
   tendre: 'Ton chaleureux, doux, affectueux. Simple et sincere.',
   poetique: 'Ton poetique, images evocatrices, rythme musical. Sans tomber dans le cliche.',
   drole: 'Ton leger et taquin, clin d\'oeil humoristique. Reste bienveillant.',
