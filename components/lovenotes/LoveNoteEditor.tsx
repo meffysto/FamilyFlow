@@ -26,7 +26,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
-import { improveLoveNote } from '../../lib/ai-service';
+import { improveLoveNote, type LoveNoteStyle } from '../../lib/ai-service';
 import { ModalHeader } from '../ui/ModalHeader';
 import { Chip } from '../ui/Chip';
 import { MarkdownText } from '../ui/MarkdownText';
@@ -68,6 +68,7 @@ export function LoveNoteEditor({
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [improving, setImproving] = useState(false);
+  const [aiStyle, setAiStyle] = useState<LoveNoteStyle>('tendre');
 
   const handleImprove = useCallback(async () => {
     if (!aiConfig) return;
@@ -79,7 +80,7 @@ export function LoveNoteEditor({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setImproving(true);
     try {
-      const resp = await improveLoveNote(aiConfig, trimmed);
+      const resp = await improveLoveNote(aiConfig, trimmed, aiStyle);
       if (resp.error || !resp.text) {
         Alert.alert('IA indisponible', resp.error || 'Réponse vide.');
         return;
@@ -92,7 +93,16 @@ export function LoveNoteEditor({
     } finally {
       setImproving(false);
     }
-  }, [aiConfig, body]);
+  }, [aiConfig, body, aiStyle]);
+
+  const AI_STYLES: Array<{ id: LoveNoteStyle; label: string; emoji: string }> = [
+    { id: 'tendre', label: 'Tendre', emoji: '🫶' },
+    { id: 'poetique', label: 'Poétique', emoji: '🌸' },
+    { id: 'drole', label: 'Drôle', emoji: '😄' },
+    { id: 'encourageant', label: 'Encourageant', emoji: '💪' },
+    { id: 'concis', label: 'Concis', emoji: '✂️' },
+    { id: 'romantique', label: 'Romantique', emoji: '❤️' },
+  ];
 
   // Reset state au mount du Modal (préremplit preset "Demain matin")
   useEffect(() => {
@@ -247,13 +257,34 @@ export function LoveNoteEditor({
                 multiline
                 value={body}
                 onChangeText={setBody}
-                placeholder="Ton message... (markdown supporté : **gras**, *italique*)"
+                placeholder="Ton message…"
                 placeholderTextColor={colors.textMuted}
                 style={[
                   styles.textInput,
                   { color: colors.text, backgroundColor: colors.cardAlt, borderColor: colors.border },
                 ]}
               />
+            )}
+            {aiConfigured && (
+              <View style={styles.aiStyleRow}>
+                <Text style={[styles.aiStyleLabel, { color: colors.textMuted }]}>
+                  Style IA
+                </Text>
+                <View style={styles.chipsRow}>
+                  {AI_STYLES.map((s) => (
+                    <Chip
+                      key={s.id}
+                      label={s.label}
+                      emoji={s.emoji}
+                      selected={aiStyle === s.id}
+                      onPress={() => {
+                        Haptics.selectionAsync().catch(() => {});
+                        setAiStyle(s.id);
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
             )}
           </View>
 
@@ -333,6 +364,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.xl,
     alignItems: 'center',
+  },
+  aiStyleRow: {
+    marginTop: Spacing.md,
+  },
+  aiStyleLabel: {
+    fontSize: FontSize.sm,
+    marginBottom: Spacing.xs,
+    fontWeight: '500',
   },
   bodyHeader: {
     flexDirection: 'row',

@@ -1063,23 +1063,46 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
  * contexte vault. Le modele ne sait jamais de qui ca vient ni a qui c'est
  * adresse. Pas de cache vault, pas de prompt system avec profils.
  */
+export type LoveNoteStyle =
+  | 'tendre'
+  | 'poetique'
+  | 'drole'
+  | 'encourageant'
+  | 'concis'
+  | 'romantique';
+
+const STYLE_DIRECTIVES: Record<LoveNoteStyle, string> = {
+  tendre: 'Ton chaleureux, doux, affectueux. Simple et sincere.',
+  poetique: 'Ton poetique, images evocatrices, rythme musical. Sans tomber dans le cliche.',
+  drole: 'Ton leger et taquin, clin d\'oeil humoristique. Reste bienveillant.',
+  encourageant: 'Ton positif et motivant, valorise la personne. Energique sans en faire trop.',
+  concis: 'Aussi court que possible. Une ou deux phrases max, percutantes.',
+  romantique: 'Ton intense et amoureux, emotion assumee. Pour partenaire adulte uniquement.',
+};
+
 export async function improveLoveNote(
   config: AIConfig,
   body: string,
+  style?: LoveNoteStyle,
 ): Promise<AIResponse> {
   const trimmed = body.trim();
   if (!trimmed) return { text: '', error: 'Texte vide' };
-  // Modele rapide par defaut (Haiku) — suffisant et economique pour ce cas
   const haikuConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const styleInstr = style
+    ? `Style demande : ${STYLE_DIRECTIVES[style]}`
+    : 'Style : ton chaleureux et sincere.';
+  const lengthRule = style === 'concis'
+    ? 'Reduis au strict essentiel — une ou deux phrases max.'
+    : 'Garde la longueur proche de l\'original (max +20%).';
   const systemPrompt = [
     "Tu aides a ameliorer une petite note tendre (love note) ecrite en francais au sein d'une famille.",
-    'Objectifs : corriger les fautes, adoucir les tournures maladroites, renforcer le ton chaleureux, preserver STRICTEMENT l\'intention et la voix originale.',
+    'Objectifs : corriger les fautes, affiner les tournures, preserver STRICTEMENT l\'intention et la voix originale.',
+    styleInstr,
     'Contraintes :',
     '- Reponds UNIQUEMENT avec le texte ameliore, sans guillemets, sans introduction, sans commentaire.',
     "- Ne rajoute jamais de nom propre, de signature, ni d'emoji si l'original n'en contient pas.",
-    '- Garde la longueur proche de l\'original (max +20%).',
+    `- ${lengthRule}`,
     '- Reste en francais.',
-    '- Markdown simple autorise (*italique*, **gras**) si deja present.',
   ].join('\n');
   return callClaude(
     haikuConfig,
