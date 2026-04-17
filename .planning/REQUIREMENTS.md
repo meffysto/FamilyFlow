@@ -44,7 +44,7 @@
 ### Catégorie QUALITÉ — Non-régression et tests
 
 - [ ] **LOVE-16**: User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes) ni aucune régression Jest (`npx jest --no-coverage` clean) après chaque phase
-- [ ] **LOVE-17**: User a un parser love notes testé par suite Jest (`lib/__tests__/parser-lovenotes.test.ts`) couvrant parse/serialize roundtrip, gestion frontmatter invalide, et listing par destinataire
+- [x] **LOVE-17**: User a un parser love notes testé par suite Jest (`lib/__tests__/parser-lovenotes.test.ts`) couvrant parse/serialize roundtrip, gestion frontmatter invalide, et listing par destinataire
 
 ---
 
@@ -89,7 +89,7 @@ Mapping REQ-ID → Phase (100% coverage des 17 REQ-IDs v1).
 | LOVE-14 | Phase 37 — Garde-parent & polish | Pending |
 | LOVE-15 | Phase 37 — Garde-parent & polish | Pending |
 | LOVE-16 | Phase 37 — Garde-parent & polish | Pending |
-| LOVE-17 | Phase 34 — Fondation données & hook domaine | Pending |
+| LOVE-17 | Phase 34 — Fondation données & hook domaine | Complete |
 
 **Coverage check :** 17/17 REQ-IDs mappés ✓ — zéro orphelin, zéro duplicate.
 
