@@ -23,11 +23,12 @@ import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { ModalHeader, SegmentedControl } from '../../components/ui';
-import { LoveNoteCard, LoveNoteEditor } from '../../components/lovenotes';
+import { LoveNoteCard, LoveNoteEditor, EnvelopeUnfoldModal } from '../../components/lovenotes';
 import {
   receivedForProfile,
   sentByProfile,
   archivedForProfile,
+  isRevealed,
 } from '../../lib/lovenotes/selectors';
 import { localIso } from '../../lib/lovenotes/reveal-engine';
 import { useRevealOnForeground } from '../../hooks/useRevealOnForeground';
@@ -50,6 +51,7 @@ export default function LoveNotesScreen() {
   const { colors, primary } = useThemeColors();
   const [segment, setSegment] = useState<Segment>('received');
   const [editorVisible, setEditorVisible] = useState(false);
+  const [unfoldNote, setUnfoldNote] = useState<LoveNote | null>(null);
 
   const profileId = activeProfile?.id ?? '';
 
@@ -80,11 +82,42 @@ export default function LoveNotesScreen() {
   const data =
     segment === 'received' ? received : segment === 'sent' ? sent : archived;
 
+  // Phase 36 Plan 04 — tap card : ouvre EnvelopeUnfoldModal (revealed direct,
+  // pending due → upgrade puis ouvre).
+  const handleCardPress = useCallback(
+    (note: LoveNote) => {
+      if (note.status === 'revealed') {
+        setUnfoldNote(note);
+        return;
+      }
+      if (note.status === 'pending' && isRevealed(note)) {
+        updateLoveNoteStatus(note.sourceFile, 'revealed')
+          .then(() => setUnfoldNote({ ...note, status: 'revealed' }))
+          .catch((e) => {
+            if (__DEV__) console.warn('[handleCardPress]', e);
+          });
+        return;
+      }
+      // pending future / read → noop (future : navigation détail)
+    },
+    [updateLoveNoteStatus],
+  );
+
+  // Phase 36 Plan 04 — patch 'read' APRÈS la fin de l'animation (Pitfall 6).
+  const handleUnfoldComplete = useCallback(async () => {
+    if (!unfoldNote) return;
+    try {
+      await updateLoveNoteStatus(unfoldNote.sourceFile, 'read');
+    } catch (e) {
+      if (__DEV__) console.warn('[handleUnfoldComplete]', e);
+    }
+  }, [unfoldNote, updateLoveNoteStatus]);
+
   const renderItem = useCallback(
     ({ item }: { item: LoveNote }) => (
-      <LoveNoteCard note={item} profiles={profiles} />
+      <LoveNoteCard note={item} profiles={profiles} onPress={handleCardPress} />
     ),
-    [profiles],
+    [profiles, handleCardPress],
   );
 
   const segments = useMemo(
@@ -169,6 +202,15 @@ export default function LoveNotesScreen() {
           recipientProfiles={recipientProfiles}
           onSave={handleSave}
           onClose={() => setEditorVisible(false)}
+        />
+      )}
+      {unfoldNote && (
+        <EnvelopeUnfoldModal
+          visible={!!unfoldNote}
+          fromName={profiles.find((p) => p.id === unfoldNote.from)?.name ?? 'Famille'}
+          body={unfoldNote.body}
+          onClose={() => setUnfoldNote(null)}
+          onUnfoldComplete={handleUnfoldComplete}
         />
       )}
     </SafeAreaView>
