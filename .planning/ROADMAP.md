@@ -89,7 +89,7 @@ Détails phase-by-phase préservés ci-dessous dans `## Phase Details`.
 
 - [x] **Phase 34: Fondation données & hook domaine** — Type + parser + hook + cache + tests (LOVE-01, 02, 03, 04, 17) (completed 2026-04-17)
 - [x] **Phase 35: Carte enveloppe dashboard + écran boîte aux lettres** — UI visible : enveloppe pinned + écran 3 segments + tuile more (LOVE-05, 06, 07, 08) (completed 2026-04-17)
-- [ ] **Phase 36: Composition & programmation reveal** — Éditeur modal + notifications locales + animation unfold (LOVE-09, 10, 11, 12, 13)
+- [x] **Phase 36: Composition & programmation reveal** — Éditeur modal + notifications locales + animation unfold (LOVE-09, 10, 11, 12, 13) (completed 2026-04-17)
 - [ ] **Phase 37: Garde-parent & polish** — Toggle parental + modération + polish final (LOVE-14, 15, 16)
 
 ## Phase Details
@@ -211,12 +211,12 @@ Plans:
   3. User voit une notification locale silencieuse planifiée au `revealAt` via `expo-notifications` — le tap sur la notif ouvre l'écran boîte aux lettres
   4. User voit les love notes `pending` dont `revealAt <= now` basculer automatiquement en `revealed` à chaque retour app foreground (`AppState` change → `active` → `revealPendingNotes()` appelé)
   5. User voit une animation "unfold" Reanimated (rotation X du rabat ≥175°, cachet qui saute, contenu dévoilé) au tap sur une enveloppe `revealed`, accompagnée d'un haptic `notificationAsync('success')` — la note passe ensuite en `read` avec `readAt` horodaté
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 36-01-PLAN.md — Reveal engine fondations (presets reveal-engine.ts + scheduleLoveNoteReveal/cancel + useRevealOnForeground hook) (LOVE-11, LOVE-12)
 - [x] 36-02-PLAN.md — Notification routing app/_layout.tsx (warm + cold start) (LOVE-11)
 - [x] 36-03-PLAN.md — LoveNoteEditor modal + FAB Écrire + useRevealOnForeground branché (LOVE-09, LOVE-10, LOVE-12)
-- [ ] 36-04-PLAN.md — EnvelopeUnfoldModal animation Reanimated + câblage tap LoveNoteCard (LOVE-13)
+- [x] 36-04-PLAN.md — EnvelopeUnfoldModal animation Reanimated + câblage tap LoveNoteCard (LOVE-13)
 **UI hint**: yes
 
 ### Phase 37: Garde-parent & polish
@@ -243,7 +243,7 @@ Plans:
 | 33. Expéditions | 3/3 | Complete   | 2026-04-14 |
 | 34. Fondation données & hook domaine | 3/3 | Complete    | 2026-04-17 |
 | 35. Carte enveloppe dashboard + écran boîte aux lettres | 3/3 | Complete   | 2026-04-17 |
-| 36. Composition & programmation reveal | 3/4 | In Progress|  |
+| 36. Composition & programmation reveal | 4/4 | Complete   | 2026-04-17 |
 | 37. Garde-parent & polish | 0/TBD | Not started | - |
 
 ## Archived Milestones

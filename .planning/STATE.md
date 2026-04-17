@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Love Notes
 status: executing
-last_updated: "2026-04-17T12:05:16.331Z"
+last_updated: "2026-04-17T12:10:06.980Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 9
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
-  completed_plans: 17
+  completed_plans: 18
   percent: 0
 ---
 
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 36 (composition-programmation-reveal) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Milestone: v1.6 Love Notes
 Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
 Last activity: 2026-04-17
@@ -159,6 +159,7 @@ Status: Ready to execute
 | Phase 36 P01 | 12min | 4 tasks | 6 files |
 | Phase 36 P02 | 3min | 1 tasks | 1 files |
 | Phase 36 P03 | 8min | 2 tasks | 3 files |
+| Phase 36 P04 | 6min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -306,6 +307,8 @@ Recent decisions affecting current work:
 - [Phase 36]: Plan 02 : useEffect RootLayout étendu (pas dupliqué) + setTimeout(..., 0) sur cold start pour gérer la race condition Stack mount avant router.push
 - [Phase 36]: addLoveNote Promise<string> consommé tel quel dans lovenotes.tsx handleSave — sourceFile propagé à scheduleLoveNoteReveal, zéro reconstruction via loveNotePath côté écran (source unique de vérité honorée)
 - [Phase 36]: Preset 'Demain matin' pré-rempli au mount LoveNoteEditor — couvre 80% des cas (surprise au réveil), preset chips + DateInput cohabitent via bascule activePreset='custom' sur édition manuelle
+- [Phase 36-04]: Plan 04: EnvelopeUnfoldModal PAS de perspective (conformité stricte CLAUDE.md) — rotateX 0→175° avec transformOrigin:'top' suffit, feel 2D acceptable
+- [Phase 36-04]: Plan 04: handleUnfoldComplete patch status='read' APRÈS finish callback animation (Pitfall 6) — évite flicker re-render pendant unfold
 
 ### Todos
 
@@ -317,5 +320,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-17T12:05:16.326Z
+Last session: 2026-04-17T12:10:00.434Z
 Next: Plan Phase 34 (Fondation données & hook domaine)
