@@ -302,17 +302,17 @@ export interface RareSeedDrop {
 interface SeedDropRule {
   sourceCropIds: string[] | '*';  // '*' = n'importe quelle culture
   seedId: string;
-  chance: number;  // probabilite (0.08 = 8%)
+  chance: number;  // probabilite (0.04 = 4%)
 }
 
 /** Table de drop des graines rares */
 export const RARE_SEED_DROP_RULES: SeedDropRule[] = [
-  // Recolte arbuste+ → orchidee (8%)
-  { sourceCropIds: ['tomato', 'cabbage', 'cucumber', 'corn', 'strawberry', 'pumpkin', 'sunflower'], seedId: 'orchidee', chance: 0.08 },
-  // Recolte arbre+ → rose doree (8%)
-  { sourceCropIds: ['corn', 'strawberry', 'pumpkin'], seedId: 'rose_doree', chance: 0.08 },
-  // Recolte citrouille/tournesol → truffe (8%)
-  { sourceCropIds: ['pumpkin', 'sunflower'], seedId: 'truffe', chance: 0.08 },
+  // Recolte arbuste+ → orchidee (4%)
+  { sourceCropIds: ['tomato', 'cabbage', 'cucumber', 'corn', 'strawberry', 'pumpkin', 'sunflower'], seedId: 'orchidee', chance: 0.04 },
+  // Recolte arbre+ → rose doree (4%)
+  { sourceCropIds: ['corn', 'strawberry', 'pumpkin'], seedId: 'rose_doree', chance: 0.04 },
+  // Recolte citrouille/tournesol → truffe (4%)
+  { sourceCropIds: ['pumpkin', 'sunflower'], seedId: 'truffe', chance: 0.04 },
   // Recolte n'importe quoi → fruit du dragon (2%)
   { sourceCropIds: '*', seedId: 'fruit_dragon', chance: 0.02 },
 ];

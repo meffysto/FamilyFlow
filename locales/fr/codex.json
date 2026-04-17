@@ -46,19 +46,39 @@
     },
     "orchidee": {
       "name": "Orchidée mystérieuse",
-      "lore": "On ne plante pas une orchidée : elle choisit son moment. Elle apparaît parfois au détour d'une récolte, cadeau inattendu des terres généreuses. Son pétale froid a un éclat presque irréel."
+      "lore": "On ne plante pas une orchidée : elle choisit son moment. Elle apparaît parfois au détour d'une récolte, cadeau inattendu des terres généreuses. Son pétale froid a un éclat presque irréel. Chance de drop : 4 %."
     },
     "rose_doree": {
       "name": "Rose dorée",
-      "lore": "Une légende du jardinage. Quelques pétales suffisent à éclairer tout un verger. La rose dorée ne se trouve qu'en récoltant patiemment les cultures plus anciennes — et même là, elle se mérite."
+      "lore": "Une légende du jardinage. Quelques pétales suffisent à éclairer tout un verger. La rose dorée ne se trouve qu'en récoltant patiemment les cultures plus anciennes — et même là, elle se mérite. Chance de drop : 4 %."
     },
     "truffe": {
       "name": "Truffe parfumée",
-      "lore": "Cachée sous les racines majestueuses, la truffe ne se dévoile qu'aux fermiers persévérants. Son parfum puissant signe les meilleurs plats de fête."
+      "lore": "Cachée sous les racines majestueuses, la truffe ne se dévoile qu'aux fermiers persévérants. Son parfum puissant signe les meilleurs plats de fête. Chance de drop : 4 %."
     },
     "fruit_dragon": {
       "name": "Fruit du dragon",
-      "lore": "Le trésor ultime de la ferme, dont la peau écailleuse semble palpiter d'une lueur intérieure. On raconte qu'un seul peut apparaître après n'importe quelle récolte — mais la plupart des jardiniers ne le verront qu'une fois dans leur vie."
+      "lore": "Le trésor ultime de la ferme, dont la peau écailleuse semble palpiter d'une lueur intérieure. On raconte qu'un seul peut apparaître après n'importe quelle récolte — mais la plupart des jardiniers ne le verront qu'une fois dans leur vie. Chance de drop : 2 %."
+    },
+    "fleur_lave": {
+      "name": "Fleur de lave",
+      "lore": "Née dans la chaleur des profondeurs volcaniques, cette fleur écarlate ne peut être ramenée que par les explorateurs les plus courageux. Elle ne pousse pas sur la ferme ordinaire — c'est un trophée d'expédition."
+    },
+    "cristal_noir": {
+      "name": "Cristal noir",
+      "lore": "Forgé sous des pressions abyssales, ce cristal sombre absorbe la lumière plutôt qu'il ne la réfléchit. Seules les expéditions les plus profondes permettent d'en ramener un fragment intact."
+    },
+    "mousse_etoile": {
+      "name": "Mousse étoilée",
+      "lore": "Dans les clairières oubliées où la lune touche le sol, cette mousse scintillante se dépose sur les vieilles pierres. Les expéditions nocturnes sont le seul moyen de la récolter."
+    },
+    "racine_geante": {
+      "name": "Racine géante",
+      "lore": "Plongée dans les couches les plus profondes de la terre depuis des siècles, cette racine ancestrale déborde de sève. Elle résiste à tout — sauf à un explorateur vraiment déterminé."
+    },
+    "fleur_celeste": {
+      "name": "Fleur céleste",
+      "lore": "Pétales d'étoiles, parfum d'aurore boréale. La fleur céleste est le trésor ultime des expéditions légendaires — rares sont ceux qui en ont vu une de leurs propres yeux."
     }
   },
   "animal": {

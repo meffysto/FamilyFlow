@@ -46,19 +46,39 @@
     },
     "orchidee": {
       "name": "Mysterious Orchid",
-      "lore": "You don't plant an orchid: it chooses its moment. It sometimes appears at the edge of a harvest, an unexpected gift from generous soil. Its cool petal holds an almost unreal shimmer."
+      "lore": "You don't plant an orchid: it chooses its moment. It sometimes appears at the edge of a harvest, an unexpected gift from generous soil. Its cool petal holds an almost unreal shimmer. Drop chance: 4%."
     },
     "rose_doree": {
       "name": "Golden Rose",
-      "lore": "A gardening legend. A few petals can light up an entire orchard. The golden rose only surfaces when older crops are harvested patiently — and even then, it has to be earned."
+      "lore": "A gardening legend. A few petals can light up an entire orchard. The golden rose only surfaces when older crops are harvested patiently — and even then, it has to be earned. Drop chance: 4%."
     },
     "truffe": {
       "name": "Fragrant Truffle",
-      "lore": "Hidden beneath majestic roots, the truffle only reveals itself to persistent farmers. Its powerful aroma signs the finest feast dishes."
+      "lore": "Hidden beneath majestic roots, the truffle only reveals itself to persistent farmers. Its powerful aroma signs the finest feast dishes. Drop chance: 4%."
     },
     "fruit_dragon": {
       "name": "Dragon Fruit",
-      "lore": "The ultimate treasure of the farm, its scaled skin seems to pulse with an inner glow. It's said that a single one can appear after any harvest — but most gardeners will only see it once in a lifetime."
+      "lore": "The ultimate treasure of the farm, its scaled skin seems to pulse with an inner glow. It's said that a single one can appear after any harvest — but most gardeners will only see it once in a lifetime. Drop chance: 2%."
+    },
+    "fleur_lave": {
+      "name": "Lava Flower",
+      "lore": "Born in the heat of volcanic depths, this scarlet flower can only be brought back by the most courageous explorers. It doesn't grow on an ordinary farm — it's an expedition trophy."
+    },
+    "cristal_noir": {
+      "name": "Black Crystal",
+      "lore": "Forged under abyssal pressure, this dark crystal absorbs light rather than reflecting it. Only the deepest expeditions allow a fragment to be brought back intact."
+    },
+    "mousse_etoile": {
+      "name": "Starry Moss",
+      "lore": "In forgotten glades where moonlight touches the ground, this shimmering moss settles on ancient stones. Night expeditions are the only way to harvest it."
+    },
+    "racine_geante": {
+      "name": "Giant Root",
+      "lore": "Buried in the deepest soil layers for centuries, this ancient root brims with sap. It resists everything — except a truly determined explorer."
+    },
+    "fleur_celeste": {
+      "name": "Celestial Flower",
+      "lore": "Petals of stars, the scent of northern lights. The celestial flower is the ultimate treasure of legendary expeditions — few have ever seen one with their own eyes."
     }
   },
   "animal": {
