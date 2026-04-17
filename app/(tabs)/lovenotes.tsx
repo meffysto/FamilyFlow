@@ -34,7 +34,6 @@ import {
 } from '../../lib/lovenotes/selectors';
 import { localIso } from '../../lib/lovenotes/reveal-engine';
 import { useRevealOnForeground } from '../../hooks/useRevealOnForeground';
-import { scheduleLoveNoteReveal } from '../../lib/scheduled-notifications';
 import type { LoveNote, LoveNoteStatus } from '../../lib/types';
 import { Spacing } from '../../constants/spacing';
 import { FontSize } from '../../constants/typography';
@@ -170,8 +169,7 @@ export default function LoveNotesScreen() {
         createdAt,
         status: 'pending' as const,
       };
-      const sourceFile = await addLoveNote(note);
-      await scheduleLoveNoteReveal({ ...note, sourceFile });
+      await addLoveNote(note);
     },
     [activeProfile, addLoveNote],
   );
