@@ -232,7 +232,7 @@ Plans:
 | 31. Ambiance dynamique | 0/TBD | Deferred | - |
 | 32. Arbre familial commun | 0/TBD | Deferred | - |
 | 33. Expéditions | 3/3 | Complete   | 2026-04-14 |
-| 34. Fondation données & hook domaine | 3/3 | Complete   | 2026-04-17 |
+| 34. Fondation données & hook domaine | 3/3 | Complete    | 2026-04-17 |
 | 35. Carte enveloppe dashboard + écran boîte aux lettres | 0/TBD | Not started | - |
 | 36. Composition & programmation reveal | 0/TBD | Not started | - |
 | 37. Garde-parent & polish | 0/TBD | Not started | - |
