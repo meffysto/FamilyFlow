@@ -178,9 +178,9 @@ Plans:
   3. User voit les love notes hydratées en mémoire au démarrage de l'app via `useVault().loveNotes` exposé par `VaultContext` (pattern identique aux 21 hooks domaine existants)
   4. User voit les love notes survivre à un restart à froid de l'app sans re-parse depuis disk (cachables dans `lib/vault-cache.ts`, `CACHE_VERSION` bumpé pour invalider propre)
   5. User voit la suite Jest `lib/__tests__/parser-lovenotes.test.ts` passer (parse/serialize roundtrip, gestion frontmatter invalide, listing par destinataire) — `npx tsc --noEmit` et `npx jest --no-coverage` clean
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 34-01-PLAN.md — Fondation data: type LoveNote + parser bidirectionnel + bump CACHE_VERSION (LOVE-01, LOVE-02, LOVE-04)
+- [x] 34-01-PLAN.md — Fondation data: type LoveNote + parser bidirectionnel + bump CACHE_VERSION (LOVE-01, LOVE-02, LOVE-04)
 - [ ] 34-02-PLAN.md — Suite Jest parser-lovenotes (parse/serialize/round-trip/listing) (LOVE-17)
 - [ ] 34-03-PLAN.md — Hook useVaultLoveNotes + cablage useVault.ts + cache hydrate/save (LOVE-03, LOVE-04)
 
@@ -232,7 +232,7 @@ Plans:
 | 31. Ambiance dynamique | 0/TBD | Deferred | - |
 | 32. Arbre familial commun | 0/TBD | Deferred | - |
 | 33. Expéditions | 3/3 | Complete   | 2026-04-14 |
-| 34. Fondation données & hook domaine | 0/3 | Planned | - |
+| 34. Fondation données & hook domaine | 1/3 | In Progress|  |
 | 35. Carte enveloppe dashboard + écran boîte aux lettres | 0/TBD | Not started | - |
 | 36. Composition & programmation reveal | 0/TBD | Not started | - |
 | 37. Garde-parent & polish | 0/TBD | Not started | - |

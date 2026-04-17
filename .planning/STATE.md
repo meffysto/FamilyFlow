@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Love Notes
-status: planning
-last_updated: "2026-04-16T14:00:00.000Z"
-last_activity: 2026-04-16
+status: executing
+last_updated: "2026-04-17T07:22:20.722Z"
+last_activity: 2026-04-17
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 9
+  completed_phases: 2
+  total_plans: 9
+  completed_plans: 9
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** v1.6 Love Notes — Phase 34 (Fondation données & hook domaine) à planifier
+**Current focus:** Phase 34 — fondation-donn-es-hook-domaine
 
 ## Current Position
 
-Phase: 34 — Fondation données & hook domaine (not started)
-Plan: —
+Phase: 34 (fondation-donn-es-hook-domaine) — EXECUTING
+Plan: 2 of 3
 Milestone: v1.6 Love Notes
 Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
-Last activity: 2026-04-16 — Roadmap v1.6 créé (Phases 34-37)
+Last activity: 2026-04-17
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Planning (roadmap approuvé, plans à générer)
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -149,6 +149,7 @@ Status: Planning (roadmap approuvé, plans à générer)
 | Phase 33-exp-ditions P02 | 3min | 2 tasks | 3 files |
 | Phase 33-exp-ditions P03 | 4min | 2 tasks | 4 files |
 | Phase 33-exp-ditions P03 | 12 | 3 tasks | 5 files |
+| Phase 34 P01 | 5min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -277,6 +278,9 @@ Recent decisions affecting current work:
 - [Phase 33-exp-ditions]: handleCollectExpedition : délai 300ms entre fermeture modal et ouverture coffre pour éviter collision animation iOS
 - [Phase 33-exp-ditions]: harvestInventory exposé par useExpeditions et passé en prop — évite double accès vault depuis les composants UI
 - [Phase 33-exp-ditions]: CostChip récolte : CROP_CATALOG.find + t(labelKey) + have/required avec colors.success/error — pattern réutilisable pour les coûts de récolte
+- [Phase 34]: [Phase 34-01]: Slug love note base36 deterministe depuis HHMMSSmmm — collision-safe ms, pas de randomness
+- [Phase 34]: [Phase 34-01]: Pas de champ title dans LoveNote — discretion, le body parle de lui-meme
+- [Phase 34]: [Phase 34-01]: CACHE_VERSION 1->2 bump + placeholder loveNotes:[] dans useVault.ts saveCache (Plan 03 cablera le vrai load)
 
 ### Todos
 
@@ -288,5 +292,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-16T14:00:00.000Z
+Last session: 2026-04-17T07:22:20.719Z
 Next: Plan Phase 34 (Fondation données & hook domaine)

@@ -16,10 +16,10 @@
 
 ### Catégorie DONNÉES — Fondation persistance & hook domaine
 
-- [ ] **LOVE-01**: User voit ses love notes persister dans le vault Obsidian au chemin `03 - Famille/LoveNotes/{to-profileId}/{YYYY-MM-DD-slug}.md` (un fichier = une note, classé par destinataire)
-- [ ] **LOVE-02**: User voit chaque love note conserver ses métadonnées critiques (`from`, `to`, `createdAt`, `revealAt`, `status`, `readAt?`) dans un frontmatter YAML lisible manuellement dans Obsidian desktop
+- [x] **LOVE-01**: User voit ses love notes persister dans le vault Obsidian au chemin `03 - Famille/LoveNotes/{to-profileId}/{YYYY-MM-DD-slug}.md` (un fichier = une note, classé par destinataire)
+- [x] **LOVE-02**: User voit chaque love note conserver ses métadonnées critiques (`from`, `to`, `createdAt`, `revealAt`, `status`, `readAt?`) dans un frontmatter YAML lisible manuellement dans Obsidian desktop
 - [ ] **LOVE-03**: User voit les love notes hydratées en mémoire au démarrage de l'app via un hook `useVaultLoveNotes` exposé dans `VaultContext` (pattern identique aux 21 hooks domaine existants)
-- [ ] **LOVE-04**: User voit les love notes survivre à un restart à froid de l'app (cachables dans `lib/vault-cache.ts`, `CACHE_VERSION` bumpé pour éviter invalidation silencieuse)
+- [x] **LOVE-04**: User voit les love notes survivre à un restart à froid de l'app (cachables dans `lib/vault-cache.ts`, `CACHE_VERSION` bumpé pour éviter invalidation silencieuse)
 
 ### Catégorie BOÎTE AUX LETTRES — UI dashboard & écran dédié
 
@@ -73,10 +73,10 @@ Mapping REQ-ID → Phase (100% coverage des 17 REQ-IDs v1).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LOVE-01 | Phase 34 — Fondation données & hook domaine | Pending |
-| LOVE-02 | Phase 34 — Fondation données & hook domaine | Pending |
+| LOVE-01 | Phase 34 — Fondation données & hook domaine | Complete |
+| LOVE-02 | Phase 34 — Fondation données & hook domaine | Complete |
 | LOVE-03 | Phase 34 — Fondation données & hook domaine | Pending |
-| LOVE-04 | Phase 34 — Fondation données & hook domaine | Pending |
+| LOVE-04 | Phase 34 — Fondation données & hook domaine | Complete |
 | LOVE-05 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
 | LOVE-06 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
 | LOVE-07 | Phase 35 — Carte enveloppe dashboard + écran boîte aux lettres | Pending |
