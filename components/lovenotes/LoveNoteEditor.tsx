@@ -4,7 +4,7 @@
  * Modal presentationStyle="pageSheet" (drag-to-dismiss iOS natif) :
  * - Chips destinataire (filtre exclut auteur — Pitfall 9)
  * - TextInput body markdown + toggle preview MarkdownText
- * - Chips presets (Demain matin / Dimanche soir / Dans 1 mois / Custom) + DateInput date + DateInput time
+ * - Chips presets (Demain matin / Dimanche soir / Dans 1 mois / Personnaliser) + DateInput date + DateInput time
  * - Pré-rempli avec preset "Demain matin" au mount (RESEARCH Open Q 5)
  * - Validation : destinataire non vide, body trim non vide, revealAt > now+60s
  */
@@ -236,7 +236,7 @@ export function LoveNoteEditor({
                 onPress={() => applyPreset('month')}
               />
               <Chip
-                label="Custom"
+                label="Personnaliser"
                 emoji="✏️"
                 selected={activePreset === 'custom'}
                 onPress={() => applyPreset('custom')}
