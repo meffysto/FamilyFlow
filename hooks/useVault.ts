@@ -79,7 +79,7 @@ import {
   getDefaultNotificationPrefs,
 } from '../lib/notifications';
 import * as Notifications from 'expo-notifications';
-import { setupAllNotifications, loadNotifConfig } from '../lib/scheduled-notifications';
+import { setupAllNotifications, loadNotifConfig, scheduleLoveNoteReveal } from '../lib/scheduled-notifications';
 import i18n from '../lib/i18n';
 import { format, startOfWeek } from 'date-fns';
 import { enqueueWrite } from '../lib/famille-queue';
@@ -729,6 +729,16 @@ export function useVaultInternal(): VaultState {
     });
     return () => sub.remove();
   }, []);
+
+  // Programmer les notifications de révélation sur CE téléphone pour les love notes
+  // reçues en attente (multi-device : le téléphone de l'expéditeur ne peut pas
+  // programmer les notifs du destinataire — chaque appareil le fait pour lui-même).
+  useEffect(() => {
+    if (!activeProfileId) return;
+    loveNotesHook.loveNotes
+      .filter((n) => n.to === activeProfileId && n.status === 'pending')
+      .forEach((n) => scheduleLoveNoteReveal(n).catch(() => {}));
+  }, [loveNotesHook.loveNotes, activeProfileId]);
 
   const loadVaultData = useCallback(async (vault: VaultManager) => {
     setError(null);
