@@ -20,6 +20,8 @@ import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { ModalHeader, SegmentedControl } from '../../components/ui';
@@ -49,6 +51,7 @@ export default function LoveNotesScreen() {
     updateLoveNoteStatus,
   } = useVault();
   const { colors, primary } = useThemeColors();
+  const tabBarHeight = useBottomTabBarHeight();
   const [segment, setSegment] = useState<Segment>('received');
   const [editorVisible, setEditorVisible] = useState(false);
   const [unfoldNote, setUnfoldNote] = useState<LoveNote | null>(null);
@@ -188,7 +191,11 @@ export default function LoveNotesScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
             setEditorVisible(true);
           }}
-          style={[styles.fab, { backgroundColor: primary }, Shadows.md]}
+          style={[
+            styles.fab,
+            { backgroundColor: primary, bottom: tabBarHeight + Spacing['2xl'] },
+            Shadows.md,
+          ]}
           accessibilityRole="button"
           accessibilityLabel="Écrire une love note"
         >
@@ -233,7 +240,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: Spacing['2xl'],
     right: Spacing['2xl'],
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
