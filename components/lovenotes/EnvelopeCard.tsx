@@ -21,6 +21,7 @@ import {
   StyleSheet,
   LayoutChangeEvent,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { PressableScale } from '../ui/PressableScale';
 import { WaxSeal } from './WaxSeal';
 import { EnvelopeFlap } from './EnvelopeFlap';
@@ -28,21 +29,24 @@ import { Spacing } from '../../constants/spacing';
 import { FontSize } from '../../constants/typography';
 
 // ─── Constantes module — cosmétiques inline ────────────────────────────────
-const PAPER = '#f5ecd5';
-const PAPER_LIGHT = '#f8ecce';
+// Palette vintage — papier jauni, encre brune soft, vignette aux coins
+const PAPER_HIGHLIGHT = '#f8ecce';
 const PAPER_MID = '#e8d5a8';
-const PAPER_SHADOW = '#c9b98a';
-const INK = '#442434';
-const INK_SOFT = '#6b5040';
+const PAPER_DARK = '#d4bc85';
+const PAPER_EDGE = '#b89a5e';
+const VIGNETTE = 'rgba(92,58,30,0.28)';
+const INK = '#3d2418';
+const INK_SOFT = '#6b4a32';
 const STACK_BACK_1 = '#e8d5a8';
 const STACK_BACK_2 = '#dfc898';
 const TILT_DEG = '-1.5deg';
 const SEAL_SIZE = 72;
-// Timbre cœur — couleurs identitaires (hors thème, cohérent avec mockup lovenote-envelope.html)
-const STAMP_RED = '#c94a5c';
-const STAMP_RED_DARK = '#9d2737';
-const POSTMARK_INK = 'rgba(68,36,52,0.35)';
-const POSTMARK_TEXT = 'rgba(68,36,52,0.55)';
+// Timbre cœur — rouge carmin vintage desature
+const STAMP_RED = '#a8384a';
+const STAMP_RED_DARK = '#7a1e2a';
+const STAMP_BORDER = 'rgba(248,236,206,0.7)';
+const POSTMARK_INK = 'rgba(61,36,24,0.45)';
+const POSTMARK_TEXT = 'rgba(61,36,24,0.7)';
 
 /** Format postmark date `·DD·MM·` */
 function formatPostmarkDate(d: Date = new Date()): string {
@@ -107,6 +111,46 @@ function EnvelopeCardBase({ count, recipientName, onPress }: EnvelopeCardProps) 
           style={[styles.envelope, { transform: [{ rotate: TILT_DEG }] }]}
           onLayout={handleLayout}
         >
+          {/* Gradient papier vintage (cream → beige foncé vers bas-droit) */}
+          <LinearGradient
+            colors={[PAPER_HIGHLIGHT, PAPER_MID, PAPER_DARK]}
+            locations={[0, 0.65, 1]}
+            start={{ x: 0.2, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+          {/* Vignette coins — foncit bord bas-droit pour effet papier usé */}
+          <LinearGradient
+            colors={['transparent', VIGNETTE]}
+            start={{ x: 0.3, y: 0.3 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFillObject, { opacity: 0.6 }]}
+            pointerEvents="none"
+          />
+          {/* Highlight coin haut-gauche — papier accroche la lumière */}
+          <LinearGradient
+            colors={['rgba(255,250,230,0.55)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.6, y: 0.5 }}
+            style={[StyleSheet.absoluteFillObject, { opacity: 0.8 }]}
+            pointerEvents="none"
+          />
+          {/* Lignes de fibres papier — pseudo texture vintage */}
+          <View style={styles.fibers} pointerEvents="none">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.fiber,
+                  {
+                    top: `${12 + i * 12}%`,
+                    opacity: 0.05 + (i % 3) * 0.02,
+                    transform: [{ rotate: `${-3 + (i % 4)}deg` }],
+                  },
+                ]}
+              />
+            ))}
+          </View>
           {/* Rabat SVG (rendu seulement quand on connaît la taille) */}
           {size.width > 0 && (
             <View
@@ -171,17 +215,27 @@ const styles = StyleSheet.create({
   envelope: {
     width: '100%',
     aspectRatio: 2 / 1.15,
-    backgroundColor: PAPER_LIGHT,
+    backgroundColor: PAPER_MID,
     borderRadius: 8,
     overflow: 'hidden',
-    // Ombre profonde — feel "posé sur la table" relief marqué
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.45,
     shadowRadius: 32,
     elevation: 16,
     borderWidth: 1,
-    borderColor: PAPER_SHADOW,
+    borderColor: PAPER_EDGE,
+  },
+  fibers: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+  fiber: {
+    position: 'absolute',
+    left: -20,
+    right: -20,
+    height: 1,
+    backgroundColor: INK_SOFT,
   },
   flapContainer: {
     position: 'absolute',
@@ -225,7 +279,7 @@ const styles = StyleSheet.create({
     backgroundColor: STAMP_RED,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: STAMP_BORDER,
     alignItems: 'center',
     justifyContent: 'center',
     transform: [{ rotate: '4deg' }],
