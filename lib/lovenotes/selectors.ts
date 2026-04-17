@@ -39,7 +39,7 @@ export function unreadForProfile(
   now: Date = new Date(),
 ): LoveNote[] {
   return notes
-    .filter((n) => n.to === profileId && n.status !== 'read' && isRevealed(n, now))
+    .filter((n) => n.to === profileId && n.status !== 'read' && n.status !== 'archived' && isRevealed(n, now))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
@@ -61,7 +61,8 @@ export function receivedForProfile(
     return 3;
   };
   return notes
-    .filter((n) => n.to === profileId)
+    // Archived exclu de Received (visible uniquement dans l'onglet Archivées)
+    .filter((n) => n.to === profileId && n.status !== 'archived')
     .sort((a, b) => {
       const ta = tier(a);
       const tb = tier(b);
@@ -75,19 +76,19 @@ export function receivedForProfile(
  */
 export function sentByProfile(notes: LoveNote[], profileId: string): LoveNote[] {
   return notes
-    .filter((n) => n.from === profileId)
+    .filter((n) => n.from === profileId && n.status !== 'archived')
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 /**
- * Archive : notes lues impliquant le profil (reçues OU envoyées).
+ * Archive : notes explicitement archivées impliquant le profil (reçues OU envoyées).
  * Tri par readAt desc (fallback createdAt).
  */
 export function archivedForProfile(notes: LoveNote[], profileId: string): LoveNote[] {
   return notes
     .filter(
       (n) =>
-        n.status === 'read' && (n.to === profileId || n.from === profileId),
+        n.status === 'archived' && (n.to === profileId || n.from === profileId),
     )
     .sort((a, b) => {
       const ka = a.readAt ?? a.createdAt;

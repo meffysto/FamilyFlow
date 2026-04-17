@@ -42,8 +42,8 @@ import type {
 } from './types';
 import type { JournalSummaryEntry } from './ai-service';
 
-const CACHE_VERSION = 2;
-const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v2.json';
+const CACHE_VERSION = 3;
+const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v3.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {

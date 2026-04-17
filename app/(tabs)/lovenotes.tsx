@@ -35,7 +35,7 @@ import {
 import { localIso } from '../../lib/lovenotes/reveal-engine';
 import { useRevealOnForeground } from '../../hooks/useRevealOnForeground';
 import { scheduleLoveNoteReveal } from '../../lib/scheduled-notifications';
-import type { LoveNote } from '../../lib/types';
+import type { LoveNote, LoveNoteStatus } from '../../lib/types';
 import { Spacing } from '../../constants/spacing';
 import { FontSize } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -119,11 +119,29 @@ export default function LoveNotesScreen() {
     }
   }, [unfoldNote, updateLoveNoteStatus]);
 
+  const handleArchive = useCallback(
+    async (note: LoveNote) => {
+      const nextStatus: LoveNoteStatus = note.status === 'archived' ? 'read' : 'archived';
+      try {
+        await updateLoveNoteStatus(note.sourceFile, nextStatus);
+      } catch (e) {
+        if (__DEV__) console.warn('[handleArchive]', e);
+      }
+    },
+    [updateLoveNoteStatus],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: LoveNote }) => (
-      <LoveNoteCard note={item} profiles={profiles} onPress={handleCardPress} />
+      <LoveNoteCard
+        note={item}
+        profiles={profiles}
+        onPress={handleCardPress}
+        onArchive={handleArchive}
+        archiveLabel={segment === 'archived' ? 'Désarchiver' : 'Archiver'}
+      />
     ),
-    [profiles, handleCardPress],
+    [profiles, handleCardPress, handleArchive, segment],
   );
 
   const segments = useMemo(

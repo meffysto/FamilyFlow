@@ -576,8 +576,8 @@ export interface Note {
 
 // ─── Love Notes (messages affectifs programmes — Phase 34) ──────────────────
 
-/** Statut de revelation d'une love note (cycle pending -> revealed -> read) */
-export type LoveNoteStatus = 'pending' | 'revealed' | 'read';
+/** Statut de revelation d'une love note (cycle pending -> revealed -> read -> archived) */
+export type LoveNoteStatus = 'pending' | 'revealed' | 'read' | 'archived';
 
 /**
  * Une note affective programmee entre membres de la famille.

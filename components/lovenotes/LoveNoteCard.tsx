@@ -11,6 +11,7 @@
 
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -23,6 +24,10 @@ interface LoveNoteCardProps {
   note: LoveNote;
   profiles: Profile[];
   onPress?: (note: LoveNote) => void;
+  /** Si fourni, affiche un swipe-gauche pour archiver/desarchiver la note. */
+  onArchive?: (note: LoveNote) => void;
+  /** Label du bouton swipe (default "Archiver"). */
+  archiveLabel?: string;
 }
 
 /**
@@ -34,8 +39,14 @@ function formatDateFR(iso: string): string {
   return iso.slice(0, 10).split('-').reverse().join('/');
 }
 
-function LoveNoteCardBase({ note, profiles, onPress }: LoveNoteCardProps) {
-  const { colors } = useThemeColors();
+function LoveNoteCardBase({
+  note,
+  profiles,
+  onPress,
+  onArchive,
+  archiveLabel = 'Archiver',
+}: LoveNoteCardProps) {
+  const { colors, primary } = useThemeColors();
 
   const sender = profiles.find((p) => p.id === note.from);
   const senderName = sender?.name ?? 'Famille';
@@ -61,6 +72,23 @@ function LoveNoteCardBase({ note, profiles, onPress }: LoveNoteCardProps) {
     onPress?.(note);
   }, [note, onPress]);
 
+  const handleArchive = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    onArchive?.(note);
+  }, [note, onArchive]);
+
+  const renderRightActions = useCallback(
+    () => (
+      <Pressable
+        onPress={handleArchive}
+        style={[styles.swipeAction, { backgroundColor: primary }]}
+      >
+        <Text style={styles.swipeActionText}>📦 {archiveLabel}</Text>
+      </Pressable>
+    ),
+    [handleArchive, archiveLabel, primary],
+  );
+
   // Choix icône d'état
   const renderStateIcon = () => {
     if (note.status === 'revealed') {
@@ -84,7 +112,7 @@ function LoveNoteCardBase({ note, profiles, onPress }: LoveNoteCardProps) {
 
   const isUnread = note.status === 'revealed';
 
-  return (
+  const cardInner = (
     <Pressable
       onPress={handlePress}
       style={[
@@ -127,6 +155,14 @@ function LoveNoteCardBase({ note, profiles, onPress }: LoveNoteCardProps) {
         {formatDateFR(note.createdAt)}
       </Text>
     </Pressable>
+  );
+
+  if (!onArchive) return cardInner;
+
+  return (
+    <ReanimatedSwipeable renderRightActions={renderRightActions} friction={2}>
+      {cardInner}
+    </ReanimatedSwipeable>
   );
 }
 
@@ -175,6 +211,18 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     marginLeft: Spacing.md,
   },
+  swipeAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing['2xl'],
+    borderRadius: 12,
+    marginLeft: Spacing.md,
+  },
+  swipeActionText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: FontSize.sm,
+  },
 });
 
 export const LoveNoteCard = React.memo(
@@ -184,5 +232,7 @@ export const LoveNoteCard = React.memo(
     prevProps.note.status === nextProps.note.status &&
     prevProps.note.readAt === nextProps.note.readAt &&
     prevProps.profiles === nextProps.profiles &&
-    prevProps.onPress === nextProps.onPress,
+    prevProps.onPress === nextProps.onPress &&
+    prevProps.onArchive === nextProps.onArchive &&
+    prevProps.archiveLabel === nextProps.archiveLabel,
 );

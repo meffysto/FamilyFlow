@@ -2791,7 +2791,7 @@ export function parseLoveNote(relativePath: string, content: string): LoveNote |
   if (!data.from || !data.to || !data.createdAt || !data.revealAt || !data.status) return null;
 
   const status = String(data.status);
-  if (status !== 'pending' && status !== 'revealed' && status !== 'read') return null;
+  if (status !== 'pending' && status !== 'revealed' && status !== 'read' && status !== 'archived') return null;
 
   return {
     from: String(data.from),
