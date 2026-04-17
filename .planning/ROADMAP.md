@@ -87,7 +87,7 @@ Détails phase-by-phase préservés ci-dessous dans `## Phase Details`.
 
 **Milestone Goal :** Permettre aux membres de la famille d'échanger des messages privés programmés ("love notes") qui apparaissent à une date future, avec un système de boîte aux lettres visualisé en carte enveloppe pinned en tête du dashboard — renforcer le lien affectif familial via des micro-moments de surprise asynchrones. Zéro nouvelle dépendance npm, backward compat Obsidian vault obligatoire, chaque phase non-cassante (app sur TestFlight).
 
-- [ ] **Phase 34: Fondation données & hook domaine** — Type + parser + hook + cache + tests (LOVE-01, 02, 03, 04, 17)
+- [x] **Phase 34: Fondation données & hook domaine** — Type + parser + hook + cache + tests (LOVE-01, 02, 03, 04, 17) (completed 2026-04-17)
 - [ ] **Phase 35: Carte enveloppe dashboard + écran boîte aux lettres** — UI visible : enveloppe pinned + écran 3 segments + tuile more (LOVE-05, 06, 07, 08)
 - [ ] **Phase 36: Composition & programmation reveal** — Éditeur modal + notifications locales + animation unfold (LOVE-09, 10, 11, 12, 13)
 - [ ] **Phase 37: Garde-parent & polish** — Toggle parental + modération + polish final (LOVE-14, 15, 16)
@@ -178,11 +178,11 @@ Plans:
   3. User voit les love notes hydratées en mémoire au démarrage de l'app via `useVault().loveNotes` exposé par `VaultContext` (pattern identique aux 21 hooks domaine existants)
   4. User voit les love notes survivre à un restart à froid de l'app sans re-parse depuis disk (cachables dans `lib/vault-cache.ts`, `CACHE_VERSION` bumpé pour invalider propre)
   5. User voit la suite Jest `lib/__tests__/parser-lovenotes.test.ts` passer (parse/serialize roundtrip, gestion frontmatter invalide, listing par destinataire) — `npx tsc --noEmit` et `npx jest --no-coverage` clean
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 34-01-PLAN.md — Fondation data: type LoveNote + parser bidirectionnel + bump CACHE_VERSION (LOVE-01, LOVE-02, LOVE-04)
 - [x] 34-02-PLAN.md — Suite Jest parser-lovenotes (parse/serialize/round-trip/listing) (LOVE-17)
-- [ ] 34-03-PLAN.md — Hook useVaultLoveNotes + cablage useVault.ts + cache hydrate/save (LOVE-03, LOVE-04)
+- [x] 34-03-PLAN.md — Hook useVaultLoveNotes + cablage useVault.ts + cache hydrate/save (LOVE-03, LOVE-04)
 
 ### Phase 35: Carte enveloppe dashboard + écran boîte aux lettres
 **Goal**: Rendre les love notes visibles et navigables — carte enveloppe distinctive pinned en tête du dashboard quand au moins 1 note à révéler/non lue, plus écran boîte aux lettres complet organisé en 3 segments (reçues / envoyées / archivées) accessible depuis la carte ET depuis une tuile permanente dans `more.tsx`.
@@ -232,7 +232,7 @@ Plans:
 | 31. Ambiance dynamique | 0/TBD | Deferred | - |
 | 32. Arbre familial commun | 0/TBD | Deferred | - |
 | 33. Expéditions | 3/3 | Complete   | 2026-04-14 |
-| 34. Fondation données & hook domaine | 2/3 | In Progress|  |
+| 34. Fondation données & hook domaine | 3/3 | Complete   | 2026-04-17 |
 | 35. Carte enveloppe dashboard + écran boîte aux lettres | 0/TBD | Not started | - |
 | 36. Composition & programmation reveal | 0/TBD | Not started | - |
 | 37. Garde-parent & polish | 0/TBD | Not started | - |
