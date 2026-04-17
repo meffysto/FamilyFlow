@@ -96,6 +96,7 @@
     .preg-dot-active{width:34px; height:34px; font-size:16px}
     .preg-weeks{font-size:9px !important; padding:0 !important}
     .farm-grid{grid-template-columns:1fr !important; gap:32px !important}
+    .farm-phone{max-width:230px !important}
   }
 </style>
 </head>
@@ -1301,7 +1302,7 @@ function IsometricFarm({ stage, season, accent, progress, animEnabled }){
         background:`radial-gradient(ellipse at 50% 55%, ${accent.glow}, transparent 65%)`,
         filter:'blur(28px)'
       }}/>
-      <div style={{
+      <div className="farm-phone" style={{
         position:'relative', zIndex:1,
         width:'100%', maxWidth:360, aspectRatio:'9/19.5',
         borderRadius:44, padding:10,
