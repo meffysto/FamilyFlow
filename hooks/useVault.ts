@@ -71,7 +71,7 @@ import type { FarmProfileData } from '../lib/types';
 import type { CompanionData, CompanionSpecies } from '../lib/mascot/companion-types';
 import { processActiveRewards, addPoints } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot, BedtimeStory } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot, BedtimeStory, LoveNote, LoveNoteStatus } from '../lib/types';
 import { useVaultBudget } from './useVaultBudget';
 import {
   parseNotificationPrefs,
@@ -88,6 +88,7 @@ import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { useVaultNotes } from './useVaultNotes';
+import { useVaultLoveNotes } from './useVaultLoveNotes';
 import { useVaultWishlist } from './useVaultWishlist';
 import { useVaultStock } from './useVaultStock';
 import { useVaultCourses } from './useVaultCourses';
@@ -285,6 +286,10 @@ export interface VaultState {
   dietary: VaultDietaryState;
   gardenRaw: string;
   setGardenRaw: React.Dispatch<React.SetStateAction<string>>;
+  loveNotes: LoveNote[];
+  addLoveNote: (note: Omit<LoveNote, 'sourceFile'>) => Promise<void>;
+  updateLoveNoteStatus: (sourceFile: string, status: LoveNoteStatus, readAt?: string) => Promise<void>;
+  deleteLoveNote: (sourceFile: string) => Promise<void>;
   stories: BedtimeStory[];
   saveStory: (story: BedtimeStory) => Promise<void>;
   deleteStory: (sourceFile: string) => Promise<void>;
@@ -584,6 +589,9 @@ export function useVaultInternal(): VaultState {
   // Domaine Histoires du soir délégué à useVaultStories
   const storiesHook = useVaultStories(vaultRef);
 
+  // Domaine Love Notes delegue a useVaultLoveNotes (Phase 34)
+  const loveNotesHook = useVaultLoveNotes(vaultRef);
+
   // Jardin familial — contenu brut du fichier partagé (Phase 26)
   const [gardenRaw, setGardenRaw] = useState<string>('');
 
@@ -683,6 +691,7 @@ export function useVaultInternal(): VaultState {
               setQuotes(cached.quotes);
               setMoods(cached.moods);
               missionsHook.setSecretMissions(cached.secretMissions);
+              loveNotesHook.setLoveNotes(cached.loveNotes);
               setIsLoading(false);
             } catch (e) {
               if (__DEV__) console.warn('[vault-cache] hydration apply failed:', e);
@@ -1209,6 +1218,9 @@ export function useVaultInternal(): VaultState {
 
         // [22] Histoires du soir
         storiesHook.loadStories(vault, enfantNames).catch(() => [] as BedtimeStory[]),
+
+        // [23] Love Notes — 1 fichier par note classe par destinataire (Phase 34)
+        loveNotesHook.loadLoveNotes(vault).catch(() => [] as LoveNote[]),
       ]);
 
       // Apply results — use helper to extract settled values
@@ -1285,6 +1297,7 @@ export function useVaultInternal(): VaultState {
       missionsHook.setSecretMissions(val(results[20], []));
       setGardenRaw(val(results[21], '') as string);
       storiesHook.setStories(val(results[22] as PromiseSettledResult<BedtimeStory[]>, []));
+      loveNotesHook.setLoveNotes(val(results[23] as PromiseSettledResult<LoveNote[]>, []));
 
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[4], []), rdvResult, tasksResult);
@@ -1319,7 +1332,7 @@ export function useVaultInternal(): VaultState {
         quotes: val(results[17], []) as ChildQuote[],
         moods: val(results[18], []) as MoodEntry[],
         secretMissions: val(results[20], []) as Task[],
-        loveNotes: [], // Phase 34 Plan 03 : sera remplace par le vrai load
+        loveNotes: val(results[23] as PromiseSettledResult<LoveNote[]>, []) as LoveNote[],
       }).catch(() => { /* Cache save non-critical */ });
 
     } catch (e) {
@@ -1365,6 +1378,7 @@ export function useVaultInternal(): VaultState {
     defisHook.resetDefis();
     questsHook.resetQuests();
     storiesHook.resetStories();
+    loveNotesHook.resetLoveNotes();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -1849,6 +1863,10 @@ export function useVaultInternal(): VaultState {
     dietary: dietaryHook,
     gardenRaw,
     setGardenRaw,
+    loveNotes: loveNotesHook.loveNotes,
+    addLoveNote: loveNotesHook.addLoveNote,
+    updateLoveNoteStatus: loveNotesHook.updateLoveNoteStatus,
+    deleteLoveNote: loveNotesHook.deleteLoveNote,
     stories: storiesHook.stories,
     saveStory: storiesHook.saveStory,
     deleteStory: storiesHook.deleteStory,
@@ -1860,7 +1878,7 @@ export function useVaultInternal(): VaultState {
     recipes, ageUpgrades, budgetState, routines,
     healthRecords, defis, questsHook.familyQuests, questsHook.unlockedRecipes, gratitudeDays, wishlistItems, journalStats, anniversaries,
     notesHook.notes,
-    quotes, moods, skillTrees, secretMissions, gardenRaw, storiesHook.stories,
+    quotes, moods, skillTrees, secretMissions, gardenRaw, storiesHook.stories, loveNotesHook.loveNotes,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri,
@@ -1879,5 +1897,6 @@ export function useVaultInternal(): VaultState {
     setCompanion, unlockCompanion,
     dietaryHook,
     storiesHook,
+    loveNotesHook,
   ]);
 }
