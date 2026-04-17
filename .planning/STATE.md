@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Love Notes
 status: executing
-last_updated: "2026-04-17T08:10:43.788Z"
+last_updated: "2026-04-17T08:17:24.115Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 9
   completed_phases: 3
   total_plans: 12
-  completed_plans: 12
+  completed_plans: 13
   percent: 0
 ---
 
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 35 (carte-enveloppe-dashboard-cran-bo-te-aux-lettres) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Milestone: v1.6 Love Notes
 Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
 Last activity: 2026-04-17
@@ -154,6 +154,7 @@ Status: Ready to execute
 | Phase 34 P02 | 3min | 1 tasks | 1 files |
 | Phase 34 P03 | 4min | 2 tasks | 2 files |
 | Phase 35 P01 | 4min | 2 tasks | 5 files |
+| Phase 35 P02 | 6min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -291,6 +292,10 @@ Recent decisions affecting current work:
 - [Phase 34]: [Phase 34-03]: Placeholder Plan 01 loveNotes:[] remplace par val(results[23]) — persist effectif, Known Stub resolu
 - [Phase 35]: isRevealed compare en heure locale (pad manuel) — LoveNote.revealAt est local-ISO sans Z, toISOString() shift en UTC et casse les comparaisons sur machines non-UTC
 - [Phase 35]: receivedForProfile tri 3-tier (revealed-unread > read > pending-futur) — preserve la surprise des notes programmees futures
+- [Phase 35]: WaxSeal scale-paramétrable (size?: number, default 72) — un seul composant pour hero (72px) ET mini (32px LoveNoteCard), pas de duplication
+- [Phase 35]: Pressable EXTERNE au transform rotate dans EnvelopeCard (Pitfall 8) — wrapper non-tourné préserve la hit-box rectangulaire
+- [Phase 35]: EnvelopeFlap rendu post-onLayout (size.width > 0) — évite SVG Polygon dégénéré 0×0 au premier render
+- [Phase 35]: Cosmétiques (PAPER, INK, WAX, TILT_DEG) inline en constantes module — scope Phase 35 minimal, pas de pollution constants/colors.ts
 
 ### Todos
 
@@ -302,5 +307,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-17T08:10:43.785Z
+Last session: 2026-04-17T08:17:24.112Z
 Next: Plan Phase 34 (Fondation données & hook domaine)
