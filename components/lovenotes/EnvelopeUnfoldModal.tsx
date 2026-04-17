@@ -71,6 +71,8 @@ export function EnvelopeUnfoldModal({
   const flapRotate = useSharedValue(0);
   const sealScale = useSharedValue(1);
   const sealRotate = useSharedValue(0);
+  const sealTranslateY = useSharedValue(0);
+  const sealOpacity = useSharedValue(1);
   const contentOpacity = useSharedValue(0);
   const contentTranslate = useSharedValue(24);
 
@@ -81,6 +83,8 @@ export function EnvelopeUnfoldModal({
       flapRotate.value = 0;
       sealScale.value = 1;
       sealRotate.value = 0;
+      sealTranslateY.value = 0;
+      sealOpacity.value = 1;
       contentOpacity.value = 0;
       contentTranslate.value = 24;
       return;
@@ -115,9 +119,21 @@ export function EnvelopeUnfoldModal({
       sealScale.value = withDelay(
         200 + SEAL_WIGGLE_MS * 4,
         withSequence(
-          withTiming(1.5, { duration: SEAL_JUMP_MS, easing: Easing.out(Easing.back(2)) }),
-          withSpring(0, SPRING_SEAL_JUMP),
+          withTiming(1.4, { duration: SEAL_JUMP_MS, easing: Easing.out(Easing.back(2)) }),
+          withTiming(1.1, { duration: 600, easing: Easing.out(Easing.quad) }),
         ),
+      );
+      // Cachet s'envole vers le haut (au-dela du cadre) puis fade out
+      sealTranslateY.value = withDelay(
+        200 + SEAL_WIGGLE_MS * 4,
+        withSequence(
+          withTiming(-20, { duration: SEAL_JUMP_MS, easing: Easing.out(Easing.back(2)) }),
+          withTiming(-260, { duration: 700, easing: Easing.out(Easing.cubic) }),
+        ),
+      );
+      sealOpacity.value = withDelay(
+        200 + SEAL_WIGGLE_MS * 4 + SEAL_JUMP_MS + 300,
+        withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }),
       );
       // 3. Rabat : unfold avec spring rebondissant (overshoot visible)
       flapRotate.value = withDelay(
@@ -160,7 +176,9 @@ export function EnvelopeUnfoldModal({
     transformOrigin: 'top',
   }));
   const sealStyle = useAnimatedStyle(() => ({
+    opacity: sealOpacity.value,
     transform: [
+      { translateY: sealTranslateY.value },
       { rotateZ: `${sealRotate.value}deg` },
       { scale: sealScale.value },
     ],
@@ -178,10 +196,6 @@ export function EnvelopeUnfoldModal({
           <Animated.View style={[styles.flap, { width: ENVELOPE_W, height: FLAP_H }, flapStyle]}>
             <EnvelopeFlap width={ENVELOPE_W} height={FLAP_H} />
           </Animated.View>
-          {/* Cachet animé — centré */}
-          <Animated.View style={[styles.sealSlot, sealStyle]} pointerEvents="none">
-            <WaxSeal size={72} count={0} pulse={false} initial="💌" />
-          </Animated.View>
           {/* Contenu révélé */}
           <Animated.View style={[styles.content, contentStyle]}>
             <ScrollView contentContainerStyle={{ padding: Spacing.xl }}>
@@ -189,6 +203,10 @@ export function EnvelopeUnfoldModal({
               <Text style={[styles.body, { color: INK }]}>{body}</Text>
             </ScrollView>
           </Animated.View>
+        </Animated.View>
+        {/* Cachet animé — hors enveloppe (overflow:hidden) pour pouvoir s'envoler */}
+        <Animated.View style={[styles.sealSlot, sealStyle]} pointerEvents="none">
+          <WaxSeal size={72} count={0} pulse={false} initial="💌" />
         </Animated.View>
       </Pressable>
     </Modal>
@@ -216,11 +234,12 @@ const styles = StyleSheet.create({
   },
   sealSlot: {
     position: 'absolute',
-    top: '40%',
+    // Centré ecran (backdrop) — env. centre enveloppe puisque enveloppe centrée
+    top: '50%',
     left: '50%',
     marginLeft: -36,
     marginTop: -36,
-    zIndex: 4,
+    zIndex: 10,
   },
   content: {
     flex: 1,
