@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Love Notes
-status: verifying
-last_updated: "2026-04-17T08:21:49.387Z"
+status: executing
+last_updated: "2026-04-17T09:27:10.045Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 9
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 14
+  total_plans: 16
+  completed_plans: 15
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 35 — carte-enveloppe-dashboard-cran-bo-te-aux-lettres
+**Current focus:** Phase 36 — composition-programmation-reveal
 
 ## Current Position
 
-Phase: 35 (carte-enveloppe-dashboard-cran-bo-te-aux-lettres) — EXECUTING
-Plan: 3 of 3
+Phase: 36 (composition-programmation-reveal) — EXECUTING
+Plan: 2 of 4
 Milestone: v1.6 Love Notes
 Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
 Last activity: 2026-04-17
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Phase complete — ready for verification
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -156,6 +156,7 @@ Status: Phase complete — ready for verification
 | Phase 35 P01 | 4min | 2 tasks | 5 files |
 | Phase 35 P02 | 6min | 2 tasks | 6 files |
 | Phase 35 P03 | 3min | 2 tasks | 2 files |
+| Phase 36 P01 | 12min | 4 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -298,6 +299,8 @@ Recent decisions affecting current work:
 - [Phase 35]: EnvelopeFlap rendu post-onLayout (size.width > 0) — évite SVG Polygon dégénéré 0×0 au premier render
 - [Phase 35]: Cosmétiques (PAPER, INK, WAX, TILT_DEG) inline en constantes module — scope Phase 35 minimal, pas de pollution constants/colors.ts
 - [Phase 35]: Plan 35-03 : injection EnvelopeCard pinned dans dashboard (avant IIFE sortedSections.filter, hors config user) + tuile permanente 💌 Love Notes dans more.tsx famille — pure composition réutilisant Plans 01+02
+- [Phase 36]: addLoveNote retourne Promise<string> (sourceFile resolu) — source unique de verite pour Plan 03, elimine reconstruction fragile de loveNotePath cote ecran
+- [Phase 36]: Notif love note silencieuse (sound: false) — reveal doit rester surprise douce, pas ping bruyant
 
 ### Todos
 
@@ -309,5 +312,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-17T08:21:49.384Z
+Last session: 2026-04-17T09:27:10.042Z
 Next: Plan Phase 34 (Fondation données & hook domaine)
