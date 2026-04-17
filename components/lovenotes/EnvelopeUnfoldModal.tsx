@@ -18,7 +18,7 @@ import React, { useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring,
-  runOnJS, Easing,
+  withDelay, withRepeat, runOnJS, Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -27,10 +27,14 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { EnvelopeFlap } from './EnvelopeFlap';
 import { WaxSeal } from './WaxSeal';
 
-const SPRING_SEAL_JUMP = { damping: 8, stiffness: 200 } as const;
-const UNFOLD_DURATION_MS = 800;
-const SEAL_JUMP_MS = 200;
-const CONTENT_REVEAL_MS = 400;
+const SPRING_ENTRANCE = { damping: 9, stiffness: 140 } as const;
+const SPRING_SEAL_JUMP = { damping: 7, stiffness: 220 } as const;
+const SPRING_FLAP = { damping: 10, stiffness: 90 } as const;
+const SPRING_CONTENT = { damping: 14, stiffness: 120 } as const;
+const SEAL_WIGGLE_MS = 90;
+const SEAL_JUMP_MS = 180;
+const CONTENT_REVEAL_MS = 450;
+const FLOAT_MS = 3200;
 
 // Couleurs identitaires enveloppe — hors thème (cf Phase 35 EnvelopeFlap/WaxSeal)
 // Le papier crème + encre brune sont des constantes de design propres au domaine
@@ -61,59 +65,115 @@ function triggerHaptic() {
 export function EnvelopeUnfoldModal({
   visible, fromName, body, onClose, onUnfoldComplete,
 }: EnvelopeUnfoldModalProps) {
+  // Anim shared values
+  const envelopeScale = useSharedValue(0.85);
+  const envelopeFloat = useSharedValue(0);
   const flapRotate = useSharedValue(0);
   const sealScale = useSharedValue(1);
+  const sealRotate = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
+  const contentTranslate = useSharedValue(24);
 
   useEffect(() => {
     if (!visible) {
-      // Reset quand invisible pour prochaine ouverture
+      envelopeScale.value = 0.85;
+      envelopeFloat.value = 0;
       flapRotate.value = 0;
       sealScale.value = 1;
+      sealRotate.value = 0;
       contentOpacity.value = 0;
+      contentTranslate.value = 24;
       return;
     }
     // Pitfall 5 : déférer d'un frame pour garantir render initial posé
     const raf = requestAnimationFrame(() => {
-      sealScale.value = withSequence(
-        withTiming(1.4, { duration: SEAL_JUMP_MS }),
-        withSpring(0, SPRING_SEAL_JUMP),
+      // 1. Entrée : enveloppe bondit doucement
+      envelopeScale.value = withSpring(1, SPRING_ENTRANCE);
+      // Flottement continu léger une fois posée
+      envelopeFloat.value = withDelay(
+        500,
+        withRepeat(
+          withSequence(
+            withTiming(1, { duration: FLOAT_MS, easing: Easing.inOut(Easing.sin) }),
+            withTiming(-1, { duration: FLOAT_MS, easing: Easing.inOut(Easing.sin) }),
+          ),
+          -1,
+          true,
+        ),
       );
-      flapRotate.value = withTiming(175, {
-        duration: UNFOLD_DURATION_MS,
-        easing: Easing.out(Easing.cubic),
-      });
-      contentOpacity.value = withTiming(
-        1,
-        { duration: CONTENT_REVEAL_MS, easing: Easing.linear },
-        (finished) => {
-          if (finished) {
-            runOnJS(triggerHaptic)();
-            runOnJS(onUnfoldComplete)();
-          }
-        },
+      // 2. Cachet : wiggle puis saut-spin puis disparition
+      sealRotate.value = withDelay(
+        200,
+        withSequence(
+          withTiming(-12, { duration: SEAL_WIGGLE_MS }),
+          withTiming(12, { duration: SEAL_WIGGLE_MS }),
+          withTiming(-8, { duration: SEAL_WIGGLE_MS }),
+          withTiming(0, { duration: SEAL_WIGGLE_MS }),
+          withTiming(360, { duration: SEAL_JUMP_MS + 100, easing: Easing.out(Easing.cubic) }),
+        ),
+      );
+      sealScale.value = withDelay(
+        200 + SEAL_WIGGLE_MS * 4,
+        withSequence(
+          withTiming(1.5, { duration: SEAL_JUMP_MS, easing: Easing.out(Easing.back(2)) }),
+          withSpring(0, SPRING_SEAL_JUMP),
+        ),
+      );
+      // 3. Rabat : unfold avec spring rebondissant (overshoot visible)
+      flapRotate.value = withDelay(
+        200 + SEAL_WIGGLE_MS * 4 + SEAL_JUMP_MS,
+        withSpring(175, SPRING_FLAP),
+      );
+      // 4. Contenu : slide-up + fade avec spring
+      contentTranslate.value = withDelay(
+        200 + SEAL_WIGGLE_MS * 4 + SEAL_JUMP_MS + 200,
+        withSpring(0, SPRING_CONTENT),
+      );
+      contentOpacity.value = withDelay(
+        200 + SEAL_WIGGLE_MS * 4 + SEAL_JUMP_MS + 200,
+        withTiming(
+          1,
+          { duration: CONTENT_REVEAL_MS, easing: Easing.out(Easing.quad) },
+          (finished) => {
+            if (finished) {
+              runOnJS(triggerHaptic)();
+              runOnJS(onUnfoldComplete)();
+            }
+          },
+        ),
       );
     });
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  const envelopeStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: envelopeScale.value },
+      { translateY: envelopeFloat.value * 4 },
+      { rotateZ: `${envelopeFloat.value * 0.8}deg` },
+    ],
+  }));
   const flapStyle = useAnimatedStyle(() => ({
     transform: [{ rotateX: `${flapRotate.value}deg` }],
     // Pas de perspective — conforme strict CLAUDE.md (feel 2D)
     transformOrigin: 'top',
   }));
   const sealStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: sealScale.value }],
+    transform: [
+      { rotateZ: `${sealRotate.value}deg` },
+      { scale: sealScale.value },
+    ],
   }));
   const contentStyle = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,
+    transform: [{ translateY: contentTranslate.value }],
   }));
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={[styles.envelope, { width: ENVELOPE_W, height: ENVELOPE_H, backgroundColor: PAPER }]} pointerEvents="box-none">
+        <Animated.View style={[styles.envelope, { width: ENVELOPE_W, height: ENVELOPE_H, backgroundColor: PAPER }, envelopeStyle]} pointerEvents="box-none">
           {/* Rabat animé — top */}
           <Animated.View style={[styles.flap, { width: ENVELOPE_W, height: FLAP_H }, flapStyle]}>
             <EnvelopeFlap width={ENVELOPE_W} height={FLAP_H} />
@@ -129,7 +189,7 @@ export function EnvelopeUnfoldModal({
               <Text style={[styles.body, { color: INK }]}>{body}</Text>
             </ScrollView>
           </Animated.View>
-        </View>
+        </Animated.View>
       </Pressable>
     </Modal>
   );

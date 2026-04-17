@@ -40,13 +40,21 @@ function LoveNoteCardBase({ note, profiles, onPress }: LoveNoteCardProps) {
   const sender = profiles.find((p) => p.id === note.from);
   const senderName = sender?.name ?? 'Famille';
 
-  // Strip markdown inline pour preview (Open Question 4 RESEARCH)
-  const preview = note.body.replace(/[*_`#>]/g, '').trim();
-
   // Pending programmée future = revealAt > now
   const nowIso = new Date().toISOString().slice(0, 19);
   const isPendingFuture =
     note.status === 'pending' && note.revealAt > nowIso;
+
+  // Preserve la magie : on ne montre le body strippé QUE pour les notes deja lues.
+  // revealed (non lue) + pending → teaser uniquement, body cache jusqu'au tap.
+  const preview =
+    note.status === 'read'
+      ? note.body.replace(/[*_`#>]/g, '').trim()
+      : note.status === 'revealed'
+        ? '✨ Tape pour découvrir…'
+        : isPendingFuture
+          ? '💌 Scellée jusqu\'à l\'heure dite'
+          : '💌 En attente…';
 
   const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
