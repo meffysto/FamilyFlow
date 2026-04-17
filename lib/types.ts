@@ -574,6 +574,37 @@ export interface Note {
   sourceFile: string;     // chemin relatif vault
 }
 
+// ─── Love Notes (messages affectifs programmes — Phase 34) ──────────────────
+
+/** Statut de revelation d'une love note (cycle pending -> revealed -> read) */
+export type LoveNoteStatus = 'pending' | 'revealed' | 'read';
+
+/**
+ * Une note affective programmee entre membres de la famille.
+ * Un fichier = une note, classe par destinataire dans `03 - Famille/LoveNotes/{to}/`.
+ * revealAt stocke en heure locale de l'appareil au moment de la composition
+ * (convention ISO sans Z, cohérente avec museum/village). La reveal logic
+ * (Phase 36) interpretera cette string comme heure locale a la lecture.
+ */
+export interface LoveNote {
+  /** ID du profil emetteur (expediteur) */
+  from: string;
+  /** ID du profil destinataire (recipiendaire) */
+  to: string;
+  /** Timestamp ISO 8601 de creation — YYYY-MM-DDTHH:mm:ss (sans Z) */
+  createdAt: string;
+  /** Timestamp ISO 8601 de revelation programmee — YYYY-MM-DDTHH:mm:ss */
+  revealAt: string;
+  /** Statut actuel : pending (en attente), revealed (revealee, non lue), read (lue) */
+  status: LoveNoteStatus;
+  /** Timestamp ISO 8601 de lecture (present uniquement si status === 'read') */
+  readAt?: string;
+  /** Corps markdown de la note (message de l'expediteur) */
+  body: string;
+  /** Chemin relatif dans le vault — non serialise, utilise pour update/delete */
+  sourceFile: string;
+}
+
 // ─── Farm profile data (farm-{profileId}.md) ─────────────────────────────────
 
 /** Données ferme/mascot/compagnon per-profil — stockées dans farm-{profileId}.md */
