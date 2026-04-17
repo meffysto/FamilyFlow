@@ -68,19 +68,21 @@ export function LoveNoteEditor({
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [improving, setImproving] = useState(false);
-  const [aiStyle, setAiStyle] = useState<LoveNoteStyle>('tendre');
+  const [showAiStyles, setShowAiStyles] = useState(false);
+  const [selection, setSelection] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
 
-  const handleImprove = useCallback(async () => {
+  const runImprove = useCallback(async (style: LoveNoteStyle) => {
     if (!aiConfig) return;
     const trimmed = body.trim();
     if (!trimmed) {
       Alert.alert('Rien à améliorer', 'Écris d\'abord ton message.');
       return;
     }
+    setShowAiStyles(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setImproving(true);
     try {
-      const resp = await improveLoveNote(aiConfig, trimmed, aiStyle);
+      const resp = await improveLoveNote(aiConfig, trimmed, style);
       if (resp.error || !resp.text) {
         Alert.alert('IA indisponible', resp.error || 'Réponse vide.');
         return;
@@ -93,7 +95,33 @@ export function LoveNoteEditor({
     } finally {
       setImproving(false);
     }
-  }, [aiConfig, body, aiStyle]);
+  }, [aiConfig, body]);
+
+  const handleImproveTap = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
+    setShowAiStyles((v) => !v);
+  }, []);
+
+  // Toolbar markdown : wrap la selection (ou insert au curseur si selection vide)
+  const wrapSelection = useCallback(
+    (marker: string) => {
+      const { start, end } = selection;
+      Haptics.selectionAsync().catch(() => {});
+      if (start === end) {
+        const placeholder = 'texte';
+        const next = body.slice(0, start) + marker + placeholder + marker + body.slice(end);
+        setBody(next);
+        const selStart = start + marker.length;
+        setSelection({ start: selStart, end: selStart + placeholder.length });
+      } else {
+        const selected = body.slice(start, end);
+        const next = body.slice(0, start) + marker + selected + marker + body.slice(end);
+        setBody(next);
+        setSelection({ start: start + marker.length, end: end + marker.length });
+      }
+    },
+    [body, selection],
+  );
 
   const AI_STYLES: Array<{ id: LoveNoteStyle; label: string; emoji: string }> = [
     { id: 'tendre', label: 'Tendre', emoji: '🫶' },
@@ -115,6 +143,8 @@ export function LoveNoteEditor({
     setActivePreset('tomorrow');
     setShowPreview(false);
     setSaving(false);
+    setShowAiStyles(false);
+    setSelection({ start: 0, end: 0 });
   }, [visible]);
 
   const applyPreset = useCallback((key: PresetKey) => {
@@ -225,7 +255,7 @@ export function LoveNoteEditor({
               <View style={styles.bodyActions}>
                 {aiConfigured && (
                   <Pressable
-                    onPress={handleImprove}
+                    onPress={handleImproveTap}
                     disabled={improving}
                     style={{ opacity: improving ? 0.5 : 1 }}
                     accessibilityRole="button"
@@ -253,22 +283,51 @@ export function LoveNoteEditor({
                 <MarkdownText>{body || '_Aperçu vide_'}</MarkdownText>
               </View>
             ) : (
-              <TextInput
-                multiline
-                value={body}
-                onChangeText={setBody}
-                placeholder="Ton message…"
-                placeholderTextColor={colors.textMuted}
-                style={[
-                  styles.textInput,
-                  { color: colors.text, backgroundColor: colors.cardAlt, borderColor: colors.border },
-                ]}
-              />
+              <>
+                {/* Toolbar markdown : gras / italique / barre */}
+                <View style={styles.markdownToolbar}>
+                  <Pressable
+                    onPress={() => wrapSelection('**')}
+                    style={[styles.mdBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+                    accessibilityLabel="Gras"
+                  >
+                    <Text style={[styles.mdBtnTextBold, { color: colors.text }]}>B</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => wrapSelection('*')}
+                    style={[styles.mdBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+                    accessibilityLabel="Italique"
+                  >
+                    <Text style={[styles.mdBtnTextItalic, { color: colors.text }]}>I</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => wrapSelection('~~')}
+                    style={[styles.mdBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+                    accessibilityLabel="Barré"
+                  >
+                    <Text style={[styles.mdBtnTextStrike, { color: colors.text }]}>S</Text>
+                  </Pressable>
+                </View>
+                <TextInput
+                  multiline
+                  value={body}
+                  onChangeText={setBody}
+                  selection={selection}
+                  onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
+                  placeholder="Ton message…"
+                  placeholderTextColor={colors.textMuted}
+                  style={[
+                    styles.textInput,
+                    { color: colors.text, backgroundColor: colors.cardAlt, borderColor: colors.border },
+                  ]}
+                />
+              </>
             )}
-            {aiConfigured && (
+            {/* Row styles IA — visible uniquement apres tap sur '✨ Améliorer' */}
+            {aiConfigured && showAiStyles && (
               <View style={styles.aiStyleRow}>
                 <Text style={[styles.aiStyleLabel, { color: colors.textMuted }]}>
-                  Style IA
+                  Choisis un style…
                 </Text>
                 <View style={styles.chipsRow}>
                   {AI_STYLES.map((s) => (
@@ -276,11 +335,8 @@ export function LoveNoteEditor({
                       key={s.id}
                       label={s.label}
                       emoji={s.emoji}
-                      selected={aiStyle === s.id}
-                      onPress={() => {
-                        Haptics.selectionAsync().catch(() => {});
-                        setAiStyle(s.id);
-                      }}
+                      selected={false}
+                      onPress={() => runImprove(s.id)}
                     />
                   ))}
                 </View>
@@ -372,6 +428,33 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     marginBottom: Spacing.xs,
     fontWeight: '500',
+  },
+  markdownToolbar: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  mdBtn: {
+    width: 36,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mdBtnTextBold: {
+    fontSize: FontSize.body,
+    fontWeight: '900',
+  },
+  mdBtnTextItalic: {
+    fontSize: FontSize.body,
+    fontStyle: 'italic',
+    fontWeight: '600',
+  },
+  mdBtnTextStrike: {
+    fontSize: FontSize.body,
+    textDecorationLine: 'line-through',
+    fontWeight: '600',
   },
   bodyHeader: {
     flexDirection: 'row',
