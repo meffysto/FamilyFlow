@@ -194,7 +194,11 @@ Plans:
   3. User peut accéder à sa boîte aux lettres complète (`/lovenotes`) en tappant la carte enveloppe OU via une tuile permanente dans l'écran `more.tsx`
   4. User voit l'écran Boîte aux lettres organisé en 3 segments segmented control : "Reçues" (non lues en priorité), "Envoyées" (programmées en attente), "Archivées" (lues + révélées) — chaque segment affiche sa propre liste virtualisée de `LoveNoteCard` mémoïsés
   5. User voit la carte enveloppe disparaître automatiquement du dashboard quand plus aucune note reçue n'est pending/unread pour le profil actif (pas de flash, render conditionnel propre)
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 35-01-PLAN.md — Selectors dérivés purs + route skeleton /(tabs)/lovenotes + _layout href:null (LOVE-06, LOVE-07, LOVE-08)
+- [ ] 35-02-PLAN.md — Composants visuels : WaxSeal + EnvelopeFlap + EnvelopeCard + LoveNoteCard + câblage écran (LOVE-05, LOVE-06, LOVE-08)
+- [ ] 35-03-PLAN.md — Injection dashboard pinned + tuile permanente more.tsx (LOVE-05, LOVE-07)
 **UI hint**: yes
 
 ### Phase 36: Composition & programmation reveal
