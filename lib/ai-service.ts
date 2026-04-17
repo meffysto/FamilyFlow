@@ -1123,6 +1123,6 @@ export async function improveLoveNote(
     sonnetConfig,
     systemPrompt,
     [{ role: 'user', content: userPrompt }],
-    800,
+    1024,
   );
 }
