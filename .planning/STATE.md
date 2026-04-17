@@ -58,6 +58,7 @@ Status: Phase complete — ready for verification
 | 260415-wnf | Reward card toast animée à la validation de tâche | 2026-04-15 | 5db78d5 | [260415-wnf-impl-menter-option-b-reward-card-toast-p](./quick/260415-wnf-impl-menter-option-b-reward-card-toast-p/) |
 | 260415-xak | HarvestCardToast — carte récolte animée + accumulation live dans ToastContext | 2026-04-15 | 4696862 | [260415-xak-cr-er-harvestcardtoast-brancher-dans-toa](./quick/260415-xak-cr-er-harvestcardtoast-brancher-dans-toa/) |
 | 260416-pct | Deal du jour stock séparé marché + quota 2 achats/profil/jour | 2026-04-16 | 1bb4895 | [260416-pct-deal-du-jour-stock-separe-marche-quota-2](./quick/260416-pct-deal-du-jour-stock-separe-marche-quota-2/) |
+| 260417-dp6 | Migration ID habitants (aigle_expedition→aigle_dore, renard_expedition→renard_arctique) dans parseFarmProfile | 2026-04-17 | a64becf | [260417-dp6-appliquer-la-migration-d-id-d-habitants-](./quick/260417-dp6-appliquer-la-migration-d-id-d-habitants-/) |
 
 ## Performance Metrics
 
