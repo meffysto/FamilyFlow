@@ -11,7 +11,8 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,13 +21,16 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 
-// ─── Constantes module — cosmétiques inline (per RESEARCH Open Question 1) ──
+// ─── Constantes module — palette cire rouge réaliste ───────────────────────
 const PULSE_DURATION = 1200;
 const PULSE_MAX = 1.06;
 const DEFAULT_SIZE = 72;
-const WAX = '#c0392b';
-// (WAX_DARK / WAX_HIGHLIGHT non utilisés ici — RN ne supporte pas le radial-gradient
-//  CSS de la mockup ; on simule via boxShadow inset + couleur unie WAX.)
+// Radial-gradient CSS impossible en RN → on simule via LinearGradient diagonal
+// + ring foncé en overlay pour l'effet "cire coulée"
+const WAX_LIGHT = '#e84c3d';    // highlight haut-gauche
+const WAX_MID = '#b3261b';      // base
+const WAX_DARK = '#6e1208';     // ombre bas-droit
+const WAX_RING = 'rgba(30,3,0,0.55)'; // anneau externe cire écrasée
 const PAPER = '#f5ecd5';
 const INK = '#442434';
 
@@ -79,10 +83,67 @@ function WaxSealBase({
         style={[
           styles.sealBase,
           animatedStyle,
-          { backgroundColor: WAX },
+          { overflow: 'hidden' },
         ]}
       >
-        <Text style={[styles.initial, { fontSize: size * 0.45 }]}>
+        {/* Base cire : gradient diagonal light -> dark */}
+        <LinearGradient
+          colors={[WAX_LIGHT, WAX_MID, WAX_DARK]}
+          locations={[0, 0.55, 1]}
+          start={{ x: 0.25, y: 0.2 }}
+          end={{ x: 0.85, y: 0.9 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+        {/* Highlight tache lumière haut-gauche (cire fondue) */}
+        <View
+          style={[
+            styles.highlight,
+            {
+              width: size * 0.45,
+              height: size * 0.3,
+              borderRadius: size * 0.3,
+              top: size * 0.12,
+              left: size * 0.18,
+            },
+          ]}
+        />
+        {/* Ombre profonde bas-droit (creux cire écrasée) */}
+        <View
+          style={[
+            styles.innerShadow,
+            {
+              width: size * 0.5,
+              height: size * 0.35,
+              borderRadius: size * 0.3,
+              bottom: size * 0.08,
+              right: size * 0.1,
+            },
+          ]}
+        />
+        {/* Anneau externe cire écrasée autour du tampon */}
+        <View
+          style={[
+            styles.ring,
+            {
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              borderWidth: size * 0.04,
+            },
+          ]}
+        />
+        {/* Initiale embossée */}
+        <Text
+          style={[
+            styles.initial,
+            {
+              fontSize: size * 0.55,
+              lineHeight: size * 0.62,
+              textShadowOffset: { width: 0, height: size * 0.025 },
+              textShadowRadius: size * 0.05,
+            },
+          ]}
+        >
           {initial}
         </Text>
       </Animated.View>
@@ -104,20 +165,40 @@ const styles = StyleSheet.create({
   sealBase: {
     alignItems: 'center',
     justifyContent: 'center',
-    // Ombre cire (multi-couche simulant la profondeur)
-    shadowColor: '#8b2518',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 6,
+    // Ombre cire — profondeur marquée, feel fondu sur papier
+    shadowColor: '#4a0a02',
+    shadowOffset: { width: 2, height: 6 },
+    shadowOpacity: 0.65,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  highlight: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255,200,180,0.45)',
+    transform: [{ rotate: '-25deg' }],
+  },
+  innerShadow: {
+    position: 'absolute',
+    backgroundColor: 'rgba(40,5,0,0.35)',
+    transform: [{ rotate: '20deg' }],
+  },
+  ring: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    borderColor: WAX_RING,
   },
   initial: {
-    color: 'rgba(255,220,200,0.95)',
+    // Police serif italique type cachet royal
+    fontFamily: Platform.select({
+      ios: 'Snell Roundhand',
+      default: undefined,
+    }),
+    color: 'rgba(255,230,210,0.95)',
     fontWeight: '700',
-    fontFamily: 'Georgia',
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.55)',
   },
   badge: {
     position: 'absolute',

@@ -20,6 +20,7 @@ import {
   Text,
   StyleSheet,
   LayoutChangeEvent,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PressableScale } from '../ui/PressableScale';
@@ -29,16 +30,16 @@ import { Spacing } from '../../constants/spacing';
 import { FontSize } from '../../constants/typography';
 
 // ─── Constantes module — cosmétiques inline ────────────────────────────────
-// Palette vintage — papier jauni, encre brune soft, vignette aux coins
-const PAPER_HIGHLIGHT = '#f8ecce';
-const PAPER_MID = '#e8d5a8';
-const PAPER_DARK = '#d4bc85';
-const PAPER_EDGE = '#b89a5e';
-const VIGNETTE = 'rgba(92,58,30,0.28)';
-const INK = '#3d2418';
-const INK_SOFT = '#6b4a32';
-const STACK_BACK_1 = '#e8d5a8';
-const STACK_BACK_2 = '#dfc898';
+// Palette kraft — papier recyclé brun chaud, grain naturel sans rayures
+const PAPER_HIGHLIGHT = '#d4b388';
+const PAPER_MID = '#b89163';
+const PAPER_DARK = '#96703f';
+const PAPER_EDGE = '#6f4e2a';
+const VIGNETTE = 'rgba(52,28,12,0.45)';
+const INK = '#2a1708';
+const INK_SOFT = '#5a3820';
+const STACK_BACK_1 = '#a0814f';
+const STACK_BACK_2 = '#8a6b3e';
 const TILT_DEG = '-1.5deg';
 const SEAL_SIZE = 72;
 // Timbre cœur — rouge carmin vintage desature
@@ -111,46 +112,30 @@ function EnvelopeCardBase({ count, recipientName, onPress }: EnvelopeCardProps) 
           style={[styles.envelope, { transform: [{ rotate: TILT_DEG }] }]}
           onLayout={handleLayout}
         >
-          {/* Gradient papier vintage (cream → beige foncé vers bas-droit) */}
+          {/* Gradient papier kraft (brun chaud, clair haut-gauche → foncé bas-droit) */}
           <LinearGradient
             colors={[PAPER_HIGHLIGHT, PAPER_MID, PAPER_DARK]}
-            locations={[0, 0.65, 1]}
-            start={{ x: 0.2, y: 0 }}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0.15, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFillObject}
           />
-          {/* Vignette coins — foncit bord bas-droit pour effet papier usé */}
+          {/* Vignette bas-droit — papier foncé sur les bords */}
           <LinearGradient
             colors={['transparent', VIGNETTE]}
-            start={{ x: 0.3, y: 0.3 }}
+            start={{ x: 0.25, y: 0.3 }}
             end={{ x: 1, y: 1 }}
-            style={[StyleSheet.absoluteFillObject, { opacity: 0.6 }]}
+            style={[StyleSheet.absoluteFillObject, { opacity: 0.7 }]}
             pointerEvents="none"
           />
-          {/* Highlight coin haut-gauche — papier accroche la lumière */}
+          {/* Highlight diffus haut-gauche — lumière sur le papier kraft */}
           <LinearGradient
-            colors={['rgba(255,250,230,0.55)', 'transparent']}
+            colors={['rgba(255,230,190,0.22)', 'transparent']}
             start={{ x: 0, y: 0 }}
-            end={{ x: 0.6, y: 0.5 }}
-            style={[StyleSheet.absoluteFillObject, { opacity: 0.8 }]}
+            end={{ x: 0.7, y: 0.6 }}
+            style={[StyleSheet.absoluteFillObject, { opacity: 0.9 }]}
             pointerEvents="none"
           />
-          {/* Lignes de fibres papier — pseudo texture vintage */}
-          <View style={styles.fibers} pointerEvents="none">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.fiber,
-                  {
-                    top: `${12 + i * 12}%`,
-                    opacity: 0.05 + (i % 3) * 0.02,
-                    transform: [{ rotate: `${-3 + (i % 4)}deg` }],
-                  },
-                ]}
-              />
-            ))}
-          </View>
           {/* Rabat SVG (rendu seulement quand on connaît la taille) */}
           {size.width > 0 && (
             <View
@@ -226,17 +211,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PAPER_EDGE,
   },
-  fibers: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-  },
-  fiber: {
-    position: 'absolute',
-    left: -20,
-    right: -20,
-    height: 1,
-    backgroundColor: INK_SOFT,
-  },
   flapContainer: {
     position: 'absolute',
     top: 0,
@@ -264,11 +238,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   recipientName: {
-    fontSize: FontSize.titleLg,
+    // Police calligraphique iOS (fallback italique sur Android)
+    fontFamily: Platform.select({ ios: 'Snell Roundhand', default: undefined }),
+    fontSize: 32,
     color: INK,
     fontStyle: 'italic',
     fontWeight: '600',
-    lineHeight: 24,
+    lineHeight: 34,
+    letterSpacing: 0.3,
   },
   stamp: {
     position: 'absolute',
