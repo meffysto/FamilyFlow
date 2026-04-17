@@ -110,6 +110,8 @@ export default function LoveNotesScreen() {
   // Phase 36 Plan 04 — patch 'read' APRÈS la fin de l'animation (Pitfall 6).
   const handleUnfoldComplete = useCallback(async () => {
     if (!unfoldNote) return;
+    // Dev test note : pas d'écriture vault (sourceFile factice)
+    if (__DEV__ && unfoldNote.sourceFile === '__dev_test__') return;
     try {
       await updateLoveNoteStatus(unfoldNote.sourceFile, 'read');
     } catch (e) {
@@ -203,6 +205,33 @@ export default function LoveNotesScreen() {
           <Text style={[styles.fabText, { color: colors.onPrimary }]}>✏️ Écrire</Text>
         </Pressable>
       )}
+
+      {/* DEV only — bouton iteration animation unfold */}
+      {__DEV__ && (
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+            setUnfoldNote({
+              sourceFile: '__dev_test__',
+              from: activeProfile?.id ?? 'dev',
+              to: activeProfile?.id ?? 'dev',
+              body: 'Ceci est une note de test pour itérer sur l\'animation unfold. ✨\n\nBody en **markdown** avec une *seconde ligne* pour voir le rendu complet.',
+              revealAt: localIso(new Date()),
+              createdAt: localIso(new Date()),
+              status: 'revealed',
+            });
+          }}
+          style={[
+            styles.fabDev,
+            { backgroundColor: colors.cardAlt, bottom: tabBarHeight + Spacing['2xl'] },
+            Shadows.md,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Rejouer animation unfold (dev)"
+        >
+          <Text style={[styles.fabText, { color: colors.text }]}>🧪 Test anim</Text>
+        </Pressable>
+      )}
       {activeProfile && (
         <LoveNoteEditor
           visible={editorVisible}
@@ -242,6 +271,13 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: Spacing['2xl'],
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: 999,
+  },
+  fabDev: {
+    position: 'absolute',
+    left: Spacing['2xl'],
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
     borderRadius: 999,
