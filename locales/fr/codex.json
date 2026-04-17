@@ -245,6 +245,22 @@
     "galette_royale": {
       "name": "Galette royale",
       "lore": "Une galette feuilletée déverrouillée grâce aux quêtes coopératives de la ferme. Farine, œuf et miel s'assemblent pour une recette symbole d'entraide familiale. Se débloque uniquement après avoir terminé une quête dédiée."
+    },
+    "tarte_carottes": {
+      "name": "Tarte aux carottes",
+      "lore": "Une tarte dorée qui met à l'honneur les carottes du printemps, sublimées par la farine du moulin et un œuf du poulailler. Parfaite pour écouler les récoltes printanières abondantes au stade arbre. Un dessert rustique qui célèbre le retour des beaux jours."
+    },
+    "veloute_printanier": {
+      "name": "Velouté printanier",
+      "lore": "Un velouté doux mariant chou frais, pomme de terre et lait de la grange. Recette printanière du stade arbre qui valorise deux cultures de saison en un plat réconfortant. Idéale pour les soirées fraîches du début de saison."
+    },
+    "gratin_hiver": {
+      "name": "Gratin d'hiver",
+      "lore": "Un gratin généreux à base de pommes de terre et de chou, gratinés au lait de la grange. Recette-phare de l'hiver au stade arbre, elle transforme les cultures de conservation en un plat chaleureux. Le réconfort d'une cuisine familiale sous la neige."
+    },
+    "mijote_hiver": {
+      "name": "Mijoté d'hiver",
+      "lore": "Un mijoté rustique de betteraves et pommes de terre, lié par un œuf du poulailler. Recette d'hiver qui valorise les légumes-racines stockés en cave après la récolte d'automne. Le goût d'une ferme qui traverse l'hiver sans faiblir."
     }
   },
   "tech": {

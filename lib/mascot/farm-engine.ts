@@ -71,7 +71,7 @@ export const SEASONAL_CROP_BONUS: Record<Season, string[]> = {
   printemps: ['carrot', 'potato', 'cabbage', 'beetroot'],  // legumes de printemps
   ete:       ['tomato', 'cucumber', 'corn', 'strawberry'],  // fruits d'ete
   automne:   ['pumpkin', 'wheat', 'beetroot'],               // recoltes d'automne
-  hiver:     [],                                              // pas de bonus en hiver
+  hiver:     ['pumpkin', 'cabbage', 'beetroot', 'potato'],   // recoltes de conservation
 };
 
 /** Verifie si une culture a un bonus saisonnier actif */

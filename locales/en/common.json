@@ -4212,7 +4212,11 @@
       "huile_phenix": "Phoenix Oil",
       "tisane_volcanique": "Volcanic Herbal Tea",
       "encre_etoiles": "Star Ink",
-      "potion_eveil": "Awakening Potion"
+      "potion_eveil": "Awakening Potion",
+      "tarte_carottes": "Carrot Tart",
+      "veloute_printanier": "Spring Velouté",
+      "gratin_hiver": "Winter Gratin",
+      "mijote_hiver": "Winter Stew"
     }
   },
   "badges": {

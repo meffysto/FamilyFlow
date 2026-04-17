@@ -245,6 +245,22 @@
     "galette_royale": {
       "name": "Royal galette",
       "lore": "A puff-pastry galette unlocked through the farm's cooperative quests. Flour, egg and honey come together in a recipe that symbolises family teamwork. It only unlocks after completing a dedicated quest."
+    },
+    "tarte_carottes": {
+      "name": "Carrot tart",
+      "lore": "A golden tart that showcases spring carrots, enhanced by mill flour and a coop egg. Perfect for using up abundant spring harvests at the tree stage. A rustic dessert that celebrates the return of sunny days."
+    },
+    "veloute_printanier": {
+      "name": "Spring velouté",
+      "lore": "A smooth velouté pairing fresh cabbage, potato and barn milk. A spring recipe of the tree stage that valorises two seasonal crops in a comforting dish. Perfect for the crisp evenings of early spring."
+    },
+    "gratin_hiver": {
+      "name": "Winter gratin",
+      "lore": "A generous gratin of potatoes and cabbage, browned with barn milk. The signature winter recipe at the tree stage, it turns storage crops into a warming dish. The comfort of family cooking under the snow."
+    },
+    "mijote_hiver": {
+      "name": "Winter stew",
+      "lore": "A rustic stew of beetroot and potato, bound together by a coop egg. A winter recipe that makes the most of root vegetables stored in the cellar after the autumn harvest. The taste of a farm that endures winter without faltering."
     }
   },
   "tech": {

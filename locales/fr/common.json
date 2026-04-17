@@ -4218,7 +4218,11 @@
       "huile_phenix": "Huile de Phénix",
       "tisane_volcanique": "Tisane Volcanique",
       "encre_etoiles": "Encre des Étoiles",
-      "potion_eveil": "Potion d'Éveil"
+      "potion_eveil": "Potion d'Éveil",
+      "tarte_carottes": "Tarte aux carottes",
+      "veloute_printanier": "Velouté printanier",
+      "gratin_hiver": "Gratin d'hiver",
+      "mijote_hiver": "Mijoté d'hiver"
     }
   },
   "badges": {

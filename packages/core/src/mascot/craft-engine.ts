@@ -195,6 +195,60 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     sellValue: 580, // (90+80+120) x 2
     minTreeStage: 'arbre',
   },
+  // ── Arbre — 🌸 Printemps (carrot/potato/cabbage/beetroot) ──
+  {
+    id: 'tarte_carottes',
+    labelKey: 'craft.recipe.tarte_carottes',
+    emoji: '🥕',
+    ingredients: [
+      { itemId: 'carrot', quantity: 2, source: 'crop' },
+      { itemId: 'farine', quantity: 1, source: 'building' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 480, // (25+25+90+80) x 2.2
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'veloute_printanier',
+    labelKey: 'craft.recipe.veloute_printanier',
+    emoji: '🥬',
+    ingredients: [
+      { itemId: 'cabbage', quantity: 1, source: 'crop' },
+      { itemId: 'potato', quantity: 1, source: 'crop' },
+      { itemId: 'lait', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 470, // (70+35+100) x 2.3
+    minTreeStage: 'arbre',
+  },
+  // ── Arbre — ❄️ Hiver (potato/cabbage/beetroot — cultures de conservation) ──
+  {
+    id: 'gratin_hiver',
+    labelKey: 'craft.recipe.gratin_hiver',
+    emoji: '🍲',
+    ingredients: [
+      { itemId: 'potato', quantity: 2, source: 'crop' },
+      { itemId: 'cabbage', quantity: 1, source: 'crop' },
+      { itemId: 'lait', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 480, // (35+35+70+100) x 2.0
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'mijote_hiver',
+    labelKey: 'craft.recipe.mijote_hiver',
+    emoji: '🥘',
+    ingredients: [
+      { itemId: 'beetroot', quantity: 2, source: 'crop' },
+      { itemId: 'potato', quantity: 1, source: 'crop' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 400, // (30+30+35+80) x 2.3
+    minTreeStage: 'arbre',
+  },
   {
     id: 'confiture_royale',
     labelKey: 'craft.recipe.confiture_royale',

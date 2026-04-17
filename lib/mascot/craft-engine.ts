@@ -54,6 +54,10 @@ const CRAFT_SPRITES: Record<string, ReturnType<typeof require>> = {
   tisane_volcanique: require('../../assets/garden/craft/tisane_volcanique.png'),
   encre_etoiles:     require('../../assets/garden/craft/encre_etoiles.png'),
   potion_eveil:      require('../../assets/garden/craft/potion_eveil.png'),
+  tarte_carottes:    require('../../assets/garden/craft/tarte_carottes.png'),
+  veloute_printanier:require('../../assets/garden/craft/veloute_printanier.png'),
+  gratin_hiver:      require('../../assets/garden/craft/gratin_hiver.png'),
+  mijote_hiver:      require('../../assets/garden/craft/mijote_hiver.png'),
 };
 
 export const CRAFT_RECIPES: CraftRecipe[] = [
@@ -289,6 +293,64 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 30,
     sellValue: 540, // (90+80+120) x 1.9
+    minTreeStage: 'arbre',
+  },
+  // ── Arbre — 🌸 Printemps (carrot/potato/cabbage/beetroot) ──
+  {
+    id: 'tarte_carottes',
+    labelKey: 'craft.recipe.tarte_carottes',
+    emoji: '🥕',
+    sprite: CRAFT_SPRITES.tarte_carottes,
+    ingredients: [
+      { itemId: 'carrot', quantity: 2, source: 'crop' },
+      { itemId: 'farine', quantity: 1, source: 'building' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 480, // (25+25+90+80) x 2.2
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'veloute_printanier',
+    labelKey: 'craft.recipe.veloute_printanier',
+    emoji: '🥬',
+    sprite: CRAFT_SPRITES.veloute_printanier,
+    ingredients: [
+      { itemId: 'cabbage', quantity: 1, source: 'crop' },
+      { itemId: 'potato', quantity: 1, source: 'crop' },
+      { itemId: 'lait', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 470, // (70+35+100) x 2.3
+    minTreeStage: 'arbre',
+  },
+  // ── Arbre — ❄️ Hiver (potato/cabbage/beetroot — cultures de conservation) ──
+  {
+    id: 'gratin_hiver',
+    labelKey: 'craft.recipe.gratin_hiver',
+    emoji: '🍲',
+    sprite: CRAFT_SPRITES.gratin_hiver,
+    ingredients: [
+      { itemId: 'potato', quantity: 2, source: 'crop' },
+      { itemId: 'cabbage', quantity: 1, source: 'crop' },
+      { itemId: 'lait', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 480, // (35+35+70+100) x 2.0
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'mijote_hiver',
+    labelKey: 'craft.recipe.mijote_hiver',
+    emoji: '🥘',
+    sprite: CRAFT_SPRITES.mijote_hiver,
+    ingredients: [
+      { itemId: 'beetroot', quantity: 2, source: 'crop' },
+      { itemId: 'potato', quantity: 1, source: 'crop' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 400, // (30+30+35+80) x 2.3
     minTreeStage: 'arbre',
   },
   {
