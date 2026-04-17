@@ -74,6 +74,48 @@ export const CROP_SPRITES: Record<string, Record<number, [any, any]>> = {
     3: [require('../../assets/garden/crops/cucumber/stage_3_a.png'), require('../../assets/garden/crops/cucumber/stage_3_b.png')],
     4: [require('../../assets/garden/crops/cucumber/stage_4_a.png'), require('../../assets/garden/crops/cucumber/stage_4_b.png')],
   },
+  fleur_lave: {
+    0: [require('../../assets/garden/crops/fleur_lave/stage_0_a.png'), require('../../assets/garden/crops/fleur_lave/stage_0_b.png')],
+    1: [require('../../assets/garden/crops/fleur_lave/stage_1_a.png'), require('../../assets/garden/crops/fleur_lave/stage_1_b.png')],
+    2: [require('../../assets/garden/crops/fleur_lave/stage_2_a.png'), require('../../assets/garden/crops/fleur_lave/stage_2_b.png')],
+    3: [require('../../assets/garden/crops/fleur_lave/stage_3_a.png'), require('../../assets/garden/crops/fleur_lave/stage_3_b.png')],
+    4: [require('../../assets/garden/crops/fleur_lave/stage_4_a.png'), require('../../assets/garden/crops/fleur_lave/stage_4_b.png')],
+  },
+  sunflower: {
+    0: [require('../../assets/garden/crops/sunflower/stage_0_a.png'), require('../../assets/garden/crops/sunflower/stage_0_b.png')],
+    1: [require('../../assets/garden/crops/sunflower/stage_1_a.png'), require('../../assets/garden/crops/sunflower/stage_1_b.png')],
+    2: [require('../../assets/garden/crops/sunflower/stage_2_a.png'), require('../../assets/garden/crops/sunflower/stage_2_b.png')],
+    3: [require('../../assets/garden/crops/sunflower/stage_3_a.png'), require('../../assets/garden/crops/sunflower/stage_3_b.png')],
+    4: [require('../../assets/garden/crops/sunflower/stage_4_a.png'), require('../../assets/garden/crops/sunflower/stage_4_b.png')],
+  },
+  cristal_noir: {
+    0: [require('../../assets/garden/crops/cristal_noir/stage_0_a.png'), require('../../assets/garden/crops/cristal_noir/stage_0_b.png')],
+    1: [require('../../assets/garden/crops/cristal_noir/stage_1_a.png'), require('../../assets/garden/crops/cristal_noir/stage_1_b.png')],
+    2: [require('../../assets/garden/crops/cristal_noir/stage_2_a.png'), require('../../assets/garden/crops/cristal_noir/stage_2_b.png')],
+    3: [require('../../assets/garden/crops/cristal_noir/stage_3_a.png'), require('../../assets/garden/crops/cristal_noir/stage_3_b.png')],
+    4: [require('../../assets/garden/crops/cristal_noir/stage_4_a.png'), require('../../assets/garden/crops/cristal_noir/stage_4_b.png')],
+  },
+  mousse_etoile: {
+    0: [require('../../assets/garden/crops/mousse_etoile/stage_0_a.png'), require('../../assets/garden/crops/mousse_etoile/stage_0_b.png')],
+    1: [require('../../assets/garden/crops/mousse_etoile/stage_1_a.png'), require('../../assets/garden/crops/mousse_etoile/stage_1_b.png')],
+    2: [require('../../assets/garden/crops/mousse_etoile/stage_2_a.png'), require('../../assets/garden/crops/mousse_etoile/stage_2_b.png')],
+    3: [require('../../assets/garden/crops/mousse_etoile/stage_3_a.png'), require('../../assets/garden/crops/mousse_etoile/stage_3_b.png')],
+    4: [require('../../assets/garden/crops/mousse_etoile/stage_4_a.png'), require('../../assets/garden/crops/mousse_etoile/stage_4_b.png')],
+  },
+  racine_geante: {
+    0: [require('../../assets/garden/crops/racine_geante/stage_0_a.png'), require('../../assets/garden/crops/racine_geante/stage_0_b.png')],
+    1: [require('../../assets/garden/crops/racine_geante/stage_1_a.png'), require('../../assets/garden/crops/racine_geante/stage_1_b.png')],
+    2: [require('../../assets/garden/crops/racine_geante/stage_2_a.png'), require('../../assets/garden/crops/racine_geante/stage_2_b.png')],
+    3: [require('../../assets/garden/crops/racine_geante/stage_3_a.png'), require('../../assets/garden/crops/racine_geante/stage_3_b.png')],
+    4: [require('../../assets/garden/crops/racine_geante/stage_4_a.png'), require('../../assets/garden/crops/racine_geante/stage_4_b.png')],
+  },
+  fleur_celeste: {
+    0: [require('../../assets/garden/crops/fleur_celeste/stage_0_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_0_b.png')],
+    1: [require('../../assets/garden/crops/fleur_celeste/stage_1_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_1_b.png')],
+    2: [require('../../assets/garden/crops/fleur_celeste/stage_2_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_2_b.png')],
+    3: [require('../../assets/garden/crops/fleur_celeste/stage_3_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_3_b.png')],
+    4: [require('../../assets/garden/crops/fleur_celeste/stage_4_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_4_b.png')],
+  },
 };
 
 /** Icones cultures (pour la boutique et le codex) */
@@ -94,4 +136,10 @@ export const CROP_ICONS: Record<string, any> = {
   rose_doree:   require('../../assets/garden/crops/rose_doree/icon.png'),
   truffe:       require('../../assets/garden/crops/truffe/icon.png'),
   fruit_dragon: require('../../assets/garden/crops/fruit_dragon/icon.png'),
+  // Graines exclusives expédition (Phase 33) — sprites PixelLab
+  fleur_lave:     require('../../assets/garden/crops/fleur_lave/icon.png'),
+  cristal_noir:   require('../../assets/garden/crops/cristal_noir/icon.png'),
+  mousse_etoile:  require('../../assets/garden/crops/mousse_etoile/icon.png'),
+  racine_geante:  require('../../assets/garden/crops/racine_geante/icon.png'),
+  fleur_celeste:  require('../../assets/garden/crops/fleur_celeste/icon.png'),
 };
