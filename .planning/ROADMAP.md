@@ -244,7 +244,7 @@ Plans:
 | 34. Fondation données & hook domaine | 3/3 | Complete    | 2026-04-17 |
 | 35. Carte enveloppe dashboard + écran boîte aux lettres | 3/3 | Complete   | 2026-04-17 |
 | 36. Composition & programmation reveal | 4/4 | Complete   | 2026-04-17 |
-| 37. Garde-parent & polish | 0/TBD | Not started | - |
+| 37. Garde-parent & polish | 0/TBD | Deferred | - |
 
 ## Archived Milestones
 

@@ -54,9 +54,9 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 
 ### Active
 
-- [ ] (v1.6) Love notes : messages privés programmés entre membres de la famille avec boîte aux lettres dédiée
-- [ ] (v1.6) Carte enveloppe pinned en tête du dashboard quand au moins une note à révéler/non lue
-- [ ] (v1.6) Garde-parent sur love notes (toggle par profil enfant + modération anti-bullying)
+- [ ] (v1.7) Sporée de Régularité : objet consommable appliqué à la plantation, engage un pari cumulatif bienveillant sur tâches ménagères avec multiplier de reward à la récolte
+- [ ] (v1.7) Pollen de Chimère : objet consommable pour greffer 2 graines en 1 plant, combine rewards et drop tables (optionnel v1.7 ou reporté v1.8)
+- [ ] (Deferred v1.6) Garde-parent sur love notes (toggle par profil enfant + modération anti-bullying)
 - [ ] (Deferred v1.5) Ambiance dynamique village (cycle jour/nuit + effets saisonniers)
 - [ ] (Deferred v1.5) Arbre familial commun au centre du village (stade évolutif collectif)
 
@@ -76,32 +76,34 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current Milestone: v1.6 Love Notes
+## Current Milestone: v1.7 Modifiers de plants
 
-**Goal:** Permettre aux membres de la famille d'échanger des messages privés programmés ("love notes") qui apparaissent à une date future, avec un système de boîte aux lettres visualisé en carte enveloppe pinned en tête du dashboard — renforcer le lien affectif familial via des micro-moments de surprise asynchrones.
+**Goal:** Introduire des objets consommables qui modifient le comportement des plants au moment de la plantation, pour créer des décisions stratégiques au-delà du cycle plant→récolte→craft classique — transformer le jardin en terrain de décisions plutôt qu'en simple timer.
 
 **Target features:**
-- Composer une love note destinée à un profil famille avec date/heure de révélation future
-- Boîte aux lettres dédiée (3 segments : reçues, envoyées en attente, archivées)
-- Carte enveloppe pinned en tête du dashboard — apparition conditionnelle quand au moins 1 note à révéler/non lue
-- Animation dévoilement Reanimated (rabat qui s'ouvre) + haptic success au reveal
-- Notifications locales planifiées au revealAt via `expo-notifications`
-- Garde-parent : toggle d'activation par profil enfant + modération notes envoyées par enfants (anti-bullying)
+- Sporée de Régularité : objet consommable appliqué à la plantation, engage un pari cumulatif bienveillant sur tâches ménagères du sealeur (prorata dérivé de la charge famille pondérée par âge), multiplier de reward à la récolte si cumul atteint
+- Pollen de Chimère (optionnel v1.7) : objet consommable pour greffer une 2e graine sur le plant principal, combine rewards (moyenne) et drop tables, règles spéciales par tier du donneur
+- Pattern "modifier" unifié (nouveau champ `FarmCrop.modifiers` JSON optionnel) — extensible pour futurs modifiers
 
 **Key context:**
-- Stockage markdown : `03 - Famille/LoveNotes/{to-profileId}/{YYYY-MM-DD-slug}.md` — compat Obsidian bidirectionnelle
-- Pattern hook à répliquer : `useVaultNotes.ts` / `useVaultGratitude.ts` (21 hooks domaine existants)
-- Cache : love notes cachables, bump `CACHE_VERSION` dans `lib/vault-cache.ts:41`
-- Aucune nouvelle dépendance npm — `expo-notifications`, `expo-haptics`, `react-native-reanimated` déjà installés
-- v1.5 Village Vivant : Phases 31 (ambiance dynamique) + 32 (arbre familial commun) deferred — reprise ultérieure
+- Sporée V4 spec : prorata cumulatif = `(poids_sealeur / poids_famille_active_7j) × Tasks_pending` recalculé à 23h30
+- Poids par âge : Adulte 1.0 / Ado 0.7 / Enfant 0.4 / Jeune enfant 0.15 / Bébé 0.0
+- Seules les tâches du **domaine Tasks** comptent (pas Courses, pas Repas, pas Routines)
+- Validation bienveillante : pari ne casse jamais avant récolte, Sporée perdue si pari raté (seul coût)
+- 3 durées Sporée (Chill ×1.3 / Engagé ×1.7 / Sprint ×2.5) dérivées de la taille du plant
+- Économie Sporée : drops 3/8/15% selon tier plant + 15% drop-back sur pari gagné + shop 400 feuilles (2/jour dès Arbre stade 3) + expedition 5% + cadeau 1 gratuite à stage 3, cap inventaire 10
+- Bump `CACHE_VERSION` dans `lib/vault-cache.ts:41` (shape `FarmCrop` change)
+- Zéro nouvelle dépendance npm reconduit
+- Phase 37 Love Notes (garde-parent & polish) reste Deferred — reprise ultérieure
 
 ## Previous State
 
-**Last shipped:** v1.5 Village Vivant (partiel, 2026-04-14) — 3/5 phases livrées (avatars vivants, décorations persistantes, expéditions). Phases 31-32 différées pour prioriser Love Notes.
-**Previously shipped:** v1.4 Jardin Familial (2026-04-11) — Place du Village coopérative avec portail animé, contributions auto, objectif hebdo, récompense collective IRL.
+**Last shipped:** v1.6 Love Notes (partiel, 2026-04-17) — 3/4 phases livrées (fondation données, carte enveloppe + écran boîte, composition + reveal). Phase 37 garde-parent & polish différée.
+**Previously shipped:** v1.5 Village Vivant (partiel, 2026-04-14) — avatars vivants, décorations persistantes, expéditions. Phases 31-32 différées.
 
 ## Previous Milestones
 
+- 🟡 **v1.6 Love Notes** — Partiel (2026-04-17). Phases 34 Fondation données, 35 Carte enveloppe + écran, 36 Composition + reveal livrées. Phase 37 Garde-parent & polish deferred.
 - 🟡 **v1.5 Village Vivant** — Partiel (2026-04-14). Phases 29 Avatars, 30 Décorations, 33 Expéditions livrées. Phases 31 Ambiance dynamique + 32 Arbre familial deferred.
 - ✅ **v1.4 Jardin Familial** — Shipped 2026-04-11. Place du Village coopérative (carte tilemap, contributions auto, objectif hebdo, récompense collective IRL). Phases 25-28. Voir `.planning/milestones/v1.4-ROADMAP.md`.
 - ✅ **v1.3 Seed** — Shipped 2026-04-10. Couplage sémantique tâches↔ferme (10 catégories, effets wow, anti-abus, musée des effets, compagnon étendu 4 event types). Phases 19-24.
@@ -159,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-17 — Phase 34 complete (fondation données + hook domaine LoveNote)*
+*Last updated: 2026-04-18 — Milestone v1.7 Modifiers de plants started (v1.6 Love Notes partial, phase 37 deferred)*

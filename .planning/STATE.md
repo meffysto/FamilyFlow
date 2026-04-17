@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Love Notes
-status: executing
-last_updated: "2026-04-17T12:10:06.980Z"
-last_activity: 2026-04-17
+milestone: v1.7
+milestone_name: Modifiers de plants
+status: defining_requirements
+last_updated: "2026-04-18T00:00:00.000Z"
+last_activity: 2026-04-18
 progress:
-  total_phases: 9
-  completed_phases: 5
-  total_plans: 16
-  completed_plans: 18
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 36 — composition-programmation-reveal
+**Current focus:** Milestone v1.7 Modifiers de plants — defining requirements
 
 ## Current Position
 
-Phase: 36 (composition-programmation-reveal) — EXECUTING
-Plan: 3 of 4
-Milestone: v1.6 Love Notes
-Last shipped: v1.5 Village Vivant partiel (Phase 33 Expéditions, 2026-04-14)
-Last activity: 2026-04-17
+Phase: Not started (defining requirements)
+Plan: —
+Milestone: v1.7 Modifiers de plants
+Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
+Last activity: 2026-04-18 — Milestone v1.7 started
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Ready to execute
+Status: Defining requirements
 
 ### Quick Tasks Completed
 
