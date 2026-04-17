@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
+import { unreadForProfile } from '../../lib/lovenotes/selectors';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { PressableScale } from '../../components/ui';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -74,7 +75,7 @@ const CATEGORY_ACCENT_KEYS: Record<CategoryKey, 'catOrganisation' | 'catSante' |
 export default function MoreScreen() {
   const router = useRouter();
   const headerRef = useRef<View>(null);
-  const { rdvs, stock, courses, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes } = useVault();
+  const { rdvs, stock, courses, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes, loveNotes } = useVault();
   const { primary, colors, isDark } = useThemeColors();
   const { t } = useTranslation();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -92,6 +93,11 @@ export default function MoreScreen() {
       return next;
     });
   }, []);
+
+  const loveNoteUnreadCount = useMemo(
+    () => (activeProfile ? unreadForProfile(loveNotes, activeProfile.id).length : 0),
+    [loveNotes, activeProfile?.id]
+  );
 
   const items: MenuItem[] = useMemo(() => {
     const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r)).length;
@@ -145,11 +151,12 @@ export default function MoreScreen() {
       { emoji: '🎁', label: t('menu.items.wishlist'), route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: colors.catFamille, category: 'famille' as const },
       { emoji: '💰', label: t('menu.items.budget'), route: '/(tabs)/budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, color: colors.catFamille, category: 'famille' as const },
       { emoji: '📝', label: t('menu.items.notes'), route: '/(tabs)/notes', badge: notes.length || undefined, color: colors.catFamille, category: 'famille' as const },
+      { emoji: '💌', label: 'Love Notes', route: '/(tabs)/lovenotes' as any, badge: loveNoteUnreadCount || undefined, color: colors.catFamille, category: 'famille' as const },
       { emoji: '📊', label: t('menu.items.stats'), route: '/(tabs)/stats', color: colors.catFamille, category: 'famille' as const },
       // Système — gris
       { emoji: '⚙️', label: t('menu.items.settings'), route: '/(tabs)/settings', color: colors.catSysteme, category: 'systeme' as const },
     ];
-  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries, t]);
+  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries, t, loveNoteUnreadCount, notes]);
 
   const visibleItems = isChildMode ? items.filter((i) => i.route !== '/(tabs)/budget' && i.route !== '/(tabs)/notes') : items;
 
