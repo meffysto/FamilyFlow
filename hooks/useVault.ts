@@ -287,7 +287,7 @@ export interface VaultState {
   gardenRaw: string;
   setGardenRaw: React.Dispatch<React.SetStateAction<string>>;
   loveNotes: LoveNote[];
-  addLoveNote: (note: Omit<LoveNote, 'sourceFile'>) => Promise<void>;
+  addLoveNote: (note: Omit<LoveNote, 'sourceFile'>) => Promise<string>;
   updateLoveNoteStatus: (sourceFile: string, status: LoveNoteStatus, readAt?: string) => Promise<void>;
   deleteLoveNote: (sourceFile: string) => Promise<void>;
   stories: BedtimeStory[];

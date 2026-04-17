@@ -35,7 +35,7 @@ export interface UseVaultLoveNotesResult {
   loveNotes: LoveNote[];
   loadLoveNotes: (vault: VaultManager) => Promise<LoveNote[]>;
   setLoveNotes: React.Dispatch<React.SetStateAction<LoveNote[]>>;
-  addLoveNote: (note: Omit<LoveNote, 'sourceFile'>) => Promise<void>;
+  addLoveNote: (note: Omit<LoveNote, 'sourceFile'>) => Promise<string>;
   updateLoveNoteStatus: (sourceFile: string, status: LoveNoteStatus, readAt?: string) => Promise<void>;
   deleteLoveNote: (sourceFile: string) => Promise<void>;
   resetLoveNotes: () => void;
@@ -73,8 +73,8 @@ export function useVaultLoveNotes(
     }
   }, []);
 
-  const addLoveNote = useCallback(async (note: Omit<LoveNote, 'sourceFile'>) => {
-    if (!vaultRef.current) return;
+  const addLoveNote = useCallback(async (note: Omit<LoveNote, 'sourceFile'>): Promise<string> => {
+    if (!vaultRef.current) throw new Error('Vault non initialise');
     const dir = `${LOVENOTES_DIR}/${note.to}`;
     await vaultRef.current.ensureDir(dir);
     const relPath = loveNotePath(note.to, note.createdAt);
@@ -82,6 +82,7 @@ export function useVaultLoveNotes(
     const exists = await vaultRef.current.exists(relPath);
     if (!exists) throw new Error("Echec de l'ecriture de la love note");
     setLoveNotes((prev) => [{ ...note, sourceFile: relPath }, ...prev]);
+    return relPath;
   }, [vaultRef]);
 
   const updateLoveNoteStatus = useCallback(async (
