@@ -12,6 +12,7 @@
 
 import * as Notifications from 'expo-notifications';
 import { RDV, Task, StockItem } from './types';
+import type { LoveNote } from './types';
 import * as SecureStore from 'expo-secure-store';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -104,6 +105,7 @@ const CAT_GENERAL = 'general-daily';
 const CAT_GROSSESSE = 'grossesse-weekly';
 const CAT_GRATITUDE = 'gratitude-daily';
 const CAT_WEEKLY_AI = 'weekly-ai-summary';
+const CAT_LOVENOTE = 'lovenote-reveal';
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
@@ -575,4 +577,58 @@ export async function setupAllNotifications(data: NotifData): Promise<{
   ]);
 
   return { permitted, config };
+}
+
+// ─── 9. Love Notes — reveal au revealAt (Phase 36) ──────────────────────────
+
+function loveNoteIdentifier(sourceFile: string): string {
+  // Sanitize / et . pour identifier sur
+  return `${CAT_LOVENOTE}-${sourceFile.replace(/[/.]/g, '_')}`;
+}
+
+/**
+ * Programme une notification locale silencieuse au revealAt de la note.
+ * Idempotent : cancel precedente avant schedule.
+ * Returns false si permission refusee OU revealAt deja passe (Pitfall 3).
+ */
+export async function scheduleLoveNoteReveal(note: LoveNote): Promise<boolean> {
+  const permitted = await requestNotificationPermissions();
+  if (!permitted) return false;
+
+  // Cancel precedente (idempotence)
+  await cancelLoveNoteReveal(note.sourceFile);
+
+  // Parse revealAt en heure locale (ISO sans Z, cf types.ts:585)
+  const [datePart, timePart] = note.revealAt.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
+  const [hh, mm, ss] = (timePart ?? '00:00:00').split(':').map(Number);
+  const revealDate = new Date(y, m - 1, d, hh, mm, ss);
+
+  if (revealDate.getTime() <= Date.now()) return false; // Pitfall 3
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: loveNoteIdentifier(note.sourceFile),
+      content: {
+        title: '💌 Nouvelle love note',
+        body: 'Une note vient d\'arriver dans ta boite aux lettres',
+        sound: false,
+        data: { route: '/(tabs)/lovenotes', sourceFile: note.sourceFile },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: revealDate },
+    });
+    return true;
+  } catch (e) {
+    if (__DEV__) console.warn('[scheduleLoveNoteReveal]', e);
+    return false;
+  }
+}
+
+/** Annule la notif programmee pour cette love note. Idempotent (no-op si absente). */
+export async function cancelLoveNoteReveal(sourceFile: string): Promise<void> {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(loveNoteIdentifier(sourceFile));
+  } catch {
+    // Idempotent
+  }
 }
