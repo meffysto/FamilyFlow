@@ -1806,16 +1806,23 @@ function FeaturesGrid({ accent, season, tweaks }){
               ))}
             </div>
           </BentoCard>
-          <BentoCard accent={accent} style={{ gridColumn:'span 4', gridRow:'span 2', background:'#1A1A2E', color:'#fff' }}>
+          <BentoCard accent={accent} style={{ gridColumn:'span 3', gridRow:'span 2', background:'#1A1A2E', color:'#fff' }}>
             <BentoHeader eyebrow="100% OFFLINE" title="Your data, your iPhone" dark />
-            <div style={{ fontSize:13, color:'#C4B5FD', marginTop:8, lineHeight:1.5 }}>
-              No server, no account. Open files — <strong style={{color:'#fff'}}>nothing proprietary</strong>. iCloud sync or none.
+            <div style={{ fontSize:12.5, color:'#C4B5FD', marginTop:8, lineHeight:1.5 }}>
+              No server, no account. Open files — <strong style={{color:'#fff'}}>nothing proprietary</strong>.
             </div>
             <div className="mono" style={{ fontSize:10, color:'#64FFB4', marginTop:'auto', padding:'6px 8px', background:'rgba(100,255,180,0.08)', borderRadius:6, border:'1px solid rgba(100,255,180,0.2)' }}>
-              ~/Family/Tasks/*.md
+              ~/Family/*.md
             </div>
           </BentoCard>
-          <BentoCard accent={accent} style={{ gridColumn:'span 8', gridRow:'span 2', background:'#fff' }}>
+          <BentoCard accent={accent} style={{ gridColumn:'span 4', gridRow:'span 2', background:`linear-gradient(135deg, #FFF4DA, #FEF3C7)` }}>
+            <BentoHeader eyebrow="FOOD PREFERENCES" title="Remembers what each person eats." />
+            <DietaryChipsEn />
+            <div style={{ fontSize:11, color:'#7B5300', marginTop:8, lineHeight:1.45, fontStyle:'italic' }}>
+              14 EU allergens, intolerances, diets (including pregnancy) + free-form dislikes. AI uses them for recipes.
+            </div>
+          </BentoCard>
+          <BentoCard accent={accent} style={{ gridColumn:'span 5', gridRow:'span 2', background:'#fff' }}>
             <BentoHeader eyebrow="MULTI-PROFILE" title="9 themes for the kids" />
             <ThemeChips />
           </BentoCard>
@@ -2151,6 +2158,31 @@ function WeekMeals({ accent }){
             boxShadow:'0 2px 4px rgba(0,0,0,0.04)'
           }}>{meals[i]}</div>
           <div style={{ fontSize:10, fontWeight:700, color:'#6B7280' }}>{d}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DietaryChipsEn(){
+  const chips = [
+    { e:'🌱', l:'Cousin vegetarian', c:'#059669' },
+    { e:'🧅', l:'Leo: no onions', c:'#7B5300' },
+    { e:'🤰', l:'Mom expecting', c:'#EC4899' },
+    { e:'🥜', l:'Dad peanut allergy', c:'#DC2626' },
+    { e:'🥛', l:'Emma lactose intol.', c:'#2563EB' },
+    { e:'🍤', l:'No shellfish', c:'#9333EA' },
+  ];
+  return (
+    <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:10 }}>
+      {chips.map(c => (
+        <div key={c.l} style={{
+          display:'inline-flex', alignItems:'center', gap:5,
+          padding:'5px 9px', borderRadius:999,
+          background:`${c.c}15`, border:`1px solid ${c.c}35`,
+          fontSize:10.5, fontWeight:700, color:c.c
+        }}>
+          <span>{c.e}</span><span>{c.l}</span>
         </div>
       ))}
     </div>
