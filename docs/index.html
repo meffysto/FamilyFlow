@@ -1806,18 +1806,16 @@ function FeaturesGrid({ accent, season, tweaks }){
               ))}
             </div>
           </BentoCard>
-          <BentoCard accent={accent} style={{ gridColumn:'span 7', gridRow:'span 2', background:'#1A1A2E', color:'#fff' }}>
-            <BentoHeader eyebrow="100% HORS-LIGNE" title="Vos données restent sur votre iPhone" dark />
-            <div style={{ fontSize:14, color:'#C4B5FD', marginTop:8, lineHeight:1.55, maxWidth:460 }}>
-              Aucun serveur, aucun compte, aucune pub. Tout est stocké en fichiers
-              ouverts et lisibles — <strong style={{color:'#fff'}}>rien de propriétaire</strong>.
-              Synchronisation iCloud entre vos appareils, ou ne synchronisez pas du tout.
+          <BentoCard accent={accent} style={{ gridColumn:'span 4', gridRow:'span 2', background:'#1A1A2E', color:'#fff' }}>
+            <BentoHeader eyebrow="100% HORS-LIGNE" title="Vos données, votre iPhone" dark />
+            <div style={{ fontSize:13, color:'#C4B5FD', marginTop:8, lineHeight:1.5 }}>
+              Aucun serveur, aucun compte. Fichiers ouverts — <strong style={{color:'#fff'}}>rien de propriétaire</strong>. Sync iCloud ou rien.
             </div>
-            <div className="mono" style={{ fontSize:11, color:'#64FFB4', marginTop:18, padding:10, background:'rgba(100,255,180,0.08)', borderRadius:8, border:'1px solid rgba(100,255,180,0.2)' }}>
-              ~/Famille/Tâches/2026-04-21.md  ← lisible partout, toujours
+            <div className="mono" style={{ fontSize:10, color:'#64FFB4', marginTop:'auto', padding:'6px 8px', background:'rgba(100,255,180,0.08)', borderRadius:6, border:'1px solid rgba(100,255,180,0.2)' }}>
+              ~/Famille/Tâches/*.md
             </div>
           </BentoCard>
-          <BentoCard accent={accent} style={{ gridColumn:'span 5', gridRow:'span 2', background:'#fff' }}>
+          <BentoCard accent={accent} style={{ gridColumn:'span 8', gridRow:'span 2', background:'#fff' }}>
             <BentoHeader eyebrow="MULTI-PROFILS" title="9 thèmes pour les enfants" />
             <ThemeChips />
           </BentoCard>

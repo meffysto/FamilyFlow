@@ -1806,18 +1806,16 @@ function FeaturesGrid({ accent, season, tweaks }){
               ))}
             </div>
           </BentoCard>
-          <BentoCard accent={accent} style={{ gridColumn:'span 7', gridRow:'span 2', background:'#1A1A2E', color:'#fff' }}>
-            <BentoHeader eyebrow="100% OFFLINE" title="Your data stays on your iPhone" dark />
-            <div style={{ fontSize:14, color:'#C4B5FD', marginTop:8, lineHeight:1.55, maxWidth:460 }}>
-              No server, no account, no ads. Everything is stored in open, readable files —
-              <strong style={{color:'#fff'}}> nothing proprietary</strong>.
-              iCloud sync across your devices, or no sync at all.
+          <BentoCard accent={accent} style={{ gridColumn:'span 4', gridRow:'span 2', background:'#1A1A2E', color:'#fff' }}>
+            <BentoHeader eyebrow="100% OFFLINE" title="Your data, your iPhone" dark />
+            <div style={{ fontSize:13, color:'#C4B5FD', marginTop:8, lineHeight:1.5 }}>
+              No server, no account. Open files — <strong style={{color:'#fff'}}>nothing proprietary</strong>. iCloud sync or none.
             </div>
-            <div className="mono" style={{ fontSize:11, color:'#64FFB4', marginTop:18, padding:10, background:'rgba(100,255,180,0.08)', borderRadius:8, border:'1px solid rgba(100,255,180,0.2)' }}>
-              ~/Family/Tasks/2026-04-21.md  ← readable anywhere, forever
+            <div className="mono" style={{ fontSize:10, color:'#64FFB4', marginTop:'auto', padding:'6px 8px', background:'rgba(100,255,180,0.08)', borderRadius:6, border:'1px solid rgba(100,255,180,0.2)' }}>
+              ~/Family/Tasks/*.md
             </div>
           </BentoCard>
-          <BentoCard accent={accent} style={{ gridColumn:'span 5', gridRow:'span 2', background:'#fff' }}>
+          <BentoCard accent={accent} style={{ gridColumn:'span 8', gridRow:'span 2', background:'#fff' }}>
             <BentoHeader eyebrow="MULTI-PROFILE" title="9 themes for the kids" />
             <ThemeChips />
           </BentoCard>
