@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { ModalHeader, SegmentedControl } from '../../components/ui';
+import { LoveNoteCard } from '../../components/lovenotes';
 import {
   receivedForProfile,
   sentByProfile,
@@ -27,7 +28,7 @@ import { Spacing } from '../../constants/spacing';
 type Segment = 'received' | 'sent' | 'archived';
 
 export default function LoveNotesScreen() {
-  const { loveNotes, activeProfile } = useVault();
+  const { loveNotes, activeProfile, profiles } = useVault();
   const { colors } = useThemeColors();
   const [segment, setSegment] = useState<Segment>('received');
 
@@ -53,20 +54,9 @@ export default function LoveNotesScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: LoveNote }) => (
-      <View
-        style={{
-          padding: Spacing.md,
-          backgroundColor: colors.card,
-          borderRadius: 12,
-        }}
-      >
-        <Text style={{ color: colors.text }}>{item.body.slice(0, 60)}</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-          {item.status}
-        </Text>
-      </View>
+      <LoveNoteCard note={item} profiles={profiles} />
     ),
-    [colors],
+    [profiles],
   );
 
   const segments = useMemo(
