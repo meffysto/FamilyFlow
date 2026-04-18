@@ -95,10 +95,7 @@ import { loadCompanionMessages, saveCompanionMessages, hasNudgeShownToday, markN
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import type { GiftEntry } from '../../lib/mascot/gift-engine';
-import { hasCropSeasonalBonus, parseCrops, serializeCrops, getAvailableCrops, RARE_SEED_DROP_RULES, PLOT_LEVEL_BONUSES, getPlotLevel, getMainPlotIndex, MAX_CROP_STAGE } from '../../lib/mascot/farm-engine';
-import { parseFarmProfile, serializeFarmProfile } from '../../lib/parser';
-import { computeCumulTarget, filterTasksForWager } from '../../lib/mascot/wager-engine';
-import { CUMUL_SCALING } from '../../lib/mascot/wager-ui-helpers';
+import { hasCropSeasonalBonus, parseCrops, getAvailableCrops, RARE_SEED_DROP_RULES, PLOT_LEVEL_BONUSES, getPlotLevel, getMainPlotIndex } from '../../lib/mascot/farm-engine';
 import { CROP_ICONS } from '../../lib/mascot/crop-sprites';
 import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL, CAMP_EXPLORATION_CELL } from '../../lib/mascot/world-grid';
 import { useExpeditions } from '../../hooks/useExpeditions';
@@ -361,7 +358,7 @@ export default function TreeScreen() {
     0: TERRAIN_HEIGHT, 1: TERRAIN_HEIGHT, 2: TERRAIN_HEIGHT,
     3: TERRAIN_HEIGHT, 4: TERRAIN_HEIGHT, 5: TERRAIN_HEIGHT,
   };
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, buySporee, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault, refreshFarm } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, buySporee, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
   const { showToast, showHarvestCard } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded, activeFarmTutorialStep } = useHelp();
@@ -426,7 +423,7 @@ export default function TreeScreen() {
   }, [screenOpacity]));
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager, incrementWagerCumul } = useFarm(contributeFamilyQuest, addContribution);
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager } = useFarm(contributeFamilyQuest, addContribution);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   // Phase 40 Plan 02 — pageSheet secondaire sceller Sporée après choix graine
   const [showWagerSealer, setShowWagerSealer] = useState(false);
@@ -1396,103 +1393,6 @@ export default function TreeScreen() {
       setShowWagerSealer(false);
     }
   }, [pendingPlant, profile, startWager, showToast]);
-
-  // ───── QA DEBUG — à retirer après Phase 40 ─────
-
-  /** +1 cumul wager (incrémente cumulCurrent + tasksCompletedToday uniquement). */
-  const handleDebugIncrementWager = useCallback(async () => {
-    if (!profile) return;
-    try {
-      await incrementWagerCumul(profile.id);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      showToast('🧪 +1 cumul');
-    } catch (e) {
-      showToast(`Debug erreur: ${e instanceof Error ? e.message : 'inconnue'}`, 'error');
-    }
-  }, [profile, incrementWagerCumul, showToast]);
-
-  /** Reset cumulTarget sur tous les plants scellés avec filtre + scaling actuels. */
-  const handleDebugResetWagerTargets = useCallback(async () => {
-    if (!profile || !vault) return;
-    try {
-      const fp = `farm-${profile.id}.md`;
-      const content = await vault.readFile(fp).catch(() => '');
-      if (!content) { showToast('🧪 Aucun farm file', 'error'); return; }
-      const farmData = parseFarmProfile(content);
-      const crops = parseCrops(farmData.farmCrops ?? '');
-      const sealed = crops.filter(c => c.modifiers?.wager?.sealerProfileId === profile.id);
-      if (sealed.length === 0) { showToast('🧪 Aucun plant scellé', 'error'); return; }
-
-      const today = new Date().toISOString().slice(0, 10);
-      const wagerTasks = filterTasksForWager(tasks);
-      const pendingCount = wagerTasks.filter(t => {
-        if (t.completed) return false;
-        if (t.dueDate) return t.dueDate <= today;
-        return !!t.recurrence;
-      }).length;
-
-      for (const crop of sealed) {
-        const w = crop.modifiers!.wager!;
-        const res = computeCumulTarget({
-          sealerProfileId: profile.id,
-          allProfiles: profiles,
-          tasks: wagerTasks,
-          today,
-          pendingCount,
-        });
-        w.cumulTarget = res.cumulTarget === 0
-          ? 0
-          : Math.max(1, Math.ceil(res.cumulTarget * CUMUL_SCALING[w.duration]));
-        w.cumulCurrent = 0;
-        w.tasksCompletedToday = 0;
-        w.lastDailyResetDate = today;
-      }
-      farmData.farmCrops = serializeCrops(crops);
-      farmData.wagerLastRecomputeDate = today;
-      const profileName = profiles.find(p => p.id === profile.id)?.name ?? profile.id;
-      await vault.writeFile(fp, serializeFarmProfile(profileName, farmData));
-      await refreshFarm(profile.id);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      showToast(`🧪 Reset ${sealed.length} plant(s)`);
-    } catch (e) {
-      showToast(`Reset erreur: ${e instanceof Error ? e.message : 'inconnue'}`, 'error');
-    }
-  }, [profile, vault, profiles, tasks, refreshFarm, showToast]);
-
-  /** Avance la croissance des plants scellés uniquement (+1 tasksCompleted → stage si atteint). */
-  const handleDebugAdvanceSealedPlants = useCallback(async () => {
-    if (!profile || !vault) return;
-    try {
-      const fp = `farm-${profile.id}.md`;
-      const content = await vault.readFile(fp).catch(() => '');
-      if (!content) { showToast('🧪 Aucun farm file', 'error'); return; }
-      const farmData = parseFarmProfile(content);
-      const crops = parseCrops(farmData.farmCrops ?? '');
-      const sealed = crops.filter(c => c.modifiers?.wager?.sealerProfileId === profile.id);
-      if (sealed.length === 0) { showToast('🧪 Aucun plant scellé', 'error'); return; }
-
-      let matured = 0;
-      for (const crop of sealed) {
-        if (crop.currentStage >= MAX_CROP_STAGE) continue;
-        const def = CROP_CATALOG.find(c => c.id === crop.cropId);
-        const tps = def?.tasksPerStage ?? 1;
-        crop.tasksCompleted = (crop.tasksCompleted ?? 0) + 1;
-        if (crop.tasksCompleted >= tps) {
-          crop.currentStage += 1;
-          crop.tasksCompleted = 0;
-          if (crop.currentStage >= MAX_CROP_STAGE) matured++;
-        }
-      }
-      farmData.farmCrops = serializeCrops(crops);
-      const profileName = profiles.find(p => p.id === profile.id)?.name ?? profile.id;
-      await vault.writeFile(fp, serializeFarmProfile(profileName, farmData));
-      await refreshFarm(profile.id);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      showToast(matured > 0 ? `🧪 ${matured} plant(s) mûr(s)` : '🧪 +1 stade scellés');
-    } catch (e) {
-      showToast(`Avance erreur: ${e instanceof Error ? e.message : 'inconnue'}`, 'error');
-    }
-  }, [profile, vault, profiles, refreshFarm, showToast]);
 
   const handleWagerSealSkip = useCallback(async () => {
     if (!pendingPlant || !profile) return;
@@ -2494,34 +2394,6 @@ export default function TreeScreen() {
           </View>
         </Animated.View>
         </Animated.View>
-
-
-        {/* 🧪 QA DEBUG — à retirer après Phase 40 */}
-        {isOwnTree && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.sm, marginTop: Spacing.md, paddingHorizontal: Spacing.md }}>
-            <TouchableOpacity
-              onPress={handleDebugIncrementWager}
-              activeOpacity={0.7}
-              style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, backgroundColor: '#FF4444', borderRadius: 10, borderWidth: 2, borderColor: '#AA0000' }}
-            >
-              <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 12 }}>🧪 +1 cumul</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleDebugAdvanceSealedPlants}
-              activeOpacity={0.7}
-              style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, backgroundColor: '#228B22', borderRadius: 10, borderWidth: 2, borderColor: '#0F5A0F' }}
-            >
-              <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 12 }}>🧪 +1 stade scellés</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleDebugResetWagerTargets}
-              activeOpacity={0.7}
-              style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, backgroundColor: '#4169E1', borderRadius: 10, borderWidth: 2, borderColor: '#1E3A8A' }}
-            >
-              <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 12 }}>🧪 Reset cumul</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
         {/* Carte 1 — Actions (panneau cozy "signpost") */}
         {isOwnTree && (
