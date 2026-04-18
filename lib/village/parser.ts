@@ -551,3 +551,147 @@ export async function appendBuildingToVault(
   const updated = appendBuilding(content, entry);
   await vault.writeFile(VILLAGE_FILE, updated);
 }
+
+// ---------------------------------------------------------------------------
+// Snapshots (Phase 39 — SPOR-04 / D-01)
+// ---------------------------------------------------------------------------
+
+/**
+ * Snapshot matinal de la charge famille utilisé par le moteur Sporée (Phase 39).
+ * Persisté ligne-par-ligne dans la section `## Snapshots` de jardin-familial.md.
+ * Format ligne : `YYYY-MM-DD:pending:id1|id2|...`
+ */
+export interface FamilySnapshot {
+  date: string;              // YYYY-MM-DD local
+  pending: number;           // nombre de tâches pending au matin (recalcul 23h30)
+  activeProfileIds: string[]; // profils actifs 7j au moment du snapshot
+}
+
+/**
+ * Parse la section `## Snapshots` de jardin-familial.md et retourne un dictionnaire
+ * indexé par date. Absence de section = objet vide (backward-compat strict).
+ * Lignes malformées ignorées silencieusement (pas de throw).
+ */
+export function parseSnapshots(content: string): Record<string, FamilySnapshot> {
+  const result: Record<string, FamilySnapshot> = {};
+  if (!content) return result;
+
+  // Defensive : on scanne TOUTES les sections `## Snapshots` (au cas ou un vault
+  // pollue aurait des doublons) et on merge leurs contenus. Les lignes malformees
+  // sont ignorees silencieusement.
+  const sectionRegex = /## Snapshots\s*\n([\s\S]*?)(?=\n## |\n*$)/g;
+  const lineRegex = /^(\d{4}-\d{2}-\d{2}):(\d+):(.*)$/;
+
+  let sectionMatch: RegExpExecArray | null;
+  while ((sectionMatch = sectionRegex.exec(content)) !== null) {
+    for (const rawLine of sectionMatch[1].split('\n')) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const m = lineRegex.exec(line);
+      if (!m) continue;
+      const [, date, pendingStr, idsRaw] = m;
+      const pending = Number.parseInt(pendingStr, 10);
+      if (!Number.isFinite(pending)) continue;
+      const activeProfileIds = idsRaw.length > 0 ? idsRaw.split('|').filter(Boolean) : [];
+      result[date] = { date, pending, activeProfileIds };
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Insere (ou remplace) un snapshot dans la section `## Snapshots`.
+ * Pattern identique a appendBuilding — jamais append en fin de fichier si une
+ * section suivante existe (Pitfall 4).
+ *
+ * Contrairement a appendBuilding qui skip si l'ID existe, appendSnapshot
+ * REMPLACE la ligne du jour si elle existe (un snapshot doit pouvoir etre
+ * rafraichi au premier recompute matinal).
+ */
+export function appendSnapshot(content: string, snapshot: FamilySnapshot): string {
+  const newLine = `${snapshot.date}:${snapshot.pending}:${snapshot.activeProfileIds.join('|')}`;
+
+  const lines = content.split('\n');
+
+  // Localiser la section ## Snapshots et la prochaine section
+  let snapStart = -1;
+  let nextSectionIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().toLowerCase() === '## snapshots') {
+      snapStart = i;
+      continue;
+    }
+    if (snapStart !== -1 && lines[i].startsWith('## ')) {
+      nextSectionIdx = i;
+      break;
+    }
+  }
+
+  if (snapStart === -1) {
+    // Section absente → creer avant ## Historique ou en fin de fichier
+    const historiquelIdx = lines.findIndex(l => l.trim().toLowerCase() === '## historique');
+    if (historiquelIdx !== -1) {
+      const before = lines.slice(0, historiquelIdx);
+      const after = lines.slice(historiquelIdx);
+      while (before.length > 0 && before[before.length - 1].trim() === '') {
+        before.pop();
+      }
+      return [...before, '', '## Snapshots', newLine, '', ...after].join('\n');
+    } else {
+      const trimmed = content.trimEnd();
+      if (trimmed === '') {
+        return `## Snapshots\n${newLine}\n`;
+      }
+      return `${trimmed}\n\n## Snapshots\n${newLine}\n`;
+    }
+  }
+
+  // Section presente → remplacer ligne du jour si elle existe, sinon inserer
+  const sectionEnd = nextSectionIdx !== -1 ? nextSectionIdx : lines.length;
+  const dateLineRegex = new RegExp(`^${escapeRegex(snapshot.date)}:\\d+:`);
+
+  // Cherche la ligne existante pour cette date
+  for (let i = snapStart + 1; i < sectionEnd; i++) {
+    if (dateLineRegex.test(lines[i].trim())) {
+      const updated = [...lines];
+      updated[i] = newLine;
+      return updated.join('\n');
+    }
+  }
+
+  // Pas de ligne existante → inserer avant la prochaine section (Pitfall 4)
+  if (nextSectionIdx !== -1) {
+    let insertAt = nextSectionIdx;
+    while (insertAt > snapStart + 1 && lines[insertAt - 1].trim() === '') {
+      insertAt--;
+    }
+    const before = lines.slice(0, insertAt);
+    const after = lines.slice(insertAt);
+    return [...before, newLine, ...after].join('\n');
+  } else {
+    const trimmed = content.trimEnd();
+    return `${trimmed}\n${newLine}\n`;
+  }
+}
+
+/**
+ * Filtre les snapshots pour ne conserver que les `maxDays` plus recents (cutoff
+ * inclusif : today - (maxDays - 1)). Retourne un nouvel objet, ne mute pas
+ * l'entree. Utilisé pour la retention 14j (defaut).
+ */
+export function pruneSnapshots(
+  snapshots: Record<string, FamilySnapshot>,
+  today: string,
+  maxDays: number = 14,
+): Record<string, FamilySnapshot> {
+  const cutoffMs = new Date(today + 'T00:00:00').getTime() - (maxDays - 1) * 86400000;
+  const result: Record<string, FamilySnapshot> = {};
+  for (const [date, snap] of Object.entries(snapshots)) {
+    const dateMs = new Date(date + 'T00:00:00').getTime();
+    if (Number.isFinite(dateMs) && dateMs >= cutoffMs) {
+      result[date] = snap;
+    }
+  }
+  return result;
+}
