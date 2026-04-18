@@ -15,7 +15,8 @@ import type { VaultManager } from '../lib/vault';
 import { parseFamille, parseGamification, serializeGamification, mergeProfiles, parseFarmProfile, serializeFarmProfile, parseTaskFile } from '../lib/parser';
 import { calculateLevel } from '../lib/gamification';
 import { DECORATIONS, INHABITANTS, TREE_STAGES } from '../lib/mascot/types';
-import { getStageIndex } from '../lib/mascot/engine';
+import { getStageIndex, getTreeStage } from '../lib/mascot/engine';
+import { canBuySporee, getLocalDateKey, SPOREE_SHOP_PRICE, type BuySporeeReason } from '../lib/mascot/sporee-economy';
 import { enqueueWrite } from '../lib/famille-queue';
 import { format } from 'date-fns';
 
@@ -54,6 +55,7 @@ export interface UseVaultProfilesResult {
   renameGarden: (profileId: string, name: string) => Promise<void>;
   updateTreeSpecies: (profileId: string, species: string) => Promise<void>;
   buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
+  buySporee: (profileId: string) => Promise<void>;
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
   unplaceMascotItem: (profileId: string, slotId: string) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender; voiceElevenLabsId?: string; voiceFishAudioId?: string; voicePersonalId?: string; voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'fish-audio-cloned' | 'expo-speech' }) => Promise<void>;
@@ -253,6 +255,92 @@ export function useVaultProfiles(
       });
     } catch (e) {
       throw new Error(`buyMascotItem: ${e}`);
+    }
+  }, [profiles]);
+
+  /** Acheter 1 Sporée à la boutique (400 🍃, cap 2/jour, min arbuste, inv 10) */
+  const buySporee = useCallback(async (profileId: string) => {
+    if (!vaultRef.current) return;
+
+    const profile = profiles.find((p) => p.id === profileId);
+    if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
+
+    const fp = farmFile(profileId);
+    const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
+    const farmData = parseFarmProfile(farmContent);
+
+    const level = calculateLevel(profile.points);
+    const treeStage = getTreeStage(level);
+    const today = getLocalDateKey();
+
+    const check = canBuySporee({
+      coins: profile.coins ?? profile.points,
+      treeStage,
+      boughtToday: farmData.sporeeShopBoughtToday ?? 0,
+      lastResetDate: farmData.sporeeShopLastResetDate ?? '',
+      today,
+      sporeeCount: farmData.sporeeCount ?? 0,
+    });
+
+    if (!check.ok) {
+      const reason: BuySporeeReason = check.reason ?? 'insufficient_coins';
+      throw new Error(`sporee:${reason}`);
+    }
+
+    try {
+      // 1. Déduire 400 feuilles dans gami-{profileId}.md
+      const file = gamiFile(profileId);
+      const gamiContent = await vaultRef.current.readFile(file).catch(() => '');
+      const gami = parseGamification(gamiContent);
+      const gamiProfile = gami.profiles.find((p) => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
+      if (gamiProfile) {
+        gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) - SPOREE_SHOP_PRICE;
+        gami.history.push({
+          profileId,
+          action: `-${SPOREE_SHOP_PRICE}`,
+          points: -SPOREE_SHOP_PRICE,
+          note: '🍃 Achat Sporée',
+          timestamp: new Date().toISOString(),
+        });
+      }
+      const singleData: GamificationData = {
+        profiles: gami.profiles.filter(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()),
+        history: gami.history.filter(e => e.profileId === profileId),
+        activeRewards: (gami.activeRewards ?? []).filter(r => r.profileId === profileId),
+        usedLoots: (gami.usedLoots ?? []).filter(u => u.profileId === profileId),
+      };
+      await vaultRef.current.writeFile(file, serializeGamification(singleData));
+
+      // 2. Incrémenter sporeeCount + bookkeeping shop dans farm-{profileId}.md
+      farmData.sporeeCount = check.nextSporeeCount;
+      farmData.sporeeShopBoughtToday = check.nextBoughtToday;
+      farmData.sporeeShopLastResetDate = check.nextLastResetDate;
+      const profileNameForFarm = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vaultRef.current.writeFile(fp, serializeFarmProfile(profileNameForFarm, farmData));
+
+      // 3. État local
+      const updatedGamiProfile = gami.profiles.find(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
+      setProfiles(prev => prev.map(p => {
+        if (p.id !== profileId) return p;
+        return {
+          ...p,
+          sporeeCount: check.nextSporeeCount,
+          sporeeShopBoughtToday: check.nextBoughtToday,
+          sporeeShopLastResetDate: check.nextLastResetDate,
+          coins: updatedGamiProfile ? (updatedGamiProfile.coins ?? updatedGamiProfile.points) : p.coins,
+        };
+      }));
+
+      setGamiData(prev => {
+        if (!prev || !updatedGamiProfile) return prev;
+        return {
+          ...prev,
+          profiles: prev.profiles.map(p => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? updatedGamiProfile : p),
+          history: [...prev.history, ...gami.history.filter(e => e.profileId === profileId && !prev.history.some(h => h.timestamp === e.timestamp))],
+        };
+      });
+    } catch (e) {
+      throw new Error(`buySporee: ${e}`);
     }
   }, [profiles]);
 
@@ -684,6 +772,7 @@ export function useVaultProfiles(
     renameGarden,
     updateTreeSpecies,
     buyMascotItem,
+    buySporee,
     placeMascotItem,
     unplaceMascotItem,
     updateProfile,

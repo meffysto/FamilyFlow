@@ -161,6 +161,7 @@ export interface VaultState {
   renameGarden: (profileId: string, name: string) => Promise<void>;
   updateTreeSpecies: (profileId: string, species: string) => Promise<void>;
   buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
+  buySporee: (profileId: string) => Promise<void>;
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
   unplaceMascotItem: (profileId: string, slotId: string) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender; voiceElevenLabsId?: string; voiceFishAudioId?: string; voicePersonalId?: string; voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'fish-audio-cloned' | 'expo-speech' }) => Promise<void>;
@@ -1766,6 +1767,7 @@ export function useVaultInternal(): VaultState {
     renameGarden: profilesHook.renameGarden,
     updateTreeSpecies: profilesHook.updateTreeSpecies,
     buyMascotItem: profilesHook.buyMascotItem,
+    buySporee: profilesHook.buySporee,
     placeMascotItem: profilesHook.placeMascotItem,
     unplaceMascotItem: profilesHook.unplaceMascotItem,
     updateProfile: profilesHook.updateProfile,

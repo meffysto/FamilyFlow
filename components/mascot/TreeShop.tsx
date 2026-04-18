@@ -43,8 +43,16 @@ import {
   type TreeSpecies,
   type PlacedBuilding,
 } from '../../lib/mascot/types';
-import { getStageIndex } from '../../lib/mascot/engine';
+import { getStageIndex, getTreeStage } from '../../lib/mascot/engine';
 import { BUILDING_CELLS } from '../../lib/mascot/world-grid';
+import {
+  canBuySporee,
+  getLocalDateKey,
+  SPOREE_SHOP_PRICE,
+  SPOREE_SHOP_DAILY_CAP,
+  SPOREE_MAX_INVENTORY,
+  SPOREE_SHOP_MIN_TREE_STAGE,
+} from '../../lib/mascot/sporee-economy';
 
 const BUILDING_SPRITES: Record<string, any> = {
   poulailler: require('../../assets/buildings/poulailler.png'),
@@ -57,7 +65,7 @@ import { Shadows } from '../../constants/shadows';
 
 // ── Types ──────────────────────────────────────
 
-type ShopTab = 'decorations' | 'inhabitants' | 'buildings';
+type ShopTab = 'decorations' | 'inhabitants' | 'buildings' | 'sporee';
 
 interface TreeShopProps {
   species: TreeSpecies;
@@ -68,6 +76,10 @@ interface TreeShopProps {
   ownedBuildings?: PlacedBuilding[];
   onBuy: (itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
   onBuyBuilding?: (buildingId: string, cellId: string) => Promise<void>;
+  onBuySporee?: () => Promise<void>;
+  sporeeCount?: number;
+  sporeeShopBoughtToday?: number;
+  sporeeShopLastResetDate?: string;
   onClose: () => void;
 }
 
@@ -170,9 +182,88 @@ function AwningStripes() {
   );
 }
 
+// ── Sporée Buy Card ───────────────────────────
+
+interface SporeeBuyCardProps {
+  level: number;
+  stageIdx: number;
+  coins: number;
+  sporeeCount: number;
+  sporeeShopBoughtToday: number;
+  sporeeShopLastResetDate?: string;
+  buying: boolean;
+  onBuy: () => Promise<void>;
+}
+
+function SporeeBuyCard({ level, stageIdx, coins, sporeeCount, sporeeShopBoughtToday, sporeeShopLastResetDate, buying, onBuy }: SporeeBuyCardProps) {
+  const { colors } = useThemeColors();
+  const treeStage = getTreeStage(level);
+  const today = getLocalDateKey();
+  const check = canBuySporee({
+    coins,
+    treeStage,
+    boughtToday: sporeeShopBoughtToday,
+    lastResetDate: sporeeShopLastResetDate ?? '',
+    today,
+    sporeeCount,
+  });
+
+  const minStageIdx = TREE_STAGES.findIndex(s => s.stage === SPOREE_SHOP_MIN_TREE_STAGE);
+  const stageLocked = stageIdx < minStageIdx;
+
+  const boughtTodayNormalized = sporeeShopLastResetDate === today ? sporeeShopBoughtToday : 0;
+
+  const blockedLabel = check.ok ? null :
+    check.reason === 'insufficient_stage' ? `Stade ${SPOREE_SHOP_MIN_TREE_STAGE} requis` :
+    check.reason === 'insufficient_coins' ? `${SPOREE_SHOP_PRICE} 🍃 requis` :
+    check.reason === 'daily_cap' ? `Cap quotidien atteint (${SPOREE_SHOP_DAILY_CAP}/jour)` :
+    check.reason === 'inventory_full' ? `Inventaire plein (${SPOREE_MAX_INVENTORY} max)` :
+    'Indisponible';
+
+  return (
+    <Animated.View entering={FadeInDown.duration(300)}>
+      <View style={[styles.itemCard, stageLocked && styles.itemCardLocked]}>
+        <View style={styles.itemContent}>
+          <Text style={styles.itemEmoji}>🍄</Text>
+          <View style={styles.itemInfo}>
+            <Text style={[styles.itemName, stageLocked && styles.itemNameLocked]}>Sporée</Text>
+            <Text style={styles.itemDesc} numberOfLines={2}>
+              Mise en jeu un plant scellé · pari multiplié si cumul atteint
+            </Text>
+            <View style={styles.itemMeta}>
+              <Text style={{ color: colors.textSub, fontSize: FontSize.caption }}>
+                Inventaire : {sporeeCount}/{SPOREE_MAX_INVENTORY} · Achats : {boughtTodayNormalized}/{SPOREE_SHOP_DAILY_CAP} aujourd'hui
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {check.ok ? (
+          <TouchableOpacity
+            style={[styles.costBadge, { backgroundColor: colors.success }]}
+            onPress={() => { if (!buying) void onBuy(); }}
+            activeOpacity={0.75}
+            disabled={buying}
+            accessibilityRole="button"
+            accessibilityLabel={`Acheter 1 Sporée pour ${SPOREE_SHOP_PRICE} feuilles`}
+          >
+            <Text style={[styles.costText, { color: '#FFFFFF' }]}>
+              {buying ? '…' : `${SPOREE_SHOP_PRICE} 🍃`}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.lockedBadge}>
+            <Text style={styles.lockedText}>{blockedLabel}</Text>
+          </View>
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
 // ── Composant ──────────────────────────────────
 
-export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabitants, ownedBuildings = [], onBuy, onBuyBuilding, onClose }: TreeShopProps) {
+export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabitants, ownedBuildings = [], onBuy, onBuyBuilding, onBuySporee, sporeeCount = 0, sporeeShopBoughtToday = 0, sporeeShopLastResetDate, onClose }: TreeShopProps) {
   const { t } = useTranslation();
   const tone = useTone();
   const { primary, tint, colors, isDark } = useThemeColors();
@@ -476,13 +567,15 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
 
           {/* Onglets */}
           <View style={styles.tabs}>
-            {(['decorations', 'inhabitants', 'buildings'] as ShopTab[]).map((tabKey) => {
+            {(['decorations', 'inhabitants', 'buildings', 'sporee'] as ShopTab[]).map((tabKey) => {
               const label =
                 tabKey === 'decorations'
                   ? t('mascot.shop.decorations')
                   : tabKey === 'inhabitants'
                   ? t('mascot.shop.inhabitants')
-                  : (t('farm.building.buy') ?? 'Bâtiments');
+                  : tabKey === 'buildings'
+                  ? (t('farm.building.buy') ?? 'Bâtiments')
+                  : 'Sporée 🍄';
               const active = tab === tabKey;
               return (
                 <TouchableOpacity
@@ -578,6 +671,28 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                   </Animated.View>
                 );
               })
+            ) : tab === 'sporee' ? (
+              <SporeeBuyCard
+                level={level}
+                stageIdx={stageIdx}
+                coins={coins}
+                sporeeCount={sporeeCount}
+                sporeeShopBoughtToday={sporeeShopBoughtToday}
+                sporeeShopLastResetDate={sporeeShopLastResetDate}
+                buying={buying === 'sporee'}
+                onBuy={async () => {
+                  if (!onBuySporee) return;
+                  setBuying('sporee');
+                  try {
+                    await onBuySporee();
+                    hapticsShopBuy();
+                  } catch {
+                    hapticsShopError();
+                  } finally {
+                    setBuying(null);
+                  }
+                }}
+              />
             ) : (
               items.map((item, idx) => renderItem(item, idx))
             )}

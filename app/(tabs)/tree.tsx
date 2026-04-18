@@ -358,7 +358,7 @@ export default function TreeScreen() {
     0: TERRAIN_HEIGHT, 1: TERRAIN_HEIGHT, 2: TERRAIN_HEIGHT,
     3: TERRAIN_HEIGHT, 4: TERRAIN_HEIGHT, 5: TERRAIN_HEIGHT,
   };
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, buySporee, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
   const { showToast, showHarvestCard } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded, activeFarmTutorialStep } = useHelp();
@@ -2594,6 +2594,23 @@ export default function TreeScreen() {
           ownedBuildings={(profile.farmBuildings ?? []).map((b: any) => (typeof b === 'string' ? b : b.buildingId))}
           onBuy={handleShopBuy}
           onBuyBuilding={undefined}
+          onBuySporee={async () => {
+            try {
+              await buySporee(profile.id);
+              showToast('🍄 Sporée acquise !');
+            } catch (e: any) {
+              const msg = String(e?.message ?? '');
+              if (msg.includes('insufficient_stage')) showToast('Stade arbuste requis', 'error');
+              else if (msg.includes('insufficient_coins')) showToast('Feuilles insuffisantes', 'error');
+              else if (msg.includes('daily_cap')) showToast('Cap quotidien atteint', 'error');
+              else if (msg.includes('inventory_full')) showToast('Inventaire Sporée plein', 'error');
+              else showToast('Achat impossible', 'error');
+              throw e;
+            }
+          }}
+          sporeeCount={profile.sporeeCount ?? 0}
+          sporeeShopBoughtToday={profile.sporeeShopBoughtToday ?? 0}
+          sporeeShopLastResetDate={profile.sporeeShopLastResetDate}
           onClose={() => setShowShop(false)}
         />
       </Modal>

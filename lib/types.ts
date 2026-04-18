@@ -100,6 +100,8 @@ export interface Profile {
   plotLevels?: number[];  // niveaux d'amélioration des parcelles (1-5)
   // Phase 38/40 — économie Sporée (mergés depuis FarmProfileData via useVault runtime merge)
   sporeeCount?: number;                    // inventaire Sporée 0-10
+  sporeeShopBoughtToday?: number;          // achats shop du jour 0-2
+  sporeeShopLastResetDate?: string;        // YYYY-MM-DD local — dernier reset cap quotidien
   // Phase 20 — bonus temporels effets sémantiques (mergés depuis FarmProfileData)
   growthSprintUntil?: string;       // ISO datetime — EFFECTS-05 : -1 task/stage temporaire
   wearEvents?: import('./mascot/wear-engine').WearEvent[];          // Evenements d'usure ferme
