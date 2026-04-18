@@ -31,10 +31,10 @@ describe('Constantes économie Sporée (SPOR-08, SPOR-09)', () => {
     expect(SPOREE_DROP_RATES.rare).toBe(0.08);
     expect(SPOREE_DROP_RATES.expedition).toBe(0.15);
   });
-  it('shop : 400 feuilles, cap 2/jour, stade arbre', () => {
+  it('shop : 400 feuilles, cap 2/jour, stade arbuste', () => {
     expect(SPOREE_SHOP_PRICE).toBe(400);
     expect(SPOREE_SHOP_DAILY_CAP).toBe(2);
-    expect(SPOREE_SHOP_MIN_TREE_STAGE).toBe('arbre');
+    expect(SPOREE_SHOP_MIN_TREE_STAGE).toBe('arbuste');
   });
   it('expedition : 5% sur Pousse+, easy exclu', () => {
     expect(SPOREE_EXPEDITION_DROP_RATE).toBe(0.05);
@@ -144,13 +144,16 @@ describe('canBuySporee (matrice validation SPOR-08)', () => {
     sporeeCount: 5,
   };
 
-  it('stade arbuste → insufficient_stage', () => {
-    expect(canBuySporee({ ...BASE, treeStage: 'arbuste' })).toEqual({ ok: false, reason: 'insufficient_stage' });
-  });
   it('stade pousse → insufficient_stage', () => {
     expect(canBuySporee({ ...BASE, treeStage: 'pousse' })).toEqual({ ok: false, reason: 'insufficient_stage' });
   });
-  it('stade majestueux → OK (≥ arbre)', () => {
+  it('stade graine → insufficient_stage', () => {
+    expect(canBuySporee({ ...BASE, treeStage: 'graine' })).toEqual({ ok: false, reason: 'insufficient_stage' });
+  });
+  it('stade arbuste → OK (= min)', () => {
+    expect(canBuySporee({ ...BASE, treeStage: 'arbuste' }).ok).toBe(true);
+  });
+  it('stade majestueux → OK (≥ arbuste)', () => {
     expect(canBuySporee({ ...BASE, treeStage: 'majestueux' }).ok).toBe(true);
   });
   it('coins 399 → insufficient_coins', () => {

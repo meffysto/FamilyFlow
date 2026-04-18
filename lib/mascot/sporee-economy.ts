@@ -34,7 +34,7 @@ export const SPOREE_SHOP_PRICE = 400;
 export const SPOREE_SHOP_DAILY_CAP = 2;
 
 /** Shop — stade arbre minimum requis (SPOR-08) */
-export const SPOREE_SHOP_MIN_TREE_STAGE: TreeStage = 'arbre';
+export const SPOREE_SHOP_MIN_TREE_STAGE: TreeStage = 'arbuste';
 
 /** Expedition — drop rate (SPOR-08) */
 export const SPOREE_EXPEDITION_DROP_RATE = 0.05;
