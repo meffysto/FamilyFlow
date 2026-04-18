@@ -1383,29 +1383,21 @@ export default function TreeScreen() {
   }, [pendingPlant, profile, startWager, showToast]);
 
   const handleWagerSealSkip = useCallback(async () => {
-    if (!pendingPlant || !profile) return;
-    try {
-      await plant(profile.id, pendingPlant.plotIndex, pendingPlant.cropId);
-      const cropDef = CROP_CATALOG.find(c => c.id === pendingPlant.cropId);
-      showToast(`${cropDef?.emoji ?? '🌱'} ${t('farm.planted')}`);
-    } catch {
-      showToast(t('common.error'), 'error');
-    } finally {
-      setPendingPlant(null);
-      setShowWagerSealer(false);
-    }
-  }, [pendingPlant, profile, plant, showToast, t]);
-
-  // P1 garde-fou anti-plant-fantôme : close du Modal sans handler ni confirm
-  // (ex: swipe down) → onRequestClose du Modal appelle handleHeaderClose qui
-  // déclenche onConfirmSkip. Cette protection supplémentaire reste au cas où
-  // le sheet serait fermé par un autre chemin (unmount, focus change).
-  const handleWagerSealerClose = useCallback(() => {
-    // Note : le composant WagerSealerSheet appelle déjà onConfirmSkip via son
-    // header close. Si pendingPlant est encore présent après dismiss, on
-    // planifie un skip silencieux pour garantir zéro parcelle orpheline.
+    // Annuler : aucune plantation, retour au seed picker avec la parcelle
+    // d'origine restaurée. L'utilisateur peut rechoisir ou fermer.
+    const restoredPlot = pendingPlant?.plotIndex ?? null;
+    setPendingPlant(null);
     setShowWagerSealer(false);
-  }, []);
+    if (restoredPlot !== null) {
+      setSelectedPlotIndex(restoredPlot);
+      setTimeout(() => setShowSeedPicker(true), 300);
+    }
+  }, [pendingPlant]);
+
+  const handleWagerSealerClose = useCallback(() => {
+    // Fermeture par header close / dismiss : traite comme Annuler
+    void handleWagerSealSkip();
+  }, [handleWagerSealSkip]);
 
   /** Tap sur une cellule batiment */
   const handleBuildingCellPress = useCallback((cellId: string, building: PlacedBuilding | null) => {

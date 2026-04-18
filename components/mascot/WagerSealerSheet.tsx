@@ -5,10 +5,10 @@
  * (Chill ×1.3 / Engagé ×1.7 / Sprint ×2.5) avec preview prorata (multiplier,
  * durée absolue, cadence requise, cumul cible), + option "Pas cette fois".
  *
- * Trois paths de sortie garantis (zéro plant fantôme, pitfall P1) :
+ * Trois paths de sortie garantis :
  *   - onConfirmSeal(duration) → sceller Sporée (consomme 1 Sporée, plante wager)
- *   - onConfirmSkip()         → planter normalement (zéro Sporée consommée)
- *   - Close header / dismiss  → skip = planter normalement (fallback bienveillant)
+ *   - onConfirmSkip()         → annuler (aucune plantation, retour au seed picker)
+ *   - Close header / dismiss  → skip = annuler (identique bouton Annuler)
  */
 
 import React, { useCallback, useMemo } from 'react';
@@ -214,10 +214,10 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
               },
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Pas cette fois, planter normalement sans consommer de Sporée"
+            accessibilityLabel="Annuler, revenir au choix de graine sans planter"
           >
             <Text style={[styles.skipText, { color: colors.textSub }]}>
-              Pas cette fois — planter normalement
+              Annuler
             </Text>
           </Pressable>
 
