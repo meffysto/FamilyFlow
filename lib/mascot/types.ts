@@ -301,6 +301,29 @@ export interface CropDefinition {
   expeditionExclusive?: boolean; // true = graine obtenue uniquement via expédition (Phase 33)
 }
 
+/** Durées possibles d'une Sporée de Régularité (Phase 38 — v1.7) */
+export type WagerDuration = 'chill' | 'engage' | 'sprint';
+
+/** Multiplicateurs associés aux durées (Chill ×1.3 / Engagé ×1.7 / Sprint ×2.5) */
+export type WagerMultiplier = 1.3 | 1.7 | 2.5;
+
+/** Modifier Sporée de Régularité — pari cumulatif bienveillant sur tâches */
+export interface WagerModifier {
+  sporeeId: string;
+  duration: WagerDuration;
+  multiplier: WagerMultiplier;
+  appliedAt: string;           // ISO YYYY-MM-DD
+  sealerProfileId: string;
+  cumulTarget?: number;        // Phase 39 — nullable phase 38
+  cumulCurrent?: number;       // Phase 39 — nullable phase 38
+}
+
+/** Ensemble extensible de modifiers applicables à un plant */
+export interface FarmCropModifiers {
+  wager?: WagerModifier;
+  graftedWith?: string;        // v1.8 Pollen — anticipé, zéro impl phase 38
+}
+
 /** Instance de culture plantee */
 export interface PlantedCrop {
   cropId: string;
@@ -309,6 +332,7 @@ export interface PlantedCrop {
   tasksCompleted: number;  // taches completees dans le stade actuel
   plantedAt: string;       // YYYY-MM-DD
   isGolden?: boolean;      // mutation doree — 3% chance a la plantation
+  modifiers?: FarmCropModifiers;  // Phase 38 (MOD-01) — Sporée, Pollen, etc.
 }
 
 /** Nombre de parcelles deblocables par stade d'arbre.

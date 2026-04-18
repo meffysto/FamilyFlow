@@ -2,7 +2,7 @@
 // Ferme — Logique de jeu (planter, pousser, recolter)
 // ─────────────────────────────────────────────
 
-import { type TreeStage, type PlantedCrop, type CropDefinition, CROP_CATALOG, PLOTS_BY_TREE_STAGE } from './types';
+import { type TreeStage, type PlantedCrop, type CropDefinition, type FarmCropModifiers, CROP_CATALOG, PLOTS_BY_TREE_STAGE } from './types';
 import { getCurrentSeason, type Season } from './seasons';
 import { type TechBonuses } from './tech-engine';
 import { type WearEffects } from './wear-engine';
@@ -221,10 +221,35 @@ export function harvestCrop(
   };
 }
 
+// Phase 38 (MOD-01) : encodage modifiers JSON avec escape des séparateurs CSV
+// `,` → `|`   (séparateur entre plants)
+// `:` → `§`   (séparateur entre champs d'un plant)
+// Résultat lisible à l'œil dans Obsidian. Voir 38-RESEARCH.md §1.
+export function encodeModifiers(modifiers: FarmCropModifiers | undefined): string {
+  if (!modifiers || Object.keys(modifiers).length === 0) return '';
+  return JSON.stringify(modifiers).replace(/,/g, '|').replace(/:/g, '§');
+}
+
+export function decodeModifiers(raw: string | undefined): FarmCropModifiers | undefined {
+  if (!raw || raw.trim() === '') return undefined;
+  try {
+    const restored = raw.replace(/§/g, ':').replace(/\|/g, ',');
+    const parsed = JSON.parse(restored) as FarmCropModifiers;
+    if (!parsed || typeof parsed !== 'object') return undefined;
+    return parsed;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Serialiser les cultures en CSV compact pour le markdown */
 export function serializeCrops(crops: PlantedCrop[]): string {
   return crops
-    .map(c => `${c.plotIndex}:${c.cropId}:${c.currentStage}:${c.tasksCompleted}:${c.plantedAt}:${c.isGolden ? '1' : ''}`)
+    .map(c => {
+      const base = `${c.plotIndex}:${c.cropId}:${c.currentStage}:${c.tasksCompleted}:${c.plantedAt}:${c.isGolden ? '1' : ''}`;
+      const modStr = encodeModifiers(c.modifiers);
+      return modStr ? `${base}:${modStr}` : base;
+    })
     .join(',');
 }
 
@@ -232,8 +257,10 @@ export function serializeCrops(crops: PlantedCrop[]): string {
 export function parseCrops(csv: string): PlantedCrop[] {
   if (!csv || csv.trim() === '') return [];
   return csv.split(',').map(entry => {
-    const [plotIndex, cropId, currentStage, tasksCompleted, plantedAt, goldenFlag] = entry.split(':');
-    return {
+    const parts = entry.split(':');
+    const [plotIndex, cropId, currentStage, tasksCompleted, plantedAt, goldenFlag, modifiersRaw] = parts;
+    const modifiers = parts.length >= 7 ? decodeModifiers(modifiersRaw) : undefined;
+    const crop: PlantedCrop = {
       plotIndex: parseInt(plotIndex, 10),
       cropId,
       currentStage: parseInt(currentStage, 10),
@@ -241,6 +268,8 @@ export function parseCrops(csv: string): PlantedCrop[] {
       plantedAt: plantedAt || new Date().toISOString().slice(0, 10),
       isGolden: goldenFlag === '1',
     };
+    if (modifiers) crop.modifiers = modifiers;
+    return crop;
   }).filter(c => !isNaN(c.plotIndex) && c.cropId);
 }
 
