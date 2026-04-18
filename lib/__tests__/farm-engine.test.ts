@@ -237,7 +237,7 @@ describe('serializeCrops / parseCrops with modifiers (Phase 38 MOD-01)', () => {
     const wager: WagerModifier = {
       sporeeId: 'sp-lucas-abc-123',
       duration: 'engage',
-      multiplier: 1.7,
+      multiplier: 3,
       appliedAt: '2026-04-18',
       sealerProfileId: 'parent-lucas',
     };
@@ -283,7 +283,7 @@ describe('serializeCrops / parseCrops with modifiers (Phase 38 MOD-01)', () => {
         wager: {
           sporeeId: 'sp-emma-d4e5-f678',
           duration: 'sprint',
-          multiplier: 2.5,
+          multiplier: 4,
           appliedAt: '2026-04-18',
           sealerProfileId: 'parent-emma',
         },
@@ -297,7 +297,7 @@ describe('serializeCrops / parseCrops with modifiers (Phase 38 MOD-01)', () => {
     const legacy: PlantedCrop = { plotIndex: 0, cropId: 'carrot', currentStage: 1, tasksCompleted: 0, plantedAt: '2026-04-18' };
     const withWager: PlantedCrop = {
       plotIndex: 1, cropId: 'tomato', currentStage: 2, tasksCompleted: 1, plantedAt: '2026-04-18',
-      modifiers: { wager: { sporeeId: 'sp-1', duration: 'chill', multiplier: 1.3, appliedAt: '2026-04-18', sealerProfileId: 'parent1' } },
+      modifiers: { wager: { sporeeId: 'sp-1', duration: 'chill', multiplier: 2, appliedAt: '2026-04-18', sealerProfileId: 'parent1' } },
     };
     const parsed = parseCrops(serializeCrops([legacy, withWager]));
     expect(parsed).toHaveLength(2);
@@ -318,7 +318,7 @@ describe('serializeCrops / parseCrops with modifiers (Phase 38 MOD-01)', () => {
 
   it('JSON modifiers n inclut JAMAIS de "," ni ":" bruts (escape pipe/§)', () => {
     const mods: FarmCropModifiers = {
-      wager: { sporeeId: 'sp-x', duration: 'engage', multiplier: 1.7, appliedAt: '2026-04-18', sealerProfileId: 'p1' },
+      wager: { sporeeId: 'sp-x', duration: 'engage', multiplier: 3, appliedAt: '2026-04-18', sealerProfileId: 'p1' },
     };
     const encoded = encodeModifiers(mods);
     expect(encoded.includes(',')).toBe(false);

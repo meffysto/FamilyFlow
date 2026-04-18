@@ -19,12 +19,34 @@ export const DURATION_FACTORS: Record<WagerDuration, number> = {
   sprint: 0.5,
 };
 
-/** Multiplicateur de reward par durée (×1.3 / ×1.7 / ×2.5). */
+/** Multiplicateur de reward par durée (cultures standard — entiers, pas fractionnaires). */
 export const MULTIPLIERS: Record<WagerDuration, WagerMultiplier> = {
-  chill: 1.3,
-  engage: 1.7,
-  sprint: 2.5,
+  chill: 2,
+  engage: 3,
+  sprint: 4,
 };
+
+/** Multiplicateur par durée pour cultures rares/expédition — chill exclu, valeurs plus basses. */
+export const MULTIPLIERS_RARE: Record<WagerDuration, WagerMultiplier> = {
+  chill: 2,   // jamais utilisé (filtré côté UI) — typage seulement
+  engage: 2,
+  sprint: 3,
+};
+
+/** Durées autorisées selon le tier (rare + expedition = pas de chill). */
+export const ALLOWED_DURATIONS: Record<'base' | 'rare' | 'expedition', WagerDuration[]> = {
+  base: ['chill', 'engage', 'sprint'],
+  rare: ['engage', 'sprint'],
+  expedition: ['engage', 'sprint'],
+};
+
+/** Retourne le multiplier correct selon tier + duration. */
+export function getMultiplierForTier(
+  tier: 'base' | 'rare' | 'expedition',
+  duration: WagerDuration,
+): WagerMultiplier {
+  return (tier === 'base' ? MULTIPLIERS : MULTIPLIERS_RARE)[duration];
+}
 
 /** Scaling du cumulTarget par durée — crée un vrai trade-off risque/reward.
  *  Chill = cumul prorata nominal, Engagé = ×1.5, Sprint = ×2.0 (plus dur à gagner). */
@@ -74,21 +96,25 @@ export function computeWagerDurations<TCtx>(
   tasksPerStage: number,
   computeCumulTargetFn: (ctx: TCtx) => { cumulTarget: number },
   ctx: TCtx,
+  tier: 'base' | 'rare' | 'expedition' = 'base',
 ): WagerDurationOption[] {
   const safeTasksPerStage = Math.max(0, tasksPerStage);
   const { cumulTarget } = computeCumulTargetFn(ctx);
-  return DURATION_ORDER.map(duration => {
-    const factor = DURATION_FACTORS[duration];
-    const absoluteTasks = Math.max(1, Math.ceil(safeTasksPerStage * 4 * factor));
-    return {
-      duration,
-      multiplier: MULTIPLIERS[duration],
-      // Préserve cumulTarget=0 (pari auto-gagné D-04) ; sinon applique le scaling.
-      targetTasks: cumulTarget === 0 ? 0 : Math.max(1, Math.ceil(cumulTarget * CUMUL_SCALING[duration])),
-      absoluteTasks,
-      estimatedHours: absoluteTasks * HOURS_PER_TASK,
-    };
-  });
+  const allowed = ALLOWED_DURATIONS[tier];
+  return DURATION_ORDER
+    .filter(d => allowed.includes(d))
+    .map(duration => {
+      const factor = DURATION_FACTORS[duration];
+      const absoluteTasks = Math.max(1, Math.ceil(safeTasksPerStage * 4 * factor));
+      return {
+        duration,
+        multiplier: getMultiplierForTier(tier, duration),
+        // Préserve cumulTarget=0 (pari auto-gagné D-04) ; sinon applique le scaling.
+        targetTasks: cumulTarget === 0 ? 0 : Math.max(1, Math.ceil(cumulTarget * CUMUL_SCALING[duration])),
+        absoluteTasks,
+        estimatedHours: absoluteTasks * HOURS_PER_TASK,
+      };
+    });
 }
 
 // ─────────────────────────────────────────────

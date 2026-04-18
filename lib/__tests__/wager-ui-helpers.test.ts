@@ -19,10 +19,10 @@ describe('DURATION_FACTORS + MULTIPLIERS (constantes source unique)', () => {
     expect(DURATION_FACTORS.engage).toBe(0.7);
     expect(DURATION_FACTORS.sprint).toBe(0.5);
   });
-  it('multipliers stricts 1.3 / 1.7 / 2.5', () => {
-    expect(MULTIPLIERS.chill).toBe(1.3);
-    expect(MULTIPLIERS.engage).toBe(1.7);
-    expect(MULTIPLIERS.sprint).toBe(2.5);
+  it('multipliers entiers base ×2 / ×3 / ×4', () => {
+    expect(MULTIPLIERS.chill).toBe(2);
+    expect(MULTIPLIERS.engage).toBe(3);
+    expect(MULTIPLIERS.sprint).toBe(4);
   });
 });
 
@@ -35,9 +35,21 @@ describe('computeWagerDurations (seed picker)', () => {
     expect(opts.map(o => o.duration)).toEqual(['chill', 'engage', 'sprint']);
   });
 
-  it('multipliers stables 1.3 / 1.7 / 2.5', () => {
+  it('multipliers base (tier par défaut) ×2 / ×3 / ×4', () => {
     const opts = computeWagerDurations(3, stubCompute(10), {});
-    expect(opts.map(o => o.multiplier)).toEqual([1.3, 1.7, 2.5]);
+    expect(opts.map(o => o.multiplier)).toEqual([2, 3, 4]);
+  });
+
+  it('tier rare : chill filtré, multipliers engage ×2 / sprint ×3', () => {
+    const opts = computeWagerDurations(3, stubCompute(10), {}, 'rare');
+    expect(opts.map(o => o.duration)).toEqual(['engage', 'sprint']);
+    expect(opts.map(o => o.multiplier)).toEqual([2, 3]);
+  });
+
+  it('tier expedition : chill filtré, multipliers engage ×2 / sprint ×3', () => {
+    const opts = computeWagerDurations(3, stubCompute(10), {}, 'expedition');
+    expect(opts.map(o => o.duration)).toEqual(['engage', 'sprint']);
+    expect(opts.map(o => o.multiplier)).toEqual([2, 3]);
   });
 
   it('petit plant tasksPerStage=1 → absoluteTasks ≥ 1 partout', () => {

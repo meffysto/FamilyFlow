@@ -11,7 +11,7 @@ import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount, rollWagerDropBack, getLocalDateKey } from '../lib/mascot/sporee-economy';
 import { computeCumulTarget, validateWagerOnHarvest, filterTasksForWager, maybeRecompute } from '../lib/mascot/wager-engine';
-import { computeWagerTotalDays, buildWagerHarvestToast, CUMUL_SCALING } from '../lib/mascot/wager-ui-helpers';
+import { computeWagerTotalDays, buildWagerHarvestToast, CUMUL_SCALING, getMultiplierForTier, ALLOWED_DURATIONS } from '../lib/mascot/wager-ui-helpers';
 import type { WagerDuration, WagerMultiplier, WagerModifier } from '../lib/mascot/types';
 import type { Task } from '../lib/types';
 import { useToast } from '../contexts/ToastContext';
@@ -82,14 +82,7 @@ function farmFile(profileId: string): string {
   return `farm-${profileId}.md`;
 }
 
-/** Phase 40 — Multiplicateurs par durée (source unique côté useFarm pour startWager).
- *  Le mapping détaillé vit dans lib/mascot/wager-ui-helpers.MULTIPLIERS ; on le
- *  duplique ici volontairement pour éviter un import UI → hook circulaire. */
-const WAGER_MULTIPLIERS: Record<WagerDuration, WagerMultiplier> = {
-  chill: 1.3,
-  engage: 1.7,
-  sprint: 2.5,
-};
+// Phase 40 — Multipliers tier-aware vivent dans wager-ui-helpers.getMultiplierForTier
 
 /** Applique une valeur de champ sur un objet FarmProfileData (mapper fieldKey → propriété) */
 // Migration: anciens itemId de loot d'expédition → IDs réels dans INHABITANTS
@@ -1061,6 +1054,12 @@ export function useFarm(
     // B2 — totalDays PERSISTÉ (source unique, élimine magic number 7 côté UI)
     const totalDays = computeWagerTotalDays(duration, cropDef.tasksPerStage);
 
+    // Tier-aware multiplier : base ×2/×3/×4, rare/expedition ×2/×3 (pas de chill).
+    const tier = classifyHarvestTier(cropId);
+    if (!ALLOWED_DURATIONS[tier].includes(duration)) {
+      throw new Error(`Durée ${duration} non autorisée pour une culture ${tier}`);
+    }
+
     // Scaling par durée — Chill ×1.0 / Engagé ×1.5 / Sprint ×2.0 (vrai trade-off risque/reward).
     // Préserve cumulTarget=0 (pari auto-gagné D-04) sans le multiplier.
     const scaledTarget = cumulResult.cumulTarget === 0
@@ -1070,7 +1069,7 @@ export function useFarm(
     const wager: WagerModifier = {
       sporeeId: `sporee-${Date.now()}`,
       duration,
-      multiplier: WAGER_MULTIPLIERS[duration],
+      multiplier: getMultiplierForTier(tier, duration),
       appliedAt: today,
       sealerProfileId: profileId,
       cumulTarget: scaledTarget,

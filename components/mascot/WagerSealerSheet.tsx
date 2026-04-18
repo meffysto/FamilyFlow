@@ -22,6 +22,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 
 import { computeWagerDurations, type WagerDurationOption } from '../../lib/mascot/wager-ui-helpers';
 import { computeCumulTarget, filterTasksForWager } from '../../lib/mascot/wager-engine';
+import { classifyHarvestTier } from '../../lib/mascot/sporee-economy';
 import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
 import type { WagerDuration } from '../../lib/mascot/types';
 import type { Profile, Task } from '../../lib/types';
@@ -81,7 +82,7 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
   onConfirmSeal,
   onConfirmSkip,
   onCancel,
-  cropId: _cropId,
+  cropId,
   tasksPerStage,
   sealerProfileId,
   allProfiles,
@@ -112,8 +113,9 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
       pendingCount,
     });
 
-    return computeWagerDurations(tasksPerStage, computeCumulTargetFn, undefined);
-  }, [tasksPerStage, sealerProfileId, allProfiles, allTasks]);
+    const tier = classifyHarvestTier(cropId);
+    return computeWagerDurations(tasksPerStage, computeCumulTargetFn, undefined, tier);
+  }, [tasksPerStage, sealerProfileId, allProfiles, allTasks, cropId]);
 
   // Handler confirm mode — factorisé (3 durées ≡ 1 handler paramétré)
   const handleConfirmDuration = useCallback(async (duration: WagerDuration) => {
