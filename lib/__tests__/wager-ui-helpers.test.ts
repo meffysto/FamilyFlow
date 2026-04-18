@@ -82,11 +82,12 @@ describe('computeWagerDurations (seed picker, déterministe)', () => {
     expect(byDuration.sprint).toBe(12);  // 4 × 3.0
   });
 
-  it('targetTasks plafonné par CUMUL_MAX=30 pour crops rares haut-niveau', () => {
-    // tasksPerStage=6 × 4 × 3.0 = 72 → cap à 30
+  it('targetTasks non plafonné — crops rares haut-niveau assument leur marathon', () => {
+    // tasksPerStage=6 × 4 × 3.0 = 72 (pas de cap)
     const opts = computeWagerDurations(6);
-    opts.forEach(o => expect(o.targetTasks).toBeLessThanOrEqual(30));
-    expect(opts[2].targetTasks).toBe(30); // sprint atteint le cap
+    expect(opts[0].targetTasks).toBe(48);  // 24 × 2.0
+    expect(opts[1].targetTasks).toBe(60);  // 24 × 2.5
+    expect(opts[2].targetTasks).toBe(72);  // 24 × 3.0
   });
 
   it('targetTasks minimum = 1 même avec tasksPerStage=0', () => {

@@ -56,15 +56,12 @@ export const CUMUL_SCALING: Record<WagerDuration, number> = {
   sprint: 3.0,
 };
 
-/** Plafond absolu du cumulTarget — évite les marathons sur crops rares haut-niveau. */
-export const CUMUL_MAX = 30;
-
 /** Calcule le cumulTarget d'un pari — formule déterministe basée uniquement sur
- *  le crop (tasksPerStage) et la durée. Pas de prorata famille, pas de pending.
- *  Plafonné à CUMUL_MAX pour jouabilité. */
+ *  le crop (tasksPerStage) et la durée. Pas de prorata famille, pas de pending,
+ *  pas de plafond (rare haut-niveau = marathon assumé). */
 export function computeWagerCumul(tasksPerStage: number, duration: WagerDuration): number {
   const baseTasks = Math.max(1, tasksPerStage) * 4;
-  return Math.min(CUMUL_MAX, Math.max(1, Math.ceil(baseTasks * CUMUL_SCALING[duration])));
+  return Math.max(1, Math.ceil(baseTasks * CUMUL_SCALING[duration]));
 }
 
 /** Projection UI : heures estimées par tâche ménagère (moyenne famille). */
