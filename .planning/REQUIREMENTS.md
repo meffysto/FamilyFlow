@@ -21,11 +21,11 @@
 
 - [x] **MOD-01**: User voit ses plants plantés supporter un champ optionnel `modifiers` (objet JSON extensible : `{ wager?: {...}, graftedWith?: string, ... }`) sérialisé/désérialisé en CSV markdown sans perte, backward-compatible (plants existants sans champ restent lisibles)
 - [x] **MOD-02**: User voit `CACHE_VERSION` bumpé dans `lib/vault-cache.ts:41` pour refléter le changement de shape `FarmCrop` — pas d'invalidation silencieuse au premier boot post-migration
-- [ ] **MOD-03**: User voit le seed picker existant étendu avec un slot optionnel "Sceller" (apparaît uniquement si ≥ 1 Sporée en inventaire) — intégration inline, zéro nouvelle modale, pattern extensible pour futurs slots modifier
+- [x] **MOD-03**: User voit le seed picker existant étendu avec un slot optionnel "Sceller" (apparaît uniquement si ≥ 1 Sporée en inventaire) — intégration inline, zéro nouvelle modale, pattern extensible pour futurs slots modifier
 
 ### Catégorie SPORÉE — Mécanique principale
 
-- [ ] **SPOR-01**: User peut appliquer une Sporée à la plantation via le slot "Sceller", choisir parmi 3 durées (Chill / Engagé / Sprint) dérivées automatiquement de la taille du plant, avec multiplier de reward visible (×1.3 / ×1.7 / ×2.5) et prorata théorique affiché avant confirmation
+- [x] **SPOR-01**: User peut appliquer une Sporée à la plantation via le slot "Sceller", choisir parmi 3 durées (Chill / Engagé / Sprint) dérivées automatiquement de la taille du plant, avec multiplier de reward visible (×1.3 / ×1.7 / ×2.5) et prorata théorique affiché avant confirmation
 - [ ] **SPOR-02**: User voit un badge sur le plant scellé affichant `X/Y tâches aujourd'hui • cumul Z/N` avec code couleur dérivé de la progression vs ligne de pace (vert/jaune/orange), sans animation continue lourde
 - [x] **SPOR-03**: User voit le cumul requis recalculé et mis à jour chaque soir à 23h30 (ou au boot de l'app si l'app était fermée) selon la formule `(poids_sealeur / poids_famille_active_7j) × Tasks_pending`, basé sur un snapshot matinal stable des tâches pending
 - [x] **SPOR-04**: User voit les poids par âge appliqués automatiquement aux profils actifs (Adulte 1.0 / Ado 0.7 / Enfant 0.4 / Jeune enfant 0.15 / Bébé 0.0) — dérivés de la date de naissance du profil, avec override manuel possible dans les settings profil
@@ -75,8 +75,8 @@ Mapping REQ-ID → Phase (v1.7 Phases 38-41).
 |-------------|-------|--------|
 | MOD-01 | Phase 38 | Complete |
 | MOD-02 | Phase 38 | Complete |
-| MOD-03 | Phase 40 | Pending |
-| SPOR-01 | Phase 40 | Pending |
+| MOD-03 | Phase 40 | Complete |
+| SPOR-01 | Phase 40 | Complete |
 | SPOR-02 | Phase 40 | Pending |
 | SPOR-03 | Phase 39 | Complete |
 | SPOR-04 | Phase 39 | Complete |

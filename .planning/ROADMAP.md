@@ -284,10 +284,10 @@ Plans:
   3. User voit un badge sur chaque plant scellé affichant `X/Y tâches aujourd'hui • cumul Z/N` avec code couleur pace (vert/jaune/orange) — pas d'animation continue lourde
   4. User voit un anneau vert "prêt à valider" sur un plant scellé déjà mûr mais pas encore récolté — distingue clairement la fenêtre de décision récolter avant ou après le cumul
   5. User récolte un plant scellé : si cumul atteint → reward × multiplier + toast de victoire + 15% chance de drop-back d'une Sporée ; sinon reward normale, seul coût = Sporée consommée (pari bienveillant, jamais de pénalité)
-**Plans:** 4 plans
+**Plans:** 2/4 plans executed
 Plans:
-- [ ] 40-01-PLAN.md — Data & hook: useFarm startWager/incrementWagerCumul/harvest wager + wager-ui-helpers + rollWagerDropBack + câblage onTaskComplete (MOD-03, SPOR-01, SPOR-07, SPOR-11)
-- [ ] 40-02-PLAN.md — UI WagerSealerSheet pageSheet secondaire (3 durées + preview prorata + skip) + câblage tree.tsx (MOD-03, SPOR-01)
+- [x] 40-01-PLAN.md — Data & hook: useFarm startWager/incrementWagerCumul/harvest wager + wager-ui-helpers + rollWagerDropBack + câblage onTaskComplete (MOD-03, SPOR-01, SPOR-07, SPOR-11)
+- [x] 40-02-PLAN.md — UI WagerSealerSheet pageSheet secondaire (3 durées + preview prorata + skip) + câblage tree.tsx (MOD-03, SPOR-01)
 - [ ] 40-03-PLAN.md — UI PlantWagerBadge + WagerReadyRing injectés dans CropCell (SPOR-02, SPOR-11)
 - [ ] 40-04-PLAN.md — Finalisation toast victoire/défaite/drop-back + suite Jest + checkpoint device (SPOR-07)
 **UI hint**: yes
@@ -319,7 +319,7 @@ Plans:
 | 37. Garde-parent & polish | 0/TBD | Deferred | - |
 | 38. Fondation modifiers + économie Sporée | 3/3 | Complete   | 2026-04-18 |
 | 39. Moteur prorata + calcul famille | 2/2 | Complete   | 2026-04-18 |
-| 40. UI Sporée — seed picker + badge + validation | 0/TBD | Not started | - |
+| 40. UI Sporée — seed picker + badge + validation | 2/4 | In Progress|  |
 | 41. Polish onboarding + codex + non-régression | 0/TBD | Not started | - |
 
 ## Archived Milestones

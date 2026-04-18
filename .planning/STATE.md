@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-18T18:01:20.644Z"
+last_updated: "2026-04-18T19:12:47.481Z"
 last_activity: 2026-04-18 -- Phase 40 execution started
 progress:
   total_phases: 13
   completed_phases: 7
   total_plans: 25
-  completed_plans: 23
+  completed_plans: 25
   percent: 0
 ---
 
@@ -165,6 +165,7 @@ Status: Executing Phase 40
 | Phase 38 P03 | 15min | 3 tasks | 6 files |
 | Phase 39-moteur-prorata-calcul-famille P01 | 8min | 2 tasks | 5 files |
 | Phase 39-moteur-prorata-calcul-famille P02 | 12min | 2 tasks | 2 files |
+| Phase 40-ui-spor-e-seed-picker-badge-validation P02 | 7min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -333,6 +334,9 @@ Recent decisions affecting current work:
 - [Phase 39-moteur-prorata-calcul-famille]: Attribution tâche→profil par triple check (mentions.id + mentions.name + sourceFile insensitive) — résilient aux conventions vault hétérogènes
 - [Phase 39-moteur-prorata-calcul-famille]: shouldRecompute simplifié jour-différent uniquement — Phase 40 schedulera setTimeout minuit si edge 23h30 requis, moteur pur reste sans heure magique
 - [Phase 39-moteur-prorata-calcul-famille]: Fallback D-04 unifié : familyWeightSum=0 OU sealeur introuvable → cumulTarget=pendingCount (pari auto-gagné)
+- [Phase 40-ui-spor-e-seed-picker-badge-validation]: Stacking pageSheets iOS : setTimeout(300ms) entre seed picker close et WagerSealerSheet present (gotcha G1)
+- [Phase 40-ui-spor-e-seed-picker-badge-validation]: Modal onRequestClose + ModalHeader close → onConfirmSkip : pas de useEffect garde-fou nécessaire (P1 résolu composant-level)
+- [Phase 40-ui-spor-e-seed-picker-badge-validation]: Profile.sporeeCount? déclaré (mergé runtime via spread farmData useVault.ts:855) — précédent farmRareSeeds/growthSprintUntil
 
 ### Todos
 
