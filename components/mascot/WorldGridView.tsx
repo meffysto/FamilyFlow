@@ -37,6 +37,10 @@ import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 import { type WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { PlantWagerBadge } from './PlantWagerBadge';
+import { WagerReadyRing } from './WagerReadyRing';
+import { computePaceLevel, daysBetween } from '../../lib/mascot/wager-ui-helpers';
+import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
 
 interface WorldGridViewProps {
   treeStage: TreeStage;
@@ -163,6 +167,41 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
     ],
   }));
 
+  // ── Sporée de Régularité (Phase 40) ──
+  // Consommation directe wager.totalDays et wager.tasksCompletedToday — persistés par Plan 40-01,
+  // aucun recalcul ici (B1/B2 plan-checker). Zéro magic number 7, zéro fallback /7.
+  // Les `?? 0` / `?? 1` servent uniquement à la rétro-compatibilité avec paris créés
+  // AVANT Plan 40-01 (cas inexistant en pratique — Phase 40 est la première à exposer l'UI).
+  const wager = crop?.modifiers?.wager ?? null;
+  const showBadge = !!wager; // G6 : visible dès plantation (stage 0)
+  const cumulTarget = wager?.cumulTarget ?? 0;
+  const cumulCurrent = wager?.cumulCurrent ?? 0;
+  const cumulReached = !!wager && cumulTarget > 0 && cumulCurrent >= cumulTarget;
+  const showReadyRing = !!wager && isMature && cumulReached;
+
+  // Pace level — B2 : totalDays consommé DIRECTEMENT depuis wager.totalDays (persisté Plan 01).
+  const paceLevel = useMemo(() => {
+    if (!wager) return 'green' as const;
+    const today = getLocalDateKey(new Date());
+    const daysElapsed = daysBetween(wager.appliedAt, today);
+    const totalDays = wager.totalDays ?? 1; // rétro-compat paris pré-Phase 40 uniquement
+    return computePaceLevel(cumulCurrent, cumulTarget, daysElapsed, totalDays);
+  }, [wager, cumulCurrent, cumulTarget]);
+
+  // tasksToday — B1 : lu directement depuis wager.tasksCompletedToday (persisté Plan 01).
+  const tasksToday = wager?.tasksCompletedToday ?? 0;
+
+  // tasksTargetToday — cadence jour courante, basée sur totalDays persisté (pas magic number).
+  const tasksTargetToday = useMemo(() => {
+    if (!wager) return 1;
+    const today = getLocalDateKey(new Date());
+    const daysElapsed = daysBetween(wager.appliedAt, today);
+    const totalDays = wager.totalDays ?? 1;
+    const daysRemaining = Math.max(1, totalDays - daysElapsed);
+    const cumulRemaining = Math.max(0, cumulTarget - cumulCurrent);
+    return Math.max(1, Math.ceil(cumulRemaining / daysRemaining));
+  }, [wager, cumulCurrent, cumulTarget]);
+
   const isBlocked = wearEffects?.blockedPlots.includes(plotIndex) ?? false;
   const hasWeeds = wearEffects?.weedyPlots.includes(plotIndex) ?? false;
 
@@ -248,6 +287,22 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
         <View style={styles.cropBubble}>
           <Text style={styles.cropBubbleText}>{bubble}</Text>
         </View>
+      )}
+      {/* Overlay anneau vert "prêt à valider" — double gate mûr + cumul atteint (Phase 40 Plan 03) */}
+      {showReadyRing && (
+        <View style={styles.wagerRingWrapper} pointerEvents="none">
+          <WagerReadyRing size={Math.min(size - Spacing.xs, 44)} />
+        </View>
+      )}
+      {/* Badge Sporée 2-lignes — visible dès stage 0 (G6), Phase 40 Plan 03 */}
+      {showBadge && wager && (
+        <PlantWagerBadge
+          cumulCurrent={cumulCurrent}
+          cumulTarget={cumulTarget}
+          tasksToday={tasksToday}
+          tasksTargetToday={tasksTargetToday}
+          paceLevel={paceLevel}
+        />
       )}
     </Animated.View>
   );
@@ -970,6 +1025,17 @@ const styles = StyleSheet.create({
     zIndex: 15,
   },
   cropBubbleText: { fontSize: 10, textAlign: 'center' as const, color: '#1F2937' },
+  // ── Sporée Phase 40 — overlay anneau centré sur le sprite ──
+  wagerRingWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 11,
+  },
   buildingCell: {
     justifyContent: 'center',
     alignItems: 'center',
