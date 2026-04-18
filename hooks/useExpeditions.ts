@@ -216,7 +216,7 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
 
   const collectExpedition = useCallback(async (
     missionId: string
-  ): Promise<{ outcome: ActiveExpedition['result']; loot?: ExpeditionLoot }> => {
+  ): Promise<{ outcome: ActiveExpedition['result']; loot?: ExpeditionLoot; sporeeFirstObtained?: boolean }> => {
     if (!vault || !currentProfile) return { outcome: undefined };
 
     const farmPath = farmFilePath(currentProfile.id);

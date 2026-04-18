@@ -313,7 +313,7 @@ export function useFarm(
   }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
-  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null; qty: number; wager?: { won: boolean; multiplier: number; dropBack: boolean; cumulCurrent: number; cumulTarget: number } } | null> => {
+  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null; qty: number; wager?: { won: boolean; multiplier: number; dropBack: boolean; cumulCurrent: number; cumulTarget: number }; sporeeFirstObtained?: boolean } | null> => {
     if (!vault) return null;
 
 
