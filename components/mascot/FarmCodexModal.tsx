@@ -289,13 +289,16 @@ export function FarmCodexModal({
           }
         />
 
-        {/* Footer : bouton replay tutoriel (D-15) */}
+        {/* Footer : compteur paris gagnés + bouton replay tutoriel (D-15, SPOR-10) */}
         <View
           style={[
             styles.footer,
             { borderTopColor: colors.text + '22' },
           ]}
         >
+          <Text style={[styles.marathonCounter, { color: colors.textSub }]}>
+            🍄 Paris gagnés : {profile?.wagerMarathonWins ?? 0}
+          </Text>
           <TouchableOpacity
             onPress={handleReplayTutorial}
             style={[
@@ -446,5 +449,11 @@ const styles = StyleSheet.create({
   replayLabel: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
+  },
+  marathonCounter: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
   },
 });
