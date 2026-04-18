@@ -7,8 +7,8 @@
  *
  * Trois paths de sortie garantis :
  *   - onConfirmSeal(duration) → sceller Sporée (consomme 1 Sporée, plante wager)
- *   - onConfirmSkip()         → annuler (aucune plantation, retour au seed picker)
- *   - Close header / dismiss  → skip = annuler (identique bouton Annuler)
+ *   - onConfirmSkip()         → planter normalement (zéro Sporée consommée)
+ *   - onCancel()              → annuler (header close / dismiss, aucune plantation)
  */
 
 import React, { useCallback, useMemo } from 'react';
@@ -45,6 +45,7 @@ export interface WagerSealerSheetProps {
   onClose: () => void;
   onConfirmSeal: (duration: WagerDuration) => Promise<void> | void;
   onConfirmSkip: () => Promise<void> | void;
+  onCancel?: () => void;
   cropId: string;
   tasksPerStage: number;
   sealerProfileId: string;
@@ -79,6 +80,7 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
   onClose,
   onConfirmSeal,
   onConfirmSkip,
+  onCancel,
   cropId: _cropId,
   tasksPerStage,
   sealerProfileId,
@@ -127,10 +129,11 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
     onClose();
   }, [onConfirmSkip, onClose]);
 
-  // Close header → skip (P1 : dismiss = planter normalement)
+  // Close header → annuler (aucune plantation, retour seed picker)
   const handleHeaderClose = useCallback(() => {
-    void handleSkip();
-  }, [handleSkip]);
+    onCancel?.();
+    onClose();
+  }, [onCancel, onClose]);
 
   return (
     <Modal
@@ -214,10 +217,10 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
               },
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Annuler, revenir au choix de graine sans planter"
+            accessibilityLabel="Pas cette fois, planter normalement sans consommer de Sporée"
           >
             <Text style={[styles.skipText, { color: colors.textSub }]}>
-              Annuler
+              Pas cette fois — planter normalement
             </Text>
           </Pressable>
 

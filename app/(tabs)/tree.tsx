@@ -1383,11 +1383,23 @@ export default function TreeScreen() {
   }, [pendingPlant, profile, startWager, showToast]);
 
   const handleWagerSealSkip = useCallback(async () => {
-    // Annuler : aucune plantation, retour au seed picker avec la parcelle
-    // d'origine restaurée. L'utilisateur peut rechoisir ou fermer.
+    if (!pendingPlant || !profile) return;
+    try {
+      await plant(profile.id, pendingPlant.plotIndex, pendingPlant.cropId);
+      const cropDef = CROP_CATALOG.find(c => c.id === pendingPlant.cropId);
+      showToast(`${cropDef?.emoji ?? '🌱'} ${t('farm.planted')}`);
+    } catch {
+      showToast(t('common.error'), 'error');
+    } finally {
+      setPendingPlant(null);
+      setShowWagerSealer(false);
+    }
+  }, [pendingPlant, profile, plant, showToast, t]);
+
+  // Header close (X) / dismiss = annuler — aucune plantation, retour seed picker
+  const handleWagerSealCancel = useCallback(() => {
     const restoredPlot = pendingPlant?.plotIndex ?? null;
     setPendingPlant(null);
-    setShowWagerSealer(false);
     if (restoredPlot !== null) {
       setSelectedPlotIndex(restoredPlot);
       setTimeout(() => setShowSeedPicker(true), 300);
@@ -1395,9 +1407,8 @@ export default function TreeScreen() {
   }, [pendingPlant]);
 
   const handleWagerSealerClose = useCallback(() => {
-    // Fermeture par header close / dismiss : traite comme Annuler
-    void handleWagerSealSkip();
-  }, [handleWagerSealSkip]);
+    setShowWagerSealer(false);
+  }, []);
 
   /** Tap sur une cellule batiment */
   const handleBuildingCellPress = useCallback((cellId: string, building: PlacedBuilding | null) => {
@@ -2055,6 +2066,7 @@ export default function TreeScreen() {
           onClose={handleWagerSealerClose}
           onConfirmSeal={handleWagerSealConfirm}
           onConfirmSkip={handleWagerSealSkip}
+          onCancel={handleWagerSealCancel}
           cropId={pendingPlant?.cropId ?? ''}
           tasksPerStage={pendingPlant?.tasksPerStage ?? 1}
           sealerProfileId={profile?.id ?? ''}
