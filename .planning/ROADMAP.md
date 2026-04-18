@@ -301,10 +301,10 @@ Plans:
   2. User voit son compteur codex `wager.marathonWins` incrémenté de +1 à chaque pari Sporée gagné — consultable dans le codex ferme existant (FarmCodexModal), récompense vanité long terme
   3. User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes MemoryEditor.tsx / cooklang.ts / useVault.ts) ni Jest (`npx jest --no-coverage` clean) après la phase finale
   4. User voit les commits, docs et noms d'exemple de v1.7 respecter la privacy policy (noms génériques Lucas/Emma/Dupont uniquement — aucun nom réel dans le repo)
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 - [x] 41-01-PLAN.md — Data fondation: FarmProfileData.wagerMarathonWins + parser + incrément harvest wager.won + tests Jest (SPOR-10)
-- [ ] 41-02-PLAN.md — SporeeOnboardingTooltip one-shot + wiring 3 sources (harvest/expedition/onboarding) + flag SecureStore via HelpContext (SPOR-10)
+- [x] 41-02-PLAN.md — SporeeOnboardingTooltip one-shot + wiring 3 sources (harvest/expedition/onboarding) + flag SecureStore via HelpContext (SPOR-10)
 - [ ] 41-03-PLAN.md — Affichage compteur codex FarmCodexModal + checkpoint non-régression TS/Jest/privacy milestone v1.7 (SPOR-10, SPOR-12)
 **UI hint**: yes
 
@@ -324,7 +324,7 @@ Plans:
 | 38. Fondation modifiers + économie Sporée | 3/3 | Complete   | 2026-04-18 |
 | 39. Moteur prorata + calcul famille | 2/2 | Complete   | 2026-04-18 |
 | 40. UI Sporée — seed picker + badge + validation | 3/4 | In Progress|  |
-| 41. Polish onboarding + codex + non-régression | 1/3 | In Progress|  |
+| 41. Polish onboarding + codex + non-régression | 2/3 | In Progress|  |
 
 ## Archived Milestones
 
