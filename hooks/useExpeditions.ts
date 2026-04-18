@@ -28,6 +28,8 @@ import {
 } from '../lib/mascot/expedition-engine';
 import { type TreeStage } from '../lib/mascot/types';
 import type { ActiveExpedition } from '../lib/types';
+import { rollSporeeDropOnExpedition, tryIncrementSporeeCount } from '../lib/mascot/sporee-economy';
+import { useToast } from '../contexts/ToastContext';
 
 // ─── Helpers chemin fichier ──────────────────────────────────────────────────
 
@@ -44,6 +46,7 @@ function gamiFilePath(profileId: string): string {
 export function useExpeditions(treeStage: TreeStage = 'graine') {
   const { vault, profiles, activeProfile, refreshFarm } = useVault();
   const { t } = useTranslation();
+  const { showToast } = useToast();
 
   // Profil actif — utilise le profil actif sélectionné (sinon premier profil adulte)
   const currentProfile = useMemo(
@@ -243,6 +246,19 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     // Roll du loot
     const loot = rollExpeditionLoot(exp.difficulty, outcome);
 
+    // Phase 38 (SPOR-08) — Drop Sporée post-expedition (5% sur Pousse+)
+    // Indépendant de l'outcome : une mission ratée peut donner une Sporée (loot séparé).
+    let sporeeRefused = false;
+    if (rollSporeeDropOnExpedition(exp.difficulty)) {
+      const currentSporee = farm.sporeeCount ?? 0;
+      const inc = tryIncrementSporeeCount(currentSporee, 1);
+      if (inc.accepted) {
+        farm.sporeeCount = inc.newCount;
+      } else {
+        sporeeRefused = true;
+      }
+    }
+
     // Distribuer le loot
     if (loot) {
       if (loot.type === 'inhabitant') {
@@ -290,8 +306,12 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     await vault.writeFile(farmPath, serializeFarmProfile(profileName, farm));
     await refreshFarm(currentProfile.id);
 
+    if (sporeeRefused) {
+      showToast('Inventaire Sporée plein', 'error');
+    }
+
     return { outcome, loot };
-  }, [vault, currentProfile, profiles, refreshFarm]);
+  }, [vault, currentProfile, profiles, refreshFarm, showToast]);
 
   // ─── Renvoyer une expédition (dismiss après collecte) ─────────────────────
 

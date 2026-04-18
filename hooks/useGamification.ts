@@ -21,6 +21,9 @@ import { getTechBonuses } from '../lib/mascot/tech-engine';
 import { getCompanionXpBonus } from '../lib/mascot/companion-engine';
 import { parseFarmProfile, serializeFarmProfile } from '../lib/parser';
 import type { CompanionSpecies } from '../lib/mascot/companion-types';
+import { detectEvolution } from '../lib/mascot/engine';
+import { shouldGiftOnboardingSporee, tryIncrementSporeeCount } from '../lib/mascot/sporee-economy';
+import { useToast } from '../contexts/ToastContext';
 import {
   awardTaskCompletion,
   openLootBox as doOpenLootBox,
@@ -92,6 +95,7 @@ function farmFile(profileId: string): string {
 
 export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgress, onContribution }: UseGamificationArgs): UseGamificationResult {
   const [isProcessing, setIsProcessing] = useState(false);
+  const { showToast } = useToast();
 
   // Charger la config gamification au montage (remplit le cache synchrone)
   useEffect(() => { loadGamiConfig(); }, []);
@@ -310,6 +314,31 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           try { await onContribution('task', profile.id); } catch { /* Village -- non-critical */ }
         }
 
+        // Phase 38 (SPOR-08) — Cadeau onboarding Sporée à la transition arbuste → arbre
+        // farmData est la source of truth déjà lue ; la transition est détectée via level avant/après.
+        try {
+          const evolution = detectEvolution(profile.level, updatedProfile.level);
+          if (evolution.evolved && shouldGiftOnboardingSporee({
+            fromStage: evolution.fromStage,
+            toStage: evolution.toStage,
+            alreadyClaimed: farmData.sporeeOnboardingGiftClaimed === true,
+          })) {
+            const currentSporee = farmData.sporeeCount ?? 0;
+            const inc = tryIncrementSporeeCount(currentSporee, 1);
+            if (inc.accepted) {
+              farmData.sporeeCount = inc.newCount;
+              farmData.sporeeOnboardingGiftClaimed = true;
+            } else {
+              // Inventaire plein : NE PAS marquer claimed, le cadeau re-tentera au prochain level-up
+              // Cohérent avec "zéro perte silencieuse" (38-RESEARCH Open Q1)
+              showToast('Inventaire Sporée plein', 'error');
+            }
+          }
+        } catch {
+          // Cadeau Sporée — non-critical, ne doit pas casser le flow de tâche
+          if (__DEV__) console.warn('Cadeau onboarding Sporée — non-critical');
+        }
+
         // 3. Ecrire farm-{id}.md UNE SEULE FOIS (crops + effets combines)
         await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
 
@@ -340,7 +369,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         setIsProcessing(false);
       }
     },
-    [vault, notifPrefs, onDataChange, onQuestProgress, onContribution]
+    [vault, notifPrefs, onDataChange, onQuestProgress, onContribution, showToast]
   );
 
   const openLootBox = useCallback(
