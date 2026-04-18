@@ -269,9 +269,9 @@ Plans:
   3. User voit seulement les profils avec ≥1 tâche complétée sur les 7 derniers jours glissants comptés dans le diviseur famille — un ado dormant n'allège pas la charge du parent sealeur
   4. User voit seulement les tâches du domaine Tasks comptabilisées (Courses, Repas, Routines, Anniversaires, Notes, Moods exclus) — filtre strict par type de source
   5. User voit la suite Jest moteur passer (prorata fractionnaire, override poids, détection 7j glissants, filtre domaine Tasks, snapshot matinal stable) — `npx tsc --noEmit` et `npx jest --no-coverage` clean
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 39-01-PLAN.md — Fondations data: Profile.weight_override + parseSnapshots/appendSnapshot/pruneSnapshots (SPOR-04, SPOR-13)
+- [x] 39-01-PLAN.md — Fondations data: Profile.weight_override + parseSnapshots/appendSnapshot/pruneSnapshots (SPOR-04, SPOR-13)
 - [ ] 39-02-PLAN.md — Moteur pur wager-engine.ts (7 concepts) + suite Jest ≥45 tests (SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13)
 
 ### Phase 40: UI Sporée — seed picker + badge + validation
@@ -313,7 +313,7 @@ Plans:
 | 36. Composition & programmation reveal | 4/4 | Complete   | 2026-04-17 |
 | 37. Garde-parent & polish | 0/TBD | Deferred | - |
 | 38. Fondation modifiers + économie Sporée | 3/3 | Complete   | 2026-04-18 |
-| 39. Moteur prorata + calcul famille | 0/2 | Planning | - |
+| 39. Moteur prorata + calcul famille | 1/2 | In Progress|  |
 | 40. UI Sporée — seed picker + badge + validation | 0/TBD | Not started | - |
 | 41. Polish onboarding + codex + non-régression | 0/TBD | Not started | - |
 

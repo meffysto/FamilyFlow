@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
-status: verifying
-last_updated: "2026-04-18T15:03:31.776Z"
+status: executing
+last_updated: "2026-04-18T17:04:01.458Z"
 last_activity: 2026-04-18
 progress:
   total_phases: 13
   completed_phases: 6
-  total_plans: 19
-  completed_plans: 21
+  total_plans: 21
+  completed_plans: 22
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 38 — fondation-modifiers-conomie-spor-e
+**Current focus:** Phase 39 — moteur-prorata-calcul-famille
 
 ## Current Position
 
-Phase: 38 (fondation-modifiers-conomie-spor-e) — EXECUTING
-Plan: 3 of 3
+Phase: 39 (moteur-prorata-calcul-famille) — EXECUTING
+Plan: 2 of 2
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
 Last activity: 2026-04-18
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Phase complete — ready for verification
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -163,6 +163,7 @@ Status: Phase complete — ready for verification
 | Phase 38 P01 | 2min | 3 tasks | 4 files |
 | Phase 38 P02 | 3min | 2 tasks | 2 files |
 | Phase 38 P03 | 15min | 3 tasks | 6 files |
+| Phase 39-moteur-prorata-calcul-famille P01 | 8min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -326,6 +327,8 @@ Recent decisions affecting current work:
 - [Phase 38]: Cap inventaire Sporée 10 strict avec refus pur (zéro fallback feuilles) — décidé Plan 02 §overflow
 - [Phase 38]: Reset daily shop Sporée via getLocalDateKey (LOCAL device, pas UTC) pour éviter décalage timezone
 - [Phase 38]: [Phase 38-03]: Économie Sporée câblée end-to-end (parser + 3 hooks), Open Q1 résolu (flag reste false si overflow au cadeau), Open Q2 résolu (roll expedition indépendant outcome), mutation in-place farmData dans useGamification (évite double I/O)
+- [Phase 39-moteur-prorata-calcul-famille]: appendSnapshot replace-on-same-date (distinct appendBuilding skip) — snapshot matinal doit pouvoir se rafraîchir
+- [Phase 39-moteur-prorata-calcul-famille]: parseSnapshots scan multi-sections (defensive merge) — survit aux vaults pollués
 
 ### Todos
 
@@ -337,5 +340,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-18T15:03:31.766Z
+Last session: 2026-04-18T17:04:01.454Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
