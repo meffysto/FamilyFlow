@@ -317,9 +317,9 @@ const GROUND_DECORATIONS: DecorationDef[] = [
   { src: '/assets/garden/decos/farm/fence_gate.png',       x: 0.46, y: 0.36, w: 28, h: 28, minStage: 1, fixed: true },
 
   // --- Farm objects (fixed) ---
-  { src: '/assets/garden/decos/farm/scarecrow.png',  x: 0.56, y: 0.15, w: 28, h: 56, minStage: 1, fixed: true },
+  { src: '/assets/garden/decos/farm/scarecrow.png',  x: 0.56, y: 0.32, w: 28, h: 56, minStage: 1, fixed: true },
   { src: '/assets/garden/decos/farm/crate.png',      x: 0.72, y: 0.04, w: 22, h: 22, minStage: 1, fixed: true },
-  { src: '/assets/garden/decos/farm/well.png',       x: 0.72, y: 0.28, w: 36, h: 48, minStage: 1, fixed: true },
+  { src: '/assets/garden/decos/farm/well.png',       x: 0.72, y: 0.32, w: 36, h: 48, minStage: 1, fixed: true },
   { src: '/assets/garden/decos/farm/barrel.png',     x: 0.78, y: 0.38, w: 24, h: 24, minStage: 2, fixed: true },
   { src: '/assets/garden/decos/farm/windmill.png',   x: 0.90, y: 0.32, w: 52, h: 76, minStage: 4, fixed: true },
   { src: '/assets/garden/decos/farm/bridge.png',     x: 0.22, y: 0.70, w: 48, h: 24, minStage: 2, fixed: true },

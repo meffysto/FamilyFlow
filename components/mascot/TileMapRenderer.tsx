@@ -313,7 +313,7 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
 
   // ── Epouvantail — dans le potager (centre, entre les rangees) ──
   if (stageIdx >= 1) {
-    decos.push({ source: FARM_OBJECTS.scarecrow, x: 0.56, y: 0.15, w: 28, h: 56, minStage: 1, fixed: true });
+    decos.push({ source: FARM_OBJECTS.scarecrow, x: 0.56, y: 0.32, w: 28, h: 56, minStage: 1, fixed: true });
   }
 
   // ── Caisse en bois — en haut a droite du potager ──
@@ -323,7 +323,7 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
 
   // ── Puits — en bas a droite du potager ──
   if (stageIdx >= 1) {
-    decos.push({ source: FARM_OBJECTS.well, x: 0.72, y: 0.22, w: 36, h: 48, minStage: 1, fixed: true });
+    decos.push({ source: FARM_OBJECTS.well, x: 0.72, y: 0.32, w: 36, h: 48, minStage: 1, fixed: true });
   }
 
   // ── Tonneau — pres du puits ──

@@ -93,11 +93,11 @@ export function getUnlockedCropCells(treeStage: TreeStage): WorldCell[] {
 
 /** Cellules de la rangee 4 — debloquees par tech expansion-1 */
 export const EXPANSION_CROP_CELLS: WorldCell[] = [
-  { id: 'c15', col: 0, row: 3, x: 0.14, y: 0.32, cellType: 'crop', unlockOrder: 20, size: 'small' },
-  { id: 'c16', col: 1, row: 3, x: 0.28, y: 0.32, cellType: 'crop', unlockOrder: 21, size: 'small' },
-  { id: 'c17', col: 2, row: 3, x: 0.42, y: 0.32, cellType: 'crop', unlockOrder: 22, size: 'small' },
-  { id: 'c18', col: 3, row: 3, x: 0.56, y: 0.32, cellType: 'crop', unlockOrder: 23, size: 'small' },
-  { id: 'c19', col: 4, row: 3, x: 0.70, y: 0.32, cellType: 'crop', unlockOrder: 24, size: 'small' },
+  { id: 'c15', col: 0, row: 3, x: 0.14, y: 0.24, cellType: 'crop', unlockOrder: 20, size: 'small' },
+  { id: 'c16', col: 1, row: 3, x: 0.28, y: 0.24, cellType: 'crop', unlockOrder: 21, size: 'small' },
+  { id: 'c17', col: 2, row: 3, x: 0.42, y: 0.24, cellType: 'crop', unlockOrder: 22, size: 'small' },
+  { id: 'c18', col: 3, row: 3, x: 0.56, y: 0.24, cellType: 'crop', unlockOrder: 23, size: 'small' },
+  { id: 'c19', col: 4, row: 3, x: 0.70, y: 0.24, cellType: 'crop', unlockOrder: 24, size: 'small' },
 ];
 
 /** Cellule building supplementaire — debloquee par tech expansion-2 */
