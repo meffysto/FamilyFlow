@@ -1,20 +1,21 @@
 /**
- * PlantWagerBadge.tsx — Badge overlay 2-LIGNES sur plants scellés (Phase 40 Plan 03).
+ * PlantWagerBadge.tsx — Badge overlay sur plants scellés (Phase 40 Plan 03).
  *
  * **Zéro animation, zéro reanimated, zéro timer.** Pure View + Text memoïsé.
  *
- * Règles verrouillées (CONTEXT.md décision D-03) :
- *   - 2 LIGNES OBLIGATOIRES — ligne 1 "X/Y tâches aujourd'hui", ligne 2 "cumul Z/N".
- *   - Badge visible dès plantation (stage 0) — G6 : feedback progression quotidienne.
- *   - Consommation DIRECTE de `wager.tasksCompletedToday` + `wager.totalDays` (B1/B2).
- *     Aucun magic number ni fallback `/7` — le parent calcule `tasksTargetToday` à partir
- *     de valeurs persistées par Plan 01.
- *   - 3 couleurs pace via tokens theme (successBg/warningBg/errorBg) — zéro hardcoded.
- *   - React.memo obligatoire : N plants scellés simultanés sans impact CPU.
+ * Affichage simplifié : une seule ligne `cumulCurrent/cumulTarget`
+ * (ex: "3/6"). Les props tasksToday/tasksTargetToday sont gardées pour
+ * compat parent mais non affichées — décision UX utilisateur post-QA.
+ *
+ * Règles :
+ *   - Badge visible dès plantation (stage 0) — G6 : feedback progression.
+ *   - Consommation DIRECTE de wager.cumulCurrent/cumulTarget (Plan 01).
+ *   - 3 couleurs pace via tokens theme (successBg/warningBg/errorBg).
+ *   - React.memo obligatoire : N plants scellés simultanés.
  *
  * Couleur de fond dérivée de `paceLevel` :
  *   - 'green'  → colors.successBg / successText (en avance ou à l'heure)
- *   - 'yellow' → colors.warningBg / warningText (léger retard bienveillant)
+ *   - 'yellow' → colors.warningBg / warningText (léger retard)
  *   - 'orange' → colors.errorBg / errorText   (retard marqué, jamais punitif)
  */
 import React, { useMemo } from 'react';
@@ -58,15 +59,17 @@ function PlantWagerBadgeBase({
     }
   }, [paceLevel, colors]);
 
-  // Fallback P2 : si cumulTarget === 0 (pari auto-gagné ou données pas encore recompute),
-  // on affiche un état neutre "✓" + "—/—" pour éviter l'affichage bancal 0/0.
+  // Fallback P2 : si cumulTarget === 0 (pari auto-gagné), affiche ✓ neutre.
   const isAutoWon = cumulTarget === 0;
-  const line1 = isAutoWon ? '—/—' : `${tasksToday}/${tasksTargetToday}`;
-  const line2 = isAutoWon ? '✓' : `${cumulCurrent}/${cumulTarget}`;
+  const label = isAutoWon ? '✓' : `${cumulCurrent}/${cumulTarget}`;
 
   const accessibilityLabel = isAutoWon
     ? 'Pari scellé : objectif déjà atteint'
-    : `Pari : ${tasksToday} sur ${tasksTargetToday} tâches aujourd'hui, cumul ${cumulCurrent} sur ${cumulTarget}`;
+    : `Pari : ${cumulCurrent} tâches sur ${cumulTarget} pour valider`;
+
+  // Suppress unused props — gardés pour compat parent (WorldGridView)
+  void tasksToday;
+  void tasksTargetToday;
 
   return (
     <View
@@ -84,14 +87,7 @@ function PlantWagerBadgeBase({
         numberOfLines={1}
         allowFontScaling={false}
       >
-        {line1}
-      </Text>
-      <Text
-        style={[styles.line2, { color: colors.textMuted }]}
-        numberOfLines={1}
-        allowFontScaling={false}
-      >
-        {line2}
+        {label}
       </Text>
     </View>
   );
