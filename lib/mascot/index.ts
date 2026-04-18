@@ -14,3 +14,5 @@ export * from './sagas-engine';
 export * from './sagas-content';
 export * from './sagas-storage';
 export * from './gift-engine';
+export * from './wager-ui-helpers';
+export { rollWagerDropBack, DROP_BACK_CHANCE } from './sporee-economy';

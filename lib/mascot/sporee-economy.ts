@@ -75,6 +75,24 @@ export function rollSporeeDropOnExpedition(difficulty: ExpeditionDifficulty): bo
 }
 
 // ─────────────────────────────────────────────
+// Phase 40 — Drop-back Sporée sur pari gagné (SPOR-08)
+// ─────────────────────────────────────────────
+
+/** Chance de récupérer 1 Sporée à la récolte victorieuse d'un pari. */
+export const DROP_BACK_CHANCE = 0.15;
+
+/**
+ * Roll drop-back Sporée post-récolte victorieuse d'un pari (Phase 40).
+ * Injection `random` pour testabilité déterministe (pattern cohérent avec
+ * rollSporeeDropOnHarvest/Expedition, mais helper dédié car consommation
+ * conditionnelle `validation.won === true` dans useFarm.harvest).
+ * Retourne true SSI random() < 0.15 (strictement inférieur).
+ */
+export function rollWagerDropBack(random: () => number = Math.random): boolean {
+  return random() < DROP_BACK_CHANCE;
+}
+
+// ─────────────────────────────────────────────
 // Inventaire — cap 10 (SPOR-09)
 // ─────────────────────────────────────────────
 

@@ -1,0 +1,154 @@
+/**
+ * Phase 40 — Helpers purs pour l'UI Sporée (seed picker + badge).
+ *
+ * Fonctions pures, zéro I/O, zéro import hook/UI, testables en isolation.
+ * Consommé par SporéeDurationPicker (Plan 02), PlantWagerBadge (Plan 03),
+ * et useFarm.startWager (persistance totalDays — B2 élimination magic number 7).
+ */
+
+import type { WagerDuration, WagerMultiplier } from './types';
+
+// ─────────────────────────────────────────────
+// Constantes partagées (source unique de vérité)
+// ─────────────────────────────────────────────
+
+/** Facteur de durée appliqué à `tasksPerStage * 4` pour dériver absoluteTasks. */
+export const DURATION_FACTORS: Record<WagerDuration, number> = {
+  chill: 1.0,
+  engage: 0.7,
+  sprint: 0.5,
+};
+
+/** Multiplicateur de reward par durée (×1.3 / ×1.7 / ×2.5). */
+export const MULTIPLIERS: Record<WagerDuration, WagerMultiplier> = {
+  chill: 1.3,
+  engage: 1.7,
+  sprint: 2.5,
+};
+
+/** Projection UI : heures estimées par tâche ménagère (moyenne famille). */
+const HOURS_PER_TASK = 6;
+
+/** Ordre stable des options présentées à l'UI. */
+const DURATION_ORDER: WagerDuration[] = ['chill', 'engage', 'sprint'];
+
+// ─────────────────────────────────────────────
+// Types publics
+// ─────────────────────────────────────────────
+
+/** Niveau de pace pour le badge 2-lignes (B1). */
+export type PaceLevel = 'green' | 'yellow' | 'orange';
+
+/** Option d'une durée présentée dans le seed picker. */
+export interface WagerDurationOption {
+  duration: WagerDuration;
+  multiplier: WagerMultiplier;
+  targetTasks: number;
+  absoluteTasks: number;
+  estimatedHours: number;
+}
+
+// ─────────────────────────────────────────────
+// 1. computeWagerDurations (seed picker, Plan 02)
+// ─────────────────────────────────────────────
+
+/**
+ * Calcule les 3 options de durée à afficher dans le seed picker.
+ * Signature callback-based pour rester pure-testable sans importer wager-engine.
+ *
+ * - absoluteTasks = max(1, ceil(tasksPerStage × 4 × facteur durée))
+ * - estimatedHours = absoluteTasks × 6 (projection UI)
+ * - targetTasks = computeCumulTargetFn(ctx).cumulTarget (consommé, jamais recalculé)
+ *
+ * Retourne toujours 3 options dans l'ordre stable chill → engage → sprint.
+ */
+export function computeWagerDurations<TCtx>(
+  tasksPerStage: number,
+  computeCumulTargetFn: (ctx: TCtx) => { cumulTarget: number },
+  ctx: TCtx,
+): WagerDurationOption[] {
+  const safeTasksPerStage = Math.max(0, tasksPerStage);
+  const { cumulTarget } = computeCumulTargetFn(ctx);
+  return DURATION_ORDER.map(duration => {
+    const factor = DURATION_FACTORS[duration];
+    const absoluteTasks = Math.max(1, Math.ceil(safeTasksPerStage * 4 * factor));
+    return {
+      duration,
+      multiplier: MULTIPLIERS[duration],
+      targetTasks: cumulTarget,
+      absoluteTasks,
+      estimatedHours: absoluteTasks * HOURS_PER_TASK,
+    };
+  });
+}
+
+// ─────────────────────────────────────────────
+// 2. computePaceLevel (badge 2-lignes B1)
+// ─────────────────────────────────────────────
+
+/**
+ * Dérive la couleur du badge selon le pace actuel :
+ *   ratio = (cumulCurrent / max(1, cumulTarget)) / max(0.01, daysElapsed / max(1, totalDays))
+ *   ratio ≥ 1.0 → green
+ *   ratio ≥ 0.7 → yellow
+ *   ratio < 0.7 → orange
+ *
+ * Fallbacks bienveillants :
+ *   - cumulTarget = 0 → green (pari auto-gagné D-04)
+ *   - daysElapsed = 0 → green (premier jour jamais punitif)
+ */
+export function computePaceLevel(
+  cumulCurrent: number,
+  cumulTarget: number,
+  daysElapsed: number,
+  totalDays: number,
+): PaceLevel {
+  if (cumulTarget === 0) return 'green';
+  if (daysElapsed === 0) return 'green';
+  const progress = cumulCurrent / Math.max(1, cumulTarget);
+  const timeShare = Math.max(0.01, daysElapsed / Math.max(1, totalDays));
+  const ratio = progress / timeShare;
+  if (ratio >= 1.0) return 'green';
+  if (ratio >= 0.7) return 'yellow';
+  return 'orange';
+}
+
+// ─────────────────────────────────────────────
+// 3. computeWagerTotalDays (B2 — source unique de vérité)
+// ─────────────────────────────────────────────
+
+/**
+ * Calcule `totalDays` PERSISTÉ sur WagerModifier au moment du startWager.
+ * Élimine le magic number 7 côté UI (B2) : tous les consommateurs lisent
+ * `wager.totalDays ?? 1` sans jamais recalculer.
+ *
+ *   absoluteTasks = max(1, ceil(tasksPerStage × 4 × facteur))
+ *   estimatedHours = absoluteTasks × 6
+ *   totalDays = max(1, ceil(estimatedHours / 24))
+ */
+export function computeWagerTotalDays(
+  duration: WagerDuration,
+  tasksPerStage: number,
+): number {
+  const safeTasksPerStage = Math.max(0, tasksPerStage);
+  const factor = DURATION_FACTORS[duration];
+  const absoluteTasks = Math.max(1, Math.ceil(safeTasksPerStage * 4 * factor));
+  const estimatedHours = absoluteTasks * HOURS_PER_TASK;
+  return Math.max(1, Math.ceil(estimatedHours / 24));
+}
+
+// ─────────────────────────────────────────────
+// 4. daysBetween (helper date locale ISO)
+// ─────────────────────────────────────────────
+
+/**
+ * Nombre de jours entre deux dates locales ISO (YYYY-MM-DD).
+ * Jamais négatif : si endISO < startISO retourne 0.
+ * Exploité par PlantWagerBadge (Plan 03) pour calculer daysElapsed depuis appliedAt.
+ */
+export function daysBetween(startISO: string, endISO: string): number {
+  const startMs = new Date(startISO + 'T00:00:00').getTime();
+  const endMs = new Date(endISO + 'T00:00:00').getTime();
+  const diffDays = Math.round((endMs - startMs) / 86400000);
+  return Math.max(0, diffDays);
+}

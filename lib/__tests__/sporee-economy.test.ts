@@ -18,6 +18,8 @@ import {
   applyDailyResetIfNeeded,
   getLocalDateKey,
   shouldGiftOnboardingSporee,
+  rollWagerDropBack,
+  DROP_BACK_CHANCE,
 } from '../mascot/sporee-economy';
 
 describe('Constantes économie Sporée (SPOR-08, SPOR-09)', () => {
@@ -191,6 +193,26 @@ describe('shouldGiftOnboardingSporee (cadeau transition 2→3)', () => {
   });
   it('undefined stages : false', () => {
     expect(shouldGiftOnboardingSporee({ fromStage: undefined, toStage: undefined, alreadyClaimed: false })).toBe(false);
+  });
+});
+
+describe('rollWagerDropBack (Phase 40 — drop-back 15% sur pari gagné)', () => {
+  it('constante DROP_BACK_CHANCE = 0.15', () => {
+    expect(DROP_BACK_CHANCE).toBe(0.15);
+  });
+  it('injection random=() => 0.1 → true (< 0.15)', () => {
+    expect(rollWagerDropBack(() => 0.1)).toBe(true);
+  });
+  it('injection random=() => 0.15 → false (strictement <)', () => {
+    expect(rollWagerDropBack(() => 0.15)).toBe(false);
+  });
+  it('injection random=() => 0.5 → false', () => {
+    expect(rollWagerDropBack(() => 0.5)).toBe(false);
+  });
+  it('default Math.random utilisé si pas d\'injection', () => {
+    const spy = jest.spyOn(Math, 'random').mockReturnValue(0.01);
+    expect(rollWagerDropBack()).toBe(true);
+    spy.mockRestore();
   });
 });
 
