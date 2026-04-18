@@ -59,18 +59,6 @@ export interface WagerSealerSheetProps {
 // Helpers internes
 // ─────────────────────────────────────────────
 
-/** Formatage heures → libellé court FR ("24h" / "3 j"). */
-function formatDuration(hours: number): string {
-  if (hours < 48) return `${hours}h`;
-  const days = Math.round(hours / 24);
-  return `${days} j`;
-}
-
-/** Cadence requise en tâches/jour arrondi supérieur (min 1). */
-function computeCadence(option: WagerDurationOption): number {
-  const days = Math.max(1, option.estimatedHours / 24);
-  return Math.max(1, Math.ceil(option.targetTasks / days));
-}
 
 // ─────────────────────────────────────────────
 // Composant
@@ -165,10 +153,9 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
           {/* 3 cartes durée */}
           {durations.map((option) => {
             const meta = DURATION_META[option.duration];
-            const cadence = computeCadence(option);
             const accessibilityLabel =
-              `Sceller avec ${meta.labelKey}, multiplicateur ${option.multiplier}, ` +
-              `durée ${formatDuration(option.estimatedHours)}, cible ${option.targetTasks} tâches`;
+              `Sceller ${meta.labelKey}, récompense multipliée par ${option.multiplier}, ` +
+              `${option.absoluteTasks} tâches pour mûrir, ${option.targetTasks} tâches pour valider le pari`;
 
             return (
               <Pressable
@@ -194,9 +181,9 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
                   </Text>
                 </View>
 
-                {/* Ligne 2 — durée · cadence · cumul */}
+                {/* Ligne 2 — maturité plant + cumul cible (sans notion de temps) */}
                 <Text style={[styles.cardMeta, { color: colors.textMuted }]}>
-                  {formatDuration(option.estimatedHours)} · ~{cadence} tâches/jour · {option.targetTasks} tâches cible
+                  🌱 {option.absoluteTasks} pour mûrir · ✅ {option.targetTasks} pour valider
                 </Text>
               </Pressable>
             );
