@@ -38,7 +38,6 @@ import { type WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { PlantWagerBadge } from './PlantWagerBadge';
-import { WagerReadyRing } from './WagerReadyRing';
 import { computePaceLevel, daysBetween } from '../../lib/mascot/wager-ui-helpers';
 import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
 
@@ -288,11 +287,10 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
           <Text style={styles.cropBubbleText}>{bubble}</Text>
         </View>
       )}
-      {/* Overlay anneau vert "prêt à valider" — double gate mûr + cumul atteint (Phase 40 Plan 03) */}
+      {/* Indicateur "prêt à valider" — 🍄 en top-left, symétrique à upgradeHint.
+          Double gate mûr + cumul atteint (Phase 40 Plan 03). */}
       {showReadyRing && (
-        <View style={styles.wagerRingWrapper} pointerEvents="none">
-          <WagerReadyRing size={Math.min(size - Spacing.xs, 44)} />
-        </View>
+        <Text style={styles.wagerReadyHint} pointerEvents="none">{'🍄'}</Text>
       )}
       {/* Badge Sporée 2-lignes — visible dès stage 0 (G6), Phase 40 Plan 03 */}
       {showBadge && wager && (
@@ -1025,17 +1023,6 @@ const styles = StyleSheet.create({
     zIndex: 15,
   },
   cropBubbleText: { fontSize: 10, textAlign: 'center' as const, color: '#1F2937' },
-  // ── Sporée Phase 40 — overlay anneau centré sur le sprite ──
-  wagerRingWrapper: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 11,
-  },
   buildingCell: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -1154,6 +1141,13 @@ const styles = StyleSheet.create({
     right: 2,
     fontSize: 10,
     opacity: 0.7,
+  },
+  wagerReadyHint: {
+    position: 'absolute',
+    top: 1,
+    left: 2,
+    fontSize: 12,
+    zIndex: 13,
   },
   // ── Overlays d'usure — BuildingCell ──
   damagedBadge: {
