@@ -149,6 +149,42 @@
     "ancien_gardien": {
       "name": "Ancient Guardian",
       "lore": "A thousand-year-old presence draped in greenery, a rare companion to the farm's great stories. You don't meet him by accident: he's the key to a tale that must be earned."
+    },
+    "renard_arctique": {
+      "name": "Arctic Fox",
+      "lore": "Immaculate winter coat, amber eyes full of spark. This ice fox only lets itself be won over by explorers returned from the coldest reaches. Its presence on the farm brings the luck of wide open spaces."
+    },
+    "aigle_dore": {
+      "name": "Golden Eagle",
+      "lore": "Lord of the summits, the golden eagle soars above the farm with silent majesty. Only high-altitude expeditions allow you to meet its gaze. It chooses to stay when the farm is worthy of its esteem."
+    },
+    "lynx_mystere": {
+      "name": "Mystery Lynx",
+      "lore": "The lynx of deep forests watches without being watched. Brought back from a secret expedition, it weaves its presence between the crops and vanishes the moment your gaze settles on it. Mysterious to the last."
+    },
+    "dragon_glace": {
+      "name": "Ice Dragon",
+      "lore": "Breathing a delicate frost over the plots, this translucent-scaled dragon comes from the snowy peaks at the world's edge. Its crystal wings catch the raking light and scatter rainbows across the entire farm."
+    },
+    "loutre_riviere": {
+      "name": "River Otter",
+      "lore": "An agile, playful glider, the river otter fills the farm's water features with a contagious energy. It settles where the water is clearest — a sign that the farm is breathing well."
+    },
+    "cerf_argente": {
+      "name": "Silver Stag",
+      "lore": "Its mother-of-pearl antlers glow under moonlight like a crown of frost. A creature of enchanted forests, the silver stag only appears at majestic farms during rare night expeditions."
+    },
+    "tortue_ancienne": {
+      "name": "Ancient Tortoise",
+      "lore": "It carries centuries of patience on its shell, adorned with moss and ancient symbols. Brought back from the world's slowest depths, the ancient tortoise brings a serenity to the farm that nothing can disturb."
+    },
+    "phenix_celeste": {
+      "name": "Celestial Phoenix",
+      "lore": "Rarer still than the ordinary phoenix, this blue-flamed phoenix never burns — it illuminates. Only legendary expeditions allow you to cross its path, and its presence brings luck beyond all seasons."
+    },
+    "loup_etoile": {
+      "name": "Star Wolf",
+      "lore": "Its dark fur is scattered with luminous dots that resemble constellations. The ultimate prestige creature, the star wolf only joins farms that have dared every possible expedition. Its loyalty is eternal."
     }
   },
   "building": {

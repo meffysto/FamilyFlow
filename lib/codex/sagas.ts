@@ -22,7 +22,7 @@ export const sagaEntries: SagaEntry[] = SAGAS.map((s) => ({
   id: `saga_${String(s.id)}`,
   kind: 'saga' as const,
   sourceId: String(s.id),
-  nameKey: `codex:saga.${String(s.id)}.name`,
-  loreKey: `codex:saga.${String(s.id)}.lore`,
+  nameKey: `codex.saga.${String(s.id)}.name`,
+  loreKey: `codex.saga.${String(s.id)}.lore`,
   spriteRef: SAGA_SPRITES[String(s.id)],
 }));

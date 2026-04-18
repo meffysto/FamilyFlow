@@ -81,14 +81,16 @@ export function sentByProfile(notes: LoveNote[], profileId: string): LoveNote[] 
 }
 
 /**
- * Archive : notes explicitement archivées impliquant le profil (reçues OU envoyées).
+ * Archive : notes lues ou explicitement archivées impliquant le profil (reçues OU envoyées).
+ * Une note avec status `read` est considérée archivée — elle a été découverte et lue.
  * Tri par readAt desc (fallback createdAt).
  */
 export function archivedForProfile(notes: LoveNote[], profileId: string): LoveNote[] {
   return notes
     .filter(
       (n) =>
-        n.status === 'archived' && (n.to === profileId || n.from === profileId),
+        (n.status === 'archived' || n.status === 'read') &&
+        (n.to === profileId || n.from === profileId),
     )
     .sort((a, b) => {
       const ka = a.readAt ?? a.createdAt;

@@ -149,6 +149,42 @@
     "ancien_gardien": {
       "name": "Ancien gardien",
       "lore": "Présence millénaire drapée de verdure, compagnon rare des grandes histoires de la ferme. On ne le rencontre pas par hasard : il est la clef d'un récit qu'il faut mériter."
+    },
+    "renard_arctique": {
+      "name": "Renard arctique",
+      "lore": "Pelage d'hiver immaculé, yeux d'ambre vif. Ce renard des glaces ne se laisse apprivoiser que par les explorateurs revenus des contrées les plus froides. Sa présence dans la ferme attire la chance des grands espaces."
+    },
+    "aigle_dore": {
+      "name": "Aigle doré",
+      "lore": "Seigneur des sommets, l'aigle doré plane au-dessus de la ferme avec une majesté silencieuse. Seules les expéditions en altitude permettent de croiser son regard. Il choisit de rester quand la ferme est digne de son estime."
+    },
+    "lynx_mystere": {
+      "name": "Lynx mystère",
+      "lore": "Le lynx des forêts profondes observe sans être observé. Ramené d'une expédition secrète, il tisse ses présences entre les cultures et disparaît dès que le regard se pose sur lui. Mystérieux jusqu'à la fin."
+    },
+    "dragon_glace": {
+      "name": "Dragon de glace",
+      "lore": "Soufflant un givre délicat sur les parcelles, ce dragon aux écailles translucides vient des pics enneigés du bout du monde. Ses ailes de cristal capturent la lumière rasante et envoient des arcs-en-ciel sur toute la ferme."
+    },
+    "loutre_riviere": {
+      "name": "Loutre de rivière",
+      "lore": "Glisseuse agile et joueuse, la loutre de rivière anime les points d'eau de la ferme d'une énergie communicative. Elle s'installe là où l'eau est la plus claire — signe que la ferme respire bien."
+    },
+    "cerf_argente": {
+      "name": "Cerf argenté",
+      "lore": "Son bois nacré brille sous la lune comme une couronne de givre. Créature des forêts enchantées, le cerf argenté n'apparaît dans les fermes majestueuses que lors de rares expéditions nocturnes."
+    },
+    "tortue_ancienne": {
+      "name": "Tortue ancienne",
+      "lore": "Elle porte des siècles de patience sur sa carapace ornée de mousse et de symboles anciens. Ramenée des profondeurs les plus lentes du monde, la tortue ancienne apporte à la ferme une sérénité que rien ne vient troubler."
+    },
+    "phenix_celeste": {
+      "name": "Phénix céleste",
+      "lore": "Plus rare encore que le phénix ordinaire, ce phénix aux flammes bleues ne brûle jamais — il illumine. Seules les expéditions légendaires permettent de le croiser, et sa présence porte bonheur au-delà des saisons."
+    },
+    "loup_etoile": {
+      "name": "Loup étoilé",
+      "lore": "Sa fourrure nocturne est parsemée de points lumineux qui ressemblent à des constellations. Créature de prestige ultime, le loup étoilé ne rejoint que les fermes qui ont osé toutes les expéditions possibles. Sa loyauté est éternelle."
     }
   },
   "building": {
@@ -281,6 +317,22 @@
     "mijote_hiver": {
       "name": "Mijoté d'hiver",
       "lore": "Un mijoté rustique de betteraves et pommes de terre, lié par un œuf du poulailler. Recette d'hiver qui valorise les légumes-racines stockés en cave après la récolte d'automne. Le goût d'une ferme qui traverse l'hiver sans faiblir."
+    },
+    "huile_phenix": {
+      "name": "Huile de phénix",
+      "lore": "Une huile ardente pressée à partir de la fleur de lave ramenée des volcans. Réservée aux recettes les plus rares, elle confère une chaleur incomparable aux préparations culinaires. Seuls les explorateurs courageux peuvent en garnir leurs étagères."
+    },
+    "tisane_volcanique": {
+      "name": "Tisane volcanique",
+      "lore": "Une infusion aux parfums de soufre doux et de fleur de lave, réconfortante malgré ses origines ardentes. Cette tisane d'expédition apaise les muscles des aventuriers et fait rêver ceux qui ne l'ont jamais goûtée."
+    },
+    "encre_etoiles": {
+      "name": "Encre des étoiles",
+      "lore": "Un pigment sombre extrait du cristal noir qui ne reflète rien mais capture tout. Cette encre d'expédition permet de tracer des cartes invisibles à la lumière du jour, révélées seulement sous le clair de lune."
+    },
+    "potion_eveil": {
+      "name": "Potion d'éveil",
+      "lore": "Brassée à partir du cristal noir et d'une touche de miel, cette potion d'éveil libère la mémoire des expéditions passées. Un seul flacon suffit à raviver des souvenirs d'ailleurs que l'on croyait perdus."
     }
   },
   "tech": {

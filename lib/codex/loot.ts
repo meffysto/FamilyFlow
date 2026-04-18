@@ -19,8 +19,8 @@ export const lootEntries: LootEntry[] = [
     kind: 'loot' as const,
     sourceId: 'golden_crop',
     lootType: 'golden_crop' as const,
-    nameKey: 'codex:loot.golden_crop.name',
-    loreKey: 'codex:loot.golden_crop.lore',
+    nameKey: 'codex.loot.golden_crop.name',
+    loreKey: 'codex.loot.golden_crop.lore',
     iconRef: '✨',
   },
   ...HARVEST_EVENTS.map(ev => ({
@@ -28,8 +28,8 @@ export const lootEntries: LootEntry[] = [
     kind: 'loot' as const,
     sourceId: ev.type,
     lootType: 'harvest_event' as const,
-    nameKey: `codex:loot.harvest_${ev.type}.name`,
-    loreKey: `codex:loot.harvest_${ev.type}.lore`,
+    nameKey: `codex.loot.harvest_${ev.type}.name`,
+    loreKey: `codex.loot.harvest_${ev.type}.lore`,
     iconRef: ev.emoji,
   })),
   ...RARE_SEED_DROP_RULES.map(rule => ({
@@ -37,8 +37,8 @@ export const lootEntries: LootEntry[] = [
     kind: 'loot' as const,
     sourceId: rule.seedId,
     lootType: 'rare_seed_drop' as const,
-    nameKey: `codex:loot.seed_${rule.seedId}.name`,
-    loreKey: `codex:loot.seed_${rule.seedId}.lore`,
+    nameKey: `codex.loot.seed_${rule.seedId}.name`,
+    loreKey: `codex.loot.seed_${rule.seedId}.lore`,
     spriteRef: CROP_ICONS[rule.seedId],
   })),
 ];

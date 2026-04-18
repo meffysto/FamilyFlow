@@ -15,7 +15,7 @@ export const questEntries: QuestEntry[] = QUEST_TEMPLATES.map((q) => ({
   id: `quest_${q.id}`,
   kind: 'quest' as const,
   sourceId: q.id,
-  nameKey: `codex:quest.${q.id}.name`,
-  loreKey: `codex:quest.${q.id}.lore`,
+  nameKey: `codex.quest.${q.id}.name`,
+  loreKey: `codex.quest.${q.id}.lore`,
   iconRef: q.emoji,
 }));

@@ -13,7 +13,7 @@ export const seasonalEntries: SeasonalEntry[] = Object.entries(
   id: `seasonal_${key}`,
   kind: 'seasonal' as const,
   sourceId: key,
-  nameKey: `codex:seasonal.${key}.name`,
-  loreKey: `codex:seasonal.${key}.lore`,
+  nameKey: `codex.seasonal.${key}.name`,
+  loreKey: `codex.seasonal.${key}.lore`,
   iconRef: content.emoji,
 }));

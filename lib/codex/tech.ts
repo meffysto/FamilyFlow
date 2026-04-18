@@ -11,7 +11,7 @@ export const techEntries: TechEntry[] = TECH_TREE.map((t) => ({
   id: `tech_${t.id}`,
   kind: 'tech' as const,
   sourceId: t.id,
-  nameKey: `codex:tech.${t.id}.name`,
-  loreKey: `codex:tech.${t.id}.lore`,
+  nameKey: `codex.tech.${t.id}.name`,
+  loreKey: `codex.tech.${t.id}.lore`,
   iconRef: t.emoji,
 }));

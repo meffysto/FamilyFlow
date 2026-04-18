@@ -12,7 +12,7 @@ export const adventureEntries: AdventureEntry[] = ADVENTURES.map((a) => ({
   id: `adventure_${a.id}`,
   kind: 'adventure' as const,
   sourceId: a.id,
-  nameKey: `codex:adventure.${a.id}.name`,
-  loreKey: `codex:adventure.${a.id}.lore`,
+  nameKey: `codex.adventure.${a.id}.name`,
+  loreKey: `codex.adventure.${a.id}.lore`,
   iconRef: a.emoji,
 }));
