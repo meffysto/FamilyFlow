@@ -53,6 +53,8 @@ export interface WagerSealerSheetProps {
   allProfiles: Profile[];
   allTasks: Task[];
   sporeeCount: number;
+  /** Historique gami pour détection "actif 7j" élargie (achats/récoltes/craft…) */
+  gamiHistory?: ReadonlyArray<{ profileId: string; timestamp: string }>;
 }
 
 // ─────────────────────────────────────────────
@@ -88,6 +90,7 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
   allProfiles,
   allTasks,
   sporeeCount,
+  gamiHistory,
 }: WagerSealerSheetProps) {
   const { primary, colors } = useThemeColors();
 
@@ -110,11 +113,12 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
       tasks: wagerTasks,
       today,
       pendingCount,
+      gamiHistory,
     });
 
     const tier = classifyHarvestTier(cropId);
     return computeWagerDurations(tasksPerStage, computeCumulTargetFn, undefined, tier);
-  }, [tasksPerStage, sealerProfileId, allProfiles, allTasks, cropId]);
+  }, [tasksPerStage, sealerProfileId, allProfiles, allTasks, cropId, gamiHistory]);
 
   // Handler confirm mode — factorisé (3 durées ≡ 1 handler paramétré)
   const handleConfirmDuration = useCallback(async (duration: WagerDuration) => {

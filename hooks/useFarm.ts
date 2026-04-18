@@ -167,7 +167,7 @@ export function useFarm(
   onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>,
   onContribution?: (type: ContributionType, profileId: string) => Promise<void>,
 ) {
-  const { vault, profiles, refreshFarm, refreshGamification, tasks, subscribeTaskComplete, activeProfile } = useVault();
+  const { vault, profiles, refreshFarm, refreshGamification, tasks, subscribeTaskComplete, activeProfile, gamiData } = useVault();
   const { showToast } = useToast();
 
   /** Deduire des feuilles dans gami-{profileId}.md */
@@ -1023,6 +1023,7 @@ export function useFarm(
       tasks: wagerTasks,
       today,
       pendingCount,
+      gamiHistory: gamiData?.history,
     });
 
     // B2 — totalDays PERSISTÉ (source unique, élimine magic number 7 côté UI)
@@ -1151,6 +1152,7 @@ export function useFarm(
             sealerProfileId: w.sealerProfileId,
             allProfiles: profiles,
             tasks: wagerTasks,
+            gamiHistory: gamiData?.history,
           });
           if (res.recomputed) {
             // Applique le scaling de la durée du pari (même logique que startWager)

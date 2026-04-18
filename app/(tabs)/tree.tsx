@@ -2185,6 +2185,7 @@ export default function TreeScreen() {
           allProfiles={profiles}
           allTasks={tasks}
           sporeeCount={profile?.sporeeCount ?? 0}
+          gamiHistory={gamiData?.history}
         />
 
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}

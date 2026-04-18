@@ -101,11 +101,14 @@ export function isProfileActive7d(
   tasks: Task[],
   profile: Profile,
   today: string,
+  gamiHistory?: ReadonlyArray<{ profileId: string; timestamp: string }>,
 ): boolean {
   const todayMs = new Date(today + 'T00:00:00').getTime();
   const sevenDaysAgoMs = todayMs - 7 * 86400000;
   const nameLower = profile.name.toLowerCase();
-  return tasks.some(t => {
+
+  // Signal 1 — tâche complétée avec ✅ date attribuée au profil
+  const taskActivity = tasks.some(t => {
     if (!t.completed || !t.completedDate) return false;
     const byProfile =
       t.mentions.includes(profile.id) ||
@@ -115,6 +118,20 @@ export function isProfileActive7d(
     const tMs = new Date(t.completedDate + 'T00:00:00').getTime();
     return tMs >= sevenDaysAgoMs && tMs <= todayMs;
   });
+  if (taskActivity) return true;
+
+  // Signal 2 — entrée gami history du profil dans la fenêtre (actions variées :
+  // achats, récoltes, craft, badges, gifts… toute action horodatée compte).
+  if (gamiHistory) {
+    const historyActivity = gamiHistory.some(e => {
+      if (e.profileId !== profile.id) return false;
+      const eMs = new Date(e.timestamp).getTime();
+      return eMs >= sevenDaysAgoMs && eMs <= todayMs;
+    });
+    if (historyActivity) return true;
+  }
+
+  return false;
 }
 
 // ─────────────────────────────────────────────
@@ -161,8 +178,11 @@ export function computeCumulTarget(opts: {
   tasks: Task[];            // tâches déjà filtrées filterTasksForWager
   today: string;
   pendingCount: number;
+  /** Optionnel — élargit la détection "actif 7j" aux entrées gami history (achats,
+   *  récoltes, craft, tâches cochées sans date ✅, badges, gifts…). */
+  gamiHistory?: ReadonlyArray<{ profileId: string; timestamp: string }>;
 }): FamilyWeightResult {
-  const { sealerProfileId, allProfiles, tasks, today, pendingCount } = opts;
+  const { sealerProfileId, allProfiles, tasks, today, pendingCount, gamiHistory } = opts;
 
   // Exclure profils en statut grossesse (Pitfall 2)
   const eligible = allProfiles.filter(p => p.statut !== 'grossesse');
@@ -174,7 +194,7 @@ export function computeCumulTarget(opts: {
   for (const p of eligible) {
     const w = resolveWeight(p, today);
     weights[p.id] = w;
-    const isActive = p.id === sealerProfileId || isProfileActive7d(tasks, p, today);
+    const isActive = p.id === sealerProfileId || isProfileActive7d(tasks, p, today, gamiHistory);
     if (isActive && w > 0) {
       activeProfileIds.push(p.id);
       familyWeightSum += w;
@@ -262,6 +282,7 @@ export function maybeRecompute(opts: {
   sealerProfileId: string;
   allProfiles: Profile[];
   tasks: Task[];
+  gamiHistory?: ReadonlyArray<{ profileId: string; timestamp: string }>;
 }): MaybeRecomputeResult {
   if (!shouldRecompute(opts.now, opts.lastRecomputeDate)) {
     return { recomputed: false };
@@ -272,6 +293,7 @@ export function maybeRecompute(opts: {
     sealerProfileId: opts.sealerProfileId,
     allProfiles: opts.allProfiles,
     tasks: opts.tasks,
+    gamiHistory: opts.gamiHistory,
     today,
     pendingCount,
   });
