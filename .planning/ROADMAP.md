@@ -99,7 +99,7 @@ Détails phase-by-phase préservés ci-dessous dans `## Phase Details`.
 **Milestone Goal :** Introduire des objets consommables qui modifient le comportement des plants au moment de la plantation, pour créer des décisions stratégiques au-delà du cycle plant→récolte→craft classique — transformer le jardin en terrain de décisions plutôt qu'en simple timer. Scope v1.7 = Sporée de Régularité uniquement (Chimère reportée v1.8). Fondation `modifiers` conçue extensible. Zéro nouvelle dépendance npm, backward compat Obsidian vault obligatoire, chaque phase non-cassante (app sur TestFlight).
 
 - [x] **Phase 38: Fondation modifiers + économie Sporée** — Shape `FarmCrop.modifiers` + CSV backward-compat + bump cache + drop/shop/expedition/cadeau + cap inventaire + tests Jest fondations (MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13) (completed 2026-04-18)
-- [ ] **Phase 39: Moteur prorata + calcul famille** — Calcul cumulatif 23h30 + snapshot matinal + poids par âge + profils actifs 7j glissants + filtre strict Tasks + tests Jest (SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13)
+- [x] **Phase 39: Moteur prorata + calcul famille** — Calcul cumulatif 23h30 + snapshot matinal + poids par âge + profils actifs 7j glissants + filtre strict Tasks + tests Jest (SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13) (completed 2026-04-18)
 - [ ] **Phase 40: UI Sporée — seed picker + badge + validation** — Slot "Sceller" inline + application Sporée 3 durées + badge plant progression + validation récolte multiplier + état visuel plant mûr (MOD-03, SPOR-01, SPOR-02, SPOR-07, SPOR-11)
 - [ ] **Phase 41: Polish onboarding + codex + non-régression** — Tooltip one-shot premier drop + compteur codex `marathonWins` + non-régression TS/Jest finale (SPOR-10, SPOR-12)
 
@@ -269,10 +269,10 @@ Plans:
   3. User voit seulement les profils avec ≥1 tâche complétée sur les 7 derniers jours glissants comptés dans le diviseur famille — un ado dormant n'allège pas la charge du parent sealeur
   4. User voit seulement les tâches du domaine Tasks comptabilisées (Courses, Repas, Routines, Anniversaires, Notes, Moods exclus) — filtre strict par type de source
   5. User voit la suite Jest moteur passer (prorata fractionnaire, override poids, détection 7j glissants, filtre domaine Tasks, snapshot matinal stable) — `npx tsc --noEmit` et `npx jest --no-coverage` clean
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 39-01-PLAN.md — Fondations data: Profile.weight_override + parseSnapshots/appendSnapshot/pruneSnapshots (SPOR-04, SPOR-13)
-- [ ] 39-02-PLAN.md — Moteur pur wager-engine.ts (7 concepts) + suite Jest ≥45 tests (SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13)
+- [x] 39-02-PLAN.md — Moteur pur wager-engine.ts (7 concepts) + suite Jest ≥45 tests (SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13)
 
 ### Phase 40: UI Sporée — seed picker + badge + validation
 **Goal**: Rendre la Sporée utilisable bout-en-bout via l'UI — slot "Sceller" inline étendant le seed picker existant (apparaît si ≥1 Sporée), application Sporée avec choix de 3 durées dérivées de la taille du plant (multipliers ×1.3 / ×1.7 / ×2.5), badge sur plant scellé affichant progression jour + cumul avec code couleur pace, état visuel "prêt à valider" sur plant mûr, validation à la récolte appliquant multiplier ou reward normale.
@@ -313,7 +313,7 @@ Plans:
 | 36. Composition & programmation reveal | 4/4 | Complete   | 2026-04-17 |
 | 37. Garde-parent & polish | 0/TBD | Deferred | - |
 | 38. Fondation modifiers + économie Sporée | 3/3 | Complete   | 2026-04-18 |
-| 39. Moteur prorata + calcul famille | 1/2 | In Progress|  |
+| 39. Moteur prorata + calcul famille | 2/2 | Complete   | 2026-04-18 |
 | 40. UI Sporée — seed picker + badge + validation | 0/TBD | Not started | - |
 | 41. Polish onboarding + codex + non-régression | 0/TBD | Not started | - |
 

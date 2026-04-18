@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
-status: executing
-last_updated: "2026-04-18T17:04:01.458Z"
+status: verifying
+last_updated: "2026-04-18T17:12:02.508Z"
 last_activity: 2026-04-18
 progress:
   total_phases: 13
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 21
-  completed_plans: 22
+  completed_plans: 23
   percent: 0
 ---
 
@@ -32,7 +32,7 @@ Last activity: 2026-04-18
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ### Quick Tasks Completed
 
@@ -164,6 +164,7 @@ Status: Ready to execute
 | Phase 38 P02 | 3min | 2 tasks | 2 files |
 | Phase 38 P03 | 15min | 3 tasks | 6 files |
 | Phase 39-moteur-prorata-calcul-famille P01 | 8min | 2 tasks | 5 files |
+| Phase 39-moteur-prorata-calcul-famille P02 | 12min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -329,6 +330,9 @@ Recent decisions affecting current work:
 - [Phase 38]: [Phase 38-03]: Économie Sporée câblée end-to-end (parser + 3 hooks), Open Q1 résolu (flag reste false si overflow au cadeau), Open Q2 résolu (roll expedition indépendant outcome), mutation in-place farmData dans useGamification (évite double I/O)
 - [Phase 39-moteur-prorata-calcul-famille]: appendSnapshot replace-on-same-date (distinct appendBuilding skip) — snapshot matinal doit pouvoir se rafraîchir
 - [Phase 39-moteur-prorata-calcul-famille]: parseSnapshots scan multi-sections (defensive merge) — survit aux vaults pollués
+- [Phase 39-moteur-prorata-calcul-famille]: Attribution tâche→profil par triple check (mentions.id + mentions.name + sourceFile insensitive) — résilient aux conventions vault hétérogènes
+- [Phase 39-moteur-prorata-calcul-famille]: shouldRecompute simplifié jour-différent uniquement — Phase 40 schedulera setTimeout minuit si edge 23h30 requis, moteur pur reste sans heure magique
+- [Phase 39-moteur-prorata-calcul-famille]: Fallback D-04 unifié : familyWeightSum=0 OU sealeur introuvable → cumulTarget=pendingCount (pari auto-gagné)
 
 ### Todos
 
@@ -340,5 +344,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-18T17:04:01.454Z
+Last session: 2026-04-18T17:11:56.559Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)

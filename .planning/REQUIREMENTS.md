@@ -27,10 +27,10 @@
 
 - [ ] **SPOR-01**: User peut appliquer une Sporée à la plantation via le slot "Sceller", choisir parmi 3 durées (Chill / Engagé / Sprint) dérivées automatiquement de la taille du plant, avec multiplier de reward visible (×1.3 / ×1.7 / ×2.5) et prorata théorique affiché avant confirmation
 - [ ] **SPOR-02**: User voit un badge sur le plant scellé affichant `X/Y tâches aujourd'hui • cumul Z/N` avec code couleur dérivé de la progression vs ligne de pace (vert/jaune/orange), sans animation continue lourde
-- [ ] **SPOR-03**: User voit le cumul requis recalculé et mis à jour chaque soir à 23h30 (ou au boot de l'app si l'app était fermée) selon la formule `(poids_sealeur / poids_famille_active_7j) × Tasks_pending`, basé sur un snapshot matinal stable des tâches pending
+- [x] **SPOR-03**: User voit le cumul requis recalculé et mis à jour chaque soir à 23h30 (ou au boot de l'app si l'app était fermée) selon la formule `(poids_sealeur / poids_famille_active_7j) × Tasks_pending`, basé sur un snapshot matinal stable des tâches pending
 - [x] **SPOR-04**: User voit les poids par âge appliqués automatiquement aux profils actifs (Adulte 1.0 / Ado 0.7 / Enfant 0.4 / Jeune enfant 0.15 / Bébé 0.0) — dérivés de la date de naissance du profil, avec override manuel possible dans les settings profil
-- [ ] **SPOR-05**: User voit seulement les profils actifs sur les 7 derniers jours glissants comptés dans le diviseur famille (au moins 1 tâche complétée dans la fenêtre) — un ado dormant n'allège pas la charge du parent sealeur
-- [ ] **SPOR-06**: User voit seulement les tâches du domaine Tasks comptabilisées (pas Courses, pas Repas, pas Routines, pas Anniversaires, pas Notes, pas Moods) — filtre strict par type de source
+- [x] **SPOR-05**: User voit seulement les profils actifs sur les 7 derniers jours glissants comptés dans le diviseur famille (au moins 1 tâche complétée dans la fenêtre) — un ado dormant n'allège pas la charge du parent sealeur
+- [x] **SPOR-06**: User voit seulement les tâches du domaine Tasks comptabilisées (pas Courses, pas Repas, pas Routines, pas Anniversaires, pas Notes, pas Moods) — filtre strict par type de source
 - [ ] **SPOR-07**: User récolte le plant scellé : si cumul atteint → reward × multiplier appliqué + toast de victoire + 15% chance de drop-back d'une Sporée, sinon reward normale sans pénalité autre que la Sporée consommée
 - [x] **SPOR-08**: User obtient des Sporées via 4 sources : drops à la récolte (3% tier 1-3, 8% rare, 15% expedition), achat shop (400 feuilles, cap 2/jour, dès Arbre stade 3), loot expedition (5% missions Pousse+), cadeau onboarding (1 gratuite au stade 3 avec tooltip explicatif)
 - [x] **SPOR-09**: User voit son inventaire de Sporées cappé à 10 — drops au-delà affichent un toast "Inventaire Sporée plein" et ne sont pas perdus silencieusement
@@ -78,10 +78,10 @@ Mapping REQ-ID → Phase (v1.7 Phases 38-41).
 | MOD-03 | Phase 40 | Pending |
 | SPOR-01 | Phase 40 | Pending |
 | SPOR-02 | Phase 40 | Pending |
-| SPOR-03 | Phase 39 | Pending |
+| SPOR-03 | Phase 39 | Complete |
 | SPOR-04 | Phase 39 | Complete |
-| SPOR-05 | Phase 39 | Pending |
-| SPOR-06 | Phase 39 | Pending |
+| SPOR-05 | Phase 39 | Complete |
+| SPOR-06 | Phase 39 | Complete |
 | SPOR-07 | Phase 40 | Pending |
 | SPOR-08 | Phase 38 | Complete |
 | SPOR-09 | Phase 38 | Complete |
