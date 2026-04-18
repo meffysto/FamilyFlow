@@ -5,7 +5,7 @@
 // Couvre VILL-11 (portail retour visuel symétrique), CD-04 (mutualisation).
 
 import React, { useCallback } from 'react';
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,10 +13,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, Radius } from '../../constants/spacing';
-
-const { width: SCREEN_W } = Dimensions.get('window');
-// Même calcul que tree.tsx pour aligner le portail au-dessus du sommet de l'arbre
-const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
 
 // Spring config constante module (convention CLAUDE.md)
 const SPRING_PORTAL = { damping: 12, stiffness: 200 } as const;
@@ -48,6 +44,9 @@ export function PortalSprite({
   accessibilityLabel = 'Portail vers le village',
   badgeCount = 0,
 }: PortalSpriteProps) {
+  const { width: SCREEN_W } = useWindowDimensions();
+  // Même calcul que tree.tsx pour aligner le portail au-dessus du sommet de l'arbre
+  const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
   const scaleAnim = useSharedValue(1);
 
   const containerStyle = useAnimatedStyle(() => ({

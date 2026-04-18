@@ -166,7 +166,7 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
         <>
           {/* Header */}
           <View style={styles.header} pointerEvents="box-none">
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={[styles.closeBtnText, { color: colors.onPrimary }]}>✕</Text>
             </TouchableOpacity>
           </View>

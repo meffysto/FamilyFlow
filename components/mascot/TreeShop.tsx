@@ -454,7 +454,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
         {/* Parchment content */}
         <View style={styles.parchment}>
         {/* Close button */}
-        <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.75}>
+        <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} activeOpacity={0.75}>
           <Text style={styles.closeBtnText}>{'✕'}</Text>
         </TouchableOpacity>
           {/* Handle */}

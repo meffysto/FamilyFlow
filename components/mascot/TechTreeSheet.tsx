@@ -439,6 +439,7 @@ export function TechTreeSheet({
             <TouchableOpacity
               onPress={onClose}
               style={styles.closeBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               activeOpacity={0.7}
             >
               <Text style={styles.closeBtnText}>{'✕'}</Text>

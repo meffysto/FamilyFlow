@@ -13,9 +13,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   Image,
   TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -46,7 +46,6 @@ import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 // ─── Design constants ─────────────────────────────────────────────────────────
 
 const SPRING_CONFIG = { damping: 14, stiffness: 200 };
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 /** Nombre d'écrans affiché dans la barre de progression */
 const PROGRESS_TOTAL = 10;
 /** Dernier step interne (12 = calendrier après mascotte + caméra) */
@@ -170,6 +169,7 @@ interface TinderCardProps {
 function TinderCard({ text, onSwipe, index, total }: TinderCardProps) {
   const { t } = useTranslation();
   const { colors } = useThemeColors();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const swiped = useRef(false);
@@ -233,7 +233,7 @@ function TinderCard({ text, onSwipe, index, total }: TinderCardProps) {
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View
-        style={[s.tinderCard, { backgroundColor: colors.card, shadowColor: colors.text }, cardStyle]}
+        style={[s.tinderCard, { width: SCREEN_WIDTH - Spacing['2xl'] * 2, backgroundColor: colors.card, shadowColor: colors.text }, cardStyle]}
       >
         {/* Indicateur OUI */}
         <Animated.View style={[s.tinderBadge, s.tinderBadgeYes, yesStyle]}>
@@ -1415,7 +1415,6 @@ const s = StyleSheet.create({
   },
   tinderCard: {
     position: 'absolute',
-    width: SCREEN_WIDTH - Spacing['2xl'] * 2,
     minHeight: 200,
     borderRadius: Radius['2xl'],
     padding: Spacing['3xl'],

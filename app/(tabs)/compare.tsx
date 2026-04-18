@@ -211,7 +211,7 @@ export default function CompareScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={[styles.header, { backgroundColor: colors.bg }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel={t('compare.a11y.back')} accessibilityRole="button">
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel={t('compare.a11y.back')} accessibilityRole="button">
             <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Comparer</Text>
@@ -233,7 +233,7 @@ export default function CompareScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel={t('compare.a11y.back')} accessibilityRole="button">
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel={t('compare.a11y.back')} accessibilityRole="button">
           <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Comparer</Text>

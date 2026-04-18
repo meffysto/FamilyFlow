@@ -18,10 +18,10 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   ActivityIndicator,
   Image,
   AppState,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -81,8 +81,6 @@ import type { FarmProfileData } from '../../lib/types';
 
 // ── Constantes module ──────────────────────────────────────────────────────
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-
 // ── Helpers hors composant ────────────────────────────────────────────────
 
 /**
@@ -131,7 +129,6 @@ async function addVillageBonus(
 
   await vaultMgr.writeFile(gamiPath, serializeGamification(singleData));
 }
-const MAP_HEIGHT = SCREEN_W * 2;
 const FOUNTAIN_SIZE = 96;
 const GOLD = '#FFD700';
 const SPRING_FEED = { damping: 20, stiffness: 200 } as const;
@@ -329,6 +326,8 @@ const CraftFeedItem = React.memo(function CraftFeedItem({
 export default function VillageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width: SCREEN_W } = useWindowDimensions();
+  const MAP_HEIGHT = SCREEN_W * 2;
   const { colors, isDark } = useThemeColors();
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -672,7 +671,7 @@ export default function VillageScreen() {
       >
         {/* ── Carte TileMap village + overlay avatars ── */}
         <View
-          style={[styles.mapContainer, { height: MAP_HEIGHT, marginHorizontal: -Spacing['2xl'] }]}
+          style={[styles.mapContainer, { width: SCREEN_W, height: MAP_HEIGHT, marginHorizontal: -Spacing['2xl'] }]}
           onLayout={handleMapLayout}
         >
           {/* Fond herbe répété — couvre toute la carte y compris zones sans tile */}
@@ -1216,7 +1215,6 @@ const styles = StyleSheet.create({
     height: FOUNTAIN_SIZE,
   },
   mapContainer: {
-    width: SCREEN_W,
     overflow: 'hidden',
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,

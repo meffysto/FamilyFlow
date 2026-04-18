@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,10 +26,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Spacing } from '../../constants/spacing';
 import type { HarvestEvent, RareSeedDrop } from '../../lib/mascot/farm-engine';
-
-const { width: SW, height: SH } = Dimensions.get('window');
-const CX = SW / 2; // centre X
-const CY = SH / 2; // centre Y
 
 // ── Types ────────────────────────────────────────
 
@@ -91,6 +87,9 @@ function PixelDot({ startX, startY, endX, endY, size, color, delay, duration }: 
 
 function InsectesContent({ event }: { event: HarvestEvent }) {
   const { t } = useTranslation();
+  const { width: SW, height: SH } = useWindowDimensions();
+  const CX = SW / 2;
+  const CY = SH / 2;
   const shakeX = useSharedValue(0);
   const trembleX = useSharedValue(0);
   const labelOpacity = useSharedValue(0);
@@ -184,6 +183,7 @@ function FireworkBurst({ originX, originY, delay }: {
 }
 
 function FallingLeaf({ x, delay }: { x: number; delay: number }) {
+  const { height: SH } = useWindowDimensions();
   const top = useSharedValue(-8);
   const left = useSharedValue(x);
   const opacity = useSharedValue(0);
@@ -219,6 +219,7 @@ function FallingLeaf({ x, delay }: { x: number; delay: number }) {
 
 function PluieDoreeContent({ event }: { event: HarvestEvent }) {
   const { t } = useTranslation();
+  const { width: SW, height: SH } = useWindowDimensions();
   const scale = useSharedValue(0);
   const [burst2, setBurst2] = useState(false);
   const [burst3, setBurst3] = useState(false);
@@ -266,6 +267,9 @@ function PluieDoreeContent({ event }: { event: HarvestEvent }) {
 // ── Mutation rare ────────────────────────────────
 
 function PixelDiamond({ index, radius }: { index: number; radius: number }) {
+  const { width: SW, height: SH } = useWindowDimensions();
+  const CX = SW / 2;
+  const CY = SH / 2;
   const angle = useSharedValue((index * Math.PI * 2) / 6);
   const flash = useSharedValue(1);
   const color = MUTATION_COLORS[index % MUTATION_COLORS.length];
@@ -301,6 +305,9 @@ function PixelDiamond({ index, radius }: { index: number; radius: number }) {
 }
 
 function PixelPulseRing({ delay }: { delay: number }) {
+  const { width: SW, height: SH } = useWindowDimensions();
+  const CX = SW / 2;
+  const CY = SH / 2;
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0.8);
 
@@ -354,6 +361,7 @@ function Sparkle({ x, y, delay }: { x: number; y: number; delay: number }) {
 
 function MutationContent({ event }: { event: HarvestEvent }) {
   const { t } = useTranslation();
+  const { width: SW, height: SH } = useWindowDimensions();
   const scale = useSharedValue(0);
   const flashOpacity = useSharedValue(0.9);
 
@@ -476,6 +484,9 @@ interface SeedDropOverlayProps {
 }
 
 export function SeedDropOverlay({ seedDrop, onDismiss }: SeedDropOverlayProps) {
+  const { width: SW, height: SH } = useWindowDimensions();
+  const CX = SW / 2;
+  const CY = SH / 2;
   const emojiScale = useSharedValue(0);
   const labelOpacity = useSharedValue(0);
 

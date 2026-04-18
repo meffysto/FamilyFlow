@@ -19,7 +19,7 @@ import {
   SectionList,
   Modal,
   Platform,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, interpolateColor, useDerivedValue } from 'react-native-reanimated';
@@ -205,6 +205,7 @@ export default function TasksScreen() {
   const { primary, tint, colors } = useThemeColors();
   const { showToast, showRewardCard } = useToast();
   const { t } = useTranslation();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
   const { filter: filterParam, addNew } = useLocalSearchParams<{ filter?: string; addNew?: string }>();
 
@@ -1036,8 +1037,8 @@ export default function TasksScreen() {
       {effectBurst && (
         <HarvestBurst
           key={effectBurst.key}
-          x={Dimensions.get('window').width / 2}
-          y={Dimensions.get('window').height / 3}
+          x={windowWidth / 2}
+          y={windowHeight / 3}
           reward={1}
           cropColor={effectBurst.variant === 'golden' ? '#FFD700' : effectBurst.variant === 'rare' ? '#A78BFA' : '#34D399'}
           variant={effectBurst.variant}

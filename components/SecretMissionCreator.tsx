@@ -14,6 +14,8 @@ import {
   TouchableOpacity,
   Modal,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -110,6 +112,11 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
       onRequestClose={handleClose}
     >
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={0}
+        >
         <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
         <ModalHeader
           title={t('secretMissionCreator.title')}
@@ -242,6 +249,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
             {t('secretMissionCreator.rewardInfo')}
           </Text>
         </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );

@@ -12,7 +12,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Image, StyleSheet, Pressable, Dimensions, Modal } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable, Modal, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -237,6 +237,8 @@ interface NarrativeCardProps {
 }
 
 function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite }: NarrativeCardProps) {
+  const { width: SCREEN_W } = useWindowDimensions();
+  const cardMaxWidth = Math.min(340, SCREEN_W - Spacing['3xl'] * 2);
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.9);
 
@@ -260,6 +262,7 @@ function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite }: Narrativ
       <Animated.View
         style={[
           styles.card,
+          { width: cardMaxWidth },
           animatedStyle,
           { backgroundColor: colors.colors.card, borderColor: colors.colors.border },
           Shadows.lg,
@@ -315,9 +318,6 @@ function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite }: Narrativ
   );
 }
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const CARD_MAX_WIDTH = Math.min(340, SCREEN_W - Spacing['3xl'] * 2);
-
 const styles = StyleSheet.create({
   fullscreen: {
     ...StyleSheet.absoluteFillObject,
@@ -330,7 +330,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
   },
   card: {
-    width: CARD_MAX_WIDTH,
     borderRadius: Radius.xl,
     padding: Spacing['3xl'],
     borderWidth: 1,

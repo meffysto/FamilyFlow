@@ -21,8 +21,8 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
-  Dimensions,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -75,10 +75,6 @@ interface EnvelopeUnfoldModalProps {
   onUnfoldComplete: () => void;
 }
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const ENVELOPE_W = Math.min(SCREEN_WIDTH - Spacing['2xl'] * 2, 340);
-const ENVELOPE_H = Math.round(ENVELOPE_W / (2 / 1.15));
-const FLAP_H = Math.round(ENVELOPE_H * 0.55);
 const SEAL_SIZE = 72;
 
 function triggerHaptic() {
@@ -94,6 +90,10 @@ function formatPostmarkDate(d: Date = new Date()): string {
 export function EnvelopeUnfoldModal({
   visible, fromName, toName, body, onClose, onUnfoldComplete,
 }: EnvelopeUnfoldModalProps) {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const ENVELOPE_W = Math.min(SCREEN_WIDTH - Spacing['2xl'] * 2, 340);
+  const ENVELOPE_H = Math.round(ENVELOPE_W / (2 / 1.15));
+  const FLAP_H = Math.round(ENVELOPE_H * 0.55);
   // Anim shared values
   const envelopeScale = useSharedValue(0.85);
   const envelopeFloat = useSharedValue(0);
@@ -253,7 +253,7 @@ export function EnvelopeUnfoldModal({
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFillObject}
             />
-            <ScrollView contentContainerStyle={styles.letterInner}>
+            <ScrollView contentContainerStyle={[styles.letterInner, { paddingTop: FLAP_H + Spacing.md }]}>
               <Text style={styles.letterFrom}>De {fromName}</Text>
               <Text style={styles.letterBody}>{body}</Text>
             </ScrollView>
@@ -292,7 +292,7 @@ export function EnvelopeUnfoldModal({
         </Animated.View>
 
         {/* Cachet de cire avec initiale calligraphique — hors overflow pour s'envoler */}
-        <Animated.View style={[styles.sealSlot, sealStyle]} pointerEvents="none">
+        <Animated.View style={[styles.sealSlot, { marginTop: -SEAL_SIZE / 2 + ENVELOPE_H * 0.05 }, sealStyle]} pointerEvents="none">
           <WaxSeal
             size={SEAL_SIZE}
             count={0}
@@ -336,7 +336,6 @@ const styles = StyleSheet.create({
     top: '50%',
     left: '50%',
     marginLeft: -SEAL_SIZE / 2,
-    marginTop: -SEAL_SIZE / 2 + ENVELOPE_H * 0.05,
     zIndex: 10,
   },
   // ─── Lettre intérieure (cream) ─────────────────────────────
@@ -346,7 +345,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   letterInner: {
-    paddingTop: FLAP_H + Spacing.md,
     paddingHorizontal: Spacing['2xl'],
     paddingBottom: Spacing['2xl'],
   },
