@@ -299,7 +299,7 @@ export function useFarm(
   }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
-  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null } | null> => {
+  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null; qty: number } | null> => {
     if (!vault) return null;
 
 
@@ -372,7 +372,7 @@ export function useFarm(
       // if (onContribution) {
       //   try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
       // }
-      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
+      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty };
     }
 
     // Preparer les champs a ecrire (chemin standard — pas de golden effect)
@@ -410,7 +410,7 @@ export function useFarm(
     //   try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
     // }
 
-    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
+    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty };
   }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress, onContribution, showToast]);
 
   /** Vendre une recolte brute depuis l'inventaire (qty = nombre d'unités à vendre) */

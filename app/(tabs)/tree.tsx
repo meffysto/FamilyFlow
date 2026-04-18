@@ -1281,7 +1281,7 @@ export default function TreeScreen() {
           const accord = FEMININE_CROPS.has(result.cropId) ? 'récoltée' : 'récolté';
           const harvestLabel = `${result.isGolden ? '✨ ' : ''}${cropLabel} ${accord} !`;
           showHarvestCard(
-            { emoji, label: harvestLabel, qty: 1 },
+            { emoji, label: harvestLabel, qty: result.qty },
             result.isGolden,
           );
           // Animation graine rare avec délai pour ne pas chevaucher le toast récolte
