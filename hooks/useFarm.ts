@@ -9,6 +9,8 @@ import { useCallback } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
+import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount } from '../lib/mascot/sporee-economy';
+import { useToast } from '../contexts/ToastContext';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { FarmInventory, CraftedItem } from '../lib/mascot/types';
 import { isLargeCropPlot } from '../lib/mascot/world-grid';
@@ -144,6 +146,11 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
     case 'gifts_sent_today':
       data.giftsSentToday = value;
       break;
+    case 'sporee_count': {
+      const n = parseInt(value, 10);
+      data.sporeeCount = isNaN(n) ? undefined : n;
+      break;
+    }
   }
 }
 
@@ -152,6 +159,7 @@ export function useFarm(
   onContribution?: (type: ContributionType, profileId: string) => Promise<void>,
 ) {
   const { vault, profiles, refreshFarm, refreshGamification } = useVault();
+  const { showToast } = useToast();
 
   /** Deduire des feuilles dans gami-{profileId}.md */
   const deductCoins = useCallback(async (profileId: string, amount: number, note: string) => {
@@ -326,6 +334,22 @@ export function useFarm(
     // Tenter un drop de graine rare
     const seedDrop = rollSeedDrop(result.harvestedCropId);
 
+    // Phase 38 (SPOR-08) — Drop Sporée post-récolte
+    // Tier classifié via CROP_CATALOG (base 3% / rare 8% / expedition 15%)
+    const sporeeTier = classifyHarvestTier(result.harvestedCropId);
+    let sporeeDropped = false;
+    let sporeeRefused = false;
+    if (rollSporeeDropOnHarvest(sporeeTier)) {
+      const currentSporee = profile.sporeeCount ?? 0;
+      const inc = tryIncrementSporeeCount(currentSporee, 1);
+      if (inc.accepted) {
+        profile.sporeeCount = inc.newCount;
+        sporeeDropped = true;
+      } else {
+        sporeeRefused = true;
+      }
+    }
+
     if (wasGoldenEffect) {
       // Ecrire farm en une seule operation (crops + harvest inv + reset golden flag)
       const updatedProfile = {
@@ -333,10 +357,14 @@ export function useFarm(
         farmCrops: serializeCrops(result.crops),
         harvestInventory: updatedHarvestInv,
         ...(seedDrop ? { farmRareSeeds: { ...(profile.farmRareSeeds ?? {}), [seedDrop.seedId]: ((profile.farmRareSeeds ?? {})[seedDrop.seedId] ?? 0) + 1 } } : {}),
+        ...(sporeeDropped ? { sporeeCount: profile.sporeeCount } : {}),
       };
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
       await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, updatedProfile));
       await refreshFarm(profileId);
+      if (sporeeRefused) {
+        showToast('Inventaire Sporée plein', 'error');
+      }
       if (onQuestProgress) {
         try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
       }
@@ -361,9 +389,17 @@ export function useFarm(
       fieldsToWrite.farm_rare_seeds = serializeRareSeeds(updatedRareSeeds);
     }
 
+    // Phase 38 (SPOR-08) — persister sporee_count si drop accepté
+    if (sporeeDropped && typeof profile.sporeeCount === 'number') {
+      fieldsToWrite.sporee_count = String(profile.sporeeCount);
+    }
+
     // Ecrire tous les champs en une seule operation
     await writeProfileFields(profileId, fieldsToWrite);
     await refreshFarm(profileId);
+    if (sporeeRefused) {
+      showToast('Inventaire Sporée plein', 'error');
+    }
 
     // Progression quêtes coopératives (harvest)
     if (onQuestProgress) {
@@ -375,7 +411,7 @@ export function useFarm(
     // }
 
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
-  }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress, onContribution]);
+  }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress, onContribution, showToast]);
 
   /** Vendre une recolte brute depuis l'inventaire (qty = nombre d'unités à vendre) */
   const sellHarvest = useCallback(async (profileId: string, cropId: string, qty: number = 1): Promise<number> => {
