@@ -304,7 +304,7 @@ const CraftFeedItem = React.memo(function CraftFeedItem({
   const label = recipe ? `${recipe.resultEmoji} ${recipe.labelFR}` : craft.recipeId;
   const xp = recipe?.xpBonus ?? 0;
   return (
-    <View style={[styles.feedItem, styles.craftFeedItem, { borderBottomColor: colors.borderLight, borderLeftColor: colors.warning }]}>
+    <View style={[styles.feedItem, styles.craftFeedItem, { borderBottomColor: colors.borderLight }]}>
       <Text style={styles.feedEmoji}>{profileEmoji}</Text>
       <View style={styles.feedContent}>
         <Text style={[styles.feedName, { color: colors.text }]} numberOfLines={1}>
@@ -1287,7 +1287,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   craftFeedItem: {
-    borderLeftWidth: 3,
     paddingLeft: Spacing.sm,
   },
   feedEmoji: {

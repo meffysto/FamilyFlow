@@ -14,7 +14,7 @@ import { computeGratitudeStreak } from '../../app/(tabs)/gratitude';
 import { isBabyProfile } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Spacing } from '../../constants/spacing';
+import { Spacing, Radius } from '../../constants/spacing';
 
 function DashboardGratitudeInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -38,7 +38,7 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
     <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} icon="🙏" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/gratitude' as any)} hideMoreLink style={{ flex: 1 }}>
       {firstEntry ? (
         <>
-          <View style={[styles.quoteBorder, { borderLeftColor: colors.catSouvenirs }]}>
+          <View style={[styles.quoteBorder, { backgroundColor: colors.cardAlt }]}>
             <Text style={[styles.quoteText, { color: colors.text }]} numberOfLines={3}>
               "{firstEntry.text}"
             </Text>
@@ -62,8 +62,8 @@ export const DashboardGratitude = React.memo(DashboardGratitudeInner);
 
 const styles = StyleSheet.create({
   quoteBorder: {
-    borderLeftWidth: 2,
-    paddingLeft: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.sm,
     marginBottom: Spacing.sm,
   },
   quoteText: {

@@ -753,7 +753,7 @@ function VaccinsTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void
           styles.vaccineBanner,
           {
             backgroundColor: allVaccinesDone ? colors.successBg : colors.warningBg,
-            borderLeftColor: allVaccinesDone ? colors.success : colors.warning,
+            borderColor: allVaccinesDone ? colors.success : colors.warning,
           },
         ]}>
           <Text style={[styles.vaccineBannerText, { color: colors.text }]} numberOfLines={1}>
@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
     borderRadius: Radius.lg,
-    borderLeftWidth: 3,
+    borderWidth: StyleSheet.hairlineWidth,
     marginBottom: Spacing.lg,
   },
   vaccineBannerText: {

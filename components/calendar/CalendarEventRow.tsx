@@ -28,12 +28,13 @@ function CalendarEventRowInner({ event }: CalendarEventRowProps) {
 
   return (
     <TouchableOpacity
-      style={[styles.row, { borderLeftColor: eventColor }]}
+      style={styles.row}
       onPress={handlePress}
       activeOpacity={event.route ? 0.7 : 1}
       accessibilityLabel={`${event.emoji} ${event.label}`}
       accessibilityRole="button"
     >
+      <View style={[styles.dot, { backgroundColor: eventColor }]} />
       <Text style={styles.emoji}>{event.emoji}</Text>
       <View style={styles.content}>
         <Text style={[styles.label, { color: colors.text }]} numberOfLines={1}>
@@ -60,10 +61,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderLeftWidth: 3,
     marginBottom: Spacing.xs,
     borderRadius: Radius.sm,
     gap: Spacing.sm,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   emoji: {
     fontSize: 18,

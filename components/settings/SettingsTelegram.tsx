@@ -86,7 +86,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
           <ModalHeader title={t('settings.telegram.modalTitle')} onClose={() => setShowSetup(false)} />
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
-            <View style={[styles.setupStep, { borderLeftColor: primary, backgroundColor: colors.cardAlt }]}>
+            <View style={[styles.setupStep, { borderColor: colors.border, backgroundColor: colors.cardAlt }]}>
               <Text style={[styles.setupTitle, { color: colors.text }]}>{t('settings.telegram.step1Title')}</Text>
               <Text style={[styles.setupText, { color: colors.textSub }]}>
                 {t('settings.telegram.step1Line1')} <Text style={[styles.bold, { color: colors.text }]}>@BotFather</Text>{'\n'}
@@ -109,7 +109,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
               accessibilityLabel={t('settings.telegram.tokenA11y')}
             />
 
-            <View style={[styles.setupStep, { borderLeftColor: primary, backgroundColor: colors.cardAlt }]}>
+            <View style={[styles.setupStep, { borderColor: colors.border, backgroundColor: colors.cardAlt }]}>
               <Text style={[styles.setupTitle, { color: colors.text }]}>{t('settings.telegram.step2Title')}</Text>
               <Text style={[styles.setupText, { color: colors.textSub }]}>
                 {t('settings.telegram.step2Line1')}{'\n'}
@@ -127,7 +127,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
               </Text>
             </View>
 
-            <View style={[styles.tip, { backgroundColor: colors.warningBg, borderLeftColor: colors.warning }]}>
+            <View style={[styles.tip, { backgroundColor: colors.warningBg, borderColor: colors.warning }]}>
               <Text style={[styles.tipText, { color: colors.warningText }]}>
                 💡 <Text style={[styles.bold, { color: colors.text }]}>{t('settings.telegram.groupTip')}</Text>
               </Text>
@@ -173,13 +173,13 @@ const styles = StyleSheet.create({
   modalSafe: { flex: 1 },
   modalScroll: { flex: 1 },
   modalContent: { padding: Spacing['3xl'], gap: Spacing.xl },
-  setupStep: { padding: Spacing.xl, borderRadius: Radius.base, borderLeftWidth: 3 },
+  setupStep: { padding: Spacing.xl, borderRadius: Radius.base, borderWidth: StyleSheet.hairlineWidth },
   setupTitle: { fontSize: FontSize.body, fontWeight: FontWeight.bold, marginBottom: Spacing.md },
   setupText: { fontSize: FontSize.sm, lineHeight: 22 },
   bold: { fontWeight: FontWeight.bold },
   code: { fontFamily: 'Courier', paddingHorizontal: 4, borderRadius: 3, fontSize: FontSize.label },
   codeBlock: { fontFamily: 'Courier', fontSize: FontSize.caption, padding: Spacing.lg, borderRadius: Radius.sm, overflow: 'hidden' },
-  tip: { padding: Spacing.xl, borderRadius: Radius.md, borderLeftWidth: 3 },
+  tip: { padding: Spacing.xl, borderRadius: Radius.md, borderWidth: StyleSheet.hairlineWidth },
   tipText: { fontSize: FontSize.label, lineHeight: 20 },
   inputLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   input: { borderWidth: 1.5, borderRadius: Radius.base, padding: Spacing.xl, fontSize: FontSize.body },

@@ -47,7 +47,7 @@ export function AllergenBanner({ conflicts }: AllergenBannerProps) {
             styles.row,
             {
               backgroundColor: colors.errorBg,
-              borderLeftColor: colors.error,
+              borderColor: colors.error,
             },
           ]}
         >
@@ -64,7 +64,7 @@ export function AllergenBanner({ conflicts }: AllergenBannerProps) {
             styles.row,
             {
               backgroundColor: colors.warningBg,
-              borderLeftColor: colors.warning,
+              borderColor: colors.warning,
             },
           ]}
         >
@@ -81,7 +81,7 @@ export function AllergenBanner({ conflicts }: AllergenBannerProps) {
             styles.row,
             {
               backgroundColor: colors.tagMention,
-              borderLeftColor: colors.warning,
+              borderColor: colors.warning,
             },
           ]}
         >
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing['2xl'],
   },
   row: {
-    borderLeftWidth: 3,
+    borderWidth: 1,
     borderRadius: Radius.lg,
     padding: Spacing.xl,
     marginBottom: Spacing.md,

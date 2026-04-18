@@ -511,7 +511,7 @@ export const MarkdownText = React.memo(function MarkdownText({
                 key={i}
                 style={[
                   mdStyles.blockquote,
-                  { borderLeftColor: colors.textMuted, backgroundColor: colors.cardAlt },
+                  { borderColor: colors.borderLight, backgroundColor: colors.cardAlt },
                 ]}
               >
                 {renderInline(block.text, {
@@ -555,7 +555,7 @@ export const MarkdownText = React.memo(function MarkdownText({
                 style={[
                   mdStyles.callout,
                   {
-                    borderLeftColor: calloutColors.border,
+                    borderColor: calloutColors.border,
                     backgroundColor: calloutColors.bg,
                   },
                 ]}
@@ -634,7 +634,7 @@ const mdStyles = StyleSheet.create({
   },
   // — Blockquote —
   blockquote: {
-    borderLeftWidth: 3,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.sm,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
@@ -653,7 +653,7 @@ const mdStyles = StyleSheet.create({
   },
   // — Callout —
   callout: {
-    borderLeftWidth: 3,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.md,
     padding: Spacing.md,
     marginVertical: Spacing.sm,

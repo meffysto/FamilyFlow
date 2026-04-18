@@ -81,11 +81,13 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
           return (
             <TouchableOpacity
               key={insight.id}
-              style={[styles.insightRowMain, { borderLeftColor: priorityColor }]}
+              style={styles.insightRowMain}
               activeOpacity={insight.action?.route ? 0.7 : 1}
               onPress={handlePress}
             >
-              <Text style={styles.insightIconMain}>{insight.icon}</Text>
+              <View style={[styles.insightIconBadgeMain, { backgroundColor: priorityColor + '18' }]}>
+                <Text style={styles.insightIconMain}>{insight.icon}</Text>
+              </View>
               <View style={styles.insightContent}>
                 <Text style={[styles.insightTitleMain, { color: colors.text }]} numberOfLines={2}>{insight.title}</Text>
                 <Text style={[styles.insightBodyMain, { color: colors.textSub }]} numberOfLines={2}>{insight.body}</Text>
@@ -102,11 +104,13 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
         return (
           <TouchableOpacity
             key={insight.id}
-            style={[styles.insightRow, { borderLeftColor: priorityColor }]}
+            style={styles.insightRow}
             activeOpacity={insight.action?.route ? 0.7 : 1}
             onPress={handlePress}
           >
-            <Text style={styles.insightIcon}>{insight.icon}</Text>
+            <View style={[styles.insightIconBadge, { backgroundColor: priorityColor + '18' }]}>
+              <Text style={styles.insightIcon}>{insight.icon}</Text>
+            </View>
             <View style={styles.insightContent}>
               <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
               <Text style={[styles.insightBody, { color: colors.textSub }]} numberOfLines={1}>{insight.body}</Text>
@@ -162,16 +166,21 @@ const styles = StyleSheet.create({
   insightRowMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderLeftWidth: 3,
-    paddingLeft: 10,
-    marginBottom: 6,
-    borderRadius: 4,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+    marginBottom: Spacing.sm,
+    borderRadius: Radius.xs,
+    gap: Spacing.md,
+  },
+  insightIconBadgeMain: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   insightIconMain: {
     fontSize: FontSize.icon,
-    marginRight: 10,
   },
   insightTitleMain: {
     fontSize: FontSize.lg,
@@ -185,16 +194,21 @@ const styles = StyleSheet.create({
   insightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    borderLeftWidth: 2,
-    paddingLeft: 10,
-    marginBottom: 2,
-    borderRadius: 4,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+    marginBottom: Spacing.xxs,
+    borderRadius: Radius.xs,
+    gap: Spacing.md,
+  },
+  insightIconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   insightIcon: {
     fontSize: FontSize.body,
-    marginRight: 8,
   },
   insightContent: {
     flex: 1,

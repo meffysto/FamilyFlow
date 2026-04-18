@@ -203,7 +203,7 @@ export default function PregnancyScreen() {
               key={week}
               style={[
                 styles.weekCard,
-                { backgroundColor: colors.card, borderLeftColor: isCurrent ? primary : colors.border },
+                { backgroundColor: colors.card, borderColor: isCurrent ? primary : colors.border },
                 Shadows.sm,
               ]}
             >
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
-    borderLeftWidth: 3,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   weekHeader: {
     flexDirection: 'row',

@@ -200,7 +200,6 @@ export default function CalendarScreen() {
                   key={dateStr}
                   style={[
                     styles.weekDay,
-                    { borderLeftColor: isToday ? primary : 'transparent' },
                     isVacation && { backgroundColor: colors.warningBg },
                   ]}
                 >
@@ -301,7 +300,6 @@ const styles = StyleSheet.create({
   weekDay: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    borderLeftWidth: 3,
     marginBottom: Spacing.xs,
   },
   weekDayLabel: {

@@ -914,7 +914,7 @@ export default function JournalScreen() {
         ) : journalContent ? (
           <View ref={firstSectionRef} style={styles.journalContent}>
             {!isViewingAdultTab && hasStats && journalStats && (
-              <View style={[styles.statsBanner, { backgroundColor: colors.card, borderLeftColor: primary }]}>
+              <View style={[styles.statsBanner, { backgroundColor: colors.card, borderColor: primary }]}>
                 <Text style={[styles.statsBannerTitle, { color: colors.text }]}>{t('journal.stats.title')}</Text>
                 <View style={styles.statsGrid}>
                   {journalStats.biberons > 0 && (
@@ -1082,7 +1082,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     ...Shadows.xs,
-    borderLeftWidth: 3,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   statsBannerTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: 10 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },

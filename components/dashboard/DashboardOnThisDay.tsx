@@ -25,7 +25,7 @@ interface OnThisDayItem {
 
 function DashboardOnThisDayInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
-  const { colors, primary } = useThemeColors();
+  const { colors } = useThemeColors();
   const { memories, photoDates, profiles } = useVault();
 
   const items = useMemo(() => {
@@ -96,7 +96,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
         return (
           <View
             key={`${item.label}-${item.year}-${i}`}
-            style={[styles.row, { borderLeftColor: primary }]}
+            style={styles.row}
           >
             <View style={styles.rowContent}>
               <Text style={[styles.title, { color: colors.text }]}>
@@ -118,8 +118,6 @@ export const DashboardOnThisDay = React.memo(DashboardOnThisDayInner);
 const styles = StyleSheet.create({
   row: {
     paddingVertical: Spacing.md,
-    borderLeftWidth: 3,
-    paddingLeft: Spacing.lg,
     gap: Spacing.xxs,
   },
   rowContent: {

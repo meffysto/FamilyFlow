@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   quoteBubble: {
     borderRadius: Radius.lg,
     padding: Spacing['2xl'],
-    borderLeftWidth: 3,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   quoteText: {
     fontSize: FontSize.body,

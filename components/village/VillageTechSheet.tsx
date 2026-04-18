@@ -265,7 +265,7 @@ function BranchSection({
   return (
     <View style={styles.branchSection}>
       {/* En-tête branche */}
-      <View style={[styles.branchHeader, { borderLeftColor: meta.color }]}>
+      <View style={styles.branchHeader}>
         <Text style={styles.branchEmoji}>{meta.emoji}</Text>
         <Text style={[styles.branchLabel, { color: Farm.brownText }]}>{meta.label}</Text>
         <View style={[styles.branchProgress, { backgroundColor: Farm.progressBg }]}>
@@ -575,7 +575,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    borderLeftWidth: 3,
     paddingLeft: Spacing.md,
     marginBottom: Spacing.md,
   },

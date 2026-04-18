@@ -101,7 +101,7 @@ function CalendarDayDetailInner({ date, events }: CalendarDayDetailProps) {
                 {items.map(e => (
                   <TouchableOpacity
                     key={e.id}
-                    style={[styles.eventRow, { borderLeftColor: sectionColor }]}
+                    style={styles.eventRow}
                     onPress={() => e.route && router.push(e.route as any)}
                     activeOpacity={e.route ? 0.7 : 1}
                     accessibilityLabel={`${config.emoji} ${e.label}`}
@@ -221,7 +221,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingLeft: Spacing.xl,
     paddingRight: Spacing.sm,
-    borderLeftWidth: 2,
     marginLeft: Spacing.xs,
     gap: Spacing.sm,
   },
