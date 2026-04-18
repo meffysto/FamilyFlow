@@ -26,6 +26,14 @@ export const MULTIPLIERS: Record<WagerDuration, WagerMultiplier> = {
   sprint: 2.5,
 };
 
+/** Scaling du cumulTarget par durée — crée un vrai trade-off risque/reward.
+ *  Chill = cumul prorata nominal, Engagé = ×1.5, Sprint = ×2.0 (plus dur à gagner). */
+export const CUMUL_SCALING: Record<WagerDuration, number> = {
+  chill: 1.0,
+  engage: 1.5,
+  sprint: 2.0,
+};
+
 /** Projection UI : heures estimées par tâche ménagère (moyenne famille). */
 const HOURS_PER_TASK = 6;
 
@@ -75,7 +83,8 @@ export function computeWagerDurations<TCtx>(
     return {
       duration,
       multiplier: MULTIPLIERS[duration],
-      targetTasks: cumulTarget,
+      // Préserve cumulTarget=0 (pari auto-gagné D-04) ; sinon applique le scaling.
+      targetTasks: cumulTarget === 0 ? 0 : Math.max(1, Math.ceil(cumulTarget * CUMUL_SCALING[duration])),
       absoluteTasks,
       estimatedHours: absoluteTasks * HOURS_PER_TASK,
     };

@@ -66,11 +66,20 @@ describe('computeWagerDurations (seed picker)', () => {
     opts.forEach(o => expect(o.estimatedHours).toBe(o.absoluteTasks * 6));
   });
 
-  it('targetTasks consommé depuis callback (jamais recalculé)', () => {
+  it('targetTasks consommé depuis callback + scaling par durée', () => {
     const spy = jest.fn(() => ({ cumulTarget: 42 }));
     const opts = computeWagerDurations(3, spy, { pendingCount: 99 });
     expect(spy).toHaveBeenCalled();
-    opts.forEach(o => expect(o.targetTasks).toBe(42));
+    const byDuration = Object.fromEntries(opts.map(o => [o.duration, o.targetTasks]));
+    expect(byDuration.chill).toBe(42);   // ×1.0
+    expect(byDuration.engage).toBe(63);  // ×1.5 = 63
+    expect(byDuration.sprint).toBe(84);  // ×2.0 = 84
+  });
+
+  it('targetTasks preserve 0 (pari auto-gagné D-04) — pas de scaling', () => {
+    const spy = jest.fn(() => ({ cumulTarget: 0 }));
+    const opts = computeWagerDurations(1, spy, {});
+    opts.forEach(o => expect(o.targetTasks).toBe(0));
   });
 });
 

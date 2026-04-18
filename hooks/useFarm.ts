@@ -11,7 +11,7 @@ import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount, rollWagerDropBack, getLocalDateKey } from '../lib/mascot/sporee-economy';
 import { computeCumulTarget, validateWagerOnHarvest, filterTasksForWager, maybeRecompute } from '../lib/mascot/wager-engine';
-import { computeWagerTotalDays, buildWagerHarvestToast } from '../lib/mascot/wager-ui-helpers';
+import { computeWagerTotalDays, buildWagerHarvestToast, CUMUL_SCALING } from '../lib/mascot/wager-ui-helpers';
 import type { WagerDuration, WagerMultiplier, WagerModifier } from '../lib/mascot/types';
 import type { Task } from '../lib/types';
 import { useToast } from '../contexts/ToastContext';
@@ -1042,9 +1042,14 @@ export function useFarm(
 
     const today = getLocalDateKey(new Date());
 
-    // Calcul cumulTarget live (filtre domaine Tasks + pending count courant)
+    // Calcul cumulTarget live — même filtre que le sealer preview
+    // (retard + aujourd'hui + récurrentes actives, exclut futures et non-récurrentes sans date)
     const wagerTasks = filterTasksForWager(tasks);
-    const pendingCount = tasks.filter(t => !t.completed).length;
+    const pendingCount = wagerTasks.filter(t => {
+      if (t.completed) return false;
+      if (t.dueDate) return t.dueDate <= today;
+      return !!t.recurrence;
+    }).length;
     const cumulResult = computeCumulTarget({
       sealerProfileId: profileId,
       allProfiles: profiles,
@@ -1056,13 +1061,19 @@ export function useFarm(
     // B2 — totalDays PERSISTÉ (source unique, élimine magic number 7 côté UI)
     const totalDays = computeWagerTotalDays(duration, cropDef.tasksPerStage);
 
+    // Scaling par durée — Chill ×1.0 / Engagé ×1.5 / Sprint ×2.0 (vrai trade-off risque/reward).
+    // Préserve cumulTarget=0 (pari auto-gagné D-04) sans le multiplier.
+    const scaledTarget = cumulResult.cumulTarget === 0
+      ? 0
+      : Math.max(1, Math.ceil(cumulResult.cumulTarget * CUMUL_SCALING[duration]));
+
     const wager: WagerModifier = {
       sporeeId: `sporee-${Date.now()}`,
       duration,
       multiplier: WAGER_MULTIPLIERS[duration],
       appliedAt: today,
       sealerProfileId: profileId,
-      cumulTarget: cumulResult.cumulTarget,
+      cumulTarget: scaledTarget,
       cumulCurrent: 0,
       tasksCompletedToday: 0,
       lastDailyResetDate: today,
