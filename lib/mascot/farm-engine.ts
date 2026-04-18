@@ -7,7 +7,7 @@ import { getCurrentSeason, type Season } from './seasons';
 import { type TechBonuses } from './tech-engine';
 import { type WearEffects } from './wear-engine';
 
-const MAX_CROP_STAGE = 4;
+export const MAX_CROP_STAGE = 4;
 
 // ─── Amélioration des parcelles ──────────────────────────────────────────────
 
