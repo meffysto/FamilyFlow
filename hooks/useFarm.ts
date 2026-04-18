@@ -1009,10 +1009,14 @@ export function useFarm(
 
     const today = getLocalDateKey(new Date());
 
-    // Calcul cumulTarget live — aligné sur pendingTasksToday du dashboard
-    // (dueDate === today strict). Le retard est affiché séparément, pas cumulé.
+    // Calcul cumulTarget live — aligné sur "X tâches restantes" de l'écran tasks
+    // (tasks.tsx:534) : toutes non complétées sauf récurrentes future-dated.
     const wagerTasks = filterTasksForWager(tasks);
-    const pendingCount = wagerTasks.filter(t => !t.completed && t.dueDate === today).length;
+    const pendingCount = wagerTasks.filter(t => {
+      if (t.completed) return false;
+      if (t.recurrence && t.dueDate && t.dueDate > today) return false;
+      return true;
+    }).length;
     const cumulResult = computeCumulTarget({
       sealerProfileId: profileId,
       allProfiles: profiles,
@@ -1129,8 +1133,12 @@ export function useFarm(
         const wagerTasks = filterTasksForWager(tasks);
         const now = new Date();
         const today = getLocalDateKey(now);
-        // Aligné pendingTasksToday dashboard (dueDate === today strict).
-        const pendingCount = wagerTasks.filter(t => !t.completed && t.dueDate === today).length;
+        // Aligné sur "X tâches restantes" de l'écran tasks (tasks.tsx:534).
+        const pendingCount = wagerTasks.filter(t => {
+          if (t.completed) return false;
+          if (t.recurrence && t.dueDate && t.dueDate > today) return false;
+          return true;
+        }).length;
         const lastRecompute = farmData.wagerLastRecomputeDate ?? '';
 
         let anyChanged = false;
