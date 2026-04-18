@@ -92,7 +92,7 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
   const durations = useMemo<WagerDurationOption[]>(() => {
     const today = getLocalDateKey(new Date());
     const wagerTasks = filterTasksForWager(allTasks);
-    const pendingCount = allTasks.filter(t => !t.completed).length;
+    const pendingCount = wagerTasks.filter(t => !t.completed).length;
 
     // Adapter au contrat callback-based de computeWagerDurations
     const computeCumulTargetFn = () => computeCumulTarget({
