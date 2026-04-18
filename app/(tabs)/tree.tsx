@@ -109,6 +109,10 @@ import { getTechBonuses, type TechBonuses } from '../../lib/mascot/tech-engine';
 import { HarvestEventOverlay, SeedDropOverlay } from '../../components/mascot/HarvestEventOverlay';
 import type { HarvestEvent, RareSeedDrop } from '../../lib/mascot/farm-engine';
 import { ModalHeader } from '../../components/ui/ModalHeader';
+import { WagerSealerSheet } from '../../components/mascot/WagerSealerSheet';
+import { canSealWager } from '../../lib/mascot/wager-engine';
+import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
+import type { WagerDuration } from '../../lib/mascot/types';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
 import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
@@ -419,8 +423,15 @@ export default function TreeScreen() {
   }, [screenOpacity]));
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction } = useFarm(contributeFamilyQuest, addContribution);
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager } = useFarm(contributeFamilyQuest, addContribution);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
+  // Phase 40 Plan 02 — pageSheet secondaire sceller Sporée après choix graine
+  const [showWagerSealer, setShowWagerSealer] = useState(false);
+  const [pendingPlant, setPendingPlant] = useState<{
+    plotIndex: number;
+    cropId: string;
+    tasksPerStage: number;
+  } | null>(null);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestEvent, setHarvestEvent] = useState<HarvestEvent | null>(null);
   const [seedDropEvent, setSeedDropEvent] = useState<RareSeedDrop | null>(null);
@@ -1317,9 +1328,33 @@ export default function TreeScreen() {
     }
   }, [profile, isOwnTree, harvest, level, stageIdx, techBonuses, stageInfo.stage, triggerActionMsg]);
 
-  /** Planter une graine sur la parcelle selectionnee */
+  /** Planter une graine sur la parcelle selectionnee.
+   *  Phase 40 : si ≥1 Sporée + canSealWager ok → ouvre WagerSealerSheet
+   *  (pageSheet empilé 300ms delay anti-collision iOS). Sinon plantation directe. */
   const handleSeedSelect = useCallback(async (cropId: string) => {
     if (!profile || selectedPlotIndex === null) return;
+
+    // Gate Phase 40 — sealer Sporée si inventaire ≥1 et profil autorisé
+    const sporeeCount = profile.sporeeCount ?? 0;
+    if (sporeeCount >= 1) {
+      const check = canSealWager({
+        sealerProfileId: profile.id,
+        allProfiles: profiles,
+        today: getLocalDateKey(new Date()),
+      });
+      if (check.ok) {
+        const cropDef = CROP_CATALOG.find(c => c.id === cropId);
+        const tasksPerStage = cropDef?.tasksPerStage ?? 1;
+        setPendingPlant({ plotIndex: selectedPlotIndex, cropId, tasksPerStage });
+        setShowSeedPicker(false);
+        // Gotcha G1 — stacking pageSheets iOS requiert un delay entre dismiss et present
+        setTimeout(() => setShowWagerSealer(true), 300);
+        setSelectedPlotIndex(null);
+        return;
+      }
+    }
+
+    // Plantation directe — comportement historique préservé
     try {
       await plant(profile.id, selectedPlotIndex, cropId);
       const cropDef = CROP_CATALOG.find(c => c.id === cropId);
@@ -1329,7 +1364,48 @@ export default function TreeScreen() {
     }
     setShowSeedPicker(false);
     setSelectedPlotIndex(null);
-  }, [profile, selectedPlotIndex, plant, showToast, t]);
+  }, [profile, profiles, selectedPlotIndex, plant, showToast, t]);
+
+  // Phase 40 — handlers WagerSealerSheet (confirm seal / skip)
+  const handleWagerSealConfirm = useCallback(async (duration: WagerDuration) => {
+    if (!pendingPlant || !profile) return;
+    try {
+      await startWager(profile.id, pendingPlant.plotIndex, pendingPlant.cropId, duration);
+      const cropDef = CROP_CATALOG.find(c => c.id === pendingPlant.cropId);
+      showToast(`${cropDef?.emoji ?? '🌱'} 🍄 Pari scellé !`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Impossible de sceller';
+      Alert.alert('Erreur', msg);
+    } finally {
+      setPendingPlant(null);
+      setShowWagerSealer(false);
+    }
+  }, [pendingPlant, profile, startWager, showToast]);
+
+  const handleWagerSealSkip = useCallback(async () => {
+    if (!pendingPlant || !profile) return;
+    try {
+      await plant(profile.id, pendingPlant.plotIndex, pendingPlant.cropId);
+      const cropDef = CROP_CATALOG.find(c => c.id === pendingPlant.cropId);
+      showToast(`${cropDef?.emoji ?? '🌱'} ${t('farm.planted')}`);
+    } catch {
+      showToast(t('common.error'), 'error');
+    } finally {
+      setPendingPlant(null);
+      setShowWagerSealer(false);
+    }
+  }, [pendingPlant, profile, plant, showToast, t]);
+
+  // P1 garde-fou anti-plant-fantôme : close du Modal sans handler ni confirm
+  // (ex: swipe down) → onRequestClose du Modal appelle handleHeaderClose qui
+  // déclenche onConfirmSkip. Cette protection supplémentaire reste au cas où
+  // le sheet serait fermé par un autre chemin (unmount, focus change).
+  const handleWagerSealerClose = useCallback(() => {
+    // Note : le composant WagerSealerSheet appelle déjà onConfirmSkip via son
+    // header close. Si pendingPlant est encore présent après dismiss, on
+    // planifie un skip silencieux pour garantir zéro parcelle orpheline.
+    setShowWagerSealer(false);
+  }, []);
 
   /** Tap sur une cellule batiment */
   const handleBuildingCellPress = useCallback((cellId: string, building: PlacedBuilding | null) => {
@@ -1980,6 +2056,20 @@ export default function TreeScreen() {
             </ScrollView>
           </View>
         </Modal>
+
+        {/* Phase 40 — pageSheet secondaire sceller Sporée (empilé après seed picker) */}
+        <WagerSealerSheet
+          visible={showWagerSealer}
+          onClose={handleWagerSealerClose}
+          onConfirmSeal={handleWagerSealConfirm}
+          onConfirmSkip={handleWagerSealSkip}
+          cropId={pendingPlant?.cropId ?? ''}
+          tasksPerStage={pendingPlant?.tasksPerStage ?? 1}
+          sealerProfileId={profile?.id ?? ''}
+          allProfiles={profiles}
+          allTasks={tasks}
+          sporeeCount={profile?.sporeeCount ?? 0}
+        />
 
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
         <Animated.View entering={FadeIn.duration(600)}>

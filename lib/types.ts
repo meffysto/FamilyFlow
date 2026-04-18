@@ -98,6 +98,8 @@ export interface Profile {
   farmTech?: string[];    // IDs des noeuds tech debloques
   farmRareSeeds?: import('../lib/mascot/types').RareSeedInventory;  // Graines rares en stock
   plotLevels?: number[];  // niveaux d'amélioration des parcelles (1-5)
+  // Phase 38/40 — économie Sporée (mergés depuis FarmProfileData via useVault runtime merge)
+  sporeeCount?: number;                    // inventaire Sporée 0-10
   // Phase 20 — bonus temporels effets sémantiques (mergés depuis FarmProfileData)
   growthSprintUntil?: string;       // ISO datetime — EFFECTS-05 : -1 task/stage temporaire
   wearEvents?: import('./mascot/wear-engine').WearEvent[];          // Evenements d'usure ferme
