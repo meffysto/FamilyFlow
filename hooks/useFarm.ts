@@ -11,7 +11,7 @@ import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount, rollWagerDropBack, getLocalDateKey } from '../lib/mascot/sporee-economy';
 import { computeCumulTarget, validateWagerOnHarvest, filterTasksForWager, maybeRecompute } from '../lib/mascot/wager-engine';
-import { computeWagerTotalDays } from '../lib/mascot/wager-ui-helpers';
+import { computeWagerTotalDays, buildWagerHarvestToast } from '../lib/mascot/wager-ui-helpers';
 import type { WagerDuration, WagerMultiplier, WagerModifier } from '../lib/mascot/types';
 import type { Task } from '../lib/types';
 import { useToast } from '../contexts/ToastContext';
@@ -414,14 +414,15 @@ export function useFarm(
       }
       // Phase 40 — Toasts wager (victoire/défaite) après refresh pour UX cohérente
       if (wager) {
-        if (wagerWon) {
-          showToast(
-            `Victoire ! +${finalQty} 🍃 (×${wager.multiplier})` + (wagerDropBack ? ' · Sporée retrouvée 🎁' : ''),
-            'success',
-          );
-        } else {
-          showToast('Plant récolté · Sporée consommée', 'info');
-        }
+        showToast(
+          buildWagerHarvestToast({
+            won: wagerWon,
+            finalQty,
+            multiplier: wager.multiplier,
+            dropBack: wagerDropBack,
+          }),
+          wagerWon ? 'success' : 'info',
+        );
       }
       if (onQuestProgress) {
         try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
@@ -460,14 +461,15 @@ export function useFarm(
     }
     // Phase 40 — Toasts wager (victoire/défaite)
     if (wager) {
-      if (wagerWon) {
-        showToast(
-          `Victoire ! +${finalQty} 🍃 (×${wager.multiplier})` + (wagerDropBack ? ' · Sporée retrouvée 🎁' : ''),
-          'success',
-        );
-      } else {
-        showToast('Plant récolté · Sporée consommée', 'info');
-      }
+      showToast(
+        buildWagerHarvestToast({
+          won: wagerWon,
+          finalQty,
+          multiplier: wager.multiplier,
+          dropBack: wagerDropBack,
+        }),
+        wagerWon ? 'success' : 'info',
+      );
     }
 
     // Progression quêtes coopératives (harvest)

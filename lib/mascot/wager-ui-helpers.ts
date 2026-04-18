@@ -152,3 +152,29 @@ export function daysBetween(startISO: string, endISO: string): number {
   const diffDays = Math.round((endMs - startMs) / 86400000);
   return Math.max(0, diffDays);
 }
+
+// ─────────────────────────────────────────────
+// 5. buildWagerHarvestToast (Plan 04 — format FR strict post-récolte)
+// ─────────────────────────────────────────────
+
+/**
+ * Construit le message de toast affiché après récolte d'un plant scellé (SPOR-07).
+ *
+ * 3 variantes strictes :
+ *  - won=false             → "Plant récolté · Sporée consommée" (neutre, JAMAIS punitif — Core Value)
+ *  - won=true, dropBack=F  → "Victoire ! +{qty} 🍃 (×{mult})"
+ *  - won=true, dropBack=T  → "Victoire ! +{qty} 🍃 (×{mult}) · Sporée retrouvée 🎁"
+ *
+ * Le consommateur (useFarm.harvest) décide du `type` ToastContext (success/info)
+ * selon `won`. Ce helper est pur — zéro I/O, zéro import UI.
+ */
+export function buildWagerHarvestToast(opts: {
+  won: boolean;
+  finalQty: number;
+  multiplier: number;
+  dropBack: boolean;
+}): string {
+  if (!opts.won) return 'Plant récolté · Sporée consommée';
+  const suffix = opts.dropBack ? ' · Sporée retrouvée 🎁' : '';
+  return `Victoire ! +${opts.finalQty} 🍃 (×${opts.multiplier})${suffix}`;
+}
