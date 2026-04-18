@@ -216,7 +216,7 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
 
   const collectExpedition = useCallback(async (
     missionId: string
-  ): Promise<{ outcome: ActiveExpedition['result']; loot?: ExpeditionLoot }> => {
+  ): Promise<{ outcome: ActiveExpedition['result']; loot?: ExpeditionLoot; sporeeFirstObtained?: boolean }> => {
     if (!vault || !currentProfile) return { outcome: undefined };
 
     const farmPath = farmFilePath(currentProfile.id);
@@ -249,11 +249,13 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     // Phase 38 (SPOR-08) — Drop Sporée post-expedition (5% sur Pousse+)
     // Indépendant de l'outcome : une mission ratée peut donner une Sporée (loot séparé).
     let sporeeRefused = false;
+    let sporeeFirstObtained = false; // Phase 41 (SPOR-10) — signal tooltip one-shot
     if (rollSporeeDropOnExpedition(exp.difficulty)) {
       const currentSporee = farm.sporeeCount ?? 0;
       const inc = tryIncrementSporeeCount(currentSporee, 1);
       if (inc.accepted) {
         farm.sporeeCount = inc.newCount;
+        sporeeFirstObtained = true;
       } else {
         sporeeRefused = true;
       }
@@ -310,7 +312,7 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
       showToast('Inventaire Sporée plein', 'error');
     }
 
-    return { outcome, loot };
+    return { outcome, loot, sporeeFirstObtained };
   }, [vault, currentProfile, profiles, refreshFarm, showToast]);
 
   // ─── Renvoyer une expédition (dismiss après collecte) ─────────────────────

@@ -29,6 +29,8 @@ import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { useGarden } from '../../hooks/useGarden';
+import { SporeeOnboardingTooltip } from '../../components/mascot/SporeeOnboardingTooltip';
+import { useHelp } from '../../contexts/HelpContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { TaskCard } from '../../components/TaskCard';
@@ -205,6 +207,9 @@ export default function TasksScreen() {
   const { primary, tint, colors } = useThemeColors();
   const { showToast, showRewardCard } = useToast();
   const { t } = useTranslation();
+  // Phase 41 (SPOR-10) — tooltip one-shot premier obtention Sporée (source : cadeau onboarding stade 3)
+  const { hasSeenScreen } = useHelp();
+  const [showSporeeTooltip, setShowSporeeTooltip] = useState(false);
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
   const { filter: filterParam, addNew } = useLocalSearchParams<{ filter?: string; addNew?: string }>();
@@ -312,12 +317,16 @@ export default function TasksScreen() {
 
         if (completed && activeProfile) {
           try {
-            const { lootAwarded, pointsGained, effectCategoryId } = await completeTask(
+            const { lootAwarded, pointsGained, effectCategoryId, sporeeFirstObtained } = await completeTask(
               activeProfile,
               task.text,
               { tags: task.tags, section: task.section, sourceFile: task.sourceFile }
             );
             await refreshGamification();
+            // Phase 41 (SPOR-10) — cadeau onboarding stade 3 : afficher tooltip one-shot
+            if (sporeeFirstObtained && !hasSeenScreen('sporee_tooltip')) {
+              setTimeout(() => setShowSporeeTooltip(true), 800);
+            }
             const name = activeProfile.name;
             // Calcul des données pour la reward card
             const newPoints = (activeProfile.points ?? 0) + pointsGained;
@@ -1045,6 +1054,12 @@ export default function TasksScreen() {
           onComplete={() => setEffectBurst(null)}
         />
       )}
+
+      {/* Phase 41 (SPOR-10) — Tooltip one-shot premier obtention Sporée (cadeau onboarding stade 3) */}
+      <SporeeOnboardingTooltip
+        visible={showSporeeTooltip}
+        onDismiss={() => setShowSporeeTooltip(false)}
+      />
     </SafeAreaView>
   );
 }

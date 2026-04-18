@@ -74,6 +74,7 @@ interface UseGamificationResult {
     cropsMatured: string[];  // IDs des cultures pretes a recolter
     effectResult?: EffectResult | null;  // Phase 20 — resultat de l'effet semantique
     effectCategoryId?: CategoryId | null;  // Phase 21 — pour HarvestBurst variant
+    sporeeFirstObtained?: boolean;  // Phase 41 (SPOR-10) — signal tooltip one-shot
   }>;
   openLootBox: (profile: Profile, gamiData: GamificationData) => Promise<{
     box: LootBox;
@@ -316,6 +317,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
 
         // Phase 38 (SPOR-08) — Cadeau onboarding Sporée à la transition arbuste → arbre
         // farmData est la source of truth déjà lue ; la transition est détectée via level avant/après.
+        let sporeeFirstObtainedViaOnboarding = false; // Phase 41 (SPOR-10) — signal tooltip one-shot
         try {
           const evolution = detectEvolution(profile.level, updatedProfile.level);
           if (evolution.evolved && shouldGiftOnboardingSporee({
@@ -328,6 +330,8 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
             if (inc.accepted) {
               farmData.sporeeCount = inc.newCount;
               farmData.sporeeOnboardingGiftClaimed = true;
+              // Phase 41 (SPOR-10) — signal tooltip cadeau onboarding
+              sporeeFirstObtainedViaOnboarding = true;
             } else {
               // Inventaire plein : NE PAS marquer claimed, le cadeau re-tentera au prochain level-up
               // Cohérent avec "zéro perte silencieuse" (38-RESEARCH Open Q1)
@@ -364,6 +368,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           cropsMatured,
           effectResult,  // Phase 20
           effectCategoryId: derivedCategory?.id ?? null,  // Phase 21 — pour HarvestBurst variant
+          sporeeFirstObtained: sporeeFirstObtainedViaOnboarding,  // Phase 41 (SPOR-10)
         };
       } finally {
         setIsProcessing(false);
