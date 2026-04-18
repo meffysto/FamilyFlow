@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-18T19:12:47.481Z"
-last_activity: 2026-04-18 -- Phase 40 execution started
+last_updated: "2026-04-18T19:35:27.060Z"
+last_activity: 2026-04-18
 progress:
   total_phases: 13
   completed_phases: 7
   total_plans: 25
-  completed_plans: 25
+  completed_plans: 26
   percent: 0
 ---
 
@@ -25,14 +25,14 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 40 (ui-spor-e-seed-picker-badge-validation) — EXECUTING
-Plan: 1 of 4
+Plan: 2 of 4
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
-Last activity: 2026-04-18 -- Phase 40 execution started
+Last activity: 2026-04-18
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Executing Phase 40
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -166,6 +166,7 @@ Status: Executing Phase 40
 | Phase 39-moteur-prorata-calcul-famille P01 | 8min | 2 tasks | 5 files |
 | Phase 39-moteur-prorata-calcul-famille P02 | 12min | 2 tasks | 2 files |
 | Phase 40-ui-spor-e-seed-picker-badge-validation P02 | 7min | 2 tasks | 3 files |
+| Phase 40 P03 | 28min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -337,6 +338,9 @@ Recent decisions affecting current work:
 - [Phase 40-ui-spor-e-seed-picker-badge-validation]: Stacking pageSheets iOS : setTimeout(300ms) entre seed picker close et WagerSealerSheet present (gotcha G1)
 - [Phase 40-ui-spor-e-seed-picker-badge-validation]: Modal onRequestClose + ModalHeader close → onConfirmSkip : pas de useEffect garde-fou nécessaire (P1 résolu composant-level)
 - [Phase 40-ui-spor-e-seed-picker-badge-validation]: Profile.sporeeCount? déclaré (mergé runtime via spread farmData useVault.ts:855) — précédent farmRareSeeds/growthSprintUntil
+- [Phase 40]: [Phase 40-03]: Badge Sporée 2 lignes strict (CONTEXT.md D-03) — jamais dégradé à 1 ligne, fallback P2 cumulTarget=0 affiche —/— + ✓ sur 2 lignes
+- [Phase 40]: [Phase 40-03]: useReducedMotion() de react-native-reanimated retenu pour WagerReadyRing (cohérent avec BuildingIdleAnim/BuildingCell/NextExpansionCell dans WorldGridView)
+- [Phase 40]: [Phase 40-03]: Palette badge étend bordure avec couleur pace pleine (success/warning/error) au lieu de colors.border neutre — renforce signal visuel scan rapide sans casser contraste AA
 
 ### Todos
 
@@ -348,5 +352,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-18T17:11:56.559Z
+Last session: 2026-04-18T19:35:27.056Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
