@@ -94,9 +94,11 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
   const durations = useMemo<WagerDurationOption[]>(() => {
     const today = getLocalDateKey(new Date());
     const wagerTasks = filterTasksForWager(allTasks);
-    // Même filtre que pendingTasksToday du dashboard (tree.tsx:779) :
-    // uniquement les tâches non faites dont dueDate === today.
-    const pendingCount = wagerTasks.filter(t => !t.completed && t.dueDate === today).length;
+    // Périmètre : tâches vraiment à faire (retard + aujourd'hui + sans date).
+    // Exclut le futur pour ne pas gonfler le cumul avec des tâches pas encore dues.
+    const pendingCount = wagerTasks.filter(t =>
+      !t.completed && (!t.dueDate || t.dueDate <= today)
+    ).length;
 
     // Adapter au contrat callback-based de computeWagerDurations
     const computeCumulTargetFn = () => computeCumulTarget({
