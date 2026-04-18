@@ -423,7 +423,7 @@ export default function TreeScreen() {
   }, [screenOpacity]));
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager } = useFarm(contributeFamilyQuest, addContribution);
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager, incrementWagerCumul } = useFarm(contributeFamilyQuest, addContribution);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   // Phase 40 Plan 02 — pageSheet secondaire sceller Sporée après choix graine
   const [showWagerSealer, setShowWagerSealer] = useState(false);
@@ -1381,6 +1381,19 @@ export default function TreeScreen() {
       setShowWagerSealer(false);
     }
   }, [pendingPlant, profile, startWager, showToast]);
+
+  // ───── QA DEBUG — simulate 1 task completion for wager testing ─────
+  // À retirer après QA Phase 40. Incrémente cumul + avance plant scellé.
+  const handleDebugIncrementWager = useCallback(async () => {
+    if (!profile) return;
+    try {
+      await incrementWagerCumul(profile.id);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      showToast('🧪 +1 tâche simulée');
+    } catch (e) {
+      showToast(`Debug erreur: ${e instanceof Error ? e.message : 'inconnue'}`, 'error');
+    }
+  }, [profile, incrementWagerCumul, showToast]);
 
   const handleWagerSealSkip = useCallback(async () => {
     if (!pendingPlant || !profile) return;
@@ -2382,6 +2395,28 @@ export default function TreeScreen() {
         </Animated.View>
         </Animated.View>
 
+
+        {/* 🧪 QA DEBUG — bouton +1 tâche (à retirer après Phase 40) */}
+        {isOwnTree && (
+          <TouchableOpacity
+            onPress={handleDebugIncrementWager}
+            activeOpacity={0.7}
+            style={{
+              alignSelf: 'center',
+              marginTop: Spacing.md,
+              paddingHorizontal: Spacing.lg,
+              paddingVertical: Spacing.sm,
+              backgroundColor: '#FF4444',
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: '#AA0000',
+            }}
+          >
+            <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 14 }}>
+              🧪 DEBUG — +1 tâche sur plants scellés
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Carte 1 — Actions (panneau cozy "signpost") */}
         {isOwnTree && (
