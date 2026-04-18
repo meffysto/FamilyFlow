@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
-status: roadmap_ready
+status: phase_planned
 last_updated: "2026-04-18T00:00:00.000Z"
 last_activity: 2026-04-18
 progress:
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: Phase 38 Fondation modifiers + économie Sporée (next up, not started)
+Phase: Phase 38 Fondation modifiers + économie Sporée (3 plans planifiés, prêt pour exécution)
 Plan: —
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
@@ -32,7 +32,7 @@ Last activity: 2026-04-18 — Roadmap v1.7 créée (Phases 38-41, 16/16 REQ mapp
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Roadmap ready — Phase 38 next via `/gsd:plan-phase 38`
+Status: Phase 38 planned — exécution via `/gsd:execute-phase 38`
 
 ### Quick Tasks Completed
 
@@ -322,7 +322,7 @@ Recent decisions affecting current work:
 
 ### Todos
 
-- Plan Phase 38 next: `/gsd:plan-phase 38` (Fondation modifiers + économie Sporée — MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13)
+- Execute Phase 38: `/gsd:execute-phase 38` (3 plans: 38-01 data+cache, 38-02 engine pur, 38-03 câblage hooks)
 
 ### Blockers
 
@@ -331,4 +331,4 @@ None
 ## Session Continuity
 
 Last session: 2026-04-18T00:00:00.000Z
-Next: Plan Phase 38 (Fondation modifiers + économie Sporée)
+Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
