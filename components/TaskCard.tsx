@@ -40,18 +40,14 @@ interface TaskCardProps {
   pointsOnComplete?: number;
 }
 
-const TAG_COLORS: Record<string, string> = {
-  maxence: '#60A5FA',
-  maison: '#34D399',
-  courses: '#F59E0B',
-  urgent: '#EF4444',
-  rdv: '#8B5CF6',
-  default: '#9CA3AF',
+/** Mappe un nom de tag vers une clé sémantique de couleur (cf. colors.tagColors) */
+const TAG_COLOR_MAP: Record<string, 'bleu' | 'vert' | 'jaune' | 'rouge' | 'violet'> = {
+  maxence: 'bleu',
+  maison: 'vert',
+  courses: 'jaune',
+  urgent: 'rouge',
+  rdv: 'violet',
 };
-
-function getTagColor(tag: string): string {
-  return TAG_COLORS[tag.toLowerCase()] ?? TAG_COLORS.default;
-}
 
 function getSourceLabel(sourceFile: string, profiles: Profile[] | undefined, t: (key: string) => string): string {
   // Chercher un profil enfant dont le nom apparaît dans le chemin du fichier
@@ -217,16 +213,20 @@ export const TaskCard = React.memo(function TaskCard({
 
         {task.tags.length > 0 && (
           <View style={styles.tags}>
-            {task.tags.map((tag) => (
-              <View
-                key={tag}
-                style={[styles.tag, { backgroundColor: getTagColor(tag) + '33' }]}
-              >
-                <Text style={[styles.tagText, { color: getTagColor(tag) }]}>
-                  #{tag}
-                </Text>
-              </View>
-            ))}
+            {task.tags.map((tag) => {
+              const semanticKey = TAG_COLOR_MAP[tag.toLowerCase()];
+              const tagColor = semanticKey ? colors.tagColors[semanticKey] : colors.textFaint;
+              return (
+                <View
+                  key={tag}
+                  style={[styles.tag, { backgroundColor: tagColor + '33' }]}
+                >
+                  <Text style={[styles.tagText, { color: tagColor }]}>
+                    #{tag}
+                  </Text>
+                </View>
+              );
+            })}
             {task.mentions.map((mention) => (
               <View key={mention} style={[styles.tag, { backgroundColor: colors.tagMention }]}>
                 <Text style={[styles.mentionText, { color: colors.tagMentionText }]}>@{mention}</Text>

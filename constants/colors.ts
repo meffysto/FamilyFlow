@@ -72,6 +72,29 @@ export const LightColors = {
   gradientJeux:          ['#E8F5E9', '#DEF0DF'] as readonly [string, string],
   gradientFamille:       ['#FDE8F0', '#FAE0EA'] as readonly [string, string],
   gradientSysteme:       ['#F0EEF6', '#EAE8F2'] as readonly [string, string],
+  // Tag colors (badges tâches) — clés sémantiques
+  tagColors: {
+    bleu:   '#60A5FA',
+    vert:   '#34D399',
+    jaune:  '#F59E0B',
+    rouge:  '#EF4444',
+    violet: '#8B5CF6',
+  },
+  // Market trend colors (O&D marché village)
+  trendColors: {
+    tres_cher: '#EF4444',
+    cher:      '#F97316',
+    normal:    '#6B7280',
+    bon_prix:  '#10B981',
+    brade:     '#3B82F6',
+  },
+  // Market stock colors (niveau de stock marché)
+  stockColors: {
+    rupture:  '#EF4444',
+    faible:   '#F97316',
+    normal:   '#6B7280',
+    abondant: '#10B981',
+  },
 };
 
 export const DarkColors: typeof LightColors = {
@@ -138,6 +161,29 @@ export const DarkColors: typeof LightColors = {
   gradientJeux:          ['#1A2A1C', '#1E2E1F'] as readonly [string, string],
   gradientFamille:       ['#2A1A22', '#2E1E26'] as readonly [string, string],
   gradientSysteme:       ['#1E1E24', '#222228'] as readonly [string, string],
+  // Tag colors (badges tâches) — variantes dark plus lumineuses
+  tagColors: {
+    bleu:   '#93C5FD',
+    vert:   '#6EE7B7',
+    jaune:  '#FCD34D',
+    rouge:  '#FCA5A5',
+    violet: '#C4B5FD',
+  },
+  // Market trend colors — variantes dark plus lumineuses
+  trendColors: {
+    tres_cher: '#FCA5A5',
+    cher:      '#FDBA74',
+    normal:    '#9CA3AF',
+    bon_prix:  '#6EE7B7',
+    brade:     '#93C5FD',
+  },
+  // Market stock colors — variantes dark plus lumineuses
+  stockColors: {
+    rupture:  '#FCA5A5',
+    faible:   '#FDBA74',
+    normal:   '#9CA3AF',
+    abondant: '#6EE7B7',
+  },
 };
 
 export type AppColors = typeof LightColors;

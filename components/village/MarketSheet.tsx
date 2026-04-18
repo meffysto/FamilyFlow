@@ -82,21 +82,6 @@ interface MarketSheetProps {
 
 const SPRING_CONFIG = { damping: 12, stiffness: 180 };
 
-const TREND_COLORS: Record<string, string> = {
-  tres_cher: '#EF4444',
-  cher: '#F97316',
-  normal: Farm.brownTextSub,
-  bon_prix: Farm.greenBtn,
-  brade: '#3B82F6',
-};
-
-const STOCK_COLORS: Record<string, string> = {
-  rupture: '#EF4444',
-  faible: '#F97316',
-  normal: Farm.brownTextSub,
-  abondant: Farm.greenBtn,
-};
-
 // ── Sous-composant : auvent rayé ────────────────────────────────
 
 function AwningStripes() {
@@ -197,12 +182,13 @@ const MarketItemRow = React.memo(function MarketItemRow({
   sellableQty: number;
   onAction: (itemId: string, qty: number) => void;
 }) {
+  const { colors } = useThemeColors();
   const [qty, setQty] = useState(1);
   const price = mode === 'acheter' ? summary.buyPrice : summary.sellPrice;
   const total = price * qty;
   const maxQty = mode === 'acheter' ? summary.stock : sellableQty;
-  const trendColor = TREND_COLORS[summary.trend] ?? Farm.brownTextSub;
-  const stockColor = STOCK_COLORS[summary.stockLevel] ?? Farm.brownTextSub;
+  const trendColor = colors.trendColors[summary.trend as keyof typeof colors.trendColors] ?? Farm.brownTextSub;
+  const stockColor = colors.stockColors[summary.stockLevel as keyof typeof colors.stockColors] ?? Farm.brownTextSub;
 
   const handlePress = useCallback(() => {
     onAction(summary.def.itemId, qty);
