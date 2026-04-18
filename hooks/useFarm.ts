@@ -372,10 +372,14 @@ export function useFarm(
     const wager = harvestedCropInstance?.modifiers?.wager;
     let wagerDropBack = false;
     let wagerWon = false;
+    let marathonIncremented = false;
     if (wager) {
       const validation = validateWagerOnHarvest(wager.cumulCurrent ?? 0, wager.cumulTarget ?? 0);
       if (validation.won) {
         wagerWon = true;
+        // Phase 41 (SPOR-10) — Compteur vanité marathon wins
+        profile.wagerMarathonWins = (profile.wagerMarathonWins ?? 0) + 1;
+        marathonIncremented = true;
         // Multiplier APRÈS golden (pitfall P3)
         finalQty = Math.round(finalQty * wager.multiplier);
         // Drop-back 15% — seulement si pari gagné
@@ -403,6 +407,8 @@ export function useFarm(
         ...(seedDrop ? { farmRareSeeds: { ...(profile.farmRareSeeds ?? {}), [seedDrop.seedId]: ((profile.farmRareSeeds ?? {})[seedDrop.seedId] ?? 0) + 1 } } : {}),
         // Persister sporeeCount si drop harvest OU drop-back wager (les deux mettent profile.sporeeCount à jour)
         ...(sporeeDropped || wagerDropBack ? { sporeeCount: profile.sporeeCount } : {}),
+        // Phase 41 (SPOR-10) — Persister compteur vanité marathon wins si incrémenté
+        ...(marathonIncremented ? { wagerMarathonWins: profile.wagerMarathonWins } : {}),
       };
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
       await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, updatedProfile));
@@ -436,6 +442,11 @@ export function useFarm(
     // Phase 38 (SPOR-08) + Phase 40 (drop-back) — persister sporee_count si drop harvest OU drop-back wager
     if ((sporeeDropped || wagerDropBack) && typeof profile.sporeeCount === 'number') {
       fieldsToWrite.sporee_count = String(profile.sporeeCount);
+    }
+
+    // Phase 41 (SPOR-10) — Persister compteur vanité marathon wins
+    if (marathonIncremented && typeof profile.wagerMarathonWins === 'number') {
+      fieldsToWrite.wager_marathon_wins = String(profile.wagerMarathonWins);
     }
 
     // Ecrire tous les champs en une seule operation

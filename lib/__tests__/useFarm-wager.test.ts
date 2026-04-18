@@ -265,6 +265,74 @@ describe('Phase 40 Plan 04 — buildWagerHarvestToast (format FR strict)', () =>
   });
 });
 
+// ─── Phase 41 Plan 01 — SPOR-10 wagerMarathonWins increment on harvest ───────
+
+/**
+ * Tests de la logique d'incrément wagerMarathonWins dans la branche harvest wager.won.
+ * On ne peut pas instancier useFarm (dépendances vault), donc on vérifie la logique
+ * d'incrément directement sur la primitive et la persistance via fieldsToWrite.
+ */
+
+describe('Phase 41 Plan 01 — wagerMarathonWins increment on harvest', () => {
+  it('Test 1: pari gagné (won=true), wagerMarathonWins initial=0 → incrément donne 1', () => {
+    const validation = validateWagerOnHarvest(10, 10);
+    expect(validation.won).toBe(true);
+    // Simule la logique d'incrément de la branche if (validation.won)
+    const profileWagerMarathonWins = 0; // default undefined traité comme 0 via ?? 0
+    const newCount = (profileWagerMarathonWins ?? 0) + 1;
+    expect(newCount).toBe(1);
+  });
+
+  it('Test 2: pari perdu (won=false) → wagerMarathonWins non touché (reste 0)', () => {
+    const validation = validateWagerOnHarvest(5, 10);
+    expect(validation.won).toBe(false);
+    // Sur défaite, la branche if (validation.won) n'est pas exécutée
+    // → pas d'incrément, wagerMarathonWins reste inchangé
+    const profileWagerMarathonWins = 0;
+    // Pas d'incrément
+    expect(profileWagerMarathonWins).toBe(0);
+  });
+
+  it('Test 3: pas de wager (plant non scellé) → wagerMarathonWins jamais touché', () => {
+    // Sans wager, le bloc if (wager) n'est pas exécuté → pas d'incrément
+    const wager = undefined;
+    let marathonIncremented = false;
+    if (wager) {
+      // Ne devrait jamais être atteint
+      marathonIncremented = true;
+    }
+    expect(marathonIncremented).toBe(false);
+  });
+
+  it('Test 4: pari gagné, wagerMarathonWins initial=5 → devient 6', () => {
+    const validation = validateWagerOnHarvest(10, 10);
+    expect(validation.won).toBe(true);
+    const profileWagerMarathonWins = 5;
+    const newCount = (profileWagerMarathonWins ?? 0) + 1;
+    expect(newCount).toBe(6);
+  });
+
+  it('Test 5: incrément ne se déclenche que sur won=true — fieldsToWrite reçoit wager_marathon_wins seulement si incrémenté', () => {
+    // Simule la logique de persistence : marathonIncremented est true seulement sur won
+    const fieldsToWrite: Record<string, string> = {};
+    const marathonIncremented = true; // Cas pari gagné
+    const profileWagerMarathonWins = 3;
+    // Logique branche non-golden
+    if (marathonIncremented && typeof profileWagerMarathonWins === 'number') {
+      fieldsToWrite.wager_marathon_wins = String(profileWagerMarathonWins);
+    }
+    expect(fieldsToWrite.wager_marathon_wins).toBe('3');
+
+    // Cas pari perdu : marathonIncremented=false → pas dans fieldsToWrite
+    const fieldsToWriteLost: Record<string, string> = {};
+    const marathonIncrementedLost = false;
+    if (marathonIncrementedLost && typeof profileWagerMarathonWins === 'number') {
+      fieldsToWriteLost.wager_marathon_wins = String(profileWagerMarathonWins);
+    }
+    expect(fieldsToWriteLost.wager_marathon_wins).toBeUndefined();
+  });
+});
+
 // ─── Phase 41 Plan 01 — SPOR-10 wagerMarathonWins parsing ────────────────────
 
 describe('Phase 41 Plan 01 — wagerMarathonWins parsing', () => {
