@@ -1160,7 +1160,12 @@ export function useFarm(
         const wagerTasks = filterTasksForWager(tasks);
         const now = new Date();
         const today = getLocalDateKey(now);
-        const pendingCount = tasks.filter(t => !t.completed).length;
+        // Même filtre que sealer + startWager : retard + aujourd'hui + récurrentes actives
+        const pendingCount = wagerTasks.filter(t => {
+          if (t.completed) return false;
+          if (t.dueDate) return t.dueDate <= today;
+          return !!t.recurrence;
+        }).length;
         const lastRecompute = farmData.wagerLastRecomputeDate ?? '';
 
         let anyChanged = false;
@@ -1175,7 +1180,11 @@ export function useFarm(
             tasks: wagerTasks,
           });
           if (res.recomputed) {
-            w.cumulTarget = res.result.cumulTarget;
+            // Applique le scaling de la durée du pari (même logique que startWager)
+            const scaled = res.result.cumulTarget === 0
+              ? 0
+              : Math.max(1, Math.ceil(res.result.cumulTarget * CUMUL_SCALING[w.duration]));
+            w.cumulTarget = scaled;
             anyChanged = true;
           }
         }
