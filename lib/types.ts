@@ -658,6 +658,8 @@ export interface FarmProfileData {
   sporeeOnboardingGiftClaimed?: boolean;   // true = cadeau stade 3 déjà donné (anti-rejeu)
   // Phase 40 — Bootstrap maybeRecompute (W3 : persistance vault-first, pas SecureStore)
   wagerLastRecomputeDate?: string;         // ISO YYYY-MM-DD — dernier passage de maybeRecompute pour ce profil
+  // Phase 41 — Compteur codex vanité long terme (SPOR-10)
+  wagerMarathonWins?: number;              // total paris Sporée gagnés (vanité, jamais reset)
 }
 
 // ─── Phase 33 — Expeditions ──────────────────────────────────────────────────

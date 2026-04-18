@@ -1,5 +1,6 @@
 /**
  * Phase 40 — Plan 04 : Suite Jest validation + drop-back + format toast FR.
+ * Phase 41 — Plan 01 : wagerMarathonWins parsing + increment on harvest.
  *
  * Tests sur primitives pures consommées par la branche wager de `useFarm.harvest` —
  * on n'instancie PAS le hook React (dépendances vault trop lourdes). On vérifie
@@ -18,6 +19,7 @@ import {
 } from '../mascot/sporee-economy';
 import { validateWagerOnHarvest } from '../mascot/wager-engine';
 import { buildWagerHarvestToast } from '../mascot/wager-ui-helpers';
+import { parseFarmProfile } from '../parser';
 
 describe('Phase 40 Plan 04 — validateWagerOnHarvest × tryIncrementSporeeCount × rollWagerDropBack', () => {
   describe('victoire (cumul atteint)', () => {
@@ -260,5 +262,33 @@ describe('Phase 40 Plan 04 — buildWagerHarvestToast (format FR strict)', () =>
       const lose = buildWagerHarvestToast({ won: false, finalQty: 0, multiplier: 1, dropBack: false });
       expect(lose).toContain(' · ');
     });
+  });
+});
+
+// ─── Phase 41 Plan 01 — SPOR-10 wagerMarathonWins parsing ────────────────────
+
+describe('Phase 41 Plan 01 — wagerMarathonWins parsing', () => {
+  it('Test 1: wager_marathon_wins: 7 → wagerMarathonWins === 7', () => {
+    const content = `# Farm — Lucas\n\nwager_marathon_wins: 7\n`;
+    const data = parseFarmProfile(content);
+    expect(data.wagerMarathonWins).toBe(7);
+  });
+
+  it('Test 2: champ absent → wagerMarathonWins === undefined', () => {
+    const content = `# Farm — Lucas\n\nsporee_count: 3\n`;
+    const data = parseFarmProfile(content);
+    expect(data.wagerMarathonWins).toBeUndefined();
+  });
+
+  it('Test 3: wager_marathon_wins: abc (NaN) → wagerMarathonWins === undefined', () => {
+    const content = `# Farm — Lucas\n\nwager_marathon_wins: abc\n`;
+    const data = parseFarmProfile(content);
+    expect(data.wagerMarathonWins).toBeUndefined();
+  });
+
+  it('Test 4: wager_marathon_wins: 0 → wagerMarathonWins === 0', () => {
+    const content = `# Farm — Lucas\n\nwager_marathon_wins: 0\n`;
+    const data = parseFarmProfile(content);
+    expect(data.wagerMarathonWins).toBe(0);
   });
 });

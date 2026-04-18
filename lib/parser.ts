@@ -695,6 +695,10 @@ export function parseFarmProfile(content: string): FarmProfileData {
     sporeeOnboardingGiftClaimed: props.sporee_onboarding_gift_claimed === 'true' ? true : undefined,
     // Phase 40 — bootstrap maybeRecompute (W3)
     wagerLastRecomputeDate: props.wager_last_recompute_date || undefined,
+    // Phase 41 — Compteur codex vanité long terme (SPOR-10)
+    wagerMarathonWins: props.wager_marathon_wins !== undefined
+      ? (n => isNaN(n) ? undefined : n)(parseInt(props.wager_marathon_wins, 10))
+      : undefined,
   };
 }
 
@@ -773,6 +777,10 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   // Phase 40 — bootstrap maybeRecompute (W3 : persistance vault-first)
   if (data.wagerLastRecomputeDate) {
     lines.push(`wager_last_recompute_date: ${data.wagerLastRecomputeDate}`);
+  }
+  // Phase 41 — Compteur codex vanité long terme (SPOR-10)
+  if (typeof data.wagerMarathonWins === 'number' && data.wagerMarathonWins > 0) {
+    lines.push(`wager_marathon_wins: ${data.wagerMarathonWins}`);
   }
 
   return lines.join('\n') + '\n';

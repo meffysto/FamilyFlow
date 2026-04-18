@@ -160,6 +160,11 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
     case 'wager_last_recompute_date':
       data.wagerLastRecomputeDate = value || undefined;
       break;
+    case 'wager_marathon_wins': {
+      const n = parseInt(value, 10);
+      data.wagerMarathonWins = isNaN(n) ? undefined : n;
+      break;
+    }
   }
 }
 
