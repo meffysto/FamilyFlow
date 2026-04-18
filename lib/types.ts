@@ -643,6 +643,11 @@ export interface FarmProfileData {
   plotLevels?: number[];  // niveau 1-5 par plotIndex (absent = tout niveau 1)
   // Deal du jour — quota per-profil (stock séparé du marché)
   dailyDealPurchases?: { dateKey: string; itemId: string; purchased: number };
+  // Phase 38 — économie Sporée per-profil (MOD/SPOR v1.7)
+  sporeeCount?: number;                    // inventaire 0-10, default undefined
+  sporeeShopBoughtToday?: number;          // achats shop du jour 0-2
+  sporeeShopLastResetDate?: string;        // YYYY-MM-DD local — dernier reset cap quotidien
+  sporeeOnboardingGiftClaimed?: boolean;   // true = cadeau stade 3 déjà donné (anti-rejeu)
 }
 
 // ─── Phase 33 — Expeditions ──────────────────────────────────────────────────

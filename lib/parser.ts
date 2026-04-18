@@ -688,6 +688,11 @@ export function parseFarmProfile(content: string): FarmProfileData {
       if (!dateKey || !itemId || isNaN(purchased)) return undefined;
       return { dateKey, itemId, purchased };
     })(),
+    // Phase 38 — économie Sporée
+    sporeeCount: props.sporee_count !== undefined ? parseInt(props.sporee_count, 10) : undefined,
+    sporeeShopBoughtToday: props.sporee_shop_bought_today !== undefined ? parseInt(props.sporee_shop_bought_today, 10) : undefined,
+    sporeeShopLastResetDate: props.sporee_shop_last_reset || undefined,
+    sporeeOnboardingGiftClaimed: props.sporee_onboarding_gift_claimed === 'true' ? true : undefined,
   };
 }
 
@@ -749,6 +754,19 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   if (data.dailyDealPurchases) {
     const { dateKey, itemId, purchased } = data.dailyDealPurchases;
     lines.push(`daily_deal_purchases: ${dateKey}|${itemId}|${purchased}`);
+  }
+  // Phase 38 — économie Sporée (ne sérialiser que si non-default)
+  if (typeof data.sporeeCount === 'number' && data.sporeeCount > 0) {
+    lines.push(`sporee_count: ${data.sporeeCount}`);
+  }
+  if (typeof data.sporeeShopBoughtToday === 'number' && data.sporeeShopBoughtToday > 0) {
+    lines.push(`sporee_shop_bought_today: ${data.sporeeShopBoughtToday}`);
+  }
+  if (data.sporeeShopLastResetDate) {
+    lines.push(`sporee_shop_last_reset: ${data.sporeeShopLastResetDate}`);
+  }
+  if (data.sporeeOnboardingGiftClaimed === true) {
+    lines.push(`sporee_onboarding_gift_claimed: true`);
   }
 
   return lines.join('\n') + '\n';
