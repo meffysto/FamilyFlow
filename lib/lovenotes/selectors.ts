@@ -89,7 +89,7 @@ export function archivedForProfile(notes: LoveNote[], profileId: string): LoveNo
   return notes
     .filter(
       (n) =>
-        (n.status === 'archived' || n.status === 'read') &&
+        n.status === 'archived' &&
         (n.to === profileId || n.from === profileId),
     )
     .sort((a, b) => {

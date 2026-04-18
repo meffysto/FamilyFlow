@@ -317,6 +317,22 @@
     "mijote_hiver": {
       "name": "Winter stew",
       "lore": "A rustic stew of beetroot and potato, bound together by a coop egg. A winter recipe that makes the most of root vegetables stored in the cellar after the autumn harvest. The taste of a farm that endures winter without faltering."
+    },
+    "huile_phenix": {
+      "name": "Phoenix oil",
+      "lore": "A fiery oil pressed from lava flowers brought back from volcanoes. Reserved for the rarest recipes, it imparts an incomparable warmth to culinary preparations. Only courageous explorers can stock their shelves with it."
+    },
+    "tisane_volcanique": {
+      "name": "Volcanic tisane",
+      "lore": "An infusion with gentle sulphur and lava flower aromas, comforting despite its fiery origins. This expedition brew soothes the muscles of adventurers and makes dreamers of those who've never tasted it."
+    },
+    "encre_etoiles": {
+      "name": "Star ink",
+      "lore": "A dark pigment extracted from black crystal that reflects nothing but captures everything. This expedition ink traces maps invisible by day, revealed only under moonlight."
+    },
+    "potion_eveil": {
+      "name": "Awakening potion",
+      "lore": "Brewed from black crystal and a touch of honey, this awakening potion frees the memory of past expeditions. A single vial is enough to revive memories of distant places thought lost forever."
     }
   },
   "tech": {

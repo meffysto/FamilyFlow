@@ -101,9 +101,9 @@ describe('DECO_CELLS', () => {
 // ─── getUnlockedCropCells ────────────────────────────────────────────────────
 
 describe('getUnlockedCropCells', () => {
-  it('retourne 0 cellules pour le stade graine', () => {
+  it('retourne 3 cellules pour le stade graine', () => {
     const cells = getUnlockedCropCells('graine');
-    expect(cells).toHaveLength(0);
+    expect(cells).toHaveLength(3);
   });
 
   it('retourne 3 cellules pour le stade pousse', () => {

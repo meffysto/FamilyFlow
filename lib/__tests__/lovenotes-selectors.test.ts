@@ -176,19 +176,19 @@ describe('sentByProfile', () => {
 });
 
 describe('archivedForProfile', () => {
-  it('inclut les notes reçues + lues', () => {
+  it('inclut les notes reçues archivées', () => {
     const notes = [
-      note({ to: 'emma', from: 'lucas', status: 'read', readAt: '2026-04-16T10:00:00' }),
+      note({ to: 'emma', from: 'lucas', status: 'archived', readAt: '2026-04-16T10:00:00' }),
       note({ to: 'emma', from: 'lucas', status: 'revealed' }),
     ];
     const out = archivedForProfile(notes, 'emma');
     expect(out).toHaveLength(1);
-    expect(out[0].status).toBe('read');
+    expect(out[0].status).toBe('archived');
   });
 
-  it('inclut les notes envoyées + lues (par destinataire)', () => {
+  it('inclut les notes envoyées archivées (par expéditeur)', () => {
     const notes = [
-      note({ from: 'lucas', to: 'emma', status: 'read', readAt: '2026-04-16T10:00:00' }),
+      note({ from: 'lucas', to: 'emma', status: 'archived', readAt: '2026-04-16T10:00:00' }),
     ];
     const out = archivedForProfile(notes, 'lucas');
     expect(out).toHaveLength(1);
@@ -199,13 +199,13 @@ describe('archivedForProfile', () => {
     const notes = [
       note({
         to: 'emma',
-        status: 'read',
+        status: 'archived',
         readAt: '2026-04-10T10:00:00',
         sourceFile: 'old.md',
       }),
       note({
         to: 'emma',
-        status: 'read',
+        status: 'archived',
         readAt: '2026-04-16T10:00:00',
         sourceFile: 'new.md',
       }),

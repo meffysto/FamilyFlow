@@ -340,7 +340,7 @@ export interface PlantedCrop {
  * nouvelles parcelles regulieres pour maintenir l'engagement.
  */
 export const PLOTS_BY_TREE_STAGE: Record<TreeStage, number> = {
-  graine:     0,  // Stade initial : pas encore de parcelles débloquées
+  graine:     3,  // Stade initial : 3 parcelles dès le début
   pousse:     3,
   arbuste:    5,
   arbre:      7,
