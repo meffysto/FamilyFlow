@@ -39,6 +39,12 @@ export interface HarvestItem {
   emoji: string;
   label: string;
   qty: number;
+  /** Phase 40 — info Sporée scellée : affiche badge 🍄 ×N + 🎁 si drop-back. */
+  wager?: {
+    won: boolean;
+    multiplier: number;
+    dropBack: boolean;
+  };
 }
 
 interface HarvestCardToastProps {
@@ -146,14 +152,22 @@ function ItemChip({ item, index, isNew, pulseKey, reduceMotion, primaryColor }: 
       style={[
         styles.chip,
         {
-          backgroundColor: 'rgba(255,255,255,0.18)',
-          borderColor: 'rgba(255,255,255,0.35)',
+          backgroundColor: item.wager?.won ? 'rgba(255,215,0,0.25)' : 'rgba(255,255,255,0.18)',
+          borderColor: item.wager?.won ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.35)',
         },
         chipStyle,
       ]}
     >
       <Text style={styles.chipEmoji}>{item.emoji}</Text>
       <Text style={[styles.chipQty, { color: '#FFFFFF' }]}>×{item.qty}</Text>
+      {item.wager?.won && (
+        <View style={styles.wagerBadge}>
+          <Text style={styles.wagerBadgeText}>{'🍄×'}{item.wager.multiplier}</Text>
+        </View>
+      )}
+      {item.wager?.dropBack && (
+        <Text style={styles.chipEmoji}>{'🎁'}</Text>
+      )}
     </Animated.View>
   );
 }
@@ -452,6 +466,18 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     lineHeight: 18,
+  },
+  wagerBadge: {
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+  },
+  wagerBadgeText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    color: '#FFE27A',
+    lineHeight: 14,
   },
   timerTrack: {
     height: 2,

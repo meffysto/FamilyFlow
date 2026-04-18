@@ -1295,9 +1295,21 @@ export default function TreeScreen() {
           const accord = FEMININE_CROPS.has(result.cropId) ? 'récoltée' : 'récolté';
           const harvestLabel = `${result.isGolden ? '✨ ' : ''}${cropLabel} ${accord} !`;
           showHarvestCard(
-            { emoji, label: harvestLabel, qty: result.qty },
+            {
+              emoji,
+              label: harvestLabel,
+              qty: result.qty,
+              wager: result.wager && result.wager.won
+                ? { won: true, multiplier: result.wager.multiplier, dropBack: result.wager.dropBack }
+                : undefined,
+            },
             result.isGolden,
           );
+          // Défaite wager : toast discret en complément (carte cachera le pari
+          // car wager.won=false → pas de badge doré). Message neutre, non punitif.
+          if (result.wager && !result.wager.won) {
+            showToast('🍄 Sporée consommée · pari non validé', 'info');
+          }
           // Animation graine rare avec délai pour ne pas chevaucher le toast récolte
           if (result.seedDrop) {
             setTimeout(() => setSeedDropEvent(result.seedDrop), 1500);

@@ -172,11 +172,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       harvestTimerRef.current = null;
     }
 
-    // Merge items : même emoji = additionner qty, sinon nouveau chip
+    // Merge items : même emoji = additionner qty, sinon nouveau chip.
+    // Préfère le wager du nouvel item (écrase si différent — cas rare mais correct).
     setHarvestItems(prev => {
       const existing = prev.find(i => i.emoji === item.emoji);
       if (existing) {
-        return prev.map(i => i.emoji === item.emoji ? { ...i, qty: i.qty + item.qty } : i);
+        return prev.map(i => i.emoji === item.emoji
+          ? { ...i, qty: i.qty + item.qty, wager: item.wager ?? i.wager }
+          : i);
       }
       return [...prev, item];
     });

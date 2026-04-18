@@ -11,7 +11,7 @@ import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount, rollWagerDropBack, getLocalDateKey } from '../lib/mascot/sporee-economy';
 import { computeCumulTarget, validateWagerOnHarvest, filterTasksForWager, maybeRecompute } from '../lib/mascot/wager-engine';
-import { computeWagerTotalDays, buildWagerHarvestToast, CUMUL_SCALING, getMultiplierForTier, ALLOWED_DURATIONS } from '../lib/mascot/wager-ui-helpers';
+import { computeWagerTotalDays, CUMUL_SCALING, getMultiplierForTier, ALLOWED_DURATIONS } from '../lib/mascot/wager-ui-helpers';
 import type { WagerDuration, WagerMultiplier, WagerModifier } from '../lib/mascot/types';
 import type { Task } from '../lib/types';
 import { useToast } from '../contexts/ToastContext';
@@ -308,7 +308,7 @@ export function useFarm(
   }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
-  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null; qty: number } | null> => {
+  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null; qty: number; wager?: { won: boolean; multiplier: number; dropBack: boolean; cumulCurrent: number; cumulTarget: number } } | null> => {
     if (!vault) return null;
 
 
@@ -405,26 +405,13 @@ export function useFarm(
       if (sporeeRefused) {
         showToast('Inventaire Sporée plein', 'error');
       }
-      // Phase 40 — Toasts wager (victoire/défaite) après refresh pour UX cohérente
-      if (wager) {
-        showToast(
-          buildWagerHarvestToast({
-            won: wagerWon,
-            finalQty,
-            multiplier: wager.multiplier,
-            dropBack: wagerDropBack,
-          }),
-          wagerWon ? 'success' : 'info',
-        );
-      }
       if (onQuestProgress) {
         try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
       }
-      // Contribution village (COOP-01) -- désactivé temporairement (seules les tâches comptent)
-      // if (onContribution) {
-      //   try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
-      // }
-      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty };
+      const wagerResult = wager
+        ? { won: wagerWon, multiplier: wager.multiplier, dropBack: wagerDropBack, cumulCurrent: wager.cumulCurrent ?? 0, cumulTarget: wager.cumulTarget ?? 0 }
+        : undefined;
+      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult };
     }
 
     // Preparer les champs a ecrire (chemin standard — pas de golden effect)
@@ -452,30 +439,16 @@ export function useFarm(
     if (sporeeRefused) {
       showToast('Inventaire Sporée plein', 'error');
     }
-    // Phase 40 — Toasts wager (victoire/défaite)
-    if (wager) {
-      showToast(
-        buildWagerHarvestToast({
-          won: wagerWon,
-          finalQty,
-          multiplier: wager.multiplier,
-          dropBack: wagerDropBack,
-          cropEmoji: CROP_CATALOG.find(c => c.id === result.harvestedCropId)?.emoji,
-        }),
-        wagerWon ? 'success' : 'info',
-      );
-    }
 
     // Progression quêtes coopératives (harvest)
     if (onQuestProgress) {
       try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
     }
-    // Contribution village (COOP-01) -- désactivé : seules les tâches comptent
-    // if (onContribution) {
-    //   try { await onContribution('harvest', profileId); } catch { /* Village -- non-critical */ }
-    // }
 
-    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty };
+    const wagerResult = wager
+      ? { won: wagerWon, multiplier: wager.multiplier, dropBack: wagerDropBack, cumulCurrent: wager.cumulCurrent ?? 0, cumulTarget: wager.cumulTarget ?? 0 }
+      : undefined;
+    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult };
   }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress, onContribution, showToast]);
 
   /** Vendre une recolte brute depuis l'inventaire (qty = nombre d'unités à vendre) */
