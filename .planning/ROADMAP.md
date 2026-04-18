@@ -98,7 +98,7 @@ Détails phase-by-phase préservés ci-dessous dans `## Phase Details`.
 
 **Milestone Goal :** Introduire des objets consommables qui modifient le comportement des plants au moment de la plantation, pour créer des décisions stratégiques au-delà du cycle plant→récolte→craft classique — transformer le jardin en terrain de décisions plutôt qu'en simple timer. Scope v1.7 = Sporée de Régularité uniquement (Chimère reportée v1.8). Fondation `modifiers` conçue extensible. Zéro nouvelle dépendance npm, backward compat Obsidian vault obligatoire, chaque phase non-cassante (app sur TestFlight).
 
-- [ ] **Phase 38: Fondation modifiers + économie Sporée** — Shape `FarmCrop.modifiers` + CSV backward-compat + bump cache + drop/shop/expedition/cadeau + cap inventaire + tests Jest fondations (MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13)
+- [x] **Phase 38: Fondation modifiers + économie Sporée** — Shape `FarmCrop.modifiers` + CSV backward-compat + bump cache + drop/shop/expedition/cadeau + cap inventaire + tests Jest fondations (MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13) (completed 2026-04-18)
 - [ ] **Phase 39: Moteur prorata + calcul famille** — Calcul cumulatif 23h30 + snapshot matinal + poids par âge + profils actifs 7j glissants + filtre strict Tasks + tests Jest (SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13)
 - [ ] **Phase 40: UI Sporée — seed picker + badge + validation** — Slot "Sceller" inline + application Sporée 3 durées + badge plant progression + validation récolte multiplier + état visuel plant mûr (MOD-03, SPOR-01, SPOR-02, SPOR-07, SPOR-11)
 - [ ] **Phase 41: Polish onboarding + codex + non-régression** — Tooltip one-shot premier drop + compteur codex `marathonWins` + non-régression TS/Jest finale (SPOR-10, SPOR-12)
@@ -253,11 +253,11 @@ Plans:
   3. User peut obtenir une Sporée via 4 sources distinctes : drop à la récolte (3% tier 1-3 / 8% rare / 15% expedition), achat shop à 400 feuilles (cap 2/jour, dès Arbre stade 3), loot expedition (5% missions Pousse+), cadeau onboarding (1 gratuite à l'atteinte stade 3 arbre)
   4. User voit son inventaire Sporée capé à 10 — tout drop au-delà affiche un toast "Inventaire Sporée plein" sans perte silencieuse
   5. User voit la suite Jest fondations passer (round-trip CSV `modifiers`, drop rate deterministe seed-based, cap 10, backward-compat plants legacy) — `npx tsc --noEmit` et `npx jest --no-coverage` clean
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 38-01-PLAN.md — Fondation data: shape PlantedCrop.modifiers + serialize/parse 7e champ pipe-escape + bump CACHE_VERSION + tests round-trip (MOD-01, MOD-02, SPOR-13)
 - [x] 38-02-PLAN.md — Moteur pur économie Sporée: constantes + rolls drop/expedition + canBuySporee + cap 10 + tests Jest matrice (SPOR-08, SPOR-09, SPOR-13)
-- [ ] 38-03-PLAN.md — Câblage hooks: parseFarmProfile fields + useFarm post-harvest + useExpeditions post-loot + useGamification cadeau onboarding + toast overflow (SPOR-08, SPOR-09)
+- [x] 38-03-PLAN.md — Câblage hooks: parseFarmProfile fields + useFarm post-harvest + useExpeditions post-loot + useGamification cadeau onboarding + toast overflow (SPOR-08, SPOR-09)
 
 ### Phase 39: Moteur prorata + calcul famille
 **Goal**: Implémenter le moteur de calcul pur du pari Sporée — prorata cumulatif `(poids_sealeur / poids_famille_active_7j) × Tasks_pending` recalculé à 23h30 avec snapshot matinal stable, poids par âge dérivés de la date de naissance (avec override settings), filtre profils actifs 7j glissants, filtre strict domaine Tasks. Fonctions pures testables, zéro UI nouvelle.
@@ -309,7 +309,7 @@ Plans:
 | 35. Carte enveloppe dashboard + écran boîte aux lettres | 3/3 | Complete   | 2026-04-17 |
 | 36. Composition & programmation reveal | 4/4 | Complete   | 2026-04-17 |
 | 37. Garde-parent & polish | 0/TBD | Deferred | - |
-| 38. Fondation modifiers + économie Sporée | 2/3 | In Progress|  |
+| 38. Fondation modifiers + économie Sporée | 3/3 | Complete   | 2026-04-18 |
 | 39. Moteur prorata + calcul famille | 0/TBD | Not started | - |
 | 40. UI Sporée — seed picker + badge + validation | 0/TBD | Not started | - |
 | 41. Polish onboarding + codex + non-régression | 0/TBD | Not started | - |
