@@ -115,6 +115,7 @@ import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
 import type { WagerDuration } from '../../lib/mascot/types';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
 import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
+import { SporeeOnboardingTooltip } from '../../components/mascot/SporeeOnboardingTooltip';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -435,6 +436,8 @@ export default function TreeScreen() {
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestEvent, setHarvestEvent] = useState<HarvestEvent | null>(null);
   const [seedDropEvent, setSeedDropEvent] = useState<RareSeedDrop | null>(null);
+  // Phase 41 (SPOR-10) — tooltip one-shot premier drop Sporée
+  const [showSporeeTooltip, setShowSporeeTooltip] = useState(false);
   // Sunrise report
   const [sunriseData, setSunriseData] = useState<{
     resources: SunriseResource[];
@@ -538,13 +541,17 @@ export default function TreeScreen() {
 
   // Handlers expéditions (Phase 33)
   const handleCollectExpedition = useCallback(async (missionId: string) => {
-    const { outcome, loot } = await collectExpedition(missionId);
+    const { outcome, loot, sporeeFirstObtained } = await collectExpedition(missionId);
     const mission = dailyPool.find(m => m.id === missionId) ?? { name: 'Expédition' };
     setShowExpeditions(false);
     setTimeout(() => {
       setChestData({ visible: true, outcome: outcome ?? 'failure', loot, missionName: mission.name });
     }, 300);
-  }, [collectExpedition, dailyPool]);
+    // Phase 41 (SPOR-10) — afficher tooltip one-shot au premier drop Sporée via expédition
+    if (sporeeFirstObtained && !hasSeenScreen('sporee_tooltip')) {
+      setTimeout(() => setShowSporeeTooltip(true), 800);
+    }
+  }, [collectExpedition, dailyPool, hasSeenScreen]);
 
   const handleCloseChest = useCallback(() => {
     setChestData(prev => ({ ...prev, visible: false }));
@@ -1315,6 +1322,10 @@ export default function TreeScreen() {
             setHarvestEvent(result.harvestEvent);
           }
           triggerActionMsg('harvest');
+          // Phase 41 (SPOR-10) — afficher tooltip one-shot au premier drop Sporée
+          if (result.sporeeFirstObtained && !hasSeenScreen('sporee_tooltip')) {
+            setTimeout(() => setShowSporeeTooltip(true), 800);
+          }
         }
       });
     } else if (crop) {
@@ -2839,6 +2850,12 @@ export default function TreeScreen() {
 
       {/* Phase 18-04 : tutoriel ferme — overlay au-dessus du HUD, refs cibles pour étapes 2-4 */}
       <FarmTutorialOverlay profile={profile} targetRefs={farmTutorialTargetRefs} />
+
+      {/* Phase 41 (SPOR-10) — Tooltip one-shot premier drop Sporée (harvest + expedition) */}
+      <SporeeOnboardingTooltip
+        visible={showSporeeTooltip}
+        onDismiss={() => setShowSporeeTooltip(false)}
+      />
 
       {/* DEV ONLY — Modal test des 10 effets sémantiques Phase 21 */}
       {__DEV__ && showDevEffects && (

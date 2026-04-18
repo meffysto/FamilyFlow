@@ -422,7 +422,9 @@ export function useFarm(
       const wagerResult = wager
         ? { won: wagerWon, multiplier: wager.multiplier, dropBack: wagerDropBack, cumulCurrent: wager.cumulCurrent ?? 0, cumulTarget: wager.cumulTarget ?? 0 }
         : undefined;
-      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult };
+      // Phase 41 (SPOR-10) — signal premier obtention Sporée (tooltip one-shot)
+      const sporeeFirstObtained = sporeeDropped || wagerDropBack;
+      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained };
     }
 
     // Preparer les champs a ecrire (chemin standard — pas de golden effect)
@@ -464,7 +466,9 @@ export function useFarm(
     const wagerResult = wager
       ? { won: wagerWon, multiplier: wager.multiplier, dropBack: wagerDropBack, cumulCurrent: wager.cumulCurrent ?? 0, cumulTarget: wager.cumulTarget ?? 0 }
       : undefined;
-    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult };
+    // Phase 41 (SPOR-10) — signal premier obtention Sporée (tooltip one-shot)
+    const sporeeFirstObtained = sporeeDropped || wagerDropBack;
+    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained };
   }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress, onContribution, showToast]);
 
   /** Vendre une recolte brute depuis l'inventaire (qty = nombre d'unités à vendre) */
