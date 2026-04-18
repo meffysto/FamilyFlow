@@ -9,10 +9,12 @@ import {
   harvestCrop,
   serializeCrops,
   parseCrops,
+  encodeModifiers,
+  decodeModifiers,
   GOLDEN_CROP_CHANCE,
   GOLDEN_HARVEST_MULTIPLIER,
 } from '../mascot/farm-engine';
-import type { PlantedCrop } from '../mascot/types';
+import type { PlantedCrop, WagerModifier, FarmCropModifiers } from '../mascot/types';
 
 // Mock getCurrentSeason pour contrôler les bonus saisonniers
 jest.mock('../mascot/seasons', () => ({
@@ -211,5 +213,117 @@ describe('serializeCrops / parseCrops', () => {
 
   it('serializeCrops retourne chaine vide pour tableau vide', () => {
     expect(serializeCrops([])).toBe('');
+  });
+});
+
+describe('serializeCrops / parseCrops with modifiers (Phase 38 MOD-01)', () => {
+  it('round-trip plant legacy sans modifier (6 champs, pas de trailing :)', () => {
+    const plant: PlantedCrop = {
+      plotIndex: 0,
+      cropId: 'carrot',
+      currentStage: 2,
+      tasksCompleted: 1,
+      plantedAt: '2026-04-18',
+    };
+    const csv = serializeCrops([plant]);
+    expect(csv).toBe('0:carrot:2:1:2026-04-18:');
+    const parsed = parseCrops(csv);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]).toEqual({ ...plant, isGolden: false });
+    expect('modifiers' in parsed[0]).toBe(false);
+  });
+
+  it('round-trip plant avec wager complet deep-equal', () => {
+    const wager: WagerModifier = {
+      sporeeId: 'sp-lucas-abc-123',
+      duration: 'engage',
+      multiplier: 1.7,
+      appliedAt: '2026-04-18',
+      sealerProfileId: 'parent-lucas',
+    };
+    const plant: PlantedCrop = {
+      plotIndex: 2,
+      cropId: 'tomato',
+      currentStage: 1,
+      tasksCompleted: 0.5,
+      plantedAt: '2026-04-18',
+      isGolden: false,
+      modifiers: { wager },
+    };
+    const csv = serializeCrops([plant]);
+    const parsed = parseCrops(csv);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].modifiers?.wager).toEqual(wager);
+  });
+
+  it('parse CSV legacy 6 champs (pré-v1.7) → modifiers undefined', () => {
+    const legacyCsv = '0:carrot:2:1:2026-04-18:,1:wheat:0:0:2026-04-17:1';
+    const parsed = parseCrops(legacyCsv);
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0].modifiers).toBeUndefined();
+    expect('modifiers' in parsed[0]).toBe(false);
+    expect(parsed[1].isGolden).toBe(true);
+    expect(parsed[1].modifiers).toBeUndefined();
+  });
+
+  it('parse 7e fragment vide string → modifiers undefined', () => {
+    const csv = '0:carrot:2:1:2026-04-18::';
+    const parsed = parseCrops(csv);
+    expect(parsed[0].modifiers).toBeUndefined();
+  });
+
+  it('round-trip sporeeId avec tirets uuid-style', () => {
+    const plant: PlantedCrop = {
+      plotIndex: 0,
+      cropId: 'corn',
+      currentStage: 0,
+      tasksCompleted: 0,
+      plantedAt: '2026-04-18',
+      modifiers: {
+        wager: {
+          sporeeId: 'sp-emma-d4e5-f678',
+          duration: 'sprint',
+          multiplier: 2.5,
+          appliedAt: '2026-04-18',
+          sealerProfileId: 'parent-emma',
+        },
+      },
+    };
+    const parsed = parseCrops(serializeCrops([plant]));
+    expect(parsed[0].modifiers?.wager?.sporeeId).toBe('sp-emma-d4e5-f678');
+  });
+
+  it('mix plants legacy + plants avec wager dans un même CSV', () => {
+    const legacy: PlantedCrop = { plotIndex: 0, cropId: 'carrot', currentStage: 1, tasksCompleted: 0, plantedAt: '2026-04-18' };
+    const withWager: PlantedCrop = {
+      plotIndex: 1, cropId: 'tomato', currentStage: 2, tasksCompleted: 1, plantedAt: '2026-04-18',
+      modifiers: { wager: { sporeeId: 'sp-1', duration: 'chill', multiplier: 1.3, appliedAt: '2026-04-18', sealerProfileId: 'parent1' } },
+    };
+    const parsed = parseCrops(serializeCrops([legacy, withWager]));
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0].modifiers).toBeUndefined();
+    expect(parsed[1].modifiers?.wager?.duration).toBe('chill');
+  });
+
+  it('encodeModifiers({}) retourne empty string', () => {
+    expect(encodeModifiers({})).toBe('');
+    expect(encodeModifiers(undefined)).toBe('');
+  });
+
+  it('decodeModifiers defensif sur input invalide', () => {
+    expect(decodeModifiers('')).toBeUndefined();
+    expect(decodeModifiers(undefined)).toBeUndefined();
+    expect(decodeModifiers('{invalide')).toBeUndefined();
+  });
+
+  it('JSON modifiers n inclut JAMAIS de "," ni ":" bruts (escape pipe/§)', () => {
+    const mods: FarmCropModifiers = {
+      wager: { sporeeId: 'sp-x', duration: 'engage', multiplier: 1.7, appliedAt: '2026-04-18', sealerProfileId: 'p1' },
+    };
+    const encoded = encodeModifiers(mods);
+    expect(encoded.includes(',')).toBe(false);
+    expect(encoded.includes(':')).toBe(false);
+    expect(encoded.includes('|')).toBe(true);
+    expect(encoded.includes('§')).toBe(true);
   });
 });
