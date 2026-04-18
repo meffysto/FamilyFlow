@@ -42,9 +42,10 @@ import type {
 } from './types';
 import type { JournalSummaryEntry } from './ai-service';
 
-// v4 : Phase 38 — shape PlantedCrop.modifiers + sporeeCount frontmatter farm (invalidation propre au premier boot post-migration)
-const CACHE_VERSION = 4;
-const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v4.json';
+// v5 : Phase 40 — shape WagerModifier étendu (tasksCompletedToday, lastDailyResetDate, totalDays)
+//                + FarmProfileData.wagerLastRecomputeDate frontmatter
+const CACHE_VERSION = 5;
+const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v5.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {

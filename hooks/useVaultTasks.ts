@@ -23,6 +23,11 @@ function warnUnexpected(context: string, e: unknown) {
 
 // ─── Interface de retour ─────────────────────────────────────────────────────
 
+/** Listener appelé sur transition false→true d'une tâche (Phase 40, pattern onQuestProgress).
+ *  Reçoit la Task complétée : le consommateur fait son propre filtre domaine
+ *  (ex: filterTasksForWager) + attribution profil (mentions/sourceFile). */
+export type TaskCompleteListener = (task: Task) => void | Promise<void>;
+
 export interface UseVaultTasksResult {
   tasks: Task[];
   setTasks: Dispatch<SetStateAction<Task[]>>;
@@ -33,6 +38,9 @@ export interface UseVaultTasksResult {
   editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string }) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   resetTasks: () => void;
+  /** Phase 40 — Souscrit un listener au complete d'une tâche (pattern event-driven,
+   *  consommé par useFarm.incrementWagerCumul). Retourne une fonction unsubscribe. */
+  subscribeTaskComplete: (listener: TaskCompleteListener) => () => void;
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -46,6 +54,22 @@ export function useVaultTasks(
   const tasksRef = useRef(tasks);
   useEffect(() => { tasksRef.current = tasks; }, [tasks]);
 
+  // ─── Phase 40 : Subscription event-driven task complete ────────────────
+  // Décision : Option B (subscribe via ref partagée exposée par VaultState) retenue
+  // plutôt qu'Option A (callback injecté à l'assemblage useVault). Raison concrète :
+  // `useFarm` est instancié dans l'écran tree.tsx (pas dans useVaultInternal), donc
+  // l'injection directe au moment de l'assemblage du contexte est impossible sans
+  // déplacer useFarm. Le subscribe via ref + useEffect dans tree.tsx (ou autre
+  // consommateur) reste compatible, zéro cycle de dépendance, pattern similaire à
+  // AppState listeners. Firing sur transition false→true uniquement (un-check ignoré).
+  const taskCompleteListenersRef = useRef<Set<TaskCompleteListener>>(new Set());
+  const subscribeTaskComplete = useCallback((listener: TaskCompleteListener) => {
+    taskCompleteListenersRef.current.add(listener);
+    return () => {
+      taskCompleteListenersRef.current.delete(listener);
+    };
+  }, []);
+
   const resetTasks = useCallback(() => {
     setTasks([]);
   }, []);
@@ -54,6 +78,7 @@ export function useVaultTasks(
 
   const toggleTask = useCallback(async (task: Task, completed: boolean) => {
     if (!vaultRef.current) return;
+    const wasCompleted = task.completed === true;
     await vaultRef.current.toggleTask(task.sourceFile, task.lineIndex, completed);
     const updateTask = (t: Task): Task => {
       if (t.id !== task.id) return t;
@@ -67,6 +92,26 @@ export function useVaultTasks(
     setTasks(prev => prev.map(updateTask));
     vacationTasksSetter(prev => prev.map(updateTask));
     setTimeout(triggerWidgetRefresh, 0);
+
+    // Phase 40 : émettre event transition false→true uniquement (un-check ignoré,
+    // récurrence qui reset completed=false côté updateTask : toujours compté comme
+    // "complétion" UX côté utilisateur).
+    if (completed && !wasCompleted) {
+      const listeners = Array.from(taskCompleteListenersRef.current);
+      for (const listener of listeners) {
+        try {
+          // fire-and-forget : ne bloque pas la toggleTask promise
+          const maybePromise = listener(task);
+          if (maybePromise && typeof (maybePromise as Promise<void>).catch === 'function') {
+            (maybePromise as Promise<void>).catch(e => {
+              if (__DEV__) console.warn('[useVaultTasks] taskComplete listener error:', e);
+            });
+          }
+        } catch (e) {
+          if (__DEV__) console.warn('[useVaultTasks] taskComplete listener sync error:', e);
+        }
+      }
+    }
   }, [triggerWidgetRefresh, vacationTasksSetter]);
 
   // ─── skipTask ────────────────────────────────────────────────────────────
@@ -217,5 +262,6 @@ export function useVaultTasks(
     editTask,
     deleteTask,
     resetTasks,
+    subscribeTaskComplete,
   };
 }

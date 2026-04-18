@@ -5,11 +5,15 @@
  * et deduit/ajoute les feuilles dans gamification.md.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
-import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount } from '../lib/mascot/sporee-economy';
+import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount, rollWagerDropBack, getLocalDateKey } from '../lib/mascot/sporee-economy';
+import { computeCumulTarget, validateWagerOnHarvest, filterTasksForWager, maybeRecompute } from '../lib/mascot/wager-engine';
+import { computeWagerTotalDays } from '../lib/mascot/wager-ui-helpers';
+import type { WagerDuration, WagerMultiplier, WagerModifier } from '../lib/mascot/types';
+import type { Task } from '../lib/types';
 import { useToast } from '../contexts/ToastContext';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { FarmInventory, CraftedItem } from '../lib/mascot/types';
@@ -77,6 +81,15 @@ function gamiFile(profileId: string): string {
 function farmFile(profileId: string): string {
   return `farm-${profileId}.md`;
 }
+
+/** Phase 40 — Multiplicateurs par durée (source unique côté useFarm pour startWager).
+ *  Le mapping détaillé vit dans lib/mascot/wager-ui-helpers.MULTIPLIERS ; on le
+ *  duplique ici volontairement pour éviter un import UI → hook circulaire. */
+const WAGER_MULTIPLIERS: Record<WagerDuration, WagerMultiplier> = {
+  chill: 1.3,
+  engage: 1.7,
+  sprint: 2.5,
+};
 
 /** Applique une valeur de champ sur un objet FarmProfileData (mapper fieldKey → propriété) */
 // Migration: anciens itemId de loot d'expédition → IDs réels dans INHABITANTS
@@ -151,6 +164,9 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
       data.sporeeCount = isNaN(n) ? undefined : n;
       break;
     }
+    case 'wager_last_recompute_date':
+      data.wagerLastRecomputeDate = value || undefined;
+      break;
   }
 }
 
@@ -158,7 +174,7 @@ export function useFarm(
   onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>,
   onContribution?: (type: ContributionType, profileId: string) => Promise<void>,
 ) {
-  const { vault, profiles, refreshFarm, refreshGamification } = useVault();
+  const { vault, profiles, refreshFarm, refreshGamification, tasks, subscribeTaskComplete, activeProfile } = useVault();
   const { showToast } = useToast();
 
   /** Deduire des feuilles dans gami-{profileId}.md */
@@ -350,6 +366,36 @@ export function useFarm(
       }
     }
 
+    // Phase 40 (SPOR-07) — Validation pari Sporée + multiplier + drop-back 15%
+    // Le modifier wager du crop récolté disparaît naturellement via harvestCrop
+    // (crop retiré du tableau serializeCrops). On lit le wager AVANT harvest
+    // depuis currentCrops pour appliquer la validation.
+    const harvestedCropInstance = currentCrops.find(c => c.plotIndex === plotIndex);
+    const wager = harvestedCropInstance?.modifiers?.wager;
+    let wagerDropBack = false;
+    let wagerWon = false;
+    if (wager) {
+      const validation = validateWagerOnHarvest(wager.cumulCurrent ?? 0, wager.cumulTarget ?? 0);
+      if (validation.won) {
+        wagerWon = true;
+        // Multiplier APRÈS golden (pitfall P3)
+        finalQty = Math.round(finalQty * wager.multiplier);
+        // Drop-back 15% — seulement si pari gagné
+        if (rollWagerDropBack()) {
+          const currentSporeeAfterMaybeDrop = profile.sporeeCount ?? 0;
+          const inc = tryIncrementSporeeCount(currentSporeeAfterMaybeDrop, 1);
+          if (inc.accepted) {
+            profile.sporeeCount = inc.newCount;
+            wagerDropBack = true;
+            // Si le drop-back monte le count, on considère qu'il faut persister
+            // (sporeeDropped n'est plus la seule source — voir below).
+          }
+        }
+      }
+      // Recalculer updatedHarvestInv avec finalQty multiplié
+      updatedHarvestInv[result.harvestedCropId] = (currentHarvestInv[result.harvestedCropId] ?? 0) + finalQty;
+    }
+
     if (wasGoldenEffect) {
       // Ecrire farm en une seule operation (crops + harvest inv + reset golden flag)
       const updatedProfile = {
@@ -357,13 +403,25 @@ export function useFarm(
         farmCrops: serializeCrops(result.crops),
         harvestInventory: updatedHarvestInv,
         ...(seedDrop ? { farmRareSeeds: { ...(profile.farmRareSeeds ?? {}), [seedDrop.seedId]: ((profile.farmRareSeeds ?? {})[seedDrop.seedId] ?? 0) + 1 } } : {}),
-        ...(sporeeDropped ? { sporeeCount: profile.sporeeCount } : {}),
+        // Persister sporeeCount si drop harvest OU drop-back wager (les deux mettent profile.sporeeCount à jour)
+        ...(sporeeDropped || wagerDropBack ? { sporeeCount: profile.sporeeCount } : {}),
       };
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
       await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, updatedProfile));
       await refreshFarm(profileId);
       if (sporeeRefused) {
         showToast('Inventaire Sporée plein', 'error');
+      }
+      // Phase 40 — Toasts wager (victoire/défaite) après refresh pour UX cohérente
+      if (wager) {
+        if (wagerWon) {
+          showToast(
+            `Victoire ! +${finalQty} 🍃 (×${wager.multiplier})` + (wagerDropBack ? ' · Sporée retrouvée 🎁' : ''),
+            'success',
+          );
+        } else {
+          showToast('Plant récolté · Sporée consommée', 'info');
+        }
       }
       if (onQuestProgress) {
         try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
@@ -389,8 +447,8 @@ export function useFarm(
       fieldsToWrite.farm_rare_seeds = serializeRareSeeds(updatedRareSeeds);
     }
 
-    // Phase 38 (SPOR-08) — persister sporee_count si drop accepté
-    if (sporeeDropped && typeof profile.sporeeCount === 'number') {
+    // Phase 38 (SPOR-08) + Phase 40 (drop-back) — persister sporee_count si drop harvest OU drop-back wager
+    if ((sporeeDropped || wagerDropBack) && typeof profile.sporeeCount === 'number') {
       fieldsToWrite.sporee_count = String(profile.sporeeCount);
     }
 
@@ -399,6 +457,17 @@ export function useFarm(
     await refreshFarm(profileId);
     if (sporeeRefused) {
       showToast('Inventaire Sporée plein', 'error');
+    }
+    // Phase 40 — Toasts wager (victoire/défaite)
+    if (wager) {
+      if (wagerWon) {
+        showToast(
+          `Victoire ! +${finalQty} 🍃 (×${wager.multiplier})` + (wagerDropBack ? ' · Sporée retrouvée 🎁' : ''),
+          'success',
+        );
+      } else {
+        showToast('Plant récolté · Sporée consommée', 'info');
+      }
     }
 
     // Progression quêtes coopératives (harvest)
@@ -934,9 +1003,220 @@ export function useFarm(
     return true;
   }, [vault, profiles, deductCoins, refreshFarm, refreshGamification]);
 
+  // ─── Phase 40 — Pari Sporée (startWager + incrementWagerCumul) ───────────
+
+  /** Sceller une Sporée sur une plantation — consomme 1 Sporée, plante,
+   *  persiste WagerModifier complet (cumulTarget + totalDays + trackers B1). */
+  const startWager = useCallback(async (
+    profileId: string,
+    plotIndex: number,
+    cropId: string,
+    duration: WagerDuration,
+  ): Promise<void> => {
+    if (!vault) return;
+
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const farmData = parseFarmProfile(content);
+
+    // Guard inventaire
+    const currentSporee = farmData.sporeeCount ?? 0;
+    if (currentSporee < 1) throw new Error('Pas de Sporée disponible');
+
+    const cropDef = CROP_CATALOG.find(c => c.id === cropId);
+    if (!cropDef) throw new Error('Culture inconnue');
+
+    // Check usure (clôture cassée) — pattern plant
+    const wearEffects = getActiveWearEffects(farmData.wearEvents ?? []);
+    if (wearEffects.blockedPlots.includes(plotIndex)) {
+      throw new Error('Cette parcelle est bloquée par une clôture cassée');
+    }
+
+    // Planter (pattern existant)
+    const currentCrops = parseCrops(farmData.farmCrops ?? '');
+    const newCrops = plantCrop(currentCrops, plotIndex, cropId);
+    if (newCrops.length === currentCrops.length) {
+      throw new Error('Parcelle déjà occupée');
+    }
+
+    const today = getLocalDateKey(new Date());
+
+    // Calcul cumulTarget live (filtre domaine Tasks + pending count courant)
+    const wagerTasks = filterTasksForWager(tasks);
+    const pendingCount = tasks.filter(t => !t.completed).length;
+    const cumulResult = computeCumulTarget({
+      sealerProfileId: profileId,
+      allProfiles: profiles,
+      tasks: wagerTasks,
+      today,
+      pendingCount,
+    });
+
+    // B2 — totalDays PERSISTÉ (source unique, élimine magic number 7 côté UI)
+    const totalDays = computeWagerTotalDays(duration, cropDef.tasksPerStage);
+
+    const wager: WagerModifier = {
+      sporeeId: `sporee-${Date.now()}`,
+      duration,
+      multiplier: WAGER_MULTIPLIERS[duration],
+      appliedAt: today,
+      sealerProfileId: profileId,
+      cumulTarget: cumulResult.cumulTarget,
+      cumulCurrent: 0,
+      tasksCompletedToday: 0,
+      lastDailyResetDate: today,
+      totalDays,
+    };
+
+    // Attacher le modifier au nouveau plant
+    const planted = newCrops.find(c => c.plotIndex === plotIndex);
+    if (planted) {
+      planted.modifiers = { ...(planted.modifiers ?? {}), wager };
+    }
+
+    // Mutation in-place + 1 unique writeFile (farmCrops + sporeeCount)
+    farmData.farmCrops = serializeCrops(newCrops);
+    farmData.sporeeCount = currentSporee - 1;
+
+    const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+    await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, farmData));
+
+    // Deduct cost graine (pattern plant classique, pas de cost si graine rare — ici
+    // le prix est celui du cropDef ; Sporée scellée sur graine standard payante).
+    if (!cropDef.dropOnly && cropDef.cost > 0) {
+      await deductCoins(profileId, cropDef.cost, `🌱 Graine scellée : ${cropId}`);
+    }
+    await refreshFarm(profileId);
+    await refreshGamification();
+  }, [vault, tasks, profiles, deductCoins, refreshFarm, refreshGamification]);
+
+  /** Incrémenter cumulCurrent + tasksCompletedToday sur TOUS les wagers actifs du profil.
+   *  Gère reset quotidien B1 : si lastDailyResetDate ≠ today → reset à 1, sinon +1. */
+  const incrementWagerCumul = useCallback(async (profileId: string): Promise<void> => {
+    if (!vault || !profileId) return;
+
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    if (!content) return;
+    const farmData = parseFarmProfile(content);
+
+    const crops = parseCrops(farmData.farmCrops ?? '');
+    // Filtre : wagers dont sealerProfileId === profileId (un user ne contribue qu'à ses paris)
+    const ownedWagerCrops = crops.filter(c => c.modifiers?.wager?.sealerProfileId === profileId);
+    if (ownedWagerCrops.length === 0) return; // early return, zéro I/O
+
+    const today = getLocalDateKey(new Date());
+    for (const crop of ownedWagerCrops) {
+      const w = crop.modifiers!.wager!;
+      // Reset quotidien B1
+      if (w.lastDailyResetDate !== today) {
+        w.tasksCompletedToday = 1;
+        w.lastDailyResetDate = today;
+      } else {
+        w.tasksCompletedToday = (w.tasksCompletedToday ?? 0) + 1;
+      }
+      w.cumulCurrent = (w.cumulCurrent ?? 0) + 1;
+    }
+
+    // Unique writeFile (serialize crops contient les modifiers mis à jour)
+    farmData.farmCrops = serializeCrops(crops);
+    const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+    await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, farmData));
+    await refreshFarm(profileId);
+  }, [vault, profiles, refreshFarm]);
+
+  // ─── Phase 40 — Bootstrap maybeRecompute au boot (W3 résolu) ────────────
+  // useEffect d'init : pour chaque wager actif du profil actif, recalcule
+  // cumulTarget si un jour s'est écoulé depuis le dernier recompute, puis
+  // persiste le nouveau cumulTarget + wagerLastRecomputeDate dans farm-{id}.md.
+  const lastBootstrapProfileRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!vault || !activeProfile) return;
+    const profileId = activeProfile.id;
+    // Un seul passage par session et par profil actif
+    if (lastBootstrapProfileRef.current === profileId) return;
+    lastBootstrapProfileRef.current = profileId;
+
+    (async () => {
+      try {
+        const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+        if (!content) return;
+        const farmData = parseFarmProfile(content);
+        const crops = parseCrops(farmData.farmCrops ?? '');
+        const ownedWagerCrops = crops.filter(c => c.modifiers?.wager?.sealerProfileId === profileId);
+        if (ownedWagerCrops.length === 0) return;
+
+        const wagerTasks = filterTasksForWager(tasks);
+        const now = new Date();
+        const today = getLocalDateKey(now);
+        const pendingCount = tasks.filter(t => !t.completed).length;
+        const lastRecompute = farmData.wagerLastRecomputeDate ?? '';
+
+        let anyChanged = false;
+        for (const crop of ownedWagerCrops) {
+          const w = crop.modifiers!.wager!;
+          const res = maybeRecompute({
+            now,
+            lastRecomputeDate: lastRecompute,
+            snapshot: { date: today, pending: pendingCount } as any,
+            sealerProfileId: w.sealerProfileId,
+            allProfiles: profiles,
+            tasks: wagerTasks,
+          });
+          if (res.recomputed) {
+            w.cumulTarget = res.result.cumulTarget;
+            anyChanged = true;
+          }
+        }
+
+        if (anyChanged) {
+          farmData.farmCrops = serializeCrops(crops);
+          farmData.wagerLastRecomputeDate = today;
+          const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+          await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, farmData));
+          await refreshFarm(profileId);
+        }
+      } catch (e) {
+        if (__DEV__) console.warn('[useFarm] bootstrap maybeRecompute error:', e);
+      }
+    })();
+  }, [vault, activeProfile, tasks, profiles, refreshFarm]);
+
+  // ─── Phase 40 — Câblage onTaskComplete → incrementWagerCumul ────────────
+  // Pattern onQuestProgress : le listener filtre le domaine Tasks (filterTasksForWager)
+  // et attribue au sealeur via mentions/sourceFile (triple check cohérent wager-engine).
+  useEffect(() => {
+    if (!subscribeTaskComplete) return;
+    const listener = async (task: Task) => {
+      // Filtre domaine : seules les tâches du domaine Tasks comptent (SPOR-06)
+      if (filterTasksForWager([task]).length === 0) return;
+      // Attribution : pour chaque profil, voir si la tâche lui appartient, puis incr
+      // ses wagers. En pratique un wager incremente via sealerProfileId qui est le
+      // propriétaire — le hook parcourt TOUS les profils actifs avec wager.
+      // Ici on incrémente pour chaque profil dont la tâche "appartient" (mentions.id,
+      // mentions.name, sourceFile nom) — pattern wager-engine.isProfileActive7d.
+      for (const p of profiles) {
+        const nameLower = p.name.toLowerCase();
+        const belongs =
+          task.mentions.includes(p.id) ||
+          task.mentions.includes(p.name) ||
+          task.sourceFile.toLowerCase().includes(nameLower);
+        if (belongs) {
+          try {
+            await incrementWagerCumul(p.id);
+          } catch (e) {
+            if (__DEV__) console.warn('[useFarm] incrementWagerCumul error:', e);
+          }
+        }
+      }
+    };
+    const unsubscribe = subscribeTaskComplete(listener);
+    return unsubscribe;
+  }, [subscribeTaskComplete, profiles, incrementWagerCumul]);
+
   return {
     plant,
     harvest,
+    startWager,
+    incrementWagerCumul,
     buyBuilding,
     upgradeBuildingAction,
     collectBuildingResources,

@@ -316,6 +316,13 @@ export interface WagerModifier {
   sealerProfileId: string;
   cumulTarget?: number;        // Phase 39 — nullable phase 38
   cumulCurrent?: number;       // Phase 39 — nullable phase 38
+
+  // Phase 40 — B1 badge 2-lignes (X/Y aujourd'hui)
+  tasksCompletedToday?: number;   // compteur du jour courant, reset au changement de jour
+  lastDailyResetDate?: string;    // ISO YYYY-MM-DD — dernière date de reset tasksCompletedToday
+
+  // Phase 40 — B2 totalDays persisté (élimine magic number 7 côté UI)
+  totalDays?: number;             // calculé via computeWagerTotalDays(duration, tasksPerStage) au startWager
 }
 
 /** Ensemble extensible de modifiers applicables à un plant */

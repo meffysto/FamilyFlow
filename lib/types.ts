@@ -652,6 +652,8 @@ export interface FarmProfileData {
   sporeeShopBoughtToday?: number;          // achats shop du jour 0-2
   sporeeShopLastResetDate?: string;        // YYYY-MM-DD local — dernier reset cap quotidien
   sporeeOnboardingGiftClaimed?: boolean;   // true = cadeau stade 3 déjà donné (anti-rejeu)
+  // Phase 40 — Bootstrap maybeRecompute (W3 : persistance vault-first, pas SecureStore)
+  wagerLastRecomputeDate?: string;         // ISO YYYY-MM-DD — dernier passage de maybeRecompute pour ce profil
 }
 
 // ─── Phase 33 — Expeditions ──────────────────────────────────────────────────

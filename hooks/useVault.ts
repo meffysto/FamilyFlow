@@ -94,7 +94,7 @@ import { useVaultStock } from './useVaultStock';
 import { useVaultCourses } from './useVaultCourses';
 import { useVaultHealth } from './useVaultHealth';
 import { useVaultSecretMissions } from './useVaultSecretMissions';
-import { useVaultTasks } from './useVaultTasks';
+import { useVaultTasks, type TaskCompleteListener } from './useVaultTasks';
 import { useVaultRecipes } from './useVaultRecipes';
 import { useVaultDefis } from './useVaultDefis';
 import { useVaultFamilyQuests } from './useVaultFamilyQuests';
@@ -172,6 +172,10 @@ export interface VaultState {
   stockSections: string[];
   toggleTask: (task: Task, completed: boolean) => Promise<void>;
   skipTask: (task: Task) => Promise<void>;
+  /** Phase 40 — Souscrit un listener appelé sur transition false→true d'une tâche.
+   *  Pattern event-driven consommé par useFarm.incrementWagerCumul (câblage Sporée).
+   *  Retourne une fonction unsubscribe à appeler au cleanup. */
+  subscribeTaskComplete: (listener: TaskCompleteListener) => () => void;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
@@ -1773,6 +1777,7 @@ export function useVaultInternal(): VaultState {
     stockSections,
     toggleTask: tasksHook.toggleTask,
     skipTask: tasksHook.skipTask,
+    subscribeTaskComplete: tasksHook.subscribeTaskComplete,
     addRDV,
     updateRDV,
     deleteRDV,

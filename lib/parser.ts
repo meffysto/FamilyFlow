@@ -693,6 +693,8 @@ export function parseFarmProfile(content: string): FarmProfileData {
     sporeeShopBoughtToday: props.sporee_shop_bought_today !== undefined ? parseInt(props.sporee_shop_bought_today, 10) : undefined,
     sporeeShopLastResetDate: props.sporee_shop_last_reset || undefined,
     sporeeOnboardingGiftClaimed: props.sporee_onboarding_gift_claimed === 'true' ? true : undefined,
+    // Phase 40 — bootstrap maybeRecompute (W3)
+    wagerLastRecomputeDate: props.wager_last_recompute_date || undefined,
   };
 }
 
@@ -767,6 +769,10 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   }
   if (data.sporeeOnboardingGiftClaimed === true) {
     lines.push(`sporee_onboarding_gift_claimed: true`);
+  }
+  // Phase 40 — bootstrap maybeRecompute (W3 : persistance vault-first)
+  if (data.wagerLastRecomputeDate) {
+    lines.push(`wager_last_recompute_date: ${data.wagerLastRecomputeDate}`);
   }
 
   return lines.join('\n') + '\n';
