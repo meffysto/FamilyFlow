@@ -11,7 +11,7 @@ import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount, rollWagerDropBack, getLocalDateKey } from '../lib/mascot/sporee-economy';
 import { computeCumulTarget, validateWagerOnHarvest, filterTasksForWager, maybeRecompute } from '../lib/mascot/wager-engine';
-import { computeWagerTotalDays, CUMUL_SCALING, getMultiplierForTier, ALLOWED_DURATIONS } from '../lib/mascot/wager-ui-helpers';
+import { computeWagerTotalDays, computeWagerCumul, getMultiplierForTier, ALLOWED_DURATIONS } from '../lib/mascot/wager-ui-helpers';
 import type { WagerDuration, WagerMultiplier, WagerModifier } from '../lib/mascot/types';
 import type { Task } from '../lib/types';
 import { useToast } from '../contexts/ToastContext';
@@ -1009,37 +1009,16 @@ export function useFarm(
 
     const today = getLocalDateKey(new Date());
 
-    // Calcul cumulTarget live — aligné sur "X tâches restantes" de l'écran tasks
-    // (tasks.tsx:534) : toutes non complétées sauf récurrentes future-dated.
-    const wagerTasks = filterTasksForWager(tasks);
-    const pendingCount = wagerTasks.filter(t => {
-      if (t.completed) return false;
-      if (t.recurrence && t.dueDate && t.dueDate > today) return false;
-      return true;
-    }).length;
-    const cumulResult = computeCumulTarget({
-      sealerProfileId: profileId,
-      allProfiles: profiles,
-      tasks: wagerTasks,
-      today,
-      pendingCount,
-      gamiHistory: gamiData?.history,
-    });
-
-    // B2 — totalDays PERSISTÉ (source unique, élimine magic number 7 côté UI)
-    const totalDays = computeWagerTotalDays(duration, cropDef.tasksPerStage);
-
+    // Cumul déterministe basé sur crop + durée (pas de prorata famille, pas de backlog).
     // Tier-aware multiplier : base ×2/×3/×4, rare/expedition ×2/×3 (pas de chill).
     const tier = classifyHarvestTier(cropId);
     if (!ALLOWED_DURATIONS[tier].includes(duration)) {
       throw new Error(`Durée ${duration} non autorisée pour une culture ${tier}`);
     }
+    const cumulTarget = computeWagerCumul(cropDef.tasksPerStage, duration);
 
-    // Scaling par durée — Chill ×1.0 / Engagé ×1.5 / Sprint ×2.0 (vrai trade-off risque/reward).
-    // Préserve cumulTarget=0 (pari auto-gagné D-04) sans le multiplier.
-    const scaledTarget = cumulResult.cumulTarget === 0
-      ? 0
-      : Math.max(1, Math.ceil(cumulResult.cumulTarget * CUMUL_SCALING[duration]));
+    // B2 — totalDays PERSISTÉ (source unique, élimine magic number 7 côté UI)
+    const totalDays = computeWagerTotalDays(duration, cropDef.tasksPerStage);
 
     const wager: WagerModifier = {
       sporeeId: `sporee-${Date.now()}`,
@@ -1047,7 +1026,7 @@ export function useFarm(
       multiplier: getMultiplierForTier(tier, duration),
       appliedAt: today,
       sealerProfileId: profileId,
-      cumulTarget: scaledTarget,
+      cumulTarget,
       cumulCurrent: 0,
       tasksCompletedToday: 0,
       lastDailyResetDate: today,
@@ -1131,35 +1110,17 @@ export function useFarm(
         const ownedWagerCrops = crops.filter(c => c.modifiers?.wager?.sealerProfileId === profileId);
         if (ownedWagerCrops.length === 0) return;
 
-        const wagerTasks = filterTasksForWager(tasks);
-        const now = new Date();
-        const today = getLocalDateKey(now);
-        // Aligné sur "X tâches restantes" de l'écran tasks (tasks.tsx:534).
-        const pendingCount = wagerTasks.filter(t => {
-          if (t.completed) return false;
-          if (t.recurrence && t.dueDate && t.dueDate > today) return false;
-          return true;
-        }).length;
-        const lastRecompute = farmData.wagerLastRecomputeDate ?? '';
-
+        // Cumul est désormais déterministe (crop + durée) — recompute au boot
+        // aligne les paris pré-existants sur la nouvelle formule.
+        const today = getLocalDateKey(new Date());
         let anyChanged = false;
         for (const crop of ownedWagerCrops) {
           const w = crop.modifiers!.wager!;
-          const res = maybeRecompute({
-            now,
-            lastRecomputeDate: lastRecompute,
-            snapshot: { date: today, pending: pendingCount } as any,
-            sealerProfileId: w.sealerProfileId,
-            allProfiles: profiles,
-            tasks: wagerTasks,
-            gamiHistory: gamiData?.history,
-          });
-          if (res.recomputed) {
-            // Applique le scaling de la durée du pari (même logique que startWager)
-            const scaled = res.result.cumulTarget === 0
-              ? 0
-              : Math.max(1, Math.ceil(res.result.cumulTarget * CUMUL_SCALING[w.duration]));
-            w.cumulTarget = scaled;
+          const def = CROP_CATALOG.find(c => c.id === crop.cropId);
+          if (!def) continue;
+          const expected = computeWagerCumul(def.tasksPerStage, w.duration);
+          if (w.cumulTarget !== expected) {
+            w.cumulTarget = expected;
             anyChanged = true;
           }
         }
@@ -1172,10 +1133,10 @@ export function useFarm(
           await refreshFarm(profileId);
         }
       } catch (e) {
-        if (__DEV__) console.warn('[useFarm] bootstrap maybeRecompute error:', e);
+        if (__DEV__) console.warn('[useFarm] bootstrap wager cumul resync error:', e);
       }
     })();
-  }, [vault, activeProfile, tasks, profiles, refreshFarm]);
+  }, [vault, activeProfile, profiles, refreshFarm]);
 
   // ─── Phase 40 — Câblage onTaskComplete → incrementWagerCumul ────────────
   // Pattern onQuestProgress : le listener filtre le domaine Tasks (filterTasksForWager)

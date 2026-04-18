@@ -21,9 +21,7 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 import { computeWagerDurations, type WagerDurationOption } from '../../lib/mascot/wager-ui-helpers';
-import { computeCumulTarget, filterTasksForWager } from '../../lib/mascot/wager-engine';
 import { classifyHarvestTier } from '../../lib/mascot/sporee-economy';
-import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
 import type { WagerDuration } from '../../lib/mascot/types';
 import type { Profile, Task } from '../../lib/types';
 
@@ -94,31 +92,17 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
 }: WagerSealerSheetProps) {
   const { primary, colors } = useThemeColors();
 
-  // Calcul des 3 options — stable tant que inputs identiques
+  // Calcul des 3 options — déterministe (crop + durée), zéro dépendance famille/backlog
   const durations = useMemo<WagerDurationOption[]>(() => {
-    const today = getLocalDateKey(new Date());
-    const wagerTasks = filterTasksForWager(allTasks);
-    // Aligné sur "X tâches restantes" de l'écran tasks (tasks.tsx:534) :
-    // toutes les non complétées sauf les récurrentes déjà validées (dueDate future).
-    const pendingCount = wagerTasks.filter(t => {
-      if (t.completed) return false;
-      if (t.recurrence && t.dueDate && t.dueDate > today) return false;
-      return true;
-    }).length;
-
-    // Adapter au contrat callback-based de computeWagerDurations
-    const computeCumulTargetFn = () => computeCumulTarget({
-      sealerProfileId,
-      allProfiles,
-      tasks: wagerTasks,
-      today,
-      pendingCount,
-      gamiHistory,
-    });
-
     const tier = classifyHarvestTier(cropId);
-    return computeWagerDurations(tasksPerStage, computeCumulTargetFn, undefined, tier);
-  }, [tasksPerStage, sealerProfileId, allProfiles, allTasks, cropId, gamiHistory]);
+    return computeWagerDurations(tasksPerStage, tier);
+  }, [tasksPerStage, cropId]);
+
+  // Suppress unused props — gardés dans le shape pour compat mais plus utilisés
+  void sealerProfileId;
+  void allProfiles;
+  void allTasks;
+  void gamiHistory;
 
   // Handler confirm mode — factorisé (3 durées ≡ 1 handler paramétré)
   const handleConfirmDuration = useCallback(async (duration: WagerDuration) => {

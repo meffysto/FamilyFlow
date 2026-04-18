@@ -26,72 +26,72 @@ describe('DURATION_FACTORS + MULTIPLIERS (constantes source unique)', () => {
   });
 });
 
-describe('computeWagerDurations (seed picker)', () => {
-  const stubCompute = (cumulTarget: number) => () => ({ cumulTarget });
-
-  it('retourne toujours 3 options dans l\'ordre chill → engage → sprint', () => {
-    const opts = computeWagerDurations(3, stubCompute(10), {});
+describe('computeWagerDurations (seed picker, déterministe)', () => {
+  it('retourne toujours 3 options base dans l\'ordre chill → engage → sprint', () => {
+    const opts = computeWagerDurations(3);
     expect(opts).toHaveLength(3);
     expect(opts.map(o => o.duration)).toEqual(['chill', 'engage', 'sprint']);
   });
 
   it('multipliers base (tier par défaut) ×2 / ×3 / ×4', () => {
-    const opts = computeWagerDurations(3, stubCompute(10), {});
+    const opts = computeWagerDurations(3);
     expect(opts.map(o => o.multiplier)).toEqual([2, 3, 4]);
   });
 
   it('tier rare : chill filtré, multipliers engage ×2 / sprint ×3', () => {
-    const opts = computeWagerDurations(3, stubCompute(10), {}, 'rare');
+    const opts = computeWagerDurations(3, 'rare');
     expect(opts.map(o => o.duration)).toEqual(['engage', 'sprint']);
     expect(opts.map(o => o.multiplier)).toEqual([2, 3]);
   });
 
   it('tier expedition : chill filtré, multipliers engage ×2 / sprint ×3', () => {
-    const opts = computeWagerDurations(3, stubCompute(10), {}, 'expedition');
+    const opts = computeWagerDurations(3, 'expedition');
     expect(opts.map(o => o.duration)).toEqual(['engage', 'sprint']);
     expect(opts.map(o => o.multiplier)).toEqual([2, 3]);
   });
 
-  it('petit plant tasksPerStage=1 → absoluteTasks ≥ 1 partout', () => {
-    const opts = computeWagerDurations(1, stubCompute(5), {});
-    opts.forEach(o => expect(o.absoluteTasks).toBeGreaterThanOrEqual(1));
-    // chill 1*4*1.0=4, engage ceil(2.8)=3, sprint ceil(2)=2
+  it('petit plant tasksPerStage=1 → absoluteTasks 4/3/2', () => {
+    const opts = computeWagerDurations(1);
     expect(opts[0].absoluteTasks).toBe(4);
     expect(opts[1].absoluteTasks).toBe(3);
     expect(opts[2].absoluteTasks).toBe(2);
   });
 
-  it('plant géant tasksPerStage=6 → chill 24 / engage 17 / sprint 12', () => {
-    const opts = computeWagerDurations(6, stubCompute(20), {});
+  it('plant géant tasksPerStage=6 → absoluteTasks 24/17/12', () => {
+    const opts = computeWagerDurations(6);
     expect(opts[0].absoluteTasks).toBe(24);
     expect(opts[1].absoluteTasks).toBe(17); // ceil(16.8)
     expect(opts[2].absoluteTasks).toBe(12);
   });
 
   it('garde-fou tasksPerStage=0 → absoluteTasks = 1 partout', () => {
-    const opts = computeWagerDurations(0, stubCompute(0), {});
+    const opts = computeWagerDurations(0);
     opts.forEach(o => expect(o.absoluteTasks).toBe(1));
   });
 
   it('estimatedHours = absoluteTasks × 6', () => {
-    const opts = computeWagerDurations(2, stubCompute(8), {});
+    const opts = computeWagerDurations(2);
     opts.forEach(o => expect(o.estimatedHours).toBe(o.absoluteTasks * 6));
   });
 
-  it('targetTasks consommé depuis callback + scaling par durée', () => {
-    const spy = jest.fn(() => ({ cumulTarget: 42 }));
-    const opts = computeWagerDurations(3, spy, { pendingCount: 99 });
-    expect(spy).toHaveBeenCalled();
+  it('targetTasks déterministe tasksPerStage=1 → chill 8 / engage 10 / sprint 12', () => {
+    const opts = computeWagerDurations(1);
     const byDuration = Object.fromEntries(opts.map(o => [o.duration, o.targetTasks]));
-    expect(byDuration.chill).toBe(42);   // ×1.0
-    expect(byDuration.engage).toBe(63);  // ×1.5 = 63
-    expect(byDuration.sprint).toBe(84);  // ×2.0 = 84
+    expect(byDuration.chill).toBe(8);    // 4 × 2.0
+    expect(byDuration.engage).toBe(10);  // 4 × 2.5
+    expect(byDuration.sprint).toBe(12);  // 4 × 3.0
   });
 
-  it('targetTasks preserve 0 (pari auto-gagné D-04) — pas de scaling', () => {
-    const spy = jest.fn(() => ({ cumulTarget: 0 }));
-    const opts = computeWagerDurations(1, spy, {});
-    opts.forEach(o => expect(o.targetTasks).toBe(0));
+  it('targetTasks plafonné par CUMUL_MAX=30 pour crops rares haut-niveau', () => {
+    // tasksPerStage=6 × 4 × 3.0 = 72 → cap à 30
+    const opts = computeWagerDurations(6);
+    opts.forEach(o => expect(o.targetTasks).toBeLessThanOrEqual(30));
+    expect(opts[2].targetTasks).toBe(30); // sprint atteint le cap
+  });
+
+  it('targetTasks minimum = 1 même avec tasksPerStage=0', () => {
+    const opts = computeWagerDurations(0);
+    opts.forEach(o => expect(o.targetTasks).toBeGreaterThanOrEqual(1));
   });
 });
 

@@ -48,13 +48,24 @@ export function getMultiplierForTier(
   return (tier === 'base' ? MULTIPLIERS : MULTIPLIERS_RARE)[duration];
 }
 
-/** Scaling du cumulTarget par durée — crée un vrai trade-off risque/reward.
- *  Chill = cumul prorata nominal, Engagé = ×1.5, Sprint = ×2.0 (plus dur à gagner). */
+/** Scaling du cumulTarget par durée — Chill ×2.0 / Engagé ×2.5 / Sprint ×3.0.
+ *  Appliqué sur `tasksPerStage × 4` (stages totaux du plant). */
 export const CUMUL_SCALING: Record<WagerDuration, number> = {
-  chill: 1.0,
-  engage: 1.5,
-  sprint: 2.0,
+  chill: 2.0,
+  engage: 2.5,
+  sprint: 3.0,
 };
+
+/** Plafond absolu du cumulTarget — évite les marathons sur crops rares haut-niveau. */
+export const CUMUL_MAX = 30;
+
+/** Calcule le cumulTarget d'un pari — formule déterministe basée uniquement sur
+ *  le crop (tasksPerStage) et la durée. Pas de prorata famille, pas de pending.
+ *  Plafonné à CUMUL_MAX pour jouabilité. */
+export function computeWagerCumul(tasksPerStage: number, duration: WagerDuration): number {
+  const baseTasks = Math.max(1, tasksPerStage) * 4;
+  return Math.min(CUMUL_MAX, Math.max(1, Math.ceil(baseTasks * CUMUL_SCALING[duration])));
+}
 
 /** Projection UI : heures estimées par tâche ménagère (moyenne famille). */
 const HOURS_PER_TASK = 6;
@@ -83,23 +94,21 @@ export interface WagerDurationOption {
 // ─────────────────────────────────────────────
 
 /**
- * Calcule les 3 options de durée à afficher dans le seed picker.
- * Signature callback-based pour rester pure-testable sans importer wager-engine.
+ * Calcule les options de durée du seed picker — formule déterministe.
  *
- * - absoluteTasks = max(1, ceil(tasksPerStage × 4 × facteur durée))
+ * - absoluteTasks = max(1, ceil(tasksPerStage × 4 × facteur durée)) — stages plant
  * - estimatedHours = absoluteTasks × 6 (projection UI)
- * - targetTasks = computeCumulTargetFn(ctx).cumulTarget (consommé, jamais recalculé)
+ * - targetTasks = computeWagerCumul(tasksPerStage, duration) — cumul du pari
+ * - multiplier = getMultiplierForTier(tier, duration) — reward ×N
  *
- * Retourne toujours 3 options dans l'ordre stable chill → engage → sprint.
+ * Tier rare/expedition filtre le chill.
+ * Retourne les options dans l'ordre stable chill → engage → sprint.
  */
-export function computeWagerDurations<TCtx>(
+export function computeWagerDurations(
   tasksPerStage: number,
-  computeCumulTargetFn: (ctx: TCtx) => { cumulTarget: number },
-  ctx: TCtx,
   tier: 'base' | 'rare' | 'expedition' = 'base',
 ): WagerDurationOption[] {
   const safeTasksPerStage = Math.max(0, tasksPerStage);
-  const { cumulTarget } = computeCumulTargetFn(ctx);
   const allowed = ALLOWED_DURATIONS[tier];
   return DURATION_ORDER
     .filter(d => allowed.includes(d))
@@ -109,8 +118,7 @@ export function computeWagerDurations<TCtx>(
       return {
         duration,
         multiplier: getMultiplierForTier(tier, duration),
-        // Préserve cumulTarget=0 (pari auto-gagné D-04) ; sinon applique le scaling.
-        targetTasks: cumulTarget === 0 ? 0 : Math.max(1, Math.ceil(cumulTarget * CUMUL_SCALING[duration])),
+        targetTasks: computeWagerCumul(safeTasksPerStage, duration),
         absoluteTasks,
         estimatedHours: absoluteTasks * HOURS_PER_TASK,
       };
