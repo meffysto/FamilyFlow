@@ -116,9 +116,10 @@ describe('Phase 40 Plan 04 — buildWagerHarvestToast (format FR strict)', () =>
     it('won=false, peu importe finalQty/multiplier/dropBack → message neutre bienveillant', () => {
       const msg = buildWagerHarvestToast({
         won: false,
-        finalQty: 30,
-        multiplier: 2.5,
+        finalQty: 4,
+        multiplier: 4,
         dropBack: false,
+        cropEmoji: '🥔',
       });
       expect(msg).toBe('Plant récolté · Sporée consommée');
     });
@@ -126,66 +127,78 @@ describe('Phase 40 Plan 04 — buildWagerHarvestToast (format FR strict)', () =>
     it('won=false avec dropBack=true (cas impossible en pratique) → même message neutre', () => {
       const msg = buildWagerHarvestToast({
         won: false,
-        finalQty: 30,
-        multiplier: 2.5,
+        finalQty: 4,
+        multiplier: 4,
         dropBack: true,
       });
       expect(msg).toBe('Plant récolté · Sporée consommée');
-      // Garde-fou : ne révèle pas le dropBack sur défaite (jamais de mélange de sémantiques).
     });
 
-    it('won=false → aucun emoji victoire (🍃 / 🎁) dans le message', () => {
+    it('won=false → aucun emoji victoire / 🎁 dans le message', () => {
       const msg = buildWagerHarvestToast({
         won: false,
-        finalQty: 30,
-        multiplier: 2.5,
+        finalQty: 4,
+        multiplier: 4,
         dropBack: false,
       });
-      expect(msg).not.toContain('🍃');
       expect(msg).not.toContain('🎁');
       expect(msg).not.toContain('Victoire');
     });
   });
 
   describe('victoire simple (won=true, dropBack=false)', () => {
-    it('finalQty=75, multiplier=2.5 → "Victoire ! +75 🍃 (×2.5)"', () => {
+    it('finalQty=4, multiplier=4, cropEmoji=🥔 → "Victoire ! +4 🥔 (×4)"', () => {
       const msg = buildWagerHarvestToast({
         won: true,
-        finalQty: 75,
-        multiplier: 2.5,
+        finalQty: 4,
+        multiplier: 4,
         dropBack: false,
+        cropEmoji: '🥔',
       });
-      expect(msg).toBe('Victoire ! +75 🍃 (×2.5)');
+      expect(msg).toBe('Victoire ! +4 🥔 (×4)');
     });
 
-    it('multiplier=1.3 (chill) → message contient "×1.3"', () => {
+    it('multiplier=2 (chill) → message contient "×2"', () => {
       const msg = buildWagerHarvestToast({
         won: true,
-        finalQty: 39,
-        multiplier: 1.3,
+        finalQty: 2,
+        multiplier: 2,
         dropBack: false,
+        cropEmoji: '🥕',
       });
-      expect(msg).toContain('×1.3');
-      expect(msg).toContain('+39 🍃');
+      expect(msg).toContain('×2');
+      expect(msg).toContain('+2 🥕');
     });
 
-    it('multiplier=1.7 (engage) → message contient "×1.7"', () => {
+    it('multiplier=3 (engage) → message contient "×3"', () => {
       const msg = buildWagerHarvestToast({
         won: true,
-        finalQty: 51,
-        multiplier: 1.7,
+        finalQty: 3,
+        multiplier: 3,
+        dropBack: false,
+        cropEmoji: '🍅',
+      });
+      expect(msg).toContain('×3');
+      expect(msg).toContain('+3 🍅');
+    });
+
+    it('cropEmoji absent → fallback 🌾', () => {
+      const msg = buildWagerHarvestToast({
+        won: true,
+        finalQty: 2,
+        multiplier: 2,
         dropBack: false,
       });
-      expect(msg).toContain('×1.7');
-      expect(msg).toContain('+51 🍃');
+      expect(msg).toContain('🌾');
     });
 
     it('victoire simple → PAS de suffixe "Sporée retrouvée"', () => {
       const msg = buildWagerHarvestToast({
         won: true,
-        finalQty: 75,
-        multiplier: 2.5,
+        finalQty: 4,
+        multiplier: 4,
         dropBack: false,
+        cropEmoji: '🥔',
       });
       expect(msg).not.toContain('Sporée retrouvée');
       expect(msg).not.toContain('🎁');
@@ -193,45 +206,48 @@ describe('Phase 40 Plan 04 — buildWagerHarvestToast (format FR strict)', () =>
   });
 
   describe('victoire + drop-back (won=true, dropBack=true)', () => {
-    it('finalQty=75, multiplier=2.5, dropBack=true → "Victoire ! +75 🍃 (×2.5) · Sporée retrouvée 🎁"', () => {
+    it('finalQty=4, multiplier=4, dropBack=true → "Victoire ! +4 🥔 (×4) · Sporée retrouvée 🎁"', () => {
       const msg = buildWagerHarvestToast({
         won: true,
-        finalQty: 75,
-        multiplier: 2.5,
+        finalQty: 4,
+        multiplier: 4,
         dropBack: true,
+        cropEmoji: '🥔',
       });
-      expect(msg).toBe('Victoire ! +75 🍃 (×2.5) · Sporée retrouvée 🎁');
+      expect(msg).toBe('Victoire ! +4 🥔 (×4) · Sporée retrouvée 🎁');
     });
 
-    it('drop-back → message contient les 2 emojis 🍃 (reward) et 🎁 (cadeau)', () => {
+    it('drop-back → message contient le cropEmoji et 🎁', () => {
       const msg = buildWagerHarvestToast({
         won: true,
-        finalQty: 51,
-        multiplier: 1.7,
+        finalQty: 3,
+        multiplier: 3,
         dropBack: true,
+        cropEmoji: '🍅',
       });
-      expect(msg).toContain('🍃');
+      expect(msg).toContain('🍅');
       expect(msg).toContain('🎁');
       expect(msg).toContain('Sporée retrouvée');
     });
 
-    it('drop-back avec multiplier=1.3 → suffixe drop-back présent même sur victoire modeste', () => {
+    it('drop-back avec multiplier=2 → suffixe drop-back présent même sur victoire modeste', () => {
       const msg = buildWagerHarvestToast({
         won: true,
-        finalQty: 39,
-        multiplier: 1.3,
+        finalQty: 2,
+        multiplier: 2,
         dropBack: true,
+        cropEmoji: '🥕',
       });
-      expect(msg).toBe('Victoire ! +39 🍃 (×1.3) · Sporée retrouvée 🎁');
+      expect(msg).toBe('Victoire ! +2 🥕 (×2) · Sporée retrouvée 🎁');
     });
   });
 
   describe('invariants format', () => {
     it('tous messages sont en français (zéro mot anglais évident)', () => {
       const msgs = [
-        buildWagerHarvestToast({ won: false, finalQty: 30, multiplier: 2.5, dropBack: false }),
-        buildWagerHarvestToast({ won: true, finalQty: 75, multiplier: 2.5, dropBack: false }),
-        buildWagerHarvestToast({ won: true, finalQty: 75, multiplier: 2.5, dropBack: true }),
+        buildWagerHarvestToast({ won: false, finalQty: 4, multiplier: 4, dropBack: false }),
+        buildWagerHarvestToast({ won: true, finalQty: 4, multiplier: 4, dropBack: false, cropEmoji: '🥔' }),
+        buildWagerHarvestToast({ won: true, finalQty: 4, multiplier: 4, dropBack: true, cropEmoji: '🥔' }),
       ];
       for (const msg of msgs) {
         expect(msg).not.toMatch(/\b(Win|Won|Loss|Lost|Victory|Reward|Consumed)\b/i);
@@ -239,7 +255,7 @@ describe('Phase 40 Plan 04 — buildWagerHarvestToast (format FR strict)', () =>
     });
 
     it('séparateur "·" (U+00B7) utilisé cohérent avec conventions toasts existants', () => {
-      const winDrop = buildWagerHarvestToast({ won: true, finalQty: 75, multiplier: 2.5, dropBack: true });
+      const winDrop = buildWagerHarvestToast({ won: true, finalQty: 4, multiplier: 4, dropBack: true, cropEmoji: '🥔' });
       expect(winDrop).toContain(' · ');
       const lose = buildWagerHarvestToast({ won: false, finalQty: 0, multiplier: 1, dropBack: false });
       expect(lose).toContain(' · ');

@@ -197,8 +197,12 @@ export function daysBetween(startISO: string, endISO: string): number {
  *
  * 3 variantes strictes :
  *  - won=false             → "Plant récolté · Sporée consommée" (neutre, JAMAIS punitif — Core Value)
- *  - won=true, dropBack=F  → "Victoire ! +{qty} 🍃 (×{mult})"
- *  - won=true, dropBack=T  → "Victoire ! +{qty} 🍃 (×{mult}) · Sporée retrouvée 🎁"
+ *  - won=true, dropBack=F  → "Victoire ! +{qty} {emoji} (×{mult})"
+ *  - won=true, dropBack=T  → "Victoire ! +{qty} {emoji} (×{mult}) · Sporée retrouvée 🎁"
+ *
+ * `finalQty` est la quantité de crops déposée dans harvestInventory (pas des feuilles !).
+ * L'emoji reflète la culture récoltée (🥔 patate, 🥕 carotte…) — la conversion en feuilles
+ * dépendables se fait à la vente via sellHarvest.
  *
  * Le consommateur (useFarm.harvest) décide du `type` ToastContext (success/info)
  * selon `won`. Ce helper est pur — zéro I/O, zéro import UI.
@@ -208,8 +212,10 @@ export function buildWagerHarvestToast(opts: {
   finalQty: number;
   multiplier: number;
   dropBack: boolean;
+  cropEmoji?: string;
 }): string {
   if (!opts.won) return 'Plant récolté · Sporée consommée';
   const suffix = opts.dropBack ? ' · Sporée retrouvée 🎁' : '';
-  return `Victoire ! +${opts.finalQty} 🍃 (×${opts.multiplier})${suffix}`;
+  const emoji = opts.cropEmoji ?? '🌾';
+  return `Victoire ! +${opts.finalQty} ${emoji} (×${opts.multiplier})${suffix}`;
 }

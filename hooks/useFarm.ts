@@ -460,6 +460,7 @@ export function useFarm(
           finalQty,
           multiplier: wager.multiplier,
           dropBack: wagerDropBack,
+          cropEmoji: CROP_CATALOG.find(c => c.id === result.harvestedCropId)?.emoji,
         }),
         wagerWon ? 'success' : 'info',
       );
