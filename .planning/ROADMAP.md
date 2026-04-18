@@ -253,10 +253,10 @@ Plans:
   3. User peut obtenir une Sporée via 4 sources distinctes : drop à la récolte (3% tier 1-3 / 8% rare / 15% expedition), achat shop à 400 feuilles (cap 2/jour, dès Arbre stade 3), loot expedition (5% missions Pousse+), cadeau onboarding (1 gratuite à l'atteinte stade 3 arbre)
   4. User voit son inventaire Sporée capé à 10 — tout drop au-delà affiche un toast "Inventaire Sporée plein" sans perte silencieuse
   5. User voit la suite Jest fondations passer (round-trip CSV `modifiers`, drop rate deterministe seed-based, cap 10, backward-compat plants legacy) — `npx tsc --noEmit` et `npx jest --no-coverage` clean
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 - [x] 38-01-PLAN.md — Fondation data: shape PlantedCrop.modifiers + serialize/parse 7e champ pipe-escape + bump CACHE_VERSION + tests round-trip (MOD-01, MOD-02, SPOR-13)
-- [ ] 38-02-PLAN.md — Moteur pur économie Sporée: constantes + rolls drop/expedition + canBuySporee + cap 10 + tests Jest matrice (SPOR-08, SPOR-09, SPOR-13)
+- [x] 38-02-PLAN.md — Moteur pur économie Sporée: constantes + rolls drop/expedition + canBuySporee + cap 10 + tests Jest matrice (SPOR-08, SPOR-09, SPOR-13)
 - [ ] 38-03-PLAN.md — Câblage hooks: parseFarmProfile fields + useFarm post-harvest + useExpeditions post-loot + useGamification cadeau onboarding + toast overflow (SPOR-08, SPOR-09)
 
 ### Phase 39: Moteur prorata + calcul famille
@@ -309,7 +309,7 @@ Plans:
 | 35. Carte enveloppe dashboard + écran boîte aux lettres | 3/3 | Complete   | 2026-04-17 |
 | 36. Composition & programmation reveal | 4/4 | Complete   | 2026-04-17 |
 | 37. Garde-parent & polish | 0/TBD | Deferred | - |
-| 38. Fondation modifiers + économie Sporée | 1/3 | In Progress|  |
+| 38. Fondation modifiers + économie Sporée | 2/3 | In Progress|  |
 | 39. Moteur prorata + calcul famille | 0/TBD | Not started | - |
 | 40. UI Sporée — seed picker + badge + validation | 0/TBD | Not started | - |
 | 41. Polish onboarding + codex + non-régression | 0/TBD | Not started | - |

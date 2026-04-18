@@ -32,8 +32,8 @@
 - [ ] **SPOR-05**: User voit seulement les profils actifs sur les 7 derniers jours glissants comptés dans le diviseur famille (au moins 1 tâche complétée dans la fenêtre) — un ado dormant n'allège pas la charge du parent sealeur
 - [ ] **SPOR-06**: User voit seulement les tâches du domaine Tasks comptabilisées (pas Courses, pas Repas, pas Routines, pas Anniversaires, pas Notes, pas Moods) — filtre strict par type de source
 - [ ] **SPOR-07**: User récolte le plant scellé : si cumul atteint → reward × multiplier appliqué + toast de victoire + 15% chance de drop-back d'une Sporée, sinon reward normale sans pénalité autre que la Sporée consommée
-- [ ] **SPOR-08**: User obtient des Sporées via 4 sources : drops à la récolte (3% tier 1-3, 8% rare, 15% expedition), achat shop (400 feuilles, cap 2/jour, dès Arbre stade 3), loot expedition (5% missions Pousse+), cadeau onboarding (1 gratuite au stade 3 avec tooltip explicatif)
-- [ ] **SPOR-09**: User voit son inventaire de Sporées cappé à 10 — drops au-delà affichent un toast "Inventaire Sporée plein" et ne sont pas perdus silencieusement
+- [x] **SPOR-08**: User obtient des Sporées via 4 sources : drops à la récolte (3% tier 1-3, 8% rare, 15% expedition), achat shop (400 feuilles, cap 2/jour, dès Arbre stade 3), loot expedition (5% missions Pousse+), cadeau onboarding (1 gratuite au stade 3 avec tooltip explicatif)
+- [x] **SPOR-09**: User voit son inventaire de Sporées cappé à 10 — drops au-delà affichent un toast "Inventaire Sporée plein" et ne sont pas perdus silencieusement
 - [ ] **SPOR-10**: User voit un tooltip one-shot au premier drop/obtention de Sporée expliquant la mécanique en 1-2 phrases + compteur codex `wager.marathonWins` incrémenté sur chaque pari gagné (récompense vanité long terme)
 - [ ] **SPOR-11**: User voit un état visuel différencié sur un plant scellé qui est déjà mûr mais pas encore récolté (anneau vert "prêt à valider") pour faciliter la décision de récolter avant ou après avoir atteint le cumul
 
@@ -83,8 +83,8 @@ Mapping REQ-ID → Phase (v1.7 Phases 38-41).
 | SPOR-05 | Phase 39 | Pending |
 | SPOR-06 | Phase 39 | Pending |
 | SPOR-07 | Phase 40 | Pending |
-| SPOR-08 | Phase 38 | Pending |
-| SPOR-09 | Phase 38 | Pending |
+| SPOR-08 | Phase 38 | Complete |
+| SPOR-09 | Phase 38 | Complete |
 | SPOR-10 | Phase 41 | Pending |
 | SPOR-11 | Phase 40 | Pending |
 | SPOR-12 | Phase 41 | Pending |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-18T07:27:00.988Z"
+last_updated: "2026-04-18T07:31:25.185Z"
 last_activity: 2026-04-18
 progress:
   total_phases: 13
   completed_phases: 5
   total_plans: 19
-  completed_plans: 19
+  completed_plans: 20
   percent: 0
 ---
 
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 38 (fondation-modifiers-conomie-spor-e) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
 Last activity: 2026-04-18
@@ -161,6 +161,7 @@ Status: Ready to execute
 | Phase 36 P03 | 8min | 2 tasks | 3 files |
 | Phase 36 P04 | 6min | 2 tasks | 3 files |
 | Phase 38 P01 | 2min | 3 tasks | 4 files |
+| Phase 38 P02 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -321,6 +322,8 @@ Recent decisions affecting current work:
 - [Phase 36-04]: Plan 04: EnvelopeUnfoldModal PAS de perspective (conformité stricte CLAUDE.md) — rotateX 0→175° avec transformOrigin:'top' suffit, feel 2D acceptable
 - [Phase 36-04]: Plan 04: handleUnfoldComplete patch status='read' APRÈS finish callback animation (Pitfall 6) — évite flicker re-render pendant unfold
 - [Phase 38]: Phase 38-01: pipe-escape JSON (, → |, : → §) retenu vs base64 pour lisibilité Obsidian
+- [Phase 38]: Cap inventaire Sporée 10 strict avec refus pur (zéro fallback feuilles) — décidé Plan 02 §overflow
+- [Phase 38]: Reset daily shop Sporée via getLocalDateKey (LOCAL device, pas UTC) pour éviter décalage timezone
 
 ### Todos
 
@@ -332,5 +335,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-18T07:27:00.984Z
+Last session: 2026-04-18T07:31:25.182Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
