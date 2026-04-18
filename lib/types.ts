@@ -64,6 +64,9 @@ export function isValidGender(value: unknown): value is Gender {
   return value === 'garçon' || value === 'fille';
 }
 
+/** Catégorie d'âge utilisée pour pondérer les profils dans le moteur Sporée (Phase 39) */
+export type WagerAgeCategory = 'adulte' | 'ado' | 'enfant' | 'jeune' | 'bebe';
+
 export interface Profile {
   id: string;               // snake_case key used in files
   name: string;
@@ -74,6 +77,7 @@ export interface Profile {
   propre?: boolean;          // potty-trained — hides diaper sections in journal/tasks
   gender?: Gender;              // sexe — utilisé pour les courbes de croissance
   statut?: 'grossesse' | 'ne'; // pregnancy mode vs born (absent = born)
+  weight_override?: WagerAgeCategory; // Phase 39 — override poids pondération Sporée
   dateTerme?: string;        // YYYY-MM-DD expected due date (grossesse only)
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
   // ─── Voix TTS (IVC ElevenLabs + iOS Personal Voice) ───────────

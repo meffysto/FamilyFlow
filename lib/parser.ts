@@ -841,6 +841,11 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         ? (currentProps.ageCategory as Profile['ageCategory'])
         : undefined;
       const statut = currentProps.statut === 'grossesse' ? 'grossesse' as const : undefined;
+      // Phase 39 — whitelist WagerAgeCategory (rejet silencieux valeur invalide)
+      const validWeightOverrides = ['adulte', 'ado', 'enfant', 'jeune', 'bebe'] as const;
+      const weight_override = (validWeightOverrides as readonly string[]).includes(currentProps.weight_override)
+        ? (currentProps.weight_override as Profile['weight_override'])
+        : undefined;
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -851,6 +856,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         propre: currentProps.propre === 'true',
         gender: isValidGender(currentProps.gender) ? currentProps.gender : undefined,
         statut,
+        weight_override,
         dateTerme: currentProps.dateTerme,
         theme,
         // ─── Voix TTS (IVC ElevenLabs + iOS Personal Voice) ───────────
@@ -919,6 +925,7 @@ export function serializeFamille(
     if (profile.gender) lines.push(`gender: ${profile.gender}`);
     if (profile.statut) lines.push(`statut: ${profile.statut}`);
     if (profile.dateTerme) lines.push(`dateTerme: ${profile.dateTerme}`);
+    if (profile.weight_override) lines.push(`weight_override: ${profile.weight_override}`);
     if (profile.theme) lines.push(`theme: ${profile.theme}`);
     // Voix TTS — omises si vides (lisibilité Obsidian)
     if (profile.voiceElevenLabsId) lines.push(`voiceElevenLabsId: ${profile.voiceElevenLabsId}`);
