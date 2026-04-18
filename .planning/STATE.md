@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-18T19:35:27.060Z"
+last_updated: "2026-04-18T23:17:02.093Z"
 last_activity: 2026-04-18
 progress:
   total_phases: 13
   completed_phases: 7
-  total_plans: 25
-  completed_plans: 26
+  total_plans: 28
+  completed_plans: 27
   percent: 0
 ---
 
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 40 — ui-spor-e-seed-picker-badge-validation
+**Current focus:** Phase 41 — polish-onboarding-codex-non-r-gression
 
 ## Current Position
 
-Phase: 40 (ui-spor-e-seed-picker-badge-validation) — EXECUTING
-Plan: 2 of 4
+Phase: 41 (polish-onboarding-codex-non-r-gression) — EXECUTING
+Plan: 2 of 3
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
 Last activity: 2026-04-18
@@ -167,6 +167,7 @@ Status: Ready to execute
 | Phase 39-moteur-prorata-calcul-famille P02 | 12min | 2 tasks | 2 files |
 | Phase 40-ui-spor-e-seed-picker-badge-validation P02 | 7min | 2 tasks | 3 files |
 | Phase 40 P03 | 28min | 3 tasks | 3 files |
+| Phase 41 P01 | 8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -341,6 +342,8 @@ Recent decisions affecting current work:
 - [Phase 40]: [Phase 40-03]: Badge Sporée 2 lignes strict (CONTEXT.md D-03) — jamais dégradé à 1 ligne, fallback P2 cumulTarget=0 affiche —/— + ✓ sur 2 lignes
 - [Phase 40]: [Phase 40-03]: useReducedMotion() de react-native-reanimated retenu pour WagerReadyRing (cohérent avec BuildingIdleAnim/BuildingCell/NextExpansionCell dans WorldGridView)
 - [Phase 40]: [Phase 40-03]: Palette badge étend bordure avec couleur pace pleine (success/warning/error) au lieu de colors.border neutre — renforce signal visuel scan rapide sans casser contraste AA
+- [Phase 41]: Serializer conditionnel wagerMarathonWins > 0 uniquement (comme sporeeCount) — évite bruit dans vault pour count = 0
+- [Phase 41]: marathonIncremented flag déclaré hors du bloc if(wager) — permet double-branche golden/non-golden identique au pattern wagerDropBack
 
 ### Todos
 
@@ -352,5 +355,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-18T19:35:27.056Z
+Last session: 2026-04-18T23:17:02.090Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)

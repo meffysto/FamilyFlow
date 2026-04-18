@@ -34,7 +34,7 @@
 - [ ] **SPOR-07**: User récolte le plant scellé : si cumul atteint → reward × multiplier appliqué + toast de victoire + 15% chance de drop-back d'une Sporée, sinon reward normale sans pénalité autre que la Sporée consommée
 - [x] **SPOR-08**: User obtient des Sporées via 4 sources : drops à la récolte (3% tier 1-3, 8% rare, 15% expedition), achat shop (400 feuilles, cap 2/jour, dès Arbre stade 3), loot expedition (5% missions Pousse+), cadeau onboarding (1 gratuite au stade 3 avec tooltip explicatif)
 - [x] **SPOR-09**: User voit son inventaire de Sporées cappé à 10 — drops au-delà affichent un toast "Inventaire Sporée plein" et ne sont pas perdus silencieusement
-- [ ] **SPOR-10**: User voit un tooltip one-shot au premier drop/obtention de Sporée expliquant la mécanique en 1-2 phrases + compteur codex `wager.marathonWins` incrémenté sur chaque pari gagné (récompense vanité long terme)
+- [x] **SPOR-10**: User voit un tooltip one-shot au premier drop/obtention de Sporée expliquant la mécanique en 1-2 phrases + compteur codex `wager.marathonWins` incrémenté sur chaque pari gagné (récompense vanité long terme)
 - [x] **SPOR-11**: User voit un état visuel différencié sur un plant scellé qui est déjà mûr mais pas encore récolté (anneau vert "prêt à valider") pour faciliter la décision de récolter avant ou après avoir atteint le cumul
 
 ### Catégorie QUALITÉ — Non-régression et tests
@@ -85,7 +85,7 @@ Mapping REQ-ID → Phase (v1.7 Phases 38-41).
 | SPOR-07 | Phase 40 | Pending |
 | SPOR-08 | Phase 38 | Complete |
 | SPOR-09 | Phase 38 | Complete |
-| SPOR-10 | Phase 41 | Pending |
+| SPOR-10 | Phase 41 | Complete |
 | SPOR-11 | Phase 40 | Complete |
 | SPOR-12 | Phase 41 | Pending |
 | SPOR-13 | Phase 38 + Phase 39 | Complete |
