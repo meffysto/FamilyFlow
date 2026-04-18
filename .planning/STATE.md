@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
-status: phase_planned
-last_updated: "2026-04-18T00:00:00.000Z"
+status: executing
+last_updated: "2026-04-18T07:27:00.988Z"
 last_activity: 2026-04-18
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 13
+  completed_phases: 5
+  total_plans: 19
+  completed_plans: 19
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Milestone v1.7 Modifiers de plants — roadmap ready, Phase 38 next up
+**Current focus:** Phase 38 — fondation-modifiers-conomie-spor-e
 
 ## Current Position
 
-Phase: Phase 38 Fondation modifiers + économie Sporée (3 plans planifiés, prêt pour exécution)
-Plan: —
+Phase: 38 (fondation-modifiers-conomie-spor-e) — EXECUTING
+Plan: 2 of 3
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
-Last activity: 2026-04-18 — Roadmap v1.7 créée (Phases 38-41, 16/16 REQ mappés)
+Last activity: 2026-04-18
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
-Status: Phase 38 planned — exécution via `/gsd:execute-phase 38`
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -160,6 +160,7 @@ Status: Phase 38 planned — exécution via `/gsd:execute-phase 38`
 | Phase 36 P02 | 3min | 1 tasks | 1 files |
 | Phase 36 P03 | 8min | 2 tasks | 3 files |
 | Phase 36 P04 | 6min | 2 tasks | 3 files |
+| Phase 38 P01 | 2min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -319,6 +320,7 @@ Recent decisions affecting current work:
 - [Phase 36]: Preset 'Demain matin' pré-rempli au mount LoveNoteEditor — couvre 80% des cas (surprise au réveil), preset chips + DateInput cohabitent via bascule activePreset='custom' sur édition manuelle
 - [Phase 36-04]: Plan 04: EnvelopeUnfoldModal PAS de perspective (conformité stricte CLAUDE.md) — rotateX 0→175° avec transformOrigin:'top' suffit, feel 2D acceptable
 - [Phase 36-04]: Plan 04: handleUnfoldComplete patch status='read' APRÈS finish callback animation (Pitfall 6) — évite flicker re-render pendant unfold
+- [Phase 38]: Phase 38-01: pipe-escape JSON (, → |, : → §) retenu vs base64 pour lisibilité Obsidian
 
 ### Todos
 
@@ -330,5 +332,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-18T00:00:00.000Z
+Last session: 2026-04-18T07:27:00.984Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)

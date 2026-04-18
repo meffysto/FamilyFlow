@@ -19,8 +19,8 @@
 
 ### Catégorie FONDATION — Infra modifiers partagée
 
-- [ ] **MOD-01**: User voit ses plants plantés supporter un champ optionnel `modifiers` (objet JSON extensible : `{ wager?: {...}, graftedWith?: string, ... }`) sérialisé/désérialisé en CSV markdown sans perte, backward-compatible (plants existants sans champ restent lisibles)
-- [ ] **MOD-02**: User voit `CACHE_VERSION` bumpé dans `lib/vault-cache.ts:41` pour refléter le changement de shape `FarmCrop` — pas d'invalidation silencieuse au premier boot post-migration
+- [x] **MOD-01**: User voit ses plants plantés supporter un champ optionnel `modifiers` (objet JSON extensible : `{ wager?: {...}, graftedWith?: string, ... }`) sérialisé/désérialisé en CSV markdown sans perte, backward-compatible (plants existants sans champ restent lisibles)
+- [x] **MOD-02**: User voit `CACHE_VERSION` bumpé dans `lib/vault-cache.ts:41` pour refléter le changement de shape `FarmCrop` — pas d'invalidation silencieuse au premier boot post-migration
 - [ ] **MOD-03**: User voit le seed picker existant étendu avec un slot optionnel "Sceller" (apparaît uniquement si ≥ 1 Sporée en inventaire) — intégration inline, zéro nouvelle modale, pattern extensible pour futurs slots modifier
 
 ### Catégorie SPORÉE — Mécanique principale
@@ -40,7 +40,7 @@
 ### Catégorie QUALITÉ — Non-régression et tests
 
 - [ ] **SPOR-12**: User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes) ni aucune régression Jest (`npx jest --no-coverage` clean) après chaque phase
-- [ ] **SPOR-13**: User a des tests Jest couvrant les fonctions pures critiques : calcul du prorata, pondération famille par âge, sérialisation/désérialisation `modifiers` CSV, validation cumul à la récolte
+- [x] **SPOR-13**: User a des tests Jest couvrant les fonctions pures critiques : calcul du prorata, pondération famille par âge, sérialisation/désérialisation `modifiers` CSV, validation cumul à la récolte
 
 ---
 
@@ -73,8 +73,8 @@ Mapping REQ-ID → Phase (v1.7 Phases 38-41).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOD-01 | Phase 38 | Pending |
-| MOD-02 | Phase 38 | Pending |
+| MOD-01 | Phase 38 | Complete |
+| MOD-02 | Phase 38 | Complete |
 | MOD-03 | Phase 40 | Pending |
 | SPOR-01 | Phase 40 | Pending |
 | SPOR-02 | Phase 40 | Pending |
@@ -88,7 +88,7 @@ Mapping REQ-ID → Phase (v1.7 Phases 38-41).
 | SPOR-10 | Phase 41 | Pending |
 | SPOR-11 | Phase 40 | Pending |
 | SPOR-12 | Phase 41 | Pending |
-| SPOR-13 | Phase 38 + Phase 39 | Pending |
+| SPOR-13 | Phase 38 + Phase 39 | Complete |
 
 **Coverage check :** 16/16 REQ-IDs mappés ✓ (3 MOD + 13 SPOR). Aucun orphelin, aucune duplication (SPOR-13 couvre les tests Jest fondations en Phase 38 ET moteur en Phase 39 — deux suites distinctes).
 
