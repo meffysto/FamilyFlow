@@ -231,7 +231,8 @@ export function getDailyDeal(
 
   // Pool STABLE basé sur initialStock > 0 (exclut tresor_familial, grand_festin)
   // → l'item du deal ne disparaît pas quand marketStock[item] tombe à 0
-  const eligible = MARKET_ITEMS.filter(item => item.initialStock > 0);
+  // Exclut les items collectifs (village/village_craft) — ils vont dans l'inventaire commun, pas le deal perso
+  const eligible = MARKET_ITEMS.filter(item => item.initialStock > 0 && item.category !== 'village_craft');
   if (eligible.length === 0) return null;
 
   const picked = eligible[hash % eligible.length];

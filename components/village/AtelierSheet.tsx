@@ -332,9 +332,12 @@ function InventaireTab({
   const knownItems = useMemo(() => {
     const itemMap: Record<string, { emoji: string; label: string }> = {};
     for (const recipe of VILLAGE_RECIPES) {
+      // Ingrédients
       for (const ing of recipe.ingredients) {
         itemMap[ing.itemId] = { emoji: ing.itemEmoji, label: ing.itemId };
       }
+      // Résultats craftés (village_craft) — visibles dans l'inventaire collectif
+      itemMap[recipe.id] = { emoji: recipe.resultEmoji, label: recipe.resultLabel };
     }
     // Mapper les IDs en labels lisibles
     const ITEM_LABELS: Record<string, string> = {
@@ -347,10 +350,10 @@ function InventaireTab({
       coffre_maritime: 'Coffre maritime',
       parchemin: 'Parchemin',
     };
-    return Object.entries(itemMap).map(([id, { emoji }]) => ({
+    return Object.entries(itemMap).map(([id, { emoji, label }]) => ({
       id,
       emoji,
-      label: ITEM_LABELS[id] ?? id,
+      label: ITEM_LABELS[id] ?? label,
       qty: inventory[id] ?? 0,
     })).sort((a, b) => b.qty - a.qty);
   }, [inventory]);
