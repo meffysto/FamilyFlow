@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -478,6 +478,15 @@ function SeedSparkle({ x, y, delay: d }: { x: number; y: number; delay: number }
   );
 }
 
+// Mapping statique seedId → sprite icon pixel art.
+// require() obligatoirement statique (Metro bundler — cf. Phase 30-01 Pitfall 4).
+const RARE_SEED_SPRITES: Record<string, number> = {
+  orchidee: require('../../assets/garden/crops/orchidee/icon.png'),
+  rose_doree: require('../../assets/garden/crops/rose_doree/icon.png'),
+  truffe: require('../../assets/garden/crops/truffe/icon.png'),
+  fruit_dragon: require('../../assets/garden/crops/fruit_dragon/icon.png'),
+};
+
 interface SeedDropOverlayProps {
   seedDrop: RareSeedDrop | null;
   onDismiss: () => void;
@@ -530,7 +539,15 @@ export function SeedDropOverlay({ seedDrop, onDismiss }: SeedDropOverlayProps) {
       {sparkles.map(s => <SeedSparkle key={s.id} x={s.x} y={s.y} delay={s.delay} />)}
       <View style={styles.centerLabel}>
         <Animated.View style={emojiStyle}>
-          <Text style={styles.seedEmoji}>{seedDrop.emoji}</Text>
+          {RARE_SEED_SPRITES[seedDrop.seedId] ? (
+            <Image
+              source={RARE_SEED_SPRITES[seedDrop.seedId]}
+              style={styles.seedSprite}
+              resizeMode="contain"
+            />
+          ) : (
+            <Text style={styles.seedEmoji}>{seedDrop.emoji}</Text>
+          )}
         </Animated.View>
         <Animated.View style={textStyle}>
           <Text style={styles.seedTitle}>🌟 Graine rare trouvée !</Text>
@@ -591,6 +608,10 @@ const styles = StyleSheet.create({
   seedEmoji: {
     fontSize: 64,
     marginBottom: Spacing.md,
+  },
+  seedSprite: {
+    width: 80,
+    height: 80,
   },
   seedTitle: {
     fontSize: 18,
