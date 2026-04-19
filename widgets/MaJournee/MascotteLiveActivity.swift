@@ -12,6 +12,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var tasksTotal: Int
         var xpGained: Int
         var currentMeal: String?    // ex: "Pâtes carbonara" (déjeuner ou dîner selon l'heure)
+        var stageOverride: String?  // "reveil"|"travail"|"midi"|"jeu"|"routine"|"dodo" (dev/test)
     }
 
     var mascotteName: String
@@ -20,6 +21,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
 
 // MARK: - Stage Narrative
 
+@available(iOS 16.2, *)
 enum MascotteStage {
     case reveil, travail, midi, jeu, routine, dodo
 
@@ -33,6 +35,23 @@ enum MascotteStage {
         case 18..<21: return .routine
         default: return .dodo
         }
+    }
+
+    static func from(override: String?) -> MascotteStage? {
+        switch override {
+        case "reveil": return .reveil
+        case "travail": return .travail
+        case "midi": return .midi
+        case "jeu": return .jeu
+        case "routine": return .routine
+        case "dodo": return .dodo
+        default: return nil
+        }
+    }
+
+    /// Résout le stage : override si fourni, sinon basé sur l'heure
+    static func resolve(date: Date, override: String?) -> MascotteStage {
+        MascotteStage.from(override: override) ?? MascotteStage.for(date: date)
     }
 
     var emoji: String {
@@ -116,52 +135,39 @@ struct MascotteLiveActivity: Widget {
             MascotteLockScreenView(context: context)
                 .widgetURL(URL(string: "family-vault://open/dashboard"))
         } dynamicIsland: { context in
-            DynamicIsland {
+            let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
+            return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    TimelineView(.periodic(from: .now, by: 60)) { _ in
-                        Text(MascotteStage.for(date: Date()).emoji)
-                            .font(.system(size: 32))
-                    }
+                    Text(stage.emoji)
+                        .font(.system(size: 32))
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    TimelineView(.periodic(from: .now, by: 60)) { _ in
-                        let stage = MascotteStage.for(date: Date())
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(stage.title(name: context.attributes.mascotteName))
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                            Text(stage.subtitle(state: context.state))
-                                .font(.caption2)
-                                .foregroundColor(.white.opacity(0.75))
-                                .lineLimit(1)
-                        }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(stage.title(name: context.attributes.mascotteName))
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        Text(stage.subtitle(state: context.state))
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.75))
+                            .lineLimit(1)
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    TimelineView(.periodic(from: .now, by: 60)) { _ in
-                        let stage = MascotteStage.for(date: Date())
-                        ProgressView(value: stage.progress(state: context.state))
-                            .tint(.green)
-                    }
+                    ProgressView(value: stage.progress(state: context.state))
+                        .tint(.green)
                 }
             } compactLeading: {
-                TimelineView(.periodic(from: .now, by: 60)) { _ in
-                    Text(MascotteStage.for(date: Date()).emoji)
-                        .font(.caption)
-                }
+                Text(stage.emoji)
+                    .font(.caption)
             } compactTrailing: {
-                TimelineView(.periodic(from: .now, by: 60)) { _ in
-                    Text(MascotteStage.for(date: Date()).compactLabel)
-                        .font(.caption2)
-                        .fontWeight(.semibold)
-                }
+                Text(stage.compactLabel)
+                    .font(.caption2)
+                    .fontWeight(.semibold)
             } minimal: {
-                TimelineView(.periodic(from: .now, by: 60)) { _ in
-                    Text(MascotteStage.for(date: Date()).emoji)
-                        .font(.caption2)
-                }
+                Text(stage.emoji)
+                    .font(.caption2)
             }
             .widgetURL(URL(string: "family-vault://open/dashboard"))
         }
@@ -175,8 +181,8 @@ struct MascotteLockScreenView: View {
     let context: ActivityViewContext<MascotteActivityAttributes>
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { _ in
-            let stage = MascotteStage.for(date: Date())
+        let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
+        return Group {
             HStack(spacing: 14) {
                 Text(stage.emoji)
                     .font(.system(size: 38))

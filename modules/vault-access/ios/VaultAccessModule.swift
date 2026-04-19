@@ -28,6 +28,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var tasksTotal: Int
         var xpGained: Int
         var currentMeal: String?
+        var stageOverride: String?
     }
 
     var mascotteName: String
@@ -476,7 +477,7 @@ public class VaultAccessModule: Module {
     // ─── Live Activity (Mascotte — journée narrative) ───────────────────
 
     /// Start the mascotte Live Activity
-    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?) -> Bool in
+    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?) -> Bool in
       if #available(iOS 16.2, *) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
 
@@ -492,7 +493,8 @@ public class VaultAccessModule: Module {
           tasksDone: tasksDone,
           tasksTotal: tasksTotal,
           xpGained: xpGained,
-          currentMeal: currentMeal
+          currentMeal: currentMeal,
+          stageOverride: stageOverride
         )
         do {
           let content = ActivityContent(state: state, staleDate: nil)
@@ -510,14 +512,15 @@ public class VaultAccessModule: Module {
     }
 
     /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
-    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?) in
+    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?) in
       if #available(iOS 16.2, *) {
         guard let activity = Activity<MascotteActivityAttributes>.activities.first else { return }
         let state = MascotteActivityAttributes.ContentState(
           tasksDone: tasksDone,
           tasksTotal: tasksTotal,
           xpGained: xpGained,
-          currentMeal: currentMeal
+          currentMeal: currentMeal,
+          stageOverride: stageOverride
         )
         let content = ActivityContent(state: state, staleDate: nil)
         await activity.update(content)

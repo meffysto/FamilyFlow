@@ -4,8 +4,8 @@ interface VaultAccessModuleType {
   startFeedingActivity(babyName: string, babyEmoji: string, feedType: string, side: string | null, volumeMl: number | null): Promise<boolean>;
   updateFeedingActivity(isPaused: boolean, side: string | null, volumeMl: number | null): Promise<void>;
   stopFeedingActivity(): Promise<void>;
-  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null): Promise<boolean>;
-  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null): Promise<void>;
+  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null): Promise<boolean>;
+  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null): Promise<void>;
   stopMascotteActivity(): Promise<void>;
   isMascotteActivityActive(): Promise<boolean>;
   pauseWidgetFeeding(): Promise<void>;
@@ -209,9 +209,10 @@ export async function startMascotteActivity(
   tasksTotal: number,
   xpGained: number,
   currentMeal: string | null,
+  stageOverride: string | null = null,
 ): Promise<boolean> {
   if (!VaultAccessNative) return false;
-  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal);
+  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride);
 }
 
 /**
@@ -222,9 +223,10 @@ export async function updateMascotteActivity(
   tasksTotal: number,
   xpGained: number,
   currentMeal: string | null,
+  stageOverride: string | null = null,
 ): Promise<void> {
   if (!VaultAccessNative) return;
-  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal);
+  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride);
 }
 
 /**

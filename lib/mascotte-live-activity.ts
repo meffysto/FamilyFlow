@@ -17,12 +17,15 @@ import {
   isMascotteActivityActive,
 } from '../modules/vault-access/src';
 
+export type MascotteStageOverride = 'reveil' | 'travail' | 'midi' | 'jeu' | 'routine' | 'dodo';
+
 export interface MascotteSnapshot {
   mascotteName: string;
   tasksDone: number;
   tasksTotal: number;
   xpGained: number;
   currentMeal: string | null;
+  stageOverride?: MascotteStageOverride | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
@@ -41,6 +44,7 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.tasksTotal,
       snap.xpGained,
       snap.currentMeal,
+      snap.stageOverride ?? null,
     );
   } catch {
     return false;
@@ -62,6 +66,7 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.tasksTotal,
       snap.xpGained,
       snap.currentMeal,
+      snap.stageOverride ?? null,
     );
   } catch {
     // silencieux — feature non critique

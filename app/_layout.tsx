@@ -139,6 +139,42 @@ function RootLayout() {
         hi?.enableSamplingProfiler?.(true);
         console.log('[Profiler] Started — attends 10-15s puis stoppe');
       });
+      DevSettings.addMenuItem('🌱 Start Mascotte (auto stage)', async () => {
+        const { startMascotte } = await import('@/lib/mascotte-live-activity');
+        const ok = await startMascotte({
+          mascotteName: 'Pousse',
+          tasksDone: 2,
+          tasksTotal: 5,
+          xpGained: 15,
+          currentMeal: 'Pâtes carbo',
+        });
+        console.log('[Mascotte] Started:', ok);
+      });
+      const cycleStages: ('reveil'|'travail'|'midi'|'jeu'|'routine'|'dodo')[] =
+        ['reveil', 'travail', 'midi', 'jeu', 'routine', 'dodo'];
+      let stageIdx = 0;
+      DevSettings.addMenuItem('🔁 Cycle Stage (dev)', async () => {
+        const { startMascotte, refreshMascotte, isMascotteActive } = await import('@/lib/mascotte-live-activity');
+        const stage = cycleStages[stageIdx % cycleStages.length];
+        stageIdx++;
+        const snap = {
+          mascotteName: 'Pousse',
+          tasksDone: stageIdx,
+          tasksTotal: 6,
+          xpGained: stageIdx * 12,
+          currentMeal: 'Pâtes carbo',
+          stageOverride: stage,
+        } as const;
+        const active = await isMascotteActive();
+        if (active) await refreshMascotte(snap);
+        else await startMascotte(snap);
+        console.log('[Mascotte] Stage →', stage);
+      });
+      DevSettings.addMenuItem('🛑 Stop Mascotte', async () => {
+        const { stopMascotte } = await import('@/lib/mascotte-live-activity');
+        await stopMascotte();
+        console.log('[Mascotte] Stopped');
+      });
       DevSettings.addMenuItem('⏹ Stop Hermes Profiler', async () => {
         const path = `${FileSystem.documentDirectory}hermes-${Date.now()}.cpuprofile`;
         const bare = path.replace('file://', '');
