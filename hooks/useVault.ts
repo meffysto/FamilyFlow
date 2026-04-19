@@ -86,6 +86,7 @@ import { enqueueWrite } from '../lib/famille-queue';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
+import { refreshMascotte } from '../lib/mascotte-live-activity';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultLoveNotes } from './useVaultLoveNotes';
@@ -489,6 +490,26 @@ export function useVaultInternal(): VaultState {
     if (widgetRefreshTimer.current) clearTimeout(widgetRefreshTimer.current);
     widgetRefreshTimer.current = setTimeout(() => {
       refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current);
+      // Refresh Live Activity mascotte si elle tourne (no-op sinon)
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayTasks = tasksRefForWidget.current.filter(t => {
+        if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
+        return t.dueDate === todayStr;
+      });
+      const doneCount = todayTasks.filter(t => t.completed).length;
+      const nowHour = new Date().getHours();
+      const dayName = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][new Date().getDay()];
+      const todayMeals = mealsRef.current.filter(m => m.day === dayName);
+      const mealText = nowHour < 14
+        ? (todayMeals.find(m => m.mealType === 'Déjeuner')?.text || null)
+        : (todayMeals.find(m => m.mealType === 'Dîner')?.text || null);
+      refreshMascotte({
+        mascotteName: 'Pousse',
+        tasksDone: doneCount,
+        tasksTotal: todayTasks.length,
+        xpGained: 0,
+        currentMeal: mealText,
+      });
     }, 300);
   }, []);
 
