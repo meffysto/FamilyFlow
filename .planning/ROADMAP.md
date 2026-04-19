@@ -101,7 +101,7 @@ Détails phase-by-phase préservés ci-dessous dans `## Phase Details`.
 - [x] **Phase 38: Fondation modifiers + économie Sporée** — Shape `FarmCrop.modifiers` + CSV backward-compat + bump cache + drop/shop/expedition/cadeau + cap inventaire + tests Jest fondations (MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13) (completed 2026-04-18)
 - [x] **Phase 39: Moteur prorata + calcul famille** — Calcul cumulatif 23h30 + snapshot matinal + poids par âge + profils actifs 7j glissants + filtre strict Tasks + tests Jest (SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13) (completed 2026-04-18)
 - [ ] **Phase 40: UI Sporée — seed picker + badge + validation** — Slot "Sceller" inline + application Sporée 3 durées + badge plant progression + validation récolte multiplier + état visuel plant mûr (MOD-03, SPOR-01, SPOR-02, SPOR-07, SPOR-11)
-- [ ] **Phase 41: Polish onboarding + codex + non-régression** — Tooltip one-shot premier drop + compteur codex `marathonWins` + non-régression TS/Jest finale (SPOR-10, SPOR-12)
+- [x] **Phase 41: Polish onboarding + codex + non-régression** — Tooltip one-shot premier drop + compteur codex `marathonWins` + non-régression TS/Jest finale (SPOR-10, SPOR-12) (completed 2026-04-19)
 
 ## Phase Details
 
@@ -301,11 +301,11 @@ Plans:
   2. User voit son compteur codex `wager.marathonWins` incrémenté de +1 à chaque pari Sporée gagné — consultable dans le codex ferme existant (FarmCodexModal), récompense vanité long terme
   3. User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes MemoryEditor.tsx / cooklang.ts / useVault.ts) ni Jest (`npx jest --no-coverage` clean) après la phase finale
   4. User voit les commits, docs et noms d'exemple de v1.7 respecter la privacy policy (noms génériques Lucas/Emma/Dupont uniquement — aucun nom réel dans le repo)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 41-01-PLAN.md — Data fondation: FarmProfileData.wagerMarathonWins + parser + incrément harvest wager.won + tests Jest (SPOR-10)
 - [x] 41-02-PLAN.md — SporeeOnboardingTooltip one-shot + wiring 3 sources (harvest/expedition/onboarding) + flag SecureStore via HelpContext (SPOR-10)
-- [ ] 41-03-PLAN.md — Affichage compteur codex FarmCodexModal + checkpoint non-régression TS/Jest/privacy milestone v1.7 (SPOR-10, SPOR-12)
+- [x] 41-03-PLAN.md — Affichage compteur codex FarmCodexModal + checkpoint non-régression TS/Jest/privacy milestone v1.7 (SPOR-10, SPOR-12)
 **UI hint**: yes
 
 ## Progress
@@ -324,7 +324,7 @@ Plans:
 | 38. Fondation modifiers + économie Sporée | 3/3 | Complete   | 2026-04-18 |
 | 39. Moteur prorata + calcul famille | 2/2 | Complete   | 2026-04-18 |
 | 40. UI Sporée — seed picker + badge + validation | 3/4 | In Progress|  |
-| 41. Polish onboarding + codex + non-régression | 2/3 | In Progress|  |
+| 41. Polish onboarding + codex + non-régression | 3/3 | Complete   | 2026-04-19 |
 
 ## Archived Milestones
 

@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-18T23:43:39.178Z"
-last_activity: 2026-04-18
+last_updated: "2026-04-19T00:10:27.932Z"
+last_activity: 2026-04-19
 progress:
   total_phases: 13
   completed_phases: 7
@@ -28,7 +28,7 @@ Phase: 41 (polish-onboarding-codex-non-r-gression) — EXECUTING
 Plan: 3 of 3
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
-Last activity: 2026-04-18
+Last activity: 2026-04-19
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
@@ -168,7 +168,7 @@ Status: Ready to execute
 | Phase 40-ui-spor-e-seed-picker-badge-validation P02 | 7min | 2 tasks | 3 files |
 | Phase 40 P03 | 28min | 3 tasks | 3 files |
 | Phase 41 P01 | 8min | 2 tasks | 4 files |
-| Phase 41-polish-onboarding-codex-non-r-gression P02 | 15min | 3 tasks | 5 files |
+| Phase 41 P03 | 15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -345,8 +345,8 @@ Recent decisions affecting current work:
 - [Phase 40]: [Phase 40-03]: Palette badge étend bordure avec couleur pace pleine (success/warning/error) au lieu de colors.border neutre — renforce signal visuel scan rapide sans casser contraste AA
 - [Phase 41]: Serializer conditionnel wagerMarathonWins > 0 uniquement (comme sporeeCount) — évite bruit dans vault pour count = 0
 - [Phase 41]: marathonIncremented flag déclaré hors du bloc if(wager) — permet double-branche golden/non-golden identique au pattern wagerDropBack
-- [Phase 41]: Signal sporeeFirstObtained propagé via return enrichi harvest/collectExpedition (pas EventEmitter) — cohérence avec tree.tsx .then(result) pattern existant
-- [Phase 41]: TUTO-02 reconduit : 2e flag device-global sporee_tooltip via HelpContext.markScreenSeen — précédent farm_tutorial Phase 18
+- [Phase 41]: Option A DiscoverySource : wagerMarathonWins?: number ajouté dans discovery.ts — évite cast (profile as any), 1 ligne propre
+- [Phase 41]: Milestone v1.7 déclarée shippable : 0 erreur TS nouvelle, 0 Jest failing (hors 2 pré-existants), 0 nom réel dans commits/docs/sources Phases 38-41
 
 ### Todos
 
@@ -358,5 +358,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-18T23:43:39.174Z
+Last session: 2026-04-19T00:10:27.927Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)

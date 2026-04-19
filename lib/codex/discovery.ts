@@ -17,6 +17,7 @@ export interface DiscoverySource {
   farmAnimals?: Array<{ animalId?: string } | string> | null;
   farmBuildings?: Array<{ buildingId?: string } | string> | null;
   completedSagas?: string[] | null;
+  wagerMarathonWins?: number;              // total paris Sporée gagnés (vanité, Phase 41 SPOR-10)
 }
 
 /**
