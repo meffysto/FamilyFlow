@@ -161,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-18 — Milestone v1.7 Modifiers de plants started (v1.6 Love Notes partial, phase 37 deferred)*
+*Last updated: 2026-04-19 — Phase 41 complete — Milestone v1.7 "Modifiers de plants" shipped: tooltip onboarding Sporée one-shot + compteur wagerMarathonWins codex + TS/Jest/privacy clean*
