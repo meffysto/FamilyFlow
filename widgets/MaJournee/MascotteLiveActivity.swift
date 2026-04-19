@@ -133,7 +133,7 @@ struct MascotteLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MascotteActivityAttributes.self) { context in
             MascotteLockScreenView(context: context)
-                .widgetURL(URL(string: "family-vault://open/dashboard"))
+                .widgetURL(URL(string: "family-vault://open/tree"))
         } dynamicIsland: { context in
             let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
             return DynamicIsland {
@@ -169,7 +169,7 @@ struct MascotteLiveActivity: Widget {
                 Text(stage.emoji)
                     .font(.caption2)
             }
-            .widgetURL(URL(string: "family-vault://open/dashboard"))
+            .widgetURL(URL(string: "family-vault://open/tree"))
         }
     }
 }

@@ -492,11 +492,13 @@ export function useVaultInternal(): VaultState {
       refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current);
       // Refresh Live Activity mascotte si elle tourne (no-op sinon)
       const todayStr = new Date().toISOString().slice(0, 10);
+      // Une tâche compte pour aujourd'hui si : due aujourd'hui OU complétée aujourd'hui
       const todayTasks = tasksRefForWidget.current.filter(t => {
+        if (t.completed && t.completedDate === todayStr) return true;
         if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
         return t.dueDate === todayStr;
       });
-      const doneCount = todayTasks.filter(t => t.completed).length;
+      const doneCount = todayTasks.filter(t => t.completed && t.completedDate === todayStr).length;
       const nowHour = new Date().getHours();
       const dayName = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][new Date().getDay()];
       const todayMeals = mealsRef.current.filter(m => m.day === dayName);

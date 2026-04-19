@@ -56,10 +56,11 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     const hour = now.getHours();
 
     const todayTasks = tasks.filter(t => {
+      if (t.completed && t.completedDate === todayStr) return true;
       if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
       return t.dueDate === todayStr;
     });
-    const done = todayTasks.filter(t => t.completed).length;
+    const done = todayTasks.filter(t => t.completed && t.completedDate === todayStr).length;
     const total = todayTasks.length;
 
     const todayMeals = meals.filter(m => m.day === dayName);
