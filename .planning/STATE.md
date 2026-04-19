@@ -60,6 +60,7 @@ Status: Ready to execute
 | 260416-pct | Deal du jour stock séparé marché + quota 2 achats/profil/jour | 2026-04-16 | 1bb4895 | [260416-pct-deal-du-jour-stock-separe-marche-quota-2](./quick/260416-pct-deal-du-jour-stock-separe-marche-quota-2/) |
 | 260417-dp6 | Migration ID habitants (aigle_expedition→aigle_dore, renard_expedition→renard_arctique) dans parseFarmProfile | 2026-04-17 | a64becf | [260417-dp6-appliquer-la-migration-d-id-d-habitants-](./quick/260417-dp6-appliquer-la-migration-d-id-d-habitants-/) |
 | 260419-jit | Pauser animations TreeView sous-composants AnimatedAnimal SeasonalParticle Particle | 2026-04-19 | cb1c791 | [260419-jit-pauser-animations-treeview-sous-composan](./quick/260419-jit-pauser-animations-treeview-sous-composan/) |
+| 260419-uet | Remplacer emoji par sprite pixel art dans SeedDropOverlay | 2026-04-19 | 2b9f29a | [260419-uet-remplacer-emoji-par-sprite-dans-seeddrop](./quick/260419-uet-remplacer-emoji-par-sprite-dans-seeddrop/) |
 
 ## Performance Metrics
 
