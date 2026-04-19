@@ -1437,17 +1437,17 @@ function HabitatLayer({ stageIdx, season, groundColors, accent }: {
 
 // ── Particules saisonnières (Reanimated) ──────
 
-function SeasonalParticles({ particle, size }: { particle: typeof SEASONAL_PARTICLES[Season]; size: number }) {
+function SeasonalParticles({ particle, size, paused = false }: { particle: typeof SEASONAL_PARTICLES[Season]; size: number; paused?: boolean }) {
   return (
     <View style={[StyleSheet.absoluteFill, styles.particleContainer]} pointerEvents="none">
       {Array.from({ length: particle.count }).map((_, i) => (
-        <SeasonParticle key={`sp-${i}`} particle={particle} index={i} containerSize={size} />
+        <SeasonParticle key={`sp-${i}`} particle={particle} index={i} containerSize={size} paused={paused} />
       ))}
     </View>
   );
 }
 
-function SeasonParticle({ particle, index, containerSize }: { particle: typeof SEASONAL_PARTICLES[Season]; index: number; containerSize: number }) {
+function SeasonParticle({ particle, index, containerSize, paused = false }: { particle: typeof SEASONAL_PARTICLES[Season]; index: number; containerSize: number; paused?: boolean }) {
   const reducedMotion = useReducedMotion();
   const translateY = useSharedValue(0);
   const translateX = useSharedValue(0);
@@ -1464,7 +1464,7 @@ function SeasonParticle({ particle, index, containerSize }: { particle: typeof S
   const duration = useMemo(() => (4000 + (index % 5) * 800) * speedMult, [index, speedMult]);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || paused) return;
     const delay = index * 600;
 
     if (particle.direction === 'down') {
@@ -1511,7 +1511,7 @@ function SeasonParticle({ particle, index, containerSize }: { particle: typeof S
       withTiming(360, { duration: duration * 2, easing: Easing.linear }),
       -1, false,
     ));
-  }, [reducedMotion]);
+  }, [reducedMotion, paused]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [
@@ -1551,17 +1551,17 @@ function SeasonParticle({ particle, index, containerSize }: { particle: typeof S
 
 // ── Particules flottantes (Reanimated) ────────
 
-function FloatingParticles({ color, count, size }: { color: string; count: number; size: number }) {
+function FloatingParticles({ color, count, size, paused = false }: { color: string; count: number; size: number; paused?: boolean }) {
   return (
     <View style={[StyleSheet.absoluteFill, styles.particleContainer]} pointerEvents="none">
       {Array.from({ length: count }).map((_, i) => (
-        <Particle key={i} color={color} index={i} containerSize={size} />
+        <Particle key={i} color={color} index={i} containerSize={size} paused={paused} />
       ))}
     </View>
   );
 }
 
-function Particle({ color, index, containerSize }: { color: string; index: number; containerSize: number }) {
+function Particle({ color, index, containerSize, paused = false }: { color: string; index: number; containerSize: number; paused?: boolean }) {
   const reducedMotion = useReducedMotion();
   const translateY = useSharedValue(0);
   const translateX = useSharedValue(0);
@@ -1574,7 +1574,7 @@ function Particle({ color, index, containerSize }: { color: string; index: numbe
   const duration = useMemo(() => 3000 + (index % 4) * 1000, [index]);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || paused) return;
     const delay = index * 400;
 
     translateY.value = withDelay(delay, withRepeat(
@@ -1605,7 +1605,7 @@ function Particle({ color, index, containerSize }: { color: string; index: numbe
       ),
       -1, true,
     ));
-  }, [reducedMotion]);
+  }, [reducedMotion, paused]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [
@@ -1935,7 +1935,7 @@ const THOUGHT_BUBBLES_IDLE = ['ZzZ', '?', '...', '♪', '!', '✨'];
 const THOUGHT_BUBBLES_NIGHT = ['💤', '🌙', 'ZzZ'];
 
 /** Animal anime : idle + balade + bulles de pensee */
-function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { frames: [any, any]; x: number; y: number; size: number; animalId: string; containerWidth: number }) {
+function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth, paused = false }: { frames: [any, any]; x: number; y: number; size: number; animalId: string; containerWidth: number; paused?: boolean }) {
   const [frameIdx, setFrameIdx] = React.useState(0);
   const [isWalking, setIsWalking] = React.useState(false);
   const [bubble, setBubble] = React.useState<string | null>(null);
@@ -1948,6 +1948,7 @@ function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { fram
   // Cycle idle / walk / thought bubbles
   useEffect(() => {
     mounted.current = true;
+    if (paused) return;
     const walkFrames = ANIMAL_WALK_FRAMES[animalId];
     let walkInterval: ReturnType<typeof setInterval>;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
@@ -1992,7 +1993,7 @@ function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { fram
       clearInterval(bubbleInterval);
       timeouts.forEach(t => clearTimeout(t));
     };
-  }, [animalId]);
+  }, [animalId, paused]);
 
   const walkDownFrames = ANIMAL_WALK_FRAMES[animalId];
   const walkLeftFrames = ANIMAL_WALK_LEFT_FRAMES[animalId];
@@ -2000,10 +2001,11 @@ function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { fram
   const isHorizontal = Math.abs(lastDx) > Math.abs(lastDy);
   const activeWalkFrames = isWalking && isHorizontal && walkLeftFrames ? walkLeftFrames : walkDownFrames;
   useEffect(() => {
+    if (paused) return;
     if (!isWalking || !activeWalkFrames) return;
     const interval = setInterval(() => setWalkFrameIdx(f => (f + 1) % activeWalkFrames.length), 200);
     return () => clearInterval(interval);
-  }, [isWalking, activeWalkFrames]);
+  }, [isWalking, activeWalkFrames, paused]);
 
   const moveStyle = useAnimatedStyle(() => ({
     transform: [
