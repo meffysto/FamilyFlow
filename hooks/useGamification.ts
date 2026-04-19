@@ -16,6 +16,7 @@ import {
   mergeProfiles,
 } from '../lib/parser';
 import { advanceFarmCrops, parseCrops, serializeCrops, type QuestFarmEffect } from '../lib/mascot/farm-engine';
+import { filterTasksForWager } from '../lib/mascot/wager-engine';
 import { parseFamilyQuestsMeta, getActiveQuestEffect, FAMILY_QUESTS_FILE } from '../lib/parser';
 import { getTechBonuses } from '../lib/mascot/tech-engine';
 import { getCompanionXpBonus } from '../lib/mascot/companion-engine';
@@ -214,6 +215,24 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           } catch { /* Quest — non-critical */ }
           const farmResult = advanceFarmCrops(currentCrops, profileTechBonuses, questFarmEffect, farmData.plotLevels);
           cropsMatured = farmResult.matured.map(c => c.cropId);
+
+          // Incrémenter cumulCurrent des wagers actifs si la tâche qualifie (SPOR-06)
+          // Fix: subscription useFarm hors scope quand tree.tsx pas monté → géré ici.
+          if (filterTasksForWager([{ sourceFile: taskMeta?.sourceFile ?? '' } as import('../lib/types').Task]).length > 0) {
+            const wagerToday = new Date().toISOString().slice(0, 10);
+            for (const crop of farmResult.crops) {
+              const w = crop.modifiers?.wager;
+              if (!w) continue;
+              if (w.lastDailyResetDate !== wagerToday) {
+                w.tasksCompletedToday = 1;
+                w.lastDailyResetDate = wagerToday;
+              } else {
+                w.tasksCompletedToday = (w.tasksCompletedToday ?? 0) + 1;
+              }
+              w.cumulCurrent = (w.cumulCurrent ?? 0) + 1;
+            }
+          }
+
           farmData.farmCrops = serializeCrops(farmResult.crops);
         }
 

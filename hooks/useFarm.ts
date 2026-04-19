@@ -10,7 +10,7 @@ import { useVault } from '../contexts/VaultContext';
 import type { ContributionType } from '../lib/village';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount, rollWagerDropBack, getLocalDateKey } from '../lib/mascot/sporee-economy';
-import { computeCumulTarget, validateWagerOnHarvest, filterTasksForWager, maybeRecompute } from '../lib/mascot/wager-engine';
+import { computeCumulTarget, validateWagerOnHarvest, maybeRecompute } from '../lib/mascot/wager-engine';
 import { computeWagerTotalDays, computeWagerCumul, getMultiplierForTier, ALLOWED_DURATIONS } from '../lib/mascot/wager-ui-helpers';
 import type { WagerDuration, WagerMultiplier, WagerModifier } from '../lib/mascot/types';
 import type { Task } from '../lib/types';
@@ -172,7 +172,7 @@ export function useFarm(
   onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>,
   onContribution?: (type: ContributionType, profileId: string) => Promise<void>,
 ) {
-  const { vault, profiles, refreshFarm, refreshGamification, tasks, subscribeTaskComplete, activeProfile, gamiData } = useVault();
+  const { vault, profiles, refreshFarm, refreshGamification, tasks, activeProfile, gamiData } = useVault();
   const { showToast } = useToast();
 
   /** Deduire des feuilles dans gami-{profileId}.md */
@@ -1158,37 +1158,9 @@ export function useFarm(
     })();
   }, [vault, activeProfile, profiles, refreshFarm]);
 
-  // ─── Phase 40 — Câblage onTaskComplete → incrementWagerCumul ────────────
-  // Pattern onQuestProgress : le listener filtre le domaine Tasks (filterTasksForWager)
-  // et attribue au sealeur via mentions/sourceFile (triple check cohérent wager-engine).
-  useEffect(() => {
-    if (!subscribeTaskComplete) return;
-    const listener = async (task: Task) => {
-      // Filtre domaine : seules les tâches du domaine Tasks comptent (SPOR-06)
-      if (filterTasksForWager([task]).length === 0) return;
-      // Attribution : pour chaque profil, voir si la tâche lui appartient, puis incr
-      // ses wagers. En pratique un wager incremente via sealerProfileId qui est le
-      // propriétaire — le hook parcourt TOUS les profils actifs avec wager.
-      // Ici on incrémente pour chaque profil dont la tâche "appartient" (mentions.id,
-      // mentions.name, sourceFile nom) — pattern wager-engine.isProfileActive7d.
-      for (const p of profiles) {
-        const nameLower = p.name.toLowerCase();
-        const belongs =
-          task.mentions.includes(p.id) ||
-          task.mentions.includes(p.name) ||
-          task.sourceFile.toLowerCase().includes(nameLower);
-        if (belongs) {
-          try {
-            await incrementWagerCumul(p.id);
-          } catch (e) {
-            if (__DEV__) console.warn('[useFarm] incrementWagerCumul error:', e);
-          }
-        }
-      }
-    };
-    const unsubscribe = subscribeTaskComplete(listener);
-    return unsubscribe;
-  }, [subscribeTaskComplete, profiles, incrementWagerCumul]);
+  // Phase 40 — subscription supprimée : l'incrément wager est désormais géré
+  // directement dans useGamification.completeTask (avant serializeCrops) pour
+  // fonctionner quel que soit l'onglet actif.
 
   return {
     plant,

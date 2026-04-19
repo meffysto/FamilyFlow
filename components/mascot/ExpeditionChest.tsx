@@ -211,65 +211,67 @@ export function ExpeditionChest({ visible, outcome, loot, missionName, onClose }
 
           {/* Contenu révélé */}
           <Animated.View style={[styles.reveal, revealAnim]}>
-            {/* Badge outcome */}
-            <View
-              style={[
-                styles.outcomeBadge,
-                {
-                  backgroundColor: isRare ? Farm.parchmentDark : outColor + '22',
-                  borderColor: outColor,
-                },
-              ]}
-            >
-              <Text style={styles.outcomeEmoji}>{outcomeEmoji(outcome)}</Text>
-              <Text style={[styles.outcomeTitle, { color: isRare ? Farm.goldText : outColor }]}>
-                {outcomeTitle(outcome)}
-              </Text>
-            </View>
+            <View style={[styles.resultPanel, { backgroundColor: colors.card }]}>
+              {/* Badge outcome */}
+              <View
+                style={[
+                  styles.outcomeBadge,
+                  {
+                    backgroundColor: isRare ? Farm.parchmentDark : outColor + '20',
+                    borderColor: outColor,
+                  },
+                ]}
+              >
+                <Text style={styles.outcomeEmoji}>{outcomeEmoji(outcome)}</Text>
+                <Text style={[styles.outcomeTitle, { color: isRare ? Farm.goldText : outColor }]}>
+                  {outcomeTitle(outcome)}
+                </Text>
+              </View>
 
-            {/* Loot si disponible */}
-            {loot && (
-              <View style={[styles.lootCard, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
-                <Text style={styles.lootEmoji}>{loot.emoji}</Text>
-                <View>
-                  <Text style={[styles.lootLabel, { color: colors.text }]}>{loot.label}</Text>
-                  <Text style={[styles.lootType, { color: colors.textMuted }]}>
-                    {loot.type === 'inhabitant' ? 'Habitant' : loot.type === 'seed' ? 'Graine' : 'Boost'}
+              {/* Loot si disponible */}
+              {loot && (
+                <View style={[styles.lootCard, { backgroundColor: colors.bg, borderColor: colors.borderLight }]}>
+                  <Text style={styles.lootEmoji}>{loot.emoji}</Text>
+                  <View>
+                    <Text style={[styles.lootLabel, { color: colors.text }]}>{loot.label}</Text>
+                    <Text style={[styles.lootType, { color: colors.textMuted }]}>
+                      {loot.type === 'inhabitant' ? 'Habitant' : loot.type === 'seed' ? 'Graine' : 'Boost'}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Bandeau perte pour failure */}
+              {outcome === 'failure' && (
+                <View style={[styles.lossBanner, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+                  <MaterialCommunityIcons name="close-circle" size={20} color={colors.error} />
+                  <Text style={[styles.lossBannerText, { color: colors.error }]}>
+                    {'Toute la mise a été perdue'}
                   </Text>
                 </View>
-              </View>
-            )}
+              )}
 
-            {/* Bandeau perte pour failure */}
-            {outcome === 'failure' && (
-              <View style={[styles.lossBanner, { backgroundColor: colors.error + '18', borderColor: colors.error }]}>
-                <MaterialCommunityIcons name="close-circle" size={20} color={colors.error} />
-                <Text style={[styles.lossBannerText, { color: colors.error }]}>
-                  {'Toute la mise a été perdue'}
+              {/* Bandeau retour partiel */}
+              {outcome === 'partial' && (
+                <View style={[styles.lossBanner, { backgroundColor: colors.warning + '15', borderColor: colors.warning }]}>
+                  <MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.warning} />
+                  <Text style={[styles.lossBannerText, { color: colors.warning }]}>
+                    {'Retour partiel — butin perdu'}
+                  </Text>
+                </View>
+              )}
+
+              {/* Bouton fermer */}
+              <TouchableOpacity
+                onPress={onClose}
+                style={[styles.closeBtn, { borderColor: colors.borderLight, backgroundColor: colors.bg }]}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.closeBtnText, { color: colors.text }]}>
+                  {'Fermer le coffre'}
                 </Text>
-              </View>
-            )}
-
-            {/* Bandeau retour partiel */}
-            {outcome === 'partial' && (
-              <View style={[styles.lossBanner, { backgroundColor: colors.warning + '18', borderColor: colors.warning }]}>
-                <MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.warning} />
-                <Text style={[styles.lossBannerText, { color: colors.warning }]}>
-                  {'Retour partiel — butin perdu'}
-                </Text>
-              </View>
-            )}
-
-            {/* Bouton fermer */}
-            <TouchableOpacity
-              onPress={onClose}
-              style={[styles.closeBtn, { borderColor: colors.borderLight, backgroundColor: colors.card }]}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.closeBtnText, { color: colors.text }]}>
-                {'Fermer le coffre'}
-              </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           </Animated.View>
         </View>
       </View>
@@ -328,9 +330,18 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   reveal: {
-    alignItems: 'center',
-    gap: Spacing['2xl'],
     width: '100%',
+  },
+  resultPanel: {
+    borderRadius: Radius.xl,
+    padding: Spacing['2xl'],
+    gap: Spacing.xl,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   outcomeBadge: {
     flexDirection: 'row',
