@@ -686,6 +686,7 @@ export default function VillageScreen() {
             containerHeight={MAP_HEIGHT}
             season={season}
             mode="village"
+            paused={animationsPaused}
           />
 
           {/* Fontaine centrale — sprite pixel statique sur le slot village_fountain */}
@@ -759,6 +760,7 @@ export default function VillageScreen() {
                 slotY={slot.y * mapSize.height}
                 pendingCount={pending}
                 onPress={() => handleBuildingPress(ub)}
+                paused={animationsPaused}
               />
             );
           })}

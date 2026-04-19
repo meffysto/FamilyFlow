@@ -7,6 +7,7 @@
 
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -65,8 +66,9 @@ export function LiquidXPBar({ current, total, label, color, height = 22 }: Liqui
     fillWidth.value = withSpring(pct, { damping: 15, stiffness: 80 });
   }, [pct]);
 
+  const isFocused = useIsFocused();
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || !isFocused) return;
     waveX.value = withRepeat(
       withSequence(
         withTiming(6, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
@@ -74,8 +76,16 @@ export function LiquidXPBar({ current, total, label, color, height = 22 }: Liqui
       ),
       -1, true,
     );
-    return () => cancelAnimation(waveX);
-  }, [reducedMotion]);
+    // Welcome pulse : stop après 5s pour économiser la batterie
+    const stopTimer = setTimeout(() => {
+      cancelAnimation(waveX);
+      waveX.value = withTiming(0, { duration: 300 });
+    }, 5000);
+    return () => {
+      clearTimeout(stopTimer);
+      cancelAnimation(waveX);
+    };
+  }, [reducedMotion, isFocused]);
 
   const fillStyle = useAnimatedStyle(() => ({
     width: `${fillWidth.value}%` as any,

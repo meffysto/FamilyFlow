@@ -7,6 +7,7 @@
 
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -64,7 +65,7 @@ function generateParticles(season: Season): ParticleConfig[] {
   }));
 }
 
-function Particle({ config, opacity, season }: { config: ParticleConfig; opacity: number; season: Season }) {
+function Particle({ config, opacity, season, paused }: { config: ParticleConfig; opacity: number; season: Season; paused: boolean }) {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const rotate = useSharedValue(0);
@@ -72,6 +73,14 @@ function Particle({ config, opacity, season }: { config: ParticleConfig; opacity
   const particleOpacity = useSharedValue(opacity);
 
   React.useEffect(() => {
+    if (paused) {
+      cancelAnimation(translateX);
+      cancelAnimation(translateY);
+      cancelAnimation(rotate);
+      cancelAnimation(scale);
+      cancelAnimation(particleOpacity);
+      return;
+    }
     const dur = config.duration;
 
     // Mouvement horizontal — va-et-vient
@@ -157,7 +166,7 @@ function Particle({ config, opacity, season }: { config: ParticleConfig; opacity
       cancelAnimation(scale);
       cancelAnimation(particleOpacity);
     };
-  }, []);
+  }, [paused]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [
@@ -193,13 +202,23 @@ export function SeasonalParticles() {
   const season = useMemo(() => getCurrentSeason(), []);
   const config = SEASON_CONFIG[season];
   const particles = useMemo(() => generateParticles(season), [season]);
+  const isFocused = useIsFocused();
+  const [paused, setPaused] = React.useState(false);
+
+  // Welcome pulse : 5s d'animation au focus puis pause — économie batterie
+  React.useEffect(() => {
+    if (!isFocused) { setPaused(true); return; }
+    setPaused(false);
+    const t = setTimeout(() => setPaused(true), 5000);
+    return () => clearTimeout(t);
+  }, [isFocused]);
 
   if (reducedMotion) return null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {particles.map((p, i) => (
-        <Particle key={i} config={p} opacity={config.opacity} season={season} />
+        <Particle key={i} config={p} opacity={config.opacity} season={season} paused={paused} />
       ))}
     </View>
   );

@@ -1661,6 +1661,16 @@ export default function TreeScreen() {
     showToast(t('mascot.adventure.reward', { points: points + SEASONAL_EVENT_BONUS_XP }));
   }, [profile?.id, activeEventId, activeEventContent, completeSagaChapter, showToast, t]);
 
+  // Fix batterie : démonter toute la scène ferme quand le tab n'est pas focus.
+  // Évite que les useAnimatedStyle des ~30+ sous-composants (crops, animaux,
+  // particules, poisson, etc.) ne driveent le display link à 120Hz en arrière-plan.
+  // Coût : ~150ms de re-mount au retour sur l'onglet (acceptable).
+  // Le VaultContext reste monté au root → DashboardGarden reflète toutes les
+  // mutations (tâches, récoltes, gains) en temps réel indépendamment de ce mount.
+  if (!isScreenFocused) {
+    return <View style={[styles.safe, { backgroundColor: colors.bg }]} />;
+  }
+
   return (
     <View style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -2173,6 +2183,7 @@ export default function TreeScreen() {
                 containerWidth={SCREEN_W}
                 containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
                 season={season}
+                paused={animationsPaused}
               />
             </View>
 
@@ -2447,6 +2458,7 @@ export default function TreeScreen() {
                     hasResult={pendingResults.length > 0}
                     remainingMinutes={remainingMinutes}
                     onPress={() => setShowExpeditions(true)}
+                    paused={animationsPaused}
                   />
                 </View>
               );

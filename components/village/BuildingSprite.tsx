@@ -32,6 +32,7 @@ interface BuildingSpriteProps {
   /** Nombre de ressources en attente de collecte */
   pendingCount?: number;
   onPress: () => void;
+  paused?: boolean;
 }
 
 export const BuildingSprite = React.memo(function BuildingSprite({
@@ -40,6 +41,7 @@ export const BuildingSprite = React.memo(function BuildingSprite({
   slotY,
   pendingCount = 0,
   onPress,
+  paused = false,
 }: BuildingSpriteProps) {
   const entry = useMemo(
     () => BUILDINGS_CATALOG.find(b => b.id === buildingId),
@@ -55,7 +57,7 @@ export const BuildingSprite = React.memo(function BuildingSprite({
 
   // Scintillement emoji ressource
   useEffect(() => {
-    if (!reducedMotion && pendingCount > 0) {
+    if (!reducedMotion && pendingCount > 0 && !paused) {
       emojiOpacity.value = withRepeat(
         withSequence(
           withTiming(1, { duration: 600, easing: Easing.inOut(Easing.sin) }),
@@ -67,7 +69,7 @@ export const BuildingSprite = React.memo(function BuildingSprite({
       emojiOpacity.value = 0.7;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reducedMotion, pendingCount > 0]);
+  }, [reducedMotion, pendingCount > 0, paused]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

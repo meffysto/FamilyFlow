@@ -10,6 +10,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, LayoutAnimation, Modal, TextInput, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import Animated, {
   FadeInDown,
   useSharedValue,
@@ -87,9 +88,10 @@ const FAMILY_TOGGLE_KEY = 'dashboard_family_toggle';
 const MainPlotPulse = React.memo(function MainPlotPulse() {
   const pulseOpacity = useSharedValue(0.3);
   const reducedMotion = useReducedMotion();
+  const isFocused = useIsFocused();
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || !isFocused) return;
     pulseOpacity.value = withRepeat(
       withSequence(
         withTiming(1, { duration: 1200 }),
@@ -98,8 +100,16 @@ const MainPlotPulse = React.memo(function MainPlotPulse() {
       -1,
       false,
     );
-    return () => cancelAnimation(pulseOpacity);
-  }, [pulseOpacity, reducedMotion]);
+    // Welcome pulse : stop après 5s pour économiser la batterie
+    const stopTimer = setTimeout(() => {
+      cancelAnimation(pulseOpacity);
+      pulseOpacity.value = withTiming(0.6, { duration: 300 });
+    }, 5000);
+    return () => {
+      clearTimeout(stopTimer);
+      cancelAnimation(pulseOpacity);
+    };
+  }, [pulseOpacity, reducedMotion, isFocused]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,

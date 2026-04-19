@@ -22,6 +22,7 @@ import Animated, {
   withRepeat,
   withSequence,
   withDelay,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 import type { Season } from '../../lib/mascot/seasons';
@@ -572,6 +573,7 @@ interface TileMapRendererProps {
   containerHeight: number;
   season: Season;
   mode?: 'farm' | 'village'; // 'farm' par defaut
+  paused?: boolean; // stopper SwimmingFish quand tab pas focus (fix batterie)
 }
 
 // ── Poisson koi anime — nage en boucle dans le lac avec cycle de frames ──
@@ -589,21 +591,27 @@ const FISH_STEP_MS = 3500;
 const FISH_FRAME_MS = 350;
 const FISH_FRAMES = FISH_DECOS.fish_koi_frames;
 
-function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: number; containerHeight: number }) {
+function SwimmingFish({ containerWidth, containerHeight, paused = false }: { containerWidth: number; containerHeight: number; paused?: boolean }) {
   const posX = useSharedValue(FISH_WAYPOINTS[0].x * containerWidth);
   const posY = useSharedValue(FISH_WAYPOINTS[0].y * containerHeight);
   const [frameIdx, setFrameIdx] = useState(0);
 
   // Cycle des frames de nage
   useEffect(() => {
+    if (paused) return;
     const interval = setInterval(() => {
       setFrameIdx(prev => (prev + 1) % FISH_FRAMES.length);
     }, FISH_FRAME_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [paused]);
 
   // Animation de deplacement dans le lac
   useEffect(() => {
+    if (paused) {
+      cancelAnimation(posX);
+      cancelAnimation(posY);
+      return;
+    }
     const points = FISH_WAYPOINTS.map(p => ({
       x: p.x * containerWidth,
       y: p.y * containerHeight,
@@ -626,7 +634,7 @@ function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: num
       withSequence(...stepsY.map(y => withTiming(y, timingConfig))),
       -1,
     ));
-  }, [containerWidth, containerHeight]);
+  }, [containerWidth, containerHeight, paused]);
 
   const animStyle = useAnimatedStyle(() => ({
     position: 'absolute' as const,
@@ -653,6 +661,7 @@ export function TileMapRenderer({
   containerHeight,
   season,
   mode = 'farm',
+  paused = false,
 }: TileMapRendererProps) {
   const stageIdx = STAGE_INDEX[treeStage] ?? 0;
 
@@ -785,7 +794,7 @@ export function TileMapRenderer({
 
       {/* Poisson koi anime dans le lac (ferme stade 1+ / village toujours) */}
       {(mode === 'village' || stageIdx >= 1) && (
-        <SwimmingFish containerWidth={containerWidth} containerHeight={containerHeight} />
+        <SwimmingFish containerWidth={containerWidth} containerHeight={containerHeight} paused={paused} />
       )}
 
       {/* Couche decorations (arbres, clotures, objets) */}

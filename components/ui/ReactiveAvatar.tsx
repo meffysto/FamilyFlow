@@ -10,6 +10,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, ViewStyle } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -31,9 +32,11 @@ interface ReactiveAvatarProps {
 }
 
 // Durée avant arrêt de l'animation (ms). -1 = continu.
+// Note : idle/night limités à 5s (welcome pulse) pour économiser la batterie —
+// sinon le display link reste à 120Hz en permanence sur le dashboard.
 const MOOD_DURATION: Record<AvatarMood, number> = {
-  idle: -1,     // respiration douce, toujours
-  night: -1,    // dort, toujours (subtil)
+  idle: 5000,   // respiration 5s puis calme (welcome pulse)
+  night: 5000,  // dort 5s puis calme
   loot: 8000,   // sautille 8s puis calme
   allDone: 5000, // danse 5s puis calme
   overdue: 3000, // tremble 3s puis calme
@@ -80,6 +83,7 @@ function resetAll(
 }
 
 export function ReactiveAvatar({ emoji, mood, style }: ReactiveAvatarProps) {
+  const isFocused = useIsFocused();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
   const translateX = useSharedValue(0);
@@ -93,6 +97,9 @@ export function ReactiveAvatar({ emoji, mood, style }: ReactiveAvatarProps) {
 
     // Reset to neutral
     resetAll(scale, translateY, translateX, rotate, scaleY);
+
+    // Stop quand écran pas focus (économie batterie)
+    if (!isFocused) return;
 
     // Petit délai pour laisser le reset finir
     const startTimer = setTimeout(() => {
@@ -209,8 +216,9 @@ export function ReactiveAvatar({ emoji, mood, style }: ReactiveAvatarProps) {
     return () => {
       clearTimeout(startTimer);
       if (timerRef.current) clearTimeout(timerRef.current);
+      resetAll(scale, translateY, translateX, rotate, scaleY);
     };
-  }, [mood]);
+  }, [mood, isFocused]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [

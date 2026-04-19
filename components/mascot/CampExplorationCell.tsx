@@ -50,11 +50,12 @@ interface Props {
   hasResult: boolean;
   remainingMinutes: number[];
   onPress: () => void;
+  paused?: boolean;
 }
 
 // ── Composant ─────────────────────────────────────────────────────────────────
 
-export function CampExplorationCell({ activeCount, hasResult, remainingMinutes, onPress }: Props) {
+export function CampExplorationCell({ activeCount, hasResult, remainingMinutes, onPress, paused = false }: Props) {
   const { colors } = useThemeColors();
 
   const isIdle = activeCount === 0 && !hasResult;
@@ -87,7 +88,7 @@ export function CampExplorationCell({ activeCount, hasResult, remainingMinutes, 
   }, [hasResult, pulseScale]);
 
   useEffect(() => {
-    if (isIdle) {
+    if (isIdle && !paused) {
       bobY.value = withRepeat(
         withSequence(
           withTiming(-4, { duration: 1200 }),
@@ -99,7 +100,7 @@ export function CampExplorationCell({ activeCount, hasResult, remainingMinutes, 
     } else {
       bobY.value = 0;
     }
-  }, [isIdle, bobY]);
+  }, [isIdle, bobY, paused]);
 
   // Timers triés du plus court au plus long, filtre les terminés (0m)
   const activeTimers = remainingMinutes
