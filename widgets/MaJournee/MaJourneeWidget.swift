@@ -454,6 +454,107 @@ struct MaJourneeLargeView: View {
     }
 }
 
+// MARK: - Lock Screen Accessory Views (iOS 16+)
+
+/// Circulaire : jauge tâches du jour (X/Y)
+@available(iOS 16.0, *)
+struct MaJourneeCircularView: View {
+    let data: WidgetData
+
+    var body: some View {
+        let progress = data.tasksProgress
+        let done = progress?.done ?? 0
+        let total = progress?.total ?? 0
+        let fraction = total > 0 ? Double(done) / Double(total) : 1.0
+
+        Group {
+            if total > 0 {
+                Gauge(value: fraction) {
+                    Image(systemName: "checklist")
+                } currentValueLabel: {
+                    Text("\(done)/\(total)")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .gaugeStyle(.accessoryCircular)
+            } else {
+                Gauge(value: 1) {
+                    Image(systemName: "checkmark.seal.fill")
+                } currentValueLabel: {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .gaugeStyle(.accessoryCircular)
+                .tint(.green)
+            }
+        }
+        .widgetURL(DeepLink.tasks)
+    }
+}
+
+/// Rectangulaire : prochain RDV (date/heure + titre + lieu)
+@available(iOS 16.0, *)
+struct MaJourneeRectangularView: View {
+    let data: WidgetData
+    let lang: WidgetLang
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if let rdv = data.upcomingRDVs.first {
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .font(.caption2)
+                    Text("\(rdv.date) · \(rdv.heure)")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                }
+                Text(rdv.title)
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .lineLimit(1)
+                if let lieu = rdv.lieu, !lieu.isEmpty {
+                    Text(lieu)
+                        .font(.caption2)
+                        .lineLimit(1)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .font(.caption2)
+                    Text(MaJourneeStrings.noRDV(lang))
+                        .font(.caption2)
+                        .lineLimit(2)
+                }
+            }
+        }
+        .widgetURL(DeepLink.rdv)
+    }
+}
+
+/// Inline : repas pertinent selon l'heure (midi avant 14h, soir après)
+@available(iOS 16.0, *)
+struct MaJourneeInlineView: View {
+    let data: WidgetData
+    let lang: WidgetLang
+
+    private var showLunch: Bool {
+        Calendar.current.component(.hour, from: Date()) < 14
+    }
+
+    var body: some View {
+        let meal = showLunch ? (data.meals?.dejeuner ?? "") : (data.meals?.diner ?? "")
+        let fallback = showLunch ? MaJourneeStrings.noLunch(lang) : MaJourneeStrings.noDinner(lang)
+        let text = meal.isEmpty ? fallback : meal
+        let icon = showLunch ? "sun.max.fill" : "moon.fill"
+        Label {
+            Text(text).lineLimit(1)
+        } icon: {
+            Image(systemName: icon)
+        }
+        .widgetURL(DeepLink.meals)
+    }
+}
+
 // MARK: - Entry View
 
 struct MaJourneeEntryView: View {
@@ -470,7 +571,20 @@ struct MaJourneeEntryView: View {
         case .systemLarge:
             MaJourneeLargeView(data: entry.data, lang: lang)
         default:
-            MaJourneeMediumView(data: entry.data, lang: lang)
+            if #available(iOS 16.0, *) {
+                switch family {
+                case .accessoryCircular:
+                    MaJourneeCircularView(data: entry.data)
+                case .accessoryRectangular:
+                    MaJourneeRectangularView(data: entry.data, lang: lang)
+                case .accessoryInline:
+                    MaJourneeInlineView(data: entry.data, lang: lang)
+                default:
+                    MaJourneeMediumView(data: entry.data, lang: lang)
+                }
+            } else {
+                MaJourneeMediumView(data: entry.data, lang: lang)
+            }
         }
     }
 }
@@ -491,6 +605,14 @@ struct MaJourneeWidget: Widget {
         }
         .configurationDisplayName("Ma Journée")
         .description("Repas, tâches et RDV du jour")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies(MaJourneeWidget.families)
+    }
+
+    static var families: [WidgetFamily] {
+        var f: [WidgetFamily] = [.systemSmall, .systemMedium, .systemLarge]
+        if #available(iOS 16.0, *) {
+            f.append(contentsOf: [.accessoryCircular, .accessoryRectangular, .accessoryInline])
+        }
+        return f
     }
 }

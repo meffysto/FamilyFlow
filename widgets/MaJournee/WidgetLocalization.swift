@@ -69,6 +69,18 @@ enum MaJourneeStrings {
     static func widgetDescription(_ lang: WidgetLang) -> String {
         lang == .en ? "Meals, tasks and appointments" : "Repas, tâches et RDV du jour"
     }
+
+    static func noDinner(_ lang: WidgetLang) -> String {
+        lang == .en ? "No dinner planned" : "Pas de dîner prévu"
+    }
+
+    static func noLunch(_ lang: WidgetLang) -> String {
+        lang == .en ? "No lunch planned" : "Pas de déjeuner prévu"
+    }
+
+    static func noRDV(_ lang: WidgetLang) -> String {
+        lang == .en ? "No upcoming appointment" : "Aucun RDV à venir"
+    }
 }
 
 // MARK: - Journal Bébé Widget Strings
