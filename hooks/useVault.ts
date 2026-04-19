@@ -178,6 +178,8 @@ export interface VaultState {
    *  Pattern event-driven consommé par useFarm.incrementWagerCumul (câblage Sporée).
    *  Retourne une fonction unsubscribe à appeler au cleanup. */
   subscribeTaskComplete: (listener: TaskCompleteListener) => () => void;
+  /** Compteur de tâches complétées aujourd'hui (event-driven — inclut les récurrentes) */
+  tasksCompletedToday: number;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
@@ -492,13 +494,14 @@ export function useVaultInternal(): VaultState {
       refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current);
       // Refresh Live Activity mascotte si elle tourne (no-op sinon)
       const todayStr = new Date().toISOString().slice(0, 10);
-      // Une tâche compte pour aujourd'hui si : due aujourd'hui OU complétée aujourd'hui
+      // Total = tâches dues aujourd'hui (récurrentes ou non)
       const todayTasks = tasksRefForWidget.current.filter(t => {
-        if (t.completed && t.completedDate === todayStr) return true;
         if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
         return t.dueDate === todayStr;
       });
-      const doneCount = todayTasks.filter(t => t.completed && t.completedDate === todayStr).length;
+      // Done = compteur événementiel incrémenté à chaque toggleTask (gère les récurrentes qui reset completed=false)
+      const counter = tasksCompletedTodayRef.current;
+      const doneCount = counter.date === todayStr ? counter.count : 0;
       const nowHour = new Date().getHours();
       const dayName = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][new Date().getDay()];
       const todayMeals = mealsRef.current.filter(m => m.day === dayName);
@@ -567,6 +570,24 @@ export function useVaultInternal(): VaultState {
   const tasksHook = useVaultTasks(vaultRef, triggerWidgetRefresh, setVacationTasks);
   const { tasks, tasksRef } = tasksHook;
   useEffect(() => { tasksRefForWidget.current = tasks; }, [tasks]);
+
+  // Compteur "tâches complétées aujourd'hui" pour Live Activity + carte dashboard
+  // (événementiel car les récurrentes reset completed=false après toggle)
+  const [tasksCompletedToday, setTasksCompletedToday] = useState(0);
+  const tasksCompletedTodayRef = useRef<{ date: string; count: number }>({ date: '', count: 0 });
+  useEffect(() => {
+    const unsub = tasksHook.subscribeTaskComplete(() => {
+      const today = new Date().toISOString().slice(0, 10);
+      if (tasksCompletedTodayRef.current.date !== today) {
+        tasksCompletedTodayRef.current = { date: today, count: 1 };
+      } else {
+        tasksCompletedTodayRef.current.count += 1;
+      }
+      setTasksCompletedToday(tasksCompletedTodayRef.current.count);
+      triggerWidgetRefresh();
+    });
+    return unsub;
+  }, [tasksHook, triggerWidgetRefresh]);
 
   const [gamiData, setGamiData] = useState<GamificationData | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
@@ -1803,6 +1824,7 @@ export function useVaultInternal(): VaultState {
     toggleTask: tasksHook.toggleTask,
     skipTask: tasksHook.skipTask,
     subscribeTaskComplete: tasksHook.subscribeTaskComplete,
+    tasksCompletedToday,
     addRDV,
     updateRDV,
     deleteRDV,

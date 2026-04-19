@@ -45,7 +45,7 @@ function stageForHour(h: number): { key: MascotteStageOverride; info: StageInfo 
 
 function DashboardCompanionDayInner(_props: DashboardSectionProps) {
   const { colors, tint } = useThemeColors();
-  const { tasks, meals } = useVault();
+  const { tasks, meals, tasksCompletedToday } = useVault();
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -56,12 +56,11 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     const hour = now.getHours();
 
     const todayTasks = tasks.filter(t => {
-      if (t.completed && t.completedDate === todayStr) return true;
       if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
       return t.dueDate === todayStr;
     });
-    const done = todayTasks.filter(t => t.completed && t.completedDate === todayStr).length;
-    const total = todayTasks.length;
+    const done = tasksCompletedToday;
+    const total = Math.max(todayTasks.length, done);
 
     const todayMeals = meals.filter(m => m.day === dayName);
     const meal = hour < 14
@@ -70,7 +69,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
 
     const stage = stageForHour(hour);
     return { done, total, meal, stage, hour };
-  }, [tasks, meals]);
+  }, [tasks, meals, tasksCompletedToday]);
 
   // Re-check actif state on mount, focus, et AppState change
   const refreshActive = useCallback(async () => {
