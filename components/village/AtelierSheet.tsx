@@ -510,7 +510,6 @@ export function AtelierSheet({
   return (
     <Modal
       visible={visible}
-      transparent
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}

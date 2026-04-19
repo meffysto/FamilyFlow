@@ -47,6 +47,8 @@ interface Props {
   outcome: ExpeditionOutcome;
   loot?: ExpeditionLoot;
   missionName: string;
+  refundedCoins?: number;
+  refundedCrops?: { cropId: string; quantity: number }[];
   onClose: () => void;
 }
 
@@ -103,7 +105,7 @@ function Star({ delay, offsetX }: StarProps) {
 
 // ── ExpeditionChest ───────────────────────────────────────────────────────────
 
-export function ExpeditionChest({ visible, outcome, loot, missionName, onClose }: Props) {
+export function ExpeditionChest({ visible, outcome, loot, missionName, refundedCoins, refundedCrops, onClose }: Props) {
   const { colors } = useThemeColors();
   const [opened, setOpened] = useState(false);
 
@@ -256,7 +258,9 @@ export function ExpeditionChest({ visible, outcome, loot, missionName, onClose }
                 <View style={[styles.lossBanner, { backgroundColor: colors.warning + '15', borderColor: colors.warning }]}>
                   <MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.warning} />
                   <Text style={[styles.lossBannerText, { color: colors.warning }]}>
-                    {'Retour partiel — butin perdu'}
+                    {refundedCoins && refundedCoins > 0
+                      ? `Retour partiel — +${refundedCoins} 🍃${refundedCrops && refundedCrops.length > 0 ? ` + ${refundedCrops.map(c => `×${c.quantity}`).join(' ')}` : ''} remboursé, butin perdu`
+                      : 'Retour partiel — butin perdu'}
                   </Text>
                 </View>
               )}

@@ -16,6 +16,8 @@ import { useVault } from '../contexts/VaultContext';
 import { parseFarmProfile, serializeFarmProfile, parseGamification, serializeGamification } from '../lib/parser';
 import {
   MAX_ACTIVE_EXPEDITIONS,
+  EXPEDITION_CATALOG,
+  PARTIAL_REFUND_RATIO,
   getDailyExpeditionPool,
   filterExpeditionsByTreeStage,
   canAffordExpedition,
@@ -133,6 +135,38 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     await vault.writeFile(file, serializeGamification(singleData));
   }, [vault]);
 
+  // ─── Créditer des feuilles (remboursement partiel) ───────────────────────
+
+  const addCoins = useCallback(async (profileId: string, amount: number, note: string): Promise<void> => {
+    if (!vault || amount <= 0) return;
+    const file = gamiFilePath(profileId);
+    const content = await vault.readFile(file).catch(() => '');
+    const gami = parseGamification(content);
+    const gamiProfile = gami.profiles.find(
+      (p: any) => p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()
+    );
+    if (!gamiProfile) return;
+
+    gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) + amount;
+    const singleData = {
+      profiles: [gamiProfile],
+      history: [
+        ...gami.history.filter((e: any) => e.profileId === profileId),
+        {
+          profileId,
+          action: `+${amount}`,
+          points: amount,
+          note,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+      activeRewards: (gami.activeRewards ?? []).filter((r: any) => r.profileId === profileId),
+      usedLoots: (gami.usedLoots ?? []).filter((u: any) => u.profileId === profileId),
+    };
+
+    await vault.writeFile(file, serializeGamification(singleData));
+  }, [vault]);
+
   // ─── Lancer une expédition ────────────────────────────────────────────────
 
   const launchExpedition = useCallback(async (mission: ExpeditionMission): Promise<boolean> => {
@@ -162,7 +196,7 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     return new Promise<boolean>((resolve) => {
       Alert.alert(
         "Confirmer l'expédition ?",
-        `Tu vas miser ${mission.costCoins} 🍃${mission.costCrops.length > 0 ? ` + ${getExpeditionCostDescription(mission, t)}` : ''} pour une expédition ${mission.durationHours}h.\n\nEn cas d'échec, toute la mise est perdue.`,
+        `Tu vas miser ${mission.costCoins} 🍃${mission.costCrops.length > 0 ? ` + ${getExpeditionCostDescription(mission, t)}` : ''} pour une expédition ${mission.durationHours}h.\n\nRetour partiel : 50 % de la mise récupérée, sans butin.\nÉchec : toute la mise est perdue.`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           {
@@ -216,7 +250,13 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
 
   const collectExpedition = useCallback(async (
     missionId: string
-  ): Promise<{ outcome: ActiveExpedition['result']; loot?: ExpeditionLoot; sporeeFirstObtained?: boolean }> => {
+  ): Promise<{
+    outcome: ActiveExpedition['result'];
+    loot?: ExpeditionLoot;
+    sporeeFirstObtained?: boolean;
+    refundedCoins?: number;
+    refundedCrops?: { cropId: string; quantity: number }[];
+  }> => {
     if (!vault || !currentProfile) return { outcome: undefined };
 
     const farmPath = farmFilePath(currentProfile.id);
@@ -245,6 +285,25 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
 
     // Roll du loot
     const loot = rollExpeditionLoot(exp.difficulty, outcome);
+
+    // Remboursement partiel (50 % de la mise coins + récoltes)
+    let refundedCoins = 0;
+    const refundedCrops: { cropId: string; quantity: number }[] = [];
+    if (outcome === 'partial') {
+      const mission = EXPEDITION_CATALOG.find(m => m.id === exp.missionId);
+      if (mission) {
+        refundedCoins = Math.floor(mission.costCoins * PARTIAL_REFUND_RATIO);
+        const harvest = { ...(farm.harvestInventory ?? {}) };
+        for (const cost of mission.costCrops) {
+          const qty = Math.floor(cost.quantity * PARTIAL_REFUND_RATIO);
+          if (qty > 0) {
+            harvest[cost.cropId] = (harvest[cost.cropId] ?? 0) + qty;
+            refundedCrops.push({ cropId: cost.cropId, quantity: qty });
+          }
+        }
+        farm.harvestInventory = harvest;
+      }
+    }
 
     // Phase 38 (SPOR-08) — Drop Sporée post-expedition (5% sur Pousse+)
     // Indépendant de l'outcome : une mission ratée peut donner une Sporée (loot séparé).
@@ -306,14 +365,19 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
 
     const profileName = profiles.find(p => p.id === currentProfile.id)?.name ?? currentProfile.id;
     await vault.writeFile(farmPath, serializeFarmProfile(profileName, farm));
+
+    if (refundedCoins > 0) {
+      await addCoins(currentProfile.id, refundedCoins, `🗺️ Retour partiel (remboursement +${refundedCoins} 🍃)`);
+    }
+
     await refreshFarm(currentProfile.id);
 
     if (sporeeRefused) {
       showToast('Inventaire Sporée plein', 'error');
     }
 
-    return { outcome, loot, sporeeFirstObtained };
-  }, [vault, currentProfile, profiles, refreshFarm, showToast]);
+    return { outcome, loot, sporeeFirstObtained, refundedCoins, refundedCrops };
+  }, [vault, currentProfile, profiles, addCoins, refreshFarm, showToast]);
 
   // ─── Renvoyer une expédition (dismiss après collecte) ─────────────────────
 

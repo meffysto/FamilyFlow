@@ -481,7 +481,6 @@ export function MarketSheet({
   return (
     <Modal
       visible={visible}
-      transparent
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}

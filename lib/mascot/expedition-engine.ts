@@ -13,6 +13,9 @@ import { type TreeStage, TREE_STAGE_ORDER, CROP_CATALOG } from './types';
 
 export const MAX_ACTIVE_EXPEDITIONS = 2;
 
+// Fraction de la mise (coins + récoltes) remboursée sur résultat "partial"
+export const PARTIAL_REFUND_RATIO = 0.5;
+
 // ─── Types internes ──────────────────────────────────────────────────────────
 
 export interface ExpeditionMission {
@@ -617,7 +620,7 @@ export function rollExpeditionResult(
 /**
  * Calcule le loot obtenu selon la difficulté et l'outcome.
  * - failure → undefined (perte totale)
- * - partial → undefined (pas d'item, juste retour partiel des ressources)
+ * - partial → undefined (pas d'item ; le remboursement 50 % de la mise est géré côté hook)
  * - success / rare_discovery → item aléatoire dans la table de loot
  */
 export function rollExpeditionLoot(

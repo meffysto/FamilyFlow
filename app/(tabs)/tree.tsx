@@ -462,6 +462,8 @@ export default function TreeScreen() {
     outcome: ExpeditionOutcome;
     loot?: ExpeditionLoot;
     missionName: string;
+    refundedCoins?: number;
+    refundedCrops?: { cropId: string; quantity: number }[];
   }>({ visible: false, outcome: 'failure', missionName: '' });
   const expeditionTreeStage = useMemo(
     () => getTreeStageInfo(calculateLevel(profile?.points ?? 0)).stage,
@@ -540,11 +542,11 @@ export default function TreeScreen() {
 
   // Handlers expéditions (Phase 33)
   const handleCollectExpedition = useCallback(async (missionId: string) => {
-    const { outcome, loot, sporeeFirstObtained } = await collectExpedition(missionId);
+    const { outcome, loot, sporeeFirstObtained, refundedCoins, refundedCrops } = await collectExpedition(missionId);
     const mission = dailyPool.find(m => m.id === missionId) ?? { name: 'Expédition' };
     setShowExpeditions(false);
     setTimeout(() => {
-      setChestData({ visible: true, outcome: outcome ?? 'failure', loot, missionName: mission.name });
+      setChestData({ visible: true, outcome: outcome ?? 'failure', loot, missionName: mission.name, refundedCoins, refundedCrops });
     }, 300);
     // Phase 41 (SPOR-10) — afficher tooltip one-shot au premier drop Sporée via expédition
     if (sporeeFirstObtained && !hasSeenScreen('sporee_tooltip')) {
@@ -2907,6 +2909,8 @@ export default function TreeScreen() {
         outcome={chestData.outcome}
         loot={chestData.loot}
         missionName={chestData.missionName}
+        refundedCoins={chestData.refundedCoins}
+        refundedCrops={chestData.refundedCrops}
         onClose={handleCloseChest}
       />
 
