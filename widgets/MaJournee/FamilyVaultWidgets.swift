@@ -8,6 +8,7 @@ struct FamilyVaultWidgets: WidgetBundle {
         JournalBebeWidget()
         if #available(iOS 16.2, *) {
             FeedingLiveActivity()
+            MascotteLiveActivity()
         }
     }
 }

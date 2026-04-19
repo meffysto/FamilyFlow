@@ -19,6 +19,21 @@ struct FeedingActivityAttributes: ActivityAttributes {
     var startedAt: Date
 }
 
+// MARK: - Mascotte Live Activity Attributes (dupliqué dans MascotteLiveActivity.swift)
+
+@available(iOS 16.2, *)
+struct MascotteActivityAttributes: ActivityAttributes {
+    public struct ContentState: Codable, Hashable {
+        var tasksDone: Int
+        var tasksTotal: Int
+        var xpGained: Int
+        var currentMeal: String?
+    }
+
+    var mascotteName: String
+    var startedAt: Date
+}
+
 public class VaultAccessModule: Module {
   /// Tracks active security-scoped resources to stop accessing on cleanup
   private var activeURLs: [URL] = []
@@ -456,6 +471,74 @@ public class VaultAccessModule: Module {
           await activity.end(content, dismissalPolicy: .immediate)
         }
       }
+    }
+
+    // ─── Live Activity (Mascotte — journée narrative) ───────────────────
+
+    /// Start the mascotte Live Activity
+    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?) -> Bool in
+      if #available(iOS 16.2, *) {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
+
+        for activity in Activity<MascotteActivityAttributes>.activities {
+          await activity.end(nil, dismissalPolicy: .immediate)
+        }
+
+        let attributes = MascotteActivityAttributes(
+          mascotteName: mascotteName,
+          startedAt: Date()
+        )
+        let state = MascotteActivityAttributes.ContentState(
+          tasksDone: tasksDone,
+          tasksTotal: tasksTotal,
+          xpGained: xpGained,
+          currentMeal: currentMeal
+        )
+        do {
+          let content = ActivityContent(state: state, staleDate: nil)
+          _ = try Activity<MascotteActivityAttributes>.request(
+            attributes: attributes,
+            content: content,
+            pushType: nil
+          )
+          return true
+        } catch {
+          return false
+        }
+      }
+      return false
+    }
+
+    /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
+    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?) in
+      if #available(iOS 16.2, *) {
+        guard let activity = Activity<MascotteActivityAttributes>.activities.first else { return }
+        let state = MascotteActivityAttributes.ContentState(
+          tasksDone: tasksDone,
+          tasksTotal: tasksTotal,
+          xpGained: xpGained,
+          currentMeal: currentMeal
+        )
+        let content = ActivityContent(state: state, staleDate: nil)
+        await activity.update(content)
+      }
+    }
+
+    /// End the mascotte Live Activity
+    AsyncFunction("stopMascotteActivity") { () in
+      if #available(iOS 16.2, *) {
+        for activity in Activity<MascotteActivityAttributes>.activities {
+          await activity.end(nil, dismissalPolicy: .immediate)
+        }
+      }
+    }
+
+    /// Returns true if a mascotte Live Activity is currently active
+    AsyncFunction("isMascotteActivityActive") { () -> Bool in
+      if #available(iOS 16.2, *) {
+        return !Activity<MascotteActivityAttributes>.activities.isEmpty
+      }
+      return false
     }
 
     /// Pause the widget feeding timer (sync app → widget)

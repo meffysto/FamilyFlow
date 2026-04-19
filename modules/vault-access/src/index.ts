@@ -4,6 +4,10 @@ interface VaultAccessModuleType {
   startFeedingActivity(babyName: string, babyEmoji: string, feedType: string, side: string | null, volumeMl: number | null): Promise<boolean>;
   updateFeedingActivity(isPaused: boolean, side: string | null, volumeMl: number | null): Promise<void>;
   stopFeedingActivity(): Promise<void>;
+  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null): Promise<boolean>;
+  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null): Promise<void>;
+  stopMascotteActivity(): Promise<void>;
+  isMascotteActivityActive(): Promise<boolean>;
   pauseWidgetFeeding(): Promise<void>;
   resumeWidgetFeeding(): Promise<void>;
   stopWidgetFeeding(): Promise<void>;
@@ -191,6 +195,52 @@ export async function updateFeedingActivity(
 export async function stopFeedingActivity(): Promise<void> {
   if (!VaultAccessNative) return;
   return VaultAccessNative.stopFeedingActivity();
+}
+
+// ─── Live Activity (Mascotte — journée narrative) ──────────────────────────
+
+/**
+ * Démarrer la Live Activity narrative de la mascotte (dure ~8h).
+ * Retourne true si l'activity a bien démarré.
+ */
+export async function startMascotteActivity(
+  mascotteName: string,
+  tasksDone: number,
+  tasksTotal: number,
+  xpGained: number,
+  currentMeal: string | null,
+): Promise<boolean> {
+  if (!VaultAccessNative) return false;
+  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal);
+}
+
+/**
+ * Mettre à jour l'état de la Live Activity mascotte (tâches cochées, repas, XP).
+ */
+export async function updateMascotteActivity(
+  tasksDone: number,
+  tasksTotal: number,
+  xpGained: number,
+  currentMeal: string | null,
+): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal);
+}
+
+/**
+ * Arrêter la Live Activity mascotte.
+ */
+export async function stopMascotteActivity(): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.stopMascotteActivity();
+}
+
+/**
+ * Retourne true si la Live Activity mascotte est actuellement active.
+ */
+export async function isMascotteActivityActive(): Promise<boolean> {
+  if (!VaultAccessNative) return false;
+  return VaultAccessNative.isMascotteActivityActive();
 }
 
 /**
