@@ -15,6 +15,8 @@ import Animated, {
   withTiming,
   withSequence,
   withDelay,
+  cancelAnimation,
+  useReducedMotion,
   Easing,
   interpolate,
   FadeIn,
@@ -51,10 +53,13 @@ function DashboardZenStateInner({ isChildMode, tomorrow }: DashboardZenStateProp
   const ring1 = useSharedValue(0);
   const ring2 = useSharedValue(0);
   const ring3 = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     // Haptic de succès au montage
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    if (reducedMotion) return;
 
     // Respiration : 3s in, 3s out
     breathe.value = withRepeat(
@@ -80,7 +85,14 @@ function DashboardZenStateInner({ isChildMode, tomorrow }: DashboardZenStateProp
     ring1.value = ringAnim();
     ring2.value = withDelay(1300, ringAnim());
     ring3.value = withDelay(2600, ringAnim());
-  }, []);
+
+    return () => {
+      cancelAnimation(breathe);
+      cancelAnimation(ring1);
+      cancelAnimation(ring2);
+      cancelAnimation(ring3);
+    };
+  }, [reducedMotion]);
 
   // Message du jour (basé sur le jour de l'année)
   const message = useMemo(() => {

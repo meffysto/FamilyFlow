@@ -6,7 +6,7 @@
  * sections verrouillee/grisees, et mini-modal detail au tap.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,11 +27,11 @@ import Animated, {
   withSpring,
   withSequence,
   FadeInDown,
+  FadeOutUp,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { useToast } from '../../contexts/ToastContext';
 import {
   CRAFT_RECIPES,
   canCraft,
@@ -193,7 +193,13 @@ export function CraftSheet({
 }: CraftSheetProps) {
   const { t } = useTranslation();
   const { colors } = useThemeColors();
-  const { showToast } = useToast();
+  const [feedback, setFeedback] = useState<{ emoji: string; text: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showFeedback = useCallback((emoji: string, text: string, type: 'success' | 'info' | 'error' = 'success') => {
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    setFeedback({ emoji, text, type });
+    feedbackTimer.current = setTimeout(() => setFeedback(null), 2500);
+  }, []);
   const [tab, setTab] = useState<CraftTab>('catalogue');
   const [crafting, setCrafting] = useState<string | null>(null);
   const [selling, setSelling] = useState<string | null>(null);
@@ -230,13 +236,13 @@ export function CraftSheet({
         }
         const name = t(recipe.labelKey);
         const displayName = qty > 1 ? `${name} ×${qty}` : name;
-        showToast(t('craft.craftReussi', { emoji: recipe.emoji, name: displayName }));
+        showFeedback(recipe.emoji, t('craft.craftReussi', { emoji: '', name: displayName }).replace(/^\s+/, ''), 'success');
       }
     } catch {
-      showToast(t('common.error'), 'error');
+      showFeedback('⚠️', t('common.error'), 'error');
     }
     setCrafting(null);
-  }, [onCraft, craftBtnScale, showToast, t]);
+  }, [onCraft, craftBtnScale, showFeedback, t]);
 
   const [sellQty, setSellQty] = useState<Record<string, number>>({});
 
@@ -259,14 +265,14 @@ export function CraftSheet({
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
-        showToast(t('craft.venteReussie', { amount }));
+        showFeedback('💰', t('craft.venteReussie', { amount }), 'success');
         setSellQty(prev => { const next = { ...prev }; delete next[cropId]; return next; });
       }
     } catch {
-      showToast(t('common.error'), 'error');
+      showFeedback('⚠️', t('common.error'), 'error');
     }
     setSelling(null);
-  }, [onSellHarvest, showToast, t, sellQty]);
+  }, [onSellHarvest, showFeedback, t, sellQty]);
 
   const handleSellCrafted = useCallback(async (recipeId: string) => {
     const qty = sellQty[recipeId] ?? 1;
@@ -277,14 +283,14 @@ export function CraftSheet({
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
-        showToast(t('craft.venteReussie', { amount }));
+        showFeedback('💰', t('craft.venteReussie', { amount }), 'success');
         setSellQty(prev => { const next = { ...prev }; delete next[recipeId]; return next; });
       }
     } catch {
-      showToast(t('common.error'), 'error');
+      showFeedback('⚠️', t('common.error'), 'error');
     }
     setSelling(null);
-  }, [onSellCrafted, showToast, t, sellQty]);
+  }, [onSellCrafted, showFeedback, t, sellQty]);
 
   // ── Compteur recettes craftables ──────────────
 
@@ -989,6 +995,37 @@ export function CraftSheet({
                 })}
               </View>
 
+              {/* Bandeau feedback inline (par-dessus le contenu du sheet) */}
+              {feedback && (
+                <Animated.View
+                  entering={FadeInDown.duration(250)}
+                  exiting={FadeOutUp.duration(200)}
+                  style={[
+                    styles.feedbackBanner,
+                    {
+                      backgroundColor: feedback.type === 'success' ? '#4ADE80'
+                        : feedback.type === 'error' ? '#FCA5A5'
+                        : Farm.parchmentDark,
+                    },
+                  ]}
+                >
+                  <Text style={styles.feedbackEmoji}>{feedback.emoji}</Text>
+                  <Text
+                    style={[
+                      styles.feedbackText,
+                      {
+                        color: feedback.type === 'success' ? '#065F46'
+                          : feedback.type === 'error' ? '#7F1D1D'
+                          : Farm.brownText,
+                      },
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {feedback.text}
+                  </Text>
+                </Animated.View>
+              )}
+
               {/* Contenu de l'onglet actif */}
               <View style={{ flex: 1 }}>
                 {tab === 'catalogue' && renderCatalogue()}
@@ -1121,6 +1158,26 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: Farm.parchment,
+  },
+
+  // ── Bandeau feedback inline (pattern TechTreeSheet) ──
+  feedbackBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    gap: Spacing.sm,
+  },
+  feedbackEmoji: {
+    fontSize: 20,
+  },
+  feedbackText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
 
   // ── Contenu commun ──

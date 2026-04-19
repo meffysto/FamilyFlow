@@ -17,6 +17,8 @@ import Animated, {
   withRepeat,
   withTiming,
   withSequence,
+  cancelAnimation,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useVault } from '../../contexts/VaultContext';
@@ -84,8 +86,10 @@ const FAMILY_TOGGLE_KEY = 'dashboard_family_toggle';
 /** Anneau pulse bleu pour le main plot */
 const MainPlotPulse = React.memo(function MainPlotPulse() {
   const pulseOpacity = useSharedValue(0.3);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reducedMotion) return;
     pulseOpacity.value = withRepeat(
       withSequence(
         withTiming(1, { duration: 1200 }),
@@ -94,7 +98,8 @@ const MainPlotPulse = React.memo(function MainPlotPulse() {
       -1,
       false,
     );
-  }, [pulseOpacity]);
+    return () => cancelAnimation(pulseOpacity);
+  }, [pulseOpacity, reducedMotion]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
@@ -123,8 +128,10 @@ const MainPlotPulse = React.memo(function MainPlotPulse() {
 const GoldenSparkle = React.memo(function GoldenSparkle() {
   const sparkleOpacity = useSharedValue(1);
   const sparkleScale = useSharedValue(1);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reducedMotion) return;
     sparkleOpacity.value = withRepeat(
       withSequence(
         withTiming(0.5, { duration: 1000 }),
@@ -141,7 +148,11 @@ const GoldenSparkle = React.memo(function GoldenSparkle() {
       -1,
       false,
     );
-  }, [sparkleOpacity, sparkleScale]);
+    return () => {
+      cancelAnimation(sparkleOpacity);
+      cancelAnimation(sparkleScale);
+    };
+  }, [sparkleOpacity, sparkleScale, reducedMotion]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: sparkleOpacity.value,

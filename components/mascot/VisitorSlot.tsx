@@ -57,6 +57,8 @@ export interface VisitorSlotProps {
   targetFX?: number;
   /** Position Y cible en fraction du container (défaut: 0.62) */
   targetFY?: number;
+  /** Stoppe les animations idle (background app / tab pas focus) */
+  paused?: boolean;
 }
 
 type VisitorState = 'entering' | 'idle' | 'reacting' | 'departing' | 'departed';
@@ -168,6 +170,7 @@ export function VisitorSlot({
   onReactionComplete,
   targetFX: propTargetFX,
   targetFY: propTargetFY,
+  paused = false,
 }: VisitorSlotProps) {
   const { primary, colors } = useThemeColors();
   const sprites = SAGA_SPRITES[sagaId] ?? DEFAULT_SPRITES;
@@ -236,25 +239,25 @@ export function VisitorSlot({
 
   // ── Frame swap idle (800ms/frame) ────────────────
   useEffect(() => {
-    if (state !== 'idle' && state !== 'reacting') return;
+    if (paused || (state !== 'idle' && state !== 'reacting')) return;
     const interval = setInterval(() => {
       if (mounted.current) setFrameIdx(f => (f + 1) % IDLE_FRAMES.length);
     }, 800);
     return () => clearInterval(interval);
-  }, [state]);
+  }, [state, paused]);
 
   // ── Frame swap walk (150ms/frame) ────────────────
   useEffect(() => {
-    if (!isWalking) return;
+    if (paused || !isWalking) return;
     const interval = setInterval(() => {
       if (mounted.current) setWalkFrameIdx(f => (f + 1) % WALK_FRAMES.length);
     }, 150);
     return () => clearInterval(interval);
-  }, [isWalking]);
+  }, [isWalking, paused]);
 
   // ── Animation idle bounce + bulle "!" ────────────
   useEffect(() => {
-    if (state !== 'idle') return;
+    if (paused || state !== 'idle') return;
 
     // Bounce vertical continu
     bounceY.value = withRepeat(
@@ -279,7 +282,7 @@ export function VisitorSlot({
     return () => {
       bounceY.value = withTiming(0, { duration: 200 });
     };
-  }, [state]);
+  }, [state, paused]);
 
   // ── Animation réaction aux choix (SAG-04) ────────
   useEffect(() => {

@@ -14,6 +14,8 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
+  cancelAnimation,
+  useReducedMotion,
   Easing,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
@@ -49,6 +51,7 @@ function WaveSVG({ color, opacity }: { color: string; opacity: number }) {
 
 export function LiquidXPBar({ current, total, label, color, height = 22 }: LiquidXPBarProps) {
   const { primary, colors } = useThemeColors();
+  const reducedMotion = useReducedMotion();
   const barColor = color ?? primary;
   const pct = Math.min((current / Math.max(total, 1)) * 100, 100);
 
@@ -63,6 +66,7 @@ export function LiquidXPBar({ current, total, label, color, height = 22 }: Liqui
   }, [pct]);
 
   useEffect(() => {
+    if (reducedMotion) return;
     waveX.value = withRepeat(
       withSequence(
         withTiming(6, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
@@ -70,7 +74,8 @@ export function LiquidXPBar({ current, total, label, color, height = 22 }: Liqui
       ),
       -1, true,
     );
-  }, []);
+    return () => cancelAnimation(waveX);
+  }, [reducedMotion]);
 
   const fillStyle = useAnimatedStyle(() => ({
     width: `${fillWidth.value}%` as any,

@@ -14,6 +14,8 @@ import Animated, {
   withSequence,
   withTiming,
   withDelay,
+  cancelAnimation,
+  useReducedMotion,
   Easing,
 } from 'react-native-reanimated';
 
@@ -147,6 +149,14 @@ function Particle({ config, opacity, season }: { config: ParticleConfig; opacity
         -1, true,
       ),
     );
+
+    return () => {
+      cancelAnimation(translateX);
+      cancelAnimation(translateY);
+      cancelAnimation(rotate);
+      cancelAnimation(scale);
+      cancelAnimation(particleOpacity);
+    };
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -179,9 +189,12 @@ function Particle({ config, opacity, season }: { config: ParticleConfig; opacity
 }
 
 export function SeasonalParticles() {
+  const reducedMotion = useReducedMotion();
   const season = useMemo(() => getCurrentSeason(), []);
   const config = SEASON_CONFIG[season];
   const particles = useMemo(() => generateParticles(season), [season]);
+
+  if (reducedMotion) return null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">

@@ -14,6 +14,8 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  cancelAnimation,
+  useReducedMotion,
   Easing,
 } from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
@@ -32,14 +34,17 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
 
   // Animation de pulsation pour le mode enfant
   const pulseOpacity = useSharedValue(1);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reducedMotion) return;
     pulseOpacity.value = withRepeat(
       withTiming(0.7, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
       -1,
       true,
     );
-  }, []);
+    return () => cancelAnimation(pulseOpacity);
+  }, [reducedMotion]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
