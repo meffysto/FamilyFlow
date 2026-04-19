@@ -137,6 +137,9 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
     return computeWagerDurations(tasksPerStage, tier);
   }, [tasksPerStage, cropId]);
 
+  // Nombre total de tâches "normales" de la plante (sans modification wager)
+  const normalTasks = Math.max(1, tasksPerStage) * 4;
+
   // Suppress unused props — gardés dans le shape pour compat mais plus utilisés
   void sealerProfileId;
   void allProfiles;
@@ -225,7 +228,7 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
               const meta = DURATION_META[option.duration];
               const accessibilityLabel =
                 `Sceller ${meta.labelKey}, récompense multipliée par ${option.multiplier}, ` +
-                `${option.absoluteTasks} tâches pour mûrir, ${option.targetTasks} tâches pour valider le pari`;
+                `${normalTasks} tâches normales pour mûrir, ${option.targetTasks} tâches pour gagner ×${option.multiplier}`;
 
               return (
                 <Pressable
@@ -248,9 +251,9 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
                     </Text>
                   </View>
 
-                  {/* Ligne 2 — maturité plant + cumul cible (sans notion de temps) */}
+                  {/* Ligne 2 — tâches normales plant + cumul cible pour décrocher les gains */}
                   <Text style={styles.cardMeta}>
-                    🌱 {option.absoluteTasks} pour mûrir · ✅ {option.targetTasks} pour valider
+                    🌱 {normalTasks} pour mûrir · ✅ {option.targetTasks} pour gagner ×{option.multiplier}
                   </Text>
                 </Pressable>
               );
