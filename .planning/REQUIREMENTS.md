@@ -39,7 +39,7 @@
 
 ### Catégorie QUALITÉ — Non-régression et tests
 
-- [ ] **SPOR-12**: User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes) ni aucune régression Jest (`npx jest --no-coverage` clean) après chaque phase
+- [x] **SPOR-12**: User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes) ni aucune régression Jest (`npx jest --no-coverage` clean) après chaque phase
 - [x] **SPOR-13**: User a des tests Jest couvrant les fonctions pures critiques : calcul du prorata, pondération famille par âge, sérialisation/désérialisation `modifiers` CSV, validation cumul à la récolte
 
 ---
@@ -87,7 +87,7 @@ Mapping REQ-ID → Phase (v1.7 Phases 38-41).
 | SPOR-09 | Phase 38 | Complete |
 | SPOR-10 | Phase 41 | Complete |
 | SPOR-11 | Phase 40 | Complete |
-| SPOR-12 | Phase 41 | Pending |
+| SPOR-12 | Phase 41 | Complete |
 | SPOR-13 | Phase 38 + Phase 39 | Complete |
 
 **Coverage check :** 16/16 REQ-IDs mappés ✓ (3 MOD + 13 SPOR). Aucun orphelin, aucune duplication (SPOR-13 couvre les tests Jest fondations en Phase 38 ET moteur en Phase 39 — deux suites distinctes).
