@@ -324,7 +324,7 @@ Plans:
 | 38. Fondation modifiers + économie Sporée | 3/3 | Complete   | 2026-04-18 |
 | 39. Moteur prorata + calcul famille | 2/2 | Complete   | 2026-04-18 |
 | 40. UI Sporée — seed picker + badge + validation | 3/4 | In Progress|  |
-| 41. Polish onboarding + codex + non-régression | 3/3 | Complete   | 2026-04-19 |
+| 41. Polish onboarding + codex + non-régression | 3/3 | Complete    | 2026-04-19 |
 
 ## Archived Milestones
 

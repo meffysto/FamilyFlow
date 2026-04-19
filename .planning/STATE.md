@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-19T00:10:27.932Z"
+last_updated: "2026-04-19T00:15:05.603Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 13
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 28
-  completed_plans: 28
+  completed_plans: 29
   percent: 0
 ---
 
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 41 (polish-onboarding-codex-non-r-gression) — EXECUTING
-Plan: 3 of 3
+Phase: 41
+Plan: Not started
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
 Last activity: 2026-04-19
