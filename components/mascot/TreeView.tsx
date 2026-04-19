@@ -285,7 +285,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
         {/* Pas de SeasonalParticles en mode pixel — elles clashent avec le style */}
         {/* Effets légendaire uniquement : particules dorées */}
         {isLegendary && animate && (
-          <FloatingParticles color={sp.particle} count={12} size={size} />
+          <FloatingParticles color={sp.particle} count={12} size={size} paused={paused} />
         )}
         {/* Ombre au sol (top-down : centrée sous l'arbre, elliptique) */}
         {shadowSprite && showGround && (
@@ -354,6 +354,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
                     size={s}
                     animalId={id}
                     containerWidth={size}
+                    paused={paused}
                   />
                 );
               })}
@@ -369,12 +370,12 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
     <View style={[styles.container, { width: size, height: size * (VIEWBOX_H / VIEWBOX_W) }]}>
       {/* Particules saisonnières */}
       {animate && (
-        <SeasonalParticles particle={seasonParticles} size={size} />
+        <SeasonalParticles particle={seasonParticles} size={size} paused={paused} />
       )}
 
       {/* Particules animées (stades avancés) */}
       {visual.hasParticles && animate && (
-        <FloatingParticles color={sp.particle} count={visual.hasAura ? 12 : 6} size={size} />
+        <FloatingParticles color={sp.particle} count={visual.hasAura ? 12 : 6} size={size} paused={paused} />
       )}
 
       <Animated.View style={styles.svgWrap}>
