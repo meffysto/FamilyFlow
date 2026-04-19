@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-19T00:15:05.603Z"
+last_updated: "2026-04-19T12:08:00.000Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 13
@@ -59,6 +59,7 @@ Status: Ready to execute
 | 260415-xak | HarvestCardToast — carte récolte animée + accumulation live dans ToastContext | 2026-04-15 | 4696862 | [260415-xak-cr-er-harvestcardtoast-brancher-dans-toa](./quick/260415-xak-cr-er-harvestcardtoast-brancher-dans-toa/) |
 | 260416-pct | Deal du jour stock séparé marché + quota 2 achats/profil/jour | 2026-04-16 | 1bb4895 | [260416-pct-deal-du-jour-stock-separe-marche-quota-2](./quick/260416-pct-deal-du-jour-stock-separe-marche-quota-2/) |
 | 260417-dp6 | Migration ID habitants (aigle_expedition→aigle_dore, renard_expedition→renard_arctique) dans parseFarmProfile | 2026-04-17 | a64becf | [260417-dp6-appliquer-la-migration-d-id-d-habitants-](./quick/260417-dp6-appliquer-la-migration-d-id-d-habitants-/) |
+| 260419-jit | Pauser animations TreeView sous-composants AnimatedAnimal SeasonalParticle Particle | 2026-04-19 | cb1c791 | [260419-jit-pauser-animations-treeview-sous-composan](./quick/260419-jit-pauser-animations-treeview-sous-composan/) |
 
 ## Performance Metrics
 
