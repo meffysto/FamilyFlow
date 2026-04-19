@@ -92,6 +92,7 @@ import {
   DashboardSecretMissions,
   DashboardGarden,
   DashboardCompanion,
+  DashboardCompanionDay,
 } from '../../components/dashboard';
 import type { ZenConfig } from '../../components/settings/SettingsZen';
 
@@ -134,6 +135,7 @@ function getAllSections(t: (key: string) => string): SectionPref[] {
     { id: 'bilanSemaine', label: t('dashboard.sectionLabels.bilanSemaine'),  emoji: '📝', visible: true,  priority: 'medium', size: 'full' },
     { id: 'secretMissions', label: t('dashboard.sectionLabels.secretMissions'), emoji: '🕵️', visible: true,  priority: 'high', size: 'full' },
     { id: 'garden',       label: t('dashboard.sectionLabels.garden'),          emoji: '🌳', visible: true,  priority: 'high', size: 'full' },
+    { id: 'companionDay', label: 'Journée de la mascotte',                      emoji: '🌱', visible: true,  priority: 'high', size: 'full' },
 
     { id: 'quicknotifs',label: t('dashboard.sectionLabels.quicknotifs'),     emoji: '📤', visible: false, priority: 'low', size: 'full' },
     { id: 'recipes',    label: t('dashboard.sectionLabels.recipes'),         emoji: '📖', visible: false, priority: 'low', size: 'full' },
@@ -821,6 +823,7 @@ export default function DashboardScreen() {
       case 'bilanSemaine': return <DashboardBilanSemaine key={id} {...sectionProps} />;
       case 'secretMissions': return <DashboardSecretMissions key={id} {...sectionProps} />;
       case 'garden':         return <DashboardGarden key={id} {...sectionProps} />;
+      case 'companionDay':   return <DashboardCompanionDay key={id} {...sectionProps} />;
       default:             return null;
     }
   };
