@@ -23,7 +23,9 @@ import { Redirect, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { VaultProvider, useVault } from '../contexts/VaultContext';
-import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, TouchableOpacity } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, TouchableOpacity, DevSettings, Share } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
+
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { configureNotifications } from '../lib/scheduled-notifications';
@@ -128,6 +130,47 @@ function RootLayout() {
   const systemScheme = useColorScheme();
 
   useEffect(() => {
+    if (__DEV__) {
+      DevSettings.addMenuItem('▶ Start Hermes Profiler', () => {
+        // @ts-ignore
+        const hi = global.HermesInternal;
+        console.log('[Profiler] HermesInternal keys:', hi ? Object.keys(hi) : 'N/A');
+        // @ts-ignore
+        hi?.enableSamplingProfiler?.(true);
+        console.log('[Profiler] Started — attends 10-15s puis stoppe');
+      });
+      DevSettings.addMenuItem('⏹ Stop Hermes Profiler', async () => {
+        const path = `${FileSystem.documentDirectory}hermes-${Date.now()}.cpuprofile`;
+        const bare = path.replace('file://', '');
+        // @ts-ignore
+        const hi = global.HermesInternal;
+        console.log('[Profiler] Stop — keys:', hi ? Object.keys(hi) : 'N/A');
+        try {
+          // @ts-ignore
+          const r = hi?.dumpSampledTraceToFile?.(bare);
+          console.log('[Profiler] dumpSampledTraceToFile returned:', r);
+        } catch (e) { console.warn('[Profiler] dump threw', e); }
+        // @ts-ignore
+        hi?.enableSamplingProfiler?.(false);
+        console.log('[Profiler] Dumped to', bare);
+        try {
+          await new Promise(r => setTimeout(r, 2000));
+          const info = await FileSystem.getInfoAsync(path);
+          console.log('[Profiler] File info:', JSON.stringify(info));
+          if (!info.exists) { console.warn('[Profiler] File not created — did you Start?'); return; }
+          const content = await FileSystem.readAsStringAsync(path);
+          console.log('[Profiler] Read', content.length, 'chars, uploading…');
+          const res = await fetch('http://192.168.1.3:8089/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: content,
+          });
+          console.log('[Profiler] Upload status:', res.status);
+        } catch (e) {
+          console.warn('[Profiler] Upload failed:', e);
+        }
+      });
+    }
     configureNotifications();
 
     // Cold start : récupérer la dernière notif tappée si l'app a été lancée par notif (Pitfall 7)
