@@ -321,6 +321,16 @@ function farmFile(profileId: string): string {
   return `farm-${profileId}.md`;
 }
 /**
+ * Identifie un event d'économie ferme (vente, bonus craft, récolte). Utilisé
+ * pour filtrer le compteur "XP effort quotidien" de la Live Activity mascotte :
+ * on veut refléter l'effort fait aujourd'hui (tâches, saga, défis) — pas les
+ * gains d'un stock vendu qui peuvent exploser le compteur.
+ */
+export function isFarmEconomyEvent(note: string): boolean {
+  if (!note) return false;
+  return note.includes('Vente craft') || note.includes('Bonus craft') || note.includes('Vente ');
+}
+/**
  * Migration one-shot + récupération : si gamification.md existe et qu'un profil n'a pas
  * encore son gami-{id}.md (ou l'a eu corrompu — fichier vide/farm-format sans profils), le créer/réparer.
  */
@@ -513,10 +523,16 @@ export function useVaultInternal(): VaultState {
         : (todayMeals.find(m => m.mealType === 'Dîner')?.text || null);
       // Récap soir (21-23h) : on recalcule le flag + le bonus text
       const recapMode = nowHour >= 21 && nowHour < 23;
-      // XP gagnés aujourd'hui par le profil actif (pour le récap)
+      // XP "effort quotidien" du profil actif (tâches, saga, défis, quêtes…)
+      // Exclut les gains d'économie ferme (ventes, bonus craft) qui gonflent artificiellement
+      // le compteur et ne reflètent pas l'effort fait par l'utilisateur aujourd'hui.
       const activeId = activeProfileIdForWidgetRef.current;
       const xpGainedToday = (gamiDataForWidgetRef.current?.history ?? [])
-        .filter(e => e.profileId === activeId && e.timestamp?.slice(0, 10) === todayStr)
+        .filter(e =>
+          e.profileId === activeId &&
+          e.timestamp?.slice(0, 10) === todayStr &&
+          !isFarmEconomyEvent(e.note)
+        )
         .reduce((sum, e) => sum + (e.points || 0), 0);
       // Level-up détecté aujourd'hui (comparaison avec le niveau au début de journée)
       const activeProfileForBonus = profilesRef.current.find(p => p.id === activeId);

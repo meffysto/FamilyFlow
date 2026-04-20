@@ -14,6 +14,7 @@ import { View, Text, StyleSheet, TouchableOpacity, AppState, Platform, Alert } f
 import { useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
+import { isFarmEconomyEvent } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { FontSize } from '../../constants/typography';
@@ -75,9 +76,14 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     // Récap soir (21-23h) : agrégats de la journée complète — dodo narratif reprend à 23h
     const recapMode = hour >= 21 && hour < 23;
 
-    // XP gagnés aujourd'hui (somme des points des events du profil actif)
+    // XP "effort quotidien" du profil actif (tâches, saga, défis, quêtes…)
+    // Exclut les gains d'économie ferme (ventes, bonus craft) — cf. isFarmEconomyEvent.
     const xpGainedToday = (gamiData?.history ?? [])
-      .filter(e => e.profileId === activeProfile?.id && e.timestamp?.slice(0, 10) === todayStr)
+      .filter(e =>
+        e.profileId === activeProfile?.id &&
+        e.timestamp?.slice(0, 10) === todayStr &&
+        !isFarmEconomyEvent(e.note)
+      )
       .reduce((sum, e) => sum + (e.points || 0), 0);
 
     // Level-up du jour : comparaison niveau actuel vs niveau au début de la journée

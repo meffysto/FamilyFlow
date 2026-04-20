@@ -73,7 +73,7 @@ enum MascotteStage {
         case .reveil: return "Réveil"
         case .travail: return "Au boulot"
         case .midi: return "À table"
-        case .jeu: return "Joue"
+        case .jeu: return "Joue!"
         case .routine: return "Routine"
         case .dodo: return "Dodo"
         }
@@ -130,6 +130,101 @@ private func progressRange(from startedAt: Date) -> ClosedRange<Date> {
     return startedAt...endOfDay
 }
 
+/// Ligne récap partagée entre la DI expanded et le Lock Screen : "5/5 tâches · +45 XP"
+/// (+ ligne bonus optionnelle si `bonusText` présent).
+@available(iOS 16.2, *)
+private func recapLine(state: MascotteActivityAttributes.ContentState) -> String {
+    var parts: [String] = []
+    if state.tasksTotal > 0 {
+        parts.append("\(state.tasksDone)/\(state.tasksTotal) tâches")
+    } else if state.tasksDone > 0 {
+        parts.append("\(state.tasksDone) tâches")
+    }
+    if state.xpGained > 0 {
+        parts.append("+\(state.xpGained) XP")
+    }
+    let line1 = parts.joined(separator: " · ")
+    if let bonus = state.bonusText, !bonus.isEmpty {
+        return line1.isEmpty ? bonus : "\(line1)\n\(bonus)"
+    }
+    return line1.isEmpty ? "Repose-toi bien 💚" : line1
+}
+
+/// Sprite pixel-art du compagnon pour la DI compact (leading + minimal).
+/// Si le sprite n'est pas disponible dans le state, fallback sur l'emoji de stage.
+/// Taille fixe ~20pt adaptée à la pilule ; `interpolation(.none)` préserve le pixel-art.
+@available(iOS 16.2, *)
+@ViewBuilder
+private func companionCompactView(
+    state: MascotteActivityAttributes.ContentState,
+    fallbackEmoji: String
+) -> some View {
+    if let b64 = state.companionSpriteBase64,
+       let data = Data(base64Encoded: b64),
+       let uiImage = UIImage(data: data) {
+        Image(uiImage: uiImage)
+            .interpolation(.none)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 28, height: 28)
+    } else {
+        Text(fallbackEmoji)
+            .font(.title3)
+    }
+}
+
+/// Contenu du compact trailing de la DI. Priorités :
+/// 1. Bonus level-up (bonusText non vide) → flèche ⬆️ dorée
+/// 2. Récap 100% → checkmark vert (journée bouclée)
+/// 3. Récap partiel → texte "X/Y" compact
+/// 4. Tâches en cours (tasksTotal > 0) → Gauge circulaire avec nombre de tâches faites
+/// 5. Fallback → label narratif du stage (ex: "Joue", "Réveil")
+@available(iOS 16.2, *)
+@ViewBuilder
+private func compactTrailingView(
+    state: MascotteActivityAttributes.ContentState,
+    stage: MascotteStage,
+    isRecap: Bool
+) -> some View {
+    if isRecap {
+        if let bonus = state.bonusText, !bonus.isEmpty {
+            Text("⬆️")
+                .font(.caption)
+        } else if state.tasksTotal > 0 && state.tasksDone >= state.tasksTotal {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.caption)
+                .foregroundColor(.green)
+        } else if state.tasksTotal > 0 {
+            Text("\(state.tasksDone)/\(state.tasksTotal)")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.white)
+        } else {
+            Text(stage.compactLabel)
+                .font(.caption2)
+                .fontWeight(.semibold)
+        }
+    } else if state.tasksTotal > 0 && state.tasksDone > 0 {
+        let progress = min(1.0, Double(state.tasksDone) / Double(state.tasksTotal))
+        ZStack {
+            Circle()
+                .stroke(Color.white.opacity(0.25), lineWidth: 2.5)
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(Color.green, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Text("\(state.tasksDone)")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.white)
+                .monospacedDigit()
+        }
+        .frame(width: 22, height: 22)
+    } else {
+        Text(stage.compactLabel)
+            .font(.caption2)
+            .fontWeight(.semibold)
+    }
+}
+
 // MARK: - Live Activity
 
 @available(iOS 16.2, *)
@@ -139,20 +234,30 @@ struct MascotteLiveActivity: Widget {
             MascotteLockScreenView(context: context)
                 .widgetURL(URL(string: "family-vault://open/tree"))
         } dynamicIsland: { context in
-            let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
+            let now = Date()
+            let stage = MascotteStage.resolve(date: now, override: context.state.stageOverride)
+            let currentHour = Calendar.current.component(.hour, from: now)
+            let isRecap = context.state.recapMode || (currentHour >= 21 && currentHour < 23)
+            let title = isRecap
+                ? "Journée accomplie 🌙"
+                : stage.title(name: context.attributes.mascotteName)
+            let subtitle = isRecap
+                ? recapLine(state: context.state)
+                : stage.subtitle(state: context.state)
+            let headEmoji = isRecap ? "🌙" : stage.emoji
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Text(stage.emoji)
+                    Text(headEmoji)
                         .font(.system(size: 32))
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(stage.title(name: context.attributes.mascotteName))
+                        Text(title)
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                             .lineLimit(1)
-                        Text(stage.subtitle(state: context.state))
+                        Text(subtitle)
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.75))
                             .lineLimit(1)
@@ -167,15 +272,11 @@ struct MascotteLiveActivity: Widget {
                     .tint(.green)
                 }
             } compactLeading: {
-                Text(stage.emoji)
-                    .font(.caption)
+                companionCompactView(state: context.state, fallbackEmoji: headEmoji)
             } compactTrailing: {
-                Text(stage.compactLabel)
-                    .font(.caption2)
-                    .fontWeight(.semibold)
+                compactTrailingView(state: context.state, stage: stage, isRecap: isRecap)
             } minimal: {
-                Text(stage.emoji)
-                    .font(.caption2)
+                companionCompactView(state: context.state, fallbackEmoji: headEmoji)
             }
             .widgetURL(URL(string: "family-vault://open/tree"))
         }
@@ -216,7 +317,7 @@ struct MascotteLockScreenView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.white)
                             .lineLimit(1)
-                        Text(recapSubtitle(state: context.state))
+                        Text(recapLine(state: context.state))
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.7))
                             .lineLimit(2)
@@ -264,22 +365,4 @@ struct MascotteLockScreenView: View {
         }
     }
 
-    /// Construit le subtitle du récap : "5/5 tâches · +45 XP"
-    /// + éventuellement une ligne bonus ("⬆️ Niveau 12 atteint !") si présente.
-    private func recapSubtitle(state: MascotteActivityAttributes.ContentState) -> String {
-        var parts: [String] = []
-        if state.tasksTotal > 0 {
-            parts.append("\(state.tasksDone)/\(state.tasksTotal) tâches")
-        } else if state.tasksDone > 0 {
-            parts.append("\(state.tasksDone) tâches")
-        }
-        if state.xpGained > 0 {
-            parts.append("+\(state.xpGained) XP")
-        }
-        let line1 = parts.joined(separator: " · ")
-        if let bonus = state.bonusText, !bonus.isEmpty {
-            return line1.isEmpty ? bonus : "\(line1)\n\(bonus)"
-        }
-        return line1.isEmpty ? "Repose-toi bien 💚" : line1
-    }
 }
