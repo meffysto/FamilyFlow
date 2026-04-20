@@ -182,8 +182,7 @@ struct MascotteLockScreenView: View {
 
     var body: some View {
         let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
-        return Group {
-            HStack(spacing: 14) {
+        return HStack(spacing: 14) {
                 Text(stage.emoji)
                     .font(.system(size: 38))
                     .frame(width: 56, height: 56)
@@ -216,8 +215,7 @@ struct MascotteLockScreenView: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(14)
-            .activityBackgroundTint(Color.black.opacity(0.85))
-        }
+        .padding(14)
+        .activityBackgroundTint(Color.black.opacity(0.85))
     }
 }

@@ -1152,11 +1152,9 @@ export default function TreeScreen() {
     return crops.filter(c => c.currentStage < 4).length;
   }, [profile?.farmCrops]);
 
-  if (!profile) return null;
-
-  const species = profile.treeSpecies || 'cerisier';
-  const hasChosenSpecies = !!profile.treeSpecies;
-  const level = calculateLevel(profile.points ?? 0);
+  const species = profile?.treeSpecies || 'cerisier';
+  const hasChosenSpecies = !!profile?.treeSpecies;
+  const level = profile ? calculateLevel(profile.points ?? 0) : 0;
   const season = getCurrentSeason();
   const seasonInfo = SEASON_INFO[season];
   const tier = getLevelTier(level);
@@ -1205,7 +1203,7 @@ export default function TreeScreen() {
   const stageIdx = getStageIndex(level);
 
   // XP progress vers prochain niveau
-  const currentXP = profile.points ?? 0;
+  const currentXP = profile?.points ?? 0;
   const nextLevelXP = xpForLevel(level);
   const prevLevelXP = level > 1 ? xpForLevel(level - 1) : 0;
   const xpInLevel = currentXP - prevLevelXP;
@@ -1672,6 +1670,8 @@ export default function TreeScreen() {
   if (!isScreenFocused) {
     return <View style={[styles.safe, { backgroundColor: colors.bg }]} />;
   }
+
+  if (!profile) return null;
 
   return (
     <View style={[styles.safe, { backgroundColor: colors.bg }]}>

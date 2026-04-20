@@ -35,6 +35,25 @@ struct MascotteActivityAttributes: ActivityAttributes {
     var startedAt: Date
 }
 
+/// Calcule la prochaine heure de transition narrative (0/9/12/14/18/21h).
+/// Utilisé comme `staleDate` sur les updates mascotte → hint à iOS de re-render
+/// proche de la transition, ce qui rafraîchit le stage affiché.
+@available(iOS 16.2, *)
+private func mascotteNextTransitionDate(from now: Date = Date()) -> Date {
+    let cal = Calendar.current
+    let transitionHours = [0, 9, 12, 14, 18, 21]
+    let startOfToday = cal.startOfDay(for: now)
+    for dayOffset in 0...2 {
+        guard let day = cal.date(byAdding: .day, value: dayOffset, to: startOfToday) else { continue }
+        for h in transitionHours {
+            if let d = cal.date(bySettingHour: h, minute: 0, second: 0, of: day), d > now {
+                return d
+            }
+        }
+    }
+    return now.addingTimeInterval(3600)
+}
+
 public class VaultAccessModule: Module {
   /// Tracks active security-scoped resources to stop accessing on cleanup
   private var activeURLs: [URL] = []
@@ -497,7 +516,7 @@ public class VaultAccessModule: Module {
           stageOverride: stageOverride
         )
         do {
-          let content = ActivityContent(state: state, staleDate: nil)
+          let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
           _ = try Activity<MascotteActivityAttributes>.request(
             attributes: attributes,
             content: content,
@@ -522,7 +541,7 @@ public class VaultAccessModule: Module {
           currentMeal: currentMeal,
           stageOverride: stageOverride
         )
-        let content = ActivityContent(state: state, staleDate: nil)
+        let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
         await activity.update(content)
       }
     }
