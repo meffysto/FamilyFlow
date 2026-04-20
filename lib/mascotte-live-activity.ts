@@ -40,8 +40,6 @@ export interface MascotteSnapshot {
   nextTaskText?: string | null;
   /** ID unique de la prochaine tâche — consommé par ToggleNextTaskIntent (iOS 17+). */
   nextTaskId?: string | null;
-  /** Queue JSON des 3 prochaines tâches pour swap live au tap [{"id","text"}]. */
-  upcomingTasksJson?: string | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
@@ -86,7 +84,6 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.bonusText ?? null,
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
-      snap.upcomingTasksJson ?? null,
     );
   } catch (e) {
     if (__DEV__) console.warn('[mascotte] startMascotteActivity threw:', e);
@@ -115,7 +112,6 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.bonusText ?? null,
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
-      snap.upcomingTasksJson ?? null,
     );
   } catch {
     // silencieux — feature non critique

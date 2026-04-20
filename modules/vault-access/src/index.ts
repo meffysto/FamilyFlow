@@ -9,9 +9,6 @@ interface VaultAccessModuleType {
   stopMascotteActivity(): Promise<void>;
   isMascotteActivityActive(): Promise<boolean>;
   consumePendingTaskToggles(): Promise<string[]>;
-  moduleBuildMarker(): Promise<string>;
-  readToggleIntentDebugLog(): Promise<string>;
-  listPendingToggleFiles(): Promise<string[]>;
   pauseWidgetFeeding(): Promise<void>;
   resumeWidgetFeeding(): Promise<void>;
   stopWidgetFeeding(): Promise<void>;
@@ -208,18 +205,16 @@ export async function stopFeedingActivity(): Promise<void> {
  * Retourne true si l'activity a bien démarré.
  */
 /**
- * Encode `nextTaskId` + `nextTaskText` + queue des prochaines tâches en un seul
- * string "id\u001Ftext\u001FqueueJson" pour rester à 10 arguments côté bridge
- * natif (workaround Swift 6.3 variadic generics > 10). Le module Swift
- * re-décode via decodeNextTaskPayload().
+ * Encode `nextTaskId` + `nextTaskText` en un seul string "id\u001Ftext" pour
+ * rester à 10 arguments côté bridge natif (workaround Swift 6.3 variadic
+ * generics > 10). Le module Swift re-décode via decodeNextTaskPayload().
  */
 function encodeNextTaskPayload(
   nextTaskText: string | null,
   nextTaskId: string | null,
-  upcomingTasksJson: string | null,
 ): string | null {
-  if (!nextTaskText && !nextTaskId && !upcomingTasksJson) return null;
-  return `${nextTaskId ?? ''}\u001F${nextTaskText ?? ''}\u001F${upcomingTasksJson ?? ''}`;
+  if (!nextTaskText && !nextTaskId) return null;
+  return `${nextTaskId ?? ''}\u001F${nextTaskText ?? ''}`;
 }
 
 export async function startMascotteActivity(
@@ -234,10 +229,9 @@ export async function startMascotteActivity(
   bonusText: string | null = null,
   nextTaskText: string | null = null,
   nextTaskId: string | null = null,
-  upcomingTasksJson: string | null = null,
 ): Promise<boolean> {
   if (!VaultAccessNative) return false;
-  const payload = encodeNextTaskPayload(nextTaskText, nextTaskId, upcomingTasksJson);
+  const payload = encodeNextTaskPayload(nextTaskText, nextTaskId);
   return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, recapMode, bonusText, payload);
 }
 
@@ -255,10 +249,9 @@ export async function updateMascotteActivity(
   bonusText: string | null = null,
   nextTaskText: string | null = null,
   nextTaskId: string | null = null,
-  upcomingTasksJson: string | null = null,
 ): Promise<void> {
   if (!VaultAccessNative) return;
-  const payload = encodeNextTaskPayload(nextTaskText, nextTaskId, upcomingTasksJson);
+  const payload = encodeNextTaskPayload(nextTaskText, nextTaskId);
   return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, recapMode, bonusText, payload);
 }
 
@@ -292,18 +285,6 @@ export async function consumePendingTaskToggles(): Promise<string[]> {
   } catch {
     return [];
   }
-}
-
-/** DEBUG — lit le log de l'AppIntent ToggleNextTask. Retourne "NO_CONTAINER" ou "NO_LOG_FILE" si vide. */
-export async function readToggleIntentDebugLog(): Promise<string> {
-  if (!VaultAccessNative) return '';
-  try { return await VaultAccessNative.readToggleIntentDebugLog(); } catch { return ''; }
-}
-
-/** DEBUG — liste les fichiers pending-task-toggles sans les consommer. */
-export async function listPendingToggleFiles(): Promise<string[]> {
-  if (!VaultAccessNative) return [];
-  try { return await VaultAccessNative.listPendingToggleFiles(); } catch { return []; }
 }
 
 /**

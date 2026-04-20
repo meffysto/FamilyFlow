@@ -1,7 +1,6 @@
 import ActivityKit
 import AppIntents
 import SwiftUI
-import UIKit
 import WidgetKit
 
 // MARK: - Attributes
@@ -20,7 +19,6 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var bonusText: String?             // ligne bonus récap (ex: "⬆️ Niveau 12 atteint !")
         var nextTaskText: String?          // prochaine tâche (récurrente prioritaire) — affichée pendant travail/jeu/routine
         var nextTaskId: String?            // identifiant unique de la prochaine tâche (pour ToggleNextTaskIntent)
-        var upcomingTasksJson: String?     // queue JSON des 3 prochaines tâches [{"id":"...","text":"..."}] pour swap live au tap
     }
 
     var mascotteName: String
@@ -51,91 +49,33 @@ struct ToggleNextTaskIntent: LiveActivityIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        let logPath: (URL) -> URL = { $0.appendingPathComponent("toggle-intent-debug.log") }
-        func log(_ msg: String, container: URL?) {
-            guard let container else { return }
-            let url = logPath(container)
-            let stamp = ISO8601DateFormatter().string(from: Date())
-            let line = "[\(stamp)] \(msg)\n"
-            if let data = line.data(using: .utf8) {
-                if FileManager.default.fileExists(atPath: url.path),
-                   let handle = try? FileHandle(forWritingTo: url) {
-                    handle.seekToEndOfFile()
-                    handle.write(data)
-                    try? handle.close()
-                } else {
-                    try? data.write(to: url)
-                }
-            }
-        }
-
-        guard let container = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
-        ) else {
-            return .result()
-        }
-
-        log("perform() called taskId=\(taskId)", container: container)
-
-        guard !taskId.isEmpty else {
-            log("taskId is empty — aborted", container: container)
+        guard !taskId.isEmpty,
+              let container = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+              ) else {
             return .result()
         }
 
         let dir = container.appendingPathComponent("pending-task-toggles", isDirectory: true)
-        do {
-            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        } catch {
-            log("createDirectory failed: \(error)", container: container)
-        }
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
-        let filename = "pending-task-toggle-\(UUID().uuidString).json"
-        let fileURL = dir.appendingPathComponent(filename)
+        let fileURL = dir.appendingPathComponent("pending-task-toggle-\(UUID().uuidString).json")
         let payload: [String: Any] = [
             "taskId": taskId,
             "timestamp": ISO8601DateFormatter().string(from: Date())
         ]
-        do {
-            let data = try JSONSerialization.data(withJSONObject: payload)
-            try data.write(to: fileURL)
-            log("wrote \(filename)", container: container)
-        } catch {
-            log("write failed: \(error)", container: container)
+        if let data = try? JSONSerialization.data(withJSONObject: payload) {
+            try? data.write(to: fileURL)
         }
 
-        // NOTE : l'update optimiste (swap live vers la tâche suivante) est
-        // désactivé car Activity<MascotteActivityAttributes>.activities retourne
-        // toujours 0 dans le process widget — l'activity a été lancée depuis le
-        // module VaultAccess, le widget a son propre module MaJourneeWidget,
-        // et Swift considère les types comme distincts malgré un shape
-        // identique. La vraie solution serait de partager le struct via un
-        // framework Swift commun aux 2 targets (refonte Xcode). En attendant,
-        // la réconciliation se fait au foreground app suivant.
-
+        // NOTE : pas d'update optimiste de la Live Activity. Le widget (module
+        // MaJourneeWidget) ne peut pas appeler Activity.update() sur une
+        // activity lancée depuis le module VaultAccess — les types Swift sont
+        // distincts malgré un shape identique (Activity<T>.activities retourne
+        // 0 côté widget). La réconciliation (toggle vault + XP + loot + prochaine
+        // tâche) se fait au foreground app suivant via le consumer + bridge.
         return .result()
     }
-}
-
-// MARK: - Upcoming Tasks Queue
-
-/// Représente une tâche dans la queue de la Live Activity (payload compact
-/// pour permettre le swap live au tap du bouton "Cocher").
-struct UpcomingTask: Codable, Hashable {
-    let id: String
-    let text: String
-}
-
-/// Décode le JSON `[{"id":"...","text":"..."}]` stocké dans ContentState en
-/// liste Swift. Retourne [] si null / invalide.
-func decodeUpcomingTasks(_ json: String?) -> [UpcomingTask] {
-    guard let json = json, let data = json.data(using: .utf8) else { return [] }
-    return (try? JSONDecoder().decode([UpcomingTask].self, from: data)) ?? []
-}
-
-/// Encode la queue en JSON pour stockage dans ContentState. Retourne nil si vide.
-func encodeUpcomingTasks(_ tasks: [UpcomingTask]) -> String? {
-    guard !tasks.isEmpty, let data = try? JSONEncoder().encode(tasks) else { return nil }
-    return String(data: data, encoding: .utf8)
 }
 
 // MARK: - Stage Narrative

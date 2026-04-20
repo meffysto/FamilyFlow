@@ -34,37 +34,24 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var bonusText: String?
         var nextTaskText: String?
         var nextTaskId: String?
-        var upcomingTasksJson: String?
     }
 
     var mascotteName: String
     var startedAt: Date
 }
 
-/// Décode le payload "id\u{1F}text\u{1F}upcomingTasksJson" envoyé par le bridge
-/// JS. Workaround du bug Swift 6.3 sur variadic generics > 10 args (on conserve
-/// 10 arguments AsyncFunction en empaquetant 3 champs dans 1 string).
-/// Format : "id\u{1F}text\u{1F}queueJson" — chaque partie peut être vide.
-private func decodeNextTaskPayload(_ payload: String?) -> (text: String?, id: String?, upcomingJson: String?) {
-  guard let payload = payload, !payload.isEmpty else { return (nil, nil, nil) }
+/// Décode le payload "id\u{1F}text" envoyé par le bridge JS. Workaround du bug
+/// Swift 6.3 sur variadic generics > 10 args (on empaquete 2 champs dans 1
+/// string pour rester à 10 arguments côté AsyncFunction).
+private func decodeNextTaskPayload(_ payload: String?) -> (text: String?, id: String?) {
+  guard let payload = payload, !payload.isEmpty else { return (nil, nil) }
   let sep = Character("\u{1F}")
-  let parts = payload.split(separator: sep, maxSplits: 2, omittingEmptySubsequences: false).map(String.init)
-  switch parts.count {
-  case 3:
-    return (
-      parts[1].isEmpty ? nil : parts[1],
-      parts[0].isEmpty ? nil : parts[0],
-      parts[2].isEmpty ? nil : parts[2]
-    )
-  case 2:
-    return (
-      parts[1].isEmpty ? nil : parts[1],
-      parts[0].isEmpty ? nil : parts[0],
-      nil
-    )
-  default:
-    return (payload, nil, nil)
+  if let idx = payload.firstIndex(of: sep) {
+    let id = String(payload[..<idx])
+    let text = String(payload[payload.index(after: idx)...])
+    return (text.isEmpty ? nil : text, id.isEmpty ? nil : id)
   }
+  return (payload, nil)
 }
 
 /// Calcule la prochaine heure de transition narrative (0/9/12/14/18/21h).
@@ -92,41 +79,6 @@ public class VaultAccessModule: Module {
 
   public func definition() -> ModuleDefinition {
     Name("VaultAccess")
-
-    /// Marqueur de build — change à chaque rebuild pour prouver que le nouveau
-    /// binaire tourne vraiment sur le device. Si le runtime renvoie l'ancien,
-    /// l'install n'a pas remplacé le binaire.
-    AsyncFunction("moduleBuildMarker") { () -> String in
-      return "build-nextTaskId-v2-2026-04-20-2100"
-    }
-
-    /// Lit le log debug écrit par ToggleNextTaskIntent depuis le widget.
-    /// Permet de diagnostiquer si l'AppIntent s'exécute réellement au tap.
-    AsyncFunction("readToggleIntentDebugLog") { () -> String in
-      guard let containerURL = FileManager.default.containerURL(
-        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
-      ) else { return "NO_CONTAINER" }
-      let logURL = containerURL.appendingPathComponent("toggle-intent-debug.log")
-      guard let data = try? Data(contentsOf: logURL),
-            let str = String(data: data, encoding: .utf8) else {
-        return "NO_LOG_FILE"
-      }
-      return str
-    }
-
-    /// Liste les fichiers pending-task-toggles actuels (sans les supprimer).
-    /// Pour debug.
-    AsyncFunction("listPendingToggleFiles") { () -> [String] in
-      guard let containerURL = FileManager.default.containerURL(
-        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
-      ) else { return ["NO_CONTAINER"] }
-      let dir = containerURL.appendingPathComponent("pending-task-toggles", isDirectory: true)
-      guard FileManager.default.fileExists(atPath: dir.path) else { return ["NO_DIR"] }
-      let files = (try? FileManager.default.contentsOfDirectory(
-        at: dir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]
-      )) ?? []
-      return files.map { $0.lastPathComponent }
-    }
 
     /// Start accessing a security-scoped URL and save a bookmark for persistent access
     AsyncFunction("startAccessing") { (uriString: String) -> Bool in
@@ -567,7 +519,7 @@ public class VaultAccessModule: Module {
     // (séparateur ASCII Unit Separator). Workaround au bug Swift 6.3 sur les
     // variadic generics qui ne dépassent pas 10 args dans `AsyncFunction`.
     AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, recapMode: Bool, bonusText: String?, nextTaskText: String?) -> Bool in
-      let (nextTaskTextClean, nextTaskId, upcomingJson) = decodeNextTaskPayload(nextTaskText)
+      let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
       if #available(iOS 16.2, *) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
 
@@ -589,8 +541,7 @@ public class VaultAccessModule: Module {
           recapMode: recapMode,
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
-          nextTaskId: nextTaskId,
-          upcomingTasksJson: upcomingJson
+          nextTaskId: nextTaskId
         )
         do {
           let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
@@ -609,7 +560,7 @@ public class VaultAccessModule: Module {
 
     /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
     AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, recapMode: Bool, bonusText: String?, nextTaskText: String?) in
-      let (nextTaskTextClean, nextTaskId, upcomingJson) = decodeNextTaskPayload(nextTaskText)
+      let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
       if #available(iOS 16.2, *) {
         guard let activity = Activity<MascotteActivityAttributes>.activities.first else { return }
         let state = MascotteActivityAttributes.ContentState(
@@ -622,8 +573,7 @@ public class VaultAccessModule: Module {
           recapMode: recapMode,
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
-          nextTaskId: nextTaskId,
-          upcomingTasksJson: upcomingJson
+          nextTaskId: nextTaskId
         )
         let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
         await activity.update(content)
