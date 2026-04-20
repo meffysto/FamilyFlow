@@ -90,7 +90,7 @@ export default function QuotesScreen() {
 
   const handleSave = useCallback(async () => {
     if (!citation.trim() || !selectedEnfant) {
-      showToast(t('quotes.toast.fillRequired'), 'error');
+      Alert.alert(t('quotes.title'), t('quotes.toast.fillRequired'));
       return;
     }
     if (editingQuote) {
