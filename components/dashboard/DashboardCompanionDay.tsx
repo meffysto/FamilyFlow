@@ -34,20 +34,22 @@ interface StageInfo {
   sub: (args: { done: number; total: number; meal: string | null }) => string;
 }
 
-function stageForHour(h: number): { key: MascotteStageOverride; info: StageInfo } {
-  if (h < 9) return { key: 'reveil', info: { emoji: '🌅', title: 'Pousse s\'étire au soleil', sub: () => 'Prête pour la journée' } };
+function stageForHour(h: number, name: string): { key: MascotteStageOverride; info: StageInfo } {
+  if (h < 9) return { key: 'reveil', info: { emoji: '🌅', title: `${name} s'étire au soleil`, sub: () => 'Prête pour la journée' } };
   if (h < 12) return { key: 'travail', info: { emoji: '⛏️', title: 'Au boulot !', sub: ({ done, total }) => `Tâches : ${done}/${total}` } };
-  if (h < 14) return { key: 'midi', info: { emoji: '🍽️', title: 'Pousse déjeune', sub: ({ meal }) => meal ? `Au menu : ${meal}` : 'Repas à planifier' } };
-  if (h < 18) return { key: 'jeu', info: { emoji: '🌿', title: 'Pousse joue dans la clairière', sub: ({ done, total }) => `Tâches : ${done}/${total}` } };
+  if (h < 14) return { key: 'midi', info: { emoji: '🍽️', title: `${name} déjeune`, sub: ({ meal }) => meal ? `Au menu : ${meal}` : 'Repas à planifier' } };
+  if (h < 18) return { key: 'jeu', info: { emoji: '🌿', title: `${name} joue dans la clairière`, sub: ({ done, total }) => `Tâches : ${done}/${total}` } };
   if (h < 21) return { key: 'routine', info: { emoji: '🛁', title: 'Routine du soir', sub: ({ meal }) => meal ? `Dîner : ${meal}` : 'Douche, dents, histoire' } };
-  return { key: 'dodo', info: { emoji: '🌙', title: 'Pousse dort paisiblement', sub: ({ done }) => `${done} tâches faites aujourd'hui` } };
+  return { key: 'dodo', info: { emoji: '🌙', title: `${name} dort paisiblement`, sub: ({ done }) => `${done} tâches faites aujourd'hui` } };
 }
 
 function DashboardCompanionDayInner(_props: DashboardSectionProps) {
   const { colors, tint } = useThemeColors();
-  const { tasks, meals, tasksCompletedToday } = useVault();
+  const { tasks, meals, tasksCompletedToday, activeProfile } = useVault();
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const mascotteName = activeProfile?.companion?.name || 'Pousse';
 
   const todayData = useMemo(() => {
     const now = new Date();
@@ -67,9 +69,9 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       ? (todayMeals.find(m => m.mealType === 'Déjeuner')?.text ?? null)
       : (todayMeals.find(m => m.mealType === 'Dîner')?.text ?? null);
 
-    const stage = stageForHour(hour);
+    const stage = stageForHour(hour, mascotteName);
     return { done, total, meal, stage, hour };
-  }, [tasks, meals, tasksCompletedToday]);
+  }, [tasks, meals, tasksCompletedToday, mascotteName]);
 
   // Re-check actif state on mount, focus, et AppState change
   const refreshActive = useCallback(async () => {
@@ -92,7 +94,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       const ok = await startMascotte({
-        mascotteName: 'Pousse',
+        mascotteName,
         tasksDone: todayData.done,
         tasksTotal: todayData.total,
         xpGained: 0,
@@ -101,7 +103,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       if (!ok) {
         Alert.alert(
           'Live Activities désactivées',
-          'Active les Live Activities dans Réglages → FamilyFlow pour accompagner Pousse sur ton Lock Screen.',
+          `Active les Live Activities dans Réglages → FamilyFlow pour accompagner ${mascotteName} sur ton Lock Screen.`,
         );
       }
       setActive(ok);
@@ -110,7 +112,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     } finally {
       setBusy(false);
     }
-  }, [busy, todayData]);
+  }, [busy, todayData, mascotteName]);
 
   const handleStop = useCallback(async () => {
     if (busy) return;
@@ -132,7 +134,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
         <Text style={styles.emoji}>{todayData.stage.info.emoji}</Text>
         <View style={styles.body}>
           <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-            {active ? todayData.stage.info.title : 'Réveille Pousse pour aujourd\'hui'}
+            {active ? todayData.stage.info.title : `Réveille ${mascotteName} pour aujourd'hui`}
           </Text>
           <Text style={[styles.sub, { color: colors.textSub }]} numberOfLines={1}>
             {active
@@ -145,7 +147,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
             onPress={handleStop}
             disabled={busy}
             style={[styles.btn, { backgroundColor: colors.cardAlt }]}
-            accessibilityLabel="Mettre Pousse au repos"
+            accessibilityLabel={`Mettre ${mascotteName} au repos`}
           >
             <Text style={[styles.btnText, { color: colors.text }]}>Dodo</Text>
           </TouchableOpacity>
@@ -154,7 +156,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
             onPress={handleStart}
             disabled={busy}
             style={[styles.btn, { backgroundColor: tint }]}
-            accessibilityLabel="Réveiller Pousse"
+            accessibilityLabel={`Réveiller ${mascotteName}`}
           >
             <Text style={[styles.btnText, { color: '#fff' }]}>Réveiller</Text>
           </TouchableOpacity>
