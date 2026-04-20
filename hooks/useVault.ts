@@ -69,7 +69,7 @@ import {
 } from '../lib/parser';
 import type { FarmProfileData } from '../lib/types';
 import type { CompanionData, CompanionSpecies } from '../lib/mascot/companion-types';
-import { processActiveRewards, addPoints } from '../lib/gamification';
+import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
 import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot, BedtimeStory, LoveNote, LoveNoteStatus } from '../lib/types';
 import { useVaultBudget } from './useVaultBudget';
@@ -86,7 +86,7 @@ import { enqueueWrite } from '../lib/famille-queue';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
-import { refreshMascotte } from '../lib/mascotte-live-activity';
+import { patchMascotte } from '../lib/mascotte-live-activity';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultLoveNotes } from './useVaultLoveNotes';
@@ -487,6 +487,9 @@ export function useVaultInternal(): VaultState {
   const mealsRef = useRef<MealItem[]>([]);
   const rdvsRef = useRef<RDV[]>([]);
   const tasksRefForWidget = useRef<Task[]>([]);
+  // Mis à jour via useEffect après déclaration de gamiData / activeProfileId
+  const gamiDataForWidgetRef = useRef<GamificationData | null>(null);
+  const activeProfileIdForWidgetRef = useRef<string | null>(null);
   const widgetRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerWidgetRefresh = useCallback(() => {
     if (widgetRefreshTimer.current) clearTimeout(widgetRefreshTimer.current);
@@ -508,12 +511,29 @@ export function useVaultInternal(): VaultState {
       const mealText = nowHour < 14
         ? (todayMeals.find(m => m.mealType === 'Déjeuner')?.text || null)
         : (todayMeals.find(m => m.mealType === 'Dîner')?.text || null);
-      refreshMascotte({
-        mascotteName: 'Pousse',
+      // Récap soir (21-23h) : on recalcule le flag + le bonus text
+      const recapMode = nowHour >= 21 && nowHour < 23;
+      // XP gagnés aujourd'hui par le profil actif (pour le récap)
+      const activeId = activeProfileIdForWidgetRef.current;
+      const xpGainedToday = (gamiDataForWidgetRef.current?.history ?? [])
+        .filter(e => e.profileId === activeId && e.timestamp?.slice(0, 10) === todayStr)
+        .reduce((sum, e) => sum + (e.points || 0), 0);
+      // Level-up détecté aujourd'hui (comparaison avec le niveau au début de journée)
+      const activeProfileForBonus = profilesRef.current.find(p => p.id === activeId);
+      const currentPoints = activeProfileForBonus?.points ?? 0;
+      const currentLevel = calculateLevel(currentPoints);
+      const levelBeforeToday = calculateLevel(currentPoints - xpGainedToday);
+      const bonusText = currentLevel > levelBeforeToday
+        ? `⬆️ Niveau ${currentLevel} atteint !`
+        : null;
+      // patchMascotte : merge avec le lastSnapshot → préserve mascotteName et companionSpriteBase64
+      patchMascotte({
         tasksDone: doneCount,
         tasksTotal: todayTasks.length,
-        xpGained: 0,
+        xpGained: xpGainedToday,
         currentMeal: mealText,
+        recapMode,
+        bonusText,
       });
     }, 300);
   }, []);
@@ -608,6 +628,10 @@ export function useVaultInternal(): VaultState {
   // Domaine Quêtes coopératives — initialisé EN PREMIER pour que contribute soit disponible pour defisHook
   const gamiDataRef = useRef(gamiData);
   gamiDataRef.current = gamiData;
+
+  // Refs déclarés en haut pour triggerWidgetRefresh, tenus à jour ici
+  gamiDataForWidgetRef.current = gamiData;
+  activeProfileIdForWidgetRef.current = activeProfileId ?? null;
 
   // ─── Backup consolidé : flush gamiData → gamification.md (1×/jour) ─────────
   const lastGamiBackupDate = useRef<string | null>(null);

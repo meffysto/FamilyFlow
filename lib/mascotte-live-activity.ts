@@ -32,6 +32,10 @@ export interface MascotteSnapshot {
   stageOverride?: MascotteStageOverride | null;
   /** Sprite compagnon encodé base64 (PNG). Affiché sur le Lock Screen. */
   companionSpriteBase64?: string | null;
+  /** Mode récap de fin de journée (21-23h) — change la layout du widget. */
+  recapMode?: boolean | null;
+  /** Ligne bonus optionnelle affichée en mode récap (ex: level up du jour). */
+  bonusText?: string | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
@@ -72,6 +76,8 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.currentMeal,
       snap.stageOverride ?? null,
       snap.companionSpriteBase64 ?? null,
+      snap.recapMode ?? false,
+      snap.bonusText ?? null,
     );
   } catch {
     return false;
@@ -95,6 +101,8 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.currentMeal,
       snap.stageOverride ?? null,
       snap.companionSpriteBase64 ?? null,
+      snap.recapMode ?? false,
+      snap.bonusText ?? null,
     );
   } catch {
     // silencieux — feature non critique

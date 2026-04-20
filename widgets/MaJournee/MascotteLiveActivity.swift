@@ -14,6 +14,8 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var currentMeal: String?           // ex: "Pâtes carbonara" (déjeuner ou dîner selon l'heure)
         var stageOverride: String?         // "reveil"|"travail"|"midi"|"jeu"|"routine"|"dodo" (dev/test)
         var companionSpriteBase64: String? // PNG idle du compagnon du profil (Lock Screen)
+        var recapMode: Bool                // true >= 21h → layout récap de fin de journée
+        var bonusText: String?             // ligne bonus récap (ex: "⬆️ Niveau 12 atteint !")
     }
 
     var mascotteName: String
@@ -188,6 +190,10 @@ struct MascotteLockScreenView: View {
 
     var body: some View {
         let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
+        // Récap inferré depuis l'heure locale (fenêtre 21-23h) si la ContentState
+        // n'a pas encore été refresh. Après 23h, on repasse en dodo narratif.
+        let currentHour = Calendar.current.component(.hour, from: Date())
+        let isRecap = context.state.recapMode || (currentHour >= 21 && currentHour < 23)
         return HStack(spacing: 14) {
                 companionAvatar(fallbackEmoji: stage.emoji)
                     .frame(width: 72, height: 72)
@@ -204,15 +210,27 @@ struct MascotteLockScreenView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                     }
-                    Text(stage.title(name: context.attributes.mascotteName))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                    Text(stage.subtitle(state: context.state))
-                        .font(.caption2)
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(1)
+                    if isRecap {
+                        Text("Journée accomplie 🌙")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        Text(recapSubtitle(state: context.state))
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.7))
+                            .lineLimit(2)
+                    } else {
+                        Text(stage.title(name: context.attributes.mascotteName))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        Text(stage.subtitle(state: context.state))
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.7))
+                            .lineLimit(1)
+                    }
                     ProgressView(timerInterval: progressRange(from: context.attributes.startedAt), countsDown: false) {
                         EmptyView()
                     } currentValueLabel: {
@@ -244,5 +262,24 @@ struct MascotteLockScreenView: View {
             Text(fallbackEmoji)
                 .font(.system(size: 48))
         }
+    }
+
+    /// Construit le subtitle du récap : "5/5 tâches · +45 XP"
+    /// + éventuellement une ligne bonus ("⬆️ Niveau 12 atteint !") si présente.
+    private func recapSubtitle(state: MascotteActivityAttributes.ContentState) -> String {
+        var parts: [String] = []
+        if state.tasksTotal > 0 {
+            parts.append("\(state.tasksDone)/\(state.tasksTotal) tâches")
+        } else if state.tasksDone > 0 {
+            parts.append("\(state.tasksDone) tâches")
+        }
+        if state.xpGained > 0 {
+            parts.append("+\(state.xpGained) XP")
+        }
+        let line1 = parts.joined(separator: " · ")
+        if let bonus = state.bonusText, !bonus.isEmpty {
+            return line1.isEmpty ? bonus : "\(line1)\n\(bonus)"
+        }
+        return line1.isEmpty ? "Repose-toi bien 💚" : line1
     }
 }

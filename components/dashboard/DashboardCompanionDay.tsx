@@ -48,7 +48,7 @@ function stageForHour(h: number, name: string): { key: MascotteStageOverride; in
 
 function DashboardCompanionDayInner(_props: DashboardSectionProps) {
   const { colors, tint } = useThemeColors();
-  const { tasks, meals, tasksCompletedToday, activeProfile } = useVault();
+  const { tasks, meals, tasksCompletedToday, activeProfile, gamiData } = useVault();
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -72,9 +72,25 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       ? (todayMeals.find(m => m.mealType === 'Déjeuner')?.text ?? null)
       : (todayMeals.find(m => m.mealType === 'Dîner')?.text ?? null);
 
+    // Récap soir (21-23h) : agrégats de la journée complète — dodo narratif reprend à 23h
+    const recapMode = hour >= 21 && hour < 23;
+
+    // XP gagnés aujourd'hui (somme des points des events du profil actif)
+    const xpGainedToday = (gamiData?.history ?? [])
+      .filter(e => e.profileId === activeProfile?.id && e.timestamp?.slice(0, 10) === todayStr)
+      .reduce((sum, e) => sum + (e.points || 0), 0);
+
+    // Level-up du jour : comparaison niveau actuel vs niveau au début de la journée
+    const currentPoints = activeProfile?.points ?? 0;
+    const currentLevel = calculateLevel(currentPoints);
+    const levelBeforeToday = calculateLevel(currentPoints - xpGainedToday);
+    const recapBonusText = currentLevel > levelBeforeToday
+      ? `⬆️ Niveau ${currentLevel} atteint !`
+      : null;
+
     const stage = stageForHour(hour, mascotteName);
-    return { done, total, meal, stage, hour };
-  }, [tasks, meals, tasksCompletedToday, mascotteName]);
+    return { done, total, meal, stage, hour, recapMode, recapBonusText, xpGainedToday };
+  }, [tasks, meals, tasksCompletedToday, mascotteName, gamiData, activeProfile?.id, activeProfile?.points]);
 
   // Re-check actif state on mount, focus, et AppState change
   const refreshActive = useCallback(async () => {
@@ -105,9 +121,11 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
         mascotteName,
         tasksDone: todayData.done,
         tasksTotal: todayData.total,
-        xpGained: 0,
+        xpGained: todayData.xpGainedToday,
         currentMeal: todayData.meal,
         companionSpriteBase64,
+        recapMode: todayData.recapMode,
+        bonusText: todayData.recapBonusText,
       });
       if (!ok) {
         Alert.alert(

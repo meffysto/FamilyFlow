@@ -30,6 +30,8 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var currentMeal: String?
         var stageOverride: String?
         var companionSpriteBase64: String?
+        var recapMode: Bool
+        var bonusText: String?
     }
 
     var mascotteName: String
@@ -42,7 +44,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
 @available(iOS 16.2, *)
 private func mascotteNextTransitionDate(from now: Date = Date()) -> Date {
     let cal = Calendar.current
-    let transitionHours = [0, 9, 12, 14, 18, 21]
+    let transitionHours = [0, 9, 12, 14, 18, 21, 23]
     let startOfToday = cal.startOfDay(for: now)
     for dayOffset in 0...2 {
         guard let day = cal.date(byAdding: .day, value: dayOffset, to: startOfToday) else { continue }
@@ -497,7 +499,7 @@ public class VaultAccessModule: Module {
     // ─── Live Activity (Mascotte — journée narrative) ───────────────────
 
     /// Start the mascotte Live Activity
-    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?) -> Bool in
+    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, recapMode: Bool, bonusText: String?) -> Bool in
       if #available(iOS 16.2, *) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
 
@@ -515,7 +517,9 @@ public class VaultAccessModule: Module {
           xpGained: xpGained,
           currentMeal: currentMeal,
           stageOverride: stageOverride,
-          companionSpriteBase64: companionSpriteBase64
+          companionSpriteBase64: companionSpriteBase64,
+          recapMode: recapMode,
+          bonusText: bonusText
         )
         do {
           let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
@@ -533,7 +537,7 @@ public class VaultAccessModule: Module {
     }
 
     /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
-    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?) in
+    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, recapMode: Bool, bonusText: String?) in
       if #available(iOS 16.2, *) {
         guard let activity = Activity<MascotteActivityAttributes>.activities.first else { return }
         let state = MascotteActivityAttributes.ContentState(
@@ -542,7 +546,9 @@ public class VaultAccessModule: Module {
           xpGained: xpGained,
           currentMeal: currentMeal,
           stageOverride: stageOverride,
-          companionSpriteBase64: companionSpriteBase64
+          companionSpriteBase64: companionSpriteBase64,
+          recapMode: recapMode,
+          bonusText: bonusText
         )
         let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
         await activity.update(content)
