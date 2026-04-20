@@ -99,7 +99,10 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     const uncompletedToday = todayTasks.filter(t => !t.completed);
     const nextTask = uncompletedToday.find(t => t.recurrence) ?? uncompletedToday[0] ?? null;
     const nextTaskText = nextTask?.text ?? null;
-    return { done, total, meal, stage, hour, recapMode, recapBonusText, xpGainedToday, nextTaskText };
+    const nextTaskId = nextTask?.id ?? null;
+    const queue = uncompletedToday.slice(0, 3).map(t => ({ id: t.id, text: t.text }));
+    const upcomingTasksJson = queue.length > 0 ? JSON.stringify(queue) : null;
+    return { done, total, meal, stage, hour, recapMode, recapBonusText, xpGainedToday, nextTaskText, nextTaskId, upcomingTasksJson };
   }, [tasks, meals, tasksCompletedToday, mascotteName, gamiData, activeProfile?.id, activeProfile?.points]);
 
   // Re-check actif state on mount, focus, et AppState change
@@ -137,6 +140,8 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
         recapMode: todayData.recapMode,
         bonusText: todayData.recapBonusText,
         nextTaskText: todayData.nextTaskText,
+        nextTaskId: todayData.nextTaskId,
+        upcomingTasksJson: todayData.upcomingTasksJson,
       });
       if (!ok) {
         Alert.alert(

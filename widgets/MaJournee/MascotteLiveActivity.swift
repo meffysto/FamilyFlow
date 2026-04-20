@@ -1,5 +1,7 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
+import UIKit
 import WidgetKit
 
 // MARK: - Attributes
@@ -17,10 +19,123 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var recapMode: Bool                // true >= 21h → layout récap de fin de journée
         var bonusText: String?             // ligne bonus récap (ex: "⬆️ Niveau 12 atteint !")
         var nextTaskText: String?          // prochaine tâche (récurrente prioritaire) — affichée pendant travail/jeu/routine
+        var nextTaskId: String?            // identifiant unique de la prochaine tâche (pour ToggleNextTaskIntent)
+        var upcomingTasksJson: String?     // queue JSON des 3 prochaines tâches [{"id":"...","text":"..."}] pour swap live au tap
     }
 
     var mascotteName: String
     var startedAt: Date
+}
+
+// MARK: - App Intent (toggle next task depuis la DI)
+
+/// App Intent iOS 17+ : coche la prochaine tâche depuis la Live Activity sans
+/// ouvrir l'app. Écrit un fichier "pending-task-toggle-{uuid}.json" dans l'App
+/// Group partagé ; l'app le consomme au prochain foreground/boot (pattern
+/// claim-first : le fichier est supprimé avant application par l'app).
+@available(iOS 17.0, *)
+struct ToggleNextTaskIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Cocher la prochaine tâche"
+    static var description: IntentDescription? = IntentDescription("Coche la prochaine tâche affichée dans la Live Activity de la mascotte.")
+    // openAppWhenRun = false : le tap écrit juste un fichier pending dans
+    // l'App Group, l'app applique toggle + XP/loot au prochain foreground.
+    // L'update optimiste (swap live) n'est pas possible sans framework Swift
+    // partagé entre widget et main app (limitation Apple connue).
+    static var openAppWhenRun: Bool = false
+
+    @Parameter(title: "Task ID")
+    var taskId: String
+
+    init() {}
+    init(taskId: String) { self.taskId = taskId }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        let logPath: (URL) -> URL = { $0.appendingPathComponent("toggle-intent-debug.log") }
+        func log(_ msg: String, container: URL?) {
+            guard let container else { return }
+            let url = logPath(container)
+            let stamp = ISO8601DateFormatter().string(from: Date())
+            let line = "[\(stamp)] \(msg)\n"
+            if let data = line.data(using: .utf8) {
+                if FileManager.default.fileExists(atPath: url.path),
+                   let handle = try? FileHandle(forWritingTo: url) {
+                    handle.seekToEndOfFile()
+                    handle.write(data)
+                    try? handle.close()
+                } else {
+                    try? data.write(to: url)
+                }
+            }
+        }
+
+        guard let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+        ) else {
+            return .result()
+        }
+
+        log("perform() called taskId=\(taskId)", container: container)
+
+        guard !taskId.isEmpty else {
+            log("taskId is empty — aborted", container: container)
+            return .result()
+        }
+
+        let dir = container.appendingPathComponent("pending-task-toggles", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        } catch {
+            log("createDirectory failed: \(error)", container: container)
+        }
+
+        let filename = "pending-task-toggle-\(UUID().uuidString).json"
+        let fileURL = dir.appendingPathComponent(filename)
+        let payload: [String: Any] = [
+            "taskId": taskId,
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ]
+        do {
+            let data = try JSONSerialization.data(withJSONObject: payload)
+            try data.write(to: fileURL)
+            log("wrote \(filename)", container: container)
+        } catch {
+            log("write failed: \(error)", container: container)
+        }
+
+        // NOTE : l'update optimiste (swap live vers la tâche suivante) est
+        // désactivé car Activity<MascotteActivityAttributes>.activities retourne
+        // toujours 0 dans le process widget — l'activity a été lancée depuis le
+        // module VaultAccess, le widget a son propre module MaJourneeWidget,
+        // et Swift considère les types comme distincts malgré un shape
+        // identique. La vraie solution serait de partager le struct via un
+        // framework Swift commun aux 2 targets (refonte Xcode). En attendant,
+        // la réconciliation se fait au foreground app suivant.
+
+        return .result()
+    }
+}
+
+// MARK: - Upcoming Tasks Queue
+
+/// Représente une tâche dans la queue de la Live Activity (payload compact
+/// pour permettre le swap live au tap du bouton "Cocher").
+struct UpcomingTask: Codable, Hashable {
+    let id: String
+    let text: String
+}
+
+/// Décode le JSON `[{"id":"...","text":"..."}]` stocké dans ContentState en
+/// liste Swift. Retourne [] si null / invalide.
+func decodeUpcomingTasks(_ json: String?) -> [UpcomingTask] {
+    guard let json = json, let data = json.data(using: .utf8) else { return [] }
+    return (try? JSONDecoder().decode([UpcomingTask].self, from: data)) ?? []
+}
+
+/// Encode la queue en JSON pour stockage dans ContentState. Retourne nil si vide.
+func encodeUpcomingTasks(_ tasks: [UpcomingTask]) -> String? {
+    guard !tasks.isEmpty, let data = try? JSONEncoder().encode(tasks) else { return nil }
+    return String(data: data, encoding: .utf8)
 }
 
 // MARK: - Stage Narrative
@@ -288,6 +403,17 @@ struct MascotteLiveActivity: Widget {
                                     .foregroundColor(.white.opacity(0.85))
                                     .lineLimit(1)
                                 Spacer(minLength: 0)
+                                if #available(iOS 17.0, *),
+                                   let taskId = context.state.nextTaskId, !taskId.isEmpty {
+                                    Button(intent: ToggleNextTaskIntent(taskId: taskId)) {
+                                        Label("Cocher", systemImage: "checkmark.circle.fill")
+                                            .font(.caption2)
+                                            .labelStyle(.titleAndIcon)
+                                    }
+                                    .tint(.green)
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.mini)
+                                }
                             }
                         }
                         ProgressView(timerInterval: progressRange(from: context.attributes.startedAt), countsDown: false) {
@@ -366,6 +492,32 @@ struct MascotteLockScreenView: View {
                     }
                     .tint(.green)
                     .padding(.top, 2)
+                    if !isRecap,
+                       shouldShowNextTask(stage: stage, isRecap: isRecap),
+                       let next = context.state.nextTaskText, !next.isEmpty {
+                        HStack(spacing: 6) {
+                            Image(systemName: "circle")
+                                .font(.caption2)
+                                .foregroundColor(.green)
+                            Text("Prochain : \(next)")
+                                .font(.caption2)
+                                .foregroundColor(.white.opacity(0.75))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            if #available(iOS 17.0, *),
+                               let taskId = context.state.nextTaskId, !taskId.isEmpty {
+                                Button(intent: ToggleNextTaskIntent(taskId: taskId)) {
+                                    Label("Cocher", systemImage: "checkmark.circle.fill")
+                                        .font(.caption2)
+                                        .labelStyle(.titleAndIcon)
+                                }
+                                .tint(.green)
+                                .buttonStyle(.bordered)
+                                .controlSize(.mini)
+                            }
+                        }
+                        .padding(.top, 4)
+                    }
                 }
 
                 Spacer(minLength: 0)

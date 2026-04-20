@@ -37,6 +37,7 @@ import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LockScreen } from '../components/LockScreen';
+import { LiveActivityGamificationBridge } from '../components/LiveActivityGamificationBridge';
 import i18n, { loadSavedLanguage } from '../lib/i18n';
 import { LightColors, DarkColors } from '../constants/colors';
 import * as SecureStore from 'expo-secure-store';
@@ -253,6 +254,7 @@ function RootLayout() {
               <HelpProvider>
               <ParentalControlsProvider>
               <ToastProvider>
+                <LiveActivityGamificationBridge />
                 <StatusBar style="auto" />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="onboarding" />

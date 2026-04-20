@@ -33,10 +33,38 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var recapMode: Bool
         var bonusText: String?
         var nextTaskText: String?
+        var nextTaskId: String?
+        var upcomingTasksJson: String?
     }
 
     var mascotteName: String
     var startedAt: Date
+}
+
+/// Décode le payload "id\u{1F}text\u{1F}upcomingTasksJson" envoyé par le bridge
+/// JS. Workaround du bug Swift 6.3 sur variadic generics > 10 args (on conserve
+/// 10 arguments AsyncFunction en empaquetant 3 champs dans 1 string).
+/// Format : "id\u{1F}text\u{1F}queueJson" — chaque partie peut être vide.
+private func decodeNextTaskPayload(_ payload: String?) -> (text: String?, id: String?, upcomingJson: String?) {
+  guard let payload = payload, !payload.isEmpty else { return (nil, nil, nil) }
+  let sep = Character("\u{1F}")
+  let parts = payload.split(separator: sep, maxSplits: 2, omittingEmptySubsequences: false).map(String.init)
+  switch parts.count {
+  case 3:
+    return (
+      parts[1].isEmpty ? nil : parts[1],
+      parts[0].isEmpty ? nil : parts[0],
+      parts[2].isEmpty ? nil : parts[2]
+    )
+  case 2:
+    return (
+      parts[1].isEmpty ? nil : parts[1],
+      parts[0].isEmpty ? nil : parts[0],
+      nil
+    )
+  default:
+    return (payload, nil, nil)
+  }
 }
 
 /// Calcule la prochaine heure de transition narrative (0/9/12/14/18/21h).
@@ -64,6 +92,41 @@ public class VaultAccessModule: Module {
 
   public func definition() -> ModuleDefinition {
     Name("VaultAccess")
+
+    /// Marqueur de build — change à chaque rebuild pour prouver que le nouveau
+    /// binaire tourne vraiment sur le device. Si le runtime renvoie l'ancien,
+    /// l'install n'a pas remplacé le binaire.
+    AsyncFunction("moduleBuildMarker") { () -> String in
+      return "build-nextTaskId-v2-2026-04-20-2100"
+    }
+
+    /// Lit le log debug écrit par ToggleNextTaskIntent depuis le widget.
+    /// Permet de diagnostiquer si l'AppIntent s'exécute réellement au tap.
+    AsyncFunction("readToggleIntentDebugLog") { () -> String in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else { return "NO_CONTAINER" }
+      let logURL = containerURL.appendingPathComponent("toggle-intent-debug.log")
+      guard let data = try? Data(contentsOf: logURL),
+            let str = String(data: data, encoding: .utf8) else {
+        return "NO_LOG_FILE"
+      }
+      return str
+    }
+
+    /// Liste les fichiers pending-task-toggles actuels (sans les supprimer).
+    /// Pour debug.
+    AsyncFunction("listPendingToggleFiles") { () -> [String] in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else { return ["NO_CONTAINER"] }
+      let dir = containerURL.appendingPathComponent("pending-task-toggles", isDirectory: true)
+      guard FileManager.default.fileExists(atPath: dir.path) else { return ["NO_DIR"] }
+      let files = (try? FileManager.default.contentsOfDirectory(
+        at: dir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]
+      )) ?? []
+      return files.map { $0.lastPathComponent }
+    }
 
     /// Start accessing a security-scoped URL and save a bookmark for persistent access
     AsyncFunction("startAccessing") { (uriString: String) -> Bool in
@@ -500,7 +563,11 @@ public class VaultAccessModule: Module {
     // ─── Live Activity (Mascotte — journée narrative) ───────────────────
 
     /// Start the mascotte Live Activity
+    // NOTE : `nextTaskText` encode aussi `nextTaskId` au format "id\u{1F}text"
+    // (séparateur ASCII Unit Separator). Workaround au bug Swift 6.3 sur les
+    // variadic generics qui ne dépassent pas 10 args dans `AsyncFunction`.
     AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, recapMode: Bool, bonusText: String?, nextTaskText: String?) -> Bool in
+      let (nextTaskTextClean, nextTaskId, upcomingJson) = decodeNextTaskPayload(nextTaskText)
       if #available(iOS 16.2, *) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
 
@@ -521,7 +588,9 @@ public class VaultAccessModule: Module {
           companionSpriteBase64: companionSpriteBase64,
           recapMode: recapMode,
           bonusText: bonusText,
-          nextTaskText: nextTaskText
+          nextTaskText: nextTaskTextClean,
+          nextTaskId: nextTaskId,
+          upcomingTasksJson: upcomingJson
         )
         do {
           let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
@@ -540,6 +609,7 @@ public class VaultAccessModule: Module {
 
     /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
     AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, recapMode: Bool, bonusText: String?, nextTaskText: String?) in
+      let (nextTaskTextClean, nextTaskId, upcomingJson) = decodeNextTaskPayload(nextTaskText)
       if #available(iOS 16.2, *) {
         guard let activity = Activity<MascotteActivityAttributes>.activities.first else { return }
         let state = MascotteActivityAttributes.ContentState(
@@ -551,7 +621,9 @@ public class VaultAccessModule: Module {
           companionSpriteBase64: companionSpriteBase64,
           recapMode: recapMode,
           bonusText: bonusText,
-          nextTaskText: nextTaskText
+          nextTaskText: nextTaskTextClean,
+          nextTaskId: nextTaskId,
+          upcomingTasksJson: upcomingJson
         )
         let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
         await activity.update(content)
@@ -565,6 +637,41 @@ public class VaultAccessModule: Module {
           await activity.end(nil, dismissalPolicy: .immediate)
         }
       }
+    }
+
+    /// Récupère et consomme les pending task toggles écrits par ToggleNextTaskIntent
+    /// depuis la Live Activity. Pattern claim-first : chaque fichier est supprimé
+    /// avant d'être retourné, évitant la double-consommation si deux appareils
+    /// réveillent l'app en même temps. Retourne la liste des taskId à cocher.
+    AsyncFunction("consumePendingTaskToggles") { () -> [String] in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else { return [] }
+
+      let dir = containerURL.appendingPathComponent("pending-task-toggles", isDirectory: true)
+      let fm = FileManager.default
+      guard fm.fileExists(atPath: dir.path) else { return [] }
+
+      guard let files = try? fm.contentsOfDirectory(
+        at: dir,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles]
+      ) else { return [] }
+
+      var taskIds: [String] = []
+      for fileURL in files {
+        guard fileURL.lastPathComponent.hasPrefix("pending-task-toggle-"),
+              fileURL.pathExtension == "json" else { continue }
+        // Claim-first : lire puis supprimer immédiatement
+        let data = try? Data(contentsOf: fileURL)
+        try? fm.removeItem(at: fileURL)
+        guard let data = data,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let taskId = json["taskId"] as? String,
+              !taskId.isEmpty else { continue }
+        taskIds.append(taskId)
+      }
+      return taskIds
     }
 
     /// Returns true if a mascotte Live Activity is currently active

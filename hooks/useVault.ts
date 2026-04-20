@@ -27,10 +27,10 @@ import { useVaultPhotos } from './useVaultPhotos';
 import { useVaultMemories } from './useVaultMemories';
 import { useVaultStories } from './useVaultStories';
 import { useVaultVacation, VACATION_STORE_KEY, VACATION_FILE } from './useVaultVacation';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { VaultManager } from '../lib/vault';
-import { restoreAccess } from '../modules/vault-access/src';
+import { restoreAccess, consumePendingTaskToggles, readToggleIntentDebugLog, listPendingToggleFiles } from '../modules/vault-access/src';
 import {
   parseTaskFile,
   parseRoutines,
@@ -178,6 +178,10 @@ export interface VaultState {
    *  Pattern event-driven consommé par useFarm.incrementWagerCumul (câblage Sporée).
    *  Retourne une fonction unsubscribe à appeler au cleanup. */
   subscribeTaskComplete: (listener: TaskCompleteListener) => () => void;
+  /** Handler complet (toggle + gamification + reward) pour tâches cochées depuis
+   *  la Live Activity. Setté par un bridge component qui a accès à
+   *  `useGamification`. Si null → fallback sur toggleTask seul (pas de XP). */
+  liveActivityTaskCompleteRef: React.MutableRefObject<((task: Task) => Promise<void>) | null>;
   /** Compteur de tâches complétées aujourd'hui (event-driven — inclut les récurrentes) */
   tasksCompletedToday: number;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
@@ -546,6 +550,12 @@ export function useVaultInternal(): VaultState {
       const uncompletedToday = todayTasks.filter(t => !t.completed);
       const nextTask = uncompletedToday.find(t => t.recurrence) ?? uncompletedToday[0] ?? null;
       const nextTaskText = nextTask?.text ?? null;
+      const nextTaskId = nextTask?.id ?? null;
+      // Queue des 3 prochaines tâches (dont la courante) pour permettre le swap
+      // live dans la Live Activity au tap "Cocher" — évite que le bandeau se
+      // vide en attendant un refresh de l'app.
+      const queue = uncompletedToday.slice(0, 3).map(t => ({ id: t.id, text: t.text }));
+      const upcomingTasksJson = queue.length > 0 ? JSON.stringify(queue) : null;
       // patchMascotte : merge avec le lastSnapshot → préserve mascotteName et companionSpriteBase64
       patchMascotte({
         tasksDone: doneCount,
@@ -555,6 +565,8 @@ export function useVaultInternal(): VaultState {
         recapMode,
         bonusText,
         nextTaskText,
+        nextTaskId,
+        upcomingTasksJson,
       });
     }, 300);
   }, []);
@@ -823,6 +835,105 @@ export function useVaultInternal(): VaultState {
     });
     return () => sub.remove();
   }, []);
+
+  // Consommer les pending task toggles écrits par ToggleNextTaskIntent depuis
+  // la Live Activity (bouton "Cocher" de la DI, iOS 17+). Pattern claim-first :
+  // consumePendingTaskToggles() supprime les fichiers côté natif avant de
+  // retourner les taskIds. On toggle chaque tâche trouvée via tasksRef (fallback
+  // silencieux si la tâche n'existe plus ou si les données ne sont pas encore
+  // chargées — le fichier est déjà supprimé, no-op acceptable).
+  // Bridge setté par <LiveActivityGamificationBridge> (rendu dans ToastProvider
+   // pour avoir accès à useGamification). null tant que pas monté → fallback
+   // sur toggleTask seul.
+  const liveActivityTaskCompleteRef = useRef<((task: Task) => Promise<void>) | null>(null);
+
+  const consumeLiveActivityToggles = useCallback(async () => {
+    if (__DEV__) console.log('[useVault] consumeLiveActivityToggles called, tasks.length=', tasksRef.current.length);
+    if (Platform.OS !== 'ios') return;
+    // Toujours peek les fichiers et le log pour debug, même si on bail
+    if (__DEV__) {
+      try {
+        const pending = await listPendingToggleFiles();
+        const debugLog = await readToggleIntentDebugLog();
+        if (pending.length > 0 || debugLog.length > 50) {
+          console.log('[useVault] pending files:', pending.length, 'debugLog tail:', debugLog.slice(-300));
+        }
+      } catch (e) { console.log('[useVault] peek failed:', e); }
+    }
+    // Si les tâches ne sont pas encore chargées, on ne consomme PAS (sinon on
+    // supprime les fichiers sans pouvoir les appliquer). L'effet init
+    // (dépendance tasks.length) les traitera dès que le vault sera prêt.
+    if (tasksRef.current.length === 0) {
+      if (__DEV__) console.log('[useVault] tasks empty — defer consume');
+      return;
+    }
+    try {
+      if (__DEV__) {
+        const pending = await listPendingToggleFiles();
+        if (pending.length > 0) {
+          console.log('[useVault] pending toggle files:', pending);
+          const debugLog = await readToggleIntentDebugLog();
+          console.log('[useVault] toggle intent debug log:\n', debugLog);
+        }
+      }
+      const taskIds = await consumePendingTaskToggles();
+      if (__DEV__ && taskIds.length > 0) console.log('[useVault] consumed taskIds:', taskIds);
+      if (!taskIds.length) return;
+      for (const taskId of taskIds) {
+        const target = tasksRef.current.find((t) => t.id === taskId);
+        if (__DEV__) {
+          console.log('[useVault] toggle target for', JSON.stringify(taskId), ':', target ? `found (completed=${target.completed})` : 'NOT FOUND');
+          if (!target) {
+            const sample = tasksRef.current.slice(0, 5).map(t => t.id);
+            console.log('[useVault] sample task IDs:', sample);
+            const byFile = tasksRef.current.filter(t => t.sourceFile.includes('Tâches récurrentes')).map(t => ({ id: t.id, src: t.sourceFile, line: t.lineIndex, text: t.text.slice(0,30) }));
+            console.log('[useVault] tasks in Tâches récurrentes.md:', byFile);
+          }
+        }
+        if (!target || target.completed) continue;
+        try {
+          // Si le bridge gamification est monté → full flow (toggle + XP + loot).
+          // Sinon fallback silencieux sur toggleTask seul (les XP rattraperont
+          // au prochain tap manuel de cette tâche).
+          if (liveActivityTaskCompleteRef.current) {
+            await liveActivityTaskCompleteRef.current(target);
+          } else {
+            await tasksHook.toggleTask(target, true);
+          }
+        } catch (e) {
+          if (__DEV__) console.warn('[useVault] toggleTask from Live Activity failed:', e);
+        }
+      }
+    } catch (e) {
+      if (__DEV__) console.warn('[useVault] consumeLiveActivityToggles threw:', e);
+    }
+  }, [tasksHook, tasksRef]);
+
+  // Au boot : tenter la consommation dès que les tâches sont chargées (1er render
+  // avec tasks non-vide). Si l'utilisateur a cliqué sur le bouton DI pendant que
+  // l'app était fermée, on rattrape au prochain lancement.
+  const didInitialToggleConsumeRef = useRef(false);
+  useEffect(() => {
+    if (__DEV__) console.log('[useVault] init-toggle effect fired, tasks.length=', tasks.length, 'already=', didInitialToggleConsumeRef.current);
+    if (didInitialToggleConsumeRef.current) return;
+    if (tasks.length === 0) return;
+    didInitialToggleConsumeRef.current = true;
+    consumeLiveActivityToggles();
+  }, [tasks.length, consumeLiveActivityToggles]);
+
+  // À chaque retour en foreground : consommer les toggles posés pendant que
+  // l'app était en background.
+  useEffect(() => {
+    if (__DEV__) console.log('[useVault] registering AppState listener for toggles');
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (__DEV__) console.log('[useVault] AppState change →', state);
+      if (state === 'active') {
+        // Petit délai pour laisser restoreAccess + éventuel reload finir
+        setTimeout(() => consumeLiveActivityToggles(), 300);
+      }
+    });
+    return () => sub.remove();
+  }, [consumeLiveActivityToggles]);
 
   // Programmer les notifications de révélation sur CE téléphone pour les love notes
   // reçues en attente (multi-device : le téléphone de l'expéditeur ne peut pas
@@ -1869,6 +1980,7 @@ export function useVaultInternal(): VaultState {
     toggleTask: tasksHook.toggleTask,
     skipTask: tasksHook.skipTask,
     subscribeTaskComplete: tasksHook.subscribeTaskComplete,
+    liveActivityTaskCompleteRef,
     tasksCompletedToday,
     addRDV,
     updateRDV,
