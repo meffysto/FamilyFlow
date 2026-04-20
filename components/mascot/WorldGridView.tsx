@@ -17,6 +17,7 @@ import Animated, {
   Easing,
   useReducedMotion,
   cancelAnimation,
+  type SharedValue,
 } from 'react-native-reanimated';
 import {
   WORLD_GRID,
@@ -88,7 +89,7 @@ const CROP_WHISPERS = [
   '🌱',
 ];
 
-function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLevel, canUpgrade, wearEffects, containerWidth, containerHeight, frameIdx, whisperCellId, paused, onPress, onLongPress, onRepairWeed, onRepairFence }: {
+function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLevel, canUpgrade, wearEffects, containerWidth, containerHeight, frameIdx, whisperCellId, paused, sharedMaturePulse, onPress, onLongPress, onRepairWeed, onRepairFence }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
@@ -103,12 +104,12 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
   frameIdx: number;
   whisperCellId: string | null;
   paused: boolean;
+  sharedMaturePulse: SharedValue<number>;
   onPress: () => void;
   onLongPress?: () => void;
   onRepairWeed?: (plotIndex: number) => void;
   onRepairFence?: (plotIndex: number) => void;
 }) {
-  const pulse = useSharedValue(1);
   const growScaleX = useSharedValue(1);
   const growScaleY = useSharedValue(1);
   const prevStage = React.useRef(crop?.currentStage ?? -1);
@@ -118,26 +119,6 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
     if (whisperCellId !== cell.id) return null;
     return CROP_WHISPERS[Math.floor(Math.random() * CROP_WHISPERS.length)];
   }, [whisperCellId, cell.id]);
-
-  // Pulse mature
-  useEffect(() => {
-    if (paused) {
-      cancelAnimation(pulse);
-      pulse.value = 1;
-      return;
-    }
-    if (isMature) {
-      pulse.value = withRepeat(
-        withSequence(
-          withTiming(1.12, { duration: 600, easing: Easing.inOut(Easing.sin) }),
-          withTiming(1, { duration: 600, easing: Easing.inOut(Easing.sin) }),
-        ),
-        -1, true,
-      );
-    } else {
-      pulse.value = 1;
-    }
-  }, [isMature, paused]);
 
   // Growth wiggle quand le stade change
   useEffect(() => {
@@ -160,7 +141,7 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [
-      { scale: pulse.value },
+      { scale: isMature ? sharedMaturePulse.value : 1 },
       { scaleX: growScaleX.value },
       { scaleY: growScaleY.value },
     ],
@@ -719,6 +700,23 @@ export function WorldGridView({
     return () => clearInterval(timer);
   }, [reducedMotion, paused]);
 
+  // Pulse global partagé pour toutes les cellules matures (1 seule boucle Reanimated au lieu de N)
+  const sharedMaturePulse = useSharedValue(1);
+  useEffect(() => {
+    if (reducedMotion || paused) {
+      cancelAnimation(sharedMaturePulse);
+      sharedMaturePulse.value = 1;
+      return;
+    }
+    sharedMaturePulse.value = withRepeat(
+      withSequence(
+        withTiming(1.12, { duration: 600, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: 600, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1, true,
+    );
+  }, [reducedMotion, paused, sharedMaturePulse]);
+
   // Timer global whisper — 1 seul setInterval pour toutes les crops
   const [whisperCellId, setWhisperCellId] = useState<string | null>(null);
   const allCropCells = useMemo(() => {
@@ -793,6 +791,7 @@ export function WorldGridView({
             frameIdx={sharedFrameIdx}
             whisperCellId={whisperCellId}
             paused={paused}
+            sharedMaturePulse={sharedMaturePulse}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
             onLongPress={() => onPlotLongPress?.(cellIdx)}
             onRepairWeed={onRepairWeed}
@@ -826,6 +825,7 @@ export function WorldGridView({
             frameIdx={sharedFrameIdx}
             whisperCellId={whisperCellId}
             paused={paused}
+            sharedMaturePulse={sharedMaturePulse}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
             onLongPress={() => onPlotLongPress?.(cellIdx)}
             onRepairWeed={onRepairWeed}
@@ -870,6 +870,7 @@ export function WorldGridView({
               frameIdx={sharedFrameIdx}
               whisperCellId={whisperCellId}
               paused={paused}
+              sharedMaturePulse={sharedMaturePulse}
               onPress={() => onCropPlotPress?.(cell.id, crop)}
               onLongPress={() => onPlotLongPress?.(cellIdx)}
               onRepairWeed={onRepairWeed}

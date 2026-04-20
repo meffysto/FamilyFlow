@@ -581,6 +581,7 @@ export default function TreeScreen() {
 
   const [isAppActive, setIsAppActive] = useState(true);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
+  const [isUserActive, setIsUserActive] = useState(true);
   useEffect(() => {
     checkPendingGifts();
     const sub = AppState.addEventListener('change', (state) => {
@@ -597,8 +598,26 @@ export default function TreeScreen() {
     return () => setIsScreenFocused(false);
   }, [checkPendingGifts]));
 
-  // Combinaison : pauser si app en background OU onglet pas visible
-  const animationsPaused = !isAppActive || !isScreenFocused;
+  // Auto-pause après 10s sans interaction (économie batterie sur écran statique)
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pokeActivity = useCallback(() => {
+    setIsUserActive(true);
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = setTimeout(() => setIsUserActive(false), 10000);
+  }, []);
+  useEffect(() => {
+    if (!isScreenFocused || !isAppActive) {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      return;
+    }
+    pokeActivity();
+    return () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    };
+  }, [isScreenFocused, isAppActive, pokeActivity]);
+
+  // Combinaison : pauser si app en background OU onglet pas visible OU utilisateur inactif
+  const animationsPaused = !isAppActive || !isScreenFocused || !isUserActive;
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -1674,10 +1693,11 @@ export default function TreeScreen() {
   if (!profile) return null;
 
   return (
-    <View style={[styles.safe, { backgroundColor: colors.bg }]}>
+    <View style={[styles.safe, { backgroundColor: colors.bg }]} onTouchStart={pokeActivity}>
       <ScrollView
         contentContainerStyle={[styles.scroll, Layout.contentContainer, { paddingTop: insets.top + 44 }]}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={pokeActivity}
       >
 
         {/* Bandeau saga active */}
