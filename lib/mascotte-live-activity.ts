@@ -21,7 +21,7 @@ import {
 import { COMPANION_SPRITES } from './mascot/companion-sprites';
 import type { CompanionSpecies, CompanionStage } from './mascot/companion-types';
 
-export type MascotteStageOverride = 'reveil' | 'travail' | 'midi' | 'jeu' | 'routine' | 'dodo';
+export type MascotteStageOverride = 'reveil' | 'travail' | 'midi' | 'jeu' | 'routine' | 'dodo' | 'recap';
 
 export interface MascotteSnapshot {
   mascotteName: string;
@@ -32,14 +32,14 @@ export interface MascotteSnapshot {
   stageOverride?: MascotteStageOverride | null;
   /** Sprite compagnon encodé base64 (PNG). Affiché sur le Lock Screen. */
   companionSpriteBase64?: string | null;
-  /** Mode récap de fin de journée (21-23h) — change la layout du widget. */
-  recapMode?: boolean | null;
-  /** Ligne bonus optionnelle affichée en mode récap (ex: level up du jour). */
+  /** Ligne bonus optionnelle affichée en stage recap (ex: level up du jour). */
   bonusText?: string | null;
-  /** Prochaine tâche à faire (récurrente prioritaire). Affichée pendant travail/jeu/routine. */
+  /** Prochaine tâche à faire (récurrente prioritaire). Affichée pendant reveil/travail/jeu/routine. */
   nextTaskText?: string | null;
   /** ID unique de la prochaine tâche — consommé par ToggleNextTaskIntent (iOS 17+). */
   nextTaskId?: string | null;
+  /** Prochain RDV dans les 24h (ex: "Pédiatre 14:30"). Affiché pendant midi. */
+  nextRdvText?: string | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
@@ -80,10 +80,10 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.currentMeal,
       snap.stageOverride ?? null,
       snap.companionSpriteBase64 ?? null,
-      snap.recapMode ?? false,
       snap.bonusText ?? null,
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
+      snap.nextRdvText ?? null,
     );
   } catch (e) {
     if (__DEV__) console.warn('[mascotte] startMascotteActivity threw:', e);
@@ -108,10 +108,10 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.currentMeal,
       snap.stageOverride ?? null,
       snap.companionSpriteBase64 ?? null,
-      snap.recapMode ?? false,
       snap.bonusText ?? null,
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
+      snap.nextRdvText ?? null,
     );
   } catch {
     // silencieux — feature non critique

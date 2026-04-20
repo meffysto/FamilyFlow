@@ -13,12 +13,12 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var tasksTotal: Int
         var xpGained: Int
         var currentMeal: String?           // ex: "Pâtes carbonara" (déjeuner ou dîner selon l'heure)
-        var stageOverride: String?         // "reveil"|"travail"|"midi"|"jeu"|"routine"|"dodo" (dev/test)
+        var stageOverride: String?         // "reveil"|"travail"|"midi"|"jeu"|"routine"|"dodo"|"recap" (dev/test)
         var companionSpriteBase64: String? // PNG idle du compagnon du profil (Lock Screen)
-        var recapMode: Bool                // true >= 21h → layout récap de fin de journée
         var bonusText: String?             // ligne bonus récap (ex: "⬆️ Niveau 12 atteint !")
-        var nextTaskText: String?          // prochaine tâche (récurrente prioritaire) — affichée pendant travail/jeu/routine
+        var nextTaskText: String?          // prochaine tâche (récurrente prioritaire) — affichée pendant reveil/travail/jeu/routine
         var nextTaskId: String?            // identifiant unique de la prochaine tâche (pour ToggleNextTaskIntent)
+        var nextRdvText: String?           // prochain RDV < 24h (ex: "Pédiatre 14:30") — affiché pendant midi
     }
 
     var mascotteName: String
@@ -82,7 +82,7 @@ struct ToggleNextTaskIntent: LiveActivityIntent {
 
 @available(iOS 16.2, *)
 enum MascotteStage {
-    case reveil, travail, midi, jeu, routine, dodo
+    case reveil, travail, midi, jeu, routine, dodo, recap
 
     static func `for`(date: Date) -> MascotteStage {
         let h = Calendar.current.component(.hour, from: date)
@@ -91,8 +91,9 @@ enum MascotteStage {
         case 9..<12: return .travail
         case 12..<14: return .midi
         case 14..<18: return .jeu
-        case 18..<21: return .routine
-        default: return .dodo
+        case 18..<20: return .routine
+        case 20..<22: return .dodo
+        default: return .recap
         }
     }
 
@@ -104,6 +105,7 @@ enum MascotteStage {
         case "jeu": return .jeu
         case "routine": return .routine
         case "dodo": return .dodo
+        case "recap": return .recap
         default: return nil
         }
     }
@@ -113,6 +115,8 @@ enum MascotteStage {
         MascotteStage.from(override: override) ?? MascotteStage.for(date: date)
     }
 
+    /// Emoji conservé uniquement comme fallback si le sprite base64 est absent
+    /// (DI compact leading, minimal, Lock Screen avatar).
     var emoji: String {
         switch self {
         case .reveil: return "🌅"
@@ -121,6 +125,7 @@ enum MascotteStage {
         case .jeu: return "🌿"
         case .routine: return "🛁"
         case .dodo: return "🌙"
+        case .recap: return "🌙"
         }
     }
 
@@ -132,6 +137,7 @@ enum MascotteStage {
         case .jeu: return "Joue!"
         case .routine: return "Routine"
         case .dodo: return "Dodo"
+        case .recap: return "Récap"
         }
     }
 
@@ -142,7 +148,8 @@ enum MascotteStage {
         case .midi: return "\(name) déjeune avec la famille"
         case .jeu: return "\(name) s'amuse dans la clairière"
         case .routine: return "L'heure de la routine du soir"
-        case .dodo: return "\(name) dort paisiblement"
+        case .dodo: return "\(name) se prépare à dormir"
+        case .recap: return "Journée accomplie 🌙"
         }
     }
 
@@ -157,6 +164,9 @@ enum MascotteStage {
             }
             return "Prête à coopérer avec ta famille"
         case .midi:
+            if let rdv = state.nextRdvText, !rdv.isEmpty {
+                return "RDV : \(rdv)"
+            }
             return meal.isEmpty ? "Au menu : à planifier 🍴" : "Au menu : \(meal) 🍝"
         case .jeu:
             if state.tasksTotal > 0 {
@@ -165,10 +175,12 @@ enum MascotteStage {
             return "Temps libre dans la clairière"
         case .routine:
             return meal.isEmpty
-                ? "Douche → Pyjama → Dents → Histoire"
+                ? "Douche → Pyjama → Dents"
                 : "Dîner : \(meal) · Puis routine 🛁"
         case .dodo:
-            return "Récap : \(state.tasksDone) tâches · +\(state.xpGained) XP 💚"
+            return "Une petite histoire avant de dormir ?"
+        case .recap:
+            return recapLine(state: state)
         }
     }
 
@@ -206,14 +218,13 @@ private func recapLine(state: MascotteActivityAttributes.ContentState) -> String
     return line1.isEmpty ? "Repose-toi bien 💚" : line1
 }
 
-/// Affiche la prochaine tâche uniquement pendant les stages d'activité (travail/jeu/routine).
-/// Les stages reveil/midi/dodo et le mode récap ont leur propre narratif (repas, dodo, stats).
+/// Affiche la prochaine tâche pendant les stages actifs (reveil/travail/jeu/routine).
+/// Les stages midi (RDV/repas), dodo (histoire) et recap (stats finales) ont leur propre narratif.
 @available(iOS 16.2, *)
-private func shouldShowNextTask(stage: MascotteStage, isRecap: Bool) -> Bool {
-    if isRecap { return false }
+private func shouldShowNextTask(stage: MascotteStage) -> Bool {
     switch stage {
-    case .travail, .jeu, .routine: return true
-    case .reveil, .midi, .dodo: return false
+    case .reveil, .travail, .jeu, .routine: return true
+    case .midi, .dodo, .recap: return false
     }
 }
 
@@ -250,10 +261,9 @@ private func companionCompactView(
 @ViewBuilder
 private func compactTrailingView(
     state: MascotteActivityAttributes.ContentState,
-    stage: MascotteStage,
-    isRecap: Bool
+    stage: MascotteStage
 ) -> some View {
-    if isRecap {
+    if stage == .recap {
         if let bonus = state.bonusText, !bonus.isEmpty {
             Text("⬆️")
                 .font(.caption)
@@ -303,15 +313,9 @@ struct MascotteLiveActivity: Widget {
         } dynamicIsland: { context in
             let now = Date()
             let stage = MascotteStage.resolve(date: now, override: context.state.stageOverride)
-            let currentHour = Calendar.current.component(.hour, from: now)
-            let isRecap = context.state.recapMode || (currentHour >= 21 && currentHour < 23)
-            let title = isRecap
-                ? "Journée accomplie 🌙"
-                : stage.title(name: context.attributes.mascotteName)
-            let subtitle = isRecap
-                ? recapLine(state: context.state)
-                : stage.subtitle(state: context.state)
-            let headEmoji = isRecap ? "🌙" : stage.emoji
+            let title = stage.title(name: context.attributes.mascotteName)
+            let subtitle = stage.subtitle(state: context.state)
+            let headEmoji = stage.emoji
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     Text(headEmoji)
@@ -332,8 +336,49 @@ struct MascotteLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(spacing: 5) {
+                        if stage == .dodo {
+                            Link(destination: URL(string: "family-vault://open/stories")!) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "book.fill")
+                                        .font(.caption2)
+                                        .foregroundColor(.yellow)
+                                    Text("Lire une histoire")
+                                        .font(.caption2)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white)
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2)
+                                        .foregroundColor(.white.opacity(0.6))
+                                }
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 8)
+                                .background(Color.white.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        } else if stage == .routine {
+                            Link(destination: URL(string: "family-vault://open/routines")!) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "checklist")
+                                        .font(.caption2)
+                                        .foregroundColor(.cyan)
+                                    Text("Ouvrir une routine")
+                                        .font(.caption2)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white)
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2)
+                                        .foregroundColor(.white.opacity(0.6))
+                                }
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 8)
+                                .background(Color.white.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
                         if let next = context.state.nextTaskText, !next.isEmpty,
-                           shouldShowNextTask(stage: stage, isRecap: isRecap) {
+                           shouldShowNextTask(stage: stage) {
                             HStack(spacing: 6) {
                                 Image(systemName: "circle")
                                     .font(.caption2)
@@ -367,7 +412,7 @@ struct MascotteLiveActivity: Widget {
             } compactLeading: {
                 companionCompactView(state: context.state, fallbackEmoji: headEmoji)
             } compactTrailing: {
-                compactTrailingView(state: context.state, stage: stage, isRecap: isRecap)
+                compactTrailingView(state: context.state, stage: stage)
             } minimal: {
                 companionCompactView(state: context.state, fallbackEmoji: headEmoji)
             }
@@ -384,10 +429,7 @@ struct MascotteLockScreenView: View {
 
     var body: some View {
         let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
-        // Récap inferré depuis l'heure locale (fenêtre 21-23h) si la ContentState
-        // n'a pas encore été refresh. Après 23h, on repasse en dodo narratif.
-        let currentHour = Calendar.current.component(.hour, from: Date())
-        let isRecap = context.state.recapMode || (currentHour >= 21 && currentHour < 23)
+        let isRecap = stage == .recap
         return HStack(spacing: 14) {
                 companionAvatar(fallbackEmoji: stage.emoji)
                     .frame(width: 72, height: 72)
@@ -432,8 +474,50 @@ struct MascotteLockScreenView: View {
                     }
                     .tint(.green)
                     .padding(.top, 2)
-                    if !isRecap,
-                       shouldShowNextTask(stage: stage, isRecap: isRecap),
+                    if stage == .dodo {
+                        Link(destination: URL(string: "family-vault://open/stories")!) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "book.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.yellow)
+                                Text("Lire une histoire")
+                                    .font(.caption2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                Spacer(minLength: 0)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                            .padding(.vertical, 5)
+                            .padding(.horizontal, 9)
+                            .background(Color.white.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .padding(.top, 4)
+                    } else if stage == .routine {
+                        Link(destination: URL(string: "family-vault://open/routines")!) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checklist")
+                                    .font(.caption2)
+                                    .foregroundColor(.cyan)
+                                Text("Ouvrir une routine")
+                                    .font(.caption2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                Spacer(minLength: 0)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                            .padding(.vertical, 5)
+                            .padding(.horizontal, 9)
+                            .background(Color.white.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .padding(.top, 4)
+                    }
+                    if shouldShowNextTask(stage: stage),
                        let next = context.state.nextTaskText, !next.isEmpty {
                         HStack(spacing: 6) {
                             Image(systemName: "circle")

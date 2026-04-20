@@ -30,10 +30,10 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var currentMeal: String?
         var stageOverride: String?
         var companionSpriteBase64: String?
-        var recapMode: Bool
         var bonusText: String?
         var nextTaskText: String?
         var nextTaskId: String?
+        var nextRdvText: String?
     }
 
     var mascotteName: String
@@ -60,7 +60,7 @@ private func decodeNextTaskPayload(_ payload: String?) -> (text: String?, id: St
 @available(iOS 16.2, *)
 private func mascotteNextTransitionDate(from now: Date = Date()) -> Date {
     let cal = Calendar.current
-    let transitionHours = [0, 9, 12, 14, 18, 21, 23]
+    let transitionHours = [0, 9, 12, 14, 18, 20, 22]
     let startOfToday = cal.startOfDay(for: now)
     for dayOffset in 0...2 {
         guard let day = cal.date(byAdding: .day, value: dayOffset, to: startOfToday) else { continue }
@@ -518,7 +518,7 @@ public class VaultAccessModule: Module {
     // NOTE : `nextTaskText` encode aussi `nextTaskId` au format "id\u{1F}text"
     // (séparateur ASCII Unit Separator). Workaround au bug Swift 6.3 sur les
     // variadic generics qui ne dépassent pas 10 args dans `AsyncFunction`.
-    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, recapMode: Bool, bonusText: String?, nextTaskText: String?) -> Bool in
+    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, nextRdvText: String?) -> Bool in
       let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
       if #available(iOS 16.2, *) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
@@ -538,10 +538,10 @@ public class VaultAccessModule: Module {
           currentMeal: currentMeal,
           stageOverride: stageOverride,
           companionSpriteBase64: companionSpriteBase64,
-          recapMode: recapMode,
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
-          nextTaskId: nextTaskId
+          nextTaskId: nextTaskId,
+          nextRdvText: nextRdvText
         )
         do {
           let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
@@ -559,7 +559,7 @@ public class VaultAccessModule: Module {
     }
 
     /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
-    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, recapMode: Bool, bonusText: String?, nextTaskText: String?) in
+    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, nextRdvText: String?) in
       let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
       if #available(iOS 16.2, *) {
         guard let activity = Activity<MascotteActivityAttributes>.activities.first else { return }
@@ -570,10 +570,10 @@ public class VaultAccessModule: Module {
           currentMeal: currentMeal,
           stageOverride: stageOverride,
           companionSpriteBase64: companionSpriteBase64,
-          recapMode: recapMode,
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
-          nextTaskId: nextTaskId
+          nextTaskId: nextTaskId,
+          nextRdvText: nextRdvText
         )
         let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
         await activity.update(content)

@@ -334,6 +334,37 @@ export function isFarmEconomyEvent(note: string): boolean {
   if (!note) return false;
   return note.includes('Vente craft') || note.includes('Bonus craft') || note.includes('Vente ');
 }
+
+/**
+ * Construit le texte du prochain RDV dans les prochaines 24h pour la Live Activity.
+ * Retourne null si aucun RDV planifié sur cette fenêtre. Format : "Pédiatre 14:30"
+ * (aujourd'hui) ou "Dentiste demain 9:00" (lendemain). Tronqué à 40 chars.
+ */
+export function computeNextRdvText(rdvs: RDV[]): string | null {
+  if (!rdvs || rdvs.length === 0) return null;
+  const now = new Date();
+  const in24h = new Date(now.getTime() + 24 * 3600 * 1000);
+  const today = now.toISOString().slice(0, 10);
+  const upcoming = rdvs
+    .filter(r => r.statut === 'planifié')
+    .map(r => {
+      const [hh, mm] = (r.heure || '00:00').split(':').map(Number);
+      const d = new Date(`${r.date_rdv}T00:00:00`);
+      d.setHours(hh || 0, mm || 0, 0, 0);
+      return { r, when: d };
+    })
+    .filter(({ when }) => when > now && when <= in24h)
+    .sort((a, b) => a.when.getTime() - b.when.getTime());
+  const next = upcoming[0];
+  if (!next) return null;
+  const label = next.r.type_rdv
+    ? next.r.type_rdv.charAt(0).toUpperCase() + next.r.type_rdv.slice(1)
+    : 'RDV';
+  const prefix = next.r.date_rdv === today ? '' : 'demain ';
+  const text = `${label} ${prefix}${next.r.heure}`;
+  return text.length > 40 ? text.slice(0, 39) + '…' : text;
+}
+
 /**
  * Migration one-shot + récupération : si gamification.md existe et qu'un profil n'a pas
  * encore son gami-{id}.md (ou l'a eu corrompu — fichier vide/farm-format sans profils), le créer/réparer.
@@ -525,8 +556,9 @@ export function useVaultInternal(): VaultState {
       const mealText = nowHour < 14
         ? (todayMeals.find(m => m.mealType === 'Déjeuner')?.text || null)
         : (todayMeals.find(m => m.mealType === 'Dîner')?.text || null);
-      // Récap soir (21-23h) : on recalcule le flag + le bonus text
-      const recapMode = nowHour >= 21 && nowHour < 23;
+      // Prochain RDV < 24h (affiché pendant le stage midi). Format : "Pédiatre 14:30"
+      // ou "Dentiste demain 9:00". Tronqué à 40 chars pour le budget ContentState.
+      const nextRdvText = computeNextRdvText(rdvsRef.current);
       // XP "effort quotidien" du profil actif (tâches, saga, défis, quêtes…)
       // Exclut les gains d'économie ferme (ventes, bonus craft) qui gonflent artificiellement
       // le compteur et ne reflètent pas l'effort fait par l'utilisateur aujourd'hui.
@@ -557,10 +589,10 @@ export function useVaultInternal(): VaultState {
         tasksTotal: todayTasks.length,
         xpGained: xpGainedToday,
         currentMeal: mealText,
-        recapMode,
         bonusText,
         nextTaskText,
         nextTaskId,
+        nextRdvText,
       });
     }, 300);
   }, []);

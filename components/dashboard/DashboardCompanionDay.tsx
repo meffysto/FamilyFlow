@@ -14,7 +14,7 @@ import { View, Text, StyleSheet, TouchableOpacity, AppState, Platform, Alert } f
 import { useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
-import { isFarmEconomyEvent } from '../../hooks/useVault';
+import { isFarmEconomyEvent, computeNextRdvText } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { FontSize } from '../../constants/typography';
@@ -43,13 +43,14 @@ function stageForHour(h: number, name: string): { key: MascotteStageOverride; in
   if (h < 12) return { key: 'travail', info: { emoji: '⛏️', title: 'Au boulot !', sub: ({ done, total }) => `Tâches : ${done}/${total}` } };
   if (h < 14) return { key: 'midi', info: { emoji: '🍽️', title: `${name} déjeune`, sub: ({ meal }) => meal ? `Au menu : ${meal}` : 'Repas à planifier' } };
   if (h < 18) return { key: 'jeu', info: { emoji: '🌿', title: `${name} joue dans la clairière`, sub: ({ done, total }) => `Tâches : ${done}/${total}` } };
-  if (h < 21) return { key: 'routine', info: { emoji: '🛁', title: 'Routine du soir', sub: ({ meal }) => meal ? `Dîner : ${meal}` : 'Douche, dents, histoire' } };
-  return { key: 'dodo', info: { emoji: '🌙', title: `${name} dort paisiblement`, sub: ({ done }) => `${done} tâches faites aujourd'hui` } };
+  if (h < 20) return { key: 'routine', info: { emoji: '🛁', title: 'Routine du soir', sub: ({ meal }) => meal ? `Dîner : ${meal}` : 'Douche, dents, histoire' } };
+  if (h < 22) return { key: 'dodo', info: { emoji: '🌙', title: `${name} se prépare à dormir`, sub: () => 'Une petite histoire ?' } };
+  return { key: 'recap', info: { emoji: '🌙', title: 'Journée accomplie', sub: ({ done }) => `${done} tâches faites aujourd'hui` } };
 }
 
 function DashboardCompanionDayInner(_props: DashboardSectionProps) {
   const { colors, tint } = useThemeColors();
-  const { tasks, meals, tasksCompletedToday, activeProfile, gamiData } = useVault();
+  const { tasks, meals, tasksCompletedToday, activeProfile, gamiData, rdvs } = useVault();
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -73,8 +74,8 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       ? (todayMeals.find(m => m.mealType === 'Déjeuner')?.text ?? null)
       : (todayMeals.find(m => m.mealType === 'Dîner')?.text ?? null);
 
-    // Récap soir (21-23h) : agrégats de la journée complète — dodo narratif reprend à 23h
-    const recapMode = hour >= 21 && hour < 23;
+    // Récap soir (stage .recap : 22h+) — géré nativement côté widget via l'enum
+    const nextRdvText = computeNextRdvText(rdvs);
 
     // XP "effort quotidien" du profil actif (tâches, saga, défis, quêtes…)
     // Exclut les gains d'économie ferme (ventes, bonus craft) — cf. isFarmEconomyEvent.
@@ -100,8 +101,8 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     const nextTask = uncompletedToday.find(t => t.recurrence) ?? uncompletedToday[0] ?? null;
     const nextTaskText = nextTask?.text ?? null;
     const nextTaskId = nextTask?.id ?? null;
-    return { done, total, meal, stage, hour, recapMode, recapBonusText, xpGainedToday, nextTaskText, nextTaskId };
-  }, [tasks, meals, tasksCompletedToday, mascotteName, gamiData, activeProfile?.id, activeProfile?.points]);
+    return { done, total, meal, stage, hour, recapBonusText, xpGainedToday, nextTaskText, nextTaskId, nextRdvText };
+  }, [tasks, meals, tasksCompletedToday, mascotteName, gamiData, activeProfile?.id, activeProfile?.points, rdvs]);
 
   // Re-check actif state on mount, focus, et AppState change
   const refreshActive = useCallback(async () => {
@@ -135,10 +136,10 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
         xpGained: todayData.xpGainedToday,
         currentMeal: todayData.meal,
         companionSpriteBase64,
-        recapMode: todayData.recapMode,
         bonusText: todayData.recapBonusText,
         nextTaskText: todayData.nextTaskText,
         nextTaskId: todayData.nextTaskId,
+        nextRdvText: todayData.nextRdvText,
       });
       if (!ok) {
         Alert.alert(
