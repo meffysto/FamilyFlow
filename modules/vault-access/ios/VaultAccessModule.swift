@@ -34,6 +34,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var nextTaskText: String?
         var nextTaskId: String?
         var nextRdvText: String?
+        var speechBubble: String?
     }
 
     var mascotteName: String
@@ -50,6 +51,19 @@ private func decodeNextTaskPayload(_ payload: String?) -> (text: String?, id: St
     let id = String(payload[..<idx])
     let text = String(payload[payload.index(after: idx)...])
     return (text.isEmpty ? nil : text, id.isEmpty ? nil : id)
+  }
+  return (payload, nil)
+}
+
+/// Décode le payload "nextRdvText\u{1F}speechBubble" — packe 2 champs optionnels
+/// dans un seul argument pour rester à 10 args (limite variadic generics Swift 6.3).
+private func decodeExtrasPayload(_ payload: String?) -> (rdv: String?, bubble: String?) {
+  guard let payload = payload, !payload.isEmpty else { return (nil, nil) }
+  let sep = Character("\u{1F}")
+  if let idx = payload.firstIndex(of: sep) {
+    let rdv = String(payload[..<idx])
+    let bubble = String(payload[payload.index(after: idx)...])
+    return (rdv.isEmpty ? nil : rdv, bubble.isEmpty ? nil : bubble)
   }
   return (payload, nil)
 }
@@ -518,8 +532,9 @@ public class VaultAccessModule: Module {
     // NOTE : `nextTaskText` encode aussi `nextTaskId` au format "id\u{1F}text"
     // (séparateur ASCII Unit Separator). Workaround au bug Swift 6.3 sur les
     // variadic generics qui ne dépassent pas 10 args dans `AsyncFunction`.
-    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, nextRdvText: String?) -> Bool in
+    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, extrasPayload: String?) -> Bool in
       let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
+      let (nextRdvText, speechBubble) = decodeExtrasPayload(extrasPayload)
       if #available(iOS 16.2, *) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
 
@@ -541,7 +556,8 @@ public class VaultAccessModule: Module {
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
           nextTaskId: nextTaskId,
-          nextRdvText: nextRdvText
+          nextRdvText: nextRdvText,
+          speechBubble: speechBubble
         )
         do {
           let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
@@ -559,8 +575,9 @@ public class VaultAccessModule: Module {
     }
 
     /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
-    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, nextRdvText: String?) in
+    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, extrasPayload: String?) in
       let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
+      let (nextRdvText, speechBubble) = decodeExtrasPayload(extrasPayload)
       if #available(iOS 16.2, *) {
         guard let activity = Activity<MascotteActivityAttributes>.activities.first else { return }
         let state = MascotteActivityAttributes.ContentState(
@@ -573,7 +590,8 @@ public class VaultAccessModule: Module {
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
           nextTaskId: nextTaskId,
-          nextRdvText: nextRdvText
+          nextRdvText: nextRdvText,
+          speechBubble: speechBubble
         )
         let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
         await activity.update(content)

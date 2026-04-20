@@ -87,6 +87,7 @@ import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
 import { patchMascotte } from '../lib/mascotte-live-activity';
+import { pickLABubbleShort, type LAStage } from '../lib/mascot/la-bubbles';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultLoveNotes } from './useVaultLoveNotes';
@@ -559,6 +560,16 @@ export function useVaultInternal(): VaultState {
       // Prochain RDV < 24h (affiché pendant le stage midi). Format : "Pédiatre 14:30"
       // ou "Dentiste demain 9:00". Tronqué à 40 chars pour le budget ContentState.
       const nextRdvText = computeNextRdvText(rdvsRef.current);
+      // Bulle compagnon : template court synchrone (l'IA est utilisée uniquement au start
+      // via DashboardCompanionDay pour ne pas brûler le budget sur chaque refresh).
+      const laStage: LAStage = nowHour < 9 ? 'reveil'
+        : nowHour < 12 ? 'travail'
+        : nowHour < 14 ? 'midi'
+        : nowHour < 18 ? 'jeu'
+        : nowHour < 20 ? 'routine'
+        : nowHour < 22 ? 'dodo'
+        : 'recap';
+      const speechBubble = pickLABubbleShort(laStage);
       // XP "effort quotidien" du profil actif (tâches, saga, défis, quêtes…)
       // Exclut les gains d'économie ferme (ventes, bonus craft) qui gonflent artificiellement
       // le compteur et ne reflètent pas l'effort fait par l'utilisateur aujourd'hui.
@@ -593,6 +604,7 @@ export function useVaultInternal(): VaultState {
         nextTaskText,
         nextTaskId,
         nextRdvText,
+        speechBubble,
       });
     }, 300);
   }, []);

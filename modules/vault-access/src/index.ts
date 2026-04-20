@@ -4,8 +4,8 @@ interface VaultAccessModuleType {
   startFeedingActivity(babyName: string, babyEmoji: string, feedType: string, side: string | null, volumeMl: number | null): Promise<boolean>;
   updateFeedingActivity(isPaused: boolean, side: string | null, volumeMl: number | null): Promise<void>;
   stopFeedingActivity(): Promise<void>;
-  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, bonusText: string | null, nextTaskPayload: string | null, nextRdvText: string | null): Promise<boolean>;
-  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, bonusText: string | null, nextTaskPayload: string | null, nextRdvText: string | null): Promise<void>;
+  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, bonusText: string | null, nextTaskPayload: string | null, extrasPayload: string | null): Promise<boolean>;
+  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, bonusText: string | null, nextTaskPayload: string | null, extrasPayload: string | null): Promise<void>;
   stopMascotteActivity(): Promise<void>;
   isMascotteActivityActive(): Promise<boolean>;
   consumePendingTaskToggles(): Promise<string[]>;
@@ -217,6 +217,18 @@ function encodeNextTaskPayload(
   return `${nextTaskId ?? ''}\u001F${nextTaskText ?? ''}`;
 }
 
+/**
+ * Encode `nextRdvText` + `speechBubble` en un seul string "rdv\u001Fbubble". Même
+ * motivation que `encodeNextTaskPayload` : garder ≤10 args côté bridge natif.
+ */
+function encodeExtrasPayload(
+  nextRdvText: string | null,
+  speechBubble: string | null,
+): string | null {
+  if (!nextRdvText && !speechBubble) return null;
+  return `${nextRdvText ?? ''}\u001F${speechBubble ?? ''}`;
+}
+
 export async function startMascotteActivity(
   mascotteName: string,
   tasksDone: number,
@@ -229,10 +241,12 @@ export async function startMascotteActivity(
   nextTaskText: string | null = null,
   nextTaskId: string | null = null,
   nextRdvText: string | null = null,
+  speechBubble: string | null = null,
 ): Promise<boolean> {
   if (!VaultAccessNative) return false;
-  const payload = encodeNextTaskPayload(nextTaskText, nextTaskId);
-  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, bonusText, payload, nextRdvText);
+  const taskPayload = encodeNextTaskPayload(nextTaskText, nextTaskId);
+  const extrasPayload = encodeExtrasPayload(nextRdvText, speechBubble);
+  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, bonusText, taskPayload, extrasPayload);
 }
 
 /**
@@ -249,10 +263,12 @@ export async function updateMascotteActivity(
   nextTaskText: string | null = null,
   nextTaskId: string | null = null,
   nextRdvText: string | null = null,
+  speechBubble: string | null = null,
 ): Promise<void> {
   if (!VaultAccessNative) return;
-  const payload = encodeNextTaskPayload(nextTaskText, nextTaskId);
-  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, bonusText, payload, nextRdvText);
+  const taskPayload = encodeNextTaskPayload(nextTaskText, nextTaskId);
+  const extrasPayload = encodeExtrasPayload(nextRdvText, speechBubble);
+  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, bonusText, taskPayload, extrasPayload);
 }
 
 /**

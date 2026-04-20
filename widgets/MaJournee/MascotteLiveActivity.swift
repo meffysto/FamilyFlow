@@ -19,6 +19,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var nextTaskText: String?          // prochaine tâche (récurrente prioritaire) — affichée pendant reveil/travail/jeu/routine
         var nextTaskId: String?            // identifiant unique de la prochaine tâche (pour ToggleNextTaskIntent)
         var nextRdvText: String?           // prochain RDV < 24h (ex: "Pédiatre 14:30") — affiché pendant midi
+        var speechBubble: String?          // phrase courte du compagnon (≤44 chars) — remplace le subtitle narratif
     }
 
     var mascotteName: String
@@ -314,7 +315,12 @@ struct MascotteLiveActivity: Widget {
             let now = Date()
             let stage = MascotteStage.resolve(date: now, override: context.state.stageOverride)
             let title = stage.title(name: context.attributes.mascotteName)
-            let subtitle = stage.subtitle(state: context.state)
+            let subtitle: String = {
+                if let bubble = context.state.speechBubble, !bubble.isEmpty {
+                    return bubble
+                }
+                return stage.subtitle(state: context.state)
+            }()
             let headEmoji = stage.emoji
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -462,10 +468,18 @@ struct MascotteLockScreenView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.white)
                             .lineLimit(1)
-                        Text(stage.subtitle(state: context.state))
-                            .font(.caption2)
-                            .foregroundColor(.white.opacity(0.7))
-                            .lineLimit(1)
+                        if let bubble = context.state.speechBubble, !bubble.isEmpty {
+                            Text("\u{201C}\(bubble)\u{201D}")
+                                .font(.caption2)
+                                .italic()
+                                .foregroundColor(.white.opacity(0.85))
+                                .lineLimit(2)
+                        } else {
+                            Text(stage.subtitle(state: context.state))
+                                .font(.caption2)
+                                .foregroundColor(.white.opacity(0.7))
+                                .lineLimit(1)
+                        }
                     }
                     ProgressView(timerInterval: progressRange(from: context.attributes.startedAt), countsDown: false) {
                         EmptyView()

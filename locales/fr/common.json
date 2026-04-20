@@ -4318,6 +4318,50 @@
       "xp": "+5% XP",
       "active": "Bonus compagnon actif"
     },
+    "la": {
+      "reveil": {
+        "1": "Bien dormi ? On y va !",
+        "2": "Debout ! Le soleil t'attend.",
+        "3": "Une belle journee commence.",
+        "4": "Hop hop, on bouge doucement."
+      },
+      "travail": {
+        "1": "On coche une tache ?",
+        "2": "Un petit effort, on y est.",
+        "3": "Avance pas a pas.",
+        "4": "Je suis la avec toi."
+      },
+      "midi": {
+        "1": "Miam, ca sent bon !",
+        "2": "Une pause, tu l'as merite.",
+        "3": "Bon appetit !",
+        "4": "On savoure ce midi."
+      },
+      "jeu": {
+        "1": "Tu joues avec moi ?",
+        "2": "C'est l'heure de bouger !",
+        "3": "On s'amuse dans la clairiere.",
+        "4": "Viens, on explore !"
+      },
+      "routine": {
+        "1": "Douche, dents, pyjama.",
+        "2": "On ralentit tout doucement.",
+        "3": "Le calme du soir approche.",
+        "4": "La routine, c'est cocoon."
+      },
+      "dodo": {
+        "1": "Une histoire avant de dormir ?",
+        "2": "Le lit t'appelle bientot.",
+        "3": "Une page, puis on dort.",
+        "4": "Bientot les reves, prepare-toi."
+      },
+      "recap": {
+        "1": "Belle journee, bravo !",
+        "2": "Repose-toi, tu l'as gagne.",
+        "3": "Fiere de toi aujourd'hui.",
+        "4": "On recommence demain ?"
+      }
+    },
     "msg": {
       "taskDone": {
         "1": "Bravo {{profileName}} ! Bien joue !",

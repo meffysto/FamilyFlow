@@ -40,6 +40,8 @@ export interface MascotteSnapshot {
   nextTaskId?: string | null;
   /** Prochain RDV dans les 24h (ex: "Pédiatre 14:30"). Affiché pendant midi. */
   nextRdvText?: string | null;
+  /** Bulle de dialogue courte du compagnon (≤44 chars). Remplace le subtitle narratif. */
+  speechBubble?: string | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
@@ -84,6 +86,7 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
       snap.nextRdvText ?? null,
+      snap.speechBubble ?? null,
     );
   } catch (e) {
     if (__DEV__) console.warn('[mascotte] startMascotteActivity threw:', e);
@@ -112,6 +115,7 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
       snap.nextRdvText ?? null,
+      snap.speechBubble ?? null,
     );
   } catch {
     // silencieux — feature non critique

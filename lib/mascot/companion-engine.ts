@@ -498,6 +498,7 @@ export async function generateCompanionAIMessage(
   event: CompanionEvent,
   context: CompanionMessageContext,
   aiCall: ((prompt: string) => Promise<string>) | null,
+  options?: { skipCache?: boolean },
 ): Promise<string> {
   const fallbackKey = pickCompanionMessage(event, context);
   if (!aiCall) return fallbackKey;
@@ -505,10 +506,12 @@ export async function generateCompanionAIMessage(
   const cacheKey = buildCacheKey(event, context);
   const ttl = CACHE_TTL[event] ?? DEFAULT_CACHE_TTL;
 
-  // Cache hit
-  const cached = aiMessageCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < ttl) {
-    return cached.message;
+  // Cache hit (sauf si skipCache explicite — ex: régénération manuelle LA)
+  if (!options?.skipCache) {
+    const cached = aiMessageCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < ttl) {
+      return cached.message;
+    }
   }
 
   // Vérifier le budget
