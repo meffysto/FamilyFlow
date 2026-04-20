@@ -22,8 +22,11 @@ import {
   startMascotte,
   stopMascotte,
   isMascotteActive,
+  loadCompanionSpriteBase64,
   type MascotteStageOverride,
 } from '../../lib/mascotte-live-activity';
+import { getCompanionStage } from '../../lib/mascot/companion-engine';
+import { calculateLevel } from '../../lib/gamification';
 import type { DashboardSectionProps } from './types';
 
 const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
@@ -93,12 +96,18 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     setBusy(true);
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      const companion = activeProfile?.companion;
+      const companionLevel = calculateLevel(activeProfile?.points ?? 0);
+      const companionSpriteBase64 = companion
+        ? await loadCompanionSpriteBase64(companion.activeSpecies, getCompanionStage(companionLevel))
+        : null;
       const ok = await startMascotte({
         mascotteName,
         tasksDone: todayData.done,
         tasksTotal: todayData.total,
         xpGained: 0,
         currentMeal: todayData.meal,
+        companionSpriteBase64,
       });
       if (!ok) {
         Alert.alert(
@@ -112,7 +121,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     } finally {
       setBusy(false);
     }
-  }, [busy, todayData, mascotteName]);
+  }, [busy, todayData, mascotteName, activeProfile]);
 
   const handleStop = useCallback(async () => {
     if (busy) return;

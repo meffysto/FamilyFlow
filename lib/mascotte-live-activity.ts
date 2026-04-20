@@ -10,12 +10,16 @@
  */
 
 import { Platform } from 'react-native';
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system/legacy';
 import {
   startMascotteActivity,
   updateMascotteActivity,
   stopMascotteActivity,
   isMascotteActivityActive,
 } from '../modules/vault-access/src';
+import { COMPANION_SPRITES } from './mascot/companion-sprites';
+import type { CompanionSpecies, CompanionStage } from './mascot/companion-types';
 
 export type MascotteStageOverride = 'reveil' | 'travail' | 'midi' | 'jeu' | 'routine' | 'dodo';
 
@@ -26,9 +30,31 @@ export interface MascotteSnapshot {
   xpGained: number;
   currentMeal: string | null;
   stageOverride?: MascotteStageOverride | null;
+  /** Sprite compagnon encodé base64 (PNG). Affiché sur le Lock Screen. */
+  companionSpriteBase64?: string | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
+
+/**
+ * Charge le PNG idle_1 d'un compagnon et renvoie sa représentation base64.
+ * Retourne null si l'espèce ou le stade n'ont pas de sprite mappé.
+ */
+export async function loadCompanionSpriteBase64(
+  species: CompanionSpecies,
+  stage: CompanionStage,
+): Promise<string | null> {
+  try {
+    const entry = COMPANION_SPRITES[species]?.[stage];
+    if (!entry) return null;
+    const asset = Asset.fromModule(entry.idle_1);
+    if (!asset.localUri) await asset.downloadAsync();
+    if (!asset.localUri) return null;
+    return await FileSystem.readAsStringAsync(asset.localUri, { encoding: 'base64' });
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Démarre la Live Activity mascotte. Idempotent :
@@ -45,6 +71,7 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.xpGained,
       snap.currentMeal,
       snap.stageOverride ?? null,
+      snap.companionSpriteBase64 ?? null,
     );
   } catch {
     return false;
@@ -67,6 +94,7 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.xpGained,
       snap.currentMeal,
       snap.stageOverride ?? null,
+      snap.companionSpriteBase64 ?? null,
     );
   } catch {
     // silencieux — feature non critique

@@ -11,8 +11,9 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var tasksDone: Int
         var tasksTotal: Int
         var xpGained: Int
-        var currentMeal: String?    // ex: "Pâtes carbonara" (déjeuner ou dîner selon l'heure)
-        var stageOverride: String?  // "reveil"|"travail"|"midi"|"jeu"|"routine"|"dodo" (dev/test)
+        var currentMeal: String?           // ex: "Pâtes carbonara" (déjeuner ou dîner selon l'heure)
+        var stageOverride: String?         // "reveil"|"travail"|"midi"|"jeu"|"routine"|"dodo" (dev/test)
+        var companionSpriteBase64: String? // PNG idle du compagnon du profil (Lock Screen)
     }
 
     var mascotteName: String
@@ -113,17 +114,18 @@ enum MascotteStage {
         }
     }
 
-    /// Progression visuelle (0-1) pour la barre Lock Screen
-    func progress(state: MascotteActivityAttributes.ContentState) -> Double {
-        switch self {
-        case .reveil: return 0.08
-        case .travail: return 0.30
-        case .midi: return 0.50
-        case .jeu: return 0.70
-        case .routine: return 0.88
-        case .dodo: return 1.0
-        }
-    }
+}
+
+/// Plage de progression de la Live Activity : du moment où l'utilisateur a
+/// appuyé sur "Réveiller" jusqu'à la fin de cette journée (minuit suivant).
+/// Alimente `ProgressView(timerInterval:)` pour une progression système animée,
+/// qui continue même quand le widget extension est suspendu.
+@available(iOS 16.2, *)
+private func progressRange(from startedAt: Date) -> ClosedRange<Date> {
+    let cal = Calendar.current
+    let startOfDay = cal.startOfDay(for: startedAt)
+    let endOfDay = cal.date(byAdding: .day, value: 1, to: startOfDay) ?? startedAt.addingTimeInterval(86400)
+    return startedAt...endOfDay
 }
 
 // MARK: - Live Activity
@@ -155,8 +157,12 @@ struct MascotteLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressView(value: stage.progress(state: context.state))
-                        .tint(.green)
+                    ProgressView(timerInterval: progressRange(from: context.attributes.startedAt), countsDown: false) {
+                        EmptyView()
+                    } currentValueLabel: {
+                        EmptyView()
+                    }
+                    .tint(.green)
                 }
             } compactLeading: {
                 Text(stage.emoji)
@@ -183,11 +189,10 @@ struct MascotteLockScreenView: View {
     var body: some View {
         let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
         return HStack(spacing: 14) {
-                Text(stage.emoji)
-                    .font(.system(size: 38))
-                    .frame(width: 56, height: 56)
+                companionAvatar(fallbackEmoji: stage.emoji)
+                    .frame(width: 72, height: 72)
                     .background(Color.white.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
@@ -208,14 +213,36 @@ struct MascotteLockScreenView: View {
                         .font(.caption2)
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)
-                    ProgressView(value: stage.progress(state: context.state))
-                        .tint(.green)
-                        .padding(.top, 2)
+                    ProgressView(timerInterval: progressRange(from: context.attributes.startedAt), countsDown: false) {
+                        EmptyView()
+                    } currentValueLabel: {
+                        EmptyView()
+                    }
+                    .tint(.green)
+                    .padding(.top, 2)
                 }
 
                 Spacer(minLength: 0)
             }
         .padding(14)
         .activityBackgroundTint(Color.black.opacity(0.85))
+    }
+
+    /// Affiche le sprite pixel art du compagnon si disponible dans le ContentState,
+    /// sinon fallback sur l'emoji du stage narratif.
+    @ViewBuilder
+    private func companionAvatar(fallbackEmoji: String) -> some View {
+        if let b64 = context.state.companionSpriteBase64,
+           let data = Data(base64Encoded: b64),
+           let uiImage = UIImage(data: data) {
+            Image(uiImage: uiImage)
+                .interpolation(.none)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .scaleEffect(1.5)
+        } else {
+            Text(fallbackEmoji)
+                .font(.system(size: 48))
+        }
     }
 }
