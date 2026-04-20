@@ -16,6 +16,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var companionSpriteBase64: String? // PNG idle du compagnon du profil (Lock Screen)
         var recapMode: Bool                // true >= 21h → layout récap de fin de journée
         var bonusText: String?             // ligne bonus récap (ex: "⬆️ Niveau 12 atteint !")
+        var nextTaskText: String?          // prochaine tâche (récurrente prioritaire) — affichée pendant travail/jeu/routine
     }
 
     var mascotteName: String
@@ -150,6 +151,17 @@ private func recapLine(state: MascotteActivityAttributes.ContentState) -> String
     return line1.isEmpty ? "Repose-toi bien 💚" : line1
 }
 
+/// Affiche la prochaine tâche uniquement pendant les stages d'activité (travail/jeu/routine).
+/// Les stages reveil/midi/dodo et le mode récap ont leur propre narratif (repas, dodo, stats).
+@available(iOS 16.2, *)
+private func shouldShowNextTask(stage: MascotteStage, isRecap: Bool) -> Bool {
+    if isRecap { return false }
+    switch stage {
+    case .travail, .jeu, .routine: return true
+    case .reveil, .midi, .dodo: return false
+    }
+}
+
 /// Sprite pixel-art du compagnon pour la DI compact (leading + minimal).
 /// Si le sprite n'est pas disponible dans le state, fallback sur l'emoji de stage.
 /// Taille fixe ~20pt adaptée à la pilule ; `interpolation(.none)` préserve le pixel-art.
@@ -264,12 +276,27 @@ struct MascotteLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressView(timerInterval: progressRange(from: context.attributes.startedAt), countsDown: false) {
-                        EmptyView()
-                    } currentValueLabel: {
-                        EmptyView()
+                    VStack(spacing: 5) {
+                        if let next = context.state.nextTaskText, !next.isEmpty,
+                           shouldShowNextTask(stage: stage, isRecap: isRecap) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "circle")
+                                    .font(.caption2)
+                                    .foregroundColor(.green)
+                                Text("Prochain : \(next)")
+                                    .font(.caption2)
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .lineLimit(1)
+                                Spacer(minLength: 0)
+                            }
+                        }
+                        ProgressView(timerInterval: progressRange(from: context.attributes.startedAt), countsDown: false) {
+                            EmptyView()
+                        } currentValueLabel: {
+                            EmptyView()
+                        }
+                        .tint(.green)
                     }
-                    .tint(.green)
                 }
             } compactLeading: {
                 companionCompactView(state: context.state, fallbackEmoji: headEmoji)

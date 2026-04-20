@@ -542,6 +542,10 @@ export function useVaultInternal(): VaultState {
       const bonusText = currentLevel > levelBeforeToday
         ? `⬆️ Niveau ${currentLevel} atteint !`
         : null;
+      // Prochaine tâche : récurrente non-cochée d'abord, sinon première non-cochée
+      const uncompletedToday = todayTasks.filter(t => !t.completed);
+      const nextTask = uncompletedToday.find(t => t.recurrence) ?? uncompletedToday[0] ?? null;
+      const nextTaskText = nextTask?.text ?? null;
       // patchMascotte : merge avec le lastSnapshot → préserve mascotteName et companionSpriteBase64
       patchMascotte({
         tasksDone: doneCount,
@@ -550,6 +554,7 @@ export function useVaultInternal(): VaultState {
         currentMeal: mealText,
         recapMode,
         bonusText,
+        nextTaskText,
       });
     }, 300);
   }, []);

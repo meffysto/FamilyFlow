@@ -36,6 +36,8 @@ export interface MascotteSnapshot {
   recapMode?: boolean | null;
   /** Ligne bonus optionnelle affichée en mode récap (ex: level up du jour). */
   bonusText?: string | null;
+  /** Prochaine tâche à faire (récurrente prioritaire). Affichée pendant travail/jeu/routine. */
+  nextTaskText?: string | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
@@ -78,6 +80,7 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.companionSpriteBase64 ?? null,
       snap.recapMode ?? false,
       snap.bonusText ?? null,
+      snap.nextTaskText ?? null,
     );
   } catch {
     return false;
@@ -103,6 +106,7 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.companionSpriteBase64 ?? null,
       snap.recapMode ?? false,
       snap.bonusText ?? null,
+      snap.nextTaskText ?? null,
     );
   } catch {
     // silencieux — feature non critique

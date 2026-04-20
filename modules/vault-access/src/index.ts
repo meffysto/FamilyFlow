@@ -4,8 +4,8 @@ interface VaultAccessModuleType {
   startFeedingActivity(babyName: string, babyEmoji: string, feedType: string, side: string | null, volumeMl: number | null): Promise<boolean>;
   updateFeedingActivity(isPaused: boolean, side: string | null, volumeMl: number | null): Promise<void>;
   stopFeedingActivity(): Promise<void>;
-  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, recapMode: boolean, bonusText: string | null): Promise<boolean>;
-  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, recapMode: boolean, bonusText: string | null): Promise<void>;
+  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, recapMode: boolean, bonusText: string | null, nextTaskText: string | null): Promise<boolean>;
+  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, recapMode: boolean, bonusText: string | null, nextTaskText: string | null): Promise<void>;
   stopMascotteActivity(): Promise<void>;
   isMascotteActivityActive(): Promise<boolean>;
   pauseWidgetFeeding(): Promise<void>;
@@ -213,9 +213,10 @@ export async function startMascotteActivity(
   companionSpriteBase64: string | null = null,
   recapMode: boolean = false,
   bonusText: string | null = null,
+  nextTaskText: string | null = null,
 ): Promise<boolean> {
   if (!VaultAccessNative) return false;
-  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, recapMode, bonusText);
+  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, recapMode, bonusText, nextTaskText);
 }
 
 /**
@@ -230,9 +231,10 @@ export async function updateMascotteActivity(
   companionSpriteBase64: string | null = null,
   recapMode: boolean = false,
   bonusText: string | null = null,
+  nextTaskText: string | null = null,
 ): Promise<void> {
   if (!VaultAccessNative) return;
-  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, recapMode, bonusText);
+  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, recapMode, bonusText, nextTaskText);
 }
 
 /**

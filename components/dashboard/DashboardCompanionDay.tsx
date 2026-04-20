@@ -95,7 +95,11 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       : null;
 
     const stage = stageForHour(hour, mascotteName);
-    return { done, total, meal, stage, hour, recapMode, recapBonusText, xpGainedToday };
+    // Prochaine tâche : récurrente non-cochée d'abord, sinon première non-cochée
+    const uncompletedToday = todayTasks.filter(t => !t.completed);
+    const nextTask = uncompletedToday.find(t => t.recurrence) ?? uncompletedToday[0] ?? null;
+    const nextTaskText = nextTask?.text ?? null;
+    return { done, total, meal, stage, hour, recapMode, recapBonusText, xpGainedToday, nextTaskText };
   }, [tasks, meals, tasksCompletedToday, mascotteName, gamiData, activeProfile?.id, activeProfile?.points]);
 
   // Re-check actif state on mount, focus, et AppState change
@@ -132,6 +136,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
         companionSpriteBase64,
         recapMode: todayData.recapMode,
         bonusText: todayData.recapBonusText,
+        nextTaskText: todayData.nextTaskText,
       });
       if (!ok) {
         Alert.alert(
