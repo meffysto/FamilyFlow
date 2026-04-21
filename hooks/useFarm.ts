@@ -33,6 +33,7 @@ import {
 import {
   CRAFT_RECIPES,
   craftItem as craftItemFn,
+  craftItemWithSelection as craftItemWithSelectionFn,
   sellCraftedItem as sellCraftedItemFn,
   serializeHarvestInventory,
   parseHarvestInventory,
@@ -526,7 +527,12 @@ export function useFarm(
   }, [vault, writeProfileField, addCoins, refreshFarm, refreshGamification]);
 
   /** Crafter un item a partir des ingredients */
-  const craft = useCallback(async (profileId: string, recipeId: string, qty: number = 1): Promise<CraftedItem[] | null> => {
+  const craft = useCallback(async (
+    profileId: string,
+    recipeId: string,
+    qty: number = 1,
+    selection?: Record<string, HarvestGrade>,
+  ): Promise<CraftedItem[] | null> => {
     if (!vault) return null;
 
     const safeQty = Math.max(1, Math.floor(qty));
@@ -540,7 +546,11 @@ export function useFarm(
     const harvestInv = profile.harvestInventory ?? {};
     const farmInv: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
-    const result = craftItemFn(recipe, harvestInv, farmInv, safeQty);
+    // Phase B UI — si selection fournie par CraftSheet picker, utiliser craftItemWithSelectionFn.
+    // Sinon fallback craftItemFn (cascade auto maillon-faible) — comportement identique à avant.
+    const result = selection
+      ? craftItemWithSelectionFn(recipe, harvestInv, farmInv, selection, safeQty)
+      : craftItemFn(recipe, harvestInv, farmInv, safeQty);
     if (!result) throw new Error('Ingredients insuffisants');
 
     // Ajouter les items craftes

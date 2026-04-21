@@ -2809,8 +2809,8 @@ export default function TreeScreen() {
         craftedItems={profile?.craftedItems ?? []}
         treeStage={stageInfo.stage}
         unlockedRecipes={unlockedRecipes}
-        onCraft={async (recipeId, qty) => {
-          const result = await craft(profile!.id, recipeId, qty);
+        onCraft={async (recipeId, qty, selection) => {
+          const result = await craft(profile!.id, recipeId, qty, selection);
           if (result && result.length > 0) triggerActionMsg('craft');
           return result;
         }}

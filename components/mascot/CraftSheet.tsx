@@ -50,6 +50,7 @@ import {
   type HarvestGrade,
 } from '../../lib/mascot/grade-engine';
 import { getDefaultGradeSelection, canCraftAtGrade, getCraftOutputGrade } from '../../lib/mascot/craft-engine';
+import { CraftGradePicker } from './CraftGradePicker';
 import {
   CROP_CATALOG,
   BUILDING_CATALOG,
@@ -80,7 +81,11 @@ interface CraftSheetProps {
   farmInventory: FarmInventory;
   craftedItems: CraftedItem[];
   treeStage: TreeStage;
-  onCraft: (recipeId: string, qty?: number) => Promise<CraftedItem[] | CraftedItem | null>;
+  onCraft: (
+    recipeId: string,
+    qty?: number,
+    selection?: Record<string, HarvestGrade>,
+  ) => Promise<CraftedItem[] | CraftedItem | null>;
   onSellHarvest: (cropId: string, qty: number) => Promise<number>;
   onSellCrafted: (recipeId: string, qty: number) => Promise<number>;
   onOfferItem?: (itemType: string, itemId: string, maxQty: number, itemName: string) => void;
@@ -217,6 +222,7 @@ export function CraftSheet({
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [selectedRecipe, setSelectedRecipe] = useState<CraftRecipe | null>(null);
   const [craftQty, setCraftQty] = useState<number>(1);
+  const [gradeSelection, setGradeSelection] = useState<Record<string, HarvestGrade>>({});
 
   // Animation bounce sur le bouton craft
   const craftBtnScale = useSharedValue(1);
@@ -232,10 +238,14 @@ export function CraftSheet({
 
   // ── Handlers ──────────────────────────────────
 
-  const handleCraft = useCallback(async (recipe: CraftRecipe, qty: number = 1) => {
+  const handleCraft = useCallback(async (
+    recipe: CraftRecipe,
+    qty: number = 1,
+    selection?: Record<string, HarvestGrade>,
+  ) => {
     setCrafting(recipe.id);
     try {
-      const result = await onCraft(recipe.id, qty);
+      const result = await onCraft(recipe.id, qty, selection);
       const success = Array.isArray(result) ? result.length > 0 : !!result;
       if (success) {
         craftBtnScale.value = withSequence(
@@ -418,7 +428,11 @@ export function CraftSheet({
                         !craftable && !locked && { borderColor: Farm.woodHighlight, borderWidth: 1.5 },
                         locked && { opacity: 0.5, borderColor: Farm.woodHighlight, borderWidth: 1.5 },
                       ]}
-                      onPress={locked ? undefined : () => { setCraftQty(1); setSelectedRecipe(recipe); }}
+                      onPress={locked ? undefined : () => {
+                        setCraftQty(1);
+                        setSelectedRecipe(recipe);
+                        setGradeSelection(getDefaultGradeSelection(harvestInventory, recipe, 1));
+                      }}
                       activeOpacity={locked ? 1 : 0.7}
                       disabled={locked}
                     >
@@ -503,12 +517,12 @@ export function CraftSheet({
           transparent
           animationType="fade"
           visible={selectedRecipe !== null}
-          onRequestClose={() => setSelectedRecipe(null)}
+          onRequestClose={() => { setSelectedRecipe(null); setGradeSelection({}); }}
         >
           <TouchableOpacity
             style={styles.catModalOverlay}
             activeOpacity={1}
-            onPress={() => setSelectedRecipe(null)}
+            onPress={() => { setSelectedRecipe(null); setGradeSelection({}); }}
           >
             <TouchableOpacity
               style={[styles.catModalContent, Shadows.lg]}
@@ -518,7 +532,7 @@ export function CraftSheet({
               {/* Bouton fermer */}
               <TouchableOpacity
                 style={styles.catModalClose}
-                onPress={() => setSelectedRecipe(null)}
+                onPress={() => { setSelectedRecipe(null); setGradeSelection({}); }}
                 activeOpacity={0.7}
               >
                 <Text style={styles.catModalCloseText}>{'✕'}</Text>
@@ -592,6 +606,48 @@ export function CraftSheet({
                 })}
               </ScrollView>
 
+              {/* Picker grade + preview (Phase B UI) */}
+              {(() => {
+                const outputGrade = getCraftOutputGrade(gradeSelection);
+                const estimatedSellValue = Math.floor(
+                  selectedRecipe.sellValue * gradeSellMultiplier(outputGrade),
+                );
+                const hasSelection = Object.keys(gradeSelection).length > 0;
+                return (
+                  <>
+                    <CraftGradePicker
+                      recipe={selectedRecipe}
+                      harvestInventory={harvestInventory}
+                      craftQty={craftQty}
+                      selection={gradeSelection}
+                      onSelectionChange={setGradeSelection}
+                      outputGrade={outputGrade}
+                    />
+                    {hasSelection && (
+                      <View style={{
+                        paddingVertical: Spacing.xs,
+                        marginBottom: Spacing.sm,
+                        gap: 2,
+                      }}>
+                        <Text style={{
+                          fontSize: FontSize.caption,
+                          color: Farm.brownTextSub,
+                        }}>
+                          {t('craft.gradeOutputLabel')} : {getGradeEmoji(outputGrade)} {t(getGradeLabelKey(outputGrade))}
+                        </Text>
+                        <Text style={{
+                          fontSize: FontSize.caption,
+                          fontWeight: FontWeight.semibold,
+                          color: Farm.brownText,
+                        }}>
+                          {t('craft.sellValueLabel')} : {estimatedSellValue} 🍃
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                );
+              })()}
+
               {/* Selector qty + Bouton Crafter — FarmButton 3D */}
               {(() => {
                 const maxQty = maxCraftableQty(selectedRecipe, harvestInventory, farmInventory);
@@ -646,9 +702,13 @@ export function CraftSheet({
                           ? async () => {
                               const r = selectedRecipe;
                               const qtyToCraft = clampedQty;
+                              const selectionToPass = Object.keys(gradeSelection).length > 0
+                                ? gradeSelection
+                                : undefined;
                               setSelectedRecipe(null);
                               setCraftQty(1);
-                              await handleCraft(r, qtyToCraft);
+                              setGradeSelection({});
+                              await handleCraft(r, qtyToCraft, selectionToPass);
                             }
                           : undefined}
                         disabled={!craftable || isCurrentlyCrafting}
