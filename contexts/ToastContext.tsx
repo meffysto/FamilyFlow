@@ -178,7 +178,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const existing = prev.find(i => i.emoji === item.emoji);
       if (existing) {
         return prev.map(i => i.emoji === item.emoji
-          ? { ...i, qty: i.qty + item.qty, wager: item.wager ?? i.wager }
+          ? { ...i, qty: i.qty + item.qty, wager: item.wager ?? i.wager, grade: item.grade ?? i.grade }
           : i);
       }
       return [...prev, item];

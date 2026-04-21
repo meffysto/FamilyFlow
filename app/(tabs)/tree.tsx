@@ -68,6 +68,7 @@ import { FamilyQuestBanner } from '../../components/mascot/FamilyQuestBanner';
 import { FamilyQuestDetailSheet } from '../../components/mascot/FamilyQuestDetailSheet';
 import { FamilyQuestPickerSheet } from '../../components/mascot/FamilyQuestPickerSheet';
 import * as Haptics from 'expo-haptics';
+import { getGradeEmoji } from '../../lib/mascot/grade-engine';
 import { useFarm } from '../../hooks/useFarm';
 import { useGarden } from '../../hooks/useGarden';
 import { SunriseReport, type SunriseResource } from '../../components/mascot/SunriseReport';
@@ -75,6 +76,7 @@ import { BadgesSheet } from '../../components/mascot/BadgesSheet';
 import { CompanionPicker } from '../../components/mascot/CompanionPicker';
 import { CompanionSlot } from '../../components/mascot/CompanionSlot';
 import { PortalSprite } from '../../components/village/PortalSprite';
+import { getDailyDeal } from '../../lib/village/market-engine';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
 import { getPendingResources } from '../../lib/mascot/building-engine';
 import {
@@ -394,7 +396,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Village / Portail (Phase 28 — MAP-03)
-  const { addContribution, getPendingItems, unlockedBuildings } = useGarden();
+  const { addContribution, getPendingItems, unlockedBuildings, marketStock } = useGarden();
 
   // Total items à récupérer dans le village (badge portail)
   const villagePendingCount = useMemo(
@@ -445,6 +447,7 @@ export default function TreeScreen() {
     totalCollected: number;
     yesterdayTasks: number;
     hasBonus: boolean;
+    dailyDeal?: { label: string; emoji: string; discountedPrice: number; originalPrice: number } | null;
   } | null>(null);
   const [tooltipInfo, setTooltipInfo] = useState<{ cellId: string; cropId: string; tasksCompleted: number; plotIndex: number } | null>(null);
 
@@ -1083,7 +1086,16 @@ export default function TreeScreen() {
           label: r.label,
           quantity: r.qty,
         }));
-        setSunriseData({ resources, totalCollected: totalPending, yesterdayTasks: 0, hasBonus: false });
+        const deal = getDailyDeal(marketStock ?? {});
+        const dailyDeal = deal
+          ? {
+              label: deal.def.label,
+              emoji: deal.def.emoji,
+              discountedPrice: deal.discountedPrice,
+              originalPrice: deal.originalPrice,
+            }
+          : null;
+        setSunriseData({ resources, totalCollected: totalPending, yesterdayTasks: 0, hasBonus: false, dailyDeal });
         await SecureStore.setItemAsync(SUNRISE_KEY, String(now));
       } else {
         const detail = Object.values(resourceMap)
@@ -1326,9 +1338,17 @@ export default function TreeScreen() {
               wager: result.wager && result.wager.won
                 ? { won: true, multiplier: result.wager.multiplier, dropBack: result.wager.dropBack }
                 : undefined,
+              // Phase A (GRADE-04) — badge grade > ordinaire + coins bonus
+              grade: result.grade && result.grade !== 'ordinaire'
+                ? { key: result.grade, bonusCoins: result.gradeBonusCoins ?? 0, emoji: getGradeEmoji(result.grade) }
+                : undefined,
             },
             result.isGolden,
           );
+          // Haptique renforcée pour grade « parfait » (2% — récompense tactile rare)
+          if (result.grade === 'parfait') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          }
           // Défaite wager : toast discret en complément (carte cachera le pari
           // car wager.won=false → pas de badge doré). Message neutre, non punitif.
           if (result.wager && !result.wager.won) {
@@ -2925,6 +2945,7 @@ export default function TreeScreen() {
         totalCollected={sunriseData?.totalCollected ?? 0}
         yesterdayTasks={sunriseData?.yesterdayTasks ?? 0}
         hasBonus={sunriseData?.hasBonus ?? false}
+        dailyDeal={sunriseData?.dailyDeal ?? null}
         onDismiss={() => setSunriseData(null)}
       />
       <HarvestEventOverlay

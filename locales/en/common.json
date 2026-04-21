@@ -4045,6 +4045,12 @@
       "growing": "🌱 {{count}} growing",
       "ready": "✨ {{count}} ready to harvest!"
     },
+    "grade": {
+      "ordinaire": "Common",
+      "beau": "Fine",
+      "superbe": "Superb",
+      "parfait": "Perfect"
+    },
     "crop": {
       "carrot": "Carrot",
       "carrot_desc": "Grows fast, great for beginners. Modest but reliable harvest.",
@@ -4252,6 +4258,8 @@
     "culture-3_desc": "Unlock sunflower crop",
     "culture-4": "Master Gardener",
     "culture-4_desc": "50% chance of double harvest",
+    "culture-5": "Precision Farming",
+    "culture-5_desc": "Chance to harvest premium quality crops (Fine 20% ×1.5 · Superb 8% ×2.5 · Perfect 2% ×4)",
     "elevage-1": "Optimal Feed",
     "elevage-1_desc": "Buildings produce 25% faster",
     "elevage-2": "Expanded Barn",

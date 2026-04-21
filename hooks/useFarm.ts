@@ -49,6 +49,11 @@ import {
   getTechBonuses,
 } from '../lib/mascot/tech-engine';
 import {
+  rollHarvestGrade,
+  getGradeMultiplier,
+  type HarvestGrade,
+} from '../lib/mascot/grade-engine';
+import {
   checkWearEvents,
   repairWearEvent,
   getActiveWearEffects,
@@ -313,7 +318,7 @@ export function useFarm(
   }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
-  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null; qty: number; wager?: { won: boolean; multiplier: number; dropBack: boolean; cumulCurrent: number; cumulTarget: number }; sporeeFirstObtained?: boolean } | null> => {
+  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null; qty: number; wager?: { won: boolean; multiplier: number; dropBack: boolean; cumulCurrent: number; cumulTarget: number }; sporeeFirstObtained?: boolean; grade?: HarvestGrade; gradeBonusCoins?: number } | null> => {
     if (!vault) return null;
 
 
@@ -398,6 +403,22 @@ export function useFarm(
       updatedHarvestInv[result.harvestedCropId] = (currentHarvestInv[result.harvestedCropId] ?? 0) + finalQty;
     }
 
+    // Phase A (GRADE-02/03) — Roll grade de récolte si tech culture-5 débloquée.
+    // Bonus coins = delta par rapport à la vente normale (harvestReward × qty × (mult − 1)).
+    // Sans la tech : grade/gradeBonusCoins restent undefined/0 → compat stricte.
+    const unlockedTechs = profile.farmTech ?? [];
+    const hasGradeTech = unlockedTechs.includes('culture-5');
+    let grade: HarvestGrade | undefined;
+    let gradeBonusCoins = 0;
+    if (hasGradeTech) {
+      grade = rollHarvestGrade();
+      const gradeMultiplier = getGradeMultiplier(grade);
+      if (gradeMultiplier > 1) {
+        const harvestReward = CROP_CATALOG.find(c => c.id === result.harvestedCropId)?.harvestReward ?? 0;
+        gradeBonusCoins = Math.round(harvestReward * finalQty * (gradeMultiplier - 1));
+      }
+    }
+
     if (wasGoldenEffect) {
       // Ecrire farm en une seule operation (crops + harvest inv + reset golden flag)
       const updatedProfile = {
@@ -413,6 +434,10 @@ export function useFarm(
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
       await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, updatedProfile));
       await refreshFarm(profileId);
+      // Phase A (GRADE-03) — créditer le bonus coins après l'écriture ferme
+      if (gradeBonusCoins > 0 && grade) {
+        await addCoins(profileId, gradeBonusCoins, `✨ Récolte grade ${grade} ×${getGradeMultiplier(grade)}`);
+      }
       if (sporeeRefused) {
         showToast('Inventaire Sporée plein', 'error');
       }
@@ -424,7 +449,7 @@ export function useFarm(
         : undefined;
       // Phase 41 (SPOR-10) — signal premier obtention Sporée (tooltip one-shot)
       const sporeeFirstObtained = sporeeDropped || wagerDropBack;
-      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained };
+      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained, grade, gradeBonusCoins };
     }
 
     // Preparer les champs a ecrire (chemin standard — pas de golden effect)
@@ -454,6 +479,10 @@ export function useFarm(
     // Ecrire tous les champs en une seule operation
     await writeProfileFields(profileId, fieldsToWrite);
     await refreshFarm(profileId);
+    // Phase A (GRADE-03) — créditer le bonus coins après l'écriture ferme
+    if (gradeBonusCoins > 0 && grade) {
+      await addCoins(profileId, gradeBonusCoins, `✨ Récolte grade ${grade} ×${getGradeMultiplier(grade)}`);
+    }
     if (sporeeRefused) {
       showToast('Inventaire Sporée plein', 'error');
     }
@@ -468,8 +497,8 @@ export function useFarm(
       : undefined;
     // Phase 41 (SPOR-10) — signal premier obtention Sporée (tooltip one-shot)
     const sporeeFirstObtained = sporeeDropped || wagerDropBack;
-    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained };
-  }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress, onContribution, showToast]);
+    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained, grade, gradeBonusCoins };
+  }, [vault, profiles, writeProfileFields, refreshFarm, addCoins, onQuestProgress, onContribution, showToast]);
 
   /** Vendre une recolte brute depuis l'inventaire (qty = nombre d'unités à vendre) */
   const sellHarvest = useCallback(async (profileId: string, cropId: string, qty: number = 1): Promise<number> => {

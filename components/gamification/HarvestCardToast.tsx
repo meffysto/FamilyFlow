@@ -24,9 +24,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Farm } from '../../constants/farm-theme';
 
 // ─── Constantes animations (identiques à RewardCardToast) ─────────────────────
 
@@ -44,6 +46,12 @@ export interface HarvestItem {
     won: boolean;
     multiplier: number;
     dropBack: boolean;
+  };
+  /** Phase A (GRADE-04) — grade de récolte > ordinaire : badge emoji + libellé i18n + coins bonus. */
+  grade?: {
+    key: string;    // 'beau' | 'superbe' | 'parfait' (jamais 'ordinaire' côté toast)
+    bonusCoins: number;
+    emoji: string;
   };
 }
 
@@ -118,6 +126,7 @@ interface ItemChipProps {
 }
 
 function ItemChip({ item, index, isNew, pulseKey, reduceMotion, primaryColor }: ItemChipProps) {
+  const { t } = useTranslation();
   const scale = useSharedValue(isNew ? 0 : 1);
   const prevPulseKey = useRef(pulseKey);
 
@@ -152,14 +161,14 @@ function ItemChip({ item, index, isNew, pulseKey, reduceMotion, primaryColor }: 
       style={[
         styles.chip,
         {
-          backgroundColor: item.wager?.won ? 'rgba(255,215,0,0.25)' : 'rgba(255,255,255,0.18)',
-          borderColor: item.wager?.won ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.35)',
+          backgroundColor: item.wager?.won ? 'rgba(255,215,0,0.35)' : primaryColor + '18',
+          borderColor: item.wager?.won ? 'rgba(184,140,0,0.6)' : primaryColor + '55',
         },
         chipStyle,
       ]}
     >
       <Text style={styles.chipEmoji}>{item.emoji}</Text>
-      <Text style={[styles.chipQty, { color: '#FFFFFF' }]}>×{item.qty}</Text>
+      <Text style={[styles.chipQty, { color: Farm.brownText }]}>×{item.qty}</Text>
       {item.wager?.won && (
         <View style={styles.wagerBadge}>
           <Text style={styles.wagerBadgeText}>{'🍄×'}{item.wager.multiplier}</Text>
@@ -167,6 +176,15 @@ function ItemChip({ item, index, isNew, pulseKey, reduceMotion, primaryColor }: 
       )}
       {item.wager?.dropBack && (
         <Text style={styles.chipEmoji}>{'🎁'}</Text>
+      )}
+      {item.grade && item.grade.key !== 'ordinaire' && (
+        <View style={styles.gradeBadge}>
+          <Text style={styles.gradeBadgeEmoji}>{item.grade.emoji}</Text>
+          <Text style={styles.gradeBadgeText}>
+            {t(`farm.grade.${item.grade.key}`)}
+            {item.grade.bonusCoins > 0 ? ` +${item.grade.bonusCoins} 🍃` : ''}
+          </Text>
+        </View>
       )}
     </Animated.View>
   );
@@ -203,11 +221,11 @@ function TimerBar({ timerKey, reduceMotion, primaryColor }: TimerBarProps) {
   }));
 
   return (
-    <View style={styles.timerTrack}>
+    <View style={[styles.timerTrack, { backgroundColor: primaryColor + '22' }]}>
       <Animated.View
         style={[
           styles.timerFill,
-          { backgroundColor: 'rgba(255,255,255,0.6)' },
+          { backgroundColor: primaryColor },
           fillStyle,
         ]}
       />
@@ -342,8 +360,9 @@ export function HarvestCardToast({
         style={[
           styles.card,
           {
-            backgroundColor: primary + 'F0',
-            borderColor: primary + '33',
+            backgroundColor: Farm.parchment,
+            borderColor: primary,
+            shadowColor: primary,
           },
         ]}
       >
@@ -351,8 +370,8 @@ export function HarvestCardToast({
         <View style={styles.header}>
           <Text style={styles.mainEmoji}>{mainEmoji}</Text>
           <View style={styles.titleGroup}>
-            <Text style={[styles.title, { color: '#FFFFFF' }]}>Récolte !</Text>
-            <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.85)' }]} numberOfLines={1}>
+            <Text style={[styles.title, { color: Farm.brownText }]}>Récolte !</Text>
+            <Text style={[styles.subtitle, { color: Farm.brownTextSub }]} numberOfLines={1}>
               {subtitle}
             </Text>
           </View>
@@ -406,14 +425,13 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: 2,
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing['2xl'],
     gap: Spacing.lg,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
     elevation: 8,
   },
   header: {
@@ -479,9 +497,27 @@ const styles = StyleSheet.create({
     color: '#FFE27A',
     lineHeight: 14,
   },
+  gradeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xxs,
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+  },
+  gradeBadgeEmoji: {
+    fontSize: FontSize.label,
+    lineHeight: 14,
+  },
+  gradeBadgeText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    color: '#FFE27A',
+    lineHeight: 14,
+  },
   timerTrack: {
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: Radius.xxs,
     overflow: 'hidden',
   },

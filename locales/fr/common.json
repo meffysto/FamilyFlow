@@ -4051,6 +4051,12 @@
       "growing": "🌱 {{count}} en cours",
       "ready": "✨ {{count}} à récolter !"
     },
+    "grade": {
+      "ordinaire": "Ordinaire",
+      "beau": "Beau",
+      "superbe": "Superbe",
+      "parfait": "Parfait"
+    },
     "crop": {
       "carrot": "Carotte",
       "carrot_desc": "Pousse vite, idéale pour débuter. Récolte modeste mais fiable.",
@@ -4258,6 +4264,8 @@
     "culture-3_desc": "Débloque la culture du tournesol",
     "culture-4": "Maître jardinier",
     "culture-4_desc": "50% de chance de récolte double",
+    "culture-5": "Agriculture de précision",
+    "culture-5_desc": "Chance d'obtenir des récoltes de qualité supérieure (Beau 20% ×1.5 · Superbe 8% ×2.5 · Parfait 2% ×4)",
     "elevage-1": "Alimentation optimale",
     "elevage-1_desc": "Les bâtiments produisent 25% plus vite",
     "elevage-2": "Grange agrandie",
