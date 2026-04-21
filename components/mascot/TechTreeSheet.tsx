@@ -73,22 +73,21 @@ const BRANCHES: { id: TechBranchId; labelKey: string; emoji: string; color: stri
 // ── AwningStripes ─────────────────────────────────────────────────────────
 
 function AwningStripes() {
+  const stripes = Array.from({ length: Farm.awningStripeCount });
   return (
     <View style={styles.awning}>
-      <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
-            ]}
-          />
-        ))}
-      </View>
-      {/* Scallop dots row */}
+      {stripes.map((_, i) => (
+        <View
+          key={i}
+          style={[
+            styles.awningStripe,
+            { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+          ]}
+        />
+      ))}
+      {/* Bande de festons marron — ligne de fermeture sous l'auvent */}
       <View style={styles.awningScallops}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {stripes.map((_, i) => (
           <View key={i} style={styles.awningScallopDot} />
         ))}
       </View>
@@ -285,7 +284,7 @@ const TechNodeView = React.memo(function TechNodeView({
           ) : (
             prereqMissing ? (
               <Text style={styles.lockedLabel}>
-                {`🔒 ${t('tech.requires', { name: '' })}`.trim()}
+                {`🔒 ${t('tech.locked')}`}
               </Text>
             ) : null
           )
@@ -427,40 +426,38 @@ export function TechTreeSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.overlayBg} activeOpacity={1} onPress={onClose} />
+      <View style={styles.container}>
+        {/* Auvent */}
+        <AwningStripes />
 
-        {/* Wood frame outer */}
-        <View style={styles.woodFrame}>
-          {/* Wood frame inner */}
-          <View style={styles.woodFrameInner}>
-            {/* Close button */}
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.closeBtnText}>{'✕'}</Text>
-            </TouchableOpacity>
+        {/* Corps parchemin */}
+        <View style={styles.parchment}>
+          {/* Bouton fermer absolu */}
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Fermer"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.closeBtnText}>{'✕'}</Text>
+          </TouchableOpacity>
 
-            {/* Awning at top */}
-            <AwningStripes />
+          {/* Handle */}
+          <View style={styles.handle} />
 
-            {/* Parchment content area */}
-            <View style={styles.parchment}>
-              {/* Handle */}
-              <View style={styles.handle} />
+          {/* Header colonne centrée : titre + badge */}
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>{t('tech.title')}</Text>
+            <View style={styles.coinsBadge}>
+              <Text style={styles.coinsText}>
+                {totalUnlocked}/{totalTechs} {t('tech.unlocked')}  ·  {coins} 🍃
+              </Text>
+            </View>
+          </View>
 
-              {/* Header */}
-              <View style={styles.header}>
-                <View style={styles.headerLeft}>
-                  <Text style={styles.title}>{'🔬 ' + t('tech.title')}</Text>
-                  <Text style={styles.headerSub}>
-                    {totalUnlocked}/{totalTechs} {t('tech.unlocked')}  ·  {coins} 🍃
-                  </Text>
-                </View>
-              </View>
+          <View style={styles.contentWrap}>
 
               {/* Barre de progression globale */}
               <View style={styles.globalProgressContainer}>
@@ -563,7 +560,6 @@ export function TechTreeSheet({
                   />
                 ))}
               </ScrollView>
-            </View>
           </View>
         </View>
       </View>
@@ -574,36 +570,19 @@ export function TechTreeSheet({
 // ── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    justifyContent: 'flex-end',
-  },
-  overlayBg: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-
-  // ── Wood frame ─────────────────────────────────────────────────────────
-  woodFrame: {
-    backgroundColor: Farm.woodDark,
-    padding: 5,
-    borderRadius: Radius['2xl'],
-    maxHeight: '88%',
-    minHeight: '88%',
-    marginHorizontal: Spacing.xl,
-    marginBottom: Spacing['4xl'],
-    ...Shadows.xl,
-  },
-  woodFrameInner: {
     backgroundColor: Farm.parchmentDark,
-    borderWidth: 2,
-    borderColor: Farm.woodHighlight,
-    borderRadius: Radius.xl,
-    overflow: 'hidden',
-    flex: 1,
   },
 
-  // ── Close button (absolute on woodFrameInner) ──────────────────────────
+  // Corps parchemin sous l'auvent
+  parchment: {
+    backgroundColor: Farm.parchmentDark,
+    flex: 1,
+    paddingBottom: Spacing['3xl'],
+  },
+
+  // Bouton fermer absolu (haut-droite, style Boutique)
   closeBtn: {
     position: 'absolute',
     top: Spacing.md,
@@ -624,13 +603,51 @@ const styles = StyleSheet.create({
     color: Farm.parchment,
   },
 
+  // Handle centré (pattern Boutique)
+  handle: {
+    width: 36,
+    height: 4,
+    backgroundColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    alignSelf: 'center',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+
+  // Header colonne centrée
+  headerRow: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+
+  // Badge coins/stats (sous le titre)
+  coinsBadge: {
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+  },
+  coinsText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
+  },
+
+  // Conteneur contenu principal
+  contentWrap: {
+    flex: 1,
+    paddingBottom: Spacing['3xl'],
+  },
+
   // ── Awning ─────────────────────────────────────────────────────────────
   awning: {
-    overflow: 'hidden',
-  },
-  awningStripes: {
     flexDirection: 'row',
     height: 28,
+    overflow: 'visible',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
@@ -639,37 +656,21 @@ const styles = StyleSheet.create({
   },
   awningStripe: {
     flex: 1,
+    height: 28,
   },
   awningScallops: {
+    position: 'absolute',
+    bottom: -4,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    marginTop: -4,
-    paddingHorizontal: 2,
   },
   awningScallopDot: {
     flex: 1,
     height: 8,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
-    backgroundColor: Farm.awningGreen,
-    marginHorizontal: 1,
-  },
-
-  // ── Parchment area ─────────────────────────────────────────────────────
-  parchment: {
-    backgroundColor: Farm.parchmentDark,
-    flex: 1,
-    paddingBottom: Spacing['3xl'],
-  },
-
-  // ── Handle ─────────────────────────────────────────────────────────────
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Farm.woodHighlight,
-    alignSelf: 'center',
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.lg,
+    backgroundColor: Farm.woodLight,
   },
 
   // ── Header ─────────────────────────────────────────────────────────────
@@ -678,12 +679,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing['2xl'],
-    marginBottom: Spacing.md,
+    paddingVertical: Spacing.xl,
+    backgroundColor: Farm.parchmentDark,
+    borderBottomWidth: 2,
+    borderBottomColor: Farm.woodHighlight,
   },
   headerLeft: {
     flex: 1,
     gap: Spacing.xxs,
     marginRight: 40,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
   },
   title: {
     fontSize: FontSize.title,
@@ -707,6 +716,7 @@ const styles = StyleSheet.create({
   // ── Global progress bar ────────────────────────────────────────────────
   globalProgressContainer: {
     marginHorizontal: Spacing['2xl'],
+    marginTop: Spacing.xl,
     marginBottom: Spacing.xl,
   },
   globalProgressBg: {

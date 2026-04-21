@@ -120,9 +120,10 @@ const SPRING_CONFIG = { damping: 12, stiffness: 180 };
 // ── AwningStripes ─────────────────────────────────────
 
 function AwningStripes() {
+  const stripes = Array.from({ length: Farm.awningStripeCount });
   return (
     <View style={awningStyles.container}>
-      {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+      {stripes.map((_, i) => (
         <View
           key={i}
           style={[
@@ -131,10 +132,10 @@ function AwningStripes() {
           ]}
         />
       ))}
-      {/* Scallop dots row */}
+      {/* Bande de festons marron — ligne de fermeture sous l'auvent */}
       <View style={awningStyles.scallopRow}>
-        {Array.from({ length: 12 }).map((_, i) => (
-          <View key={i} style={awningStyles.scallopDot} />
+        {stripes.map((_, i) => (
+          <View key={i} style={awningStyles.scallop} />
         ))}
       </View>
     </View>
@@ -145,7 +146,7 @@ const awningStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: 28,
-    overflow: 'hidden',
+    overflow: 'visible',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
@@ -154,6 +155,7 @@ const awningStyles = StyleSheet.create({
   },
   stripe: {
     flex: 1,
+    height: 28,
   },
   scallopRow: {
     position: 'absolute',
@@ -161,13 +163,11 @@ const awningStyles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-around',
   },
-  scallopDot: {
-    width: 8,
+  scallop: {
+    flex: 1,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: Farm.parchment,
+    backgroundColor: Farm.woodLight,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
@@ -951,24 +951,19 @@ export function CraftSheet({
           >
             <Text style={styles.closeBtnText}>{'✕'}</Text>
           </TouchableOpacity>
-              {/* Handle + coins */}
-              <View style={styles.handleRow}>
-                <View style={styles.handleBadge}>
-                  <View style={styles.handle} />
-                  <View style={styles.handleCoinsRow}>
-                    <Text style={styles.handleCoins}>{coins}</Text>
-                    <Text style={styles.handleCoinsEmoji}>🍃</Text>
-                  </View>
-                </View>
-              </View>
+              {/* Handle */}
+              <View style={styles.handle} />
 
-              {/* Titre */}
+              {/* Header : titre centré + badge coins en dessous (pattern Boutique) */}
               <View style={styles.headerRow}>
                 <Text style={styles.title}>
-                  {'🔨 ' + t('craft.atelier')}
+                  {t('craft.atelier')}
                 </Text>
-                {/* Espace pour le bouton close */}
-                <View style={{ width: 36 }} />
+                <View style={styles.coinsBadge}>
+                  <Text style={styles.coinsText}>
+                    {t('mascot.shop.yourLeaves', { count: coins })}
+                  </Text>
+                </View>
               </View>
 
               {/* Onglets */}
@@ -1074,53 +1069,36 @@ const styles = StyleSheet.create({
     backgroundColor: Farm.parchmentDark,
   },
 
-  // ── Handle + coins ──
-  handleRow: {
-    alignItems: 'center',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  handleBadge: {
-    alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
-    borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.xs,
-    paddingBottom: Spacing.xs,
-    gap: 4,
-  },
+  // ── Handle seul ──
   handle: {
     width: 36,
     height: 4,
     backgroundColor: Farm.woodHighlight,
-    borderRadius: 2,
+    borderRadius: Radius.full,
+    alignSelf: 'center',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
   },
-  handleCoinsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
+  // ── Badge coins à droite du titre (pattern Boutique) ──
+  coinsBadge: {
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
   },
-  handleCoins: {
-    fontSize: FontSize.caption,
+  coinsText: {
+    fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
     color: Farm.brownText,
-    lineHeight: FontSize.caption * 1.2,
   },
-  handleCoinsEmoji: {
-    fontSize: FontSize.caption,
-    lineHeight: FontSize.caption * 1.2,
-    marginTop: 1,
-  },
-
-  // ── Header row (titre) ──
+  // ── Header colonne centrée (pattern Boutique) ──
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.md,
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   title: {
     fontSize: FontSize.title,
