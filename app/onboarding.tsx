@@ -80,7 +80,7 @@ type PainId = typeof PAIN_OPTIONS[number]['id'];
 // Assets ferme — scène mini ferme onboarding
 const FARM_ASSETS = {
   peach:    require('../assets/garden/trees/peach/summer_2.png'),
-  etal:     require('../assets/garden/decos/etal_fruits.png'),
+  etal:     require('../assets/garden/decos/entree_ferme.png'),
   poulailler: require('../assets/garden/buildings/poulailler/idle_south.png'),
   grange:     require('../assets/buildings/grange_lv1.png'),
   corn:     require('../assets/garden/crops/corn/stage_4.png'),

@@ -160,7 +160,7 @@ const SHADOW_SPRITES: Record<string, any> = {
 // Objets de ferme generes via PixelLab
 const FARM_OBJECTS = {
   fence_h: require('../../assets/garden/decos/farm/fence_horizontal.png'),
-  fence_gate: require('../../assets/garden/decos/farm/fence_gate.png'),
+  fence_gate: require('../../assets/garden/decos/entree_ferme.png'),
   scarecrow: require('../../assets/garden/decos/farm/scarecrow.png'),
   barrel: require('../../assets/garden/decos/farm/barrel.png'),
   crate: require('../../assets/garden/decos/farm/crate.png'),
@@ -304,8 +304,8 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
         fixed: true,
       });
     }
-    // Portillon a l'entree du chemin
-    decos.push({ source: FARM_OBJECTS.fence_gate, x: 0.46, y: fenceY, w: 28, h: 28, minStage: 1, fixed: true });
+    // Portail d'entree de la ferme — sprite pleine porte
+    decos.push({ source: FARM_OBJECTS.fence_gate, x: 0.42, y: fenceY, w: 96, h: 64, minStage: 1, fixed: true });
   }
 
   // ══════════════════════════════════════════════
@@ -351,8 +351,6 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
   decos.push({ source: FISH_DECOS.fish_barrel, x: 0.38, y: 0.84, w: 38, h: 38, minStage: 0, fixed: true });
   // Nasse — decalee a droite
   decos.push({ source: FISH_DECOS.fish_trap, x: 0.40, y: 0.90, w: 36, h: 36, minStage: 0, fixed: true });
-  // Trophee — haut gauche berge
-  decos.push({ source: FISH_DECOS.fish_trophy, x: 0.06, y: 0.60, w: 34, h: 34, minStage: 0, fixed: true });
   // Poisson koi : rendu séparément en animé (voir SwimmingFish)
 
   // ── Panneau — entree de la ferme (bas centre) ──
@@ -397,7 +395,7 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
   });
 
   // ── Rochers — eparpilles ──
-  decos.push({ source: GROUND.rock1, x: 0.14, y: 0.54, w: 20, h: 20, minStage: 0 });
+  decos.push({ source: GROUND.rock1, x: 0.04, y: 0.66, w: 20, h: 20, minStage: 0 });
   decos.push({ source: GROUND.rock2, x: 0.60, y: 0.86, w: 18, h: 18, minStage: 0 });
   decos.push({ source: GROUND.rock3, x: 0.75, y: 0.50, w: 16, h: 16, minStage: 0 });
   if (stageIdx >= 1) {
@@ -409,7 +407,7 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
   decos.push({ source: GROUND.bush1, x: 0.62, y: 0.96, w: 38, h: 38, minStage: 0 });
   decos.push({ source: GROUND.bush3, x: 0.88, y: 0.92, w: 36, h: 36, minStage: 0 });
   if (stageIdx >= 1) {
-    decos.push({ source: GROUND.bush2, x: 0.15, y: 0.58, w: 32, h: 32, minStage: 1 });
+    decos.push({ source: GROUND.bush2, x: 0.04, y: 0.72, w: 32, h: 32, minStage: 1 });
     decos.push({ source: GROUND.bush1, x: 0.68, y: 0.48, w: 30, h: 30, minStage: 1 });
     decos.push({ source: GROUND.bush3, x: 0.30, y: 0.92, w: 34, h: 34, minStage: 1 });
   }
@@ -438,7 +436,7 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
 
   // ── Champignons — pres des arbres et zones ombrees ──
   if (stageIdx >= 1) {
-    decos.push({ source: GROUND.mushroom1, x: 0.10, y: 0.50, w: 18, h: 18, minStage: 1 });
+    decos.push({ source: GROUND.mushroom1, x: 0.04, y: 0.42, w: 18, h: 18, minStage: 1 });
   }
   if (stageIdx >= 2) {
     decos.push({ source: GROUND.mushroom2, x: 0.08, y: 0.70, w: 16, h: 16, minStage: 2 });
