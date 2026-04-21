@@ -1748,48 +1748,46 @@ export default function TreeScreen() {
           onRequestClose={() => setShowItemPicker(false)}
         >
           <View style={styles.cozyContainer}>
-            {/* En-tête parchemin */}
-            <View style={styles.cozyHeader}>
-              <View style={styles.cozyHeaderLeft}>
-                <Image source={ACTION_SPRITES.embellir} style={styles.cozyHeaderSprite} />
-                <Text style={styles.cozyHeaderTitle}>{t('mascot.placement.choose')}</Text>
+            {/* Auvent (pattern Boutique) */}
+            <View style={styles.cozyAwning}>
+              {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.cozyAwningStripe,
+                    { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+                  ]}
+                />
+              ))}
+              {/* Bande de festons marron — ligne de fermeture */}
+              <View style={styles.cozyAwningScallop}>
+                {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+                  <View key={i} style={styles.cozyAwningScallopDot} />
+                ))}
               </View>
+            </View>
+
+            {/* Corps parchemin */}
+            <View style={styles.cozyParchment}>
+              {/* Bouton fermer absolu */}
               <TouchableOpacity
+                style={styles.cozyCloseBtn}
                 onPress={() => setShowItemPicker(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close', 'Fermer')}
+                activeOpacity={0.8}
               >
-                <Text style={styles.cozyHeaderClose}>{'✕'}</Text>
+                <Text style={styles.cozyCloseBtnText}>{'✕'}</Text>
               </TouchableOpacity>
-            </View>
 
-            {/* Bande auvent */}
-            <View style={styles.cozyAwning}>
-              <View style={styles.cozyAwningStripes}>
-                {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.cozyAwningStripe,
-                      { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
-                    ]}
-                  />
-                ))}
+              {/* Handle */}
+              <View style={styles.cozyHandle} />
+
+              {/* Header colonne centrée */}
+              <View style={styles.cozyHeaderRow}>
+                <Text style={styles.cozyHeaderTitle}>{t('mascot.actions.embellir', 'Embellir')}</Text>
               </View>
-              <View style={styles.cozyAwningShadow} />
-              <View style={styles.cozyAwningScallop}>
-                {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.cozyAwningScallopDot,
-                      { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
-                    ]}
-                  />
-                ))}
-              </View>
-            </View>
 
             {(() => {
               const handlePickerTap = async (itemId: string) => {
@@ -1884,6 +1882,7 @@ export default function TreeScreen() {
                 </ScrollView>
               );
             })()}
+            </View>
           </View>
         </Modal>
 
@@ -3444,8 +3443,52 @@ const styles = StyleSheet.create({
   // ── Modal Embellir (picker cozy) ─────────────────────────────────────────
   cozyContainer: {
     flex: 1,
-    backgroundColor: Farm.parchment,
+    backgroundColor: Farm.parchmentDark,
   },
+  // Corps parchemin sous l'auvent
+  cozyParchment: {
+    backgroundColor: Farm.parchmentDark,
+    flex: 1,
+    paddingBottom: Spacing['3xl'],
+  },
+  // Bouton fermer absolu (haut-droite, style Boutique)
+  cozyCloseBtn: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  cozyCloseBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.parchment,
+  },
+  // Handle centré
+  cozyHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    alignSelf: 'center',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  // Header colonne centrée (pattern Boutique)
+  cozyHeaderRow: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  // (Style legacy conservé pour éventuel usage — non utilisé après refonte)
   cozyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -3481,34 +3524,34 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     color: Farm.brownText,
   },
-  // Auvent
+  // Auvent (pattern Boutique — festons marron débordants)
   cozyAwning: {
-    height: 36,
-    overflow: 'hidden',
-  },
-  cozyAwningStripes: {
     flexDirection: 'row',
     height: 28,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 0,
+    elevation: 4,
   },
   cozyAwningStripe: {
     flex: 1,
-  },
-  cozyAwningShadow: {
-    height: 4,
-    backgroundColor: 'rgba(0,0,0,0.12)',
+    height: 28,
   },
   cozyAwningScallop: {
-    flexDirection: 'row',
     position: 'absolute',
-    bottom: 4,
+    bottom: -4,
     left: 0,
     right: 0,
+    flexDirection: 'row',
   },
   cozyAwningScallopDot: {
     flex: 1,
     height: 8,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
+    backgroundColor: Farm.woodLight,
   },
   // Scroll
   cozyScroll: {

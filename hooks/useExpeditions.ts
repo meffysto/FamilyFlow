@@ -192,58 +192,44 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
       return false;
     }
 
-    // Dialogue de confirmation OGame-style (risque visible)
-    return new Promise<boolean>((resolve) => {
-      Alert.alert(
-        "Confirmer l'expédition ?",
-        `Tu vas miser ${mission.costCoins} 🍃${mission.costCrops.length > 0 ? ` + ${getExpeditionCostDescription(mission, t)}` : ''} pour une expédition ${mission.durationHours}h.\n\nRetour partiel : 50 % de la mise récupérée, sans butin.\nÉchec : toute la mise est perdue.`,
-        [
-          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
-          {
-            text: 'Lancer',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await Haptics.impactAsync(ImpactFeedbackStyle.Medium);
+    // Confirmation déportée dans l'UI (modal Farm-styled côté ExpeditionsSheet).
+    // Ici on exécute directement le launch — l'appelant est responsable d'avoir confirmé.
+    try {
+      await Haptics.impactAsync(ImpactFeedbackStyle.Medium);
 
-                // Déduire les feuilles
-                await deductCoins(currentProfile.id, mission.costCoins);
+      // Déduire les feuilles
+      await deductCoins(currentProfile.id, mission.costCoins);
 
-                // Lire la ferme, muter, réécrire
-                const farmPath = farmFilePath(currentProfile.id);
-                const farmContent = await vault.readFile(farmPath).catch(() => '');
-                const farm = parseFarmProfile(farmContent);
+      // Lire la ferme, muter, réécrire
+      const farmPath = farmFilePath(currentProfile.id);
+      const farmContent = await vault.readFile(farmPath).catch(() => '');
+      const farm = parseFarmProfile(farmContent);
 
-                // Déduire les récoltes
-                const harvest = { ...(farm.harvestInventory ?? {}) };
-                for (const cost of mission.costCrops) {
-                  harvest[cost.cropId] = Math.max(0, (harvest[cost.cropId] ?? 0) - cost.quantity);
-                }
-                farm.harvestInventory = harvest;
+      // Déduire les récoltes
+      const harvest = { ...(farm.harvestInventory ?? {}) };
+      for (const cost of mission.costCrops) {
+        harvest[cost.cropId] = Math.max(0, (harvest[cost.cropId] ?? 0) - cost.quantity);
+      }
+      farm.harvestInventory = harvest;
 
-                // Ajouter l'expédition active
-                const newExp: ActiveExpedition = {
-                  missionId: mission.id,
-                  difficulty: mission.difficulty,
-                  startedAt: new Date().toISOString(),
-                  durationHours: mission.durationHours,
-                };
-                farm.activeExpeditions = [...(farm.activeExpeditions ?? []), newExp];
+      // Ajouter l'expédition active
+      const newExp: ActiveExpedition = {
+        missionId: mission.id,
+        difficulty: mission.difficulty,
+        startedAt: new Date().toISOString(),
+        durationHours: mission.durationHours,
+      };
+      farm.activeExpeditions = [...(farm.activeExpeditions ?? []), newExp];
 
-                const profileName = profiles.find(p => p.id === currentProfile.id)?.name ?? currentProfile.id;
-                await vault.writeFile(farmPath, serializeFarmProfile(profileName, farm));
-                await refreshFarm(currentProfile.id);
+      const profileName = profiles.find(p => p.id === currentProfile.id)?.name ?? currentProfile.id;
+      await vault.writeFile(farmPath, serializeFarmProfile(profileName, farm));
+      await refreshFarm(currentProfile.id);
 
-                resolve(true);
-              } catch {
-                /* Expédition — non-critical */
-                resolve(false);
-              }
-            },
-          },
-        ]
-      );
-    });
+      return true;
+    } catch {
+      /* Expédition — non-critical */
+      return false;
+    }
   }, [vault, currentProfile, activeCount, profiles, deductCoins, refreshFarm]);
 
   // ─── Collecter le résultat d'une expédition ───────────────────────────────

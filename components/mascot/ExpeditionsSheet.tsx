@@ -23,6 +23,10 @@ import Animated, {
   withRepeat,
   withSequence,
   withSpring,
+  withDelay,
+  Easing,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -37,6 +41,7 @@ import {
   getLootDisplay,
   EXPEDITION_DROP_RATES,
   EXPEDITION_LOOT_TABLE,
+  EXPEDITION_CATALOG,
   type ExpeditionMission,
 } from '../../lib/mascot/expedition-engine';
 import { CROP_CATALOG, type HarvestInventory } from '../../lib/mascot/types';
@@ -143,7 +148,7 @@ interface Props {
   canLaunch: boolean;
   pityCount: number;
   harvestInventory: HarvestInventory;
-  onLaunch: (mission: ExpeditionMission) => void;
+  onLaunch: (mission: ExpeditionMission) => Promise<boolean>;
   onCollect: (missionId: string) => void;
   onDismiss: (missionId: string) => void;
 }
@@ -167,6 +172,8 @@ export function ExpeditionsSheet({
   const { primary, colors } = useThemeColors();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>('catalogue');
+  const [launchingMission, setLaunchingMission] = useState<ExpeditionMission | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<ExpeditionMission | null>(null);
 
   // Countdown ticker — recalculer toutes les 60s
   const [tick, setTick] = useState(0);
@@ -186,6 +193,29 @@ export function ExpeditionsSheet({
     Haptics.selectionAsync();
     setActiveTab(tab);
     tabIndicatorX.value = withTiming(index * TAB_WIDTH, { duration: 150 });
+  };
+
+  // Demande de lancement → ouvre le modal de confirmation Farm-styled
+  const handleLaunchMission = async (mission: ExpeditionMission): Promise<boolean> => {
+    setPendingConfirm(mission);
+    return false; // on laisse le modal gérer la suite
+  };
+
+  // Confirmé par l'utilisateur → exécute réellement le lancement
+  const handleConfirmLaunch = async () => {
+    const mission = pendingConfirm;
+    if (!mission) return;
+    setPendingConfirm(null);
+    const ok = await onLaunch(mission);
+    if (ok) {
+      setLaunchingMission(mission);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setTimeout(() => {
+        setActiveTab('encours');
+        tabIndicatorX.value = withTiming(1 * TAB_WIDTH, { duration: 180 });
+      }, 500);
+      setTimeout(() => setLaunchingMission(null), 900);
+    }
   };
 
   // Expedition actives sans résultat (en route)
@@ -262,6 +292,19 @@ export function ExpeditionsSheet({
           showsVerticalScrollIndicator={false}
           contentInsetAdjustmentBehavior="automatic"
         >
+          {/* Dev-only : bouton test du flux de lancement */}
+          {__DEV__ && activeTab === 'catalogue' && dailyPool.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setPendingConfirm(dailyPool[0])}
+              activeOpacity={0.8}
+              style={styles.devTestBtn}
+            >
+              <Text style={styles.devTestBtnText}>
+                🧪 Tester le flux de lancement
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* ── Onglet Catalogue ── */}
           {activeTab === 'catalogue' && (
             <>
@@ -280,7 +323,7 @@ export function ExpeditionsSheet({
                     key={mission.id}
                     mission={mission}
                     canLaunch={canLaunch}
-                    onLaunch={() => onLaunch(mission)}
+                    onLaunch={() => handleLaunchMission(mission)}
                     colors={colors}
                     primary={primary}
                     harvestInventory={harvestInventory}
@@ -303,7 +346,7 @@ export function ExpeditionsSheet({
                   <ActiveExpeditionRow
                     key={exp.missionId}
                     expedition={exp}
-                    mission={dailyPool.find(m => m.id === exp.missionId)}
+                    mission={EXPEDITION_CATALOG.find(m => m.id === exp.missionId)}
                     onCollect={() => onCollect(exp.missionId)}
                     colors={colors}
                     primary={primary}
@@ -326,7 +369,7 @@ export function ExpeditionsSheet({
                   <ResultRow
                     key={exp.missionId + exp.startedAt}
                     expedition={exp}
-                    mission={dailyPool.find(m => m.id === exp.missionId)}
+                    mission={EXPEDITION_CATALOG.find(m => m.id === exp.missionId)}
                     onDismiss={() => onDismiss(exp.missionId)}
                     colors={colors}
                   />
@@ -335,8 +378,235 @@ export function ExpeditionsSheet({
             </>
           )}
         </ScrollView>
+
+        {/* Overlay animation de lancement */}
+        {launchingMission && (
+          <LaunchAnimationOverlay mission={launchingMission} />
+        )}
+
+        {/* Modal confirmation Farm-style */}
+        {pendingConfirm && (
+          <ConfirmLaunchModal
+            mission={pendingConfirm}
+            onCancel={() => setPendingConfirm(null)}
+            onConfirm={handleConfirmLaunch}
+            primary={primary}
+            colors={colors}
+            t={t}
+          />
+        )}
       </View>
     </Modal>
+  );
+}
+
+// ── ConfirmLaunchModal ────────────────────────────────────────────────────────
+
+function ConfirmLaunchModal({ mission, onCancel, onConfirm, primary, colors, t }: {
+  mission: ExpeditionMission;
+  onCancel: () => void;
+  onConfirm: () => void;
+  primary: string;
+  colors: AppColors;
+  t: (key: string) => string;
+}) {
+  const cardScale = useSharedValue(0.85);
+  const backdropOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    cardScale.value = withSpring(1, { damping: 14, stiffness: 200 });
+    backdropOpacity.value = withTiming(1, { duration: 180 });
+  }, []);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  const diffColor = difficultyColor(mission.difficulty, colors);
+  const failurePct = Math.round(EXPEDITION_DROP_RATES[mission.difficulty].failure * 100);
+
+  return (
+    <Animated.View style={[styles.confirmBackdrop, backdropStyle]}>
+      <TouchableOpacity
+        style={StyleSheet.absoluteFill}
+        activeOpacity={1}
+        onPress={onCancel}
+      />
+      <Animated.View style={[styles.confirmCard, cardStyle]}>
+        {/* Auvent décoratif */}
+        <AwningStripes />
+
+        <View style={styles.confirmBody}>
+          <Text style={styles.confirmEmoji}>{mission.emoji}</Text>
+          <Text style={styles.confirmTitle}>Confirmer l'expédition ?</Text>
+          <Text style={[styles.confirmMissionName, { color: colors.text }]} numberOfLines={1}>
+            {mission.name}
+          </Text>
+
+          {/* Badge difficulté */}
+          <View style={[styles.diffBadge, styles.confirmDiffBadge, { backgroundColor: diffColor + '22', borderColor: diffColor }]}>
+            <Text style={[styles.diffBadgeText, { color: diffColor }]}>
+              {difficultyLabel(mission.difficulty)} · {mission.durationHours}h
+            </Text>
+          </View>
+
+          {/* Mise */}
+          <View style={styles.confirmCostRow}>
+            <View style={[styles.chip, { backgroundColor: Farm.parchmentDark }]}>
+              <Text style={[styles.chipText, { color: Farm.goldText }]}>
+                {`${mission.costCoins} 🍃`}
+              </Text>
+            </View>
+            {mission.costCrops.map(cost => {
+              const cropDef = CROP_CATALOG.find(c => c.id === cost.cropId);
+              const emoji = cropDef?.emoji ?? '🌿';
+              const name = cropDef ? t(cropDef.labelKey) : cost.cropId;
+              return (
+                <View key={cost.cropId} style={[styles.costChip, { backgroundColor: colors.catJeux + '22' }]}>
+                  <Text style={styles.costChipEmoji}>{emoji}</Text>
+                  <Text style={[styles.costChipName, { color: colors.catJeux }]}>{name}</Text>
+                  <Text style={[styles.costChipQty, { color: colors.catJeux }]}>×{cost.quantity}</Text>
+                </View>
+              );
+            })}
+          </View>
+
+          {/* Avertissement risques */}
+          <View style={styles.confirmRiskBox}>
+            <Text style={[styles.confirmRiskLine, { color: colors.warning }]}>
+              {`⚠️  Retour partiel : 50 % récupéré, sans butin`}
+            </Text>
+            <Text style={[styles.confirmRiskLine, { color: colors.error }]}>
+              {`💀  ${failurePct}% d'échec : toute la mise perdue`}
+            </Text>
+          </View>
+
+          {/* Boutons */}
+          <View style={styles.confirmBtnRow}>
+            <TouchableOpacity
+              onPress={onCancel}
+              style={[styles.confirmCancelBtn, { borderColor: colors.borderLight }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.confirmCancelText, { color: colors.textMuted }]}>Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onConfirm}
+              style={[styles.confirmLaunchBtn, { backgroundColor: primary }]}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.confirmLaunchText, { color: colors.onPrimary }]}>Lancer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+// ── LaunchAnimationOverlay ────────────────────────────────────────────────────
+
+function LaunchAnimationOverlay({ mission }: { mission: ExpeditionMission }) {
+  const emojiScale = useSharedValue(0);
+  const emojiTranslateY = useSharedValue(0);
+  const emojiRotate = useSharedValue(0);
+  const ringScale = useSharedValue(0);
+  const ringOpacity = useSharedValue(0);
+  const sparkle1 = useSharedValue(0);
+  const sparkle2 = useSharedValue(0);
+  const sparkle3 = useSharedValue(0);
+
+  useEffect(() => {
+    // Phase 1 : emoji pop (0-250ms)
+    emojiScale.value = withSequence(
+      withTiming(1.15, { duration: 140, easing: Easing.out(Easing.cubic) }),
+      withTiming(1, { duration: 110, easing: Easing.inOut(Easing.cubic) }),
+    );
+    emojiRotate.value = withSequence(
+      withTiming(-6, { duration: 140, easing: Easing.out(Easing.cubic) }),
+      withTiming(0, { duration: 160, easing: Easing.inOut(Easing.cubic) }),
+    );
+    // Ring d'expansion (0-450ms)
+    ringScale.value = withTiming(2.4, { duration: 450, easing: Easing.out(Easing.cubic) });
+    ringOpacity.value = withSequence(
+      withTiming(0.8, { duration: 80 }),
+      withTiming(0, { duration: 370, easing: Easing.out(Easing.cubic) }),
+    );
+    // Sparkles en cascade courte
+    sparkle1.value = withDelay(80, withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) }));
+    sparkle2.value = withDelay(140, withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }));
+    sparkle3.value = withDelay(200, withTiming(1, { duration: 460, easing: Easing.out(Easing.cubic) }));
+    // Phase 2 : glisse vers le haut (450-850ms) — direction "en cours"
+    emojiTranslateY.value = withDelay(
+      450,
+      withTiming(-140, { duration: 380, easing: Easing.in(Easing.cubic) }),
+    );
+    emojiScale.value = withDelay(
+      450,
+      withTiming(0.6, { duration: 380, easing: Easing.in(Easing.cubic) }),
+    );
+  }, []);
+
+  const emojiStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: emojiTranslateY.value },
+      { scale: emojiScale.value },
+      { rotate: `${emojiRotate.value}deg` },
+    ],
+  }));
+
+  const ringStyle = useAnimatedStyle(() => ({
+    opacity: ringOpacity.value,
+    transform: [{ scale: ringScale.value }],
+  }));
+
+  const sparkleStyle1 = useAnimatedStyle(() => ({
+    opacity: 1 - sparkle1.value,
+    transform: [
+      { translateX: sparkle1.value * -80 },
+      { translateY: sparkle1.value * -60 },
+      { scale: 0.6 + sparkle1.value * 0.8 },
+    ],
+  }));
+  const sparkleStyle2 = useAnimatedStyle(() => ({
+    opacity: 1 - sparkle2.value,
+    transform: [
+      { translateX: sparkle2.value * 90 },
+      { translateY: sparkle2.value * -70 },
+      { scale: 0.6 + sparkle2.value * 0.8 },
+    ],
+  }));
+  const sparkleStyle3 = useAnimatedStyle(() => ({
+    opacity: 1 - sparkle3.value,
+    transform: [
+      { translateX: sparkle3.value * -70 },
+      { translateY: sparkle3.value * 80 },
+      { scale: 0.6 + sparkle3.value * 0.8 },
+    ],
+  }));
+
+  return (
+    <Animated.View
+      entering={FadeIn.duration(150)}
+      exiting={FadeOut.duration(250)}
+      pointerEvents="none"
+      style={styles.launchOverlay}
+    >
+      <View style={styles.launchCenter}>
+        <Animated.View style={[styles.launchRing, ringStyle]} />
+        <Animated.Text style={[styles.launchEmoji, emojiStyle]}>{mission.emoji}</Animated.Text>
+        <Animated.Text style={[styles.launchSparkle, sparkleStyle1]}>✨</Animated.Text>
+        <Animated.Text style={[styles.launchSparkle, sparkleStyle2]}>✦</Animated.Text>
+        <Animated.Text style={[styles.launchSparkle, sparkleStyle3]}>⭐</Animated.Text>
+      </View>
+      <Animated.View entering={FadeIn.delay(200).duration(300)}>
+        <Text style={styles.launchTitle}>Expédition partie !</Text>
+        <Text style={styles.launchSubtitle} numberOfLines={1}>{mission.name}</Text>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -345,7 +615,7 @@ export function ExpeditionsSheet({
 interface CardProps {
   mission: ExpeditionMission;
   canLaunch: boolean;
-  onLaunch: () => void;
+  onLaunch: () => Promise<boolean>;
   colors: AppColors;
   primary: string;
   harvestInventory: HarvestInventory;
@@ -591,6 +861,168 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Farm.parchment,
+  },
+  // ── Launch overlay ──
+  launchOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(30, 20, 10, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  launchCenter: {
+    width: 160,
+    height: 160,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  launchRing: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: Farm.goldText,
+  },
+  launchEmoji: {
+    fontSize: 72,
+    textAlign: 'center',
+  },
+  launchSparkle: {
+    position: 'absolute',
+    fontSize: 26,
+    color: Farm.goldText,
+  },
+  launchTitle: {
+    marginTop: Spacing.xl,
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    color: Farm.parchment,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  launchSubtitle: {
+    marginTop: Spacing.xs,
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.semibold,
+    color: Farm.goldText,
+    textAlign: 'center',
+  },
+  // ── Confirm modal ──
+  confirmBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(30, 20, 10, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 80,
+    paddingHorizontal: Spacing['2xl'],
+  },
+  confirmCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: Farm.parchment,
+    borderRadius: Radius.lg,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  confirmBody: {
+    padding: Spacing['2xl'],
+    alignItems: 'center',
+  },
+  confirmEmoji: {
+    fontSize: 56,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  confirmTitle: {
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
+    textAlign: 'center',
+  },
+  confirmMissionName: {
+    marginTop: Spacing.xs,
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+  },
+  confirmDiffBadge: {
+    marginTop: Spacing.md,
+    alignSelf: 'center',
+  },
+  confirmCostRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+  },
+  confirmRiskBox: {
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    width: '100%',
+    gap: Spacing.xs,
+  },
+  confirmRiskLine: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+  },
+  confirmBtnRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+    width: '100%',
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  confirmCancelText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+  },
+  confirmLaunchBtn: {
+    flex: 1.4,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+  },
+  confirmLaunchText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+  },
+  // ── Dev test ──
+  devTestBtn: {
+    marginHorizontal: Spacing['2xl'],
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
+    alignItems: 'center',
+  },
+  devTestBtnText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
   },
   header: {
     flexDirection: 'row',
