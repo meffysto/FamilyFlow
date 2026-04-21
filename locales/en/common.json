@@ -4195,6 +4195,10 @@
     "sellValueLabel": "Sell value",
     "notEnoughGrade": "Not enough {{grade}} {{item}}",
     "weakestLinkHint": "Crafted item grade = weakest ingredient",
+    "pickGrade": "Choose grade",
+    "ingredientGrades": "Grades per ingredient",
+    "gradesGrisesHint": "Greyed grades = insufficient quantity",
+    "grade": "Grade",
     "recipe": {
       "soupe": "Garden Soup",
       "bouquet": "Country Bouquet",

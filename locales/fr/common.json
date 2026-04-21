@@ -4201,6 +4201,10 @@
     "sellValueLabel": "Valeur de vente",
     "notEnoughGrade": "Pas assez de {{grade}} {{item}}",
     "weakestLinkHint": "Le grade de l'item crafté = le plus faible des ingrédients",
+    "pickGrade": "Choisir le grade",
+    "ingredientGrades": "Grades par ingrédient",
+    "gradesGrisesHint": "Grades grisés = quantité insuffisante",
+    "grade": "Grade",
     "recipe": {
       "soupe": "Soupe du potager",
       "bouquet": "Bouquet champêtre",
