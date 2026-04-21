@@ -55,6 +55,12 @@ export const TECH_TREE: TechNode[] = [
     labelKey: 'tech.culture-4', descriptionKey: 'tech.culture-4_desc',
     emoji: '👑', cost: 7500, requires: 'culture-3',
   },
+  {
+    // Phase A — Grades de récolte (probabiliste per-roll, pas un TechBonus agrégé)
+    id: 'culture-5', branch: 'culture', order: 5,
+    labelKey: 'tech.culture-5', descriptionKey: 'tech.culture-5_desc',
+    emoji: '🔬', cost: 10000, requires: 'culture-4',
+  },
 
   // Branche Elevage — production batiments
   {
