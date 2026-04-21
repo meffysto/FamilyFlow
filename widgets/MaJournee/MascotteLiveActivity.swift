@@ -14,7 +14,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var xpGained: Int
         var currentMeal: String?           // ex: "Pâtes carbonara" (déjeuner ou dîner selon l'heure)
         var stageOverride: String?         // "reveil"|"travail"|"midi"|"jeu"|"routine"|"dodo"|"recap" (dev/test)
-        var companionSpriteBase64: String? // PNG idle du compagnon du profil (Lock Screen)
+        var companionSpriteToken: String? // cache-bust token ; PNG lu depuis App Group
         var bonusText: String?             // ligne bonus récap (ex: "⬆️ Niveau 12 atteint !")
         var nextTaskText: String?          // prochaine tâche (récurrente prioritaire) — affichée pendant reveil/travail/jeu/routine
         var nextTaskId: String?            // identifiant unique de la prochaine tâche (pour ToggleNextTaskIntent)
@@ -238,9 +238,8 @@ private func companionCompactView(
     state: MascotteActivityAttributes.ContentState,
     fallbackEmoji: String
 ) -> some View {
-    if let b64 = state.companionSpriteBase64,
-       let data = Data(base64Encoded: b64),
-       let uiImage = UIImage(data: data) {
+    if state.companionSpriteToken != nil,
+       let uiImage = loadCompanionSpriteFromAppGroup() {
         Image(uiImage: uiImage)
             .interpolation(.none)
             .resizable()
@@ -250,6 +249,19 @@ private func companionCompactView(
         Text(fallbackEmoji)
             .font(.title3)
     }
+}
+
+/// Lit le sprite compagnon depuis le container App Group partagé.
+/// L'app main écrit le PNG dans `group.com.familyvault.dev/companion-sprite.png`
+/// ; le token dans ContentState invalide le cache de rendu widget.
+@available(iOS 16.2, *)
+private func loadCompanionSpriteFromAppGroup() -> UIImage? {
+    guard let container = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+    ) else { return nil }
+    let fileURL = container.appendingPathComponent("companion-sprite.png")
+    guard let data = try? Data(contentsOf: fileURL) else { return nil }
+    return UIImage(data: data)
 }
 
 /// Contenu du compact trailing de la DI. Priorités :
@@ -568,9 +580,8 @@ struct MascotteLockScreenView: View {
     /// sinon fallback sur l'emoji du stage narratif.
     @ViewBuilder
     private func companionAvatar(fallbackEmoji: String) -> some View {
-        if let b64 = context.state.companionSpriteBase64,
-           let data = Data(base64Encoded: b64),
-           let uiImage = UIImage(data: data) {
+        if context.state.companionSpriteToken != nil,
+           let uiImage = loadCompanionSpriteFromAppGroup() {
             Image(uiImage: uiImage)
                 .interpolation(.none)
                 .resizable()

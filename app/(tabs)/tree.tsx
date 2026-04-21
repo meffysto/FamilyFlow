@@ -741,10 +741,14 @@ export default function TreeScreen() {
   // Handler de sélection du compagnon
   const handleCompanionSelect = useCallback(async (species: CompanionSpecies, name: string) => {
     if (!activeProfile) return;
+    const previousUnlocked = activeProfile.companion?.unlockedSpecies ?? [];
+    const unlockedSpecies = previousUnlocked.includes(species)
+      ? previousUnlocked
+      : [...previousUnlocked, species];
     const newCompanion: CompanionData = {
       activeSpecies: species,
       name,
-      unlockedSpecies: [species],
+      unlockedSpecies,
     };
     await setCompanion(activeProfile.id, newCompanion);
     setShowCompanionPicker(false);

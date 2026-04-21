@@ -29,7 +29,7 @@ struct MascotteActivityAttributes: ActivityAttributes {
         var xpGained: Int
         var currentMeal: String?
         var stageOverride: String?
-        var companionSpriteBase64: String?
+        var companionSpriteToken: String?  // cache-busting token ; PNG dans App Group
         var bonusText: String?
         var nextTaskText: String?
         var nextTaskId: String?
@@ -39,6 +39,26 @@ struct MascotteActivityAttributes: ActivityAttributes {
 
     var mascotteName: String
     var startedAt: Date
+}
+
+/// Écrit le PNG du sprite compagnon dans le container App Group partagé.
+/// Retourne un token court (taille+hash prefix) pour cache-buster le widget.
+/// Évite d'embarquer le base64 dans ContentState (limite iOS ~4 KB).
+private func persistCompanionSprite(_ base64: String?) -> String? {
+  guard let base64 = base64, !base64.isEmpty,
+        let data = Data(base64Encoded: base64),
+        let container = FileManager.default.containerURL(
+          forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+        ) else { return nil }
+  let fileURL = container.appendingPathComponent("companion-sprite.png")
+  do {
+    try data.write(to: fileURL, options: .atomic)
+    // Token = taille + prefix hash → change dès que le sprite change
+    let hash = data.hashValue & 0xFFFF
+    return "\(data.count)-\(String(hash, radix: 16))"
+  } catch {
+    return nil
+  }
 }
 
 /// Décode le payload "id\u{1F}text" envoyé par le bridge JS. Workaround du bug
@@ -552,7 +572,7 @@ public class VaultAccessModule: Module {
           xpGained: xpGained,
           currentMeal: currentMeal,
           stageOverride: stageOverride,
-          companionSpriteBase64: companionSpriteBase64,
+          companionSpriteToken: persistCompanionSprite(companionSpriteBase64),
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
           nextTaskId: nextTaskId,
@@ -586,7 +606,7 @@ public class VaultAccessModule: Module {
           xpGained: xpGained,
           currentMeal: currentMeal,
           stageOverride: stageOverride,
-          companionSpriteBase64: companionSpriteBase64,
+          companionSpriteToken: persistCompanionSprite(companionSpriteBase64),
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
           nextTaskId: nextTaskId,
