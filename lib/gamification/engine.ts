@@ -369,16 +369,22 @@ export function openLootBox(
       break;
     }
     case 'farm_seed': {
-      // Ajouter la graine à l'inventaire de récoltes du profil
+      // Ajouter la graine à l'inventaire de récoltes du profil (Phase B — grade 'ordinaire')
       const cropId = rewardDef.mascotItemId;
       if (cropId) {
         const currentHarvest = updatedProfile.harvestInventory ?? {};
+        const existing = currentHarvest[cropId];
+        let nextEntry: Partial<Record<'ordinaire' | 'beau' | 'superbe' | 'parfait', number>>;
+        if (existing == null) {
+          nextEntry = { ordinaire: 1 };
+        } else if (typeof existing === 'number') {
+          nextEntry = { ordinaire: existing + 1 };
+        } else {
+          nextEntry = { ...existing, ordinaire: (existing.ordinaire ?? 0) + 1 };
+        }
         updatedProfile = {
           ...updatedProfile,
-          harvestInventory: {
-            ...currentHarvest,
-            [cropId]: (currentHarvest[cropId] ?? 0) + 1,
-          },
+          harvestInventory: { ...currentHarvest, [cropId]: nextEntry },
         };
       }
       break;

@@ -9,6 +9,7 @@ import type { FarmInventory, HarvestInventory, CraftedItem } from '../mascot/typ
 import { BUILDINGS_CATALOG } from './catalog';
 import { CROP_CATALOG } from '../mascot/types';
 import { CRAFT_RECIPES } from '../mascot/craft-engine';
+import { countItemTotal } from '../mascot/grade-engine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constantes
@@ -296,7 +297,8 @@ export function getAvailableTradeItems(
 
     case 'harvest': {
       const result: TradeItemOption[] = [];
-      for (const [cropId, available] of Object.entries(harvestInv)) {
+      for (const cropId of Object.keys(harvestInv)) {
+        const available = countItemTotal(harvestInv, cropId);
         if (available > 0) {
           const cropDef = CROP_CATALOG.find(c => c.id === cropId);
           const label = cropDef?.id ?? cropId;

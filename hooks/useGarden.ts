@@ -63,6 +63,13 @@ import type {
 } from '../lib/village';
 import type { VillageTechBonuses } from '../lib/village/atelier-engine';
 import { MARKET_ITEMS, DAILY_DEAL_STOCK_PER_PROFILE } from '../lib/village/market-engine';
+import {
+  addToGradedInventory,
+  removeFromGradedInventory,
+  countItemByGrade,
+  countItemTotal,
+  type HarvestGrade,
+} from '../lib/mascot/grade-engine';
 import { parseGamification, serializeGamification } from '../lib/parser';
 import type { VaultManager } from '../lib/vault';
 
@@ -164,7 +171,7 @@ export interface UseGardenReturn {
   marketStock: MarketStock;
   marketTransactions: MarketTransaction[];
   buyFromMarket: (itemId: string, quantity: number, profileId: string, priceOverride?: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
-  sellToMarket: (itemId: string, quantity: number, profileId: string) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
+  sellToMarket: (itemId: string, quantity: number, profileId: string, grade?: HarvestGrade) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
   // Deal du jour — flux séparé (stock indépendant du marché, quota per-profil)
   buyDailyDeal: (itemId: string, unitPrice: number, profileId: string) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
 }
@@ -576,8 +583,9 @@ export function useGarden(): UseGardenReturn {
             const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
             await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, farmInventory: farmInvObj }));
           } else {
-            const harvestInvObj = { ...(farmData.harvestInventory ?? {}) } as any;
-            harvestInvObj[itemId] = (harvestInvObj[itemId] ?? 0) + quantity;
+            // Phase B — achat marché ajoute toujours en grade 'ordinaire' (pas de triche)
+            const harvestInvObj = { ...(farmData.harvestInventory ?? {}) };
+            addToGradedInventory(harvestInvObj, itemId, 'ordinaire', quantity);
             const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
             await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, harvestInventory: harvestInvObj }));
           }
@@ -617,7 +625,7 @@ export function useGarden(): UseGardenReturn {
    * Items farm : déduit de l'inventaire ferme du profil.
    */
   const sellToMarket = useCallback(
-    async (itemId: string, quantity: number, profileId: string): Promise<{ success: boolean; totalGain?: number; error?: string }> => {
+    async (itemId: string, quantity: number, profileId: string, grade: HarvestGrade = 'ordinaire'): Promise<{ success: boolean; totalGain?: number; error?: string }> => {
       if (!vault) return { success: false, error: 'Vault non disponible' };
 
       if (!canTransactToday(marketTransactions, profileId)) {
@@ -639,19 +647,20 @@ export function useGarden(): UseGardenReturn {
           if (category === 'farm') {
             profileItemCount = (farmData.farmInventory as any)?.[itemId] ?? 0;
           } else if (category === 'harvest') {
-            profileItemCount = (farmData.harvestInventory as any)?.[itemId] ?? 0;
+            // Phase B — compter uniquement le grade demandé
+            profileItemCount = countItemByGrade(farmData.harvestInventory ?? {}, itemId, grade);
           } else if (category === 'crafted') {
-            profileItemCount = (farmData.craftedItems ?? []).filter((c: any) => c.recipeId === itemId).length;
+            profileItemCount = (farmData.craftedItems ?? []).filter((c: any) => c.recipeId === itemId && (c.grade ?? 'ordinaire') === grade).length;
           }
         } catch {
           profileItemCount = 0;
         }
       }
 
-      const check = canSellItem(itemId, quantity, marketStock, profileItemCount);
+      const check = canSellItem(itemId, quantity, marketStock, profileItemCount, grade);
       if (!check.canSell) return { success: false, error: check.reason };
 
-      const { newStock, transaction, totalGain } = executeSell(itemId, quantity, profileId, marketStock);
+      const { newStock, transaction, totalGain } = executeSell(itemId, quantity, profileId, marketStock, undefined, grade);
 
       const updatedTxns = pruneTransactionLog([...marketTransactions, transaction]);
 
@@ -684,15 +693,17 @@ export function useGarden(): UseGardenReturn {
             farmInv[itemId] = Math.max(0, (farmInv[itemId] ?? 0) - quantity);
             await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, farmInventory: farmInv }));
           } else if (category === 'harvest') {
-            const harvestInv = { ...(farmData.harvestInventory ?? {}) } as any;
-            harvestInv[itemId] = Math.max(0, (harvestInv[itemId] ?? 0) - quantity);
+            // Phase B — retrait du grade spécifié uniquement
+            const harvestInv = { ...(farmData.harvestInventory ?? {}) };
+            removeFromGradedInventory(harvestInv, itemId, grade, quantity);
             await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, harvestInventory: harvestInv }));
           } else if (category === 'crafted') {
-            // Retirer N CraftedItem avec ce recipeId (les plus anciens d'abord)
+            // Phase B — retirer N CraftedItem avec ce recipeId ET grade (FIFO par craftedAt)
             const craftedItems = [...(farmData.craftedItems ?? [])];
             let removed = 0;
             const filtered = craftedItems.filter((c: any) => {
-              if (removed < quantity && c.recipeId === itemId) { removed++; return false; }
+              const cGrade = (c.grade ?? 'ordinaire');
+              if (removed < quantity && c.recipeId === itemId && cGrade === grade) { removed++; return false; }
               return true;
             });
             await vault.writeFile(farmPath, serializeFarmProfile(profileName, { ...farmData, craftedItems: filtered }));
@@ -813,8 +824,9 @@ export function useGarden(): UseGardenReturn {
         farmInvObj[itemId] = (farmInvObj[itemId] ?? 0) + 1;
         updatedFarm = { ...updatedFarm, farmInventory: farmInvObj };
       } else if (category === 'harvest') {
-        const harvestInvObj = { ...(farmData.harvestInventory ?? {}) } as any;
-        harvestInvObj[itemId] = (harvestInvObj[itemId] ?? 0) + 1;
+        // Phase B — deal du jour = achat marché → grade 'ordinaire' systématique
+        const harvestInvObj = { ...(farmData.harvestInventory ?? {}) };
+        addToGradedInventory(harvestInvObj, itemId, 'ordinaire', 1);
         updatedFarm = { ...updatedFarm, harvestInventory: harvestInvObj };
       } else if (category === 'crafted') {
         const craftedItems = [...(farmData.craftedItems ?? [])];
@@ -979,12 +991,11 @@ export function useGarden(): UseGardenReturn {
         };
         return encodeTrade(payload);
       } else if (category === 'harvest') {
-        const currentQty = farmData.harvestInventory?.[itemId] ?? 0;
+        // Phase B — envoi inter-famille en grade 'ordinaire' uniquement (pas de triche)
+        const currentQty = countItemByGrade(farmData.harvestInventory ?? {}, itemId, 'ordinaire');
         if (currentQty < quantity) return null;
-        const updatedHarvest = {
-          ...farmData.harvestInventory,
-          [itemId]: currentQty - quantity,
-        };
+        const updatedHarvest = { ...(farmData.harvestInventory ?? {}) };
+        removeFromGradedInventory(updatedHarvest, itemId, 'ordinaire', quantity);
         const newField = incrementTradesSent(tradeSentTodayField);
         const updatedFarmData = {
           ...farmData,
@@ -1114,8 +1125,9 @@ export function useGarden(): UseGardenReturn {
         await refreshFarm(profileId);
         return { success: true, itemLabel: label, emoji, quantity: payload.quantity, category: payload.category, itemId: payload.itemId };
       } else if (payload.category === 'harvest') {
-        const currentQty = farmData.harvestInventory?.[payload.itemId] ?? 0;
-        const updatedHarvest = { ...farmData.harvestInventory, [payload.itemId]: currentQty + payload.quantity };
+        // Phase B — réception trade = grade 'ordinaire' systématique
+        const updatedHarvest = { ...(farmData.harvestInventory ?? {}) };
+        addToGradedInventory(updatedHarvest, payload.itemId, 'ordinaire', payload.quantity);
         const newClaimedCodes = [...claimedCodes, code.trim().toUpperCase()].slice(-200);
         const updatedFarmData = { ...farmData, harvestInventory: updatedHarvest, trade_claimed_codes: newClaimedCodes };
         const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;

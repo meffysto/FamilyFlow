@@ -8,6 +8,7 @@ import matter from 'gray-matter';
 import { format } from 'date-fns';
 import type { FarmProfileData } from '../types';
 import type { FarmInventory, HarvestInventory, RareSeedInventory, CraftedItem } from './types';
+import { addToGradedInventory, countItemTotal, removeFromGradedInventory, countItemByGrade } from './grade-engine';
 
 // ── Constantes ───────────────────────────────────────────────────────────────
 
@@ -166,8 +167,9 @@ export function addGiftToInventory(
 
   switch (item_type) {
     case 'harvest': {
+      // Phase B — les cadeaux arrivent en grade 'ordinaire' (pas de triche via gift)
       const inv: HarvestInventory = { ...(farmData.harvestInventory ?? {}) };
-      inv[item_id] = (inv[item_id] ?? 0) + quantity;
+      addToGradedInventory(inv, item_id, 'ordinaire', quantity);
       return { ...farmData, harvestInventory: inv };
     }
 
@@ -215,10 +217,20 @@ export function removeFromInventory(
 
   switch (itemType) {
     case 'harvest': {
+      // Phase B — retrait cascade (ordinaire d'abord, préserve les grades rares)
       const inv: HarvestInventory = { ...(farmData.harvestInventory ?? {}) };
-      const current = inv[itemId] ?? 0;
+      const current = countItemTotal(inv, itemId);
       if (current < qty) return failure;
-      inv[itemId] = current - qty;
+      let toRemove = qty;
+      for (const g of ['ordinaire', 'beau', 'superbe', 'parfait'] as const) {
+        if (toRemove <= 0) break;
+        const have = countItemByGrade(inv, itemId, g);
+        const take = Math.min(have, toRemove);
+        if (take > 0) {
+          removeFromGradedInventory(inv, itemId, g, take);
+          toRemove -= take;
+        }
+      }
       return { success: true, updated: { ...farmData, harvestInventory: inv } };
     }
 

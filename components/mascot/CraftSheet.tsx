@@ -40,6 +40,17 @@ import {
 import { parseGiftHistory } from '../../lib/mascot/gift-engine';
 import type { GiftHistoryEntry } from '../../lib/mascot/gift-engine';
 import {
+  GRADE_ORDER,
+  countItemByGrade,
+  countItemTotal,
+  getGradeEmoji,
+  getGradeLabelKey,
+  gradeSellMultiplier,
+  getWeakestGrade,
+  type HarvestGrade,
+} from '../../lib/mascot/grade-engine';
+import { getDefaultGradeSelection, canCraftAtGrade, getCraftOutputGrade } from '../../lib/mascot/craft-engine';
+import {
   CROP_CATALOG,
   BUILDING_CATALOG,
   TREE_STAGES,
@@ -447,7 +458,7 @@ export function CraftSheet({
                       <View style={styles.catDotRow}>
                         {recipe.ingredients.map((ing) => {
                           const have = ing.source === 'crop'
-                            ? (harvestInventory[ing.itemId] ?? 0)
+                            ? countItemTotal(harvestInventory, ing.itemId)
                             : (farmInventory[ing.itemId as keyof FarmInventory] ?? 0);
                           const enough = have >= ing.quantity;
                           const cropDef = ing.source === 'crop'
@@ -534,7 +545,7 @@ export function CraftSheet({
                 </Text>
                 {selectedRecipe.ingredients.map((ing) => {
                   const have = ing.source === 'crop'
-                    ? (harvestInventory[ing.itemId] ?? 0)
+                    ? countItemTotal(harvestInventory, ing.itemId)
                     : (farmInventory[ing.itemId as keyof FarmInventory] ?? 0);
                   const enough = have >= ing.quantity;
                   const cropDef = ing.source === 'crop'
@@ -683,12 +694,16 @@ export function CraftSheet({
   // ── Tab : Inventaire (recoltes brutes) ────────
 
   const harvestEntries = useMemo(() => {
-    return Object.entries(harvestInventory)
-      .filter(([, qty]) => qty > 0)
-      .map(([cropId, qty]) => {
+    // Phase B — affichage agrégé (total toutes grades) pour l'onglet Inventaire
+    const entries: Array<{ cropId: string; qty: number; cropDef: typeof CROP_CATALOG[number] | undefined }> = [];
+    for (const cropId of Object.keys(harvestInventory)) {
+      const qty = countItemTotal(harvestInventory, cropId);
+      if (qty > 0) {
         const cropDef = CROP_CATALOG.find(c => c.id === cropId);
-        return { cropId, qty, cropDef };
-      });
+        entries.push({ cropId, qty, cropDef });
+      }
+    }
+    return entries;
   }, [harvestInventory]);
 
   const resourceEntries = useMemo(() => {

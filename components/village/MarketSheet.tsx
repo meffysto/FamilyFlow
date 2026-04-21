@@ -65,12 +65,14 @@ interface MarketSheetProps {
   villageInventory: Record<string, number>;
   /** Items ferme (oeuf/lait/farine/miel — per-profile) */
   farmInventory: Record<string, number>;
-  /** Récoltes cultures (per-profile) */
-  harvestInventory: Record<string, number>;
-  /** Items craftés ferme — recipeId → count (per-profile) */
+  /** Récoltes cultures (per-profile, format gradé Phase B) */
+  harvestInventory: import('../../lib/mascot/types').HarvestInventory;
+  /** Items craftés ferme — recipeId → count (per-profile, total toutes grades) */
   craftedCounts: Record<string, number>;
+  /** Items craftés ferme — recipeId:grade → count (per-profile, Phase B) */
+  craftedCountsByGrade?: Record<string, Partial<Record<import('../../lib/mascot/grade-engine').HarvestGrade, number>>>;
   onBuy: (itemId: string, quantity: number, priceOverride?: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
-  onSell: (itemId: string, quantity: number) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
+  onSell: (itemId: string, quantity: number, grade?: import('../../lib/mascot/grade-engine').HarvestGrade) => Promise<{ success: boolean; totalGain?: number; error?: string }>;
   onClose: () => void;
   /** Flux deal du jour — séparé du marché (quota per-profil, stock indépendant) */
   onBuyDeal: (itemId: string, qty: number, unitPrice: number) => Promise<{ success: boolean; totalCost?: number; error?: string }>;
@@ -420,7 +422,17 @@ export function MarketSheet({
       if (cat === 'farm') {
         map[s.def.itemId] = farmInventory[s.def.itemId] ?? 0;
       } else if (cat === 'harvest') {
-        map[s.def.itemId] = harvestInventory[s.def.itemId] ?? 0;
+        // Phase B — total toutes grades pour compat affichage legacy
+        const entry = harvestInventory[s.def.itemId];
+        if (entry == null) {
+          map[s.def.itemId] = 0;
+        } else if (typeof entry === 'number') {
+          map[s.def.itemId] = entry;
+        } else {
+          let total = 0;
+          for (const g of ['ordinaire', 'beau', 'superbe', 'parfait'] as const) total += entry[g] ?? 0;
+          map[s.def.itemId] = total;
+        }
       } else if (cat === 'crafted') {
         map[s.def.itemId] = craftedCounts[s.def.itemId] ?? 0;
       }

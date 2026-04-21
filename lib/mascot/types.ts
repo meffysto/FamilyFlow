@@ -466,11 +466,23 @@ export interface CraftedItem {
   recipeId: string;
   craftedAt: string;         // ISO date string
   isGolden?: boolean;        // true si tous les ingredients etaient golden
+  /** Phase B — grade hérité du maillon faible des ingrédients ; undefined parsé legacy = ordinaire */
+  grade?: import('./grade-engine').HarvestGrade;
 }
 
-/** Inventaire des recoltes brutes (cultures recoltees non vendues) */
+/**
+ * Entrée d'inventaire de récolte.
+ * - Legacy (pré-Phase B) : `number` brut = quantité toutes grades confondues traitée comme 'ordinaire'.
+ * - Phase B : `Partial<Record<HarvestGrade, number>>` = quantités par grade.
+ * Les helpers `countItemTotal` / `countItemByGrade` de grade-engine gèrent les deux.
+ */
+export type HarvestInventoryEntry =
+  | number
+  | Partial<Record<import('./grade-engine').HarvestGrade, number>>;
+
+/** Inventaire des recoltes brutes (cultures recoltees non vendues). */
 export interface HarvestInventory {
-  [cropId: string]: number;  // ex: { strawberry: 3, wheat: 1 }
+  [cropId: string]: HarvestInventoryEntry;
 }
 
 /** Inventaire des graines rares (obtenues par drop a la recolte) */

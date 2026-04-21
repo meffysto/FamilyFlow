@@ -19,6 +19,7 @@ import {
   type PendingGifts,
   type GiftHistoryEntry,
 } from '../mascot/gift-engine';
+import { countItemTotal } from '../mascot/grade-engine';
 import type { FarmProfileData } from '../types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -28,7 +29,8 @@ function baseFarmData(): FarmProfileData {
     mascotDecorations: [],
     mascotInhabitants: [],
     mascotPlacements: {},
-    harvestInventory: { carrot: 5, wheat: 2 },
+    // Phase B — format gradé { ordinaire: 5 } pour compat graded tests
+    harvestInventory: { carrot: { ordinaire: 5 }, wheat: { ordinaire: 2 } },
     farmInventory: { oeuf: 3, lait: 2, farine: 1, miel: 0 },
     craftedItems: [],
     farmRareSeeds: { orchidee: 1 },
@@ -188,14 +190,14 @@ describe('addGiftToInventory', () => {
     const farm = baseFarmData();
     const gift = makeGiftEntry({ item_type: 'harvest', item_id: 'carrot', quantity: 3 });
     const updated = addGiftToInventory(farm, gift);
-    expect(updated.harvestInventory?.carrot).toBe(8); // 5 + 3
+    expect(countItemTotal(updated.harvestInventory ?? {}, 'carrot')).toBe(8); // 5 + 3
   });
 
   it('ajoute un nouveau crop de type harvest (absent de l inventaire)', () => {
     const farm = baseFarmData();
     const gift = makeGiftEntry({ item_type: 'harvest', item_id: 'tomato', quantity: 1 });
     const updated = addGiftToInventory(farm, gift);
-    expect(updated.harvestInventory?.tomato).toBe(1);
+    expect(countItemTotal(updated.harvestInventory ?? {}, 'tomato')).toBe(1);
   });
 
   it('ajoute correctement un item de type rare_seed au RareSeedInventory', () => {
@@ -244,7 +246,7 @@ describe('removeFromInventory', () => {
     const farm = baseFarmData();
     const { success, updated } = removeFromInventory(farm, 'harvest', 'carrot', 3);
     expect(success).toBe(true);
-    expect(updated.harvestInventory?.carrot).toBe(2); // 5 - 3
+    expect(countItemTotal(updated.harvestInventory ?? {}, 'carrot')).toBe(2); // 5 - 3
   });
 
   it('retourne success=false si quantite insuffisante (harvest)', () => {

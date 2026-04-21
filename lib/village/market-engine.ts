@@ -8,6 +8,7 @@ import { BUILDINGS_CATALOG } from './catalog';
 import { CROP_CATALOG } from '../mascot/types';
 import { CRAFT_RECIPES } from '../mascot/craft-engine';
 import { VILLAGE_RECIPES } from './atelier-engine';
+import { gradeSellMultiplier, type HarvestGrade } from '../mascot/grade-engine';
 import type { MarketStock, MarketTransaction } from './types';
 
 // Re-export pour accès direct depuis le barrel
@@ -427,6 +428,7 @@ export function canSellItem(
   quantity: number,
   marketStock: MarketStock,
   profileItemCount: number,
+  grade: HarvestGrade = 'ordinaire',
 ): { canSell: boolean; totalGain: number; reason?: string } {
   const def = findMarketItem(itemId);
   if (!def) return { canSell: false, totalGain: 0, reason: 'Article introuvable' };
@@ -436,7 +438,8 @@ export function canSellItem(
   }
 
   const stock = marketStock[def.itemId] ?? 0;
-  const unitPrice = getSellPrice(def, stock);
+  // Phase B — le prix de vente intègre le multiplicateur de grade (×1 / ×1.5 / ×2.5 / ×4)
+  const unitPrice = Math.floor(getSellPrice(def, stock) * gradeSellMultiplier(grade));
   const totalGain = unitPrice * quantity;
 
   return { canSell: true, totalGain };
@@ -485,10 +488,12 @@ export function executeSell(
   profileId: string,
   marketStock: MarketStock,
   now: Date = new Date(),
+  grade: HarvestGrade = 'ordinaire',
 ): { newStock: MarketStock; transaction: MarketTransaction; totalGain: number } {
   const def = findMarketItem(itemId)!;
   const stock = marketStock[def.itemId] ?? 0;
-  const unitPrice = getSellPrice(def, stock);
+  // Phase B — prix unitaire × multiplicateur de grade
+  const unitPrice = Math.floor(getSellPrice(def, stock) * gradeSellMultiplier(grade));
   const totalGain = unitPrice * quantity;
 
   const newStock = { ...marketStock };

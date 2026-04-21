@@ -12,6 +12,15 @@ import {
   type RareSeedInventory,
 } from './types';
 import { GOLDEN_HARVEST_MULTIPLIER } from './farm-engine';
+import {
+  GRADE_ORDER,
+  addToGradedInventory,
+  countItemByGrade,
+  countItemTotal,
+  removeFromGradedInventory,
+  getWeakestGrade,
+  type HarvestGrade,
+} from './grade-engine';
 
 // ── Valeurs de base des ressources batiment (pour calcul sellValue) ──
 
@@ -498,7 +507,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
 
 // ── Fonctions metier ─────────────────────────────────────────────────
 
-/** Verifier si une recette peut etre craftee avec l'inventaire actuel */
+/** Verifier si une recette peut etre craftee avec l'inventaire actuel (total toutes grades) */
 export function canCraft(
   recipe: CraftRecipe,
   harvestInv: HarvestInventory,
@@ -506,7 +515,7 @@ export function canCraft(
 ): boolean {
   for (const ing of recipe.ingredients) {
     if (ing.source === 'crop') {
-      if ((harvestInv[ing.itemId] ?? 0) < ing.quantity) return false;
+      if (countItemTotal(harvestInv, ing.itemId) < ing.quantity) return false;
     } else {
       // building resource
       const key = ing.itemId as ResourceType;
@@ -516,7 +525,7 @@ export function canCraft(
   return true;
 }
 
-/** Quantité maximale craftable d'une recette en fonction des inventaires disponibles */
+/** Quantité maximale craftable d'une recette en fonction des inventaires disponibles (total toutes grades) */
 export function maxCraftableQty(
   recipe: CraftRecipe,
   harvestInv: HarvestInventory,
@@ -527,7 +536,7 @@ export function maxCraftableQty(
   for (const ing of recipe.ingredients) {
     if (ing.quantity <= 0) continue;
     const have = ing.source === 'crop'
-      ? (harvestInv[ing.itemId] ?? 0)
+      ? countItemTotal(harvestInv, ing.itemId)
       : (farmInv[ing.itemId as ResourceType] ?? 0);
     max = Math.min(max, Math.floor(have / ing.quantity));
   }
@@ -537,6 +546,9 @@ export function maxCraftableQty(
 /**
  * Crafter N items en une opération atomique — retourne inventaires mis a jour + items craftes,
  * ou null si ingredients insuffisants pour la quantite demandee.
+ *
+ * Phase B : retire les ingredients en grade 'ordinaire' par défaut (compat legacy).
+ * Les call sites qui veulent un grade spécifique utilisent `craftItemWithSelection`.
  */
 export function craftItem(
   recipe: CraftRecipe,
@@ -547,13 +559,23 @@ export function craftItem(
   const safeQty = Math.max(1, Math.floor(qty));
   if (maxCraftableQty(recipe, harvestInv, farmInv) < safeQty) return null;
 
-  // Copier les inventaires pour ne pas muter les originaux
-  const newHarvestInv: HarvestInventory = { ...harvestInv };
+  // Copier les inventaires pour ne pas muter les originaux (deep copy des entrées graded)
+  const newHarvestInv: HarvestInventory = cloneHarvestInventory(harvestInv);
   const newFarmInv: FarmInventory = { ...farmInv };
 
   for (const ing of recipe.ingredients) {
     if (ing.source === 'crop') {
-      newHarvestInv[ing.itemId] = (newHarvestInv[ing.itemId] ?? 0) - ing.quantity * safeQty;
+      // Retrait cascade : on consomme d'abord ordinaire, puis beau, etc. (préserve les grades rares)
+      let toRemove = ing.quantity * safeQty;
+      for (const grade of GRADE_ORDER) {
+        if (toRemove <= 0) break;
+        const have = countItemByGrade(newHarvestInv, ing.itemId, grade);
+        const take = Math.min(have, toRemove);
+        if (take > 0) {
+          removeFromGradedInventory(newHarvestInv, ing.itemId, grade, take);
+          toRemove -= take;
+        }
+      }
     } else {
       const key = ing.itemId as ResourceType;
       newFarmInv[key] = (newFarmInv[key] ?? 0) - ing.quantity * safeQty;
@@ -564,6 +586,121 @@ export function craftItem(
   const items: CraftedItem[] = Array.from({ length: safeQty }, () => ({
     recipeId: recipe.id,
     craftedAt: nowIso,
+  }));
+
+  return { harvestInv: newHarvestInv, farmInv: newFarmInv, items };
+}
+
+/** Clone profond de HarvestInventory (préserve les entrées number legacy et les records graded). */
+export function cloneHarvestInventory(inv: HarvestInventory): HarvestInventory {
+  const out: HarvestInventory = {};
+  for (const cropId of Object.keys(inv)) {
+    const entry = inv[cropId];
+    if (entry == null) continue;
+    if (typeof entry === 'number') {
+      out[cropId] = entry;
+    } else {
+      out[cropId] = { ...entry };
+    }
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────
+// Phase B — Helpers craft par grade (maillon faible)
+// ─────────────────────────────────────────────
+
+/**
+ * Par défaut, sélectionne pour chaque ingrédient le grade le plus faible POSSÉDÉ
+ * en quantité suffisante pour la recette × multiplier.
+ * Fallback 'ordinaire' si aucun grade n'est suffisant (UI affichera grisé).
+ */
+export function getDefaultGradeSelection(
+  inv: HarvestInventory,
+  recipe: CraftRecipe,
+  multiplier: number = 1,
+): Record<string, HarvestGrade> {
+  const selection: Record<string, HarvestGrade> = {};
+  for (const ing of recipe.ingredients) {
+    if (ing.source !== 'crop') continue;
+    const needed = ing.quantity * multiplier;
+    const found = GRADE_ORDER.find(g => countItemByGrade(inv, ing.itemId, g) >= needed);
+    selection[ing.itemId] = found ?? 'ordinaire';
+  }
+  return selection;
+}
+
+/**
+ * Vérifie qu'on peut crafter avec la sélection de grades donnée.
+ * Retourne canCraft=false et missing détaillé sinon.
+ */
+export function canCraftAtGrade(
+  inv: HarvestInventory,
+  recipe: CraftRecipe,
+  selection: Record<string, HarvestGrade>,
+  farmInv: FarmInventory,
+  multiplier: number = 1,
+): {
+  canCraft: boolean;
+  missing?: { itemId: string; grade?: HarvestGrade; have: number; need: number };
+} {
+  for (const ing of recipe.ingredients) {
+    const need = ing.quantity * multiplier;
+    if (ing.source === 'crop') {
+      const grade = selection[ing.itemId] ?? 'ordinaire';
+      const have = countItemByGrade(inv, ing.itemId, grade);
+      if (have < need) return { canCraft: false, missing: { itemId: ing.itemId, grade, have, need } };
+    } else {
+      const key = ing.itemId as ResourceType;
+      const have = farmInv[key] ?? 0;
+      if (have < need) return { canCraft: false, missing: { itemId: ing.itemId, have, need } };
+    }
+  }
+  return { canCraft: true };
+}
+
+/** Grade output d'un craft = min des grades sélectionnés (règle du maillon faible). */
+export function getCraftOutputGrade(
+  selection: Record<string, HarvestGrade>,
+): HarvestGrade {
+  const grades = Object.values(selection);
+  return getWeakestGrade(grades);
+}
+
+/**
+ * Crafter N items avec sélection de grade par ingrédient — Phase B.
+ * Retire strictement les qty des grades sélectionnés ; output a le grade maillon faible.
+ */
+export function craftItemWithSelection(
+  recipe: CraftRecipe,
+  harvestInv: HarvestInventory,
+  farmInv: FarmInventory,
+  selection: Record<string, HarvestGrade>,
+  qty: number = 1,
+): { harvestInv: HarvestInventory; farmInv: FarmInventory; items: CraftedItem[] } | null {
+  const safeQty = Math.max(1, Math.floor(qty));
+  const check = canCraftAtGrade(harvestInv, recipe, selection, farmInv, safeQty);
+  if (!check.canCraft) return null;
+
+  const newHarvestInv: HarvestInventory = cloneHarvestInventory(harvestInv);
+  const newFarmInv: FarmInventory = { ...farmInv };
+
+  for (const ing of recipe.ingredients) {
+    if (ing.source === 'crop') {
+      const grade = selection[ing.itemId] ?? 'ordinaire';
+      removeFromGradedInventory(newHarvestInv, ing.itemId, grade, ing.quantity * safeQty);
+    } else {
+      const key = ing.itemId as ResourceType;
+      newFarmInv[key] = (newFarmInv[key] ?? 0) - ing.quantity * safeQty;
+    }
+  }
+
+  const outputGrade = getCraftOutputGrade(selection);
+  const nowIso = new Date().toISOString();
+  const items: CraftedItem[] = Array.from({ length: safeQty }, () => ({
+    recipeId: recipe.id,
+    craftedAt: nowIso,
+    grade: outputGrade,
   }));
 
   return { harvestInv: newHarvestInv, farmInv: newFarmInv, items };
@@ -583,49 +720,126 @@ export function sellRawHarvest(cropId: string, isGolden?: boolean): number {
 
 // ── Serialisation / Parsing ──────────────────────────────────────────
 
-/** Serialiser l'inventaire recoltes en CSV "strawberry:3,wheat:1" */
+const VALID_GRADES: ReadonlySet<string> = new Set<string>(GRADE_ORDER);
+
+/**
+ * Serialiser l'inventaire recoltes en CSV Phase B : "tomato:ordinaire:8,tomato:beau:3,wheat:ordinaire:5".
+ * Ordre déterministe : cropId alphabétique + grade selon GRADE_ORDER.
+ * Filtre qty <= 0. Les entrées legacy number sont écrites en `cropId:ordinaire:qty`.
+ */
 export function serializeHarvestInventory(inv: HarvestInventory): string {
-  return Object.entries(inv)
-    .filter(([, qty]) => qty > 0)
-    .map(([cropId, qty]) => `${cropId}:${qty}`)
-    .join(',');
+  const parts: string[] = [];
+  for (const cropId of Object.keys(inv).sort()) {
+    const raw = inv[cropId];
+    if (raw == null) continue;
+    // Upgrade silencieux : entrée legacy number → ordinaire
+    const gradeMap: Partial<Record<HarvestGrade, number>> =
+      typeof raw === 'number' ? { ordinaire: raw } : raw;
+    for (const grade of GRADE_ORDER) {
+      const qty = gradeMap[grade] ?? 0;
+      if (qty > 0) parts.push(`${cropId}:${grade}:${qty}`);
+    }
+  }
+  return parts.join(',');
 }
 
-/** Parser l'inventaire recoltes depuis CSV */
+/**
+ * Parser l'inventaire recoltes depuis CSV — Phase B.
+ * Accepte deux formats par entrée :
+ *   - Legacy "cropId:qty"       → grade 'ordinaire'
+ *   - Phase B "cropId:grade:qty" → grade explicite
+ * Grade invalide → fallback 'ordinaire' (résilience). Fusion si doublons.
+ */
 export function parseHarvestInventory(csv: string | undefined): HarvestInventory {
   const inv: HarvestInventory = {};
   if (!csv || csv.trim() === '') return inv;
-  for (const entry of csv.split(',')) {
-    const [cropId, val] = entry.trim().split(':');
-    if (cropId && val) {
-      const qty = parseInt(val, 10);
-      if (!isNaN(qty) && qty > 0) {
-        inv[cropId] = qty;
+  for (const rawEntry of csv.split(',')) {
+    const entry = rawEntry.trim();
+    if (!entry) continue;
+    const parts = entry.split(':');
+    if (parts.length === 2) {
+      // Legacy cropId:qty
+      const [cropId, qtyStr] = parts;
+      const qty = parseInt(qtyStr, 10);
+      if (cropId && !isNaN(qty) && qty > 0) {
+        addToGradedInventory(inv, cropId, 'ordinaire', qty);
       }
+    } else if (parts.length === 3) {
+      // v2 cropId:grade:qty
+      const [cropId, gradeRaw, qtyStr] = parts;
+      const qty = parseInt(qtyStr, 10);
+      if (!cropId || isNaN(qty) || qty <= 0) continue;
+      const grade: HarvestGrade = VALID_GRADES.has(gradeRaw)
+        ? (gradeRaw as HarvestGrade)
+        : 'ordinaire';
+      addToGradedInventory(inv, cropId, grade, qty);
     }
   }
   return inv;
 }
 
-/** Serialiser les items craftes en CSV "confiture:2024-01-01T00:00:00.000Z,gateau:2024-02-01T00:00:00.000Z" */
+/**
+ * Serialiser les items craftes en CSV.
+ * Format Phase B : "recipeId:craftedAt:grade" (3 parts) si grade présent.
+ * Format legacy : "recipeId:craftedAt" si grade absent.
+ * Note : craftedAt est un ISO string qui contient des ':' — on reconstruit via split(',') entre items,
+ * et à l'intérieur d'une entrée on limite à 3 fragments en utilisant un marker d'échappement interne
+ * simple. Pour rester compat avec l'existant, on garde l'ISO tel quel quand pas de grade,
+ * et on append ":<grade>" seulement quand présent (safe car GRADE_ORDER n'intersecte pas l'ISO).
+ */
 export function serializeCraftedItems(items: CraftedItem[]): string {
   if (items.length === 0) return '';
   return items
-    .map(item => `${item.recipeId}:${item.craftedAt}`)
+    .map(item => {
+      if (item.grade) return `${item.recipeId}:${item.craftedAt}:${item.grade}`;
+      return `${item.recipeId}:${item.craftedAt}`;
+    })
     .join(',');
 }
 
-/** Parser les items craftes depuis CSV */
+/**
+ * Parser les items craftes depuis CSV.
+ * - Dernier fragment après ':' = grade si ∈ GRADE_ORDER (sinon fait partie du craftedAt legacy).
+ * - Grade invalide (ex: "unknown") → fallback 'ordinaire'.
+ */
 export function parseCraftedItems(csv: string | undefined): CraftedItem[] {
   if (!csv || csv.trim() === '') return [];
-  return csv.split(',').map(entry => {
-    const colonIdx = entry.indexOf(':');
-    if (colonIdx < 0) return null;
-    const recipeId = entry.slice(0, colonIdx).trim();
-    const craftedAt = entry.slice(colonIdx + 1).trim();
-    if (!recipeId || !craftedAt) return null;
-    return { recipeId, craftedAt } as CraftedItem;
-  }).filter((item): item is CraftedItem => item !== null);
+  return csv
+    .split(',')
+    .map(entry => {
+      const trimmed = entry.trim();
+      const firstColon = trimmed.indexOf(':');
+      if (firstColon < 0) return null;
+      const recipeId = trimmed.slice(0, firstColon);
+      let rest = trimmed.slice(firstColon + 1);
+      if (!recipeId || !rest) return null;
+
+      // Détection grade suffixe : dernier fragment séparé par ':' exactement = grade
+      const lastColon = rest.lastIndexOf(':');
+      let grade: HarvestGrade | undefined;
+      if (lastColon >= 0) {
+        const tail = rest.slice(lastColon + 1);
+        if (VALID_GRADES.has(tail)) {
+          grade = tail as HarvestGrade;
+          rest = rest.slice(0, lastColon);
+        } else if (/^[a-z]+$/i.test(tail) && tail.length <= 10 && !/^\d/.test(tail)) {
+          // suffixe alpha non-grade (ex: "unknown") → traité comme grade invalide, fallback ordinaire
+          // On ne le consomme que si le craftedAt résiduel reste plausible (contient un chiffre / date)
+          const residual = rest.slice(0, lastColon);
+          if (/\d/.test(residual)) {
+            grade = 'ordinaire';
+            rest = residual;
+          }
+        }
+      }
+
+      const craftedAt = rest;
+      if (!craftedAt) return null;
+      const item: CraftedItem = { recipeId, craftedAt };
+      if (grade) item.grade = grade;
+      return item;
+    })
+    .filter((item): item is CraftedItem => item !== null);
 }
 
 // ── Graines rares — Serialisation / Parsing ─────────────────────────

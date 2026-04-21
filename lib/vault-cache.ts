@@ -44,8 +44,10 @@ import type { JournalSummaryEntry } from './ai-service';
 
 // v5 : Phase 40 — shape WagerModifier étendu (tasksCompletedToday, lastDailyResetDate, totalDays)
 //                + FarmProfileData.wagerLastRecomputeDate frontmatter
-const CACHE_VERSION = 5;
-const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v5.json';
+// v6 : Phase B grades (260421-obd) — HarvestInventory shape change (cropId → grade → qty)
+//                + CraftedItem.grade optional
+const CACHE_VERSION = 6;
+const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v6.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {

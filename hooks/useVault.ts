@@ -1770,8 +1770,16 @@ export function useVaultInternal(): VaultState {
         const fp = farmFile(profileId);
         const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
         const farmData = parseFarmProfile(farmContent);
+        // Phase B — bonus saga arrive en grade 'ordinaire'
         const harvestInv = { ...(farmData.harvestInventory ?? {}) };
-        harvestInv[bonusCropId] = (harvestInv[bonusCropId] ?? 0) + 1;
+        const existing = harvestInv[bonusCropId];
+        if (existing == null) {
+          harvestInv[bonusCropId] = { ordinaire: 1 };
+        } else if (typeof existing === 'number') {
+          harvestInv[bonusCropId] = { ordinaire: existing + 1 };
+        } else {
+          harvestInv[bonusCropId] = { ...existing, ordinaire: (existing.ordinaire ?? 0) + 1 };
+        }
         farmData.harvestInventory = harvestInv;
         const profileNameSaga = profiles.find(p => p.id === profileId)?.name ?? profileId;
         await vaultRef.current.writeFile(fp, serializeFarmProfile(profileNameSaga, farmData));

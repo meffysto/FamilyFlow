@@ -31,6 +31,13 @@ import {
 import { type TreeStage } from '../lib/mascot/types';
 import type { ActiveExpedition } from '../lib/types';
 import { rollSporeeDropOnExpedition, tryIncrementSporeeCount } from '../lib/mascot/sporee-economy';
+import {
+  addToGradedInventory,
+  removeFromGradedInventory,
+  countItemByGrade,
+  countItemTotal,
+} from '../lib/mascot/grade-engine';
+import type { HarvestGrade } from '../lib/mascot/grade-engine';
 import { useToast } from '../contexts/ToastContext';
 
 // ─── Helpers chemin fichier ──────────────────────────────────────────────────
@@ -175,7 +182,12 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     // Vérifier les ressources
     const coins = currentProfile.coins ?? 0;
     const harvestInventory = currentProfile.harvestInventory ?? {};
-    if (!canAffordExpedition(mission, coins, harvestInventory)) {
+    // Phase B — expedition-engine raisonne en totaux agrégés (flatten graded → number)
+    const flattenedInv: Record<string, number> = {};
+    for (const cropId of Object.keys(harvestInventory)) {
+      flattenedInv[cropId] = countItemTotal(harvestInventory, cropId);
+    }
+    if (!canAffordExpedition(mission, coins, flattenedInv)) {
       Alert.alert(
         'Ressources insuffisantes',
         "Tu n'as pas assez de feuilles ou de récoltes pour cette expédition."
@@ -205,10 +217,19 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
       const farmContent = await vault.readFile(farmPath).catch(() => '');
       const farm = parseFarmProfile(farmContent);
 
-      // Déduire les récoltes
+      // Déduire les récoltes — Phase B cascade ordinaire → beau → superbe → parfait
       const harvest = { ...(farm.harvestInventory ?? {}) };
       for (const cost of mission.costCrops) {
-        harvest[cost.cropId] = Math.max(0, (harvest[cost.cropId] ?? 0) - cost.quantity);
+        let toRemove = cost.quantity;
+        for (const g of ['ordinaire', 'beau', 'superbe', 'parfait'] as HarvestGrade[]) {
+          if (toRemove <= 0) break;
+          const have = countItemByGrade(harvest, cost.cropId, g);
+          const take = Math.min(have, toRemove);
+          if (take > 0) {
+            removeFromGradedInventory(harvest, cost.cropId, g, take);
+            toRemove -= take;
+          }
+        }
       }
       farm.harvestInventory = harvest;
 
@@ -279,11 +300,12 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
       const mission = EXPEDITION_CATALOG.find(m => m.id === exp.missionId);
       if (mission) {
         refundedCoins = Math.floor(mission.costCoins * PARTIAL_REFUND_RATIO);
+        // Phase B — remboursement partiel en grade 'ordinaire' (pas de triche)
         const harvest = { ...(farm.harvestInventory ?? {}) };
         for (const cost of mission.costCrops) {
           const qty = Math.floor(cost.quantity * PARTIAL_REFUND_RATIO);
           if (qty > 0) {
-            harvest[cost.cropId] = (harvest[cost.cropId] ?? 0) + qty;
+            addToGradedInventory(harvest, cost.cropId, 'ordinaire', qty);
             refundedCrops.push({ cropId: cost.cropId, quantity: qty });
           }
         }

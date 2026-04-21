@@ -51,6 +51,10 @@ import {
 import {
   rollHarvestGrade,
   getGradeMultiplier,
+  addToGradedInventory,
+  removeFromGradedInventory,
+  countItemByGrade,
+  countItemTotal,
   type HarvestGrade,
 } from '../lib/mascot/grade-engine';
 import {
@@ -329,7 +333,7 @@ export function useFarm(
     const result = harvestCrop(currentCrops, plotIndex);
     if (!result.harvestedCropId) return null;
 
-    // Ajouter la recolte a l'inventaire
+    // Ajouter la recolte a l'inventaire (Phase B — format gradé)
     const currentHarvestInv = profile.harvestInventory ?? {};
     const updatedHarvestInv = { ...currentHarvestInv };
     // Parcelle geante (c20) = double recolte
@@ -348,7 +352,6 @@ export function useFarm(
       finalQty = Math.round(finalQty * EFFECT_GOLDEN_MULTIPLIER);
       profile.nextHarvestGolden = false; // reset flag — persiste via serializeFarmProfile ci-dessous
     }
-    updatedHarvestInv[result.harvestedCropId] = (updatedHarvestInv[result.harvestedCropId] ?? 0) + finalQty;
 
     // Tenter un drop de graine rare
     const seedDrop = rollSeedDrop(result.harvestedCropId);
@@ -399,25 +402,17 @@ export function useFarm(
           }
         }
       }
-      // Recalculer updatedHarvestInv avec finalQty multiplié
-      updatedHarvestInv[result.harvestedCropId] = (currentHarvestInv[result.harvestedCropId] ?? 0) + finalQty;
     }
 
-    // Phase A (GRADE-02/03) — Roll grade de récolte si tech culture-5 débloquée.
-    // Bonus coins = delta par rapport à la vente normale (harvestReward × qty × (mult − 1)).
-    // Sans la tech : grade/gradeBonusCoins restent undefined/0 → compat stricte.
+    // Phase A conservée — Roll grade si tech culture-5 débloquée (sinon ordinaire).
+    // Phase B — le gain se matérialise à la vente/craft (plus de bonus coins immédiat ici).
     const unlockedTechs = profile.farmTech ?? [];
     const hasGradeTech = unlockedTechs.includes('culture-5');
-    let grade: HarvestGrade | undefined;
-    let gradeBonusCoins = 0;
-    if (hasGradeTech) {
-      grade = rollHarvestGrade();
-      const gradeMultiplier = getGradeMultiplier(grade);
-      if (gradeMultiplier > 1) {
-        const harvestReward = CROP_CATALOG.find(c => c.id === result.harvestedCropId)?.harvestReward ?? 0;
-        gradeBonusCoins = Math.round(harvestReward * finalQty * (gradeMultiplier - 1));
-      }
-    }
+    const grade: HarvestGrade | undefined = hasGradeTech ? rollHarvestGrade() : undefined;
+    const finalGrade: HarvestGrade = grade ?? 'ordinaire';
+
+    // Phase B — écriture unique dans l'inventaire gradé (après wager multiplier + grade)
+    addToGradedInventory(updatedHarvestInv, result.harvestedCropId, finalGrade, finalQty);
 
     if (wasGoldenEffect) {
       // Ecrire farm en une seule operation (crops + harvest inv + reset golden flag)
@@ -434,10 +429,7 @@ export function useFarm(
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
       await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, updatedProfile));
       await refreshFarm(profileId);
-      // Phase A (GRADE-03) — créditer le bonus coins après l'écriture ferme
-      if (gradeBonusCoins > 0 && grade) {
-        await addCoins(profileId, gradeBonusCoins, `✨ Récolte grade ${grade} ×${getGradeMultiplier(grade)}`);
-      }
+      // Phase B — plus de bonus coins immédiat (la valeur grade se matérialise à la vente/craft)
       if (sporeeRefused) {
         showToast('Inventaire Sporée plein', 'error');
       }
@@ -449,7 +441,7 @@ export function useFarm(
         : undefined;
       // Phase 41 (SPOR-10) — signal premier obtention Sporée (tooltip one-shot)
       const sporeeFirstObtained = sporeeDropped || wagerDropBack;
-      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained, grade, gradeBonusCoins };
+      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained, grade, gradeBonusCoins: 0 };
     }
 
     // Preparer les champs a ecrire (chemin standard — pas de golden effect)
@@ -479,10 +471,7 @@ export function useFarm(
     // Ecrire tous les champs en une seule operation
     await writeProfileFields(profileId, fieldsToWrite);
     await refreshFarm(profileId);
-    // Phase A (GRADE-03) — créditer le bonus coins après l'écriture ferme
-    if (gradeBonusCoins > 0 && grade) {
-      await addCoins(profileId, gradeBonusCoins, `✨ Récolte grade ${grade} ×${getGradeMultiplier(grade)}`);
-    }
+    // Phase B — plus de bonus coins immédiat (la valeur grade se matérialise à la vente/craft)
     if (sporeeRefused) {
       showToast('Inventaire Sporée plein', 'error');
     }
@@ -497,7 +486,7 @@ export function useFarm(
       : undefined;
     // Phase 41 (SPOR-10) — signal premier obtention Sporée (tooltip one-shot)
     const sporeeFirstObtained = sporeeDropped || wagerDropBack;
-    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained, grade, gradeBonusCoins };
+    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained, grade, gradeBonusCoins: 0 };
   }, [vault, profiles, writeProfileFields, refreshFarm, addCoins, onQuestProgress, onContribution, showToast]);
 
   /** Vendre une recolte brute depuis l'inventaire (qty = nombre d'unités à vendre) */
@@ -508,12 +497,22 @@ export function useFarm(
     const profile = parseFarmProfile(content);
 
     const harvestInv = profile.harvestInventory ?? {};
-    const available = harvestInv[cropId] ?? 0;
+    const available = countItemTotal(harvestInv, cropId);
     if (available <= 0) return 0;
 
     const actualQty = Math.min(qty, available);
+    // Phase B — retrait cascade : ordinaire → beau → superbe → parfait (préserve les grades rares)
     const updatedInv = { ...harvestInv };
-    updatedInv[cropId] = updatedInv[cropId] - actualQty;
+    let toRemove = actualQty;
+    for (const g of ['ordinaire', 'beau', 'superbe', 'parfait'] as HarvestGrade[]) {
+      if (toRemove <= 0) break;
+      const have = countItemByGrade(updatedInv, cropId, g);
+      const take = Math.min(have, toRemove);
+      if (take > 0) {
+        removeFromGradedInventory(updatedInv, cropId, g, take);
+        toRemove -= take;
+      }
+    }
 
     const unitReward = getEffectiveHarvestReward(cropId);
     if (unitReward <= 0) return 0;

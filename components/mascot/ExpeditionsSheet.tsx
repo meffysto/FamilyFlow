@@ -45,6 +45,7 @@ import {
   type ExpeditionMission,
 } from '../../lib/mascot/expedition-engine';
 import { CROP_CATALOG, type HarvestInventory } from '../../lib/mascot/types';
+import { countItemTotal } from '../../lib/mascot/grade-engine';
 import type { ActiveExpedition, ExpeditionDifficulty, ExpeditionOutcome } from '../../lib/types';
 
 // ── Constantes module ─────────────────────────────────────────────────────────
@@ -678,7 +679,7 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
           const cropDef = CROP_CATALOG.find(c => c.id === cost.cropId);
           const cropEmoji = cropDef?.emoji ?? '🌿';
           const cropName = cropDef ? t(cropDef.labelKey) : cost.cropId;
-          const have = harvestInventory[cost.cropId] ?? 0;
+          const have = countItemTotal(harvestInventory, cost.cropId);
           const enough = have >= cost.quantity;
           return (
             <View
