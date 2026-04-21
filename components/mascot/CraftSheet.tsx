@@ -87,7 +87,7 @@ interface CraftSheetProps {
     selection?: Record<string, HarvestGrade>,
   ) => Promise<CraftedItem[] | CraftedItem | null>;
   onSellHarvest: (cropId: string, qty: number) => Promise<number>;
-  onSellCrafted: (recipeId: string, qty: number) => Promise<number>;
+  onSellCrafted: (recipeId: string, qty: number, grade?: HarvestGrade) => Promise<number>;
   onOfferItem?: (itemType: string, itemId: string, maxQty: number, itemName: string) => void;
   giftHistory?: string;
   unlockedRecipes?: string[];
@@ -295,17 +295,18 @@ export function CraftSheet({
     setSelling(null);
   }, [onSellHarvest, showFeedback, t, sellQty]);
 
-  const handleSellCrafted = useCallback(async (recipeId: string) => {
-    const qty = sellQty[recipeId] ?? 1;
-    setSelling(recipeId);
+  const handleSellCrafted = useCallback(async (recipeId: string, grade: HarvestGrade) => {
+    const groupKey = `${recipeId}::${grade}`;
+    const qty = sellQty[groupKey] ?? 1;
+    setSelling(groupKey);
     try {
-      const amount = await onSellCrafted(recipeId, qty);
+      const amount = await onSellCrafted(recipeId, qty, grade);
       if (amount > 0) {
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
         showFeedback('💰', t('craft.venteReussie', { amount }), 'success');
-        setSellQty(prev => { const next = { ...prev }; delete next[recipeId]; return next; });
+        setSellQty(prev => { const next = { ...prev }; delete next[groupKey]; return next; });
       }
     } catch {
       showFeedback('⚠️', t('common.error'), 'error');
@@ -924,16 +925,23 @@ export function CraftSheet({
   // ── Tab : Mes creations (items craftes) ───────
 
   const craftedGroups = useMemo(() => {
-    const groups: Record<string, { recipe: CraftRecipe; count: number }> = {};
+    const groups: Record<string, { recipe: CraftRecipe; grade: HarvestGrade; count: number }> = {};
     for (const item of craftedItems) {
       const recipe = CRAFT_RECIPES.find(r => r.id === item.recipeId);
       if (!recipe) continue;
-      if (!groups[item.recipeId]) {
-        groups[item.recipeId] = { recipe, count: 0 };
+      const grade: HarvestGrade = item.grade ?? 'ordinaire';
+      const key = `${item.recipeId}::${grade}`;
+      if (!groups[key]) {
+        groups[key] = { recipe, grade, count: 0 };
       }
-      groups[item.recipeId].count++;
+      groups[key].count++;
     }
-    return Object.values(groups);
+    // Tri : même recette groupée, grades du plus rare au plus commun
+    const gradeRank: Record<HarvestGrade, number> = { parfait: 0, superbe: 1, beau: 2, ordinaire: 3 };
+    return Object.values(groups).sort((a, b) => {
+      if (a.recipe.id !== b.recipe.id) return a.recipe.id.localeCompare(b.recipe.id);
+      return gradeRank[a.grade] - gradeRank[b.grade];
+    });
   }, [craftedItems]);
 
   const renderCreations = () => (
@@ -943,12 +951,16 @@ export function CraftSheet({
           {t('craft.aucunItem')}
         </Text>
       )}
-      {craftedGroups.map(({ recipe, count }, idx) => {
+      {craftedGroups.map(({ recipe, grade, count }, idx) => {
         const recipeName = t(recipe.labelKey);
-        const currentQty = getSellQty(recipe.id);
+        const groupKey = `${recipe.id}::${grade}`;
+        const currentQty = getSellQty(groupKey);
         const clampedQty = Math.min(currentQty, count);
+        const mult = gradeSellMultiplier(grade);
+        const unitPrice = Math.round(recipe.sellValue * mult);
+        const showGradeBadge = grade !== 'ordinaire';
         return (
-          <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
+          <Animated.View key={groupKey} entering={FadeInDown.delay(idx * 60).duration(300)}>
             <View style={styles.inventoryRow}>
               {recipe.sprite ? (
                 <Image source={recipe.sprite} style={styles.inventorySprite} />
@@ -957,10 +969,10 @@ export function CraftSheet({
               )}
               <View style={styles.inventoryInfo}>
                 <Text style={styles.inventoryName}>
-                  {recipeName}
+                  {showGradeBadge ? `${getGradeEmoji(grade)} ` : ''}{recipeName}
                 </Text>
                 <Text style={styles.inventoryQty}>
-                  x{count} — {recipe.sellValue} 🍃 + {recipe.xpBonus} XP
+                  x{count} — {unitPrice} 🍃{showGradeBadge ? ` (×${mult})` : ''} + {recipe.xpBonus} XP
                 </Text>
               </View>
               <TouchableOpacity
@@ -972,11 +984,11 @@ export function CraftSheet({
               </TouchableOpacity>
               {count > 1 && (
                 <View style={styles.qtySelector}>
-                  <TouchableOpacity onPress={() => adjustSellQty(recipe.id, -1, count)} style={styles.qtyBtn} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => adjustSellQty(groupKey, -1, count)} style={styles.qtyBtn} activeOpacity={0.7}>
                     <Text style={[styles.qtyBtnText, clampedQty <= 1 && { opacity: 0.3 }]}>−</Text>
                   </TouchableOpacity>
                   <Text style={styles.qtyValue}>{clampedQty}</Text>
-                  <TouchableOpacity onPress={() => adjustSellQty(recipe.id, 1, count)} style={styles.qtyBtn} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => adjustSellQty(groupKey, 1, count)} style={styles.qtyBtn} activeOpacity={0.7}>
                     <Text style={[styles.qtyBtnText, clampedQty >= count && { opacity: 0.3 }]}>+</Text>
                   </TouchableOpacity>
                 </View>
@@ -984,14 +996,14 @@ export function CraftSheet({
               <TouchableOpacity
                 style={[
                   styles.sellBtn,
-                  selling === recipe.id && { opacity: 0.5 },
+                  selling === groupKey && { opacity: 0.5 },
                 ]}
-                onPress={() => handleSellCrafted(recipe.id)}
-                disabled={selling === recipe.id}
+                onPress={() => handleSellCrafted(recipe.id, grade)}
+                disabled={selling === groupKey}
                 activeOpacity={0.7}
               >
                 <Text style={styles.sellBtnText}>
-                  {clampedQty > 1 ? `${recipe.sellValue * clampedQty} 🍃` : t('craft.vendre')}
+                  {clampedQty > 1 ? `${unitPrice * clampedQty} 🍃` : t('craft.vendre')}
                 </Text>
               </TouchableOpacity>
             </View>

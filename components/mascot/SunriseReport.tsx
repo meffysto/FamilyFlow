@@ -27,6 +27,13 @@ export interface SunriseResource {
   quantity: number;
 }
 
+export interface SunriseDailyDeal {
+  label: string;
+  emoji: string;
+  discountedPrice: number;
+  originalPrice: number;
+}
+
 interface SunriseReportProps {
   visible: boolean;
   profileName: string;
@@ -34,6 +41,7 @@ interface SunriseReportProps {
   totalCollected: number;
   yesterdayTasks: number;
   hasBonus: boolean;
+  dailyDeal?: SunriseDailyDeal | null;
   onDismiss: () => void;
 }
 
@@ -46,6 +54,7 @@ export function SunriseReport({
   totalCollected,
   yesterdayTasks,
   hasBonus,
+  dailyDeal,
   onDismiss,
 }: SunriseReportProps) {
   const filteredResources = useMemo(
@@ -109,6 +118,23 @@ export function SunriseReport({
                   {`${totalCollected} ressource${totalCollected > 1 ? 's' : ''} \u00E0 r\u00E9cuperer`}
                 </Text>
               </Animated.View>
+
+              {/* Deal du jour au village */}
+              {dailyDeal && (
+                <Animated.View
+                  entering={FadeIn.delay(600 + filteredResources.length * 150 + 350).duration(400)}
+                  style={styles.dealBox}
+                >
+                  <Text style={styles.dealTitle}>{'\uD83C\uDFF7\uFE0F Deal du jour au village'}</Text>
+                  <Text style={styles.dealItem}>
+                    {`${dailyDeal.emoji} ${dailyDeal.label}`}
+                  </Text>
+                  <Text style={styles.dealPrice}>
+                    {`${dailyDeal.discountedPrice} \uD83C\uDF43 `}
+                    <Text style={styles.dealPriceOriginal}>{`au lieu de ${dailyDeal.originalPrice}`}</Text>
+                  </Text>
+                </Animated.View>
+              )}
 
               {/* Hint fermer */}
               <Animated.Text
@@ -216,6 +242,41 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
     color: '#92400E',
+  },
+  dealBox: {
+    width: '100%',
+    backgroundColor: 'rgba(217,119,6,0.12)',
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(217,119,6,0.35)',
+  },
+  dealTitle: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: '#92400E',
+    marginBottom: 2,
+    letterSpacing: 0.5,
+  },
+  dealItem: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: '#78350F',
+    marginBottom: 2,
+  },
+  dealPrice: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: '#B45309',
+  },
+  dealPriceOriginal: {
+    fontWeight: FontWeight.normal,
+    color: '#B45309',
+    textDecorationLine: 'line-through',
+    opacity: 0.7,
   },
   dismissHint: {
     fontSize: FontSize.caption,

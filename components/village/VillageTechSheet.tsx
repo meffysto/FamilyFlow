@@ -426,21 +426,19 @@ const styles = StyleSheet.create({
 
   // ── Wood frame ────────────────────────────────────────────────────────────
   woodFrame: {
+    flex: 1,
     backgroundColor: Farm.woodDark,
     padding: 5,
     borderRadius: Radius['2xl'],
-    maxHeight: '88%',
-    marginHorizontal: Spacing.xl,
-    marginBottom: Spacing['4xl'],
     ...Shadows.xl,
   },
   woodFrameInner: {
+    flex: 1,
     backgroundColor: Farm.woodLight,
     borderWidth: 2,
     borderColor: Farm.woodHighlight,
     borderRadius: Radius.xl,
     overflow: 'hidden',
-    flexShrink: 1,
   },
 
   // ── Awning ────────────────────────────────────────────────────────────────
@@ -475,8 +473,8 @@ const styles = StyleSheet.create({
 
   // ── Parchment area ────────────────────────────────────────────────────────
   parchment: {
+    flex: 1,
     backgroundColor: Farm.parchment,
-    flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },
 

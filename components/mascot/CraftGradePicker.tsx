@@ -15,8 +15,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   FadeIn,
-  SlideInDown,
-  SlideOutUp,
+  FadeOut,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -126,11 +125,11 @@ export function CraftGradePicker({
       {/* Panneau expand : grades par ingrédient */}
       {expanded && (
         <Animated.View
-          entering={SlideInDown.duration(220)}
-          exiting={SlideOutUp.duration(180)}
+          entering={FadeIn.duration(180)}
+          exiting={FadeOut.duration(120)}
           style={[
             styles.panel,
-            { borderColor: Farm.woodHighlight, backgroundColor: Farm.parchment },
+            { borderColor: Farm.woodHighlight, backgroundColor: Farm.progressBg },
           ]}
         >
           <Text style={[styles.panelHint, { color: Farm.brownTextSub }]}>

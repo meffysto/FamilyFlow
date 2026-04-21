@@ -306,6 +306,40 @@ function ProfileCard({
             );
           })}
 
+          {__DEV__ && (
+            <View style={styles.saveBtn}>
+              <Button
+                label="🧪 Seed grades (dev)"
+                onPress={async () => {
+                  try {
+                    const farmPath = `farm-${profile.id}.md`;
+                    const farmContent = await vault.readFile(farmPath).catch(() => '');
+                    const farmData = parseFarmProfile(farmContent);
+                    const techs = new Set(farmData.farmTech ?? []);
+                    for (const id of ['culture-1', 'culture-2', 'culture-3', 'culture-4', 'culture-5']) {
+                      techs.add(id);
+                    }
+                    farmData.farmTech = Array.from(techs);
+                    const gradedSeed = { ordinaire: 10, beau: 5, superbe: 2, parfait: 1 };
+                    farmData.harvestInventory = {
+                      ...(farmData.harvestInventory ?? {}),
+                      tomato: gradedSeed,
+                      potato: gradedSeed,
+                      carrot: gradedSeed,
+                      wheat: gradedSeed,
+                      cabbage: gradedSeed,
+                    };
+                    await vault.writeFile(farmPath, serializeFarmProfile(profile.name, farmData));
+                    await refresh();
+                    Alert.alert('🧪 Seed grades', `${profile.avatar} ${profile.name} — techs culture-1→5 + 5 cultures avec mix de grades (10/5/2/1)`);
+                  } catch (e: any) {
+                    Alert.alert('Erreur', e.message ?? String(e));
+                  }
+                }}
+              />
+            </View>
+          )}
+
           <View style={styles.saveBtn}>
             <Button label="Sauvegarder" onPress={handleSave} />
           </View>

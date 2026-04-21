@@ -636,29 +636,27 @@ const styles = StyleSheet.create({
   },
   // Wood frame outer
   woodFrame: {
+    flex: 1,
     backgroundColor: Farm.woodDark,
     padding: Spacing['2xl'],
     borderTopLeftRadius: Radius['2xl'],
     borderTopRightRadius: Radius['2xl'],
-    maxHeight: '88%',
-    marginHorizontal: Spacing.xl,
-    marginBottom: Spacing['4xl'],
     borderRadius: Radius['2xl'],
     ...Shadows.xl,
   },
   // Wood frame inner
   woodFrameInner: {
+    flex: 1,
     backgroundColor: Farm.woodLight,
     borderWidth: 2,
     borderColor: Farm.woodHighlight,
     overflow: 'hidden',
-    flexShrink: 1,
     borderRadius: Radius.xl,
   },
   // Parchment content area
   parchment: {
+    flex: 1,
     backgroundColor: Farm.parchment,
-    flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },
   handleRow: {

@@ -834,21 +834,19 @@ const styles = StyleSheet.create({
 
   // ── Cadre bois ──────────────────────────────────
   woodFrame: {
-    marginHorizontal: Spacing.xl,
-    marginBottom: Spacing['4xl'],
+    flex: 1,
     borderRadius: Radius['2xl'],
     backgroundColor: Farm.woodDark,
     padding: 5,
     ...Shadows.xl,
-    maxHeight: '90%',
   },
   woodFrameInner: {
     borderRadius: Radius.xl,
+    flex: 1,
     backgroundColor: Farm.woodLight,
     borderWidth: 2,
     borderColor: Farm.woodHighlight,
     overflow: 'hidden',
-    flexShrink: 1,
   },
 
   // ── Auvent ──────────────────────────────────────
@@ -883,8 +881,8 @@ const styles = StyleSheet.create({
 
   // ── Fond parchemin ──────────────────────────────
   parchment: {
+    flex: 1,
     backgroundColor: Farm.parchment,
-    flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },
   handle: {

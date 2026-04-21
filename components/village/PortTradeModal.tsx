@@ -588,20 +588,18 @@ const styles = StyleSheet.create({
 
   // Wood frame
   woodFrame: {
+    flex: 1,
     backgroundColor: Farm.woodDark,
     padding: Spacing['lg'],
     borderRadius: Radius['2xl'],
     ...Shadows.xl,
-    maxHeight: '85%',
-    marginHorizontal: Spacing.xl,
-    marginBottom: Spacing['4xl'],
   },
   woodFrameInner: {
     backgroundColor: Farm.woodLight,
     borderWidth: 2,
     borderColor: Farm.woodHighlight,
     overflow: 'hidden',
-    flexShrink: 1,
+    flex: 1,
     borderRadius: Radius.xl,
   },
 
@@ -632,8 +630,8 @@ const styles = StyleSheet.create({
 
   // Parchment area
   parchment: {
+    flex: 1,
     backgroundColor: Farm.parchment,
-    flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },
 

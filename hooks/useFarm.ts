@@ -56,6 +56,7 @@ import {
   removeFromGradedInventory,
   countItemByGrade,
   countItemTotal,
+  gradeSellMultiplier,
   type HarvestGrade,
 } from '../lib/mascot/grade-engine';
 import {
@@ -582,36 +583,43 @@ export function useFarm(
     return result.items;
   }, [vault, writeProfileFields, refreshFarm, refreshGamification, onQuestProgress]);
 
-  /** Vendre des items craftés (qty = nombre d'unités à vendre) */
-  const sellCrafted = useCallback(async (profileId: string, recipeId: string, qty: number = 1): Promise<number> => {
+  /** Vendre des items craftés (qty = nombre d'unités à vendre, grade filtre optionnel) */
+  const sellCrafted = useCallback(async (profileId: string, recipeId: string, qty: number = 1, grade?: HarvestGrade): Promise<number> => {
     if (!vault || qty <= 0) return 0;
 
     const content = await vault.readFile(farmFile(profileId)).catch(() => '');
     const profile = parseFarmProfile(content);
 
     const craftedItems = profile.craftedItems ?? [];
-    const matching = craftedItems.filter(i => i.recipeId === recipeId);
+    const matches = (item: { recipeId: string; grade?: HarvestGrade }) => {
+      if (item.recipeId !== recipeId) return false;
+      if (!grade) return true;
+      const itemGrade: HarvestGrade = item.grade ?? 'ordinaire';
+      return itemGrade === grade;
+    };
+    const matching = craftedItems.filter(matches);
     if (matching.length === 0) return 0;
 
     const actualQty = Math.min(qty, matching.length);
     const recipe = CRAFT_RECIPES.find(r => r.id === recipeId);
     if (!recipe) return 0;
 
-    // Supprimer actualQty items correspondants
+    // Supprimer actualQty items correspondants (en respectant le filtre grade)
     const updatedItems = [...craftedItems];
     let removed = 0;
     for (let i = updatedItems.length - 1; i >= 0 && removed < actualQty; i--) {
-      if (updatedItems[i].recipeId === recipeId) {
+      if (matches(updatedItems[i])) {
         updatedItems.splice(i, 1);
         removed++;
       }
     }
 
-    const unitValue = sellCraftedItemFn(recipe);
+    const effectiveGrade: HarvestGrade = grade ?? 'ordinaire';
+    const unitValue = Math.round(sellCraftedItemFn(recipe) * gradeSellMultiplier(effectiveGrade));
     const totalValue = unitValue * actualQty;
 
     await writeProfileField(profileId, 'farm_crafted_items', serializeCraftedItems(updatedItems));
-    await addCoins(profileId, totalValue, `🎁 Vente craft x${actualQty} : ${recipeId}`);
+    await addCoins(profileId, totalValue, `🎁 Vente craft x${actualQty} : ${recipeId}${grade && grade !== 'ordinaire' ? ` (${grade})` : ''}`);
     await refreshFarm(profileId);
     await refreshGamification();
     return totalValue;

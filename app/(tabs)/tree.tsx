@@ -2815,7 +2815,7 @@ export default function TreeScreen() {
           return result;
         }}
         onSellHarvest={(cropId, qty) => sellHarvest(profile!.id, cropId, qty)}
-        onSellCrafted={(recipeId, qty) => sellCrafted(profile!.id, recipeId, qty)}
+        onSellCrafted={(recipeId, qty, grade) => sellCrafted(profile!.id, recipeId, qty, grade)}
         onOfferItem={(itemType, itemId, maxQty, itemName) => {
           setShowCraftSheet(false);
           setGiftOffer({ itemType, itemId, maxQty, itemName });
