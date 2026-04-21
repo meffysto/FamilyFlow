@@ -19,6 +19,7 @@ import {
   parseCraftedItems,
 } from '../mascot/craft-engine';
 import type { HarvestInventory, FarmInventory, CraftRecipe } from '../mascot/types';
+import { countItemByGrade } from '../mascot/grade-engine';
 
 // ─── CRAFT_RECIPES ────────────────────────────────────────────────────────────
 
@@ -94,12 +95,12 @@ describe('canCraft', () => {
 describe('craftItem', () => {
   it('retourne items crafte + deduit ingredients (confiture)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
-    const harvestInv: HarvestInventory = { strawberry: 3 };
+    const harvestInv: HarvestInventory = { strawberry: { ordinaire: 3 } };
     const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv);
     expect(result).not.toBeNull();
-    expect(result!.harvestInv.strawberry).toBe(1); // 3 - 2
+    expect(countItemByGrade(result!.harvestInv, 'strawberry', 'ordinaire')).toBe(1); // 3 - 2
     expect(result!.items).toHaveLength(1);
     expect(result!.items[0].recipeId).toBe('confiture');
     expect(result!.items[0].craftedAt).toBeTruthy();
@@ -116,23 +117,23 @@ describe('craftItem', () => {
 
   it('ne modifie pas les inventaires si ingredients insuffisants', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
-    const harvestInv: HarvestInventory = { strawberry: 1 };
+    const harvestInv: HarvestInventory = { strawberry: { ordinaire: 1 } };
     const farmInv: FarmInventory = { oeuf: 2, lait: 3, farine: 1, miel: 0 };
 
     craftItem(recipe, harvestInv, farmInv);
     // Originaux non mutes
-    expect(harvestInv.strawberry).toBe(1);
+    expect(countItemByGrade(harvestInv, 'strawberry', 'ordinaire')).toBe(1);
     expect(farmInv.oeuf).toBe(2);
   });
 
   it('deduit les ressources building (gateau)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'gateau')!;
-    const harvestInv: HarvestInventory = { strawberry: 2 };
+    const harvestInv: HarvestInventory = { strawberry: { ordinaire: 2 } };
     const farmInv: FarmInventory = { oeuf: 3, lait: 0, farine: 2, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv);
     expect(result).not.toBeNull();
-    expect(result!.harvestInv.strawberry).toBe(1);
+    expect(countItemByGrade(result!.harvestInv, 'strawberry', 'ordinaire')).toBe(1);
     expect(result!.farmInv.oeuf).toBe(2);
     expect(result!.farmInv.farine).toBe(1);
     expect(result!.items[0].recipeId).toBe('gateau');
@@ -140,47 +141,47 @@ describe('craftItem', () => {
 
   it('deduit les ingredients crop et building (omelette)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'omelette')!;
-    const harvestInv: HarvestInventory = { tomato: 1 };
+    const harvestInv: HarvestInventory = { tomato: { ordinaire: 1 } };
     const farmInv: FarmInventory = { oeuf: 2, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv);
     expect(result).not.toBeNull();
-    expect(result!.harvestInv.tomato).toBe(0);
+    expect(countItemByGrade(result!.harvestInv, 'tomato', 'ordinaire')).toBe(0);
     expect(result!.farmInv.oeuf).toBe(0);
   });
 
   it('crafte N items en une fois (qty=3) — deduit qty × ingredients', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!; // 2 strawberry / craft
-    const harvestInv: HarvestInventory = { strawberry: 8 };
+    const harvestInv: HarvestInventory = { strawberry: { ordinaire: 8 } };
     const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv, 3);
     expect(result).not.toBeNull();
-    expect(result!.harvestInv.strawberry).toBe(2); // 8 - 2*3
+    expect(countItemByGrade(result!.harvestInv, 'strawberry', 'ordinaire')).toBe(2); // 8 - 2*3
     expect(result!.items).toHaveLength(3);
     expect(result!.items.every(i => i.recipeId === 'confiture')).toBe(true);
   });
 
   it('retourne null si qty depasse les ingredients disponibles', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!; // 2 strawberry / craft
-    const harvestInv: HarvestInventory = { strawberry: 5 }; // max 2 craftables
+    const harvestInv: HarvestInventory = { strawberry: { ordinaire: 5 } }; // max 2 craftables
     const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv, 3);
     expect(result).toBeNull();
     // Originaux non mutes
-    expect(harvestInv.strawberry).toBe(5);
+    expect(countItemByGrade(harvestInv, 'strawberry', 'ordinaire')).toBe(5);
   });
 
   it('clamp qty < 1 a 1 (qty=0 traite comme qty=1)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
-    const harvestInv: HarvestInventory = { strawberry: 3 };
+    const harvestInv: HarvestInventory = { strawberry: { ordinaire: 3 } };
     const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv, 0);
     expect(result).not.toBeNull();
     expect(result!.items).toHaveLength(1);
-    expect(result!.harvestInv.strawberry).toBe(1);
+    expect(countItemByGrade(result!.harvestInv, 'strawberry', 'ordinaire')).toBe(1);
   });
 });
 
@@ -259,12 +260,13 @@ describe('sellRawHarvest', () => {
 
 describe('serializeHarvestInventory / parseHarvestInventory', () => {
   it('round-trip correct', () => {
-    const inv: HarvestInventory = { strawberry: 3, wheat: 1, carrot: 0 };
+    // Phase B — format gradé + compat ascendante sur les entrées number
+    const inv: HarvestInventory = { strawberry: { ordinaire: 3 }, wheat: { ordinaire: 1 }, carrot: { ordinaire: 0 } };
     const csv = serializeHarvestInventory(inv);
     const parsed = parseHarvestInventory(csv);
-    // carrot:0 devrait etre filtre ou conserve selon l'impl
-    expect(parsed.strawberry).toBe(3);
-    expect(parsed.wheat).toBe(1);
+    // carrot:0 est filtré (qty > 0 seulement)
+    expect(countItemByGrade(parsed, 'strawberry', 'ordinaire')).toBe(3);
+    expect(countItemByGrade(parsed, 'wheat', 'ordinaire')).toBe(1);
   });
 
   it('parse une chaine vide retourne objet vide', () => {

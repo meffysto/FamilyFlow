@@ -4190,6 +4190,11 @@
     "hintPlant": "Plant {{name}} on a plot",
     "hintBuilding": "Produced by {{name}}",
     "niveauRequis": "lvl {{level}}+",
+    "gradePickerLabel": "Grade",
+    "gradeOutputLabel": "Output quality",
+    "sellValueLabel": "Sell value",
+    "notEnoughGrade": "Not enough {{grade}} {{item}}",
+    "weakestLinkHint": "Crafted item grade = weakest ingredient",
     "recipe": {
       "soupe": "Garden Soup",
       "bouquet": "Country Bouquet",
@@ -4616,5 +4621,10 @@
       "rare": "Rare",
       "golden": "Epic"
     }
+  },
+  "market": {
+    "sellByGrade": "Sell by quality",
+    "gradeColumnLabel": "Quality",
+    "sellLinePrefix": "Sell"
   }
 }

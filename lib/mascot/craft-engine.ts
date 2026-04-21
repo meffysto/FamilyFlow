@@ -563,29 +563,44 @@ export function craftItem(
   const newHarvestInv: HarvestInventory = cloneHarvestInventory(harvestInv);
   const newFarmInv: FarmInventory = { ...farmInv };
 
+  // Phase B — trace les grades effectivement consommés par ingrédient crop
+  // afin de calculer le grade output (maillon faible) sans UI picker explicite.
+  // Règle : on consomme d'abord ordinaire, puis beau, etc. (préserve les grades rares)
+  // — donc le grade effectif d'un ingrédient = le plus bas grade où on a puisé.
+  const gradesConsumed: HarvestGrade[] = [];
+
   for (const ing of recipe.ingredients) {
     if (ing.source === 'crop') {
-      // Retrait cascade : on consomme d'abord ordinaire, puis beau, etc. (préserve les grades rares)
       let toRemove = ing.quantity * safeQty;
+      let firstGradeUsed: HarvestGrade | null = null;
       for (const grade of GRADE_ORDER) {
         if (toRemove <= 0) break;
         const have = countItemByGrade(newHarvestInv, ing.itemId, grade);
         const take = Math.min(have, toRemove);
         if (take > 0) {
+          if (firstGradeUsed === null) firstGradeUsed = grade;
           removeFromGradedInventory(newHarvestInv, ing.itemId, grade, take);
           toRemove -= take;
         }
       }
+      if (firstGradeUsed) gradesConsumed.push(firstGradeUsed);
     } else {
       const key = ing.itemId as ResourceType;
       newFarmInv[key] = (newFarmInv[key] ?? 0) - ing.quantity * safeQty;
     }
   }
 
+  // Grade output = maillon faible des grades effectivement consommés (ingrédients crop uniquement).
+  // Si aucun crop dans la recette, output grade reste 'ordinaire' par défaut.
+  const outputGrade: HarvestGrade = gradesConsumed.length > 0
+    ? getWeakestGrade(gradesConsumed)
+    : 'ordinaire';
+
   const nowIso = new Date().toISOString();
   const items: CraftedItem[] = Array.from({ length: safeQty }, () => ({
     recipeId: recipe.id,
     craftedAt: nowIso,
+    grade: outputGrade,
   }));
 
   return { harvestInv: newHarvestInv, farmInv: newFarmInv, items };

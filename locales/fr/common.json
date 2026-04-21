@@ -4196,6 +4196,11 @@
     "hintPlant": "Plante {{name}} sur une parcelle",
     "hintBuilding": "Produit par {{name}}",
     "niveauRequis": "niv. {{level}}+",
+    "gradePickerLabel": "Grade",
+    "gradeOutputLabel": "Qualité obtenue",
+    "sellValueLabel": "Valeur de vente",
+    "notEnoughGrade": "Pas assez de {{grade}} {{item}}",
+    "weakestLinkHint": "Le grade de l'item crafté = le plus faible des ingrédients",
     "recipe": {
       "soupe": "Soupe du potager",
       "bouquet": "Bouquet champêtre",
@@ -4666,5 +4671,10 @@
       "rare": "Rare",
       "golden": "Épique"
     }
+  },
+  "market": {
+    "sellByGrade": "Vendre par qualité",
+    "gradeColumnLabel": "Qualité",
+    "sellLinePrefix": "Vendre"
   }
 }
