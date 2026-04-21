@@ -28,7 +28,7 @@ Phase: 41
 Plan: Not started
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
-Last activity: 2026-04-19
+Last activity: 2026-04-21 - Completed quick task 260421-nvj: Phase A Grades de récolte — tech culture-5 + roll grade à la récolte + toast
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
@@ -62,6 +62,7 @@ Status: Ready to execute
 | 260419-jit | Pauser animations TreeView sous-composants AnimatedAnimal SeasonalParticle Particle | 2026-04-19 | cb1c791 | [260419-jit-pauser-animations-treeview-sous-composan](./quick/260419-jit-pauser-animations-treeview-sous-composan/) |
 | 260419-uet | Remplacer emoji par sprite pixel art dans SeedDropOverlay | 2026-04-19 | 2b9f29a | [260419-uet-remplacer-emoji-par-sprite-dans-seeddrop](./quick/260419-uet-remplacer-emoji-par-sprite-dans-seeddrop/) |
 | 260420-fsj | Bascule horaire auto Live Activity mascotte via TimelineView | 2026-04-20 | 337e704 | [260420-fsj-ajouter-la-bascule-horaire-auto-dans-mas](./quick/260420-fsj-ajouter-la-bascule-horaire-auto-dans-mas/) |
+| 260421-nvj | Phase A Grades de récolte — tech culture-5 + roll grade à la récolte + toast | 2026-04-21 | 8bf19ea | [260421-nvj-phase-a-grades-de-r-colte-tech-culture-5](./quick/260421-nvj-phase-a-grades-de-r-colte-tech-culture-5/) |
 
 ## Performance Metrics
 
