@@ -8,13 +8,13 @@
  * - Récoltes en stock
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import type { AppColors } from '../../constants/colors';
-import { View, Text, StyleSheet, TextInput, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert, TouchableOpacity, Modal } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { serializeGamification, parseFarmProfile, serializeFarmProfile } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { useToast } from '../../contexts/ToastContext';
+import { HarvestCardToast, type HarvestItem } from '../gamification/HarvestCardToast';
 import { Button } from '../ui/Button';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -23,6 +23,7 @@ import { calculateLevel } from '../../lib/gamification';
 import { serializeBuildings, serializeInventory } from '../../lib/mascot/building-engine';
 import { serializeHarvestInventory, serializeRareSeeds } from '../../lib/mascot/craft-engine';
 import { TECH_TREE } from '../../lib/mascot/tech-engine';
+import { getGradeEmoji, getGradeMultiplier } from '../../lib/mascot/grade-engine';
 import type { Profile, GamificationData } from '../../lib/types';
 import type { FarmInventory, PlacedBuilding } from '../../lib/mascot/types';
 
@@ -323,10 +324,42 @@ const TEST_CROPS = [
   { emoji: '🌾', label: 'Blé récolté !', qty: 5 },
 ];
 
-function HarvestCardTest() {
+export function HarvestCardTest() {
   const { colors, primary } = useThemeColors();
-  const { showHarvestCard } = useToast();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
+
+  // État local — le toast global est rendu derrière le modal pageSheet,
+  // on rend donc une instance locale qui overlay l'intérieur du modal.
+  const [items, setItems] = useState<HarvestItem[]>([]);
+  const [visible, setVisible] = useState(false);
+  const [hasLoot, setHasLoot] = useState(false);
+  const [sparkleKey, setSparkleKey] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const visibleRef = useRef(false);
+
+  const hideHarvest = useCallback(() => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    visibleRef.current = false;
+    setVisible(false);
+    setTimeout(() => { setItems([]); setHasLoot(false); }, 400);
+  }, []);
+
+  const showHarvestCard = useCallback((item: HarvestItem, loot?: boolean) => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    setItems(prev => {
+      const existing = prev.find(i => i.emoji === item.emoji);
+      if (existing) {
+        return prev.map(i => i.emoji === item.emoji
+          ? { ...i, qty: i.qty + item.qty, wager: item.wager ?? i.wager, grade: item.grade ?? i.grade }
+          : i);
+      }
+      return [...prev, item];
+    });
+    if (loot) setHasLoot(true);
+    if (!visibleRef.current) { visibleRef.current = true; setVisible(true); }
+    setSparkleKey(k => k + 1);
+    timerRef.current = setTimeout(() => { hideHarvest(); timerRef.current = null; }, 3000);
+  }, [hideHarvest]);
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
@@ -398,8 +431,102 @@ function HarvestCardTest() {
               🔁  Même culture × 8 (merge qty : attendu +96 🍂)
             </Text>
           </TouchableOpacity>
+
+          <Text style={[styles.sectionLabel, { color: primary }]}>Grades de récolte</Text>
+          <Text style={[styles.levelHint, { color: colors.textFaint }]}>
+            Badge grade + bonus coins sur le chip (Phase A GRADE-04)
+          </Text>
+          {(['beau', 'superbe', 'parfait'] as const).map(g => {
+            const bonus = Math.round(12 * (getGradeMultiplier(g) - 1));
+            return (
+              <TouchableOpacity
+                key={g}
+                style={[styles.testBtn, { backgroundColor: primary + '20', borderColor: primary + '40' }]}
+                onPress={() => showHarvestCard({
+                  emoji: '🍅',
+                  label: `Tomate ${g} !`,
+                  qty: 12,
+                  grade: { key: g, bonusCoins: bonus, emoji: getGradeEmoji(g) },
+                })}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.testBtnText, { color: colors.text }]}>
+                  {getGradeEmoji(g)}  Tomate {g}  <Text style={{ color: primary }}>×12 +{bonus} 🍃</Text>
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          <Text style={[styles.sectionLabel, { color: primary }]}>Sporée scellée (wager)</Text>
+          <Text style={[styles.levelHint, { color: colors.textFaint }]}>
+            Badge 🍄×N (won) et 🎁 (drop-back) — Phase 40
+          </Text>
+          <TouchableOpacity
+            style={[styles.testBtn, { backgroundColor: '#FFD70020', borderColor: '#FFD70060' }]}
+            onPress={() => showHarvestCard({
+              emoji: '🍓',
+              label: 'Fraise dorée !',
+              qty: 30,
+              wager: { won: true, multiplier: 3, dropBack: false },
+            })}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.testBtnText, { color: colors.text }]}>
+              🍄  Wager won ×3 (fond doré)
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.testBtn, { backgroundColor: '#FFD70020', borderColor: '#FFD70060' }]}
+            onPress={() => showHarvestCard({
+              emoji: '🍓',
+              label: 'Fraise dorée + drop-back !',
+              qty: 60,
+              wager: { won: true, multiplier: 5, dropBack: true },
+            }, true)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.testBtnText, { color: colors.text }]}>
+              🎁  Wager won ×5 + drop-back (loot badge)
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={[styles.sectionLabel, { color: primary }]}>Combo grade + wager</Text>
+          <TouchableOpacity
+            style={[styles.testBtn, { backgroundColor: primary + '20', borderColor: primary + '40' }]}
+            onPress={() => showHarvestCard({
+              emoji: '🌽',
+              label: 'Maïs parfait + wager !',
+              qty: 20,
+              grade: { key: 'parfait', bonusCoins: 60, emoji: getGradeEmoji('parfait') },
+              wager: { won: true, multiplier: 4, dropBack: true },
+            }, true)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.testBtnText, { color: colors.text }]}>
+              💎🍄  Parfait + wager ×4 + drop-back (full stack)
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
+
+      {/* Toast local dans un Modal transparent — overlay le sheet parent
+          (le toast global du ToastProvider est rendu sous le sheet pageSheet) */}
+      <Modal
+        visible={visible || items.length > 0}
+        transparent
+        animationType="none"
+        onRequestClose={hideHarvest}
+      >
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+          <HarvestCardToast
+            visible={visible}
+            items={items}
+            onDismiss={hideHarvest}
+            hasLoot={hasLoot}
+            sparkleKey={sparkleKey}
+          />
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -422,7 +549,6 @@ export function SettingsGamiAdmin({ vault, profiles, gamiData, refresh }: Settin
       <Text style={[styles.warning, { color: '#ef4444' }]}>
         Mode admin — Les modifications sont écrites directement dans le vault.
       </Text>
-      <HarvestCardTest />
       {profiles.map(profile => (
         <ProfileCard
           key={profile.id}

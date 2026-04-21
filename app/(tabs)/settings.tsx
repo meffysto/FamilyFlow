@@ -36,7 +36,7 @@ import { SettingsHelp } from '../../components/settings/SettingsHelp';
 import { SettingsZen, ZenConfig, DEFAULT_ZEN_CONFIG } from '../../components/settings/SettingsZen';
 import { SettingsAuth } from '../../components/settings/SettingsAuth';
 import { SettingsAutomations } from '../../components/settings/SettingsAutomations';
-import { SettingsGamiAdmin } from '../../components/settings/SettingsGamiAdmin';
+import { SettingsGamiAdmin, HarvestCardTest } from '../../components/settings/SettingsGamiAdmin';
 import { SettingsCoupling } from '../../components/settings/SettingsCoupling';
 import { SettingsElevenLabs } from '../../components/settings/SettingsElevenLabs';
 import { SettingsFishAudio } from '../../components/settings/SettingsFishAudio';
@@ -52,7 +52,7 @@ type SectionId =
   | 'notifications' | 'zen' | 'vacation' | 'gamification' | 'coupling' | 'automations'
   | 'ai' | 'elevenlabs' | 'fish-audio' | 'telegram' | 'grandparents'
   | 'auth' | 'parental' | 'vault' | 'help'
-  | 'gami-admin';
+  | 'gami-admin' | 'harvest-test';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -135,6 +135,7 @@ export default function SettingsScreen() {
     vault: t('settingsScreen.modalTitles.vault'),
     help: t('settingsScreen.modalTitles.help'),
     'gami-admin': 'Admin Gamification',
+    'harvest-test': 'Tester Harvest Card',
   };
 
   return (
@@ -334,18 +335,8 @@ export default function SettingsScreen() {
             <SettingsRow
               emoji="🌾"
               title="Tester Harvest Card"
-              subtitle="Accumulation live — tape plusieurs fois"
-              onPress={() => {
-                const crops = [
-                  { emoji: '🍅', label: 'Tomate récoltée !', qty: 12 },
-                  { emoji: '🥕', label: 'Carotte récoltée !', qty: 8 },
-                  { emoji: '🌽', label: 'Maïs récolté !', qty: 20 },
-                  { emoji: '🍓', label: '✨ Fraise dorée récoltée !', qty: 60 },
-                  { emoji: '🌾', label: 'Blé récolté !', qty: 5 },
-                ];
-                const crop = crops[Math.floor(Math.random() * crops.length)];
-                showHarvestCard({ emoji: crop.emoji, label: crop.label, qty: crop.qty }, crop.emoji === '🍓');
-              }}
+              subtitle="Accumulation, grades, wager, combo"
+              onPress={() => setActiveSection('harvest-test')}
               isLast
             />
           </>
@@ -452,6 +443,7 @@ export default function SettingsScreen() {
             {activeSection === 'gami-admin' && (
               <SettingsGamiAdmin vault={vault} profiles={profiles} gamiData={gamiData} refresh={refresh} />
             )}
+            {activeSection === 'harvest-test' && <HarvestCardTest />}
           </ScrollView>
         </SafeAreaView>
       </Modal>
