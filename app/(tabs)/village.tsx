@@ -1130,15 +1130,25 @@ export default function VillageScreen() {
           }
           return counts;
         })()}
+        craftedCountsByGrade={(() => {
+          // Phase B — map recipeId → grade → count pour fan-out par grade en vente
+          const map: Record<string, Partial<Record<import('../../lib/mascot/grade-engine').HarvestGrade, number>>> = {};
+          for (const item of craftedItems) {
+            const g = (item as { grade?: import('../../lib/mascot/grade-engine').HarvestGrade }).grade ?? 'ordinaire';
+            if (!map[item.recipeId]) map[item.recipeId] = {};
+            map[item.recipeId]![g] = (map[item.recipeId]![g] ?? 0) + 1;
+          }
+          return map;
+        })()}
         onBuy={async (itemId, qty, priceOverride?) => {
           if (!activeProfile) return { success: false, error: 'Profil introuvable' };
           const result = await buyFromMarket(itemId, qty, activeProfile.id, priceOverride);
           if (result.success) await loadFarmInventories();
           return result;
         }}
-        onSell={async (itemId, qty) => {
+        onSell={async (itemId, qty, grade) => {
           if (!activeProfile) return { success: false, error: 'Profil introuvable' };
-          const result = await sellToMarket(itemId, qty, activeProfile.id);
+          const result = await sellToMarket(itemId, qty, activeProfile.id, grade);
           if (result.success) await loadFarmInventories();
           return result;
         }}

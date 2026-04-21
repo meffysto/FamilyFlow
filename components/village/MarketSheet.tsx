@@ -31,10 +31,19 @@ import {
   getStockLabel,
   transactionsRemainingToday,
   getDailyDeal,
+  getSellPrice,
   MAX_MARKET_TXN_PER_DAY,
   DAILY_DEAL_STOCK_PER_PROFILE,
 } from '../../lib/village/market-engine';
 import type { MarketItemSummary, DailyDeal } from '../../lib/village/market-engine';
+import {
+  GRADE_ORDER,
+  getGradeEmoji,
+  getGradeLabelKey,
+  gradeSellMultiplier,
+  type HarvestGrade,
+} from '../../lib/mascot/grade-engine';
+import { useTranslation } from 'react-i18next';
 import type { MarketStock, MarketTransaction } from '../../lib/village/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -173,22 +182,93 @@ function FarmButton({
 
 // ── MarketItemRow (memoïsé) ──────────────────────────────────────────────
 
+/** Breakdown par grade pour un item vendable (harvest/crafted) avec plusieurs grades possédés. */
+interface GradeSellLine {
+  grade: HarvestGrade;
+  qty: number;
+  unitPrice: number; // sellPrice × gradeSellMultiplier (floor)
+}
+
+/** Sous-ligne de vente par grade — rendue seulement quand ≥ 2 grades possédés. */
+const GradeSellSubRow = React.memo(function GradeSellSubRow({
+  line,
+  itemId,
+  onAction,
+}: {
+  line: GradeSellLine;
+  itemId: string;
+  onAction: (itemId: string, qty: number, grade?: HarvestGrade) => void;
+}) {
+  const { t } = useTranslation();
+  const [qty, setQty] = useState(1);
+  const canAct = line.qty >= qty && qty > 0;
+  const total = line.unitPrice * qty;
+  const handlePress = useCallback(() => {
+    onAction(itemId, qty, line.grade);
+    setQty(1);
+  }, [itemId, qty, line.grade, onAction]);
+
+  return (
+    <View style={styles.gradeSellRow}>
+      <View style={styles.gradeSellInfo}>
+        <Text style={styles.gradeSellBadge}>
+          {getGradeEmoji(line.grade)} {t(getGradeLabelKey(line.grade))}
+        </Text>
+        <Text style={styles.gradeSellMeta}>
+          ×{line.qty} · {line.unitPrice} 🍃/u
+        </Text>
+      </View>
+      <View style={styles.gradeSellActions}>
+        <View style={styles.qtyRowCompact}>
+          <TouchableOpacity
+            onPress={() => setQty(Math.max(1, qty - 1))}
+            style={styles.qtyBtnSmall}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.qtyBtnText}>−</Text>
+          </TouchableOpacity>
+          <Text style={styles.qtyValueSmall}>{qty}</Text>
+          <TouchableOpacity
+            onPress={() => setQty(Math.min(line.qty, qty + 1))}
+            style={styles.qtyBtnSmall}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.qtyBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
+        <FarmButton
+          label={`+${total} 🍃`}
+          enabled={canAct}
+          variant="sell"
+          onPress={handlePress}
+        />
+      </View>
+    </View>
+  );
+});
+
 const MarketItemRow = React.memo(function MarketItemRow({
   summary,
   mode,
   sellableQty,
   onAction,
+  sellBreakdown,
 }: {
   summary: MarketItemSummary;
   mode: MarketTab;
   sellableQty: number;
-  onAction: (itemId: string, qty: number) => void;
+  onAction: (itemId: string, qty: number, grade?: HarvestGrade) => void;
+  /** Phase B — breakdown par grade pour le mode vente (harvest/crafted uniquement) */
+  sellBreakdown?: GradeSellLine[];
 }) {
   const { colors } = useThemeColors();
   const [qty, setQty] = useState(1);
   const price = mode === 'acheter' ? summary.buyPrice : summary.sellPrice;
   const total = price * qty;
   const maxQty = mode === 'acheter' ? summary.stock : sellableQty;
+  // Phase B — mode vente multi-grade : on affiche l'en-tête de l'item + une sous-ligne par grade possédé
+  const showGradeBreakdown =
+    mode === 'vendre' && sellBreakdown && sellBreakdown.length > 1;
   const trendColor = colors.trendColors[summary.trend as keyof typeof colors.trendColors] ?? Farm.brownTextSub;
   const stockColor = colors.stockColors[summary.stockLevel as keyof typeof colors.stockColors] ?? Farm.brownTextSub;
 
@@ -201,6 +281,7 @@ const MarketItemRow = React.memo(function MarketItemRow({
 
   return (
     <View style={styles.itemRow}>
+      <View style={styles.itemRowInner}>
       {/* Info item */}
       <View style={styles.itemInfo}>
         <View style={styles.itemHeader}>
@@ -245,33 +326,49 @@ const MarketItemRow = React.memo(function MarketItemRow({
         </Text>
       </View>
 
-      {/* Contrôles quantité + bouton */}
-      <View style={styles.actionCol}>
-        <View style={styles.qtyRow}>
-          <TouchableOpacity
-            onPress={() => setQty(Math.max(1, qty - 1))}
-            style={styles.qtyBtn}
-            activeOpacity={0.6}
-          >
-            <Text style={styles.qtyBtnText}>−</Text>
-          </TouchableOpacity>
-          <Text style={styles.qtyValue}>{qty}</Text>
-          <TouchableOpacity
-            onPress={() => setQty(Math.min(maxQty, qty + 1))}
-            style={styles.qtyBtn}
-            activeOpacity={0.6}
-          >
-            <Text style={styles.qtyBtnText}>+</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Contrôles quantité + bouton (mode simple, un seul grade ou achat) */}
+      {!showGradeBreakdown && (
+        <View style={styles.actionCol}>
+          <View style={styles.qtyRow}>
+            <TouchableOpacity
+              onPress={() => setQty(Math.max(1, qty - 1))}
+              style={styles.qtyBtn}
+              activeOpacity={0.6}
+            >
+              <Text style={styles.qtyBtnText}>−</Text>
+            </TouchableOpacity>
+            <Text style={styles.qtyValue}>{qty}</Text>
+            <TouchableOpacity
+              onPress={() => setQty(Math.min(maxQty, qty + 1))}
+              style={styles.qtyBtn}
+              activeOpacity={0.6}
+            >
+              <Text style={styles.qtyBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
 
-        <FarmButton
-          label={mode === 'acheter' ? `${total} 🍃` : `+${total} 🍃`}
-          enabled={canAct}
-          variant={mode === 'acheter' ? 'buy' : 'sell'}
-          onPress={handlePress}
-        />
+          <FarmButton
+            label={mode === 'acheter' ? `${total} 🍃` : `+${total} 🍃`}
+            enabled={canAct}
+            variant={mode === 'acheter' ? 'buy' : 'sell'}
+            onPress={handlePress}
+          />
+        </View>
+      )}
       </View>
+      {/* Phase B — fan-out par grade (mode vente uniquement, ≥ 2 grades possédés) */}
+      {showGradeBreakdown && (
+        <View style={styles.gradeBreakdownCol}>
+          {sellBreakdown!.map(line => (
+            <GradeSellSubRow
+              key={`${summary.def.itemId}-${line.grade}`}
+              line={line}
+              itemId={summary.def.itemId}
+              onAction={onAction}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 });
@@ -361,6 +458,7 @@ export function MarketSheet({
   farmInventory,
   harvestInventory,
   craftedCounts,
+  craftedCountsByGrade,
   onBuy,
   onSell,
   onClose,
@@ -440,6 +538,50 @@ export function MarketSheet({
     return map;
   }, [summaries, villageInventory, farmInventory, harvestInventory, craftedCounts]);
 
+  /** Phase B — breakdown par grade pour les items vendables (harvest + crafted). */
+  const sellBreakdownMap = useMemo(() => {
+    const map: Record<string, GradeSellLine[]> = {};
+    for (const s of summaries) {
+      const cat = s.def.category;
+      if (cat !== 'harvest' && cat !== 'crafted') continue;
+      const baseSell = getSellPrice(s.def, s.stock);
+      const lines: GradeSellLine[] = [];
+
+      if (cat === 'harvest') {
+        const entry = harvestInventory[s.def.itemId];
+        if (entry == null) continue;
+        // Format legacy number → traité comme ordinaire
+        if (typeof entry === 'number') {
+          if (entry > 0) lines.push({ grade: 'ordinaire', qty: entry, unitPrice: Math.floor(baseSell) });
+        } else {
+          for (const g of GRADE_ORDER) {
+            const qty = entry[g] ?? 0;
+            if (qty > 0) {
+              lines.push({ grade: g, qty, unitPrice: Math.floor(baseSell * gradeSellMultiplier(g)) });
+            }
+          }
+        }
+      } else if (cat === 'crafted') {
+        const byGrade = craftedCountsByGrade?.[s.def.itemId];
+        if (byGrade) {
+          for (const g of GRADE_ORDER) {
+            const qty = byGrade[g] ?? 0;
+            if (qty > 0) {
+              lines.push({ grade: g, qty, unitPrice: Math.floor(baseSell * gradeSellMultiplier(g)) });
+            }
+          }
+        } else {
+          // Fallback legacy : tout compté en ordinaire
+          const total = craftedCounts[s.def.itemId] ?? 0;
+          if (total > 0) lines.push({ grade: 'ordinaire', qty: total, unitPrice: Math.floor(baseSell) });
+        }
+      }
+
+      if (lines.length > 0) map[s.def.itemId] = lines;
+    }
+    return map;
+  }, [summaries, harvestInventory, craftedCounts, craftedCountsByGrade]);
+
   const handleBuy = useCallback(async (itemId: string, qty: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const result = await onBuy(itemId, qty);
@@ -454,9 +596,9 @@ export function MarketSheet({
     }
   }, [onBuy, flashOpacity]);
 
-  const handleSell = useCallback(async (itemId: string, qty: number) => {
+  const handleSell = useCallback(async (itemId: string, qty: number, grade?: HarvestGrade) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const result = await onSell(itemId, qty);
+    const result = await onSell(itemId, qty, grade);
     if (result.success) {
       flashOpacity.value = withSequence(
         withTiming(1, { duration: 100 }),
@@ -640,7 +782,10 @@ export function MarketSheet({
                         summary={s}
                         mode={tab}
                         sellableQty={sellableQtyMap[s.def.itemId] ?? 0}
-                        onAction={tab === 'acheter' ? handleBuy : handleSell}
+                        onAction={tab === 'acheter'
+                          ? (itemId, qty) => handleBuy(itemId, qty)
+                          : (itemId, qty, grade) => handleSell(itemId, qty, grade)}
+                        sellBreakdown={tab === 'vendre' ? sellBreakdownMap[s.def.itemId] : undefined}
                       />
                     </Animated.View>
                   ))
@@ -940,8 +1085,66 @@ const styles = StyleSheet.create({
     borderColor: Farm.woodHighlight,
     backgroundColor: Farm.parchmentDark,
     padding: Spacing.xl,
+    flexDirection: 'column',
+    gap: Spacing.md,
+  },
+  itemRowInner: {
     flexDirection: 'row',
     gap: Spacing.xl,
+  },
+  // ── Phase B — breakdown par grade (vente multi-grade) ──
+  gradeBreakdownCol: {
+    gap: Spacing.sm,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Farm.woodHighlight,
+  },
+  gradeSellRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  gradeSellInfo: {
+    flex: 1,
+  },
+  gradeSellBadge: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
+  },
+  gradeSellMeta: {
+    fontSize: FontSize.label,
+    color: Farm.brownTextSub,
+    marginTop: 2,
+  },
+  gradeSellActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  qtyRowCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  qtyBtnSmall: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Farm.parchment,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+  },
+  qtyValueSmall: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+    minWidth: 16,
+    textAlign: 'center',
+    color: Farm.brownText,
   },
   itemInfo: {
     flex: 1,
