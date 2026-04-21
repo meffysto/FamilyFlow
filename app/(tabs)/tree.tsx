@@ -425,6 +425,8 @@ export default function TreeScreen() {
   // Ferme
   const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager } = useFarm(contributeFamilyQuest, addContribution);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
+  // Armement manuel : la prochaine plantation ouvrira le sealer Sporée
+  const [sporeeWagerArmed, setSporeeWagerArmed] = useState(false);
   // Phase 40 Plan 02 — pageSheet secondaire sceller Sporée après choix graine
   const [showWagerSealer, setShowWagerSealer] = useState(false);
   const [pendingPlant, setPendingPlant] = useState<{
@@ -1370,14 +1372,15 @@ export default function TreeScreen() {
   }, [profile, isOwnTree, harvest, level, stageIdx, techBonuses, stageInfo.stage, triggerActionMsg]);
 
   /** Planter une graine sur la parcelle selectionnee.
-   *  Phase 40 : si ≥1 Sporée + canSealWager ok → ouvre WagerSealerSheet
-   *  (pageSheet empilé 300ms delay anti-collision iOS). Sinon plantation directe. */
+   *  Si l'utilisateur a armé le pari Sporée via le bouton du picker et que
+   *  les conditions sont réunies → ouvre WagerSealerSheet (pageSheet empilé
+   *  300ms delay anti-collision iOS). Sinon plantation directe. */
   const handleSeedSelect = useCallback(async (cropId: string) => {
     if (!profile || selectedPlotIndex === null) return;
 
-    // Gate Phase 40 — sealer Sporée si inventaire ≥1 et profil autorisé
+    // Gate armement manuel — sealer Sporée si bouton cliqué, inventaire ≥1 et profil autorisé
     const sporeeCount = profile.sporeeCount ?? 0;
-    if (sporeeCount >= 1) {
+    if (sporeeWagerArmed && sporeeCount >= 1) {
       const check = canSealWager({
         sealerProfileId: profile.id,
         allProfiles: profiles,
@@ -1405,7 +1408,8 @@ export default function TreeScreen() {
     }
     setShowSeedPicker(false);
     setSelectedPlotIndex(null);
-  }, [profile, profiles, selectedPlotIndex, plant, showToast, t]);
+    setSporeeWagerArmed(false);
+  }, [profile, profiles, selectedPlotIndex, plant, showToast, t, sporeeWagerArmed]);
 
   // Phase 40 — handlers WagerSealerSheet (confirm seal / skip)
   const handleWagerSealConfirm = useCallback(async (duration: WagerDuration) => {
@@ -1420,6 +1424,7 @@ export default function TreeScreen() {
     } finally {
       setPendingPlant(null);
       setShowWagerSealer(false);
+      setSporeeWagerArmed(false);
     }
   }, [pendingPlant, profile, startWager, showToast]);
 
@@ -1434,6 +1439,7 @@ export default function TreeScreen() {
     } finally {
       setPendingPlant(null);
       setShowWagerSealer(false);
+      setSporeeWagerArmed(false);
     }
   }, [pendingPlant, profile, plant, showToast, t]);
 
@@ -1886,7 +1892,7 @@ export default function TreeScreen() {
           visible={showSeedPicker}
           animationType="slide"
           presentationStyle="pageSheet"
-          onRequestClose={() => setShowSeedPicker(false)}
+          onRequestClose={() => { setShowSeedPicker(false); setSporeeWagerArmed(false); }}
         >
           <View style={styles.seedSheetContainer}>
             {/* Auvent rayé */}
@@ -1911,7 +1917,7 @@ export default function TreeScreen() {
               {/* Bouton fermer bois */}
               <TouchableOpacity
                 style={styles.seedCloseBtn}
-                onPress={() => setShowSeedPicker(false)}
+                onPress={() => { setShowSeedPicker(false); setSporeeWagerArmed(false); }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 activeOpacity={0.8}
               >
@@ -1936,6 +1942,53 @@ export default function TreeScreen() {
                 </Text>
                 <View style={{ width: 36 }} />
               </View>
+
+              {/* Bouton armement Sporée — n'apparait que si inventaire ≥1 */}
+              {(() => {
+                const sporeeCount = profile?.sporeeCount ?? 0;
+                if (sporeeCount < 1) return null;
+                const sealCheck = profile
+                  ? canSealWager({
+                      sealerProfileId: profile.id,
+                      allProfiles: profiles,
+                      today: getLocalDateKey(new Date()),
+                    })
+                  : { ok: false as const, reason: 'profile_not_found' as const };
+                if (!sealCheck.ok) return null;
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.seedSporeeToggle,
+                      sporeeWagerArmed && styles.seedSporeeToggleActive,
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setSporeeWagerArmed(v => !v);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.seedSporeeToggleEmoji}>🍄</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.seedSporeeToggleTitle}>
+                        {sporeeWagerArmed
+                          ? 'Pari Sporée armé — choisis ta graine'
+                          : 'Parier une Sporée sur la prochaine plante'}
+                      </Text>
+                      <Text style={styles.seedSporeeToggleSub}>
+                        {sporeeWagerArmed
+                          ? 'Touche à nouveau pour annuler'
+                          : `${sporeeCount} en stock`}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.seedSporeeToggleDot,
+                        sporeeWagerArmed && styles.seedSporeeToggleDotActive,
+                      ]}
+                    />
+                  </TouchableOpacity>
+                );
+              })()}
 
               <ScrollView
                 style={styles.seedSheetScroll}
@@ -3675,6 +3728,49 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
+  },
+  seedSporeeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
+  },
+  seedSporeeToggleActive: {
+    borderColor: '#8B5CF6',
+    backgroundColor: '#F3E8FF',
+  },
+  seedSporeeToggleEmoji: {
+    fontSize: 24,
+  },
+  seedSporeeToggleTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  seedSporeeToggleSub: {
+    fontSize: FontSize.caption,
+    color: Farm.brownTextSub,
+    marginTop: 2,
+  },
+  seedSporeeToggleDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: 'transparent',
+  },
+  seedSporeeToggleDotActive: {
+    backgroundColor: '#8B5CF6',
+    borderColor: '#7C3AED',
   },
   seedSheetScroll: {
     flex: 1,

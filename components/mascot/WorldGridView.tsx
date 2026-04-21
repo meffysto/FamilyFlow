@@ -877,8 +877,8 @@ export function WorldGridView({
               onRepairFence={onRepairFence}
             />
             <View style={[styles.largeBadge, {
-              left: cell.x * containerWidth - CELL_SIZES.large / 2 + CELL_SIZES.large - 18,
-              top: cell.y * containerHeight - CELL_SIZES.large / 2 - 4,
+              left: cell.x * containerWidth - CELL_SIZES.large / 2 + 2,
+              top: cell.y * containerHeight + CELL_SIZES.large / 2 - 14,
             }]}>
               <Text style={styles.largeBadgeText}>x2</Text>
             </View>
