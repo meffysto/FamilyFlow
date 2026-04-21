@@ -44,6 +44,10 @@ yarn-error.*
 /ios
 /android
 
+# Xcode app sandbox snapshots (contiennent données perso)
+*.xcappdata/
+*.xcappdata
+
 # Native module build artifacts
 **/android/build/
 

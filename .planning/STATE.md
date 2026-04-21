@@ -61,6 +61,7 @@ Status: Ready to execute
 | 260417-dp6 | Migration ID habitants (aigle_expedition→aigle_dore, renard_expedition→renard_arctique) dans parseFarmProfile | 2026-04-17 | a64becf | [260417-dp6-appliquer-la-migration-d-id-d-habitants-](./quick/260417-dp6-appliquer-la-migration-d-id-d-habitants-/) |
 | 260419-jit | Pauser animations TreeView sous-composants AnimatedAnimal SeasonalParticle Particle | 2026-04-19 | cb1c791 | [260419-jit-pauser-animations-treeview-sous-composan](./quick/260419-jit-pauser-animations-treeview-sous-composan/) |
 | 260419-uet | Remplacer emoji par sprite pixel art dans SeedDropOverlay | 2026-04-19 | 2b9f29a | [260419-uet-remplacer-emoji-par-sprite-dans-seeddrop](./quick/260419-uet-remplacer-emoji-par-sprite-dans-seeddrop/) |
+| 260420-fsj | Bascule horaire auto Live Activity mascotte via TimelineView | 2026-04-20 | 337e704 | [260420-fsj-ajouter-la-bascule-horaire-auto-dans-mas](./quick/260420-fsj-ajouter-la-bascule-horaire-auto-dans-mas/) |
 
 ## Performance Metrics
 

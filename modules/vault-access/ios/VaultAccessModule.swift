@@ -19,6 +19,74 @@ struct FeedingActivityAttributes: ActivityAttributes {
     var startedAt: Date
 }
 
+// MARK: - Mascotte Live Activity Attributes (dupliqué dans MascotteLiveActivity.swift)
+
+@available(iOS 16.2, *)
+struct MascotteActivityAttributes: ActivityAttributes {
+    public struct ContentState: Codable, Hashable {
+        var tasksDone: Int
+        var tasksTotal: Int
+        var xpGained: Int
+        var currentMeal: String?
+        var stageOverride: String?
+        var companionSpriteBase64: String?
+        var bonusText: String?
+        var nextTaskText: String?
+        var nextTaskId: String?
+        var nextRdvText: String?
+        var speechBubble: String?
+    }
+
+    var mascotteName: String
+    var startedAt: Date
+}
+
+/// Décode le payload "id\u{1F}text" envoyé par le bridge JS. Workaround du bug
+/// Swift 6.3 sur variadic generics > 10 args (on empaquete 2 champs dans 1
+/// string pour rester à 10 arguments côté AsyncFunction).
+private func decodeNextTaskPayload(_ payload: String?) -> (text: String?, id: String?) {
+  guard let payload = payload, !payload.isEmpty else { return (nil, nil) }
+  let sep = Character("\u{1F}")
+  if let idx = payload.firstIndex(of: sep) {
+    let id = String(payload[..<idx])
+    let text = String(payload[payload.index(after: idx)...])
+    return (text.isEmpty ? nil : text, id.isEmpty ? nil : id)
+  }
+  return (payload, nil)
+}
+
+/// Décode le payload "nextRdvText\u{1F}speechBubble" — packe 2 champs optionnels
+/// dans un seul argument pour rester à 10 args (limite variadic generics Swift 6.3).
+private func decodeExtrasPayload(_ payload: String?) -> (rdv: String?, bubble: String?) {
+  guard let payload = payload, !payload.isEmpty else { return (nil, nil) }
+  let sep = Character("\u{1F}")
+  if let idx = payload.firstIndex(of: sep) {
+    let rdv = String(payload[..<idx])
+    let bubble = String(payload[payload.index(after: idx)...])
+    return (rdv.isEmpty ? nil : rdv, bubble.isEmpty ? nil : bubble)
+  }
+  return (payload, nil)
+}
+
+/// Calcule la prochaine heure de transition narrative (0/9/12/14/18/21h).
+/// Utilisé comme `staleDate` sur les updates mascotte → hint à iOS de re-render
+/// proche de la transition, ce qui rafraîchit le stage affiché.
+@available(iOS 16.2, *)
+private func mascotteNextTransitionDate(from now: Date = Date()) -> Date {
+    let cal = Calendar.current
+    let transitionHours = [0, 9, 12, 14, 18, 20, 22]
+    let startOfToday = cal.startOfDay(for: now)
+    for dayOffset in 0...2 {
+        guard let day = cal.date(byAdding: .day, value: dayOffset, to: startOfToday) else { continue }
+        for h in transitionHours {
+            if let d = cal.date(bySettingHour: h, minute: 0, second: 0, of: day), d > now {
+                return d
+            }
+        }
+    }
+    return now.addingTimeInterval(3600)
+}
+
 public class VaultAccessModule: Module {
   /// Tracks active security-scoped resources to stop accessing on cleanup
   private var activeURLs: [URL] = []
@@ -456,6 +524,130 @@ public class VaultAccessModule: Module {
           await activity.end(content, dismissalPolicy: .immediate)
         }
       }
+    }
+
+    // ─── Live Activity (Mascotte — journée narrative) ───────────────────
+
+    /// Start the mascotte Live Activity
+    // NOTE : `nextTaskText` encode aussi `nextTaskId` au format "id\u{1F}text"
+    // (séparateur ASCII Unit Separator). Workaround au bug Swift 6.3 sur les
+    // variadic generics qui ne dépassent pas 10 args dans `AsyncFunction`.
+    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, extrasPayload: String?) -> Bool in
+      let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
+      let (nextRdvText, speechBubble) = decodeExtrasPayload(extrasPayload)
+      if #available(iOS 16.2, *) {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
+
+        for activity in Activity<MascotteActivityAttributes>.activities {
+          await activity.end(nil, dismissalPolicy: .immediate)
+        }
+
+        let attributes = MascotteActivityAttributes(
+          mascotteName: mascotteName,
+          startedAt: Date()
+        )
+        let state = MascotteActivityAttributes.ContentState(
+          tasksDone: tasksDone,
+          tasksTotal: tasksTotal,
+          xpGained: xpGained,
+          currentMeal: currentMeal,
+          stageOverride: stageOverride,
+          companionSpriteBase64: companionSpriteBase64,
+          bonusText: bonusText,
+          nextTaskText: nextTaskTextClean,
+          nextTaskId: nextTaskId,
+          nextRdvText: nextRdvText,
+          speechBubble: speechBubble
+        )
+        do {
+          let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
+          _ = try Activity<MascotteActivityAttributes>.request(
+            attributes: attributes,
+            content: content,
+            pushType: nil
+          )
+          return true
+        } catch {
+          return false
+        }
+      }
+      return false
+    }
+
+    /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
+    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, extrasPayload: String?) in
+      let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
+      let (nextRdvText, speechBubble) = decodeExtrasPayload(extrasPayload)
+      if #available(iOS 16.2, *) {
+        guard let activity = Activity<MascotteActivityAttributes>.activities.first else { return }
+        let state = MascotteActivityAttributes.ContentState(
+          tasksDone: tasksDone,
+          tasksTotal: tasksTotal,
+          xpGained: xpGained,
+          currentMeal: currentMeal,
+          stageOverride: stageOverride,
+          companionSpriteBase64: companionSpriteBase64,
+          bonusText: bonusText,
+          nextTaskText: nextTaskTextClean,
+          nextTaskId: nextTaskId,
+          nextRdvText: nextRdvText,
+          speechBubble: speechBubble
+        )
+        let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
+        await activity.update(content)
+      }
+    }
+
+    /// End the mascotte Live Activity
+    AsyncFunction("stopMascotteActivity") { () in
+      if #available(iOS 16.2, *) {
+        for activity in Activity<MascotteActivityAttributes>.activities {
+          await activity.end(nil, dismissalPolicy: .immediate)
+        }
+      }
+    }
+
+    /// Récupère et consomme les pending task toggles écrits par ToggleNextTaskIntent
+    /// depuis la Live Activity. Pattern claim-first : chaque fichier est supprimé
+    /// avant d'être retourné, évitant la double-consommation si deux appareils
+    /// réveillent l'app en même temps. Retourne la liste des taskId à cocher.
+    AsyncFunction("consumePendingTaskToggles") { () -> [String] in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else { return [] }
+
+      let dir = containerURL.appendingPathComponent("pending-task-toggles", isDirectory: true)
+      let fm = FileManager.default
+      guard fm.fileExists(atPath: dir.path) else { return [] }
+
+      guard let files = try? fm.contentsOfDirectory(
+        at: dir,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles]
+      ) else { return [] }
+
+      var taskIds: [String] = []
+      for fileURL in files {
+        guard fileURL.lastPathComponent.hasPrefix("pending-task-toggle-"),
+              fileURL.pathExtension == "json" else { continue }
+        // Claim-first : lire puis supprimer immédiatement
+        let data = try? Data(contentsOf: fileURL)
+        try? fm.removeItem(at: fileURL)
+        guard let data = data,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let taskId = json["taskId"] as? String,
+              !taskId.isEmpty else { continue }
+        taskIds.append(taskId)
+      }
+      return taskIds
+    }
+
+    /// Returns true if a mascotte Live Activity is currently active
+    AsyncFunction("isMascotteActivityActive") { () -> Bool in
+      if #available(iOS 16.2, *) {
+        return !Activity<MascotteActivityAttributes>.activities.isEmpty
+      }
+      return false
     }
 
     /// Pause the widget feeding timer (sync app → widget)

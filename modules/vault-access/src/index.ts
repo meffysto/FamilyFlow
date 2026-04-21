@@ -4,6 +4,11 @@ interface VaultAccessModuleType {
   startFeedingActivity(babyName: string, babyEmoji: string, feedType: string, side: string | null, volumeMl: number | null): Promise<boolean>;
   updateFeedingActivity(isPaused: boolean, side: string | null, volumeMl: number | null): Promise<void>;
   stopFeedingActivity(): Promise<void>;
+  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, bonusText: string | null, nextTaskPayload: string | null, extrasPayload: string | null): Promise<boolean>;
+  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, bonusText: string | null, nextTaskPayload: string | null, extrasPayload: string | null): Promise<void>;
+  stopMascotteActivity(): Promise<void>;
+  isMascotteActivityActive(): Promise<boolean>;
+  consumePendingTaskToggles(): Promise<string[]>;
   pauseWidgetFeeding(): Promise<void>;
   resumeWidgetFeeding(): Promise<void>;
   stopWidgetFeeding(): Promise<void>;
@@ -191,6 +196,111 @@ export async function updateFeedingActivity(
 export async function stopFeedingActivity(): Promise<void> {
   if (!VaultAccessNative) return;
   return VaultAccessNative.stopFeedingActivity();
+}
+
+// ─── Live Activity (Mascotte — journée narrative) ──────────────────────────
+
+/**
+ * Démarrer la Live Activity narrative de la mascotte (dure ~8h).
+ * Retourne true si l'activity a bien démarré.
+ */
+/**
+ * Encode `nextTaskId` + `nextTaskText` en un seul string "id\u001Ftext" pour
+ * rester à 10 arguments côté bridge natif (workaround Swift 6.3 variadic
+ * generics > 10). Le module Swift re-décode via decodeNextTaskPayload().
+ */
+function encodeNextTaskPayload(
+  nextTaskText: string | null,
+  nextTaskId: string | null,
+): string | null {
+  if (!nextTaskText && !nextTaskId) return null;
+  return `${nextTaskId ?? ''}\u001F${nextTaskText ?? ''}`;
+}
+
+/**
+ * Encode `nextRdvText` + `speechBubble` en un seul string "rdv\u001Fbubble". Même
+ * motivation que `encodeNextTaskPayload` : garder ≤10 args côté bridge natif.
+ */
+function encodeExtrasPayload(
+  nextRdvText: string | null,
+  speechBubble: string | null,
+): string | null {
+  if (!nextRdvText && !speechBubble) return null;
+  return `${nextRdvText ?? ''}\u001F${speechBubble ?? ''}`;
+}
+
+export async function startMascotteActivity(
+  mascotteName: string,
+  tasksDone: number,
+  tasksTotal: number,
+  xpGained: number,
+  currentMeal: string | null,
+  stageOverride: string | null = null,
+  companionSpriteBase64: string | null = null,
+  bonusText: string | null = null,
+  nextTaskText: string | null = null,
+  nextTaskId: string | null = null,
+  nextRdvText: string | null = null,
+  speechBubble: string | null = null,
+): Promise<boolean> {
+  if (!VaultAccessNative) return false;
+  const taskPayload = encodeNextTaskPayload(nextTaskText, nextTaskId);
+  const extrasPayload = encodeExtrasPayload(nextRdvText, speechBubble);
+  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, bonusText, taskPayload, extrasPayload);
+}
+
+/**
+ * Mettre à jour l'état de la Live Activity mascotte (tâches cochées, repas, XP).
+ */
+export async function updateMascotteActivity(
+  tasksDone: number,
+  tasksTotal: number,
+  xpGained: number,
+  currentMeal: string | null,
+  stageOverride: string | null = null,
+  companionSpriteBase64: string | null = null,
+  bonusText: string | null = null,
+  nextTaskText: string | null = null,
+  nextTaskId: string | null = null,
+  nextRdvText: string | null = null,
+  speechBubble: string | null = null,
+): Promise<void> {
+  if (!VaultAccessNative) return;
+  const taskPayload = encodeNextTaskPayload(nextTaskText, nextTaskId);
+  const extrasPayload = encodeExtrasPayload(nextRdvText, speechBubble);
+  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, bonusText, taskPayload, extrasPayload);
+}
+
+/**
+ * Arrêter la Live Activity mascotte.
+ */
+export async function stopMascotteActivity(): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.stopMascotteActivity();
+}
+
+/**
+ * Retourne true si la Live Activity mascotte est actuellement active.
+ */
+export async function isMascotteActivityActive(): Promise<boolean> {
+  if (!VaultAccessNative) return false;
+  return VaultAccessNative.isMascotteActivityActive();
+}
+
+/**
+ * Consomme (claim-first) les pending task toggles écrits par l'AppIntent
+ * ToggleNextTaskIntent depuis la Live Activity. Retourne les taskIds à appliquer.
+ * Les fichiers sont supprimés côté natif avant d'être retournés : si l'app crash
+ * entre la suppression et l'application, le toggle est perdu (acceptable, le
+ * prochain clic dans l'app le refait).
+ */
+export async function consumePendingTaskToggles(): Promise<string[]> {
+  if (!VaultAccessNative) return [];
+  try {
+    return await VaultAccessNative.consumePendingTaskToggles();
+  } catch {
+    return [];
+  }
 }
 
 /**

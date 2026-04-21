@@ -27,10 +27,10 @@ import { useVaultPhotos } from './useVaultPhotos';
 import { useVaultMemories } from './useVaultMemories';
 import { useVaultStories } from './useVaultStories';
 import { useVaultVacation, VACATION_STORE_KEY, VACATION_FILE } from './useVaultVacation';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { VaultManager } from '../lib/vault';
-import { restoreAccess } from '../modules/vault-access/src';
+import { restoreAccess, consumePendingTaskToggles } from '../modules/vault-access/src';
 import {
   parseTaskFile,
   parseRoutines,
@@ -69,7 +69,7 @@ import {
 } from '../lib/parser';
 import type { FarmProfileData } from '../lib/types';
 import type { CompanionData, CompanionSpecies } from '../lib/mascot/companion-types';
-import { processActiveRewards, addPoints } from '../lib/gamification';
+import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
 import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot, BedtimeStory, LoveNote, LoveNoteStatus } from '../lib/types';
 import { useVaultBudget } from './useVaultBudget';
@@ -86,6 +86,8 @@ import { enqueueWrite } from '../lib/famille-queue';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
+import { patchMascotte } from '../lib/mascotte-live-activity';
+import { pickLABubbleShort, type LAStage } from '../lib/mascot/la-bubbles';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultLoveNotes } from './useVaultLoveNotes';
@@ -177,6 +179,12 @@ export interface VaultState {
    *  Pattern event-driven consommé par useFarm.incrementWagerCumul (câblage Sporée).
    *  Retourne une fonction unsubscribe à appeler au cleanup. */
   subscribeTaskComplete: (listener: TaskCompleteListener) => () => void;
+  /** Handler complet (toggle + gamification + reward) pour tâches cochées depuis
+   *  la Live Activity. Setté par un bridge component qui a accès à
+   *  `useGamification`. Si null → fallback sur toggleTask seul (pas de XP). */
+  liveActivityTaskCompleteRef: React.MutableRefObject<((task: Task) => Promise<void>) | null>;
+  /** Compteur de tâches complétées aujourd'hui (event-driven — inclut les récurrentes) */
+  tasksCompletedToday: number;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
@@ -317,6 +325,47 @@ function gamiFile(profileId: string): string {
 function farmFile(profileId: string): string {
   return `farm-${profileId}.md`;
 }
+/**
+ * Identifie un event d'économie ferme (vente, bonus craft, récolte). Utilisé
+ * pour filtrer le compteur "XP effort quotidien" de la Live Activity mascotte :
+ * on veut refléter l'effort fait aujourd'hui (tâches, saga, défis) — pas les
+ * gains d'un stock vendu qui peuvent exploser le compteur.
+ */
+export function isFarmEconomyEvent(note: string): boolean {
+  if (!note) return false;
+  return note.includes('Vente craft') || note.includes('Bonus craft') || note.includes('Vente ');
+}
+
+/**
+ * Construit le texte du prochain RDV dans les prochaines 24h pour la Live Activity.
+ * Retourne null si aucun RDV planifié sur cette fenêtre. Format : "Pédiatre 14:30"
+ * (aujourd'hui) ou "Dentiste demain 9:00" (lendemain). Tronqué à 40 chars.
+ */
+export function computeNextRdvText(rdvs: RDV[]): string | null {
+  if (!rdvs || rdvs.length === 0) return null;
+  const now = new Date();
+  const in24h = new Date(now.getTime() + 24 * 3600 * 1000);
+  const today = now.toISOString().slice(0, 10);
+  const upcoming = rdvs
+    .filter(r => r.statut === 'planifié')
+    .map(r => {
+      const [hh, mm] = (r.heure || '00:00').split(':').map(Number);
+      const d = new Date(`${r.date_rdv}T00:00:00`);
+      d.setHours(hh || 0, mm || 0, 0, 0);
+      return { r, when: d };
+    })
+    .filter(({ when }) => when > now && when <= in24h)
+    .sort((a, b) => a.when.getTime() - b.when.getTime());
+  const next = upcoming[0];
+  if (!next) return null;
+  const label = next.r.type_rdv
+    ? next.r.type_rdv.charAt(0).toUpperCase() + next.r.type_rdv.slice(1)
+    : 'RDV';
+  const prefix = next.r.date_rdv === today ? '' : 'demain ';
+  const text = `${label} ${prefix}${next.r.heure}`;
+  return text.length > 40 ? text.slice(0, 39) + '…' : text;
+}
+
 /**
  * Migration one-shot + récupération : si gamification.md existe et qu'un profil n'a pas
  * encore son gami-{id}.md (ou l'a eu corrompu — fichier vide/farm-format sans profils), le créer/réparer.
@@ -484,11 +533,79 @@ export function useVaultInternal(): VaultState {
   const mealsRef = useRef<MealItem[]>([]);
   const rdvsRef = useRef<RDV[]>([]);
   const tasksRefForWidget = useRef<Task[]>([]);
+  // Mis à jour via useEffect après déclaration de gamiData / activeProfileId
+  const gamiDataForWidgetRef = useRef<GamificationData | null>(null);
+  const activeProfileIdForWidgetRef = useRef<string | null>(null);
   const widgetRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerWidgetRefresh = useCallback(() => {
     if (widgetRefreshTimer.current) clearTimeout(widgetRefreshTimer.current);
     widgetRefreshTimer.current = setTimeout(() => {
       refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current);
+      // Refresh Live Activity mascotte si elle tourne (no-op sinon)
+      const todayStr = new Date().toISOString().slice(0, 10);
+      // Total = tâches dues aujourd'hui (récurrentes ou non)
+      const todayTasks = tasksRefForWidget.current.filter(t => {
+        if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
+        return t.dueDate === todayStr;
+      });
+      // Done = compteur événementiel incrémenté à chaque toggleTask (gère les récurrentes qui reset completed=false)
+      const counter = tasksCompletedTodayRef.current;
+      const doneCount = counter.date === todayStr ? counter.count : 0;
+      const nowHour = new Date().getHours();
+      const dayName = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][new Date().getDay()];
+      const todayMeals = mealsRef.current.filter(m => m.day === dayName);
+      const mealText = nowHour < 14
+        ? (todayMeals.find(m => m.mealType === 'Déjeuner')?.text || null)
+        : (todayMeals.find(m => m.mealType === 'Dîner')?.text || null);
+      // Prochain RDV < 24h (affiché pendant le stage midi). Format : "Pédiatre 14:30"
+      // ou "Dentiste demain 9:00". Tronqué à 40 chars pour le budget ContentState.
+      const nextRdvText = computeNextRdvText(rdvsRef.current);
+      // Bulle compagnon : template court synchrone (l'IA est utilisée uniquement au start
+      // via DashboardCompanionDay pour ne pas brûler le budget sur chaque refresh).
+      const laStage: LAStage = nowHour < 9 ? 'reveil'
+        : nowHour < 12 ? 'travail'
+        : nowHour < 14 ? 'midi'
+        : nowHour < 18 ? 'jeu'
+        : nowHour < 20 ? 'routine'
+        : nowHour < 22 ? 'dodo'
+        : 'recap';
+      const speechBubble = pickLABubbleShort(laStage);
+      // XP "effort quotidien" du profil actif (tâches, saga, défis, quêtes…)
+      // Exclut les gains d'économie ferme (ventes, bonus craft) qui gonflent artificiellement
+      // le compteur et ne reflètent pas l'effort fait par l'utilisateur aujourd'hui.
+      const activeId = activeProfileIdForWidgetRef.current;
+      const xpGainedToday = (gamiDataForWidgetRef.current?.history ?? [])
+        .filter(e =>
+          e.profileId === activeId &&
+          e.timestamp?.slice(0, 10) === todayStr &&
+          !isFarmEconomyEvent(e.note)
+        )
+        .reduce((sum, e) => sum + (e.points || 0), 0);
+      // Level-up détecté aujourd'hui (comparaison avec le niveau au début de journée)
+      const activeProfileForBonus = profilesRef.current.find(p => p.id === activeId);
+      const currentPoints = activeProfileForBonus?.points ?? 0;
+      const currentLevel = calculateLevel(currentPoints);
+      const levelBeforeToday = calculateLevel(currentPoints - xpGainedToday);
+      const bonusText = currentLevel > levelBeforeToday
+        ? `⬆️ Niveau ${currentLevel} atteint !`
+        : null;
+      // Prochaine tâche : récurrente non-cochée d'abord, sinon première non-cochée
+      const uncompletedToday = todayTasks.filter(t => !t.completed);
+      const nextTask = uncompletedToday.find(t => t.recurrence) ?? uncompletedToday[0] ?? null;
+      const nextTaskText = nextTask?.text ?? null;
+      const nextTaskId = nextTask?.id ?? null;
+      // patchMascotte : merge avec le lastSnapshot → préserve mascotteName et companionSpriteBase64
+      patchMascotte({
+        tasksDone: doneCount,
+        tasksTotal: todayTasks.length,
+        xpGained: xpGainedToday,
+        currentMeal: mealText,
+        bonusText,
+        nextTaskText,
+        nextTaskId,
+        nextRdvText,
+        speechBubble,
+      });
     }, 300);
   }, []);
 
@@ -545,6 +662,24 @@ export function useVaultInternal(): VaultState {
   const { tasks, tasksRef } = tasksHook;
   useEffect(() => { tasksRefForWidget.current = tasks; }, [tasks]);
 
+  // Compteur "tâches complétées aujourd'hui" pour Live Activity + carte dashboard
+  // (événementiel car les récurrentes reset completed=false après toggle)
+  const [tasksCompletedToday, setTasksCompletedToday] = useState(0);
+  const tasksCompletedTodayRef = useRef<{ date: string; count: number }>({ date: '', count: 0 });
+  useEffect(() => {
+    const unsub = tasksHook.subscribeTaskComplete(() => {
+      const today = new Date().toISOString().slice(0, 10);
+      if (tasksCompletedTodayRef.current.date !== today) {
+        tasksCompletedTodayRef.current = { date: today, count: 1 };
+      } else {
+        tasksCompletedTodayRef.current.count += 1;
+      }
+      setTasksCompletedToday(tasksCompletedTodayRef.current.count);
+      triggerWidgetRefresh();
+    });
+    return unsub;
+  }, [tasksHook, triggerWidgetRefresh]);
+
   const [gamiData, setGamiData] = useState<GamificationData | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
   const [journalStats, setJournalStats] = useState<JournalSummaryEntry[]>([]);
@@ -564,6 +699,10 @@ export function useVaultInternal(): VaultState {
   // Domaine Quêtes coopératives — initialisé EN PREMIER pour que contribute soit disponible pour defisHook
   const gamiDataRef = useRef(gamiData);
   gamiDataRef.current = gamiData;
+
+  // Refs déclarés en haut pour triggerWidgetRefresh, tenus à jour ici
+  gamiDataForWidgetRef.current = gamiData;
+  activeProfileIdForWidgetRef.current = activeProfileId ?? null;
 
   // ─── Backup consolidé : flush gamiData → gamification.md (1×/jour) ─────────
   const lastGamiBackupDate = useRef<string | null>(null);
@@ -734,6 +873,69 @@ export function useVaultInternal(): VaultState {
     });
     return () => sub.remove();
   }, []);
+
+  // Consommer les pending task toggles écrits par ToggleNextTaskIntent depuis
+  // la Live Activity (bouton "Cocher" de la DI, iOS 17+). Pattern claim-first :
+  // consumePendingTaskToggles() supprime les fichiers côté natif avant de
+  // retourner les taskIds. On toggle chaque tâche trouvée via tasksRef (fallback
+  // silencieux si la tâche n'existe plus ou si les données ne sont pas encore
+  // chargées — le fichier est déjà supprimé, no-op acceptable).
+  // Bridge setté par <LiveActivityGamificationBridge> (rendu dans ToastProvider
+   // pour avoir accès à useGamification). null tant que pas monté → fallback
+   // sur toggleTask seul.
+  const liveActivityTaskCompleteRef = useRef<((task: Task) => Promise<void>) | null>(null);
+
+  const consumeLiveActivityToggles = useCallback(async () => {
+    if (Platform.OS !== 'ios') return;
+    // Tant que les tâches ne sont pas chargées, on ne consomme pas (sinon les
+    // fichiers seraient supprimés côté natif sans pouvoir être appliqués).
+    // L'effet init (dépendance tasks.length) les traite dès que le vault est prêt.
+    if (tasksRef.current.length === 0) return;
+    try {
+      const taskIds = await consumePendingTaskToggles();
+      if (!taskIds.length) return;
+      for (const taskId of taskIds) {
+        const target = tasksRef.current.find((t) => t.id === taskId);
+        if (!target || target.completed) continue;
+        try {
+          // Si le bridge gamification est monté → full flow (toggle + XP + loot).
+          // Sinon fallback silencieux sur toggleTask seul.
+          if (liveActivityTaskCompleteRef.current) {
+            await liveActivityTaskCompleteRef.current(target);
+          } else {
+            await tasksHook.toggleTask(target, true);
+          }
+        } catch (e) {
+          if (__DEV__) console.warn('[useVault] toggleTask from Live Activity failed:', e);
+        }
+      }
+    } catch {
+      // silencieux — feature non critique
+    }
+  }, [tasksHook, tasksRef]);
+
+  // Au boot : tenter la consommation dès que les tâches sont chargées (1er render
+  // avec tasks non-vide). Si l'utilisateur a cliqué sur le bouton DI pendant que
+  // l'app était fermée, on rattrape au prochain lancement.
+  const didInitialToggleConsumeRef = useRef(false);
+  useEffect(() => {
+    if (didInitialToggleConsumeRef.current) return;
+    if (tasks.length === 0) return;
+    didInitialToggleConsumeRef.current = true;
+    consumeLiveActivityToggles();
+  }, [tasks.length, consumeLiveActivityToggles]);
+
+  // À chaque retour en foreground : consommer les toggles posés pendant que
+  // l'app était en background.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
+        // Petit délai pour laisser restoreAccess + éventuel reload finir
+        setTimeout(() => consumeLiveActivityToggles(), 300);
+      }
+    });
+    return () => sub.remove();
+  }, [consumeLiveActivityToggles]);
 
   // Programmer les notifications de révélation sur CE téléphone pour les love notes
   // reçues en attente (multi-device : le téléphone de l'expéditeur ne peut pas
@@ -1780,6 +1982,8 @@ export function useVaultInternal(): VaultState {
     toggleTask: tasksHook.toggleTask,
     skipTask: tasksHook.skipTask,
     subscribeTaskComplete: tasksHook.subscribeTaskComplete,
+    liveActivityTaskCompleteRef,
+    tasksCompletedToday,
     addRDV,
     updateRDV,
     deleteRDV,
