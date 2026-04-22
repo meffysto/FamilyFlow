@@ -46,8 +46,9 @@ import type { JournalSummaryEntry } from './ai-service';
 //                + FarmProfileData.wagerLastRecomputeDate frontmatter
 // v6 : Phase B grades (260421-obd) — HarvestInventory shape change (cropId → grade → qty)
 //                + CraftedItem.grade optional
-const CACHE_VERSION = 6;
-const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v6.json';
+// v7 : Phase 42 — CompanionData étendu (lastFedAt?: string + feedBuff?: FeedBuff | null)
+const CACHE_VERSION = 7;
+const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v7.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {
