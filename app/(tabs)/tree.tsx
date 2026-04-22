@@ -2407,13 +2407,6 @@ export default function TreeScreen() {
                   paused={animationsPaused}
                   feedState={feedState}
                 />
-                {/* Phase 42 — Particules emoji flottantes pendant feed (D-19) */}
-                <FeedParticles
-                  visible={!!feedState}
-                  affinity={feedState ? (feedState.replace('eating-', '') as CropAffinity) : 'neutral'}
-                  x={SCREEN_W * 0.42}
-                  y={(DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) * 0.55}
-                />
               </View>
             )}
 
@@ -3015,6 +3008,14 @@ export default function TreeScreen() {
         inventory={profile?.harvestInventory ?? {}}
         companionSpecies={companion?.activeSpecies ?? 'chat'}
         onPick={handleFeedCrop}
+      />
+
+      {/* Phase 42 — Particules feed en top-level (au-dessus de toutes les couches diorama) */}
+      <FeedParticles
+        visible={!!feedState}
+        affinity={feedState ? (feedState.replace('eating-', '') as CropAffinity) : 'neutral'}
+        x={SCREEN_W / 2}
+        y={SCREEN_H * 0.42}
       />
 
       {/* Modal compagnon — choix initial ou switch */}
