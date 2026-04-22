@@ -768,8 +768,9 @@ export default function TreeScreen() {
   const handleFeedCrop = useCallback(
     async (cropId: string, grade: HarvestGrade) => {
       if (!activeProfile?.id) return;
-      const result = await feedCompanion(activeProfile.id, cropId, grade);
+      // Fermer le picker immédiatement pour que le sprite soit visible AVANT d'animer
       setShowFeedPicker(false);
+      const result = await feedCompanion(activeProfile.id, cropId, grade);
       if (!result) return;
       if (!result.applied) {
         // Cooldown — feedback silencieux (bouton déjà disabled dans CompanionCard)
@@ -781,10 +782,13 @@ export default function TreeScreen() {
       } else {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       }
-      // Phase 42 — déclencher animation pulse + particules selon affinité (D-18/D-19)
+      // Attendre la fin de l'animation de fermeture modal (~350ms iOS) avant d'animer
+      // sinon le sprite est obscurci pendant la pulse et les particules
       const nextState = `eating-${result.affinity}` as const;
-      setFeedState(nextState);
-      setTimeout(() => setFeedState(null), 1500);
+      setTimeout(() => {
+        setFeedState(nextState);
+        setTimeout(() => setFeedState(null), 1800);
+      }, 400);
     },
     [activeProfile?.id, feedCompanion],
   );

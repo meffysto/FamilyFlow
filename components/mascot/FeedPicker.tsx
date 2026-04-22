@@ -60,10 +60,25 @@ const GRADE_FR_TO_EN: Record<HarvestGradeFr, HarvestGradeEn> = {
 
 const GRADE_DISPLAY_ORDER: HarvestGradeFr[] = ['parfait', 'superbe', 'beau', 'ordinaire'];
 
-const AFFINITY_RANK: Record<CropAffinity, number> = {
-  preferred: 0,
-  neutral:   1,
-  hated:     2,
+const SECTION_META: Record<CropAffinity, { label: string; sub: string; emoji: string; color: string }> = {
+  preferred: {
+    label: 'Préférés',
+    sub:   '❤️ Buff ×1.3 — le compagnon adore !',
+    emoji: '❤️',
+    color: Farm.greenBtn,
+  },
+  neutral: {
+    label: 'Neutres',
+    sub:   'Buff normal — aucun bonus ni malus',
+    emoji: '😊',
+    color: Farm.brownTextSub,
+  },
+  hated: {
+    label: 'Détestés',
+    sub:   '😖 Aucun buff — le compagnon fera « beurk »',
+    emoji: '😖',
+    color: '#C04A3A',
+  },
 };
 
 // ─────────────────────────────────────────────
@@ -133,8 +148,8 @@ export function FeedPicker({
 }: FeedPickerProps) {
   const { t } = useTranslation();
 
-  const rows: Row[] = useMemo(() => {
-    const out: Row[] = [];
+  const { preferredRows, neutralRows, hatedRows } = useMemo(() => {
+    const all: Row[] = [];
     for (const [cropId, entry] of Object.entries(inventory || {})) {
       const def = CROP_CATALOG.find(c => c.id === cropId);
       if (!def) continue;
@@ -148,7 +163,7 @@ export function FeedPicker({
       for (const gradeFr of GRADE_DISPLAY_ORDER) {
         const qty = entryRecord[gradeFr] ?? 0;
         if (qty <= 0) continue;
-        out.push({
+        all.push({
           cropId,
           emoji: def.emoji,
           labelKey: def.labelKey,
@@ -160,13 +175,17 @@ export function FeedPicker({
       }
     }
 
-    out.sort((a, b) => {
-      const rAff = AFFINITY_RANK[a.affinity] - AFFINITY_RANK[b.affinity];
-      if (rAff !== 0) return rAff;
-      return GRADE_ORDER.indexOf(b.gradeFr) - GRADE_ORDER.indexOf(a.gradeFr);
-    });
-    return out;
+    const byGradeDesc = (a: Row, b: Row) =>
+      GRADE_ORDER.indexOf(b.gradeFr) - GRADE_ORDER.indexOf(a.gradeFr);
+
+    return {
+      preferredRows: all.filter(r => r.affinity === 'preferred').sort(byGradeDesc),
+      neutralRows:   all.filter(r => r.affinity === 'neutral').sort(byGradeDesc),
+      hatedRows:     all.filter(r => r.affinity === 'hated').sort(byGradeDesc),
+    };
   }, [inventory, companionSpecies]);
+
+  const totalRows = preferredRows.length + neutralRows.length + hatedRows.length;
 
   const handlePick = useCallback(
     (row: Row) => {
@@ -207,7 +226,7 @@ export function FeedPicker({
                 </Text>
               </Animated.View>
 
-              {rows.length === 0 ? (
+              {totalRows === 0 ? (
                 <View style={styles.empty}>
                   <Text style={styles.emptyEmoji}>🌱</Text>
                   <Text style={styles.emptyText}>
@@ -219,66 +238,74 @@ export function FeedPicker({
                   contentContainerStyle={styles.list}
                   showsVerticalScrollIndicator={false}
                 >
-                  {rows.map((row, idx) => {
-                    const isHated = row.affinity === 'hated';
-                    const isPreferred = row.affinity === 'preferred';
-                    const cropName = t(row.labelKey);
-                    const gradeLabel = t(getGradeLabelKey(row.gradeFr));
+                  {(['preferred', 'neutral', 'hated'] as CropAffinity[]).map(aff => {
+                    const sectionRows =
+                      aff === 'preferred' ? preferredRows :
+                      aff === 'neutral'   ? neutralRows   :
+                      hatedRows;
+                    if (sectionRows.length === 0) return null;
+                    const meta = SECTION_META[aff];
 
                     return (
-                      <Animated.View
-                        key={`${row.cropId}-${row.gradeFr}-${idx}`}
-                        entering={FadeIn.delay(idx * 40).duration(240)}
-                      >
-                        <Pressable
-                          onPress={() => handlePick(row)}
-                          style={({ pressed }) => [
-                            styles.row,
-                            isPreferred && styles.rowPreferred,
-                            isHated && styles.rowHated,
-                            pressed && { opacity: 0.8 },
-                          ]}
-                        >
-                          {/* Emoji rond */}
-                          <View style={styles.emojiCircle}>
-                            <Text style={styles.emoji}>{row.emoji}</Text>
+                      <View key={aff} style={styles.section}>
+                        <View style={[styles.sectionHeader, { borderColor: meta.color }]}>
+                          <Text style={[styles.sectionEmoji]}>{meta.emoji}</Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.sectionLabel, { color: meta.color }]}>
+                              {meta.label} ({sectionRows.length})
+                            </Text>
+                            <Text style={styles.sectionSub}>{meta.sub}</Text>
                           </View>
+                        </View>
 
-                          {/* Infos */}
-                          <View style={styles.info}>
-                            <View style={styles.nameRow}>
-                              <Text style={styles.name} numberOfLines={1}>
-                                {cropName}
-                              </Text>
-                              {isPreferred && (
-                                <Text style={styles.affinityBadge} accessibilityLabel="Préféré">
-                                  ❤️
-                                </Text>
-                              )}
-                              {isHated && (
-                                <Text style={styles.affinityBadge} accessibilityLabel="Détesté">
-                                  😖
-                                </Text>
-                              )}
-                            </View>
-                            <View style={styles.gradeRow}>
-                              <Text style={styles.gradeEmoji}>{getGradeEmoji(row.gradeFr)}</Text>
-                              <Text style={styles.gradeLabel}>{gradeLabel}</Text>
-                            </View>
-                          </View>
+                        {sectionRows.map((row, idx) => {
+                          const isHated = row.affinity === 'hated';
+                          const isPreferred = row.affinity === 'preferred';
+                          const cropName = t(row.labelKey);
+                          const gradeLabel = t(getGradeLabelKey(row.gradeFr));
 
-                          {/* Qty badge */}
-                          <View style={styles.qtyBadge}>
-                            <Text style={styles.qtyText}>×{row.qty}</Text>
-                          </View>
-                        </Pressable>
-                      </Animated.View>
+                          return (
+                            <Animated.View
+                              key={`${row.cropId}-${row.gradeFr}-${idx}`}
+                              entering={FadeIn.delay(idx * 30).duration(220)}
+                            >
+                              <Pressable
+                                onPress={() => handlePick(row)}
+                                style={({ pressed }) => [
+                                  styles.row,
+                                  isPreferred && styles.rowPreferred,
+                                  isHated && styles.rowHated,
+                                  pressed && { opacity: 0.8 },
+                                ]}
+                              >
+                                <View style={styles.emojiCircle}>
+                                  <Text style={styles.emoji}>{row.emoji}</Text>
+                                </View>
+
+                                <View style={styles.info}>
+                                  <Text style={styles.name} numberOfLines={1}>
+                                    {cropName}
+                                  </Text>
+                                  <View style={styles.gradeRow}>
+                                    <Text style={styles.gradeEmoji}>{getGradeEmoji(row.gradeFr)}</Text>
+                                    <Text style={styles.gradeLabel}>{gradeLabel}</Text>
+                                  </View>
+                                </View>
+
+                                <View style={styles.qtyBadge}>
+                                  <Text style={styles.qtyText}>×{row.qty}</Text>
+                                </View>
+                              </Pressable>
+                            </Animated.View>
+                          );
+                        })}
+                      </View>
                     );
                   })}
 
                   <Text style={styles.footerHint}>
-                    Astuce : les crops préférés donnent un buff XP renforcé. Les
-                    crops détestés ne donnent aucun bonus.
+                    Astuce : nourrir avec un crop préféré + grade parfait donne
+                    le buff XP maximal (+19.5% pendant 1h30).
                   </Text>
                 </ScrollView>
               )}
@@ -397,6 +424,38 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
     gap: Spacing.md,
   },
+
+  // ── Section affinité ──
+  section: {
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderLeftWidth: 4,
+    backgroundColor: Farm.parchment,
+    borderTopRightRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+  },
+  sectionEmoji: {
+    fontSize: 24,
+  },
+  sectionLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  sectionSub: {
+    fontSize: FontSize.label,
+    color: Farm.brownTextSub,
+    marginTop: 1,
+  },
+
   row: {
     flexDirection: 'row',
     alignItems: 'center',
