@@ -354,6 +354,8 @@ export function CompanionCard({
           onSelect={handleSelectSpecies}
           unlockedSpecies={companion.unlockedSpecies}
           isInitialChoice={false}
+          currentSpecies={companion.activeSpecies}
+          currentName={companion.name}
         />
       </View>
     </Modal>

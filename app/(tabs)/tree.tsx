@@ -773,7 +773,12 @@ export default function TreeScreen() {
       const result = await feedCompanion(activeProfile.id, cropId, grade);
       if (!result) return;
       if (!result.applied) {
-        // Cooldown — feedback silencieux (bouton déjà disabled dans CompanionCard)
+        // Cooldown actif — informer le joueur (peut arriver via long-press sprite qui bypasse CompanionCard)
+        const totalMin = Math.max(1, Math.ceil(result.cooldownMs / 60000));
+        const h = Math.floor(totalMin / 60);
+        const m = totalMin % 60;
+        const remaining = h > 0 ? `${h}h ${m.toString().padStart(2, '0')}` : `${m}min`;
+        Alert.alert('😋 Rassasié', `Ton compagnon n'a pas encore faim ! Reviens dans ${remaining}.`);
         return;
       }
       // Haptic feedback selon affinité (D-20)

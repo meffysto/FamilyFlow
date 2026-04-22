@@ -75,8 +75,21 @@ export const CompanionAvatarMini = React.memo(function CompanionAvatarMini({
     return <Text style={{ fontSize: size * 0.8 }}>{fallbackEmoji}</Text>;
   }
 
-  // Utiliser l'emoji de l'espèce comme avatar — les sprites placeholder sont trop petits
   const speciesKey = companion.activeSpecies.toLowerCase() as CompanionSpecies;
+  const stage = getCompanionStage(level);
+  const sprite = AVATAR_SPRITES[speciesKey]?.[stage];
+
+  if (sprite) {
+    return (
+      <Image
+        source={sprite}
+        style={{ width: size, height: size }}
+        resizeMode="contain"
+      />
+    );
+  }
+
+  // Fallback emoji si sprite manquant
   const emoji = SPECIES_EMOJI[speciesKey] ?? fallbackEmoji;
   return <Text style={{ fontSize: size * 0.8 }}>{emoji}</Text>;
 });

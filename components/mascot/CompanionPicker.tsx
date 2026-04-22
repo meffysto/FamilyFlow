@@ -8,7 +8,7 @@
  *   - bouton confirmer farm 3D glossy vert
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -154,6 +154,10 @@ interface CompanionPickerProps {
   onSelect: (species: CompanionSpecies, name: string) => void;
   unlockedSpecies: CompanionSpecies[];
   isInitialChoice: boolean;
+  /** Espèce actuelle à présélectionner lors d'un switch (optionnel) */
+  currentSpecies?: CompanionSpecies;
+  /** Nom actuel à préremplir lors d'un switch (optionnel) */
+  currentName?: string;
 }
 
 // ── Composant ─────────────────────────────────────────
@@ -164,10 +168,20 @@ export const CompanionPicker = React.memo(function CompanionPicker({
   onSelect,
   unlockedSpecies,
   isInitialChoice,
+  currentSpecies,
+  currentName,
 }: CompanionPickerProps) {
   const { t } = useTranslation();
-  const [selectedSpecies, setSelectedSpecies] = useState<CompanionSpecies>('chat');
-  const [companionName, setCompanionName] = useState('');
+  const [selectedSpecies, setSelectedSpecies] = useState<CompanionSpecies>(currentSpecies ?? 'chat');
+  const [companionName, setCompanionName] = useState(currentName ?? '');
+
+  // Resync quand la modal s'ouvre (switch depuis CompanionCard)
+  useEffect(() => {
+    if (visible) {
+      if (currentSpecies) setSelectedSpecies(currentSpecies);
+      if (currentName !== undefined) setCompanionName(currentName);
+    }
+  }, [visible, currentSpecies, currentName]);
 
   const canConfirm = companionName.trim().length > 0;
 
