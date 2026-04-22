@@ -496,6 +496,12 @@ const MOOD_EMOJI: Record<CompanionMood, string> = {
   triste:   '😢',
 };
 
+/** Phase 42 — Spring config pour l'animation feed (pulse + recul) */
+const SPRING_FEED = { damping: 10, stiffness: 180 } as const;
+
+/** Type feedState — synchronisé avec affinité crop */
+export type FeedState = 'eating-preferred' | 'eating-neutral' | 'eating-hated' | null;
+
 // ── Props ─────────────────────────────────────────────
 
 interface HarvestableInfo {
@@ -519,6 +525,7 @@ interface CompanionSlotProps {
   builtBuildingYs?: number[];       // positions Y des bâtiments construits
   hasLake?: boolean;                // true si le lac est visible (stade >= pousse)
   paused?: boolean;                 // stopper animations quand app en background
+  feedState?: FeedState;            // Phase 42 — déclenche animation pulse/recul selon affinité
 }
 
 // ── Composant ─────────────────────────────────────────
@@ -538,6 +545,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   builtBuildingYs = [],
   hasLake = true,
   paused = false,
+  feedState = null,
 }: CompanionSlotProps) {
   const { colors } = useThemeColors();
   const [frameIdx, setFrameIdx] = useState(0);
@@ -555,6 +563,9 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const bubbleAnim = useSharedValue(0);
   const posX = useSharedValue(0);
   const posY = useSharedValue(0);
+  // Phase 42 — valeurs animées feed (pulse + recul si détesté)
+  const feedScale = useSharedValue(1);
+  const feedTranslateX = useSharedValue(0);
 
   // Frame swap idle — plus rapide en marchant (300ms) qu'au repos (800ms)
   // Stoppé quand paused (app en background)
@@ -791,6 +802,34 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     }
   }, [message, harvestHint]);
 
+  // Phase 42 — Animation feed (pulse joyeux OU recul + secousse si détesté)
+  useEffect(() => {
+    if (!feedState) {
+      feedScale.value = withTiming(1, { duration: 200 });
+      feedTranslateX.value = withTiming(0, { duration: 200 });
+      return;
+    }
+    if (feedState === 'eating-hated') {
+      // Recul + petite secousse, pas de scale joyeux
+      feedTranslateX.value = withSequence(
+        withTiming(-8, { duration: 200 }),
+        withTiming(0, { duration: 400 }),
+      );
+      feedScale.value = withSequence(
+        withSpring(0.9, SPRING_FEED),
+        withSpring(1.0, SPRING_FEED),
+      );
+    } else {
+      // eating-preferred ou eating-neutral : pulse joyeux
+      const peak = feedState === 'eating-preferred' ? 1.3 : 1.15;
+      feedScale.value = withSequence(
+        withSpring(peak, SPRING_FEED),
+        withSpring(1.0, SPRING_FEED),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedState]);
+
   const handleTap = useCallback(() => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
     jumpY.value = withSequence(
@@ -812,11 +851,12 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     ],
   }));
 
-  // Style du sprite (saut + flip directionnel)
+  // Style du sprite (saut + flip directionnel + pulse feed Phase 42)
   const companionAnimStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: jumpY.value },
-      { scale: scale.value },
+      { translateX: feedTranslateX.value },
+      { scale: scale.value * feedScale.value },
     ],
   }));
 
