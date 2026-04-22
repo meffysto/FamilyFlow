@@ -539,6 +539,11 @@ export function useVaultInternal(): VaultState {
   const mealsRef = useRef<MealItem[]>([]);
   const rdvsRef = useRef<RDV[]>([]);
   const tasksRefForWidget = useRef<Task[]>([]);
+  // Snapshot du total de tâches max observé aujourd'hui.
+  // Évite de dépendre d'un compteur événementiel (subscription fragile).
+  // Les récurrentes cochées bumpent dueDate au lendemain et sortent du filtre,
+  // réduisant todayTasks.length — le max préserve le vrai total du jour.
+  const tasksTotalSnapshotRef = useRef<{ date: string; total: number }>({ date: '', total: 0 });
   // Mis à jour via useEffect après déclaration de gamiData / activeProfileId
   const gamiDataForWidgetRef = useRef<GamificationData | null>(null);
   const activeProfileIdForWidgetRef = useRef<string | null>(null);
@@ -553,12 +558,18 @@ export function useVaultInternal(): VaultState {
         if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
         return t.dueDate === todayStr;
       });
-      // Done = compteur événementiel (fiable pour récurrentes qui reset completed=false)
-      const counter = tasksCompletedTodayRef.current;
-      const doneCount = counter.date === todayStr ? counter.count : 0;
-      // Total = pending + done : inclut les récurrentes bumpées au lendemain dans la journée
+      // Snapshot total : retient le max observé ce jour pour absorber les récurrentes
+      // cochées (dueDate bumpé → elles sortent du filtre, todayTasks.length décroît).
+      // Approche plus robuste que le compteur événementiel (pas de subscription fragile).
+      if (tasksTotalSnapshotRef.current.date !== todayStr) {
+        tasksTotalSnapshotRef.current = { date: todayStr, total: todayTasks.length };
+      } else {
+        tasksTotalSnapshotRef.current.total = Math.max(tasksTotalSnapshotRef.current.total, todayTasks.length);
+      }
+      const totalCount = tasksTotalSnapshotRef.current.total;
       const pendingCount = todayTasks.filter(t => !t.completed).length;
-      const totalCount = pendingCount + doneCount;
+      // doneCount = total - pending (fonctionne pour récurrentes ET ponctuelles)
+      const doneCount = Math.max(0, totalCount - pendingCount);
       // Widget JSON — même formule que la LA
       refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current, { done: doneCount, total: totalCount });
       const nowHour = new Date().getHours();
