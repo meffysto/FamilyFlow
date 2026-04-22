@@ -69,7 +69,9 @@ import {
 } from '../lib/parser';
 import type { FarmProfileData } from '../lib/types';
 import type { CompanionData, CompanionSpecies, HarvestGrade as CompanionHarvestGrade } from '../lib/mascot/companion-types';
-import { feedCompanion as feedCompanionEngine, type FeedResult } from '../lib/mascot/companion-engine';
+import { feedCompanion as feedCompanionEngine, buildFeedMessage, type FeedResult } from '../lib/mascot/companion-engine';
+import { loadCompanionMessages, saveCompanionMessages } from '../lib/mascot/companion-storage';
+import { CROP_CATALOG } from '../lib/mascot/types';
 import type { HarvestGrade as FarmHarvestGrade } from '../lib/mascot/grade-engine';
 import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
@@ -1965,6 +1967,33 @@ export function useVaultInternal(): VaultState {
               }
             : p,
         ));
+        // Phase 42 — Push message contextualisé + Live Activity (fire-and-forget, D-21/D-22/D-24)
+        try {
+          const cropDef = CROP_CATALOG.find(c => c.id === cropId);
+          // labelKey format "farm.crop.carrot" → extrait "carrot" comme fallback label
+          const cropLabel = cropDef?.labelKey?.replace(/^farm\.crop\./, '') ?? cropId;
+          const msg = buildFeedMessage({
+            affinity: result.affinity,
+            grade,
+            cropLabel,
+            cropEmoji: cropDef?.emoji,
+          });
+          const existing = await loadCompanionMessages(profileId);
+          const updatedMsgs = [...existing, {
+            text: msg,
+            event: `feed_${result.affinity}`,
+            timestamp: new Date().toISOString(),
+          }].slice(-5);
+          await saveCompanionMessages(profileId, updatedMsgs);
+        } catch { /* non-critical */ }
+        try {
+          // Live Activity : patchMascotte merge feedBuffActive au lastSnapshot (Option A locked)
+          await patchMascotte({
+            feedBuffActive: result.newBuff
+              ? { multiplier: result.newBuff.multiplier, expiresAtIso: result.newBuff.expiresAt }
+              : null,
+          });
+        } catch { /* non-critical */ }
         return result;
       } catch (e) {
         if (__DEV__) console.warn('[feedCompanion]', e);
