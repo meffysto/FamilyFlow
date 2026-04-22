@@ -540,7 +540,8 @@ export function serializeMeals(meals: MealItem[]): string {
  * Format v3 (Phase 42) : "activeSpecies:name:unlocked1|unlocked2:lastFedAtISO:feedBuffMul:feedBuffExpiresAtISO"
  * Format v2 (Phase 20) : "activeSpecies:name:unlocked1|unlocked2"
  * Format v1 legacy     : "activeSpecies:name:unlocked1|unlocked2:mood" — la 4e partie (mood) est ignorée si non-ISO.
- * Les parts 3 (lastFedAt) et 5 (feedBuff.expiresAt) sont des ISO → reconstitution via slice+join (pattern parseActiveExpeditions).
+ * Les ISO (lastFedAt / feedBuff.expiresAt) contiennent 2 `:` (Z) ou 3 `:` (timezone offset comme +02:00) →
+ * on repère la position du multiplicateur (token purement numérique ou vide) pour délimiter les ISO.
  * Retourne null si la valeur est vide ou invalide.
  */
 export function parseCompanion(raw: string | undefined): CompanionData | null {
@@ -555,24 +556,45 @@ export function parseCompanion(raw: string | undefined): CompanionData | null {
     name,
     unlockedSpecies: unlockedRaw.split('|') as CompanionSpecies[],
   };
-  // Phase 42 — v3 minimum 8 parts (3 base + 3 ISO + 2 vides). Gate exclut v1 4-parts legacy (mood).
+  // Phase 42 — v3 minimum 8 parts (3 base + ISO≥3 + MUL + expiresAt≥3 ou vides).
+  // Gate exclut v1 4-parts legacy (mood) et v2 3-parts pur.
   if (parts.length >= 8) {
-    const lastFedCandidate = parts.slice(3, 6).join(':');
-    if (lastFedCandidate) {
-      const lastFedDate = new Date(lastFedCandidate);
-      if (!isNaN(lastFedDate.getTime())) {
-        base.lastFedAt = lastFedCandidate;
+    // Repère l'index du multiplicateur de manière robuste :
+    // - MUL présent : token de la forme stricte "N.NNNN" (toFixed(4)) → regex unique
+    // - MUL absent (buff null) : token vide suivi d'un token vide (trailing "::")
+    // Les ISO peuvent contenir `:` (ex: "2026-04-22T10:00:00+02:00" = 3 `:` internes
+    // donc split produit un segment trailing "00" purement numérique — à ne PAS
+    // confondre avec MUL). D'où le double critère ci-dessous.
+    const MUL_STRICT_RE = /^\d+\.\d{4}$/;
+    let mulIdx = -1;
+    for (let i = 3; i < parts.length; i++) {
+      if (MUL_STRICT_RE.test(parts[i])) {
+        mulIdx = i;
+        break;
       }
     }
-    const mulRaw = parts[6] || '';
-    const mul = parseFloat(mulRaw);
-    if (!isNaN(mul) && mul > 0 && parts.length >= 10) {
-      const expiresCandidate = parts.slice(7, 10).join(':');
-      if (expiresCandidate) {
-        const expDate = new Date(expiresCandidate);
-        if (!isNaN(expDate.getTime())) {
-          const buff: FeedBuff = { multiplier: mul, expiresAt: expiresCandidate };
-          base.feedBuff = buff;
+    // Pas de MUL strict trouvé → cas buff null : MUL vide en length-2, expiresAt vide en length-1
+    if (mulIdx === -1 && parts.length >= 8 && parts[parts.length - 1] === '' && parts[parts.length - 2] === '') {
+      mulIdx = parts.length - 2;
+    }
+    if (mulIdx > 3) {
+      const lastFedCandidate = parts.slice(3, mulIdx).join(':');
+      if (lastFedCandidate) {
+        const lastFedDate = new Date(lastFedCandidate);
+        if (!isNaN(lastFedDate.getTime())) {
+          base.lastFedAt = lastFedCandidate;
+        }
+      }
+      const mulRaw = parts[mulIdx] || '';
+      const mul = parseFloat(mulRaw);
+      if (!isNaN(mul) && mul > 0 && mulIdx + 1 < parts.length) {
+        const expiresCandidate = parts.slice(mulIdx + 1).join(':');
+        if (expiresCandidate) {
+          const expDate = new Date(expiresCandidate);
+          if (!isNaN(expDate.getTime())) {
+            const buff: FeedBuff = { multiplier: mul, expiresAt: expiresCandidate };
+            base.feedBuff = buff;
+          }
         }
       }
     }
