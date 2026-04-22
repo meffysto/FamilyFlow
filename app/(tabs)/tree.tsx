@@ -2988,31 +2988,21 @@ export default function TreeScreen() {
         vault={vault}
       />
 
-      {/* Phase 42 — Modal CompanionCard (refonte D-26/D-28) */}
-      <Modal
-        visible={showCompanionCard}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowCompanionCard(false)}
-      >
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-          <ModalHeader title="Compagnon" onClose={() => setShowCompanionCard(false)} />
-          {companion && (
-            <View style={{ padding: Spacing.lg }}>
-              <CompanionCard
-                companion={companion}
-                level={level}
-                onPressFeed={() => {
-                  setShowCompanionCard(false);
-                  // Gotcha pageSheet stacking (Phase 40 G1) : 300ms entre fermeture et ouverture
-                  setTimeout(() => setShowFeedPicker(true), 300);
-                }}
-                onSelectSpecies={handleCompanionSelect}
-              />
-            </View>
-          )}
-        </SafeAreaView>
-      </Modal>
+      {/* Phase 42 — CompanionCard (refonte visuelle parchemin cozy, self-contained Modal) */}
+      {companion && (
+        <CompanionCard
+          visible={showCompanionCard}
+          onClose={() => setShowCompanionCard(false)}
+          companion={companion}
+          level={level}
+          onPressFeed={() => {
+            setShowCompanionCard(false);
+            // Gotcha pageSheet stacking (Phase 40 G1) : 300ms entre fermeture et ouverture
+            setTimeout(() => setShowFeedPicker(true), 300);
+          }}
+          onSelectSpecies={handleCompanionSelect}
+        />
+      )}
 
       {/* Phase 42 — FeedPicker (picker crops par grade avec affinités) */}
       <FeedPicker

@@ -1,36 +1,38 @@
 /**
  * FeedPicker.tsx — Sheet picker crops pour nourrir le compagnon (Phase 42 D-02)
  *
- * Modal pageSheet qui liste toutes les combinaisons (cropId, grade) ayant qty > 0
- * dans l'inventaire du joueur. Affiche un badge d'affinité selon l'espèce du compagnon :
- *   • préférés (❤️) : tri en premier + bordure accentuée (D-04)
- *   • détestés (😖) : opacité 0.55 mais restent sélectionnables — le joueur peut
- *     « gâcher » un crop s'il le souhaite (D-03)
+ * Style "cozy farm game" aligné sur TreeShop / BuildingShopSheet :
+ *   - cadre bois sombre + auvent rayé + parchemin + close bouton rond
  *
- * Note sur les grades : l'inventaire stocke les grades en français
- * ('ordinaire' | 'beau' | 'superbe' | 'parfait' — cf. lib/mascot/grade-engine).
- * Le moteur de nourrissage (feedCompanion) attend les grades en anglais
- * ('ordinary' | 'good' | 'excellent' | 'perfect' — cf. companion-types).
- * La conversion se fait ici via GRADE_FR_TO_EN avant d'appeler onPick.
+ * Liste toutes les combinaisons (cropId, grade) ayant qty > 0 :
+ *   • préférés (❤️) : tri en premier + bordure accentuée (D-04)
+ *   • détestés (😖) : opacité 0.55 mais sélectionnables (D-03)
+ *
+ * Conversion grades FR (inventaire) → EN (moteur feed) via GRADE_FR_TO_EN.
  */
 
 import React, { useMemo, useCallback } from 'react';
 import {
   View,
   Text,
-  Pressable,
-  ScrollView,
   Modal,
+  Pressable,
+  TouchableOpacity,
+  ScrollView,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  FadeIn,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { ModalHeader } from '../ui';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { Farm } from '../../constants/farm-theme';
 import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
+
 import { CROP_CATALOG, type HarvestInventory } from '../../lib/mascot/types';
 import {
   GRADE_ORDER,
@@ -56,10 +58,8 @@ const GRADE_FR_TO_EN: Record<HarvestGradeFr, HarvestGradeEn> = {
   parfait:   'perfect',
 };
 
-/** Ordre d'affichage : du meilleur au moins bon (parfait d'abord dans un crop). */
 const GRADE_DISPLAY_ORDER: HarvestGradeFr[] = ['parfait', 'superbe', 'beau', 'ordinaire'];
 
-/** Rang affinité pour tri (préféré → neutre → détesté). */
 const AFFINITY_RANK: Record<CropAffinity, number> = {
   preferred: 0,
   neutral:   1,
@@ -75,7 +75,6 @@ export interface FeedPickerProps {
   onClose: () => void;
   inventory: HarvestInventory;
   companionSpecies: CompanionSpecies;
-  /** Callback invoqué avec le cropId et le grade en anglais (compatible feedCompanion). */
   onPick: (cropId: string, grade: HarvestGradeEn) => void;
 }
 
@@ -87,6 +86,38 @@ interface Row {
   gradeEn: HarvestGradeEn;
   qty: number;
   affinity: CropAffinity;
+}
+
+// ── Auvent rayé ───────────────────────────────
+
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningStripe,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={styles.awningShadow} />
+      <View style={styles.awningScallop}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningScallopDot,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
 }
 
 // ─────────────────────────────────────────────
@@ -101,15 +132,12 @@ export function FeedPicker({
   onPick,
 }: FeedPickerProps) {
   const { t } = useTranslation();
-  const { colors, primary } = useThemeColors();
 
   const rows: Row[] = useMemo(() => {
     const out: Row[] = [];
     for (const [cropId, entry] of Object.entries(inventory || {})) {
       const def = CROP_CATALOG.find(c => c.id === cropId);
       if (!def) continue;
-      // HarvestInventoryEntry : soit `number` legacy (pré-Phase B), soit
-      // `Partial<Record<HarvestGrade, number>>` (Phase B).
       const entryRecord: Partial<Record<HarvestGradeFr, number>> =
         typeof entry === 'number'
           ? { ordinaire: entry }
@@ -132,11 +160,9 @@ export function FeedPicker({
       }
     }
 
-    // Tri : affinité (préféré d'abord), puis grade desc (parfait d'abord).
     out.sort((a, b) => {
       const rAff = AFFINITY_RANK[a.affinity] - AFFINITY_RANK[b.affinity];
       if (rAff !== 0) return rAff;
-      // GRADE_ORDER est croissant (ordinaire → parfait) — on inverse.
       return GRADE_ORDER.indexOf(b.gradeFr) - GRADE_ORDER.indexOf(a.gradeFr);
     });
     return out;
@@ -144,9 +170,7 @@ export function FeedPicker({
 
   const handlePick = useCallback(
     (row: Row) => {
-      Haptics.selectionAsync().catch(() => {
-        /* non-critical */
-      });
+      Haptics.selectionAsync().catch(() => {});
       onPick(row.cropId, row.gradeEn);
       onClose();
     },
@@ -156,88 +180,122 @@ export function FeedPicker({
   return (
     <Modal
       visible={visible}
+      transparent
       animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView
-        style={[styles.safe, { backgroundColor: colors.bg }]}
-        edges={['bottom']}
-      >
-        <ModalHeader title="Nourrir le compagnon" onClose={onClose} />
+      <View style={styles.overlay}>
+        <TouchableOpacity
+          style={styles.overlayBg}
+          activeOpacity={1}
+          onPress={onClose}
+        />
 
-        {rows.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>🌱</Text>
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Récoltez quelque chose d'abord pour nourrir votre compagnon.
-            </Text>
-          </View>
-        ) : (
-          <ScrollView
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-          >
-            {rows.map((row, idx) => {
-              const isHated = row.affinity === 'hated';
-              const isPreferred = row.affinity === 'preferred';
-              const cropName = t(row.labelKey);
-              const gradeLabel = t(getGradeLabelKey(row.gradeFr));
+        <View style={styles.woodFrame}>
+          <View style={styles.woodFrameInner}>
+            <AwningStripes />
 
-              return (
-                <Pressable
-                  key={`${row.cropId}-${row.gradeFr}-${idx}`}
-                  onPress={() => handlePick(row)}
-                  style={({ pressed }) => [
-                    styles.row,
-                    {
-                      backgroundColor: colors.card,
-                      borderColor: isPreferred ? primary : colors.border,
-                      borderWidth: isPreferred ? 2 : 1,
-                      opacity: isHated ? 0.55 : pressed ? 0.85 : 1,
-                    },
-                  ]}
+            <View style={styles.parchment}>
+              <View style={styles.handle} />
+
+              <Animated.View
+                entering={FadeIn.springify().damping(14).stiffness(200)}
+                style={styles.farmTitle}
+              >
+                <Text style={styles.farmTitleText}>
+                  Nourrir le compagnon
+                </Text>
+              </Animated.View>
+
+              {rows.length === 0 ? (
+                <View style={styles.empty}>
+                  <Text style={styles.emptyEmoji}>🌱</Text>
+                  <Text style={styles.emptyText}>
+                    Récoltez quelque chose d'abord pour nourrir votre compagnon.
+                  </Text>
+                </View>
+              ) : (
+                <ScrollView
+                  contentContainerStyle={styles.list}
+                  showsVerticalScrollIndicator={false}
                 >
-                  <Text style={styles.emoji}>{row.emoji}</Text>
+                  {rows.map((row, idx) => {
+                    const isHated = row.affinity === 'hated';
+                    const isPreferred = row.affinity === 'preferred';
+                    const cropName = t(row.labelKey);
+                    const gradeLabel = t(getGradeLabelKey(row.gradeFr));
 
-                  <View style={styles.info}>
-                    <View style={styles.nameRow}>
-                      <Text style={[styles.name, { color: colors.text }]}>
-                        {cropName}
-                      </Text>
-                      {isPreferred && (
-                        <Text style={styles.affinityBadge} accessibilityLabel="Préféré">
-                          ❤️
-                        </Text>
-                      )}
-                      {isHated && (
-                        <Text style={styles.affinityBadge} accessibilityLabel="Détesté">
-                          😖
-                        </Text>
-                      )}
-                    </View>
-                    <View style={styles.gradeRow}>
-                      <Text style={styles.gradeEmoji}>{getGradeEmoji(row.gradeFr)}</Text>
-                      <Text style={[styles.gradeLabel, { color: colors.textMuted }]}>
-                        {gradeLabel}
-                      </Text>
-                    </View>
-                  </View>
+                    return (
+                      <Animated.View
+                        key={`${row.cropId}-${row.gradeFr}-${idx}`}
+                        entering={FadeIn.delay(idx * 40).duration(240)}
+                      >
+                        <Pressable
+                          onPress={() => handlePick(row)}
+                          style={({ pressed }) => [
+                            styles.row,
+                            isPreferred && styles.rowPreferred,
+                            isHated && styles.rowHated,
+                            pressed && { opacity: 0.8 },
+                          ]}
+                        >
+                          {/* Emoji rond */}
+                          <View style={styles.emojiCircle}>
+                            <Text style={styles.emoji}>{row.emoji}</Text>
+                          </View>
 
-                  <View style={styles.qtyBlock}>
-                    <Text style={[styles.qty, { color: colors.text }]}>×{row.qty}</Text>
-                  </View>
-                </Pressable>
-              );
-            })}
+                          {/* Infos */}
+                          <View style={styles.info}>
+                            <View style={styles.nameRow}>
+                              <Text style={styles.name} numberOfLines={1}>
+                                {cropName}
+                              </Text>
+                              {isPreferred && (
+                                <Text style={styles.affinityBadge} accessibilityLabel="Préféré">
+                                  ❤️
+                                </Text>
+                              )}
+                              {isHated && (
+                                <Text style={styles.affinityBadge} accessibilityLabel="Détesté">
+                                  😖
+                                </Text>
+                              )}
+                            </View>
+                            <View style={styles.gradeRow}>
+                              <Text style={styles.gradeEmoji}>{getGradeEmoji(row.gradeFr)}</Text>
+                              <Text style={styles.gradeLabel}>{gradeLabel}</Text>
+                            </View>
+                          </View>
 
-            <Text style={[styles.footerHint, { color: colors.textMuted }]}>
-              Astuce : les crops préférés donnent un buff XP renforcé. Les crops
-              détestés ne donnent aucun bonus et déclenchent un "beurk".
-            </Text>
-          </ScrollView>
-        )}
-      </SafeAreaView>
+                          {/* Qty badge */}
+                          <View style={styles.qtyBadge}>
+                            <Text style={styles.qtyText}>×{row.qty}</Text>
+                          </View>
+                        </Pressable>
+                      </Animated.View>
+                    );
+                  })}
+
+                  <Text style={styles.footerHint}>
+                    Astuce : les crops préférés donnent un buff XP renforcé. Les
+                    crops détestés ne donnent aucun bonus.
+                  </Text>
+                </ScrollView>
+              )}
+            </View>
+
+            {/* Close button */}
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtn}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.closeBtnText}>{'✕'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -247,27 +305,132 @@ export function FeedPicker({
 // ─────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: {
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  overlayBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+
+  // ── Wood frame ──
+  woodFrame: {
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing['4xl'],
+    borderRadius: Radius['2xl'],
+    backgroundColor: Farm.woodDark,
+    padding: 5,
+    ...Shadows.xl,
+    maxHeight: '85%',
+  },
+  woodFrameInner: {
+    borderRadius: Radius.xl,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    overflow: 'hidden',
+    flexShrink: 1,
+  },
+
+  // ── Auvent ──
+  awning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  awningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  awningStripe: {
     flex: 1,
   },
+  awningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
+  awningScallop: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 4,
+    left: 0,
+    right: 0,
+  },
+  awningScallopDot: {
+    flex: 1,
+    height: 8,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+
+  // ── Parchemin ──
+  parchment: {
+    backgroundColor: Farm.parchmentDark,
+    flexShrink: 1,
+    paddingBottom: Spacing['3xl'],
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+    backgroundColor: Farm.woodHighlight,
+  },
+  farmTitle: {
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  farmTitleText: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
+  },
+
+  // ── Liste ──
   list: {
-    padding: Spacing['2xl'],
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing.md,
     gap: Spacing.md,
-    paddingBottom: Spacing['4xl'],
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
     padding: Spacing.xl,
-    borderRadius: Radius.lg,
     gap: Spacing.xl,
   },
+  rowPreferred: {
+    borderWidth: 2,
+    borderColor: Farm.greenBtn,
+    backgroundColor: Farm.parchment,
+  },
+  rowHated: {
+    opacity: 0.55,
+  },
+  emojiCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.parchment,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   emoji: {
-    fontSize: 32,
+    fontSize: 28,
   },
   info: {
     flex: 1,
-    gap: Spacing.xxs,
+    gap: 2,
   },
   nameRow: {
     flexDirection: 'row',
@@ -277,7 +440,8 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
   affinityBadge: {
     fontSize: FontSize.body,
@@ -292,21 +456,30 @@ const styles = StyleSheet.create({
   },
   gradeLabel: {
     fontSize: FontSize.label,
+    color: Farm.brownTextSub,
   },
-  qtyBlock: {
-    minWidth: 40,
-    alignItems: 'flex-end',
-  },
-  qty: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
+  qtyBadge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.parchment,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    minWidth: 44,
     alignItems: 'center',
-    padding: Spacing['4xl'],
-    gap: Spacing.xl,
+  },
+  qtyText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+
+  // ── Empty ──
+  empty: {
+    alignItems: 'center',
+    paddingVertical: Spacing['4xl'],
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.md,
   },
   emptyEmoji: {
     fontSize: 48,
@@ -315,7 +488,10 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     textAlign: 'center',
     lineHeight: 22,
+    color: Farm.brownTextSub,
   },
+
+  // ── Footer hint ──
   footerHint: {
     fontSize: FontSize.label,
     fontStyle: 'italic',
@@ -323,5 +499,27 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
     paddingHorizontal: Spacing.md,
     lineHeight: 18,
+    color: Farm.brownTextSub,
+  },
+
+  // ── Close button ──
+  closeBtn: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.woodDark,
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.parchment,
   },
 });
