@@ -118,9 +118,13 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         const profileWithStreak: Profile = { ...profile, streak: currentStreak + 1 };
 
         // Calculate new points (uses updated streak for bonus)
-        // Bonus compagnon +5% XP (per D-09)
+        // Phase 42 — getCompanionXpBonus intègre le feedBuff actif (empilage multiplicatif D-07).
+        //   - pas de compagnon : 1.0
+        //   - compagnon sans buff : COMPANION_XP_BONUS = 1.05
+        //   - compagnon + buff actif : 1.05 × feedBuff.multiplier (ex: 1.2075 ou 1.56975)
+        // Condition `> 1.0` : intention explicite (bonus multiplicatif uniquement).
         const companionBonus = getCompanionXpBonus(profileWithStreak.companion);
-        let profileWithCompanionBonus: Profile = companionBonus !== 1.0
+        let profileWithCompanionBonus: Profile = companionBonus > 1.0
           ? { ...profileWithStreak, points: Math.round(profileWithStreak.points) }
           : profileWithStreak;
 
@@ -134,9 +138,9 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         }
 
         const { profile: updatedProfileRaw, entry: entryRaw, lootAwarded } = awardTaskCompletion(profileWithCompanionBonus, taskText);
-        // Appliquer le bonus compagnon sur les points gagnés (delta)
+        // Phase 42 — appliquer le bonus compagnon (base 1.05 ± feedBuff) sur le delta de points gagnés.
         const basePointsGained = updatedProfileRaw.points - profileWithCompanionBonus.points;
-        const bonusPoints = companionBonus !== 1.0 ? Math.round(basePointsGained * companionBonus) - basePointsGained : 0;
+        const bonusPoints = companionBonus > 1.0 ? Math.round(basePointsGained * companionBonus) - basePointsGained : 0;
         let updatedProfile: Profile = bonusPoints > 0
           ? { ...updatedProfileRaw, points: updatedProfileRaw.points + bonusPoints }
           : updatedProfileRaw;
