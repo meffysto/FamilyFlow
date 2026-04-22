@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-22T11:48:56.112Z"
+last_updated: "2026-04-22T11:52:20.163Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 14
   completed_phases: 8
   total_plans: 37
-  completed_plans: 31
+  completed_plans: 32
   percent: 0
 ---
 
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 42 (Nourrir le compagnon) — EXECUTING
-Plan: 2 of 9
+Plan: 3 of 9
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
 Last activity: 2026-04-22
@@ -177,6 +177,7 @@ Status: Ready to execute
 | Phase 41 P03 | 15min | 2 tasks | 2 files |
 | Phase 42-nourrir-le-compagnon P01 | 3min | 1 tasks | 1 files |
 | Phase 42-nourrir-le-compagnon P02 | 5min | 3 tasks | 3 files |
+| Phase 42-nourrir-le-compagnon P03 | 4min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -358,6 +359,7 @@ Recent decisions affecting current work:
 - [Phase 41]: Milestone v1.7 déclarée shippable : 0 erreur TS nouvelle, 0 Jest failing (hors 2 pré-existants), 0 nom réel dans commits/docs/sources Phases 38-41
 - [Phase 42-nourrir-le-compagnon]: Mapping COMPANION_PREFERENCES Option A verrouillé : tous uniques dans CROP_CATALOG, fish/bone/mushroom/onion deferred v1.8+
 - [Phase 42-nourrir-le-compagnon]: [Phase 42-02]: Scan MUL dynamique /^\d+\.\d{4}$/ + fallback empty-trailing — supporte ISO timezone offset +02:00 sans casser ISO Z
+- [Phase 42-nourrir-le-compagnon]: Plan 42-03: feedCompanion pure (spread CompanionData) + getActiveFeedBuff expiration lazy (read-only, nettoyage différé à prochaine écriture)
 
 ### Todos
 
@@ -369,5 +371,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-22T11:48:56.109Z
+Last session: 2026-04-22T11:52:20.159Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
