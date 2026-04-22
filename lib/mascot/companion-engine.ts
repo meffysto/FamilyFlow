@@ -105,11 +105,22 @@ export function getCompanionMood(
 
 /**
  * Retourne le multiplicateur de bonus XP du compagnon.
- * +5% si un compagnon est actif, sinon 1.0.
+ * — Base : +5% si un compagnon est actif (COMPANION_XP_BONUS)
+ * — Phase 42 : empilage multiplicatif avec feedBuff actif (D-07)
+ *   XP final = base × 1.05 × feedBuff.multiplier (si buff actif)
+ *   ex: ordinaire neutre → 1.05 × 1.05 = 1.1025
+ *       parfait préféré  → 1.05 × 1.495 ≈ 1.56975
+ *   Expiration lazy : buff expiré retombe à 1.05 (pré-Phase 42).
  */
-export function getCompanionXpBonus(companion: CompanionData | null | undefined): number {
+export function getCompanionXpBonus(
+  companion: CompanionData | null | undefined,
+  nowMs: number = Date.now(),
+): number {
   if (!companion) return 1.0;
-  return COMPANION_XP_BONUS;
+  const base = COMPANION_XP_BONUS;
+  const activeBuff = getActiveFeedBuff(companion, nowMs);
+  if (!activeBuff) return base;
+  return +(base * activeBuff.multiplier).toFixed(4);
 }
 
 // ── Phase 42 — Nourrissage compagnon ────────────────────
