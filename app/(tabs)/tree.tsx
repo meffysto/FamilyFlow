@@ -77,9 +77,10 @@ import { CompanionPicker } from '../../components/mascot/CompanionPicker';
 import { CompanionSlot } from '../../components/mascot/CompanionSlot';
 import { CompanionCard } from '../../components/mascot/CompanionCard';
 import { FeedPicker } from '../../components/mascot/FeedPicker';
+import { FeedParticles } from '../../components/mascot/FeedParticles';
 import { ModalHeader } from '../../components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { HarvestGrade } from '../../lib/mascot/companion-types';
+import type { HarvestGrade, CropAffinity } from '../../lib/mascot/companion-types';
 import { PortalSprite } from '../../components/village/PortalSprite';
 import { getDailyDeal } from '../../lib/village/market-engine';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
@@ -506,6 +507,8 @@ export default function TreeScreen() {
   const [showCompanionPicker, setShowCompanionPicker] = useState(false);
   const [showCompanionCard, setShowCompanionCard] = useState(false);
   const [showFeedPicker, setShowFeedPicker] = useState(false);
+  // Phase 42 — feedState pour animation pulse + particules (reset 1500ms après feed)
+  const [feedState, setFeedState] = useState<null | 'eating-preferred' | 'eating-neutral' | 'eating-hated'>(null);
   const [companionMessage, setCompanionMessage] = useState<string | null>(null);
   const companionPickerShownRef = useRef(false);
   // Mémoire courte du compagnon — en mémoire uniquement, jamais persistée
@@ -778,6 +781,10 @@ export default function TreeScreen() {
       } else {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       }
+      // Phase 42 — déclencher animation pulse + particules selon affinité (D-18/D-19)
+      const nextState = `eating-${result.affinity}` as const;
+      setFeedState(nextState);
+      setTimeout(() => setFeedState(null), 1500);
     },
     [activeProfile?.id, feedCompanion],
   );
@@ -2394,6 +2401,14 @@ export default function TreeScreen() {
                   builtBuildingYs={builtBuildingYs}
                   hasLake={stageIdx >= 1}
                   paused={animationsPaused}
+                  feedState={feedState}
+                />
+                {/* Phase 42 — Particules emoji flottantes pendant feed (D-19) */}
+                <FeedParticles
+                  visible={!!feedState}
+                  affinity={feedState ? (feedState.replace('eating-', '') as CropAffinity) : 'neutral'}
+                  x={SCREEN_W * 0.42}
+                  y={(DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) * 0.55}
                 />
               </View>
             )}
