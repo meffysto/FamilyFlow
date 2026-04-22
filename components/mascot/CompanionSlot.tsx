@@ -511,6 +511,7 @@ interface CompanionSlotProps {
   name: string;
   message?: string | null;
   onTap: () => void;
+  onLongPress?: () => void;         // Phase 42 — tap long ouvre FeedPicker (D-29)
   containerWidth: number;
   containerHeight: number;
   harvestables?: HarvestableInfo[];  // crops prêtes à récolter
@@ -529,6 +530,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   name,
   message,
   onTap,
+  onLongPress,
   containerWidth,
   containerHeight,
   harvestables = [],
@@ -914,7 +916,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       )}
 
       {/* Sprite animé du compagnon */}
-      <Pressable onPress={handleTap} accessibilityLabel={name}>
+      <Pressable onPress={handleTap} onLongPress={onLongPress} accessibilityLabel={name}>
         <Animated.View style={companionAnimStyle}>
           <Image
             source={currentSprite}

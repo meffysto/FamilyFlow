@@ -75,6 +75,11 @@ import { SunriseReport, type SunriseResource } from '../../components/mascot/Sun
 import { BadgesSheet } from '../../components/mascot/BadgesSheet';
 import { CompanionPicker } from '../../components/mascot/CompanionPicker';
 import { CompanionSlot } from '../../components/mascot/CompanionSlot';
+import { CompanionCard } from '../../components/mascot/CompanionCard';
+import { FeedPicker } from '../../components/mascot/FeedPicker';
+import { ModalHeader } from '../../components/ui';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import type { HarvestGrade } from '../../lib/mascot/companion-types';
 import { PortalSprite } from '../../components/village/PortalSprite';
 import { getDailyDeal } from '../../lib/village/market-engine';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
@@ -360,7 +365,7 @@ export default function TreeScreen() {
     0: TERRAIN_HEIGHT, 1: TERRAIN_HEIGHT, 2: TERRAIN_HEIGHT,
     3: TERRAIN_HEIGHT, 4: TERRAIN_HEIGHT, 5: TERRAIN_HEIGHT,
   };
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, buySporee, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, buySporee, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, feedCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
   const { showToast, showHarvestCard } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded, activeFarmTutorialStep } = useHelp();
@@ -499,6 +504,8 @@ export default function TreeScreen() {
 
   // Compagnon mascotte
   const [showCompanionPicker, setShowCompanionPicker] = useState(false);
+  const [showCompanionCard, setShowCompanionCard] = useState(false);
+  const [showFeedPicker, setShowFeedPicker] = useState(false);
   const [companionMessage, setCompanionMessage] = useState<string | null>(null);
   const companionPickerShownRef = useRef(false);
   // Mémoire courte du compagnon — en mémoire uniquement, jamais persistée
@@ -753,6 +760,27 @@ export default function TreeScreen() {
     await setCompanion(activeProfile.id, newCompanion);
     setShowCompanionPicker(false);
   }, [activeProfile, setCompanion]);
+
+  // Phase 42 — Handler nourrissage compagnon (D-01, D-20)
+  const handleFeedCrop = useCallback(
+    async (cropId: string, grade: HarvestGrade) => {
+      if (!activeProfile?.id) return;
+      const result = await feedCompanion(activeProfile.id, cropId, grade);
+      setShowFeedPicker(false);
+      if (!result) return;
+      if (!result.applied) {
+        // Cooldown — feedback silencieux (bouton déjà disabled dans CompanionCard)
+        return;
+      }
+      // Haptic feedback selon affinité (D-20)
+      if (result.affinity === 'preferred') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+      } else {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      }
+    },
+    [activeProfile?.id, feedCompanion],
+  );
 
   // Refs stables pour éviter les boucles de re-render
   const companionRef = useRef(companion);
@@ -2354,6 +2382,11 @@ export default function TreeScreen() {
                   name={companion.name}
                   message={companionMessage}
                   onTap={handleCompanionTap}
+                  onLongPress={() => {
+                    // Phase 42 D-29 — tap long sur sprite ouvre directement FeedPicker
+                    Haptics.selectionAsync().catch(() => {});
+                    setShowFeedPicker(true);
+                  }}
                   containerWidth={SCREEN_W}
                   containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
                   harvestables={harvestables}
@@ -2610,7 +2643,15 @@ export default function TreeScreen() {
                 <Text style={styles.chipCozyLabel}>{t('mascot.actions.galerie', 'Galerie')}</Text>
               </TouchableOpacity>
               {companion && (
-                <TouchableOpacity style={[styles.chipCozy, styles.chipCozyCompanion]} onPress={() => { Haptics.selectionAsync(); setShowCompanionPicker(true); }} activeOpacity={0.7}>
+                <TouchableOpacity
+                  style={[styles.chipCozy, styles.chipCozyCompanion]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    // Phase 42 — ouvrir la CompanionCard (refonte) si compagnon existant
+                    setShowCompanionCard(true);
+                  }}
+                  activeOpacity={0.7}
+                >
                   <Text style={styles.chipCozyEmoji}>{'🐾'}</Text>
                   <Text style={styles.chipCozyLabel}>{companion.name}</Text>
                 </TouchableOpacity>
@@ -2930,6 +2971,41 @@ export default function TreeScreen() {
         onClose={() => setShowMuseum(false)}
         profileId={activeProfile?.id ?? null}
         vault={vault}
+      />
+
+      {/* Phase 42 — Modal CompanionCard (refonte D-26/D-28) */}
+      <Modal
+        visible={showCompanionCard}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowCompanionCard(false)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+          <ModalHeader title="Compagnon" onClose={() => setShowCompanionCard(false)} />
+          {companion && (
+            <View style={{ padding: Spacing.lg }}>
+              <CompanionCard
+                companion={companion}
+                level={level}
+                onPressFeed={() => {
+                  setShowCompanionCard(false);
+                  // Gotcha pageSheet stacking (Phase 40 G1) : 300ms entre fermeture et ouverture
+                  setTimeout(() => setShowFeedPicker(true), 300);
+                }}
+                onSelectSpecies={handleCompanionSelect}
+              />
+            </View>
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      {/* Phase 42 — FeedPicker (picker crops par grade avec affinités) */}
+      <FeedPicker
+        visible={showFeedPicker}
+        onClose={() => setShowFeedPicker(false)}
+        inventory={profile?.harvestInventory ?? {}}
+        companionSpecies={companion?.activeSpecies ?? 'chat'}
+        onPick={handleFeedCrop}
       />
 
       {/* Modal compagnon — choix initial ou switch */}
