@@ -42,6 +42,8 @@ export interface MascotteSnapshot {
   nextRdvText?: string | null;
   /** Bulle de dialogue courte du compagnon (≤44 chars). Remplace le subtitle narratif. */
   speechBubble?: string | null;
+  /** Phase 42 — Buff XP actif (D-22). Override speechBubble par défaut en "Boosté ! +X%". */
+  feedBuffActive?: { multiplier: number; expiresAtIso: string } | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
@@ -69,12 +71,31 @@ export async function loadCompanionSpriteBase64(
 }
 
 /**
+ * Phase 42 — Construit la bulle de dialogue Live Activity pour un buff actif (D-23).
+ * Format ≤44 chars : "Boosté ! +X% XP ⚡ (Ymin)"
+ */
+export function buildFeedSpeechBubble(
+  buff: { multiplier: number; expiresAtIso: string },
+  nowMs: number = Date.now(),
+): string {
+  const pct = Math.round((buff.multiplier - 1) * 100);
+  const remainingMs = Math.max(0, new Date(buff.expiresAtIso).getTime() - nowMs);
+  const min = Math.ceil(remainingMs / 60000);
+  const label = `Boosté ! +${pct}% XP ⚡ (${min}min)`;
+  return label.length <= 44 ? label : label.slice(0, 44);
+}
+
+/**
  * Démarre la Live Activity mascotte. Idempotent :
  * si une activity tourne déjà, elle est remplacée.
  */
 export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
   if (Platform.OS !== 'ios') return false;
-  lastSnapshot = snap;
+  // Phase 42 — Override speechBubble si buff actif et non-fourni explicitement (D-23)
+  const effectiveBubble =
+    snap.speechBubble ??
+    (snap.feedBuffActive ? buildFeedSpeechBubble(snap.feedBuffActive) : null);
+  lastSnapshot = { ...snap, speechBubble: effectiveBubble };
   try {
     return await startMascotteActivity(
       snap.mascotteName,
@@ -88,7 +109,7 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
       snap.nextRdvText ?? null,
-      snap.speechBubble ?? null,
+      effectiveBubble,
     );
   } catch (e) {
     if (__DEV__) console.warn('[mascotte] startMascotteActivity threw:', e);
@@ -102,7 +123,11 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
  */
 export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
   if (Platform.OS !== 'ios') return;
-  lastSnapshot = snap;
+  // Phase 42 — Override speechBubble si buff actif et non-fourni explicitement (D-23)
+  const effectiveBubble =
+    snap.speechBubble ??
+    (snap.feedBuffActive ? buildFeedSpeechBubble(snap.feedBuffActive) : null);
+  lastSnapshot = { ...snap, speechBubble: effectiveBubble };
   try {
     const active = await isMascotteActivityActive();
     if (!active) return;
@@ -117,7 +142,7 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
       snap.nextRdvText ?? null,
-      snap.speechBubble ?? null,
+      effectiveBubble,
     );
   } catch {
     // silencieux — feature non critique
