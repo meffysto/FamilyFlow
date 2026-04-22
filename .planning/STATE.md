@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-22T12:15:58.607Z"
+last_updated: "2026-04-22T12:16:15.085Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 14
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 42 (Nourrir le compagnon) — EXECUTING
-Plan: 7 of 9
+Plan: 8 of 9
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
 Last activity: 2026-04-22
@@ -183,6 +183,7 @@ Status: Ready to execute
 | Phase 42 P06 | 8min | 1 tasks | 1 files |
 | Phase 42 P07 | 12min | 2 tasks | 3 files |
 | Phase 42 P08 | ~8min | 3 tasks | 3 files |
+| Phase 42 P09 | 8min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -366,6 +367,7 @@ Recent decisions affecting current work:
 - [Phase 42-nourrir-le-compagnon]: [Phase 42-02]: Scan MUL dynamique /^\d+\.\d{4}$/ + fallback empty-trailing — supporte ISO timezone offset +02:00 sans casser ISO Z
 - [Phase 42-nourrir-le-compagnon]: Plan 42-03: feedCompanion pure (spread CompanionData) + getActiveFeedBuff expiration lazy (read-only, nettoyage différé à prochaine écriture)
 - [Phase 42-nourrir-le-compagnon]: getCompanionXpBonus empile feedBuff multiplicativement (D-07), condition > 1.0 dans useGamification
+- [Phase 42]: Plan 42-09: Option A Live Activity locked — patchMascotte Partial<MascotteSnapshot> accepte feedBuffActive sans extension signature
 
 ### Todos
 
@@ -377,5 +379,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-22T12:09:21.223Z
+Last session: 2026-04-22T12:16:05.596Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)

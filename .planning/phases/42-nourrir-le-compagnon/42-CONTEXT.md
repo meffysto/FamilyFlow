@@ -51,13 +51,14 @@ Permettre au joueur de **nourrir son compagnon** avec les crops de son inventair
 - **D-12:** Buff peut expirer avant la fin du cooldown (ex: parfait buff 1h30 + cooldown 3h = 1h30 sans buff ni possibilité de renourrir)
 
 ### Affinités par espèce (constantes)
-- **D-13:** Mapping figé dans `companion-types.ts` :
-  - Chat : préféré = poisson (lac), neutre par défaut, déteste = oignon
-  - Chien : préféré = os (expédition), neutre par défaut, déteste = tomate
-  - Lapin : préféré = carotte, neutre par défaut, déteste = maïs
-  - Renard : préféré = fraise, neutre par défaut, déteste = betterave
-  - Hérisson : préféré = champignon (rare), neutre par défaut, déteste = concombre
-- **D-14:** "Second préféré" (chou, potiron, blé, pomme de terre, fraise) initialement skippé pour v1 — toutes les autres crops sont neutres. Peut être étendu plus tard.
+- **D-13:** Mapping figé dans `companion-types.ts` (REVISÉ 2026-04-22 : poisson/os/champignon/oignon absents du CROP_CATALOG → redistribution dans crops existants, toutes espèces uniques) :
+  - Chat : préféré = `strawberry` (fraise), déteste = `cucumber` (concombre)
+  - Chien : préféré = `pumpkin` (potiron), déteste = `tomato` (tomate)
+  - Lapin : préféré = `carrot` (carotte), déteste = `corn` (maïs)
+  - Renard : préféré = `beetroot` (betterave), déteste = `wheat` (blé)
+  - Hérisson : préféré = `potato` (pomme de terre), déteste = `cabbage` (chou)
+- **D-14:** Second préféré skippé pour v1 — toutes les autres crops sont neutres. Extension future possible.
+- **D-13-bis (deferred v1.8+):** Étendre CROP_CATALOG avec fish/bone/mushroom/onion pour restaurer le design original "poisson pour chat, os pour chien, champignon pour hérisson" — nécessite emojis + grades + drops + nouveau loot expédition/lac. Hors scope Phase 42.
 
 ### État persisté (CompanionData)
 - **D-15:** Ajout de deux champs optionnels dans `CompanionData` :
