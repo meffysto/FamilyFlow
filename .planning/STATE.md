@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-22T12:01:39.212Z"
+last_updated: "2026-04-22T12:02:42.983Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 14
   completed_phases: 8
   total_plans: 37
-  completed_plans: 34
+  completed_plans: 35
   percent: 0
 ---
 
@@ -180,6 +180,7 @@ Status: Ready to execute
 | Phase 42-nourrir-le-compagnon P03 | 4min | 2 tasks | 2 files |
 | Phase 42-nourrir-le-compagnon P04 | 6min | 2 tasks | 3 files |
 | Phase 42 P05 | 4min | 1 tasks | 1 files |
+| Phase 42 P06 | 8min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
