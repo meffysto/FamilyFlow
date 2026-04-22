@@ -128,7 +128,14 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
   useFocusEffect(useCallback(() => { refreshActive(); }, [refreshActive]));
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') refreshActive();
+      if (s !== 'active') return;
+      refreshActive();
+      // Re-post un update() pour rafraîchir staleDate + stage horaire.
+      // Sans ça, iOS consomme le staleDate initial (ex: reveil→travail à 9h) mais
+      // n'en reçoit pas de nouveau → bloqué sur travail jusqu'au prochain event
+      // métier. patchMascotte({}) merge avec lastSnapshot, ré-écrit ContentState,
+      // le natif recalcule staleDate pour la prochaine transition.
+      patchMascotte({}).catch(() => {});
     });
     return () => sub.remove();
   }, [refreshActive]);
