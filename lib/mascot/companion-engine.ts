@@ -184,6 +184,34 @@ export function getActiveFeedBuff(
   return companion.feedBuff;
 }
 
+/**
+ * Phase 42 — Construit un message contextualisé après un feed (D-21).
+ * Variantes :
+ *  - preferred + perfect : message enthousiaste avec emoji crop + ✨
+ *  - preferred (autre grade) : message content
+ *  - neutral : remerciement neutre
+ *  - hated : rejet clair (compagnon recule)
+ */
+export function buildFeedMessage(params: {
+  affinity: CropAffinity;
+  grade: HarvestGrade;
+  cropLabel: string;   // nom traduit du crop (ex: "fraise")
+  cropEmoji?: string;  // emoji du crop pour préfixer si fourni
+}): string {
+  const { affinity, grade, cropLabel, cropEmoji = '' } = params;
+  const prefix = cropEmoji ? `${cropEmoji} ` : '';
+  if (affinity === 'hated') {
+    return `😖 Berk… je déteste ça.`;
+  }
+  if (affinity === 'preferred' && grade === 'perfect') {
+    return `${prefix}✨ Ma ${cropLabel} préférée en version parfaite ! Je t'adore !`;
+  }
+  if (affinity === 'preferred') {
+    return `${prefix}Mmm ma préférée, merci !`;
+  }
+  return `${prefix}Merci, c'était bon.`;
+}
+
 // ── Templates de messages ────────────────────────────────
 
 /**

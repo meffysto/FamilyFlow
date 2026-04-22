@@ -6,7 +6,7 @@ import {
   COMPANION_PREFERENCES,
   type CompanionData,
 } from '../mascot/companion-types';
-import { feedCompanion, getActiveFeedBuff, getCompanionXpBonus } from '../mascot/companion-engine';
+import { feedCompanion, getActiveFeedBuff, getCompanionXpBonus, buildFeedMessage } from '../mascot/companion-engine';
 
 // ────────────────────────────────────────────────
 // Phase 42 — Suite Jest feedCompanion + helpers
@@ -212,5 +212,25 @@ describe('Phase 42 — getCompanionXpBonus stacking', () => {
       feedBuff: { multiplier: 1.15 * 1.3, expiresAt: future },
     };
     expect(getCompanionXpBonus(comp)).toBeCloseTo(1.05 * 1.15 * 1.3, 3);
+  });
+});
+
+describe('Phase 42 — buildFeedMessage', () => {
+  it('preferred + perfect → mention parfaite + crop label', () => {
+    const msg = buildFeedMessage({ affinity: 'preferred', grade: 'perfect', cropLabel: 'fraise', cropEmoji: '🍓' });
+    expect(msg).toContain('parfaite');
+    expect(msg).toContain('fraise');
+  });
+  it('hated → Berk', () => {
+    const msg = buildFeedMessage({ affinity: 'hated', grade: 'good', cropLabel: 'maïs', cropEmoji: '🌽' });
+    expect(msg).toContain('Berk');
+  });
+  it('neutral → merci sobre', () => {
+    expect(buildFeedMessage({ affinity: 'neutral', grade: 'good', cropLabel: 'blé', cropEmoji: '🌾' }))
+      .toContain('Merci');
+  });
+  it('preferred non-perfect → préférée', () => {
+    expect(buildFeedMessage({ affinity: 'preferred', grade: 'good', cropLabel: 'betterave', cropEmoji: '🫜' }))
+      .toContain('préférée');
   });
 });
