@@ -68,7 +68,9 @@ import {
   serializeFarmProfile,
 } from '../lib/parser';
 import type { FarmProfileData } from '../lib/types';
-import type { CompanionData, CompanionSpecies } from '../lib/mascot/companion-types';
+import type { CompanionData, CompanionSpecies, HarvestGrade as CompanionHarvestGrade } from '../lib/mascot/companion-types';
+import { feedCompanion as feedCompanionEngine, type FeedResult } from '../lib/mascot/companion-engine';
+import type { HarvestGrade as FarmHarvestGrade } from '../lib/mascot/grade-engine';
 import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
 import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot, BedtimeStory, LoveNote, LoveNoteStatus } from '../lib/types';
@@ -295,6 +297,7 @@ export interface VaultState {
   awardProfileXP: (profileId: string, xp: number, note: string) => Promise<void>;
   setCompanion: (profileId: string, companion: CompanionData) => Promise<void>;
   unlockCompanion: (profileId: string, speciesId: CompanionSpecies) => Promise<void>;
+  feedCompanion: (profileId: string, cropId: string, grade: CompanionHarvestGrade) => Promise<FeedResult | null>;
   /** Préférences alimentaires famille + invités (Phase 15 — PREF-02/06/07) */
   dietary: VaultDietaryState;
   gardenRaw: string;
@@ -1892,6 +1895,85 @@ export function useVaultInternal(): VaultState {
     }
   }, [setCompanion]);
 
+  /**
+   * Phase 42 — Nourrir le compagnon avec un crop de grade donné.
+   *
+   * Transaction single-file : companion + harvestInventory vivent dans farm-{id}.md,
+   * une seule écriture suffit. Si l'I/O échoue, retour null (fail-open).
+   *
+   * Note grades : le moteur (companion-engine) utilise les grades EN
+   * ('ordinary' | 'good' | 'excellent' | 'perfect'), mais l'inventaire récolte
+   * stocke les grades FR ('ordinaire' | 'beau' | 'superbe' | 'parfait'). Un
+   * mapping EN→FR est appliqué avant de décrémenter harvestInventory.
+   *
+   * @returns null si I/O échoue ou profil/compagnon introuvable.
+   * @returns FeedResult avec applied=false si cooldown actif (pas d'écriture).
+   * @returns FeedResult avec applied=true + updated=nouveau CompanionData si succès.
+   */
+  const feedCompanion = useCallback(
+    async (
+      profileId: string,
+      cropId: string,
+      grade: CompanionHarvestGrade,
+    ): Promise<FeedResult | null> => {
+      if (!vaultRef.current) return null;
+      const profile = profiles.find(p => p.id === profileId);
+      if (!profile || !profile.companion) return null;
+      // 1. Appliquer le feed pur (cooldown check inclus, aucune mutation)
+      const result = feedCompanionEngine(profile.companion, cropId, grade);
+      if (!result.applied) return result; // cooldown — UI affiche message, pas d'I/O
+      // 2. Lire + mutate farm-{id}.md (companion + harvestInventory) en une seule transaction
+      try {
+        const fp = farmFile(profileId);
+        const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
+        const farmData = parseFarmProfile(farmContent);
+        // 2a. Mutate companion
+        farmData.companion = result.updated;
+        // 2b. Décrémenter harvestInventory[cropId][gradeFr] de 1 (pattern inverse L1776-1789)
+        const GRADE_EN_TO_FR: Record<CompanionHarvestGrade, FarmHarvestGrade> = {
+          ordinary: 'ordinaire',
+          good: 'beau',
+          excellent: 'superbe',
+          perfect: 'parfait',
+        };
+        const gradeFr = GRADE_EN_TO_FR[grade];
+        const harvestInv = { ...(farmData.harvestInventory ?? {}) };
+        const existing = harvestInv[cropId];
+        if (existing != null && typeof existing === 'object') {
+          const currentQty = (existing as Partial<Record<FarmHarvestGrade, number>>)[gradeFr] ?? 0;
+          if (currentQty > 0) {
+            harvestInv[cropId] = { ...existing, [gradeFr]: currentQty - 1 };
+            farmData.harvestInventory = harvestInv;
+          }
+        } else if (typeof existing === 'number' && gradeFr === 'ordinaire' && existing > 0) {
+          // Legacy pré-Phase B — qty numérique traitée comme 'ordinaire'
+          harvestInv[cropId] = { ordinaire: existing - 1 };
+          farmData.harvestInventory = harvestInv;
+        }
+        // 3. Écriture unique
+        const profileName = profile.name ?? profileId;
+        await vaultRef.current.writeFile(fp, serializeFarmProfile(profileName, farmData));
+        // 4. Update local state (pattern setCompanion L1868-1870)
+        //    On met aussi à jour profile.harvestInventory pour que l'UI reflète le décrément
+        //    sans attendre un refresh complet du vault (FeedPicker lit profile.harvestInventory).
+        setProfiles(prev => prev.map(p =>
+          p.id === profileId
+            ? {
+                ...p,
+                companion: result.updated,
+                harvestInventory: farmData.harvestInventory,
+              }
+            : p,
+        ));
+        return result;
+      } catch (e) {
+        if (__DEV__) console.warn('[feedCompanion]', e);
+        return null;
+      }
+    },
+    [profiles],
+  );
+
   const markLootUsed = useCallback(async (loot: UsedLoot) => {
     if (!vaultRef.current || !gamiData) return;
     const updated: GamificationData = {
@@ -2093,6 +2175,7 @@ export function useVaultInternal(): VaultState {
     awardProfileXP,
     setCompanion,
     unlockCompanion,
+    feedCompanion,
     dietary: dietaryHook,
     gardenRaw,
     setGardenRaw,
@@ -2127,7 +2210,7 @@ export function useVaultInternal(): VaultState {
     addQuote, editQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     missionsHook,
     completeAdventure, completeSagaChapter, markLootUsed, awardProfileXP,
-    setCompanion, unlockCompanion,
+    setCompanion, unlockCompanion, feedCompanion,
     dietaryHook,
     storiesHook,
     loveNotesHook,
