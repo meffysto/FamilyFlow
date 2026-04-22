@@ -25,7 +25,22 @@ import { serializeHarvestInventory, serializeRareSeeds } from '../../lib/mascot/
 import { TECH_TREE } from '../../lib/mascot/tech-engine';
 import { getGradeEmoji, getGradeMultiplier } from '../../lib/mascot/grade-engine';
 import type { Profile, GamificationData } from '../../lib/types';
-import type { FarmInventory, PlacedBuilding } from '../../lib/mascot/types';
+import { CROP_CATALOG, type FarmInventory, type PlacedBuilding } from '../../lib/mascot/types';
+import type { HarvestGrade } from '../../lib/mascot/grade-engine';
+import type { CompanionData } from '../../lib/mascot/companion-types';
+
+// ── Grades (FR) ──────────────────────────────────
+const GRADES_FR: HarvestGrade[] = ['ordinaire', 'beau', 'superbe', 'parfait'];
+const GRADE_EMOJI: Record<HarvestGrade, string> = {
+  ordinaire: '⚪',
+  beau: '🟢',
+  superbe: '🟡',
+  parfait: '🟣',
+};
+
+/** Split crops : classiques (plantables) vs rares/expédition (dropOnly). */
+const REGULAR_CROPS = CROP_CATALOG.filter(c => !c.dropOnly);
+const RARE_CROPS = CROP_CATALOG.filter(c => c.dropOnly);
 
 interface SettingsGamiAdminProps {
   vault: any;
@@ -97,17 +112,44 @@ function ProfileCard({
   const [farine, setFarine] = useState(String(inv.farine));
   const [miel, setMiel] = useState(String(inv.miel));
 
-  // Récoltes
+  // Récoltes — structure par grade : Record<cropId, Record<grade, string>>
+  // Supporte l'ancien format (number direct = ordinaire) et le nouveau (per-grade)
   const harvestInv = profile.harvestInventory ?? {};
-  const [harvests, setHarvests] = useState<Record<string, string>>(
-    Object.fromEntries(Object.entries(harvestInv).map(([k, v]) => [k, String(v)]))
-  );
+  const initHarvests = (): Record<string, Record<HarvestGrade, string>> => {
+    const out: Record<string, Record<HarvestGrade, string>> = {};
+    for (const crop of CROP_CATALOG) {
+      const entry = (harvestInv as Record<string, unknown>)[crop.id];
+      const row: Record<HarvestGrade, string> = { ordinaire: '', beau: '', superbe: '', parfait: '' };
+      if (typeof entry === 'number') {
+        row.ordinaire = entry > 0 ? String(entry) : '';
+      } else if (entry && typeof entry === 'object') {
+        for (const g of GRADES_FR) {
+          const n = (entry as Partial<Record<HarvestGrade, number>>)[g] ?? 0;
+          row[g] = n > 0 ? String(n) : '';
+        }
+      }
+      out[crop.id] = row;
+    }
+    return out;
+  };
+  const [harvests, setHarvests] = useState<Record<string, Record<HarvestGrade, string>>>(initHarvests);
+  const [harvestsExpanded, setHarvestsExpanded] = useState(false);
 
-  // Graines rares
+  // Graines rares — flat numbers (pas de grade, cf. RareSeedInventory)
   const rareSeeds = profile.farmRareSeeds ?? {};
-  const [seeds, setSeeds] = useState<Record<string, string>>(
-    Object.fromEntries(Object.entries(rareSeeds).map(([k, v]) => [k, String(v)]))
-  );
+  const initSeeds = (): Record<string, string> => {
+    const out: Record<string, string> = {};
+    for (const crop of RARE_CROPS) {
+      const n = (rareSeeds as Record<string, number>)[crop.id] ?? 0;
+      out[crop.id] = n > 0 ? String(n) : '';
+    }
+    return out;
+  };
+  const [seeds, setSeeds] = useState<Record<string, string>>(initSeeds);
+  const [seedsExpanded, setSeedsExpanded] = useState(false);
+
+  // Compagnon — outils test feedBuff / cooldown (Phase 42)
+  const companion = profile.companion as CompanionData | undefined;
 
   // Technologies ferme
   const [unlockedTechs, setUnlockedTechs] = useState<Set<string>>(
@@ -157,15 +199,22 @@ function ProfileCard({
         farine: parseInt(farine, 10) || 0,
         miel: parseInt(miel, 10) || 0,
       };
-      const updatedHarvest: Record<string, number> = {};
-      for (const [k, v] of Object.entries(harvests)) {
-        const n = parseInt(v, 10) || 0;
-        if (n > 0) updatedHarvest[k] = n;
+      // Harvest : reconstruire en format per-grade, ne garder que les crops avec >0 pour au moins un grade
+      const updatedHarvest: Record<string, Partial<Record<HarvestGrade, number>>> = {};
+      for (const [cropId, row] of Object.entries(harvests)) {
+        const grades: Partial<Record<HarvestGrade, number>> = {};
+        let hasAny = false;
+        for (const g of GRADES_FR) {
+          const n = parseInt(row[g] ?? '', 10) || 0;
+          if (n > 0) { grades[g] = n; hasAny = true; }
+        }
+        if (hasAny) updatedHarvest[cropId] = grades;
       }
+      // Seeds : flat numbers
       const updatedSeeds: Record<string, number> = {};
-      for (const [k, v] of Object.entries(seeds)) {
+      for (const [cropId, v] of Object.entries(seeds)) {
         const n = parseInt(v, 10) || 0;
-        if (n > 0) updatedSeeds[k] = n;
+        if (n > 0) updatedSeeds[cropId] = n;
       }
 
       const farmPath = `farm-${profile.id}.md`;
@@ -246,35 +295,163 @@ function ProfileCard({
           <NumField label="Farine" value={farine} onChangeText={setFarine} colors={colors} />
           <NumField label="Miel" value={miel} onChangeText={setMiel} colors={colors} />
 
-          {/* ── Récoltes ── */}
-          {Object.keys(harvests).length > 0 && (
+          {/* ── Récoltes (tous crops, par grade) ── */}
+          <TouchableOpacity
+            onPress={() => setHarvestsExpanded(e => !e)}
+            activeOpacity={0.7}
+            style={styles.subHeader}
+          >
+            <Text style={[styles.sectionLabel, { color: primary, marginTop: 0 }]}>
+              Récoltes en stock ({REGULAR_CROPS.length} crops × 4 grades)
+            </Text>
+            <Text style={[styles.chevron, { color: colors.textFaint }]}>
+              {harvestsExpanded ? '▼' : '▶'}
+            </Text>
+          </TouchableOpacity>
+          {harvestsExpanded && (
             <>
-              <Text style={[styles.sectionLabel, { color: primary }]}>Récoltes en stock</Text>
-              {Object.entries(harvests).map(([cropId, qty]) => (
+              <View style={styles.gradeHeader}>
+                <Text style={[styles.gradeHeaderLabel, { color: colors.textFaint }]}>Crop</Text>
+                {GRADES_FR.map(g => (
+                  <Text key={g} style={[styles.gradeHeaderCell, { color: colors.textFaint }]}>
+                    {GRADE_EMOJI[g]}
+                  </Text>
+                ))}
+              </View>
+              {REGULAR_CROPS.map(crop => (
+                <View key={crop.id} style={styles.gradeRow}>
+                  <Text style={[styles.cropLabel, { color: colors.text }]} numberOfLines={1}>
+                    {crop.emoji} {crop.id}
+                  </Text>
+                  {GRADES_FR.map(g => (
+                    <TextInput
+                      key={g}
+                      style={[styles.gradeInput, { color: colors.text, borderColor: colors.separator, backgroundColor: colors.bg }]}
+                      value={harvests[crop.id]?.[g] ?? ''}
+                      onChangeText={v => setHarvests(prev => ({
+                        ...prev,
+                        [crop.id]: { ...prev[crop.id], [g]: v },
+                      }))}
+                      keyboardType="numeric"
+                      selectTextOnFocus
+                      placeholder="0"
+                      placeholderTextColor={colors.textFaint}
+                    />
+                  ))}
+                </View>
+              ))}
+              <View style={styles.quickActionRow}>
+                <TouchableOpacity
+                  style={[styles.quickBtn, { borderColor: primary + '40', backgroundColor: primary + '12' }]}
+                  onPress={() => {
+                    const filled: Record<string, Record<HarvestGrade, string>> = {};
+                    for (const crop of REGULAR_CROPS) {
+                      filled[crop.id] = { ordinaire: '10', beau: '5', superbe: '2', parfait: '1' };
+                    }
+                    setHarvests(prev => ({ ...prev, ...filled }));
+                  }}
+                >
+                  <Text style={[styles.quickBtnText, { color: primary }]}>🌾 Remplir tout (10/5/2/1)</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.quickBtn, { borderColor: colors.separator }]}
+                  onPress={() => {
+                    const empty: Record<string, Record<HarvestGrade, string>> = {};
+                    for (const crop of REGULAR_CROPS) {
+                      empty[crop.id] = { ordinaire: '', beau: '', superbe: '', parfait: '' };
+                    }
+                    setHarvests(empty);
+                  }}
+                >
+                  <Text style={[styles.quickBtnText, { color: colors.textMuted }]}>🗑 Vider</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {/* ── Graines rares (drop-only + expédition) ── */}
+          <TouchableOpacity
+            onPress={() => setSeedsExpanded(e => !e)}
+            activeOpacity={0.7}
+            style={styles.subHeader}
+          >
+            <Text style={[styles.sectionLabel, { color: primary, marginTop: 0 }]}>
+              Graines rares ({RARE_CROPS.length})
+            </Text>
+            <Text style={[styles.chevron, { color: colors.textFaint }]}>
+              {seedsExpanded ? '▼' : '▶'}
+            </Text>
+          </TouchableOpacity>
+          {seedsExpanded && (
+            <>
+              {RARE_CROPS.map(crop => (
                 <NumField
-                  key={cropId}
-                  label={cropId}
-                  value={qty}
-                  onChangeText={v => setHarvests(prev => ({ ...prev, [cropId]: v }))}
+                  key={crop.id}
+                  label={`${crop.emoji} ${crop.id}${crop.expeditionExclusive ? ' (expé)' : ''}`}
+                  value={seeds[crop.id] ?? ''}
+                  onChangeText={v => setSeeds(prev => ({ ...prev, [crop.id]: v }))}
                   colors={colors}
                 />
               ))}
             </>
           )}
 
-          {/* ── Graines rares ── */}
-          {Object.keys(seeds).length > 0 && (
+          {/* ── Compagnon (Phase 42) : reset cooldown + buff ── */}
+          {companion && (
             <>
-              <Text style={[styles.sectionLabel, { color: primary }]}>Graines rares</Text>
-              {Object.entries(seeds).map(([cropId, qty]) => (
-                <NumField
-                  key={cropId}
-                  label={cropId}
-                  value={qty}
-                  onChangeText={v => setSeeds(prev => ({ ...prev, [cropId]: v }))}
-                  colors={colors}
-                />
-              ))}
+              <Text style={[styles.sectionLabel, { color: primary }]}>
+                Compagnon — {companion.activeSpecies} {companion.name ? `« ${companion.name} »` : ''}
+              </Text>
+              <Text style={[styles.levelHint, { color: colors.textFaint, textAlign: 'left' }]}>
+                {companion.lastFedAt ? `Dernier nourrissage : ${new Date(companion.lastFedAt).toLocaleString('fr-FR')}` : 'Jamais nourri'}
+                {companion.feedBuff ? ` · Buff ×${companion.feedBuff.multiplier} jusqu'à ${new Date(companion.feedBuff.expiresAt).toLocaleTimeString('fr-FR')}` : ''}
+              </Text>
+              <View style={styles.quickActionRow}>
+                <TouchableOpacity
+                  style={[styles.quickBtn, { borderColor: primary + '40', backgroundColor: primary + '12' }]}
+                  onPress={async () => {
+                    try {
+                      const farmPath = `farm-${profile.id}.md`;
+                      const farmContent = await vault.readFile(farmPath).catch(() => '');
+                      const farmData = parseFarmProfile(farmContent);
+                      if (farmData.companion) {
+                        farmData.companion = { ...farmData.companion, lastFedAt: undefined, feedBuff: null };
+                        await vault.writeFile(farmPath, serializeFarmProfile(profile.name, farmData));
+                        await refresh();
+                        Alert.alert('🐾 Compagnon', 'Cooldown reset — prêt à être nourri !');
+                      }
+                    } catch (e: any) {
+                      Alert.alert('Erreur', e.message ?? String(e));
+                    }
+                  }}
+                >
+                  <Text style={[styles.quickBtnText, { color: primary }]}>⏱ Reset cooldown</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.quickBtn, { borderColor: primary + '40', backgroundColor: primary + '12' }]}
+                  onPress={async () => {
+                    try {
+                      const farmPath = `farm-${profile.id}.md`;
+                      const farmContent = await vault.readFile(farmPath).catch(() => '');
+                      const farmData = parseFarmProfile(farmContent);
+                      if (farmData.companion) {
+                        const expiresAt = new Date(Date.now() + 90 * 60 * 1000).toISOString();
+                        farmData.companion = {
+                          ...farmData.companion,
+                          feedBuff: { multiplier: 1.1950, expiresAt },
+                        };
+                        await vault.writeFile(farmPath, serializeFarmProfile(profile.name, farmData));
+                        await refresh();
+                        Alert.alert('✨ Compagnon', 'Buff +19.5% XP activé pour 1h30');
+                      }
+                    } catch (e: any) {
+                      Alert.alert('Erreur', e.message ?? String(e));
+                    }
+                  }}
+                >
+                  <Text style={[styles.quickBtnText, { color: primary }]}>✨ Force buff max</Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
 
@@ -696,5 +873,69 @@ const styles = StyleSheet.create({
   testBtnText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
+  },
+  // ── Grade editor (harvest + seeds) ──
+  subHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  gradeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    marginBottom: 2,
+  },
+  gradeHeaderLabel: {
+    flex: 1,
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  gradeHeaderCell: {
+    width: 50,
+    textAlign: 'center',
+    fontSize: FontSize.label,
+  },
+  gradeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: 2,
+  },
+  cropLabel: {
+    flex: 1,
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
+  },
+  gradeInput: {
+    width: 50,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    fontSize: FontSize.label,
+    textAlign: 'center',
+  },
+  quickActionRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  quickBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
+  },
+  quickBtnText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
 });
