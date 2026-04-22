@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-22T10:07:29.580Z"
-last_activity: "2026-04-21 - Completed quick task 260421-qy5: Picker de grade interactif dans CraftSheet (UI Phase B)"
+last_updated: "2026-04-22T11:45:16.252Z"
+last_activity: 2026-04-22
 progress:
   total_phases: 14
   completed_phases: 8
-  total_plans: 28
-  completed_plans: 29
+  total_plans: 37
+  completed_plans: 30
   percent: 0
 ---
 
@@ -20,15 +20,15 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 41 — polish-onboarding-codex-non-r-gression
+**Current focus:** Phase 42 — Nourrir le compagnon
 
 ## Current Position
 
-Phase: 41
-Plan: Not started
+Phase: 42 (Nourrir le compagnon) — EXECUTING
+Plan: 2 of 9
 Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
 Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
-Last activity: 2026-04-21 - Completed quick task 260421-qy5: Picker de grade interactif dans CraftSheet (UI Phase B)
+Last activity: 2026-04-22
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
@@ -175,6 +175,7 @@ Status: Ready to execute
 | Phase 40 P03 | 28min | 3 tasks | 3 files |
 | Phase 41 P01 | 8min | 2 tasks | 4 files |
 | Phase 41 P03 | 15min | 2 tasks | 2 files |
+| Phase 42-nourrir-le-compagnon P01 | 3min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -354,6 +355,7 @@ Recent decisions affecting current work:
 - [Phase 41]: marathonIncremented flag déclaré hors du bloc if(wager) — permet double-branche golden/non-golden identique au pattern wagerDropBack
 - [Phase 41]: Option A DiscoverySource : wagerMarathonWins?: number ajouté dans discovery.ts — évite cast (profile as any), 1 ligne propre
 - [Phase 41]: Milestone v1.7 déclarée shippable : 0 erreur TS nouvelle, 0 Jest failing (hors 2 pré-existants), 0 nom réel dans commits/docs/sources Phases 38-41
+- [Phase 42-nourrir-le-compagnon]: Mapping COMPANION_PREFERENCES Option A verrouillé : tous uniques dans CROP_CATALOG, fish/bone/mushroom/onion deferred v1.8+
 
 ### Todos
 
@@ -365,5 +367,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-22T10:07:29.569Z
+Last session: 2026-04-22T11:45:16.248Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)

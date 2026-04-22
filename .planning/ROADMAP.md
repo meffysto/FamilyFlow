@@ -333,3 +333,13 @@ Plans:
 - **v1.2 Confort & Découverte** — `.planning/milestones/v1.2-ROADMAP.md`
 - **v1.3 Seed** — `.planning/milestones/v1.3-ROADMAP.md` *(si archivé)*
 - **v1.4 Jardin Familial** — `.planning/milestones/v1.4-ROADMAP.md`
+
+### Phase 42: Nourrir le compagnon
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 41
+**Plans:** 1/9 plans executed
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 42 to break down)
