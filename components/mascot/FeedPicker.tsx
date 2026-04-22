@@ -42,6 +42,7 @@ import {
 } from '../../lib/mascot/grade-engine';
 import {
   getAffinity,
+  getBuffForCrop,
   type HarvestGrade as HarvestGradeEn,
   type CompanionSpecies,
   type CropAffinity,
@@ -292,8 +293,28 @@ export function FeedPicker({
                                   </View>
                                 </View>
 
-                                <View style={styles.qtyBadge}>
-                                  <Text style={styles.qtyText}>×{row.qty}</Text>
+                                <View style={styles.rightCol}>
+                                  {(() => {
+                                    const buff = getBuffForCrop(row.gradeEn, companionSpecies, row.cropId);
+                                    if (!buff) {
+                                      return (
+                                        <View style={[styles.buffBadge, styles.buffBadgeNone]}>
+                                          <Text style={styles.buffBadgeNoneText}>0%</Text>
+                                        </View>
+                                      );
+                                    }
+                                    const pct = Math.round((buff.multiplier - 1) * 100);
+                                    return (
+                                      <View style={[styles.buffBadge, isPreferred ? styles.buffBadgePreferred : styles.buffBadgeNeutral]}>
+                                        <Text style={[styles.buffBadgeText, isPreferred && { color: '#FFFFFF' }]}>
+                                          +{pct}% XP
+                                        </Text>
+                                      </View>
+                                    );
+                                  })()}
+                                  <View style={styles.qtyBadge}>
+                                    <Text style={styles.qtyText}>×{row.qty}</Text>
+                                  </View>
                                 </View>
                               </Pressable>
                             </Animated.View>
@@ -516,6 +537,40 @@ const styles = StyleSheet.create({
   gradeLabel: {
     fontSize: FontSize.label,
     color: Farm.brownTextSub,
+  },
+  rightCol: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  buffBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    minWidth: 68,
+    alignItems: 'center',
+  },
+  buffBadgePreferred: {
+    backgroundColor: Farm.greenBtn,
+    borderColor: Farm.greenBtnShadow,
+  },
+  buffBadgeNeutral: {
+    backgroundColor: Farm.parchment,
+    borderColor: Farm.woodHighlight,
+  },
+  buffBadgeNone: {
+    backgroundColor: 'rgba(192,74,58,0.12)',
+    borderColor: '#C04A3A',
+  },
+  buffBadgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  buffBadgeNoneText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+    color: '#C04A3A',
   },
   qtyBadge: {
     paddingHorizontal: Spacing.md,
