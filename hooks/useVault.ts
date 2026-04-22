@@ -90,7 +90,8 @@ import { enqueueWrite } from '../lib/famille-queue';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
-import { patchMascotte } from '../lib/mascotte-live-activity';
+import { patchMascotte, loadCompanionSpriteBase64 } from '../lib/mascotte-live-activity';
+import { getCompanionStage } from '../lib/mascot/companion-engine';
 import { pickLABubbleShort, type LAStage } from '../lib/mascot/la-bubbles';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { useVaultNotes } from './useVaultNotes';
@@ -1987,12 +1988,35 @@ export function useVaultInternal(): VaultState {
           await saveCompanionMessages(profileId, updatedMsgs);
         } catch { /* non-critical */ }
         try {
-          // Live Activity : patchMascotte merge feedBuffActive au lastSnapshot (Option A locked)
-          await patchMascotte({
-            feedBuffActive: result.newBuff
-              ? { multiplier: result.newBuff.multiplier, expiresAtIso: result.newBuff.expiresAt }
-              : null,
-          });
+          // Phase 42 — Live Activity : sprite happy temporaire (4s) + buff actif
+          // Seul le "preferred" et "neutral" déclenchent happy ; "hated" garde idle
+          // (cohérent avec l'anim in-app : scale-pulse pour happy, recul pour beurk)
+          const shouldFlashHappy = result.affinity !== 'hated';
+          const stage = getCompanionStage(profile.level ?? 1);
+          const buffPayload = result.newBuff
+            ? { multiplier: result.newBuff.multiplier, expiresAtIso: result.newBuff.expiresAt }
+            : null;
+
+          if (shouldFlashHappy) {
+            const [happySprite, idleSprite] = await Promise.all([
+              loadCompanionSpriteBase64(profile.companion.activeSpecies, stage, 'happy'),
+              loadCompanionSpriteBase64(profile.companion.activeSpecies, stage, 'idle'),
+            ]);
+            // Push sprite happy + buff dès maintenant
+            await patchMascotte({
+              feedBuffActive: buffPayload,
+              ...(happySprite ? { companionSpriteBase64: happySprite } : {}),
+            });
+            // Revenir au sprite idle après 4s (buff reste affiché via feedBuffActive)
+            if (idleSprite) {
+              setTimeout(() => {
+                patchMascotte({ companionSpriteBase64: idleSprite }).catch(() => {});
+              }, 4000);
+            }
+          } else {
+            // Détesté : pas de flash happy, juste le buff nul
+            await patchMascotte({ feedBuffActive: buffPayload });
+          }
         } catch { /* non-critical */ }
         return result;
       } catch (e) {
