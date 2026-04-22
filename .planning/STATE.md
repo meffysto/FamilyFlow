@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-19T12:08:00.000Z"
-last_activity: 2026-04-19
+last_updated: "2026-04-22T10:07:29.580Z"
+last_activity: "2026-04-21 - Completed quick task 260421-qy5: Picker de grade interactif dans CraftSheet (UI Phase B)"
 progress:
-  total_phases: 13
+  total_phases: 14
   completed_phases: 8
   total_plans: 28
   completed_plans: 29
@@ -202,6 +202,7 @@ Recent decisions affecting current work:
 - [Init v1.7]: Zéro nouvelle dépendance npm reconduit (6e milestone consécutif) — expo-haptics, reanimated, expo-secure-store déjà installés
 - [Init v1.7]: Bump CACHE_VERSION dans lib/vault-cache.ts:41 mandatory car shape FarmCrop change — évite invalidation silencieuse au premier boot post-migration
 - [Init v1.7]: Pari Sporée bienveillant — jamais de pénalité feuilles sur pari perdu, seul coût = Sporée consommée ; préserve la Core Value bien-être familial
+- Phase 42 added: Nourrir le compagnon — buff XP temporaire via crops récoltés, affinités espèce/crop, cooldown 3h, Live Activity
 - [Init v1.7]: SPOR-13 (tests Jest) éclaté sur Phases 38 et 39 — deux suites distinctes (fondations CSV/économie en 38, moteur prorata/poids/filtre en 39) au lieu d'une phase tests en bout de chaîne
 - [Init v1.6]: Phase 34 (fondation données) isolée de toute UI — livre type + parser + hook + cache + tests en invisible avant toute vue, minimise le risque de régression
 - [Init v1.6]: Phase 35 livre d'abord la visibilité (carte enveloppe + écran) AVANT la composition — l'utilisateur peut voir l'état du domaine avant de pouvoir écrire, permet test sur données seed manuelles
@@ -364,5 +365,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-19T00:10:27.927Z
+Last session: 2026-04-22T10:07:29.569Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
