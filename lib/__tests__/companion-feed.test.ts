@@ -6,7 +6,7 @@ import {
   COMPANION_PREFERENCES,
   type CompanionData,
 } from '../mascot/companion-types';
-import { feedCompanion, getActiveFeedBuff } from '../mascot/companion-engine';
+import { feedCompanion, getActiveFeedBuff, getCompanionXpBonus } from '../mascot/companion-engine';
 
 // ────────────────────────────────────────────────
 // Phase 42 — Suite Jest feedCompanion + helpers
@@ -176,5 +176,41 @@ describe('Phase 42 — getActiveFeedBuff', () => {
   it('compagnon null → null', () => {
     expect(getActiveFeedBuff(null)).toBeNull();
     expect(getActiveFeedBuff(undefined)).toBeNull();
+  });
+});
+
+describe('Phase 42 — getCompanionXpBonus stacking', () => {
+  it('null → 1.0', () => {
+    expect(getCompanionXpBonus(null)).toBe(1.0);
+  });
+  it('undefined → 1.0', () => {
+    expect(getCompanionXpBonus(undefined)).toBe(1.0);
+  });
+  it('pas de feedBuff → 1.05', () => {
+    expect(getCompanionXpBonus(baseCompanion())).toBeCloseTo(1.05, 3);
+  });
+  it('feedBuff actif mul 1.15 → 1.05 × 1.15', () => {
+    const future = new Date(Date.now() + 3600_000).toISOString();
+    const comp: CompanionData = {
+      ...baseCompanion(),
+      feedBuff: { multiplier: 1.15, expiresAt: future },
+    };
+    expect(getCompanionXpBonus(comp)).toBeCloseTo(1.05 * 1.15, 3);
+  });
+  it('feedBuff expiré → 1.05 (expiration lazy)', () => {
+    const past = new Date(Date.now() - 60_000).toISOString();
+    const comp: CompanionData = {
+      ...baseCompanion(),
+      feedBuff: { multiplier: 1.15, expiresAt: past },
+    };
+    expect(getCompanionXpBonus(comp)).toBeCloseTo(1.05, 3);
+  });
+  it('stacking max (preferred + perfect) → 1.05 × 1.495', () => {
+    const future = new Date(Date.now() + 3600_000).toISOString();
+    const comp: CompanionData = {
+      ...baseCompanion(),
+      feedBuff: { multiplier: 1.15 * 1.3, expiresAt: future },
+    };
+    expect(getCompanionXpBonus(comp)).toBeCloseTo(1.05 * 1.15 * 1.3, 3);
   });
 });
