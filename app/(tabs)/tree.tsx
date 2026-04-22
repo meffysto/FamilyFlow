@@ -787,7 +787,7 @@ export default function TreeScreen() {
       const nextState = `eating-${result.affinity}` as const;
       setTimeout(() => {
         setFeedState(nextState);
-        setTimeout(() => setFeedState(null), 1800);
+        setTimeout(() => setFeedState(null), 2400);
       }, 400);
     },
     [activeProfile?.id, feedCompanion],

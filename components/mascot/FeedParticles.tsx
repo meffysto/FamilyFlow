@@ -34,10 +34,10 @@ const AFFINITY_EMOJI: Record<CropAffinity, string> = {
   hated:     '💨',
 };
 
-const PARTICLE_COUNT = 5;
-const FLOAT_DISTANCE = -60;
-const DURATION_MS = 1200;
-const FADE_OUT_MS = 400;
+const PARTICLE_COUNT = 8;
+const FLOAT_DISTANCE = -120;
+const DURATION_MS = 1600;
+const FADE_OUT_MS = 500;
 
 // ── Props ─────────────────────────────────────────────
 
@@ -100,19 +100,22 @@ function Particle({ emoji, delay, offsetX, onLastEnd }: ParticleProps) {
 export function FeedParticles({ visible, affinity, x, y, onEnd }: FeedParticlesProps) {
   if (!visible) return null;
   const emoji = AFFINITY_EMOJI[affinity];
-  // Offsets horizontaux dispersés autour du point central
-  const offsets = [-24, -12, 0, 12, 24];
+  // 8 offsets horizontaux répartis en éventail large autour du centre
+  const offsets = [-60, -40, -22, -8, 10, 24, 42, 62];
   return (
-    <View style={[styles.container, { left: x, top: y }]} pointerEvents="none">
-      {Array.from({ length: PARTICLE_COUNT }).map((_, i) => (
-        <Particle
-          key={`${affinity}-${i}`}
-          emoji={emoji}
-          delay={i * 60}
-          offsetX={offsets[i] ?? 0}
-          onLastEnd={i === PARTICLE_COUNT - 1 ? onEnd : undefined}
-        />
-      ))}
+    <View style={styles.overlay} pointerEvents="none">
+      {/* Container centré sur le point émetteur — bounded mais overflow visible */}
+      <View style={[styles.emitter, { left: x - 80, top: y - 20 }]} pointerEvents="none">
+        {Array.from({ length: PARTICLE_COUNT }).map((_, i) => (
+          <Particle
+            key={`${affinity}-${i}`}
+            emoji={emoji}
+            delay={i * 80}
+            offsetX={80 + (offsets[i] ?? 0)}
+            onLastEnd={i === PARTICLE_COUNT - 1 ? onEnd : undefined}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -120,15 +123,27 @@ export function FeedParticles({ visible, affinity, x, y, onEnd }: FeedParticlesP
 // ── Styles ────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'visible',
+    zIndex: 999,
+    elevation: 999,
+  },
+  emitter: {
     position: 'absolute',
-    width: 0,
-    height: 0,
+    width: 160,
+    height: 40,
+    overflow: 'visible',
   },
   particle: {
     position: 'absolute',
+    top: 0,
+    left: 0,
   },
   emoji: {
-    fontSize: 20,
+    fontSize: 32,
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
