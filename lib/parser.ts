@@ -60,7 +60,7 @@ import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } 
 import { parseBuildings, parseInventory, serializeBuildings, serializeInventory } from './mascot/building-engine';
 import { parseHarvestInventory, parseCraftedItems, parseRareSeeds, serializeHarvestInventory, serializeCraftedItems, serializeRareSeeds } from './mascot/craft-engine';
 import { parseWearEvents, serializeWearEvents } from './mascot/wear-engine';
-import type { CompanionData, CompanionSpecies } from './mascot/companion-types';
+import type { CompanionData, CompanionSpecies, FeedBuff } from './mascot/companion-types';
 import { calculateLevel } from './gamification';
 import type { TreeSpecies } from './mascot/types';
 import type { FamilyQuest } from './quest-types';
@@ -537,8 +537,10 @@ export function serializeMeals(meals: MealItem[]): string {
 
 /**
  * Parse le champ companion d'un profil farm-{id}.md.
- * Format CSV : "activeSpecies:name:unlocked1|unlocked2"
- * Ancien format (backward compat) : "activeSpecies:name:unlocked1|unlocked2:mood" — la 4e partie (mood) est ignorée.
+ * Format v3 (Phase 42) : "activeSpecies:name:unlocked1|unlocked2:lastFedAtISO:feedBuffMul:feedBuffExpiresAtISO"
+ * Format v2 (Phase 20) : "activeSpecies:name:unlocked1|unlocked2"
+ * Format v1 legacy     : "activeSpecies:name:unlocked1|unlocked2:mood" — la 4e partie (mood) est ignorée si non-ISO.
+ * Les parts 3 (lastFedAt) et 5 (feedBuff.expiresAt) sont des ISO → reconstitution via slice+join (pattern parseActiveExpeditions).
  * Retourne null si la valeur est vide ou invalide.
  */
 export function parseCompanion(raw: string | undefined): CompanionData | null {
@@ -548,21 +550,51 @@ export function parseCompanion(raw: string | undefined): CompanionData | null {
   const activeSpecies = parts[0] as CompanionSpecies;
   const name = parts[1] || '';
   const unlockedRaw = parts[2] || activeSpecies;
-  // parts[3] (mood, ancien format) ignoré silencieusement pour backward compat
-  return {
+  const base: CompanionData = {
     activeSpecies,
     name,
     unlockedSpecies: unlockedRaw.split('|') as CompanionSpecies[],
   };
+  // Phase 42 — v3 minimum 8 parts (3 base + 3 ISO + 2 vides). Gate exclut v1 4-parts legacy (mood).
+  if (parts.length >= 8) {
+    const lastFedCandidate = parts.slice(3, 6).join(':');
+    if (lastFedCandidate) {
+      const lastFedDate = new Date(lastFedCandidate);
+      if (!isNaN(lastFedDate.getTime())) {
+        base.lastFedAt = lastFedCandidate;
+      }
+    }
+    const mulRaw = parts[6] || '';
+    const mul = parseFloat(mulRaw);
+    if (!isNaN(mul) && mul > 0 && parts.length >= 10) {
+      const expiresCandidate = parts.slice(7, 10).join(':');
+      if (expiresCandidate) {
+        const expDate = new Date(expiresCandidate);
+        if (!isNaN(expDate.getTime())) {
+          const buff: FeedBuff = { multiplier: mul, expiresAt: expiresCandidate };
+          base.feedBuff = buff;
+        }
+      }
+    }
+  }
+  return base;
 }
 
 /**
  * Sérialise un CompanionData en chaîne CSV pour farm-{id}.md.
- * Format : "activeSpecies:name:unlocked1|unlocked2"
+ * Format v3 : "activeSpecies:name:unlocked:lastFedAt:feedBuffMul:feedBuffExpiresAt"
+ * Champs Phase 42 omis si absents → format v2 compatible pour compagnons sans feed.
+ * toFixed(4) pour multiplicateur (évite imprécision flottante).
  */
 export function serializeCompanion(data: CompanionData): string {
   const unlocked = data.unlockedSpecies.join('|');
-  return `${data.activeSpecies}:${data.name}:${unlocked}`;
+  const base = `${data.activeSpecies}:${data.name}:${unlocked}`;
+  const hasFeedData = data.lastFedAt || data.feedBuff;
+  if (!hasFeedData) return base;
+  const lastFed = data.lastFedAt || '';
+  const buffMul = data.feedBuff ? data.feedBuff.multiplier.toFixed(4) : '';
+  const buffExp = data.feedBuff ? data.feedBuff.expiresAt : '';
+  return `${base}:${lastFed}:${buffMul}:${buffExp}`;
 }
 
 // ─── Phase 33 — Expeditions CSV ─────────────────────────────────────────────
