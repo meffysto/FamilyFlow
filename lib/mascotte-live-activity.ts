@@ -18,7 +18,7 @@ import {
   stopMascotteActivity,
   isMascotteActivityActive,
 } from '../modules/vault-access/src';
-import { COMPANION_SPRITES } from './mascot/companion-sprites';
+import { COMPANION_SPRITES, type CompanionMood } from './mascot/companion-sprites';
 import type { CompanionSpecies, CompanionStage } from './mascot/companion-types';
 
 export type MascotteStageOverride = 'reveil' | 'travail' | 'midi' | 'jeu' | 'routine' | 'dodo' | 'recap';
@@ -47,17 +47,19 @@ export interface MascotteSnapshot {
 let lastSnapshot: MascotteSnapshot | null = null;
 
 /**
- * Charge le PNG idle_1 d'un compagnon et renvoie sa représentation base64.
+ * Charge le PNG d'un compagnon (idle ou happy) et renvoie sa représentation base64.
  * Retourne null si l'espèce ou le stade n'ont pas de sprite mappé.
  */
 export async function loadCompanionSpriteBase64(
   species: CompanionSpecies,
   stage: CompanionStage,
+  mood: CompanionMood = 'idle',
 ): Promise<string | null> {
   try {
     const entry = COMPANION_SPRITES[species]?.[stage];
     if (!entry) return null;
-    const asset = Asset.fromModule(entry.idle_1);
+    const module = mood === 'happy' ? entry.happy : entry.idle_1;
+    const asset = Asset.fromModule(module);
     if (!asset.localUri) await asset.downloadAsync();
     if (!asset.localUri) return null;
     return await FileSystem.readAsStringAsync(asset.localUri, { encoding: 'base64' });

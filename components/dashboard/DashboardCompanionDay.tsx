@@ -9,7 +9,7 @@
  * Cette carte est le pont dans l'app : découverte + état + contrôle.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, AppState, Platform, Alert, Image } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import { useFocusEffect } from 'expo-router';
@@ -55,7 +55,7 @@ function stageForHour(h: number, name: string): { key: MascotteStageOverride; in
 
 function DashboardCompanionDayInner(_props: DashboardSectionProps) {
   const { colors, tint } = useThemeColors();
-  const { tasks, meals, tasksCompletedToday, activeProfile, gamiData, rdvs } = useVault();
+  const { tasks, meals, tasksCompletedToday, activeProfile, gamiData, rdvs, subscribeTaskComplete } = useVault();
   const { config: aiConfig } = useAI();
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -132,6 +132,32 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     });
     return () => sub.remove();
   }, [refreshActive]);
+
+  // Flash happy sur tâche cochée : patchMascotte avec sprite happy, retour idle après 2s.
+  // Uniquement si la LA tourne — sinon no-op (patchMascotte garde l'invariant lastSnapshot).
+  const happyFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!active) return;
+    const unsub = subscribeTaskComplete(async () => {
+      const companion = activeProfile?.companion;
+      if (!companion) return;
+      const stage = getCompanionStage(calculateLevel(activeProfile?.points ?? 0));
+      try {
+        const happyB64 = await loadCompanionSpriteBase64(companion.activeSpecies, stage, 'happy');
+        if (!happyB64) return;
+        await patchMascotte({ companionSpriteBase64: happyB64 });
+        if (happyFlashTimerRef.current) clearTimeout(happyFlashTimerRef.current);
+        happyFlashTimerRef.current = setTimeout(async () => {
+          const idleB64 = await loadCompanionSpriteBase64(companion.activeSpecies, stage, 'idle');
+          if (idleB64) patchMascotte({ companionSpriteBase64: idleB64 });
+        }, 2000);
+      } catch { /* silencieux — non critique */ }
+    });
+    return () => {
+      unsub();
+      if (happyFlashTimerRef.current) clearTimeout(happyFlashTimerRef.current);
+    };
+  }, [active, subscribeTaskComplete, activeProfile?.companion, activeProfile?.points]);
 
   // Précharge le sprite compagnon dès que le profil actif est connu, indépendamment
   // de l'état de la LA — permet d'afficher le sprite dans la carte même LA éteinte.
