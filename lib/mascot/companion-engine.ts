@@ -6,11 +6,18 @@ import {
   COMPANION_STAGES,
   COMPANION_XP_BONUS,
   SPECIES_PERSONALITY,
+  getAffinity,
+  getBuffForCrop,
+  isBuffActive,
+  getCooldownRemainingMs,
   type CompanionData,
   type CompanionEvent,
   type CompanionMood,
   type CompanionMessageContext,
   type CompanionStage,
+  type CropAffinity,
+  type FeedBuff,
+  type HarvestGrade,
 } from './companion-types';
 
 // ── Évolution ────────────────────────────────────────────
@@ -103,6 +110,67 @@ export function getCompanionMood(
 export function getCompanionXpBonus(companion: CompanionData | null | undefined): number {
   if (!companion) return 1.0;
   return COMPANION_XP_BONUS;
+}
+
+// ── Phase 42 — Nourrissage compagnon ────────────────────
+
+/** Résultat structuré d'une tentative de nourrissage */
+export interface FeedResult {
+  /** Nouvel objet CompanionData (jamais mutation de l'argument) */
+  updated: CompanionData;
+  /** Affinité évaluée (pour animations/messages) */
+  affinity: CropAffinity;
+  /** true si le feed a été appliqué, false si cooldown actif */
+  applied: boolean;
+  /** Nouveau buff créé (null si hated ou cooldown actif) */
+  newBuff: FeedBuff | null;
+  /** ms restantes avant prochain feed autorisé (0 si applied=true) */
+  cooldownMs: number;
+}
+
+/**
+ * Tente de nourrir le compagnon avec `cropId` au grade `grade`.
+ * — Si cooldown actif (getCooldownRemainingMs > 0) : applied=false, rien n'est modifié.
+ * — Sinon : lastFedAt rafraîchi, feedBuff défini (ou null si hated).
+ * Fonction pure : retourne un nouvel objet CompanionData sans muter l'argument (D-09, D-10).
+ */
+export function feedCompanion(
+  companion: CompanionData,
+  cropId: string,
+  grade: HarvestGrade,
+  nowMs: number = Date.now(),
+): FeedResult {
+  const affinity = getAffinity(companion.activeSpecies, cropId);
+  const cooldownMs = getCooldownRemainingMs(companion.lastFedAt, nowMs);
+  if (cooldownMs > 0) {
+    return {
+      updated: companion,
+      affinity,
+      applied: false,
+      newBuff: null,
+      cooldownMs,
+    };
+  }
+  const newBuff = getBuffForCrop(grade, companion.activeSpecies, cropId, nowMs);
+  const updated: CompanionData = {
+    ...companion,
+    lastFedAt: new Date(nowMs).toISOString(),
+    feedBuff: newBuff, // null si hated — D-06
+  };
+  return { updated, affinity, applied: true, newBuff, cooldownMs: 0 };
+}
+
+/**
+ * Retourne le feedBuff s'il est encore actif (expiration lazy).
+ * Ne modifie pas le CompanionData — le nettoyage persistant se fait à la prochaine écriture.
+ */
+export function getActiveFeedBuff(
+  companion: CompanionData | null | undefined,
+  nowMs: number = Date.now(),
+): FeedBuff | null {
+  if (!companion || !companion.feedBuff) return null;
+  if (!isBuffActive(companion.feedBuff, nowMs)) return null;
+  return companion.feedBuff;
 }
 
 // ── Templates de messages ────────────────────────────────
