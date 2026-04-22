@@ -540,17 +540,21 @@ export function useVaultInternal(): VaultState {
   const triggerWidgetRefresh = useCallback(() => {
     if (widgetRefreshTimer.current) clearTimeout(widgetRefreshTimer.current);
     widgetRefreshTimer.current = setTimeout(() => {
-      refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current);
-      // Refresh Live Activity mascotte si elle tourne (no-op sinon)
       const todayStr = new Date().toISOString().slice(0, 10);
-      // Total = tâches dues aujourd'hui (récurrentes ou non)
+      // Tâches dues aujourd'hui (récurrentes ou non). Les récurrentes cochées sortent
+      // car dueDate est bumpé au lendemain — compensé par le counter événementiel.
       const todayTasks = tasksRefForWidget.current.filter(t => {
         if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
         return t.dueDate === todayStr;
       });
-      // Done = compteur événementiel incrémenté à chaque toggleTask (gère les récurrentes qui reset completed=false)
+      // Done = compteur événementiel (fiable pour récurrentes qui reset completed=false)
       const counter = tasksCompletedTodayRef.current;
       const doneCount = counter.date === todayStr ? counter.count : 0;
+      // Total = pending + done : inclut les récurrentes bumpées au lendemain dans la journée
+      const pendingCount = todayTasks.filter(t => !t.completed).length;
+      const totalCount = pendingCount + doneCount;
+      // Widget JSON — même formule que la LA
+      refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current, { done: doneCount, total: totalCount });
       const nowHour = new Date().getHours();
       const dayName = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][new Date().getDay()];
       const todayMeals = mealsRef.current.filter(m => m.day === dayName);
@@ -597,7 +601,7 @@ export function useVaultInternal(): VaultState {
       // patchMascotte : merge avec le lastSnapshot → préserve mascotteName et companionSpriteBase64
       patchMascotte({
         tasksDone: doneCount,
-        tasksTotal: todayTasks.length,
+        tasksTotal: totalCount,
         xpGained: xpGainedToday,
         currentMeal: mealText,
         bonusText,

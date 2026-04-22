@@ -54,10 +54,16 @@ interface WidgetData {
   nextRDVs: WidgetRDV[];
 }
 
+export interface WidgetProgressOverride {
+  done: number;
+  total: number;
+}
+
 function buildWidgetData(
   meals: MealItem[],
   rdvs: RDV[],
   allTasks: Task[],
+  progressOverride?: WidgetProgressOverride,
 ): WidgetData {
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
@@ -68,18 +74,18 @@ function buildWidgetData(
   const dejeuner = todayMeals.find(m => m.mealType === 'Déjeuner')?.text || null;
   const diner = todayMeals.find(m => m.mealType === 'Dîner')?.text || null;
 
-  // Tâches du jour : récurrentes dues aujourd'hui/retard + ponctuelles dues aujourd'hui
-  const allDayTasks = allTasks.filter(t => {
-    if (t.completed) return false;
+  // Tâches du jour : récurrentes dues aujourd'hui/retard + ponctuelles dues aujourd'hui.
+  // Garde les completed pour qu'elles comptent dans `done` (ponctuelles cochées).
+  const todayTasks = allTasks.filter(t => {
     if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
     return t.dueDate === todayStr;
   });
-  const done = allDayTasks.filter(t => t.completed).length;
-  const total = allDayTasks.length;
-  const nextTasks = allDayTasks
-    .filter(t => !t.completed)
-    .slice(0, 3)
-    .map(t => t.text);
+  const pending = todayTasks.filter(t => !t.completed);
+  // progressOverride fourni par useVault (counter événementiel qui comptabilise les récurrentes
+  // cochées dont le dueDate a été bumpé au lendemain). Sinon fallback sur done depuis les tasks.
+  const done = progressOverride?.done ?? todayTasks.filter(t => t.completed).length;
+  const total = progressOverride?.total ?? pending.length + done;
+  const nextTasks = pending.slice(0, 3).map(t => t.text);
 
   // Prochains RDVs planifiés
   const upcoming = rdvs
@@ -116,8 +122,9 @@ export function refreshWidget(
   meals: MealItem[],
   rdvs: RDV[],
   allTasks: Task[] = [],
+  progressOverride?: WidgetProgressOverride,
 ): void {
-  const data = buildWidgetData(meals, rdvs, allTasks);
+  const data = buildWidgetData(meals, rdvs, allTasks, progressOverride);
   const jsonData = JSON.stringify(data);
 
   if (Platform.OS === 'ios' && updateWidgetDataNative) {
