@@ -28,7 +28,7 @@ Phase: 42
 Plan: 9/9 complétés
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-23 - Completed quick task 260423-jw6: Stocker les MP3 ElevenLabs dans le vault + autoGenerate=false pour ReplayStep
+Last activity: 2026-04-23 - Completed quick task 260423-l1j: Onglet Bibliothèque histoires (tab switcher animé, groupes univers, badge audio async)
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
@@ -67,6 +67,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260421-qy5 | Picker de grade interactif dans CraftSheet (UI Phase B) | 2026-04-21 | aa347ae | [260421-qy5-picker-grade-interactif-craftsheet-s-lec](./quick/260421-qy5-picker-grade-interactif-craftsheet-s-lec/) |
 | 260423-jh5 | Fix lag au tap lootbox — onOpen() en parallèle + haptics fire-and-forget | 2026-04-23 | e19edc7 | [260423-jh5-fix-lag-au-tap-lootbox-lancer-onopen-en-](./quick/260423-jh5-fix-lag-au-tap-lootbox-lancer-onopen-en-/) |
 | 260423-jw6 | Persister MP3 ElevenLabs/Fish Audio dans le vault iCloud + blocage regénération ReplayStep | 2026-04-23 | 86c8cb8 | [260423-jw6-stocker-les-mp3-elevenlabs-dans-le-vault](./quick/260423-jw6-stocker-les-mp3-elevenlabs-dans-le-vault/) |
+| 260423-l1j | Onglet Bibliothèque histoires — groupes univers, filtre enfant, badge audio async, retour tab-aware | 2026-04-23 | 6d44fe4 | [260423-l1j-ajouter-onglet-biblioth-que-dans-stories](./quick/260423-l1j-ajouter-onglet-biblioth-que-dans-stories/) |
 
 ## Performance Metrics
 
