@@ -137,6 +137,13 @@ function formatRemaining(minutes: number): string {
   return `${h}h ${m}m`;
 }
 
+function getMinutesUntilMidnight(): number {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  return Math.ceil((midnight.getTime() - now.getTime()) / 60_000);
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -309,6 +316,16 @@ export function ExpeditionsSheet({
           {/* ── Onglet Catalogue ── */}
           {activeTab === 'catalogue' && (
             <>
+              {/* Compteur renouvellement quotidien */}
+              <View style={[styles.resetBanner, { backgroundColor: Farm.parchmentDark, borderColor: Farm.woodHighlight }]}>
+                <MaterialCommunityIcons name="clock-outline" size={14} color={Farm.brownText} />
+                <Text style={[styles.resetBannerText, { color: Farm.brownText }]}>
+                  {`Nouvelles expéditions dans `}
+                  <Text style={styles.resetBannerTime}>
+                    {formatRemaining(getMinutesUntilMidnight())}
+                  </Text>
+                </Text>
+              </View>
               {pityCount >= 4 && (
                 <Text style={[styles.pityNote, { color: colors.info }]}>
                   {'Ta prochaine expédition est protégée ✨'}
@@ -1108,6 +1125,26 @@ const styles = StyleSheet.create({
     paddingTop: Spacing['2xl'],
     paddingBottom: Spacing['4xl'],
     gap: Spacing['2xl'],
+  },
+  // ── Reset banner ──────────────────────────────────
+  resetBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.xs,
+  },
+  resetBannerText: {
+    fontSize: FontSize.caption,
+    fontStyle: 'italic',
+  },
+  resetBannerTime: {
+    fontWeight: FontWeight.bold,
+    fontStyle: 'normal',
   },
   // ── Pity note ─────────────────────────────────────
   pityNote: {
