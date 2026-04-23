@@ -825,9 +825,10 @@ export function LootBoxOpener({
     setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 500);
     setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 700);
 
-    await new Promise((r) => setTimeout(r, 600));
-    const box = await onOpen();
-    await new Promise((r) => setTimeout(r, 500));
+    // Fetch API démarre IMMÉDIATEMENT en parallèle du shake animation.
+    // On attend que max(fetch, 900ms minimum de shake "présentable") soit terminé.
+    const minShakeDelay = new Promise((r) => setTimeout(r, 900));
+    const [box] = await Promise.all([onOpen(), minShakeDelay]);
 
     if (!box) {
       setPhase('idle');
@@ -844,28 +845,27 @@ export function LootBoxOpener({
     const isHighTier = boxIsMythique || boxIsLegendaire;
 
     if (boxIsMythique) {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      await new Promise((r) => setTimeout(r, 300));
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      await new Promise((r) => setTimeout(r, 250));
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      await new Promise((r) => setTimeout(r, 200));
+      // Haptics fire-and-forget — ne bloquent plus l'apparition du reveal
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 300);
+      setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 550);
 
       flashOpacity.value = withSequence(
         withTiming(0.9, { duration: 100 }),
         withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }),
       );
     } else if (boxIsLegendaire) {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      await new Promise((r) => setTimeout(r, 200));
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      // Haptics fire-and-forget — ne bloquent plus l'apparition du reveal
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 200);
 
       flashOpacity.value = withSequence(
         withTiming(0.5, { duration: 100 }),
         withTiming(0, { duration: 400 }),
       );
     } else if (boxIsEpique) {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      // Haptics fire-and-forget — ne bloque plus l'apparition du reveal
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       flashOpacity.value = withSequence(
         withTiming(0.3, { duration: 80 }),
         withTiming(0, { duration: 300 }),
@@ -916,7 +916,8 @@ export function LootBoxOpener({
       rewardGlow.value = withTiming(0.5, { duration: 600 });
     }
 
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    // Haptics fire-and-forget — ne bloque pas le confetti
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 200);
 
     if (confettiRef.current) confettiRef.current.start();
