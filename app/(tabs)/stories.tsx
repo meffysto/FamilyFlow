@@ -172,9 +172,10 @@ interface StoryCardProps {
   showEnfantName: boolean;
   audioAvailable: boolean;
   onPress: (s: BedtimeStory) => void;
+  onLongPress?: (s: BedtimeStory) => void;
 }
 
-const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAvailable, onPress }: StoryCardProps) {
+const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAvailable, onPress, onLongPress }: StoryCardProps) {
   const { primary, colors } = useThemeColors();
 
   const dateFR = React.useMemo(() => {
@@ -189,6 +190,8 @@ const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAv
     <Pressable
       style={[storyCardStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
       onPress={() => onPress(story)}
+      onLongPress={onLongPress ? () => onLongPress(story) : undefined}
+      delayLongPress={500}
     >
       {/* Badge audio */}
       {audioAvailable && (
@@ -264,10 +267,11 @@ interface BibliothequeViewProps {
   profiles: Profile[];
   childProfiles: Profile[];
   onStoryPress: (s: BedtimeStory) => void;
+  onStoryLongPress: (s: BedtimeStory) => void;
   onCreatePress: () => void;
 }
 
-function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStoryPress, onCreatePress }: BibliothequeViewProps) {
+function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStoryPress, onStoryLongPress, onCreatePress }: BibliothequeViewProps) {
   const { primary, colors } = useThemeColors();
 
   // Filtre enfant (null = tous)
@@ -280,23 +284,40 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
   // Collapse par univers
   const [collapsedUnivers, setCollapsedUnivers] = useState<Partial<Record<StoryUniverseId, boolean>>>({});
 
+  // Tri
+  type SortOrder = 'date_desc' | 'date_asc' | 'duree_asc' | 'alpha';
+  const [sortOrder, setSortOrder] = useState<SortOrder>('date_desc');
+  const SORT_OPTIONS: { key: SortOrder; label: string }[] = [
+    { key: 'date_desc', label: 'Récent' },
+    { key: 'date_asc', label: 'Ancien' },
+    { key: 'duree_asc', label: 'Courte' },
+    { key: 'alpha', label: 'A→Z' },
+  ];
+
   // Histoires filtrées
   const filteredStories = React.useMemo(
     () => stories.filter(s => !selectedEnfantId || s.enfantId === selectedEnfantId),
     [stories, selectedEnfantId],
   );
 
-  // Groupes par univers (ordre canonique, tri date desc)
+  const sortHistoires = useCallback((list: BedtimeStory[]): BedtimeStory[] => {
+    switch (sortOrder) {
+      case 'date_desc': return [...list].sort((a, b) => b.date.localeCompare(a.date));
+      case 'date_asc':  return [...list].sort((a, b) => a.date.localeCompare(b.date));
+      case 'duree_asc': return [...list].sort((a, b) => a.duree_lecture - b.duree_lecture);
+      case 'alpha':     return [...list].sort((a, b) => a.titre.localeCompare(b.titre, 'fr'));
+    }
+  }, [sortOrder]);
+
+  // Groupes par univers (ordre canonique)
   const groupes = React.useMemo(() =>
     STORY_UNIVERSES
       .map(u => ({
         universe: u,
-        histoires: filteredStories
-          .filter(s => s.univers === u.id)
-          .sort((a, b) => b.date.localeCompare(a.date)),
+        histoires: sortHistoires(filteredStories.filter(s => s.univers === u.id)),
       }))
       .filter(g => g.histoires.length > 0),
-    [filteredStories],
+    [filteredStories, sortHistoires],
   );
 
   // Chargement audio async (non-bloquant)
@@ -412,6 +433,29 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
         </ScrollView>
       )}
 
+      {/* Chips de tri */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={biblioStyles.sortScroll}
+        contentContainerStyle={biblioStyles.sortContent}
+      >
+        {SORT_OPTIONS.map(opt => (
+          <Pressable
+            key={opt.key}
+            style={[
+              biblioStyles.sortChip,
+              { borderColor: colors.border, backgroundColor: sortOrder === opt.key ? primary : colors.card },
+            ]}
+            onPress={() => { Haptics.selectionAsync(); setSortOrder(opt.key); }}
+          >
+            <Text style={[biblioStyles.sortChipText, { color: sortOrder === opt.key ? colors.bg : colors.textMuted }]}>
+              {opt.label}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
       {/* Groupes par univers */}
       {groupes.map(({ universe, histoires }) => (
         <UniversGroupe
@@ -423,6 +467,7 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
           audioAvailableMap={audioAvailableMap}
           onToggle={() => toggleCollapse(universe.id)}
           onStoryPress={handleStoryPress}
+          onStoryLongPress={onStoryLongPress}
           colors={colors}
           primary={primary}
         />
@@ -441,11 +486,12 @@ interface UniversGroupeProps {
   audioAvailableMap: Record<string, boolean>;
   onToggle: () => void;
   onStoryPress: (s: BedtimeStory) => void;
+  onStoryLongPress: (s: BedtimeStory) => void;
   colors: ReturnType<typeof useThemeColors>['colors'];
   primary: string;
 }
 
-function UniversGroupe({ universe, histoires, collapsed, showEnfantName, audioAvailableMap, onToggle, onStoryPress, colors }: UniversGroupeProps) {
+function UniversGroupe({ universe, histoires, collapsed, showEnfantName, audioAvailableMap, onToggle, onStoryPress, onStoryLongPress, colors }: UniversGroupeProps) {
   const chevronRotation = useSharedValue(collapsed ? 0 : 1);
 
   const chevronStyle = useAnimatedStyle(() => ({
@@ -482,8 +528,14 @@ function UniversGroupe({ universe, histoires, collapsed, showEnfantName, audioAv
           showEnfantName={showEnfantName}
           audioAvailable={audioAvailableMap[story.id] ?? false}
           onPress={onStoryPress}
+          onLongPress={onStoryLongPress}
         />
       ))}
+      {!collapsed && histoires.length > 0 && (
+        <Text style={[biblioStyles.deleteHint, { color: colors.textMuted }]}>
+          Maintenir pour supprimer
+        </Text>
+      )}
     </View>
   );
 }
@@ -496,6 +548,11 @@ const biblioStyles = StyleSheet.create({
   createBtn: { borderRadius: Radius.full, paddingVertical: Spacing['2xl'], paddingHorizontal: Spacing['4xl'], alignItems: 'center' },
   createBtnText: { color: '#fff', fontSize: FontSize.body, fontWeight: FontWeight.bold },
   childFilterScroll: { marginBottom: Spacing['2xl'] },
+  sortScroll: { marginBottom: Spacing['2xl'] },
+  sortContent: { paddingHorizontal: Spacing['2xl'], gap: Spacing.md },
+  sortChip: { borderWidth: 1, borderRadius: Radius.full, paddingVertical: Spacing.sm, paddingHorizontal: Spacing['2xl'] },
+  sortChipText: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
+  deleteHint: { fontSize: FontSize.caption, textAlign: 'center', paddingVertical: Spacing.md, paddingBottom: Spacing['2xl'] },
   childFilterContent: { paddingHorizontal: 0, gap: Spacing.md },
   childChip: {
     flexDirection: 'row',
@@ -1753,6 +1810,7 @@ export default function StoriesScreen() {
           profiles={profiles}
           childProfiles={childProfiles}
           onStoryPress={handleReplayStory}
+          onStoryLongPress={handleDeleteStory}
           onCreatePress={() => { Haptics.selectionAsync(); setActiveTab('nouvelle'); }}
         />
       );
