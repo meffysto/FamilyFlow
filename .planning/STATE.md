@@ -66,6 +66,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260421-obd | Phase B Grades — inventaire par grade + craft maillon-faible + vente marché par grade | 2026-04-21 | ba4c7ec | [260421-obd-phase-b-grades-inventaire-par-grade-pick](./quick/260421-obd-phase-b-grades-inventaire-par-grade-pick/) |
 | 260421-qy5 | Picker de grade interactif dans CraftSheet (UI Phase B) | 2026-04-21 | aa347ae | [260421-qy5-picker-grade-interactif-craftsheet-s-lec](./quick/260421-qy5-picker-grade-interactif-craftsheet-s-lec/) |
 | 260423-jh5 | Fix lag au tap lootbox — onOpen() en parallèle + haptics fire-and-forget | 2026-04-23 | e19edc7 | [260423-jh5-fix-lag-au-tap-lootbox-lancer-onopen-en-](./quick/260423-jh5-fix-lag-au-tap-lootbox-lancer-onopen-en-/) |
+| 260423-jw6 | Persister MP3 ElevenLabs/Fish Audio dans le vault iCloud + blocage regénération ReplayStep | 2026-04-23 | 86c8cb8 | [260423-jw6-stocker-les-mp3-elevenlabs-dans-le-vault](./quick/260423-jw6-stocker-les-mp3-elevenlabs-dans-le-vault/) |
 
 ## Performance Metrics
 
