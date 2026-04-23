@@ -17,8 +17,9 @@ import {
 } from '@simform_solutions/react-native-audio-waveform';
 import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { generateSpeech } from '../../lib/elevenlabs';
-import { generateSpeechFish } from '../../lib/fish-audio';
+import { generateSpeech, getCachedStoryAudio, storyVaultAudioRelPath } from '../../lib/elevenlabs';
+import { generateSpeechFish, getCachedStoryAudioFish } from '../../lib/fish-audio';
+import { useVault } from '../../contexts/VaultContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -214,10 +215,12 @@ interface Props {
   elevenLabsKey: string;
   fishAudioKey?: string;
   onFinish: () => void;
+  autoGenerate?: boolean; // défaut true
 }
 
-function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish }: Props) {
+function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish, autoGenerate = true }: Props) {
   const { primary, colors } = useThemeColors();
+  const { vault } = useVault();
   const isElevenLabs = voiceConfig.engine === 'elevenlabs';
   const isFishAudio = voiceConfig.engine === 'fish-audio';
   const isApiVoice = isElevenLabs || isFishAudio;
@@ -233,6 +236,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
   const [audioPath, setAudioPath] = useState<string | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [waveformReady, setWaveformReady] = useState(false);
+  const [needsGeneration, setNeedsGeneration] = useState(false);
   const [elevenSpeed, setElevenSpeed] = useState<ElevenSpeed>(1.0);
   const [waveformWidth, setWaveformWidth] = useState(0);
   const waveformRef = useRef<IWaveformRef>(null);
@@ -253,46 +257,93 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
     };
   }, []);
 
+  // Construit l'URI absolue du fichier MP3 dans le vault iCloud
+  const vaultUri = React.useMemo(() => {
+    if (!vault) return undefined;
+    const relPath = storyVaultAudioRelPath(histoire.enfant, histoire.id);
+    // Reproduit la logique VaultManager.uri() (méthode privée)
+    const isUri = vault.vaultPath.startsWith('file://') || vault.vaultPath.startsWith('content://');
+    const rel = isUri
+      ? relPath.split('/').map((c) => encodeURIComponent(c)).join('/')
+      : relPath;
+    const path = `${vault.vaultPath}/${rel}`;
+    return isUri ? path : `file://${path}`;
+  }, [vault, histoire.enfant, histoire.id]);
+
+  // Génère l'audio via l'API (appelable à la demande ou automatiquement)
+  const runGeneration = React.useCallback(async (signal: { cancelled: boolean }) => {
+    const apiKey = isFishAudio ? fishAudioKey : elevenLabsKey;
+    const engineLabel = isFishAudio ? 'Fish Audio' : 'ElevenLabs';
+
+    if (!apiKey) {
+      if (!signal.cancelled) setGenError(`Cle ${engineLabel} manquante. Configurez votre cle API dans les parametres.`);
+      return;
+    }
+
+    if (!signal.cancelled) {
+      setIsLoading(true);
+      setGenError(null);
+    }
+
+    try {
+      const result = isFishAudio
+        ? await generateSpeechFish(apiKey, histoire.texte, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
+        : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id);
+      if (signal.cancelled) return;
+      if ('error' in result) {
+        setGenError(result.error);
+      } else {
+        setAudioPath(result.audioUri);
+        // Persister dans le vault iCloud (best-effort silencieux)
+        if (vault) {
+          vault
+            .copyFileToVault(result.audioUri, storyVaultAudioRelPath(histoire.enfant, histoire.id))
+            .catch(() => { /* best-effort — iCloud indisponible */ });
+        }
+      }
+    } catch (e) {
+      if (!signal.cancelled) setGenError(e instanceof Error ? e.message : 'Erreur inconnue');
+    } finally {
+      if (!signal.cancelled) setIsLoading(false);
+    }
+  }, [isFishAudio, fishAudioKey, elevenLabsKey, histoire.texte, histoire.id, histoire.enfant, voiceConfig.fishAudioReferenceId, voiceConfig.elevenLabsVoiceId, vault]);
+
   // Pre-generation API voice (ElevenLabs ou Fish Audio) au montage (une fois)
   useEffect(() => {
     if (!isApiVoice) return;
 
-    let cancelled = false;
+    let signal = { cancelled: false };
 
-    const run = async () => {
-      const apiKey = isFishAudio ? fishAudioKey : elevenLabsKey;
-      const engineLabel = isFishAudio ? 'Fish Audio' : 'ElevenLabs';
+    const init = async () => {
+      const voiceId = isFishAudio
+        ? (voiceConfig.fishAudioReferenceId ?? '')
+        : (voiceConfig.elevenLabsVoiceId ?? '');
 
-      if (!apiKey) {
-        if (!cancelled) setGenError(`Cle ${engineLabel} manquante. Configurez votre cle API dans les parametres.`);
+      // Vérifier le cache local (et fallback vault si disponible)
+      const cached = isFishAudio
+        ? await getCachedStoryAudioFish(histoire.id, voiceId, vaultUri)
+        : await getCachedStoryAudio(histoire.id, voiceId, vaultUri);
+
+      if (signal.cancelled) return;
+
+      if (cached) {
+        setAudioPath(cached);
         return;
       }
 
-      if (!cancelled) {
-        setIsLoading(true);
-        setGenError(null);
+      // Aucun cache disponible
+      if (!autoGenerate) {
+        setNeedsGeneration(true);
+        return;
       }
 
-      try {
-        const result = isFishAudio
-          ? await generateSpeechFish(apiKey, histoire.texte, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
-          : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id);
-        if (cancelled) return;
-        if ('error' in result) {
-          setGenError(result.error);
-        } else {
-          setAudioPath(result.audioUri);
-        }
-      } catch (e) {
-        if (!cancelled) setGenError(e instanceof Error ? e.message : 'Erreur inconnue');
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
+      // Génération automatique
+      await runGeneration(signal);
     };
 
-    run();
-    return () => { cancelled = true; };
-  }, [isApiVoice, isFishAudio, elevenLabsKey, fishAudioKey, histoire.texte, voiceConfig.elevenLabsVoiceId, voiceConfig.fishAudioReferenceId]);
+    init();
+    return () => { signal.cancelled = true; };
+  }, [isApiVoice, isFishAudio, autoGenerate, vaultUri, histoire.id, voiceConfig.elevenLabsVoiceId, voiceConfig.fishAudioReferenceId, runGeneration]);
 
   // ─── Playback expo-speech ────────────────────────────────────────────────
   const startExpoSpeech = useCallback(async () => {
@@ -451,13 +502,28 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
                 color={primary}
               />
             </View>
+          ) : needsGeneration && !isLoading ? (
+            <View style={styles.placeholderCenter}>
+              <Pressable
+                style={[styles.generateButton, { backgroundColor: primary }]}
+                onPress={() => {
+                  setNeedsGeneration(false);
+                  const signal = { cancelled: false };
+                  runGeneration(signal);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Générer l'audio"
+              >
+                <Text style={styles.generateButtonText}>🔊 Générer l'audio</Text>
+              </Pressable>
+            </View>
           ) : (
             <View style={styles.placeholderCenter}>
               {isLoading ? (
                 <>
                   <ActivityIndicator color={primary} />
                   <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
-                    Génération de l'audio…
+                    Génération en cours…
                   </Text>
                 </>
               ) : genError ? (
@@ -557,4 +623,6 @@ const styles = StyleSheet.create({
   speedText: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
   finishButton: { paddingVertical: Spacing.lg },
   finishText: { fontSize: FontSize.sm },
+  generateButton: { paddingHorizontal: Spacing['2xl'], paddingVertical: Spacing.lg, borderRadius: Radius.lg, alignItems: 'center' },
+  generateButtonText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold, color: '#fff' },
 });

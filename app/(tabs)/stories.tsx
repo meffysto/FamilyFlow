@@ -1307,6 +1307,7 @@ export default function StoriesScreen() {
           elevenLabsKey={elevenLabsKey}
           fishAudioKey={fishAudioKey}
           onFinish={() => goTo({ etape: 'choisir_enfant' })}
+          autoGenerate={false}
         />
       </ScrollView>
     );
