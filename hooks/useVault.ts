@@ -121,6 +121,12 @@ import {
 export const VAULT_PATH_KEY = 'vault_path';
 export { ACTIVE_PROFILE_KEY } from './useVaultProfiles';
 
+// Persiste le snapshot tâches du jour (total + compteur) pour survivre aux
+// kills d'app — sinon chaque relaunch ré-initialise à todayTasks.length qui
+// est déjà réduit par les récurrentes bumpées en session précédente.
+const TASK_DAY_METRICS_KEY = 'task_day_metrics_v1';
+type TaskDayMetrics = { date: string; total: number; count: number };
+
 /** Distinguer "fichier inexistant" (attendu) des vraies erreurs */
 function isFileNotFound(e: unknown): boolean {
   const msg = String(e);
@@ -549,6 +555,22 @@ export function useVaultInternal(): VaultState {
   // subscriber subscribeTaskComplete déclaré plus bas. Déclaré ici pour
   // pouvoir être lu dans triggerWidgetRefresh (ordre de déclaration React).
   const tasksCompletedTodayRef = useRef<{ date: string; count: number }>({ date: '', count: 0 });
+
+  // Load snapshot persisté au mount : survive les kills d'app du jour (sinon
+  // on ré-initialise à todayTasks.length qui sous-estime après récurrentes
+  // bumpées en session précédente → affichage 1/13 au lieu de 2/14).
+  useEffect(() => {
+    SecureStore.getItemAsync(TASK_DAY_METRICS_KEY).then(raw => {
+      if (!raw) return;
+      try {
+        const parsed: TaskDayMetrics = JSON.parse(raw);
+        const todayStr = new Date().toISOString().slice(0, 10);
+        if (parsed.date !== todayStr) return; // jour précédent → ignorer, nouveau cycle
+        tasksTotalSnapshotRef.current = { date: parsed.date, total: parsed.total };
+        tasksCompletedTodayRef.current = { date: parsed.date, count: parsed.count };
+      } catch { /* parse error → partir à zéro */ }
+    }).catch(() => { /* SecureStore miss → ok */ });
+  }, []);
   // Mis à jour via useEffect après déclaration de gamiData / activeProfileId
   const gamiDataForWidgetRef = useRef<GamificationData | null>(null);
   const activeProfileIdForWidgetRef = useRef<string | null>(null);
@@ -582,6 +604,20 @@ export function useVaultInternal(): VaultState {
       // Les deux voies se complètent : le snapshot attrape les cas où doneCount
       // est stale, et pending+done attrape les cas où le snapshot rate le max.
       const totalCount = Math.max(tasksTotalSnapshotRef.current.total, pendingCount + doneCount);
+      // Mettre à jour le snapshot observé avec le max re-calculé pour capturer
+      // les ajouts de tâches en cours de journée (tasks ajoutées via l'UI).
+      if (totalCount > tasksTotalSnapshotRef.current.total) {
+        tasksTotalSnapshotRef.current.total = totalCount;
+      }
+      // Persister pour survivre aux kills d'app (fire-and-forget).
+      SecureStore.setItemAsync(
+        TASK_DAY_METRICS_KEY,
+        JSON.stringify({
+          date: todayStr,
+          total: tasksTotalSnapshotRef.current.total,
+          count: doneCount,
+        } satisfies TaskDayMetrics)
+      ).catch(() => { /* write silencieux — feature non critique */ });
       // Widget JSON — même formule que la LA
       refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current, { done: doneCount, total: totalCount });
       const nowHour = new Date().getHours();
