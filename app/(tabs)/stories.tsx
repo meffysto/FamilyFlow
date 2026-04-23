@@ -857,8 +857,18 @@ export default function StoriesScreen() {
   // ── Étape 1 : Choisir l'enfant ──
 
   function ChoisirEnfantStep() {
+    const todayISO = new Date().toISOString().slice(0, 10);
+
     const lastMoodFor = (profileId: string) =>
       moods.filter(m => m.profileId === profileId).sort((a, b) => b.date.localeCompare(a.date))[0];
+
+    const moodHintFor = (profileId: string): string | null => {
+      const mood = moods.find(m => m.profileId === profileId && m.date === todayISO);
+      if (!mood) return null;
+      if (mood.level >= 4) return ['🌟 Super journée — parfait pour une grande aventure !', '✨ Belle journée — ce soir on part à l\'aventure !'][mood.level - 4] ?? '✨ Belle journée — ce soir on part à l\'aventure !';
+      if (mood.level <= 2) return mood.level === 1 ? '🌙 Petite journée difficile — une histoire douce ce soir ?' : '💛 Petite tristesse — une histoire réconfortante ?';
+      return '🌙 Journée tranquille — quelle histoire ce soir ?';
+    };
 
     if (childProfiles.length === 0) {
       return (
@@ -903,6 +913,7 @@ export default function StoriesScreen() {
                 )}
                 <Text style={[styles.profileReady, { color: colors.textMuted }]}>Prêt pour dormir ?</Text>
               </Pressable>
+              {(() => { const hint = moodHintFor(p.id); return hint ? <Text style={[styles.moodHint, { color: colors.textMuted }]}>{hint}</Text> : null; })()}
               </View>
             );
           })()
@@ -914,24 +925,28 @@ export default function StoriesScreen() {
             scrollEnabled={false}
             renderItem={({ item: p }) => {
               const mood = lastMoodFor(p.id);
+              const hint = moodHintFor(p.id);
               return (
-                <Pressable
-                  style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setSelectedUniversId(null);
-                    goTo({ etape: 'choisir_univers', enfantId: p.id, enfantName: p.name });
-                  }}
-                >
-                  <Text style={styles.profileAvatar}>{p.avatar}</Text>
-                  <Text style={[styles.profileName, { color: colors.text }]}>{p.name}</Text>
-                  {mood && (
-                    <Text style={[styles.profileBadge, { color: colors.textMuted }]}>
-                      {['😢', '😐', '😊', '😄', '🤩'][mood.level - 1]}
-                    </Text>
-                  )}
-                  <Text style={[styles.profileReady, { color: colors.textMuted }]}>🌙 Prêt pour dormir ?</Text>
-                </Pressable>
+                <View style={{ flex: 1 }}>
+                  <Pressable
+                    style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setSelectedUniversId(null);
+                      goTo({ etape: 'choisir_univers', enfantId: p.id, enfantName: p.name });
+                    }}
+                  >
+                    <Text style={styles.profileAvatar}>{p.avatar}</Text>
+                    <Text style={[styles.profileName, { color: colors.text }]}>{p.name}</Text>
+                    {mood && (
+                      <Text style={[styles.profileBadge, { color: colors.textMuted }]}>
+                        {['😢', '😐', '😊', '😄', '🤩'][mood.level - 1]}
+                      </Text>
+                    )}
+                    <Text style={[styles.profileReady, { color: colors.textMuted }]}>🌙 Prêt pour dormir ?</Text>
+                  </Pressable>
+                  {hint && <Text style={[styles.moodHint, { color: colors.textMuted }]}>{hint}</Text>}
+                </View>
               );
             }}
           />
@@ -1989,6 +2004,7 @@ const styles = StyleSheet.create({
   profileNameSolo: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing.md },
   profileBadge: { fontSize: 20, marginBottom: Spacing.xs },
   profileReady: { fontSize: FontSize.micro, textAlign: 'center' },
+  moodHint: { fontSize: FontSize.micro, textAlign: 'center', marginTop: Spacing.sm, paddingHorizontal: Spacing.md },
   primaryButton: { borderRadius: Radius.full, paddingVertical: Spacing['2xl'], paddingHorizontal: Spacing['4xl'], alignItems: 'center', marginTop: Spacing['2xl'] },
   primaryButtonText: { color: '#fff', fontSize: FontSize.body, fontWeight: FontWeight.bold },
   secondaryButton: { borderRadius: Radius.full, paddingVertical: Spacing.lg, paddingHorizontal: Spacing['4xl'], alignItems: 'center', marginTop: Spacing.lg, borderWidth: 1.5 },
