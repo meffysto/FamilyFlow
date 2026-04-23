@@ -35,6 +35,10 @@ import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryVoiceEngine,
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
+// ─── Constantes animation ───────────────────────────────────────────────────
+
+const TAB_SPRING: { damping: number; stiffness: number } = { damping: 18, stiffness: 180 };
+
 // ─── Types machine à états ──────────────────────────────────────────────────
 
 type StoryFlowStep =
@@ -59,6 +63,466 @@ function computeAge(birthdate?: string): string {
   }
 }
 
+// ─── TabSwitcher ─────────────────────────────────────────────────────────────
+
+interface TabSwitcherProps {
+  activeTab: 'nouvelle' | 'bibliotheque';
+  onTabChange: (tab: 'nouvelle' | 'bibliotheque') => void;
+  primary: string;
+  colors: ReturnType<typeof useThemeColors>['colors'];
+}
+
+function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherProps) {
+  const [tabWidth, setTabWidth] = React.useState(0);
+  const indicatorX = useSharedValue(0);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
+
+  const handlePress = useCallback((tab: 'nouvelle' | 'bibliotheque') => {
+    const toIndex = tab === 'nouvelle' ? 0 : 1;
+    indicatorX.value = withSpring(toIndex * tabWidth, TAB_SPRING);
+    onTabChange(tab);
+  }, [tabWidth, onTabChange, indicatorX]);
+
+  // Synchroniser l'indicateur quand tabWidth change ou activeTab change
+  React.useEffect(() => {
+    if (tabWidth === 0) return;
+    const idx = activeTab === 'nouvelle' ? 0 : 1;
+    indicatorX.value = withSpring(idx * tabWidth, TAB_SPRING);
+  }, [tabWidth, activeTab, indicatorX]);
+
+  return (
+    <View
+      style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+      onLayout={e => setTabWidth(e.nativeEvent.layout.width / 2)}
+    >
+      {/* Indicateur animé */}
+      <Animated.View
+        style={[
+          tabSwitcherStyles.indicator,
+          indicatorStyle,
+          { backgroundColor: primary, width: tabWidth },
+        ]}
+      />
+      {/* Onglet Nouvelle histoire */}
+      <Pressable
+        style={tabSwitcherStyles.tab}
+        onPress={() => handlePress('nouvelle')}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === 'nouvelle' }}
+      >
+        <Text style={[
+          tabSwitcherStyles.tabText,
+          { color: activeTab === 'nouvelle' ? colors.bg : colors.textMuted },
+        ]}>
+          ✨ Nouvelle
+        </Text>
+      </Pressable>
+      {/* Onglet Bibliothèque */}
+      <Pressable
+        style={tabSwitcherStyles.tab}
+        onPress={() => handlePress('bibliotheque')}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === 'bibliotheque' }}
+      >
+        <Text style={[
+          tabSwitcherStyles.tabText,
+          { color: activeTab === 'bibliotheque' ? colors.bg : colors.textMuted },
+        ]}>
+          📚 Bibliothèque
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const tabSwitcherStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    marginHorizontal: Spacing['4xl'],
+    marginVertical: Spacing.lg,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    overflow: 'hidden',
+    height: 40,
+  },
+  indicator: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    borderRadius: Radius.full,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+});
+
+// ─── StoryCard ───────────────────────────────────────────────────────────────
+
+interface StoryCardProps {
+  story: BedtimeStory;
+  showEnfantName: boolean;
+  audioAvailable: boolean;
+  onPress: (s: BedtimeStory) => void;
+}
+
+const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAvailable, onPress }: StoryCardProps) {
+  const { primary, colors } = useThemeColors();
+
+  const dateFR = React.useMemo(() => {
+    try {
+      return format(new Date(story.date), 'dd/MM/yyyy');
+    } catch {
+      return story.date;
+    }
+  }, [story.date]);
+
+  return (
+    <Pressable
+      style={[storyCardStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+      onPress={() => onPress(story)}
+    >
+      {/* Badge audio */}
+      {audioAvailable && (
+        <View style={[storyCardStyles.audioBadge, { backgroundColor: `${primary}20` }]}>
+          <Text style={[storyCardStyles.audioBadgeText, { color: primary }]}>🔊</Text>
+        </View>
+      )}
+      {/* Titre */}
+      <Text style={[storyCardStyles.title, { color: colors.text }]} numberOfLines={2}>
+        {story.titre}
+      </Text>
+      {/* Méta : date + durée */}
+      <Text style={[storyCardStyles.meta, { color: colors.textMuted }]} numberOfLines={1}>
+        {dateFR} · {story.duree_lecture}
+      </Text>
+      {/* Chip enfant (si multi-enfants) */}
+      {showEnfantName && (
+        <View style={[storyCardStyles.enfantChip, { backgroundColor: colors.border }]}>
+          <Text style={[storyCardStyles.enfantChipText, { color: colors.textMuted }]}>
+            {story.enfant}
+          </Text>
+        </View>
+      )}
+    </Pressable>
+  );
+});
+
+const storyCardStyles = StyleSheet.create({
+  card: {
+    padding: Spacing['2xl'],
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+  },
+  audioBadge: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  audioBadgeText: { fontSize: FontSize.caption },
+  title: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.xs,
+    paddingRight: Spacing['4xl'],
+  },
+  meta: {
+    fontSize: FontSize.caption,
+    marginBottom: Spacing.xs,
+  },
+  enfantChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    marginTop: Spacing.xs,
+  },
+  enfantChipText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+  },
+});
+
+// ─── BibliothequeView ─────────────────────────────────────────────────────────
+
+interface BibliothequeViewProps {
+  stories: BedtimeStory[];
+  profiles: Profile[];
+  childProfiles: Profile[];
+  onStoryPress: (s: BedtimeStory) => void;
+  onCreatePress: () => void;
+}
+
+function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStoryPress, onCreatePress }: BibliothequeViewProps) {
+  const { primary, colors } = useThemeColors();
+
+  // Filtre enfant (null = tous)
+  const defaultEnfantId = childProfiles.length === 1 ? (childProfiles[0]?.id ?? null) : null;
+  const [selectedEnfantId, setSelectedEnfantId] = useState<string | null>(defaultEnfantId);
+
+  // Disponibilité audio (chargée en async)
+  const [audioAvailableMap, setAudioAvailableMap] = useState<Record<string, boolean>>({});
+
+  // Collapse par univers
+  const [collapsedUnivers, setCollapsedUnivers] = useState<Partial<Record<StoryUniverseId, boolean>>>({});
+
+  // Histoires filtrées
+  const filteredStories = React.useMemo(
+    () => stories.filter(s => !selectedEnfantId || s.enfantId === selectedEnfantId),
+    [stories, selectedEnfantId],
+  );
+
+  // Groupes par univers (ordre canonique, tri date desc)
+  const groupes = React.useMemo(() =>
+    STORY_UNIVERSES
+      .map(u => ({
+        universe: u,
+        histoires: filteredStories
+          .filter(s => s.univers === u.id)
+          .sort((a, b) => b.date.localeCompare(a.date)),
+      }))
+      .filter(g => g.histoires.length > 0),
+    [filteredStories],
+  );
+
+  // Chargement audio async (non-bloquant)
+  useEffect(() => {
+    if (filteredStories.length === 0) {
+      setAudioAvailableMap({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.all(
+        filteredStories.map(async (s) => {
+          try {
+            if (s.voice?.engine === 'fish-audio' && s.voice.fishAudioReferenceId) {
+              const path = await getCachedStoryAudioFish(s.id, s.voice.fishAudioReferenceId);
+              return [s.id, path !== null] as const;
+            }
+            const voiceId = s.voice?.elevenLabsVoiceId;
+            if (!voiceId) return [s.id, false] as const;
+            const path = await getCachedStoryAudio(s.id, voiceId);
+            return [s.id, path !== null] as const;
+          } catch (e) {
+            if (__DEV__) console.warn('[BibliothequeView] audio check failed:', e);
+            return [s.id, false] as const;
+          }
+        }),
+      );
+      if (cancelled) return;
+      const map: Record<string, boolean> = {};
+      for (const [k, v] of results) map[k] = v;
+      setAudioAvailableMap(map);
+    })();
+    return () => { cancelled = true; };
+  }, [filteredStories]);
+
+  const handleStoryPress = useCallback((histoire: BedtimeStory) => {
+    Haptics.selectionAsync();
+    onStoryPress(histoire);
+  }, [onStoryPress]);
+
+  const toggleCollapse = useCallback((universId: StoryUniverseId) => {
+    Haptics.selectionAsync();
+    setCollapsedUnivers(prev => ({ ...prev, [universId]: !prev[universId] }));
+  }, []);
+
+  const showEnfantName = !selectedEnfantId;
+
+  // État vide
+  if (groupes.length === 0) {
+    return (
+      <View style={biblioStyles.emptyContainer}>
+        <Text style={biblioStyles.emptyEmoji}>📚</Text>
+        <Text style={[biblioStyles.emptyTitle, { color: colors.text }]}>
+          Aucune histoire pour l'instant
+        </Text>
+        <Text style={[biblioStyles.emptySubtitle, { color: colors.textMuted }]}>
+          Créez votre première histoire ✨
+        </Text>
+        <Pressable
+          style={[biblioStyles.createBtn, { backgroundColor: primary }]}
+          onPress={onCreatePress}
+        >
+          <Text style={biblioStyles.createBtnText}>Créer une histoire</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      {/* Sélecteur enfant (uniquement si plusieurs enfants) */}
+      {childProfiles.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={biblioStyles.childFilterScroll}
+          contentContainerStyle={biblioStyles.childFilterContent}
+        >
+          {/* Chip "Tous" */}
+          <Pressable
+            style={[
+              biblioStyles.childChip,
+              { borderColor: colors.border, backgroundColor: !selectedEnfantId ? primary : colors.card },
+            ]}
+            onPress={() => { Haptics.selectionAsync(); setSelectedEnfantId(null); }}
+          >
+            <Text style={[
+              biblioStyles.childChipText,
+              { color: !selectedEnfantId ? colors.bg : colors.textMuted },
+            ]}>
+              Tous
+            </Text>
+          </Pressable>
+          {/* Chips enfants */}
+          {childProfiles.map(p => (
+            <Pressable
+              key={p.id}
+              style={[
+                biblioStyles.childChip,
+                { borderColor: colors.border, backgroundColor: selectedEnfantId === p.id ? primary : colors.card },
+              ]}
+              onPress={() => { Haptics.selectionAsync(); setSelectedEnfantId(p.id); }}
+            >
+              <Text style={biblioStyles.childChipAvatar}>{p.avatar}</Text>
+              <Text style={[
+                biblioStyles.childChipText,
+                { color: selectedEnfantId === p.id ? colors.bg : colors.textMuted },
+              ]}>
+                {p.name}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
+      {/* Groupes par univers */}
+      {groupes.map(({ universe, histoires }) => (
+        <UniversGroupe
+          key={universe.id}
+          universe={universe}
+          histoires={histoires}
+          collapsed={collapsedUnivers[universe.id] ?? false}
+          showEnfantName={showEnfantName}
+          audioAvailableMap={audioAvailableMap}
+          onToggle={() => toggleCollapse(universe.id)}
+          onStoryPress={handleStoryPress}
+          colors={colors}
+          primary={primary}
+        />
+      ))}
+    </View>
+  );
+}
+
+// ─── UniversGroupe ────────────────────────────────────────────────────────────
+
+interface UniversGroupeProps {
+  universe: typeof STORY_UNIVERSES[0];
+  histoires: BedtimeStory[];
+  collapsed: boolean;
+  showEnfantName: boolean;
+  audioAvailableMap: Record<string, boolean>;
+  onToggle: () => void;
+  onStoryPress: (s: BedtimeStory) => void;
+  colors: ReturnType<typeof useThemeColors>['colors'];
+  primary: string;
+}
+
+function UniversGroupe({ universe, histoires, collapsed, showEnfantName, audioAvailableMap, onToggle, onStoryPress, colors }: UniversGroupeProps) {
+  const chevronRotation = useSharedValue(collapsed ? 0 : 1);
+
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronRotation.value * 90}deg` }],
+  }));
+
+  React.useEffect(() => {
+    chevronRotation.value = withSpring(collapsed ? 0 : 1, TAB_SPRING);
+  }, [collapsed, chevronRotation]);
+
+  return (
+    <View style={biblioStyles.universeGroup}>
+      {/* En-tête groupe cliquable */}
+      <Pressable
+        style={[biblioStyles.universeHeader, { borderBottomColor: colors.border }]}
+        onPress={onToggle}
+      >
+        <Text style={biblioStyles.universeEmoji}>{universe.emoji}</Text>
+        <Text style={[biblioStyles.universeTitle, { color: colors.text }]}>
+          {universe.titre}
+        </Text>
+        <Text style={[biblioStyles.universeCount, { color: colors.textMuted }]}>
+          · {histoires.length}
+        </Text>
+        <Animated.Text style={[biblioStyles.universeChevron, { color: colors.textMuted }, chevronStyle]}>
+          ›
+        </Animated.Text>
+      </Pressable>
+      {/* Cartes (masquées si collapsed) */}
+      {!collapsed && histoires.map(story => (
+        <StoryCard
+          key={story.id}
+          story={story}
+          showEnfantName={showEnfantName}
+          audioAvailable={audioAvailableMap[story.id] ?? false}
+          onPress={onStoryPress}
+        />
+      ))}
+    </View>
+  );
+}
+
+const biblioStyles = StyleSheet.create({
+  emptyContainer: { alignItems: 'center', paddingTop: Spacing['6xl'], paddingHorizontal: Spacing['4xl'] },
+  emptyEmoji: { fontSize: 64, marginBottom: Spacing['2xl'] },
+  emptyTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold, textAlign: 'center', marginBottom: Spacing.md },
+  emptySubtitle: { fontSize: FontSize.body, textAlign: 'center', marginBottom: Spacing['4xl'] },
+  createBtn: { borderRadius: Radius.full, paddingVertical: Spacing['2xl'], paddingHorizontal: Spacing['4xl'], alignItems: 'center' },
+  createBtnText: { color: '#fff', fontSize: FontSize.body, fontWeight: FontWeight.bold },
+  childFilterScroll: { marginBottom: Spacing['2xl'] },
+  childFilterContent: { paddingHorizontal: 0, gap: Spacing.md },
+  childChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    gap: Spacing.xs,
+  },
+  childChipAvatar: { fontSize: 16 },
+  childChipText: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
+  universeGroup: { marginBottom: Spacing['2xl'] },
+  universeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: Spacing.md,
+    gap: Spacing.md,
+  },
+  universeEmoji: { fontSize: 22 },
+  universeTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  universeCount: { flex: 1, fontSize: FontSize.caption },
+  universeChevron: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+});
+
 // ─── Composant principal ─────────────────────────────────────────────────────
 
 export default function StoriesScreen() {
@@ -79,6 +543,7 @@ export default function StoriesScreen() {
   );
 
   const [step, setStep] = useState<StoryFlowStep>({ etape: 'choisir_enfant' });
+  const [activeTab, setActiveTab] = useState<'nouvelle' | 'bibliotheque'>('nouvelle');
   const [selectedUniversId, setSelectedUniversId] = useState<StoryUniverseId | null>(null);
   const [detailText, setDetailText] = useState('');
 
@@ -261,6 +726,7 @@ export default function StoriesScreen() {
         goTo({ etape: 'choisir_univers', enfantId: step.enfantId, enfantName: step.enfantName });
         break;
       case 'replay':
+        // Retour vers l'onglet d'origine (bibliothèque ou nouvelle)
         goTo({ etape: 'choisir_enfant' });
         break;
       default:
@@ -1306,7 +1772,11 @@ export default function StoriesScreen() {
           voiceConfig={histoire.voice}
           elevenLabsKey={elevenLabsKey}
           fishAudioKey={fishAudioKey}
-          onFinish={() => goTo({ etape: 'choisir_enfant' })}
+          onFinish={() => {
+            // Retour tab-aware : si venu de la bibliothèque, y revenir
+            goTo({ etape: 'choisir_enfant' });
+            // activeTab reste inchangé — si 'bibliotheque', on y revient naturellement
+          }}
           autoGenerate={false}
         />
       </ScrollView>
@@ -1315,6 +1785,18 @@ export default function StoriesScreen() {
 
   // ── Rendu selon étape ──
   const renderContent = () => {
+    // Bibliothèque affichée à l'étape choisir_enfant seulement
+    if (step.etape === 'choisir_enfant' && activeTab === 'bibliotheque') {
+      return (
+        <BibliothequeView
+          stories={stories}
+          profiles={profiles}
+          childProfiles={childProfiles}
+          onStoryPress={handleReplayStory}
+          onCreatePress={() => { Haptics.selectionAsync(); setActiveTab('nouvelle'); }}
+        />
+      );
+    }
     switch (step.etape) {
       case 'choisir_enfant':
         return <ChoisirEnfantStep />;
@@ -1356,6 +1838,19 @@ export default function StoriesScreen() {
         </Text>
         <View style={styles.headerRight} />
       </View>
+
+      {/* Onglets Nouvelle histoire / Bibliothèque — visibles seulement à l'étape choisir_enfant */}
+      {step.etape === 'choisir_enfant' && (
+        <TabSwitcher
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            Haptics.selectionAsync();
+            setActiveTab(tab);
+          }}
+          primary={primary}
+          colors={colors}
+        />
+      )}
 
       {/* Confettis */}
       <ConfettiCannon
