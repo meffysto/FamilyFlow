@@ -848,35 +848,62 @@ export default function StoriesScreen() {
 
     return (
       <View>
-        <Text style={[styles.stepTitle, { color: colors.text }]}>Pour qui cette histoire ?</Text>
-        <FlatList
-          data={childProfiles}
-          keyExtractor={p => p.id}
-          numColumns={2}
-          scrollEnabled={false}
-          renderItem={({ item: p }) => {
+        <Text style={[styles.stepTitle, { color: colors.text }]}>🌙 C'est l'heure des histoires</Text>
+        {childProfiles.length === 1 ? (
+          // Enfant unique — carte centrée et agrandie
+          (() => {
+            const p = childProfiles[0]!;
             const mood = lastMoodFor(p.id);
             return (
               <Pressable
-                style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                style={[styles.profileCardSolo, { backgroundColor: colors.card, borderColor: primary }]}
                 onPress={() => {
                   Haptics.selectionAsync();
                   setSelectedUniversId(null);
                   goTo({ etape: 'choisir_univers', enfantId: p.id, enfantName: p.name });
                 }}
               >
-                <Text style={styles.profileAvatar}>{p.avatar}</Text>
-                <Text style={[styles.profileName, { color: colors.text }]}>{p.name}</Text>
+                <Text style={styles.profileAvatarSolo}>{p.avatar}</Text>
+                <Text style={[styles.profileNameSolo, { color: colors.text }]}>{p.name}</Text>
                 {mood && (
                   <Text style={[styles.profileBadge, { color: colors.textMuted }]}>
                     {['😢', '😐', '😊', '😄', '🤩'][mood.level - 1]}
                   </Text>
                 )}
-                <Text style={[styles.profileReady, { color: colors.textMuted }]}>🌙 Prêt pour dormir ?</Text>
+                <Text style={[styles.profileReady, { color: colors.textMuted }]}>Prêt pour dormir ?</Text>
               </Pressable>
             );
-          }}
-        />
+          })()
+        ) : (
+          <FlatList
+            data={childProfiles}
+            keyExtractor={p => p.id}
+            numColumns={2}
+            scrollEnabled={false}
+            renderItem={({ item: p }) => {
+              const mood = lastMoodFor(p.id);
+              return (
+                <Pressable
+                  style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setSelectedUniversId(null);
+                    goTo({ etape: 'choisir_univers', enfantId: p.id, enfantName: p.name });
+                  }}
+                >
+                  <Text style={styles.profileAvatar}>{p.avatar}</Text>
+                  <Text style={[styles.profileName, { color: colors.text }]}>{p.name}</Text>
+                  {mood && (
+                    <Text style={[styles.profileBadge, { color: colors.textMuted }]}>
+                      {['😢', '😐', '😊', '😄', '🤩'][mood.level - 1]}
+                    </Text>
+                  )}
+                  <Text style={[styles.profileReady, { color: colors.textMuted }]}>🌙 Prêt pour dormir ?</Text>
+                </Pressable>
+              );
+            }}
+          />
+        )}
 
       </View>
     );
@@ -1922,8 +1949,11 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 64, marginBottom: Spacing['2xl'] },
   emptyText: { fontSize: FontSize.body, textAlign: 'center' },
   profileCard: { flex: 1, margin: Spacing.md, padding: Spacing['2xl'], borderRadius: Radius.xl, borderWidth: 1, alignItems: 'center', maxWidth: '48%' },
+  profileCardSolo: { alignSelf: 'center', width: '70%', marginTop: Spacing['4xl'], padding: Spacing['4xl'], borderRadius: Radius.xl, borderWidth: 2, alignItems: 'center' },
   profileAvatar: { fontSize: 40, marginBottom: Spacing.md },
+  profileAvatarSolo: { fontSize: 72, marginBottom: Spacing['2xl'] },
   profileName: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: Spacing.xs },
+  profileNameSolo: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing.md },
   profileBadge: { fontSize: 20, marginBottom: Spacing.xs },
   profileReady: { fontSize: FontSize.micro, textAlign: 'center' },
   primaryButton: { borderRadius: Radius.full, paddingVertical: Spacing['2xl'], paddingHorizontal: Spacing['4xl'], alignItems: 'center', marginTop: Spacing['2xl'] },
