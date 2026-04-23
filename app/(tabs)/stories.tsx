@@ -418,7 +418,7 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
           key={universe.id}
           universe={universe}
           histoires={histoires}
-          collapsed={collapsedUnivers[universe.id] ?? false}
+          collapsed={collapsedUnivers[universe.id] ?? true}
           showEnfantName={showEnfantName}
           audioAvailableMap={audioAvailableMap}
           onToggle={() => toggleCollapse(universe.id)}
@@ -821,46 +821,6 @@ export default function StoriesScreen() {
           }}
         />
 
-        {recentStories.length > 0 && (
-          <View style={{ marginTop: Spacing['4xl'] }}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-              📚 Histoires précédentes
-            </Text>
-            {recentStories.map(story => {
-              const univers = STORY_UNIVERSES.find(u => u.id === story.univers);
-              const hasCachedAudio = audioCacheMap[story.sourceFile] === true;
-              const [yyyy, mm, dd] = story.date.split('-');
-              const dateFR = (yyyy && mm && dd) ? `${dd}/${mm}/${yyyy}` : story.date;
-              return (
-                <Pressable
-                  key={story.sourceFile}
-                  style={[styles.previousStoryCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => handleReplayStory(story)}
-                  onLongPress={() => handleDeleteStory(story)}
-                  delayLongPress={500}
-                >
-                  <Text style={styles.previousStoryEmoji}>{univers?.emoji ?? '📖'}</Text>
-                  <View style={styles.previousStoryBody}>
-                    <Text style={[styles.previousStoryTitle, { color: colors.text }]} numberOfLines={1}>
-                      {story.titre}
-                    </Text>
-                    <Text style={[styles.previousStoryMeta, { color: colors.textMuted }]} numberOfLines={1}>
-                      {story.enfant} · {dateFR}
-                    </Text>
-                  </View>
-                  {hasCachedAudio && (
-                    <View style={[styles.previousStoryBadge, { backgroundColor: `${primary}20` }]}>
-                      <Text style={[styles.previousStoryBadgeText, { color: primary }]}>🔊</Text>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-            <Text style={[styles.previousStoryHint, { color: colors.textMuted }]}>
-              Appuyer pour relire · Maintenir pour supprimer
-            </Text>
-          </View>
-        )}
       </View>
     );
   }
