@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
-status: executing
-last_updated: "2026-04-22T12:20:18.971Z"
-last_activity: 2026-04-22
+status: Phase 42 complète — shippable sur TestFlight
+last_updated: "2026-04-23T12:06:52.109Z"
+last_activity: 2026-04-23
 progress:
   total_phases: 14
   completed_phases: 9
   total_plans: 37
   completed_plans: 38
-  percent: 0
+  percent: 100
 ---
 
 # Project State
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 42 — Nourrir le compagnon
+**Current focus:** Phase 42 — Nourrir le compagnon (COMPLÈTE)
 
 ## Current Position
 
 Phase: 42
-Plan: Not started
-Milestone: v1.7 Modifiers de plants (4 phases : 38-41)
-Last shipped: v1.6 Love Notes partiel (Phase 36 Composition + reveal, 2026-04-17)
-Last activity: 2026-04-22
+Plan: 9/9 complétés
+Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
+Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
+Last activity: 2026-04-23
 
-Progress: [░░░░░░░░░░] 0% (0/4 phases)
+Progress: [██████████] 100% (9/9 plans Phase 42)
 
-Status: Ready to execute
+Status: Phase 42 complète — shippable sur TestFlight
 
 ### Quick Tasks Completed
 
@@ -369,6 +369,8 @@ Recent decisions affecting current work:
 - [Phase 42-nourrir-le-compagnon]: Plan 42-03: feedCompanion pure (spread CompanionData) + getActiveFeedBuff expiration lazy (read-only, nettoyage différé à prochaine écriture)
 - [Phase 42-nourrir-le-compagnon]: getCompanionXpBonus empile feedBuff multiplicativement (D-07), condition > 1.0 dans useGamification
 - [Phase 42]: Plan 42-09: Option A Live Activity locked — patchMascotte Partial<MascotteSnapshot> accepte feedBuffActive sans extension signature
+- [Phase 42]: Option A locked : patchMascotte signature Partial<MascotteSnapshot> inchangée — feedBuffActive acceptée automatiquement par ajout à l'interface
+- [Phase 42]: Wiring centralisé dans hooks/useVault.ts:feedCompanion — tree.tsx inchangé — élimine overlap Plan 42-08/42-09
 
 ### Todos
 
@@ -380,5 +382,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-22T12:16:05.596Z
+Last session: 2026-04-23T12:06:52.105Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
