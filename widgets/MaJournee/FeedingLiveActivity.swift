@@ -1,22 +1,11 @@
 import ActivityKit
 import SwiftUI
 import WidgetKit
+import LiveActivityShared
 
-// MARK: - Attributes
-
-struct FeedingActivityAttributes: ActivityAttributes {
-    /// Données statiques (ne changent pas pendant l'activité)
-    public struct ContentState: Codable, Hashable {
-        var isPaused: Bool
-        var side: String?       // "G" ou "D" (allaitement)
-        var volumeMl: Int?      // ml (biberon)
-    }
-
-    var babyName: String
-    var babyEmoji: String
-    var feedType: String        // "allaitement" ou "biberon"
-    var startedAt: Date
-}
+// FeedingActivityAttributes est déclaré dans le module partagé
+// LiveActivityShared (modules/live-activity-shared/) pour unifier l'identité
+// de type entre app et widget.
 
 // MARK: - Live Activity
 

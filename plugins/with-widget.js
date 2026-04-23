@@ -5,13 +5,17 @@
  * - Copie les fichiers Swift du widget dans ios/MaJourneeWidget/
  * - Crée le target app_extension dans le projet Xcode
  * - Configure les build settings, embed phase et target dependency
+ * - Patche le Podfile pour linker LiveActivityShared aux deux targets
+ *   (requis pour que l'App Intent du widget mette à jour la Live Activity)
  */
-const { withXcodeProject, withEntitlementsPlist } = require('expo/config-plugins');
+const { withXcodeProject, withEntitlementsPlist, withDangerousMod } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
 const WIDGET_NAME = 'MaJourneeWidget';
 const APP_GROUP_ID = 'group.com.familyvault.dev';
+const SHARED_POD_NAME = 'LiveActivityShared';
+const SHARED_POD_PATH = '../modules/live-activity-shared/ios';
 
 module.exports = function withMaJourneeWidget(config) {
   const bundleId = `${config.ios?.bundleIdentifier}.${WIDGET_NAME}`;
@@ -152,8 +156,89 @@ module.exports = function withMaJourneeWidget(config) {
     return mod;
   });
 
+  // 3. Patcher le Podfile pour linker LiveActivityShared. Nécessaire car
+  //    `/ios` est gitignored et régénéré à chaque prebuild — les edits
+  //    manuels du Podfile ne survivent pas.
+  config = withDangerousMod(config, [
+    'ios',
+    (mod) => {
+      const podfilePath = path.join(mod.modRequest.platformProjectRoot, 'Podfile');
+      if (!fs.existsSync(podfilePath)) return mod;
+
+      let podfile = fs.readFileSync(podfilePath, 'utf8');
+      const podLine = `pod '${SHARED_POD_NAME}', :path => '${SHARED_POD_PATH}'`;
+      let mutated = false;
+
+      // 3a. Ajouter le pod à la cible FamilyFlow (après use_expo_modules!).
+      if (!new RegExp(`target 'FamilyFlow'[\\s\\S]*?${escapeRe(podLine)}`).test(podfile)) {
+        const replaced = podfile.replace(
+          /(target 'FamilyFlow' do\s*\n\s*use_expo_modules!)/,
+          `$1\n\n  # Module partagé avec le widget — ActivityAttributes uniques\n  ${podLine}`
+        );
+        if (replaced !== podfile) {
+          podfile = replaced;
+          mutated = true;
+        }
+      }
+
+      // 3b. Ajouter la cible MaJourneeWidget si absente.
+      if (!/target 'MaJourneeWidget' do/.test(podfile)) {
+        podfile = podfile.trimEnd() + `\n\n# Widget — partage LiveActivityShared avec l'app pour l'update optimiste\ntarget '${WIDGET_NAME}' do\n  ${podLine}\nend\n`;
+        mutated = true;
+      }
+
+      // 3c. Injecter le scrub SwiftUICore dans le post_install existant
+      //     (iOS 18 SDK propage des refs implicites à SwiftUICore, framework
+      //     privé non linkable par le widget extension).
+      const scrubMarker = '# LiveActivityShared : scrub SwiftUICore';
+      if (!podfile.includes(scrubMarker)) {
+        const scrubBlock = `
+    ${scrubMarker}
+    installer.pods_project.targets.each do |t|
+      t.build_configurations.each do |c|
+        ld = c.build_settings['OTHER_LDFLAGS']
+        if ld.is_a?(Array)
+          c.build_settings['OTHER_LDFLAGS'] = ld.reject { |f| f.to_s.include?('SwiftUICore') }
+        elsif ld.is_a?(String) && ld.include?('SwiftUICore')
+          c.build_settings['OTHER_LDFLAGS'] = ld.gsub(/-framework\\s+"?SwiftUICore"?/, '').strip
+        end
+      end
+    end
+    installer.aggregate_targets.each do |agg|
+      agg.xcconfigs.each do |cname, xc|
+        xc.frameworks.delete('SwiftUICore')
+        xc.weak_frameworks.delete('SwiftUICore')
+        xcp = agg.xcconfig_path(cname)
+        xc.save_as(xcp)
+        if File.exist?(xcp)
+          raw = File.read(xcp)
+          cleaned = raw.gsub(/-framework\\s+"?SwiftUICore"?/, '').gsub(/\\s+$/, "\\n")
+          File.write(xcp, cleaned) if raw != cleaned
+        end
+      end
+    end`;
+        // Injecte juste avant le `end` de fermeture du bloc `post_install do |installer|`.
+        const replaced = podfile.replace(
+          /(post_install do \|installer\|[\s\S]*?react_native_post_install\([\s\S]*?\))\s*\n(\s*)end/,
+          `$1\n${scrubBlock}\n$2end`
+        );
+        if (replaced !== podfile) {
+          podfile = replaced;
+          mutated = true;
+        }
+      }
+
+      if (mutated) fs.writeFileSync(podfilePath, podfile);
+      return mod;
+    },
+  ]);
+
   return config;
 };
+
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

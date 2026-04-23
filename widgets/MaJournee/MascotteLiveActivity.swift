@@ -2,98 +2,15 @@ import ActivityKit
 import AppIntents
 import SwiftUI
 import WidgetKit
+import LiveActivityShared
 
-// MARK: - Attributes
-
-@available(iOS 16.2, *)
-struct MascotteActivityAttributes: ActivityAttributes {
-    /// État dynamique mis à jour au fil de la journée depuis l'app RN
-    public struct ContentState: Codable, Hashable {
-        var tasksDone: Int
-        var tasksTotal: Int
-        var xpGained: Int
-        var currentMeal: String?           // ex: "Pâtes carbonara" (déjeuner ou dîner selon l'heure)
-        var stageOverride: String?         // "reveil"|"travail"|"midi"|"jeu"|"routine"|"dodo"|"recap" (dev/test)
-        var companionSpriteToken: String? // cache-bust token ; PNG lu depuis App Group
-        var bonusText: String?             // ligne bonus récap (ex: "⬆️ Niveau 12 atteint !")
-        var nextTaskText: String?          // prochaine tâche (récurrente prioritaire) — affichée pendant reveil/travail/jeu/routine
-        var nextTaskId: String?            // identifiant unique de la prochaine tâche (pour ToggleNextTaskIntent)
-        var nextRdvText: String?           // prochain RDV < 24h (ex: "Pédiatre 14:30") — affiché pendant midi
-        var speechBubble: String?          // phrase courte du compagnon (≤44 chars) — remplace le subtitle narratif
-    }
-
-    var mascotteName: String
-    var startedAt: Date
-}
-
-// MARK: - Deep Links
-
-/// Deep links centralisés pour éviter les force-unwrap répétés et garder
-/// les URLs en un seul endroit (côté Swift ; miroir possible côté RN).
-@available(iOS 16.2, *)
-enum MascotteDeepLink: String {
-    case tree = "family-vault://open/tree"
-    case stories = "family-vault://open/stories"
-    case routines = "family-vault://open/routines"
-
-    var url: URL { URL(string: rawValue)! }
-}
-
-// MARK: - App Intent (toggle next task depuis la DI)
-
-/// App Intent iOS 17+ : coche la prochaine tâche depuis la Live Activity sans
-/// ouvrir l'app. Écrit un fichier "pending-task-toggle-{uuid}.json" dans l'App
-/// Group partagé ; l'app le consomme au prochain foreground/boot (pattern
-/// claim-first : le fichier est supprimé avant application par l'app).
-@available(iOS 17.0, *)
-struct ToggleNextTaskIntent: LiveActivityIntent {
-    static var title: LocalizedStringResource = "Cocher la prochaine tâche"
-    static var description: IntentDescription? = IntentDescription("Coche la prochaine tâche affichée dans la Live Activity de la mascotte.")
-    // openAppWhenRun = false : le tap écrit juste un fichier pending dans
-    // l'App Group, l'app applique toggle + XP/loot au prochain foreground.
-    // L'update optimiste (swap live) n'est pas possible sans framework Swift
-    // partagé entre widget et main app (limitation Apple connue).
-    static var openAppWhenRun: Bool = false
-
-    @Parameter(title: "Task ID")
-    var taskId: String
-
-    init() {}
-    init(taskId: String) { self.taskId = taskId }
-
-    /// Formatter ISO8601 partagé — l'instanciation est coûteuse, un seul suffit.
-    private static let isoFormatter = ISO8601DateFormatter()
-
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        guard !taskId.isEmpty,
-              let container = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
-              ) else {
-            return .result()
-        }
-
-        let dir = container.appendingPathComponent("pending-task-toggles", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-
-        let fileURL = dir.appendingPathComponent("pending-task-toggle-\(UUID().uuidString).json")
-        let payload: [String: Any] = [
-            "taskId": taskId,
-            "timestamp": Self.isoFormatter.string(from: Date())
-        ]
-        if let data = try? JSONSerialization.data(withJSONObject: payload) {
-            try? data.write(to: fileURL)
-        }
-
-        // NOTE : pas d'update optimiste de la Live Activity. Le widget (module
-        // MaJourneeWidget) ne peut pas appeler Activity.update() sur une
-        // activity lancée depuis le module VaultAccess — les types Swift sont
-        // distincts malgré un shape identique (Activity<T>.activities retourne
-        // 0 côté widget). La réconciliation (toggle vault + XP + loot + prochaine
-        // tâche) se fait au foreground app suivant via le consumer + bridge.
-        return .result()
-    }
-}
+// MARK: - Attributes, Deep Links & App Intent
+//
+// MascotteActivityAttributes, MascotteDeepLink et ToggleNextTaskIntent vivent
+// dans le module partagé LiveActivityShared (modules/live-activity-shared/).
+// Même module côté app ET widget → identité de type unique → l'App Intent
+// peut retrouver la Live Activity via `Activity<MascotteActivityAttributes>
+// .activities` et faire l'update optimiste (tasksDone+1, clear nextTask).
 
 // MARK: - Stage Narrative
 
@@ -322,6 +239,7 @@ private func compactTrailingView(
         }
     } else if state.tasksTotal > 0 && state.tasksDone > 0 {
         let progress = min(1.0, Double(state.tasksDone) / Double(state.tasksTotal))
+        let justFlashed = state.justCompletedAt != nil
         ZStack {
             Circle()
                 .stroke(Color.white.opacity(0.25), lineWidth: 2.5)
@@ -329,14 +247,31 @@ private func compactTrailingView(
                 .trim(from: 0, to: progress)
                 .stroke(Color.green, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-            Text("\(state.tasksDone)")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.white)
-                .monospacedDigit()
+            // Pendant le flash post-tap : ✓ bondissant au centre (feedback
+            // immédiat). Sinon : le compteur numérique tasksDone.
+            if justFlashed {
+                if #available(iOS 17.0, *) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 11, weight: .heavy))
+                        .foregroundColor(.green)
+                        .symbolEffect(.bounce, value: state.justCompletedAt)
+                } else {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 11, weight: .heavy))
+                        .foregroundColor(.green)
+                }
+            } else {
+                Text("\(state.tasksDone)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .monospacedDigit()
+            }
         }
         .frame(width: 22, height: 22)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(state.tasksDone) tâches sur \(state.tasksTotal)")
+        .accessibilityLabel(justFlashed
+            ? "Tâche cochée, \(state.tasksDone) sur \(state.tasksTotal)"
+            : "\(state.tasksDone) tâches sur \(state.tasksTotal)")
     } else {
         Text(stage.compactLabel)
             .font(.caption2)
@@ -486,13 +421,38 @@ struct MascotteLockScreenView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
-                        Circle()
-                            .fill(Color.green)
-                            .frame(width: 6, height: 6)
+                        // Flash post-tap : le point vert devient un ✓ bondissant
+                        // (feedback immédiat de l'action "Cocher") tant que l'app
+                        // n'a pas réconcilié en foreground.
+                        if context.state.justCompletedAt != nil {
+                            if #available(iOS 17.0, *) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.green)
+                                    .symbolEffect(.bounce, value: context.state.justCompletedAt)
+                            } else {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.green)
+                            }
+                        } else {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 6, height: 6)
+                        }
                         Text("La journée de \(context.attributes.mascotteName)")
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
+                        if context.state.justCompletedAt != nil {
+                            Text("+1 fait")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.green)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Color.green.opacity(0.15))
+                                .clipShape(Capsule())
+                        }
                     }
                     if isRecap {
                         Text("Journée accomplie 🌙")

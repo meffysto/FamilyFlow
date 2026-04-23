@@ -11,4 +11,5 @@ Pod::Spec.new do |s|
   s.source_files   = '**/*.swift'
 
   s.dependency 'ExpoModulesCore'
+  s.dependency 'LiveActivityShared'
 end

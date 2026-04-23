@@ -2,44 +2,13 @@ import ExpoModulesCore
 import Foundation
 import WidgetKit
 import ActivityKit
+import LiveActivityShared
 
-// MARK: - Live Activity Attributes (dupliqué dans FeedingLiveActivity.swift pour le widget target)
-
-@available(iOS 16.2, *)
-struct FeedingActivityAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var isPaused: Bool
-        var side: String?
-        var volumeMl: Int?
-    }
-
-    var babyName: String
-    var babyEmoji: String
-    var feedType: String
-    var startedAt: Date
-}
-
-// MARK: - Mascotte Live Activity Attributes (dupliqué dans MascotteLiveActivity.swift)
-
-@available(iOS 16.2, *)
-struct MascotteActivityAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var tasksDone: Int
-        var tasksTotal: Int
-        var xpGained: Int
-        var currentMeal: String?
-        var stageOverride: String?
-        var companionSpriteToken: String?  // cache-busting token ; PNG dans App Group
-        var bonusText: String?
-        var nextTaskText: String?
-        var nextTaskId: String?
-        var nextRdvText: String?
-        var speechBubble: String?
-    }
-
-    var mascotteName: String
-    var startedAt: Date
-}
+// Types FeedingActivityAttributes et MascotteActivityAttributes sont déclarés
+// dans le module partagé LiveActivityShared (modules/live-activity-shared/).
+// Même module Swift côté app ET côté widget → identité de type unique pour
+// ActivityKit → l'App Intent du widget peut retrouver et mettre à jour la
+// Live Activity démarrée ici.
 
 /// Écrit le PNG du sprite compagnon dans le container App Group partagé.
 /// Retourne un token court (taille+hash prefix) pour cache-buster le widget.
