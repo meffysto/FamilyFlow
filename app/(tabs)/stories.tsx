@@ -850,7 +850,8 @@ export default function StoriesScreen() {
 
     return (
       <View>
-        <Text style={[styles.stepTitle, { color: colors.text }]}>Pour qui génère-t-on une histoire ce soir ?</Text>
+        <Text style={[styles.stepTitle, { color: colors.text }]}>Des histoires uniques</Text>
+        <Text style={[styles.stepSubtitle, { color: colors.textMuted }]}>Personnalisées par la vie de votre enfant · À écouter avec votre propre voix</Text>
         {childProfiles.length === 1 ? (
           // Enfant unique — carte centrée horizontalement et verticalement
           (() => {
@@ -1943,7 +1944,8 @@ const styles = StyleSheet.create({
   headerRight: { width: 36 },
   content: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['6xl'] },
-  stepTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing['4xl'] },
+  stepTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing.md },
+  stepSubtitle: { fontSize: FontSize.sm, marginBottom: Spacing['4xl'] },
   bookCarousel: { marginHorizontal: -Spacing['2xl'], paddingVertical: 40, overflow: 'visible' },
   universCarouselWrapper: { flex: 1, justifyContent: 'center', paddingTop: 80 },
   stepTitleCentered: { textAlign: 'center', paddingHorizontal: Spacing['4xl'] },
