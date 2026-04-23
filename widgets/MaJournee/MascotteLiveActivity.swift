@@ -26,6 +26,19 @@ struct MascotteActivityAttributes: ActivityAttributes {
     var startedAt: Date
 }
 
+// MARK: - Deep Links
+
+/// Deep links centralisés pour éviter les force-unwrap répétés et garder
+/// les URLs en un seul endroit (côté Swift ; miroir possible côté RN).
+@available(iOS 16.2, *)
+enum MascotteDeepLink: String {
+    case tree = "family-vault://open/tree"
+    case stories = "family-vault://open/stories"
+    case routines = "family-vault://open/routines"
+
+    var url: URL { URL(string: rawValue)! }
+}
+
 // MARK: - App Intent (toggle next task depuis la DI)
 
 /// App Intent iOS 17+ : coche la prochaine tâche depuis la Live Activity sans
@@ -48,6 +61,9 @@ struct ToggleNextTaskIntent: LiveActivityIntent {
     init() {}
     init(taskId: String) { self.taskId = taskId }
 
+    /// Formatter ISO8601 partagé — l'instanciation est coûteuse, un seul suffit.
+    private static let isoFormatter = ISO8601DateFormatter()
+
     @MainActor
     func perform() async throws -> some IntentResult {
         guard !taskId.isEmpty,
@@ -63,7 +79,7 @@ struct ToggleNextTaskIntent: LiveActivityIntent {
         let fileURL = dir.appendingPathComponent("pending-task-toggle-\(UUID().uuidString).json")
         let payload: [String: Any] = [
             "taskId": taskId,
-            "timestamp": ISO8601DateFormatter().string(from: Date())
+            "timestamp": Self.isoFormatter.string(from: Date())
         ]
         if let data = try? JSONSerialization.data(withJSONObject: payload) {
             try? data.write(to: fileURL)
@@ -238,30 +254,41 @@ private func companionCompactView(
     state: MascotteActivityAttributes.ContentState,
     fallbackEmoji: String
 ) -> some View {
-    if state.companionSpriteToken != nil,
-       let uiImage = loadCompanionSpriteFromAppGroup() {
+    if let token = state.companionSpriteToken,
+       let uiImage = CompanionSpriteCache.image(for: token) {
         Image(uiImage: uiImage)
             .interpolation(.none)
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: 28, height: 28)
+            .accessibilityLabel("Compagnon")
     } else {
         Text(fallbackEmoji)
             .font(.title3)
+            .accessibilityLabel("Compagnon")
     }
 }
 
-/// Lit le sprite compagnon depuis le container App Group partagé.
-/// L'app main écrit le PNG dans `group.com.familyvault.dev/companion-sprite.png`
-/// ; le token dans ContentState invalide le cache de rendu widget.
+/// Cache mémoire du sprite compagnon indexé par `companionSpriteToken`.
+/// Évite la relecture disque à chaque render (compactLeading + minimal +
+/// Lock Screen = 3× par refresh). Invalidé automatiquement quand l'app
+/// change le token après régénération du sprite.
 @available(iOS 16.2, *)
-private func loadCompanionSpriteFromAppGroup() -> UIImage? {
-    guard let container = FileManager.default.containerURL(
-        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
-    ) else { return nil }
-    let fileURL = container.appendingPathComponent("companion-sprite.png")
-    guard let data = try? Data(contentsOf: fileURL) else { return nil }
-    return UIImage(data: data)
+private enum CompanionSpriteCache {
+    private static var cache: [String: UIImage] = [:]
+
+    static func image(for token: String?) -> UIImage? {
+        let key = token ?? "__default__"
+        if let cached = cache[key] { return cached }
+        guard let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+        ) else { return nil }
+        let fileURL = container.appendingPathComponent("companion-sprite.png")
+        guard let data = try? Data(contentsOf: fileURL),
+              let image = UIImage(data: data) else { return nil }
+        cache[key] = image
+        return image
+    }
 }
 
 /// Contenu du compact trailing de la DI. Priorités :
@@ -308,6 +335,8 @@ private func compactTrailingView(
                 .monospacedDigit()
         }
         .frame(width: 22, height: 22)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(state.tasksDone) tâches sur \(state.tasksTotal)")
     } else {
         Text(stage.compactLabel)
             .font(.caption2)
@@ -322,7 +351,7 @@ struct MascotteLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MascotteActivityAttributes.self) { context in
             MascotteLockScreenView(context: context)
-                .widgetURL(URL(string: "family-vault://open/tree"))
+                .widgetURL(MascotteDeepLink.tree.url)
         } dynamicIsland: { context in
             let now = Date()
             let stage = MascotteStage.resolve(date: now, override: context.state.stageOverride)
@@ -355,7 +384,7 @@ struct MascotteLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(spacing: 5) {
                         if stage == .dodo {
-                            Link(destination: URL(string: "family-vault://open/stories")!) {
+                            Link(destination: MascotteDeepLink.stories.url) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "book.fill")
                                         .font(.caption2)
@@ -375,7 +404,7 @@ struct MascotteLiveActivity: Widget {
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         } else if stage == .routine {
-                            Link(destination: URL(string: "family-vault://open/routines")!) {
+                            Link(destination: MascotteDeepLink.routines.url) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "checklist")
                                         .font(.caption2)
@@ -434,7 +463,7 @@ struct MascotteLiveActivity: Widget {
             } minimal: {
                 companionCompactView(state: context.state, fallbackEmoji: headEmoji)
             }
-            .widgetURL(URL(string: "family-vault://open/tree"))
+            .widgetURL(MascotteDeepLink.tree.url)
         }
     }
 }
@@ -444,6 +473,7 @@ struct MascotteLiveActivity: Widget {
 @available(iOS 16.2, *)
 struct MascotteLockScreenView: View {
     let context: ActivityViewContext<MascotteActivityAttributes>
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
@@ -501,7 +531,7 @@ struct MascotteLockScreenView: View {
                     .tint(.green)
                     .padding(.top, 2)
                     if stage == .dodo {
-                        Link(destination: URL(string: "family-vault://open/stories")!) {
+                        Link(destination: MascotteDeepLink.stories.url) {
                             HStack(spacing: 6) {
                                 Image(systemName: "book.fill")
                                     .font(.caption2)
@@ -522,7 +552,7 @@ struct MascotteLockScreenView: View {
                         }
                         .padding(.top, 4)
                     } else if stage == .routine {
-                        Link(destination: URL(string: "family-vault://open/routines")!) {
+                        Link(destination: MascotteDeepLink.routines.url) {
                             HStack(spacing: 6) {
                                 Image(systemName: "checklist")
                                     .font(.caption2)
@@ -573,23 +603,28 @@ struct MascotteLockScreenView: View {
                 Spacer(minLength: 0)
             }
         .padding(14)
-        .activityBackgroundTint(Color.black.opacity(0.85))
+        .activityBackgroundTint(colorScheme == .dark
+            ? Color.black.opacity(0.85)
+            : Color(white: 0.12).opacity(0.92))
     }
 
     /// Affiche le sprite pixel art du compagnon si disponible dans le ContentState,
     /// sinon fallback sur l'emoji du stage narratif.
     @ViewBuilder
     private func companionAvatar(fallbackEmoji: String) -> some View {
-        if context.state.companionSpriteToken != nil,
-           let uiImage = loadCompanionSpriteFromAppGroup() {
+        let label = "Compagnon \(context.attributes.mascotteName)"
+        if let token = context.state.companionSpriteToken,
+           let uiImage = CompanionSpriteCache.image(for: token) {
             Image(uiImage: uiImage)
                 .interpolation(.none)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .scaleEffect(1.5)
+                .accessibilityLabel(label)
         } else {
             Text(fallbackEmoji)
                 .font(.system(size: 48))
+                .accessibilityLabel(label)
         }
     }
 
