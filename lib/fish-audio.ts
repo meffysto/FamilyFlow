@@ -22,15 +22,34 @@ export function storyAudioPathFish(storyId: string, referenceId: string): string
 
 /**
  * Retourne le chemin d'un MP3 deja genere s'il existe, sinon null.
+ * Si le cache documentDir est absent mais que vaultUri est fourni et pointe vers
+ * un fichier existant, le MP3 est copie depuis le vault vers documentDir.
  */
 export async function getCachedStoryAudioFish(
   storyId: string,
   referenceId: string,
+  vaultUri?: string,
 ): Promise<string | null> {
   try {
     const path = storyAudioPathFish(storyId, referenceId);
     const info = await FileSystem.getInfoAsync(path);
-    return info.exists ? path : null;
+    if (info.exists) return path;
+
+    // Fallback vault : copier depuis iCloud vers documentDir
+    if (vaultUri) {
+      try {
+        const vaultInfo = await FileSystem.getInfoAsync(vaultUri);
+        if (vaultInfo.exists) {
+          await ensureAudioDir();
+          await FileSystem.copyAsync({ from: vaultUri, to: path });
+          return path;
+        }
+      } catch (e) {
+        if (__DEV__) console.warn('[fish-audio] fallback vault copy failed:', e);
+      }
+    }
+
+    return null;
   } catch {
     return null;
   }

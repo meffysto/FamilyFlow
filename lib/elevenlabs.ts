@@ -27,17 +27,44 @@ export function storyAudioPath(storyId: string, voiceId: string): string {
 }
 
 /**
+ * Chemin relatif vault pour l'audio MP3 d'une histoire.
+ * Convention : 09 - Histoires/{enfant}/{storyId}.mp3
+ */
+export function storyVaultAudioRelPath(enfant: string, storyId: string): string {
+  return `09 - Histoires/${enfant}/${storyId}.mp3`;
+}
+
+/**
  * Retourne le chemin d'un MP3 déjà généré s'il existe, sinon null.
+ * Si le cache documentDir est absent mais que vaultUri est fourni et pointe vers
+ * un fichier existant, le MP3 est copié depuis le vault vers documentDir.
  * Usage : pré-check sans déclencher la génération (ex. afficher un badge "déjà téléchargée").
  */
 export async function getCachedStoryAudio(
   storyId: string,
   voiceId: string,
+  vaultUri?: string,
 ): Promise<string | null> {
   try {
     const path = storyAudioPath(storyId, voiceId);
     const info = await FileSystem.getInfoAsync(path);
-    return info.exists ? path : null;
+    if (info.exists) return path;
+
+    // Fallback vault : copier depuis iCloud vers documentDir
+    if (vaultUri) {
+      try {
+        const vaultInfo = await FileSystem.getInfoAsync(vaultUri);
+        if (vaultInfo.exists) {
+          await ensureAudioDir();
+          await FileSystem.copyAsync({ from: vaultUri, to: path });
+          return path;
+        }
+      } catch (e) {
+        if (__DEV__) console.warn('[elevenlabs] fallback vault copy failed:', e);
+      }
+    }
+
+    return null;
   } catch {
     return null;
   }
