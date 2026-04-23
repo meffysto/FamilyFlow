@@ -2172,6 +2172,7 @@
       "save": "Save",
       "update": "Update"
     },
+    "filterAll": "All",
     "toast": {
       "fillRequired": "Please fill in at least the child and the quote",
       "added": "Quote added!",

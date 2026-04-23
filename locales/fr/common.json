@@ -2180,6 +2180,7 @@
       "save": "Enregistrer",
       "update": "Modifier"
     },
+    "filterAll": "Tous",
     "toast": {
       "fillRequired": "Remplissez au moins l'enfant et la citation",
       "added": "Mot ajouté !",

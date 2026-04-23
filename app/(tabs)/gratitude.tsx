@@ -5,18 +5,21 @@
  * Fichier vault : 06 - Mémoires/Gratitude familiale.md
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   ScrollView,
   SectionList,
   Modal,
   TextInput,
   RefreshControl,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -32,13 +35,127 @@ import { Shadows } from '../../constants/shadows';
 import type { GratitudeEntry, GratitudeDay } from '../../lib/types';
 import { isBabyProfile } from '../../lib/types';
 import { MarkdownText } from '../../components/ui/MarkdownText';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import { EmptyState } from '../../components/EmptyState';
 import { useTranslation } from 'react-i18next';
 
 type TabId = 'aujourdhui' | 'livre';
+
+// ─── Constantes animation ────────────────────────────────────────────────────
+
+const TAB_SPRING = { damping: 32, stiffness: 200 };
+
+// ─── TabSwitcher pilule animée ───────────────────────────────────────────────
+
+interface TabSwitcherProps {
+  activeTab: TabId;
+  onTabChange: (tab: TabId) => void;
+  primary: string;
+  colors: ReturnType<typeof useThemeColors>['colors'];
+}
+
+function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherProps) {
+  const [tabWidth, setTabWidth] = useState(0);
+  const indicatorX = useSharedValue(0);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
+
+  const handlePress = useCallback((tab: TabId) => {
+    const toIndex = tab === 'aujourdhui' ? 0 : 1;
+    indicatorX.value = withSpring(toIndex * tabWidth, TAB_SPRING);
+    onTabChange(tab);
+  }, [tabWidth, onTabChange, indicatorX]);
+
+  React.useEffect(() => {
+    if (tabWidth === 0) return;
+    const idx = activeTab === 'aujourdhui' ? 0 : 1;
+    indicatorX.value = withSpring(idx * tabWidth, TAB_SPRING);
+  }, [tabWidth, activeTab, indicatorX]);
+
+  const DRAG_THRESHOLD = 30;
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      const base = activeTab === 'aujourdhui' ? 0 : tabWidth;
+      indicatorX.value = Math.max(0, Math.min(tabWidth, base + e.translationX));
+    })
+    .onEnd((e) => {
+      if (e.translationX > DRAG_THRESHOLD && activeTab === 'aujourdhui') {
+        indicatorX.value = withSpring(tabWidth, TAB_SPRING);
+        runOnJS(Haptics.selectionAsync)();
+        runOnJS(onTabChange)('livre');
+      } else if (e.translationX < -DRAG_THRESHOLD && activeTab === 'livre') {
+        indicatorX.value = withSpring(0, TAB_SPRING);
+        runOnJS(Haptics.selectionAsync)();
+        runOnJS(onTabChange)('aujourdhui');
+      } else {
+        const snap = activeTab === 'aujourdhui' ? 0 : tabWidth;
+        indicatorX.value = withSpring(snap, TAB_SPRING);
+      }
+    });
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <View
+        style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onLayout={e => setTabWidth(e.nativeEvent.layout.width / 2)}
+      >
+        <Animated.View
+          style={[tabSwitcherStyles.indicator, indicatorStyle, { backgroundColor: primary, width: tabWidth }]}
+        />
+        <Pressable
+          style={tabSwitcherStyles.tab}
+          onPress={() => handlePress('aujourdhui')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'aujourdhui' }}
+        >
+          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'aujourdhui' ? colors.bg : colors.textMuted }]}>
+            🌟 Aujourd'hui
+          </Text>
+        </Pressable>
+        <Pressable
+          style={tabSwitcherStyles.tab}
+          onPress={() => handlePress('livre')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'livre' }}
+        >
+          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'livre' ? colors.bg : colors.textMuted }]}>
+            📖 Livre d'or
+          </Text>
+        </Pressable>
+      </View>
+    </GestureDetector>
+  );
+}
+
+const tabSwitcherStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    marginHorizontal: Spacing['4xl'],
+    marginVertical: Spacing.lg,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    overflow: 'hidden',
+    height: 40,
+  },
+  indicator: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    borderRadius: Radius.full,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+});
 
 const LOAD_BATCH = 30;
 
@@ -144,11 +261,6 @@ export default function GratitudeScreen() {
     return format(d, 'EEEE d MMMM yyyy', { locale: getDateLocale() });
   }, [selectedDate, isToday]);
 
-  const tabs: { id: TabId; label: string }[] = [
-    { id: 'aujourdhui', label: t('gratitude.tabs.today') },
-    { id: 'livre', label: t('gratitude.tabs.goldenBook') },
-  ];
-
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
@@ -161,13 +273,7 @@ export default function GratitudeScreen() {
       </View>
 
       {/* Onglets */}
-      <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <SegmentedControl
-          segments={tabs}
-          value={activeTab}
-          onChange={(id) => setActiveTab(id as TabId)}
-        />
-      </View>
+      <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} primary={primary} colors={colors} />
 
       {activeTab === 'aujourdhui' && (
         <ScrollView
@@ -397,11 +503,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   streakText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  tabBar: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
   scroll: { flex: 1 },
   content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
   // Date navigation

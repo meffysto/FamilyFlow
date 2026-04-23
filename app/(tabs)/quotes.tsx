@@ -5,7 +5,7 @@
  * Fichier vault : 06 - Mémoires/Mots d'enfants.md
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -50,6 +50,7 @@ export default function QuotesScreen() {
   const [editingQuote, setEditingQuote] = useState<ChildQuote | null>(null);
   const [dictaphoneVisible, setDictaphoneVisible] = useState(false);
   const dictaphoneResultRef = useRef<string>('');
+  const [filterEnfant, setFilterEnfant] = useState<string | null>(null);
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant' || p.role === 'ado'),
@@ -68,9 +69,41 @@ export default function QuotesScreen() {
       const [yyyy, mm] = key.split('-');
       const d = new Date(parseInt(yyyy), parseInt(mm) - 1, 1);
       const title = format(d, 'MMMM yyyy', { locale: getDateLocale() });
-      return { title: title.charAt(0).toUpperCase() + title.slice(1), data };
+      return { key, title: title.charAt(0).toUpperCase() + title.slice(1), data, count: data.length };
     });
   }, [quotes]);
+
+  const filteredSections = useMemo(() => {
+    if (!filterEnfant) return sections;
+    return sections
+      .map(s => { const data = s.data.filter(q => q.enfant === filterEnfant); return { ...s, data, count: data.length }; })
+      .filter(s => s.count > 0);
+  }, [sections, filterEnfant]);
+
+  // Sections repliées par défaut pour les mois passés
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+  const hasInitialized = useRef(false);
+
+  useEffect(() => {
+    if (hasInitialized.current || sections.length === 0) return;
+    hasInitialized.current = true;
+    const now = new Date().toISOString().slice(0, 7);
+    setCollapsedMonths(new Set(sections.filter(s => s.key < now).map(s => s.key)));
+  }, [sections]);
+
+  const toggleMonth = useCallback((key: string) => {
+    Haptics.selectionAsync();
+    setCollapsedMonths(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
+
+  const displaySections = useMemo(
+    () => filteredSections.map(s => collapsedMonths.has(s.key) ? { ...s, data: [] as ChildQuote[] } : s),
+    [filteredSections, collapsedMonths],
+  );
 
   const openModal = useCallback(() => {
     setCitation('');
@@ -134,24 +167,24 @@ export default function QuotesScreen() {
     [],
   );
 
-  const renderItem = useCallback(({ item }: { item: ChildQuote }) => (
-    <TouchableOpacity activeOpacity={0.7} onPress={() => openEdit(item)} onLongPress={() => handleDelete(item)}>
-      <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
-        <Text style={[styles.citation, { color: colors.text }]}>
-          « {item.citation} »
-        </Text>
-        <View style={styles.cardFooter}>
-          <Text style={[styles.enfant, { color: primary }]} numberOfLines={1}>
-            {item.enfant}
-          </Text>
-          <Text style={[styles.date, { color: colors.textMuted }]}>
-            {formatDateLocalized(item.date)}
-            {item.contexte ? ` · ${item.contexte}` : ''}
-          </Text>
+  const renderItem = useCallback(({ item }: { item: ChildQuote }) => {
+    const avatar = enfants.find(e => e.name === item.enfant)?.avatar ?? '💬';
+    return (
+      <TouchableOpacity activeOpacity={0.7} onPress={() => openEdit(item)} onLongPress={() => handleDelete(item)}>
+        <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardAvatar}>{avatar}</Text>
+            <Text style={[styles.enfant, { color: primary }]} numberOfLines={1}>{item.enfant}</Text>
+            <Text style={[styles.date, { color: colors.textMuted }]}>{formatDateLocalized(item.date)}</Text>
+          </View>
+          <Text style={[styles.citation, { color: colors.text }]}>« {item.citation} »</Text>
+          {!!item.contexte && (
+            <Text style={[styles.contexteText, { color: colors.textFaint }]}>{item.contexte}</Text>
+          )}
         </View>
-      </View>
-    </TouchableOpacity>
-  ), [colors, primary, handleDelete, openEdit]);
+      </TouchableOpacity>
+    );
+  }, [colors, primary, handleDelete, openEdit, enfants]);
 
   // Fermer le modal principal avant d'ouvrir le dictaphone (max 1 niveau)
   const openDictaphone = useCallback(() => {
@@ -187,6 +220,26 @@ export default function QuotesScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Filtre par enfant */}
+      {enfants.length > 1 && (
+        <View style={styles.filterBar}>
+          <Chip
+            label={t('quotes.filterAll')}
+            selected={!filterEnfant}
+            onPress={() => setFilterEnfant(null)}
+          />
+          {enfants.map(e => (
+            <Chip
+              key={e.id}
+              label={e.name}
+              emoji={e.avatar}
+              selected={filterEnfant === e.name}
+              onPress={() => setFilterEnfant(filterEnfant === e.name ? null : e.name)}
+            />
+          ))}
+        </View>
+      )}
+
       {quotes.length === 0 ? (
         <EmptyState
           emoji="💬"
@@ -197,14 +250,23 @@ export default function QuotesScreen() {
         />
       ) : (
         <SectionList
-          sections={sections}
+          sections={displaySections}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          renderSectionHeader={({ section }) => (
-            <Text style={[styles.sectionHeader, { color: colors.textSub }]}>
-              {section.title}
-            </Text>
-          )}
+          renderSectionHeader={({ section }) => {
+            const collapsed = collapsedMonths.has(section.key);
+            return (
+              <TouchableOpacity
+                onPress={() => toggleMonth(section.key)}
+                style={styles.sectionHeaderRow}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sectionHeader, { color: colors.textSub }]}>{section.title}</Text>
+                <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.count}</Text>
+                <Text style={[styles.chevron, { color: colors.textMuted }]}>{collapsed ? '▶' : '▼'}</Text>
+              </TouchableOpacity>
+            );
+          }}
           contentContainerStyle={[styles.list, Layout.contentContainer]}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
@@ -315,40 +377,66 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing['4xl'],
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.md,
+  },
   sectionHeader: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
     textTransform: 'capitalize',
+    flex: 1,
+  },
+  sectionCount: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  chevron: {
+    fontSize: 11,
+    width: 16,
+    textAlign: 'center',
+  },
+  filterBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
   card: {
     borderRadius: Radius.lg,
-    padding: Spacing.md,
+    padding: Spacing.lg,
     marginBottom: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  cardAvatar: {
+    fontSize: 22,
   },
   citation: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
     fontStyle: 'italic',
-    marginBottom: Spacing.xs,
     lineHeight: FontSize.body * 1.5,
   },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    marginTop: Spacing.xxs,
+  contexteText: {
+    fontSize: FontSize.caption,
   },
   enfant: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    flexShrink: 0,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    flex: 1,
   },
   date: {
     fontSize: FontSize.micro,
-    flex: 1,
     textAlign: 'right',
   },
   // Modal
