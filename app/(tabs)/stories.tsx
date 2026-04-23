@@ -9,6 +9,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat,
   cancelAnimation, runOnJS,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -93,48 +94,73 @@ function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherPro
     indicatorX.value = withSpring(idx * tabWidth, TAB_SPRING);
   }, [tabWidth, activeTab, indicatorX]);
 
+  // Pan gesture : glisser la pillule gauche/droite
+  const DRAG_THRESHOLD = 30;
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      const base = activeTab === 'nouvelle' ? 0 : tabWidth;
+      indicatorX.value = Math.max(0, Math.min(tabWidth, base + e.translationX));
+    })
+    .onEnd((e) => {
+      if (e.translationX > DRAG_THRESHOLD && activeTab === 'nouvelle') {
+        indicatorX.value = withSpring(tabWidth, TAB_SPRING);
+        runOnJS(Haptics.selectionAsync)();
+        runOnJS(onTabChange)('bibliotheque');
+      } else if (e.translationX < -DRAG_THRESHOLD && activeTab === 'bibliotheque') {
+        indicatorX.value = withSpring(0, TAB_SPRING);
+        runOnJS(Haptics.selectionAsync)();
+        runOnJS(onTabChange)('nouvelle');
+      } else {
+        // Snap back
+        const snap = activeTab === 'nouvelle' ? 0 : tabWidth;
+        indicatorX.value = withSpring(snap, TAB_SPRING);
+      }
+    });
+
   return (
-    <View
-      style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
-      onLayout={e => setTabWidth(e.nativeEvent.layout.width / 2)}
-    >
-      {/* Indicateur animé */}
-      <Animated.View
-        style={[
-          tabSwitcherStyles.indicator,
-          indicatorStyle,
-          { backgroundColor: primary, width: tabWidth },
-        ]}
-      />
-      {/* Onglet Nouvelle histoire */}
-      <Pressable
-        style={tabSwitcherStyles.tab}
-        onPress={() => handlePress('nouvelle')}
-        accessibilityRole="tab"
-        accessibilityState={{ selected: activeTab === 'nouvelle' }}
+    <GestureDetector gesture={panGesture}>
+      <View
+        style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onLayout={e => setTabWidth(e.nativeEvent.layout.width / 2)}
       >
-        <Text style={[
-          tabSwitcherStyles.tabText,
-          { color: activeTab === 'nouvelle' ? colors.bg : colors.textMuted },
-        ]}>
-          ✨ Nouvelle
-        </Text>
-      </Pressable>
-      {/* Onglet Bibliothèque */}
-      <Pressable
-        style={tabSwitcherStyles.tab}
-        onPress={() => handlePress('bibliotheque')}
-        accessibilityRole="tab"
-        accessibilityState={{ selected: activeTab === 'bibliotheque' }}
-      >
-        <Text style={[
-          tabSwitcherStyles.tabText,
-          { color: activeTab === 'bibliotheque' ? colors.bg : colors.textMuted },
-        ]}>
-          📚 Bibliothèque
-        </Text>
-      </Pressable>
-    </View>
+        {/* Indicateur animé */}
+        <Animated.View
+          style={[
+            tabSwitcherStyles.indicator,
+            indicatorStyle,
+            { backgroundColor: primary, width: tabWidth },
+          ]}
+        />
+        {/* Onglet Nouvelle histoire */}
+        <Pressable
+          style={tabSwitcherStyles.tab}
+          onPress={() => handlePress('nouvelle')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'nouvelle' }}
+        >
+          <Text style={[
+            tabSwitcherStyles.tabText,
+            { color: activeTab === 'nouvelle' ? colors.bg : colors.textMuted },
+          ]}>
+            ✨ Nouvelle
+          </Text>
+        </Pressable>
+        {/* Onglet Bibliothèque */}
+        <Pressable
+          style={tabSwitcherStyles.tab}
+          onPress={() => handlePress('bibliotheque')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'bibliotheque' }}
+        >
+          <Text style={[
+            tabSwitcherStyles.tabText,
+            { color: activeTab === 'bibliotheque' ? colors.bg : colors.textMuted },
+          ]}>
+            📚 Bibliothèque
+          </Text>
+        </Pressable>
+      </View>
+    </GestureDetector>
   );
 }
 
