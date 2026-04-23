@@ -193,6 +193,7 @@ export default function MealsScreen() {
   const tabBarRef = useRef<View>(null);
 
   // Import state
+  const [showImportPicker, setShowImportPicker] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [importUrl, setImportUrl] = useState('');
   const [importLoading, setImportLoading] = useState(false);
@@ -1454,30 +1455,16 @@ export default function MealsScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
             }
           >
-            {/* Import methods grid */}
-            <View style={styles.importGrid}>
-              {[
-                { emoji: '🌐', label: t('meals.import.urlLabel'), onPress: () => setShowImport(true), a11y: t('meals.import.urlA11y') },
-                { emoji: '📷', label: photoImportLoading ? (importStatus || t('meals.import.photoLoading')) : t('meals.import.photoLabel'), onPress: handlePhotoImport, a11y: t('meals.import.photoA11y'), disabled: photoImportLoading },
-                { emoji: '📋', label: t('meals.import.textLabel'), onPress: () => { setShowTextImport(true); setTextImportValue(''); setTextImportResult(null); }, a11y: t('meals.import.textA11y') },
-                { emoji: '🔍', label: t('meals.import.vaultLabel'), onPress: () => { setShowScanner(true); setScanResults([]); }, a11y: t('meals.import.vaultA11y') },
-                { emoji: '🌍', label: t('meals.import.communityLabel'), onPress: () => { setShowExplore(true); setExploreQuery(''); setExploreResults([]); setExplorePreview(null); }, a11y: t('meals.import.communityA11y') },
-              ].map((item, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={[styles.importCard, { backgroundColor: tint, borderColor: primary + '20' }, item.disabled && { opacity: 0.5 }]}
-                  onPress={item.onPress}
-                  activeOpacity={0.7}
-                  disabled={item.disabled}
-                  accessibilityLabel={item.a11y}
-                  accessibilityRole="button"
-                  accessibilityState={item.disabled ? { disabled: true } : undefined}
-                >
-                  <Text style={styles.importCardEmoji}>{item.emoji}</Text>
-                  <Text style={[styles.importCardLabel, { color: primary }]} numberOfLines={1}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {/* Import button */}
+            <TouchableOpacity
+              style={[styles.importPickerBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
+              onPress={() => setShowImportPicker(true)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('meals.import.pickerA11y')}
+            >
+              <Text style={[styles.importPickerBtnText, { color: primary }]}>+ {t('meals.import.pickerLabel')}</Text>
+            </TouchableOpacity>
 
             {filteredRecipes.length === 0 ? (
               <View style={styles.emptyState}>
@@ -1877,6 +1864,76 @@ export default function MealsScreen() {
             </View>
           </KeyboardAvoidingView>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Import picker bottom sheet */}
+      <Modal
+        visible={showImportPicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowImportPicker(false)}
+      >
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+          <View style={[styles.pickerHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+            <View style={{ width: 28 }} />
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>{t('meals.import.pickerTitle')}</Text>
+            <TouchableOpacity onPress={() => setShowImportPicker(false)}>
+              <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={{ padding: Spacing['2xl'], gap: Spacing.md }}>
+            {[
+              {
+                emoji: '🌐',
+                title: t('meals.import.urlLabel'),
+                description: t('meals.import.urlPickerDesc'),
+                onPress: () => { setShowImportPicker(false); setShowImport(true); },
+              },
+              {
+                emoji: '📷',
+                title: t('meals.import.photoLabel'),
+                description: t('meals.import.photoPickerDesc'),
+                disabled: photoImportLoading,
+                onPress: () => { setShowImportPicker(false); handlePhotoImport(); },
+              },
+              {
+                emoji: '📋',
+                title: t('meals.import.textLabel'),
+                description: t('meals.import.textPickerDesc'),
+                onPress: () => { setShowImportPicker(false); setShowTextImport(true); setTextImportValue(''); setTextImportResult(null); },
+              },
+              {
+                emoji: '🔍',
+                title: t('meals.import.vaultLabel'),
+                description: t('meals.import.vaultPickerDesc'),
+                onPress: () => { setShowImportPicker(false); setShowScanner(true); setScanResults([]); },
+              },
+              {
+                emoji: '🌍',
+                title: t('meals.import.communityLabel'),
+                description: t('meals.import.communityPickerDesc'),
+                onPress: () => { setShowImportPicker(false); setShowExplore(true); setExploreQuery(''); setExploreResults([]); setExplorePreview(null); },
+              },
+            ].map((item, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.importPickerRow, { backgroundColor: colors.card, borderColor: colors.border }, item.disabled && { opacity: 0.4 }]}
+                onPress={item.onPress}
+                disabled={item.disabled}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+              >
+                <Text style={styles.importPickerRowEmoji}>{item.emoji}</Text>
+                <View style={styles.importPickerRowText}>
+                  <Text style={[styles.importPickerRowTitle, { color: colors.text }]}>{item.title}</Text>
+                  <Text style={[styles.importPickerRowDesc, { color: colors.textMuted }]}>{item.description}</Text>
+                </View>
+                <Text style={[styles.importPickerRowChevron, { color: colors.textMuted }]}>›</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
 
       {/* Import recipe modal */}
@@ -2882,29 +2939,46 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
   },
-  // Import grid
-  importGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  importCard: {
-    width: '30%' as any,
-    flexGrow: 1,
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xs,
+  // Import picker button
+  importPickerBtn: {
     borderRadius: Radius.lg,
     borderWidth: 1,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+  },
+  importPickerBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  // Import picker sheet rows
+  importPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.lg,
+  },
+  importPickerRowEmoji: {
+    fontSize: 28,
+    width: 36,
+    textAlign: 'center',
+  },
+  importPickerRowText: {
+    flex: 1,
     gap: Spacing.xs,
   },
-  importCardEmoji: {
-    fontSize: 28,
-  },
-  importCardLabel: {
-    fontSize: FontSize.caption,
+  importPickerRowTitle: {
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    textAlign: 'center',
+  },
+  importPickerRowDesc: {
+    fontSize: FontSize.caption,
+  },
+  importPickerRowChevron: {
+    fontSize: 22,
+    fontWeight: FontWeight.normal,
   },
   importLabel: {
     fontSize: FontSize.sm,
