@@ -850,7 +850,7 @@ export default function StoriesScreen() {
 
     return (
       <View>
-        <Text style={[styles.stepTitle, { color: colors.text }]}>🌙 C'est l'heure des histoires</Text>
+        <Text style={[styles.stepTitle, { color: colors.text }]}>Pour qui génère-t-on une histoire ce soir ?</Text>
         {childProfiles.length === 1 ? (
           // Enfant unique — carte centrée horizontalement et verticalement
           (() => {
