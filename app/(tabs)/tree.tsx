@@ -507,8 +507,12 @@ export default function TreeScreen() {
   const [showCompanionPicker, setShowCompanionPicker] = useState(false);
   const [showCompanionCard, setShowCompanionCard] = useState(false);
   const [showFeedPicker, setShowFeedPicker] = useState(false);
-  // Phase 42 — feedState pour animation pulse + particules (reset 1500ms après feed)
+  // Phase 42 — feedState pour animation pulse + particules (reset 2400ms après feed)
   const [feedState, setFeedState] = useState<null | 'eating-preferred' | 'eating-neutral' | 'eating-hated'>(null);
+  // Feed mis en file d'attente pendant la fermeture du Modal — joué sur onDismiss
+  // (sinon l'animation pulse est cachée sous le backdrop + slide-out du Modal iOS ~500ms)
+  const pendingFeedRef = useRef<typeof feedState>(null);
+  const feedResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [companionMessage, setCompanionMessage] = useState<string | null>(null);
   const companionPickerShownRef = useRef(false);
   // Mémoire courte du compagnon — en mémoire uniquement, jamais persistée
@@ -787,16 +791,33 @@ export default function TreeScreen() {
       } else {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       }
-      // Attendre la fin de l'animation de fermeture modal (~350ms iOS) avant d'animer
-      // sinon le sprite est obscurci pendant la pulse et les particules
+      // Armer l'animation ; elle sera jouée sur onDismiss du Modal (après slide-out
+      // complet). Fallback timeout si onDismiss ne tire pas (Android / Modal déjà fermé).
       const nextState = `eating-${result.affinity}` as const;
+      pendingFeedRef.current = nextState;
       setTimeout(() => {
-        setFeedState(nextState);
-        setTimeout(() => setFeedState(null), 2400);
-      }, 400);
+        if (pendingFeedRef.current === nextState) {
+          triggerPendingFeed();
+        }
+      }, 650);
     },
     [activeProfile?.id, feedCompanion],
   );
+
+  const triggerPendingFeed = useCallback(() => {
+    const s = pendingFeedRef.current;
+    if (!s) return;
+    pendingFeedRef.current = null;
+    setFeedState(s);
+    if (feedResetTimerRef.current) clearTimeout(feedResetTimerRef.current);
+    feedResetTimerRef.current = setTimeout(() => setFeedState(null), 2400);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (feedResetTimerRef.current) clearTimeout(feedResetTimerRef.current);
+    };
+  }, []);
 
   // Refs stables pour éviter les boucles de re-render
   const companionRef = useRef(companion);
@@ -3010,17 +3031,10 @@ export default function TreeScreen() {
       <FeedPicker
         visible={showFeedPicker}
         onClose={() => setShowFeedPicker(false)}
+        onDismiss={triggerPendingFeed}
         inventory={profile?.harvestInventory ?? {}}
         companionSpecies={companion?.activeSpecies ?? 'chat'}
         onPick={handleFeedCrop}
-      />
-
-      {/* Phase 42 — Particules feed en top-level (au-dessus de toutes les couches diorama) */}
-      <FeedParticles
-        visible={!!feedState}
-        affinity={feedState ? (feedState.replace('eating-', '') as CropAffinity) : 'neutral'}
-        x={SCREEN_W / 2}
-        y={SCREEN_H * 0.42}
       />
 
       {/* Modal compagnon — choix initial ou switch */}

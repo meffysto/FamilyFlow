@@ -22,13 +22,21 @@ import { ImpactFeedbackStyle } from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/spacing';
-import type { CompanionSpecies, CompanionStage, CompanionMood } from '../../lib/mascot/companion-types';
+import type { CompanionSpecies, CompanionStage, CompanionMood, CropAffinity } from '../../lib/mascot/companion-types';
 import { COMPANION_SPRITES } from '../../lib/mascot/companion-sprites';
+import { FeedParticles } from './FeedParticles';
 
 // ── Constantes géométrie ──────────────────────────────
 
 /** Taille du sprite du compagnon (logical pixels) */
 const COMPANION_SIZE = 48;
+
+/** Zone d'ancrage des particules feed — couvre la trajectoire des emojis
+ * (rise 120px, spread horizontal ±100px autour du sprite). */
+const PARTICLE_ANCHOR_W = 200;
+const PARTICLE_ANCHOR_H = 160;
+/** Offset Y pour que l'émetteur soit au niveau du haut du sprite. */
+const PARTICLE_EMITTER_Y = PARTICLE_ANCHOR_H - 20;
 
 /** Point de repos du compagnon (position fractionnelle dans le container) */
 const HOME_FX = 0.42;
@@ -955,15 +963,26 @@ export const CompanionSlot = React.memo(function CompanionSlot({
         </View>
       )}
 
-      {/* Sprite animé du compagnon */}
+      {/* Sprite animé du compagnon + overlay particules */}
       <Pressable onPress={handleTap} onLongPress={onLongPress} accessibilityLabel={name}>
-        <Animated.View style={companionAnimStyle}>
-          <Image
-            source={currentSprite}
-            style={[styles.sprite, flipX && { transform: [{ scaleX: -1 }] }]}
-            resizeMode="contain"
-          />
-        </Animated.View>
+        <View style={styles.spriteWrap}>
+          <Animated.View style={companionAnimStyle}>
+            <Image
+              source={currentSprite}
+              style={[styles.sprite, flipX && { transform: [{ scaleX: -1 }] }]}
+              resizeMode="contain"
+            />
+          </Animated.View>
+          {/* Particules feed — rendues au-dessus du sprite, suivent moveStyle via le parent */}
+          <View pointerEvents="none" style={styles.particlesAnchor}>
+            <FeedParticles
+              visible={!!feedState}
+              affinity={feedState ? (feedState.replace('eating-', '') as CropAffinity) : 'neutral'}
+              x={PARTICLE_ANCHOR_W / 2}
+              y={PARTICLE_EMITTER_Y}
+            />
+          </View>
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -979,6 +998,22 @@ const styles = StyleSheet.create({
   sprite: {
     width: COMPANION_SIZE,
     height: COMPANION_SIZE,
+  },
+  spriteWrap: {
+    width: COMPANION_SIZE,
+    height: COMPANION_SIZE,
+    overflow: 'visible',
+  },
+  particlesAnchor: {
+    position: 'absolute',
+    // Centré horizontalement sur le sprite (wrap = 48×48)
+    left: COMPANION_SIZE / 2 - PARTICLE_ANCHOR_W / 2,
+    // Le bas de l'ancre arrive à ~20px sous le haut du sprite (là où l'émetteur est placé)
+    top: -(PARTICLE_ANCHOR_H - 20),
+    width: PARTICLE_ANCHOR_W,
+    height: PARTICLE_ANCHOR_H,
+    overflow: 'visible',
+    zIndex: 100,
   },
   messageBubble: {
     position: 'absolute',

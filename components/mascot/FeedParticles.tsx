@@ -21,6 +21,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  withSequence,
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
@@ -63,19 +64,24 @@ function Particle({ emoji, delay, offsetX, onLastEnd }: ParticleProps) {
   const opacity = useSharedValue(0);
 
   useEffect(() => {
-    // Fade-in rapide
-    opacity.value = withDelay(delay, withTiming(1, { duration: 100 }));
     // Float-up sur toute la durée
     translateY.value = withDelay(
       delay,
       withTiming(FLOAT_DISTANCE, { duration: DURATION_MS, easing: Easing.out(Easing.quad) }),
     );
-    // Fade-out final
+    // Fade-in rapide PUIS hold PUIS fade-out — en une seule séquence pour éviter
+    // l'écrasement d'une assignation par la suivante (bug précédent : le fade-in
+    // était immédiatement remplacé par le fade-out différé → opacity restait à 0).
+    const HOLD_MS = DURATION_MS - 100 - FADE_OUT_MS;
     opacity.value = withDelay(
-      delay + DURATION_MS - FADE_OUT_MS,
-      withTiming(0, { duration: FADE_OUT_MS }, (finished) => {
-        if (finished && onLastEnd) runOnJS(onLastEnd)();
-      }),
+      delay,
+      withSequence(
+        withTiming(1, { duration: 100 }),
+        withTiming(1, { duration: HOLD_MS }),
+        withTiming(0, { duration: FADE_OUT_MS }, (finished) => {
+          if (finished && onLastEnd) runOnJS(onLastEnd)();
+        }),
+      ),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delay]);

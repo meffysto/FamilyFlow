@@ -92,6 +92,8 @@ export interface FeedPickerProps {
   inventory: HarvestInventory;
   companionSpecies: CompanionSpecies;
   onPick: (cropId: string, grade: HarvestGradeEn) => void;
+  /** iOS — appelé une fois le Modal totalement dismissé (slide terminé). */
+  onDismiss?: () => void;
 }
 
 interface Row {
@@ -146,6 +148,7 @@ export function FeedPicker({
   inventory,
   companionSpecies,
   onPick,
+  onDismiss,
 }: FeedPickerProps) {
   const { t } = useTranslation();
 
@@ -203,6 +206,7 @@ export function FeedPicker({
       transparent
       animationType="slide"
       onRequestClose={onClose}
+      onDismiss={onDismiss}
     >
       <View style={styles.overlay}>
         <TouchableOpacity
