@@ -39,6 +39,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 // ─── Constantes animation ───────────────────────────────────────────────────
 
 const TAB_SPRING: { damping: number; stiffness: number } = { damping: 18, stiffness: 180 };
+const TAB_SPRING_SNAP: { damping: number; stiffness: number } = { damping: 32, stiffness: 200 };
 
 // ─── Types machine à états ──────────────────────────────────────────────────
 
@@ -103,17 +104,17 @@ function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherPro
     })
     .onEnd((e) => {
       if (e.translationX > DRAG_THRESHOLD && activeTab === 'nouvelle') {
-        indicatorX.value = withSpring(tabWidth, TAB_SPRING);
+        indicatorX.value = withSpring(tabWidth, TAB_SPRING_SNAP);
         runOnJS(Haptics.selectionAsync)();
         runOnJS(onTabChange)('bibliotheque');
       } else if (e.translationX < -DRAG_THRESHOLD && activeTab === 'bibliotheque') {
-        indicatorX.value = withSpring(0, TAB_SPRING);
+        indicatorX.value = withSpring(0, TAB_SPRING_SNAP);
         runOnJS(Haptics.selectionAsync)();
         runOnJS(onTabChange)('nouvelle');
       } else {
         // Snap back
         const snap = activeTab === 'nouvelle' ? 0 : tabWidth;
-        indicatorX.value = withSpring(snap, TAB_SPRING);
+        indicatorX.value = withSpring(snap, TAB_SPRING_SNAP);
       }
     });
 
