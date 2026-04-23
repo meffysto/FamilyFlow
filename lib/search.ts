@@ -9,14 +9,14 @@
  * Aucune dépendance externe — fonctionne hors-ligne.
  */
 
-import type { Task, RDV, StockItem, MealItem, CourseItem, Memory, Defi, WishlistItem, Profile } from './types';
+import type { Task, RDV, StockItem, MealItem, CourseItem, Memory, Defi, WishlistItem, Profile, LoveNote, Note, Routine, Anniversary, ChildQuote } from './types';
 import type { AppRecipe } from './cooklang';
 import { formatDateLocalized } from './date-locale';
 import { startOfWeek, endOfWeek, addDays, format as fnsFormat } from 'date-fns';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
-export type SearchResultType = 'task' | 'rdv' | 'recipe' | 'stock' | 'meal' | 'memory' | 'course' | 'defi' | 'wishlist';
+export type SearchResultType = 'task' | 'rdv' | 'recipe' | 'stock' | 'meal' | 'memory' | 'course' | 'defi' | 'wishlist' | 'lovenote' | 'note' | 'routine' | 'anniversary' | 'quote';
 
 export interface SearchResult {
   type: SearchResultType;
@@ -38,6 +38,11 @@ export interface SearchInput {
   wishlistItems: WishlistItem[];
   recipes: AppRecipe[];
   profiles?: Profile[];
+  loveNotes?: LoveNote[];
+  notes?: Note[];
+  routines?: Routine[];
+  anniversaries?: Anniversary[];
+  quotes?: ChildQuote[];
 }
 
 /** Résultat enrichi avec les filtres actifs */
@@ -366,6 +371,21 @@ const TYPE_KEYWORDS: Record<string, SearchResultType[]> = {
   souhait: ['wishlist'],
   cadeau: ['wishlist'],
   idee: ['wishlist'],
+  lovenote: ['lovenote'],
+  message: ['lovenote'],
+  amour: ['lovenote'],
+  note: ['note'],
+  notes: ['note'],
+  routine: ['routine'],
+  routines: ['routine'],
+  matin: ['routine'],
+  soir: ['routine'],
+  anniversaire: ['anniversary'],
+  anniversaires: ['anniversary'],
+  naissance: ['anniversary'],
+  citation: ['quote'],
+  citations: ['quote'],
+  perle: ['quote'],
 };
 
 function detectTypes(tokens: string[]): Set<SearchResultType> {
@@ -502,6 +522,51 @@ const wishlistConfig: SearchEntityConfig<WishlistItem> = {
   getBonus: (w) => w.bought ? 0 : 0.3,
 };
 
+const loveNoteConfig: SearchEntityConfig<LoveNote> = {
+  type: 'lovenote',
+  icon: '💌',
+  route: '/(tabs)/lovenotes',
+  getFields: (ln) => [ln.body],
+  getTitle: (ln) => ln.body.length > 50 ? ln.body.slice(0, 50) + '…' : ln.body,
+  getSnippet: (ln) => `${ln.status} — ${formatDateLocalized(ln.createdAt.slice(0, 10))}`,
+};
+
+const noteConfig: SearchEntityConfig<Note> = {
+  type: 'note',
+  icon: '📝',
+  route: '/(tabs)/notes',
+  getFields: (n) => [n.title, n.content, n.tags.join(' '), n.category],
+  getTitle: (n) => n.title,
+  getSnippet: (n) => `${n.category} — ${n.content.slice(0, 60)}`,
+};
+
+const routineConfig: SearchEntityConfig<Routine> = {
+  type: 'routine',
+  icon: '🔁',
+  route: '/(tabs)/routines',
+  getFields: (r) => [r.label, r.steps.map((s) => s.text).join(' ')],
+  getTitle: (r) => `${r.emoji} ${r.label}`,
+  getSnippet: (r) => `${r.steps.length} étape${r.steps.length > 1 ? 's' : ''}`,
+};
+
+const anniversaryConfig: SearchEntityConfig<Anniversary> = {
+  type: 'anniversary',
+  icon: '🎂',
+  route: '/(tabs)/anniversaires',
+  getFields: (a) => [a.name, a.category || '', a.notes || ''],
+  getTitle: (a) => a.name,
+  getSnippet: (a) => `${a.date}${a.birthYear ? ` — né(e) en ${a.birthYear}` : ''}${a.category ? ` — ${a.category}` : ''}`,
+};
+
+const quoteConfig: SearchEntityConfig<ChildQuote> = {
+  type: 'quote',
+  icon: '💬',
+  route: '/(tabs)/quotes',
+  getFields: (q) => [q.citation, q.enfant, q.contexte || ''],
+  getTitle: (q) => `"${q.citation}"`,
+  getSnippet: (q) => `${q.enfant}${q.contexte ? ` — ${q.contexte}` : ''} — ${formatDateLocalized(q.date)}`,
+};
+
 // ─── Moteur principal ───────────────────────────────────────────────────────────
 
 const SEARCH_CONFIGS: { type: SearchResultType; getItems: (input: SearchInput) => any[]; config: SearchEntityConfig<any> }[] = [
@@ -514,6 +579,11 @@ const SEARCH_CONFIGS: { type: SearchResultType; getItems: (input: SearchInput) =
   { type: 'memory', getItems: (i) => i.memories, config: memoryConfig },
   { type: 'defi', getItems: (i) => i.defis, config: defiConfig },
   { type: 'wishlist', getItems: (i) => i.wishlistItems, config: wishlistConfig },
+  { type: 'lovenote', getItems: (i) => i.loveNotes ?? [], config: loveNoteConfig },
+  { type: 'note', getItems: (i) => i.notes ?? [], config: noteConfig },
+  { type: 'routine', getItems: (i) => i.routines ?? [], config: routineConfig },
+  { type: 'anniversary', getItems: (i) => i.anniversaries ?? [], config: anniversaryConfig },
+  { type: 'quote', getItems: (i) => i.quotes ?? [], config: quoteConfig },
 ];
 
 /**

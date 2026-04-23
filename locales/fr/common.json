@@ -2432,7 +2432,7 @@
     "resultCount_one": "{{count}} résultat",
     "resultCount_other": "{{count}} résultats",
     "noResults": "Aucun résultat pour \"{{query}}\"",
-    "hint": "Tâches, RDV, recettes, stock, repas, courses, souvenirs, défis, souhaits",
+    "hint": "Tâches, RDV, recettes, notes, messages, routines, anniversaires, citations...",
     "hintWithAI": "\n\nOu posez une question à l'assistant IA",
     "typeLabels": {
       "task": "Tâche",
@@ -2443,7 +2443,12 @@
       "course": "Course",
       "memory": "Souvenir",
       "defi": "Défi",
-      "wishlist": "Souhait"
+      "wishlist": "Souhait",
+      "lovenote": "Message",
+      "note": "Note",
+      "routine": "Routine",
+      "anniversary": "Anniversaire",
+      "quote": "Citation"
     }
   },
   "lockScreen": {

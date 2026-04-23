@@ -857,7 +857,7 @@ export default function DashboardScreen() {
                 companion={activeProfile.companion}
                 level={activeProfile.level}
                 fallbackEmoji=""
-                size={18}
+                size={36}
               />
             )}
           </View>

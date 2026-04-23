@@ -2424,7 +2424,7 @@
     "resultCount_one": "{{count}} result",
     "resultCount_other": "{{count}} results",
     "noResults": "No results for \"{{query}}\"",
-    "hint": "Tasks, appointments, recipes, stock, meals, shopping, memories, challenges, wishes",
+    "hint": "Tasks, appointments, recipes, notes, messages, routines, anniversaries, quotes...",
     "hintWithAI": "\n\nOr ask the AI assistant",
     "typeLabels": {
       "task": "Task",
@@ -2435,7 +2435,12 @@
       "course": "Shopping",
       "memory": "Memory",
       "defi": "Challenge",
-      "wishlist": "Wish"
+      "wishlist": "Wish",
+      "lovenote": "Message",
+      "note": "Note",
+      "routine": "Routine",
+      "anniversary": "Anniversary",
+      "quote": "Quote"
     }
   },
   "lockScreen": {

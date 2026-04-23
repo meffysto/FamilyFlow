@@ -42,6 +42,11 @@ const ROUTE_MAP: Record<SearchResultType, string> = {
   memory: '/(tabs)/more',
   defi: '/(tabs)/defis',
   wishlist: '/(tabs)/wishlist',
+  lovenote: '/(tabs)/lovenotes',
+  note: '/(tabs)/notes',
+  routine: '/(tabs)/routines',
+  anniversary: '/(tabs)/anniversaires',
+  quote: '/(tabs)/quotes',
 };
 
 /** Params de navigation par type */
@@ -62,6 +67,11 @@ const TYPE_LABEL_KEYS: Record<SearchResultType, string> = {
   memory: 'globalSearch.typeLabels.memory',
   defi: 'globalSearch.typeLabels.defi',
   wishlist: 'globalSearch.typeLabels.wishlist',
+  lovenote: 'globalSearch.typeLabels.lovenote',
+  note: 'globalSearch.typeLabels.note',
+  routine: 'globalSearch.typeLabels.routine',
+  anniversary: 'globalSearch.typeLabels.anniversary',
+  quote: 'globalSearch.typeLabels.quote',
 };
 
 interface GlobalSearchProps {
@@ -102,6 +112,11 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
         wishlistItems: vault.wishlistItems,
         recipes: vault.recipes,
         profiles: vault.profiles,
+        loveNotes: vault.loveNotes,
+        notes: vault.notes,
+        routines: vault.routines,
+        anniversaries: vault.anniversaries,
+        quotes: vault.quotes,
       };
     }
 
@@ -121,10 +136,16 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
       wishlistItems: vault.wishlistItems.filter((w) => w.profileName.toLowerCase() === nameLower),
       recipes: vault.recipes,
       profiles: vault.profiles,
+      loveNotes: vault.loveNotes.filter((ln) => ln.to === profileId || ln.from === profileId),
+      notes: vault.notes,
+      routines: vault.routines.filter((r) => !r.profileId || r.profileId === profileId),
+      anniversaries: vault.anniversaries,
+      quotes: vault.quotes.filter((q) => q.enfant.toLowerCase() === nameLower),
     };
   }, [vault.tasks, vault.rdvs, vault.stock, vault.meals,
     vault.courses, vault.memories, vault.defis, vault.wishlistItems, vault.recipes,
-    vault.profiles, isChildMode, vault.activeProfile]);
+    vault.profiles, vault.loveNotes, vault.notes, vault.routines, vault.anniversaries,
+    vault.quotes, isChildMode, vault.activeProfile]);
 
   const searchOutput: SearchOutput = useMemo(() => searchVaultWithFilters(query, searchInput), [query, searchInput]);
   const results = searchOutput.results;
