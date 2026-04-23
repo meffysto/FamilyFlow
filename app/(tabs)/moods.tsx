@@ -6,17 +6,19 @@
  * Fichier vault : 05 - Famille/Humeurs.md
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   RefreshControl,
   TextInput,
   Modal,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { format, subDays } from 'date-fns';
@@ -31,12 +33,192 @@ import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Button } from '../../components/ui/Button';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { MOOD_EMOJIS, type MoodLevel } from '../../lib/types';
 
 type TabId = 'aujourdhui' | 'historique';
 const MOOD_LEVELS: MoodLevel[] = [1, 2, 3, 4, 5];
 const HISTORY_DAYS = 30;
+
+const TAB_SPRING = { damping: 32, stiffness: 200 };
+const BTN_SPRING = { damping: 14, stiffness: 300 };
+
+// Couleurs heatmap humeur (fond cellule historique)
+const MOOD_COLORS: Record<MoodLevel, string> = {
+  1: '#ef444430',
+  2: '#f9731630',
+  3: '#eab30830',
+  4: '#22c55e30',
+  5: '#8b5cf630',
+};
+
+// ─── TabSwitcher pilule animée ───────────────────────────────────────────────
+
+interface TabSwitcherProps {
+  activeTab: TabId;
+  onTabChange: (tab: TabId) => void;
+  primary: string;
+  colors: ReturnType<typeof useThemeColors>['colors'];
+}
+
+function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherProps) {
+  const [tabWidth, setTabWidth] = useState(0);
+  const indicatorX = useSharedValue(0);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
+
+  const handlePress = useCallback((tab: TabId) => {
+    const toIndex = tab === 'aujourdhui' ? 0 : 1;
+    indicatorX.value = withSpring(toIndex * tabWidth, TAB_SPRING);
+    onTabChange(tab);
+  }, [tabWidth, onTabChange, indicatorX]);
+
+  React.useEffect(() => {
+    if (tabWidth === 0) return;
+    const idx = activeTab === 'aujourdhui' ? 0 : 1;
+    indicatorX.value = withSpring(idx * tabWidth, TAB_SPRING);
+  }, [tabWidth, activeTab, indicatorX]);
+
+  const DRAG_THRESHOLD = 30;
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      const base = activeTab === 'aujourdhui' ? 0 : tabWidth;
+      indicatorX.value = Math.max(0, Math.min(tabWidth, base + e.translationX));
+    })
+    .onEnd((e) => {
+      if (e.translationX > DRAG_THRESHOLD && activeTab === 'aujourdhui') {
+        indicatorX.value = withSpring(tabWidth, TAB_SPRING);
+        runOnJS(Haptics.selectionAsync)();
+        runOnJS(onTabChange)('historique');
+      } else if (e.translationX < -DRAG_THRESHOLD && activeTab === 'historique') {
+        indicatorX.value = withSpring(0, TAB_SPRING);
+        runOnJS(Haptics.selectionAsync)();
+        runOnJS(onTabChange)('aujourdhui');
+      } else {
+        const snap = activeTab === 'aujourdhui' ? 0 : tabWidth;
+        indicatorX.value = withSpring(snap, TAB_SPRING);
+      }
+    });
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <View
+        style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onLayout={e => setTabWidth(e.nativeEvent.layout.width / 2)}
+      >
+        <Animated.View
+          style={[tabSwitcherStyles.indicator, indicatorStyle, { backgroundColor: primary, width: tabWidth }]}
+        />
+        <Pressable
+          style={tabSwitcherStyles.tab}
+          onPress={() => handlePress('aujourdhui')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'aujourdhui' }}
+        >
+          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'aujourdhui' ? colors.bg : colors.textMuted }]}>
+            ☀️ Aujourd'hui
+          </Text>
+        </Pressable>
+        <Pressable
+          style={tabSwitcherStyles.tab}
+          onPress={() => handlePress('historique')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'historique' }}
+        >
+          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'historique' ? colors.bg : colors.textMuted }]}>
+            📅 Historique
+          </Text>
+        </Pressable>
+      </View>
+    </GestureDetector>
+  );
+}
+
+const tabSwitcherStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    marginHorizontal: Spacing['4xl'],
+    marginVertical: Spacing.lg,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    overflow: 'hidden',
+    height: 40,
+  },
+  indicator: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    borderRadius: Radius.full,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+});
+
+// ─── Bouton humeur animé ─────────────────────────────────────────────────────
+
+interface MoodBtnProps {
+  level: MoodLevel;
+  selected: boolean;
+  primary: string;
+  colors: ReturnType<typeof useThemeColors>['colors'];
+  onPress: () => void;
+  size?: 'lg' | 'sm';
+  accessibilityLabel?: string;
+}
+
+function MoodBtn({ level, selected, primary, colors, onPress, size = 'lg', accessibilityLabel }: MoodBtnProps) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.82, BTN_SPRING);
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, BTN_SPRING);
+  }, [scale]);
+
+  const handlePress = useCallback(() => {
+    Haptics.selectionAsync();
+    onPress();
+  }, [onPress]);
+
+  return (
+    <Animated.View style={[animStyle, size === 'lg' ? styles.moodBtnWrapper : styles.familyMoodBtnWrapper]}>
+      <Pressable
+        style={[
+          size === 'lg' ? styles.moodBtn : styles.familyMoodBtn,
+          {
+            backgroundColor: selected ? primary + '22' : colors.card,
+            borderColor: selected ? primary : colors.border,
+          },
+          size === 'lg' && Shadows.sm,
+        ]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+      >
+        <Text style={size === 'lg' ? styles.moodEmoji : styles.familyMoodEmoji}>
+          {MOOD_EMOJIS[level]}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ─── Écran principal ─────────────────────────────────────────────────────────
 
 export default function MoodsScreen() {
   const { t } = useTranslation();
@@ -58,7 +240,6 @@ export default function MoodsScreen() {
     [profiles],
   );
 
-  // Enfants ne peuvent modifier que leur propre humeur
   const editableProfileIds = useMemo(
     () => isChildMode
       ? new Set([activeProfile?.id].filter(Boolean))
@@ -76,7 +257,6 @@ export default function MoodsScreen() {
     [todayMoods, activeProfile],
   );
 
-  // Historique : grille 30 jours × profils
   const historyGrid = useMemo(() => {
     const days: { date: string; label: string; entries: Map<string, MoodLevel> }[] = [];
     const now = new Date();
@@ -110,20 +290,18 @@ export default function MoodsScreen() {
     }
   }, [noteModal.profileId, noteModal.profileName, noteModal.level, noteText, addMood, showToast]);
 
-  const tabs: { id: TabId; label: string }[] = [
-    { id: 'aujourdhui', label: t('moodsScreen.tabs.today') },
-    { id: 'historique', label: t('moodsScreen.tabs.history') },
-  ];
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{t('moodsScreen.title')}</Text>
       </View>
 
-      <View style={styles.tabBar}>
-        <SegmentedControl segments={tabs} value={activeTab} onChange={(id) => setActiveTab(id as TabId)} />
-      </View>
+      <TabSwitcher
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        primary={primary}
+        colors={colors}
+      />
 
       <ScrollView
         style={styles.scroll}
@@ -132,26 +310,22 @@ export default function MoodsScreen() {
       >
         {activeTab === 'aujourdhui' ? (
           <>
-            {/* Mon humeur */}
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               {t('moodsScreen.sectionTitle')}
             </Text>
 
             <View style={styles.moodRow}>
               {MOOD_LEVELS.map(level => (
-                <TouchableOpacity
+                <MoodBtn
                   key={level}
-                  style={[
-                    styles.moodBtn,
-                    { backgroundColor: myMoodToday?.level === level ? primary + '20' : colors.card, borderColor: myMoodToday?.level === level ? primary : colors.border },
-                    Shadows.sm,
-                  ]}
+                  level={level}
+                  selected={myMoodToday?.level === level}
+                  primary={primary}
+                  colors={colors}
                   onPress={() => handleSelectMood(level)}
+                  size="lg"
                   accessibilityLabel={t('moodsScreen.a11y.moodLevel', { level })}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.moodEmoji}>{MOOD_EMOJIS[level]}</Text>
-                </TouchableOpacity>
+                />
               ))}
             </View>
 
@@ -162,7 +336,6 @@ export default function MoodsScreen() {
               </Text>
             )}
 
-            {/* Humeurs de la famille */}
             <Text style={[styles.sectionTitle, { color: colors.text, marginTop: Spacing.xl }]}>
               {t('moodsScreen.familyToday')}
             </Text>
@@ -185,17 +358,16 @@ export default function MoodsScreen() {
                   {canEdit ? (
                     <View style={styles.familyMoodRow}>
                       {MOOD_LEVELS.map(level => (
-                        <TouchableOpacity
+                        <MoodBtn
                           key={level}
-                          style={[
-                            styles.familyMoodBtn,
-                            { backgroundColor: entry?.level === level ? primary + '20' : colors.cardAlt, borderColor: entry?.level === level ? primary : 'transparent' },
-                          ]}
+                          level={level}
+                          selected={entry?.level === level}
+                          primary={primary}
+                          colors={colors}
                           onPress={() => handleSelectMood(level, p.id, p.name)}
+                          size="sm"
                           accessibilityLabel={t('moodsScreen.a11y.moodLevelFor', { level, name: p.name })}
-                        >
-                          <Text style={styles.familyMoodEmoji}>{MOOD_EMOJIS[level]}</Text>
-                        </TouchableOpacity>
+                        />
                       ))}
                     </View>
                   ) : (
@@ -209,7 +381,7 @@ export default function MoodsScreen() {
           </>
         ) : (
           <>
-            {/* Grille historique */}
+            {/* En-tête grille */}
             <View style={styles.gridHeader}>
               <View style={styles.gridDateCol} />
               {moodableProfiles.map(p => (
@@ -219,14 +391,32 @@ export default function MoodsScreen() {
               ))}
             </View>
 
-            {historyGrid.map(day => (
-              <View key={day.date} style={[styles.gridRow, { borderBottomColor: colors.separator }]}>
-                <Text style={[styles.gridDate, { color: colors.textMuted }]}>{day.label}</Text>
-                {moodableProfiles.map(p => (
-                  <Text key={p.id} style={styles.gridCell}>
-                    {day.entries.has(p.id) ? MOOD_EMOJIS[day.entries.get(p.id)!] : '·'}
-                  </Text>
-                ))}
+            {historyGrid.map((day, i) => (
+              <View
+                key={day.date}
+                style={[
+                  styles.gridRow,
+                  { borderBottomColor: colors.separator },
+                  i === 0 && styles.gridRowFirst,
+                ]}
+              >
+                <Text style={[styles.gridDate, { color: i === 0 ? primary : colors.textMuted, fontWeight: i === 0 ? FontWeight.semibold : FontWeight.normal }]}>
+                  {i === 0 ? 'auj.' : day.label}
+                </Text>
+                {moodableProfiles.map(p => {
+                  const level = day.entries.get(p.id);
+                  return (
+                    <View key={p.id} style={styles.gridCellWrapper}>
+                      {level ? (
+                        <View style={[styles.gridCellBubble, { backgroundColor: MOOD_COLORS[level] }]}>
+                          <Text style={styles.gridCellEmoji}>{MOOD_EMOJIS[level]}</Text>
+                        </View>
+                      ) : (
+                        <Text style={[styles.gridCellEmpty, { color: colors.separator }]}>·</Text>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
             ))}
           </>
@@ -260,15 +450,12 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs,
   },
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-  },
-  tabBar: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
   },
   scroll: { flex: 1 },
   scrollContent: {
@@ -280,15 +467,18 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
     marginBottom: Spacing.md,
   },
+  // Boutons humeur grand format
+  moodBtnWrapper: {
+    flex: 1,
+    maxWidth: 64,
+  },
   moodRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: Spacing.sm,
   },
   moodBtn: {
-    flex: 1,
     aspectRatio: 1,
-    maxWidth: 64,
     borderRadius: Radius.lg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -302,13 +492,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     textAlign: 'center',
   },
-  familyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: Spacing.sm,
-  },
+  // Cards famille
   familyCard: {
     borderRadius: Radius.lg,
     borderWidth: 1,
@@ -330,8 +514,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.sm,
   },
-  familyMoodBtn: {
+  familyMoodBtnWrapper: {
     flex: 1,
+  },
+  familyMoodBtn: {
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
@@ -339,9 +525,6 @@ const styles = StyleSheet.create({
   },
   familyMoodEmoji: {
     fontSize: FontSize.heading,
-  },
-  familyMood: {
-    fontSize: 20,
   },
   familyMoodReadonly: {
     fontSize: FontSize.heading,
@@ -356,14 +539,15 @@ const styles = StyleSheet.create({
   gridHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
   },
   gridDateCol: {
-    width: 48,
+    width: 44,
   },
   gridProfileName: {
     flex: 1,
-    fontSize: FontSize.body,
+    fontSize: FontSize.lg,
     textAlign: 'center',
   },
   gridRow: {
@@ -371,15 +555,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.xs,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.xs,
+  },
+  gridRowFirst: {
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
   },
   gridDate: {
-    width: 48,
+    width: 44,
     fontSize: FontSize.micro,
   },
-  gridCell: {
+  gridCellWrapper: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 2,
+  },
+  gridCellBubble: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gridCellEmoji: {
     fontSize: 16,
-    textAlign: 'center',
+  },
+  gridCellEmpty: {
+    fontSize: 14,
+    lineHeight: 28,
   },
   // Modal
   modalContainer: { flex: 1 },
