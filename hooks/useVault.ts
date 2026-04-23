@@ -539,11 +539,16 @@ export function useVaultInternal(): VaultState {
   const mealsRef = useRef<MealItem[]>([]);
   const rdvsRef = useRef<RDV[]>([]);
   const tasksRefForWidget = useRef<Task[]>([]);
-  // Snapshot du total de tâches max observé aujourd'hui.
-  // Évite de dépendre d'un compteur événementiel (subscription fragile).
-  // Les récurrentes cochées bumpent dueDate au lendemain et sortent du filtre,
-  // réduisant todayTasks.length — le max préserve le vrai total du jour.
+  // Snapshot du total de tâches max observé aujourd'hui (absorbe les
+  // récurrentes qui sortent du filtre après toggle). Complété par le compteur
+  // événementiel ci-dessous — critique car la première réconciliation après
+  // un tap Live Activity (foreground) arrive APRÈS le toggle donc le snapshot
+  // seul capturerait un todayTasks.length déjà réduit.
   const tasksTotalSnapshotRef = useRef<{ date: string; total: number }>({ date: '', total: 0 });
+  // Compteur événementiel des tâches cochées aujourd'hui. Incrémenté par le
+  // subscriber subscribeTaskComplete déclaré plus bas. Déclaré ici pour
+  // pouvoir être lu dans triggerWidgetRefresh (ordre de déclaration React).
+  const tasksCompletedTodayRef = useRef<{ date: string; count: number }>({ date: '', count: 0 });
   // Mis à jour via useEffect après déclaration de gamiData / activeProfileId
   const gamiDataForWidgetRef = useRef<GamificationData | null>(null);
   const activeProfileIdForWidgetRef = useRef<string | null>(null);
@@ -558,18 +563,25 @@ export function useVaultInternal(): VaultState {
         if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
         return t.dueDate === todayStr;
       });
-      // Snapshot total : retient le max observé ce jour pour absorber les récurrentes
-      // cochées (dueDate bumpé → elles sortent du filtre, todayTasks.length décroît).
-      // Approche plus robuste que le compteur événementiel (pas de subscription fragile).
+      // Snapshot max observé ce jour (absorbe les récurrentes qui sortent du
+      // filtre quand leur dueDate est bumpée). Reset au changement de date.
       if (tasksTotalSnapshotRef.current.date !== todayStr) {
         tasksTotalSnapshotRef.current = { date: todayStr, total: todayTasks.length };
       } else {
         tasksTotalSnapshotRef.current.total = Math.max(tasksTotalSnapshotRef.current.total, todayTasks.length);
       }
-      const totalCount = tasksTotalSnapshotRef.current.total;
       const pendingCount = todayTasks.filter(t => !t.completed).length;
-      // doneCount = total - pending (fonctionne pour récurrentes ET ponctuelles)
-      const doneCount = Math.max(0, totalCount - pendingCount);
+      // doneCount = compteur événementiel (incrément sur chaque toggle ok,
+      // peu importe récurrente ou ponctuelle). Robuste même si le snapshot
+      // initial du jour rate la mesure max (cas : première triggerWidgetRefresh
+      // du jour tournée APRÈS la réconciliation des pending toggles LA).
+      const doneCount = tasksCompletedTodayRef.current.date === todayStr
+        ? tasksCompletedTodayRef.current.count
+        : 0;
+      // totalCount = max(snapshot observation, reconstruction événementielle).
+      // Les deux voies se complètent : le snapshot attrape les cas où doneCount
+      // est stale, et pending+done attrape les cas où le snapshot rate le max.
+      const totalCount = Math.max(tasksTotalSnapshotRef.current.total, pendingCount + doneCount);
       // Widget JSON — même formule que la LA
       refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current, { done: doneCount, total: totalCount });
       const nowHour = new Date().getHours();
@@ -685,8 +697,9 @@ export function useVaultInternal(): VaultState {
 
   // Compteur "tâches complétées aujourd'hui" pour Live Activity + carte dashboard
   // (événementiel car les récurrentes reset completed=false après toggle)
+  // NB : tasksCompletedTodayRef est déclaré plus haut (avant triggerWidgetRefresh
+  // pour que le doneCount y ait accès). On ne garde ici que le state + subscriber.
   const [tasksCompletedToday, setTasksCompletedToday] = useState(0);
-  const tasksCompletedTodayRef = useRef<{ date: string; count: number }>({ date: '', count: 0 });
   useEffect(() => {
     const unsub = tasksHook.subscribeTaskComplete(() => {
       const today = new Date().toISOString().slice(0, 10);
