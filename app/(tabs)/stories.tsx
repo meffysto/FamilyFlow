@@ -846,15 +846,18 @@ export default function StoriesScreen() {
 
     const recentStories = stories.slice(0, 10);
 
+    const { height } = useWindowDimensions();
+
     return (
       <View>
         <Text style={[styles.stepTitle, { color: colors.text }]}>🌙 C'est l'heure des histoires</Text>
         {childProfiles.length === 1 ? (
-          // Enfant unique — carte centrée et agrandie
+          // Enfant unique — carte centrée horizontalement et verticalement
           (() => {
             const p = childProfiles[0]!;
             const mood = lastMoodFor(p.id);
             return (
+              <View style={{ height: height * 0.6, justifyContent: 'center', alignItems: 'center' }}>
               <Pressable
                 style={[styles.profileCardSolo, { backgroundColor: colors.card, borderColor: primary }]}
                 onPress={() => {
@@ -872,6 +875,7 @@ export default function StoriesScreen() {
                 )}
                 <Text style={[styles.profileReady, { color: colors.textMuted }]}>Prêt pour dormir ?</Text>
               </Pressable>
+              </View>
             );
           })()
         ) : (
@@ -1949,7 +1953,7 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 64, marginBottom: Spacing['2xl'] },
   emptyText: { fontSize: FontSize.body, textAlign: 'center' },
   profileCard: { flex: 1, margin: Spacing.md, padding: Spacing['2xl'], borderRadius: Radius.xl, borderWidth: 1, alignItems: 'center', maxWidth: '48%' },
-  profileCardSolo: { alignSelf: 'center', width: '70%', marginTop: Spacing['4xl'], padding: Spacing['4xl'], borderRadius: Radius.xl, borderWidth: 2, alignItems: 'center' },
+  profileCardSolo: { width: '70%', padding: Spacing['4xl'], borderRadius: Radius.xl, borderWidth: 2, alignItems: 'center' },
   profileAvatar: { fontSize: 40, marginBottom: Spacing.md },
   profileAvatarSolo: { fontSize: 72, marginBottom: Spacing['2xl'] },
   profileName: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: Spacing.xs },
