@@ -68,7 +68,7 @@ interface UseGamificationArgs {
 }
 
 interface UseGamificationResult {
-  completeTask: (profile: Profile, taskText: string, taskMeta?: { tags?: string[]; section?: string; sourceFile?: string }) => Promise<{
+  completeTask: (profile: Profile, taskText: string, taskMeta?: { tags?: string[]; section?: string; sourceFile?: string; xpOverride?: number }) => Promise<{
     updatedProfile: Profile;
     lootAwarded: boolean;
     pointsGained: number;
@@ -103,7 +103,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
   useEffect(() => { loadGamiConfig(); }, []);
 
   const completeTask = useCallback(
-    async (profile: Profile, taskText: string, taskMeta?: { tags?: string[]; section?: string; sourceFile?: string }) => {
+    async (profile: Profile, taskText: string, taskMeta?: { tags?: string[]; section?: string; sourceFile?: string; xpOverride?: number }) => {
       if (!vault) throw new Error('Vault non initialisé');
       setIsProcessing(true);
 
@@ -137,7 +137,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           };
         }
 
-        const { profile: updatedProfileRaw, entry: entryRaw, lootAwarded } = awardTaskCompletion(profileWithCompanionBonus, taskText);
+        const { profile: updatedProfileRaw, entry: entryRaw, lootAwarded } = awardTaskCompletion(profileWithCompanionBonus, taskText, taskMeta?.xpOverride);
         // Phase 42 — appliquer le bonus compagnon (base 1.05 ± feedBuff) sur le delta de points gagnés.
         const basePointsGained = updatedProfileRaw.points - profileWithCompanionBonus.points;
         const bonusPoints = companionBonus > 1.0 ? Math.round(basePointsGained * companionBonus) - basePointsGained : 0;
@@ -201,8 +201,10 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         let farmData = parseFarmProfile(farmContent);
 
         // 1. Avancer les cultures (existant)
+        // xpOverride=0 → tâche sans récompense, pas de croissance crops
+        const isZeroXpTask = taskMeta?.xpOverride === 0;
         const currentCrops = parseCrops(farmData.farmCrops ?? '');
-        if (currentCrops.length > 0) {
+        if (currentCrops.length > 0 && !isZeroXpTask) {
           const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
           // Phase 20 : Growth Sprint bonus temporel (EFFECTS-05)
           if (farmData.growthSprintUntil && new Date(farmData.growthSprintUntil) > new Date()) {
@@ -243,7 +245,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         // 2. Phase 20 : Appliquer l'effet semantique (SEMANTIC-06..10, EFFECTS-01..10)
         try {
           const enabled = await isSemanticCouplingEnabled();
-          if (enabled && taskMeta) {
+          if (enabled && taskMeta && !isZeroXpTask) {
             const task: Pick<Task, 'text' | 'tags' | 'section' | 'sourceFile'> = {
               text: taskText,
               tags: taskMeta.tags ?? [],

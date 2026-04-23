@@ -502,7 +502,9 @@
       "recurrenceLabel": "Se répète (optionnel)",
       "assignLabel": "👤 Attribuer à",
       "saveToLabel": "Enregistrer pour",
-      "deleteBtn": "Supprimer cette tâche"
+      "deleteBtn": "Supprimer cette tâche",
+      "xpLabel": "Points XP",
+      "xpDefault": "Défaut"
     },
     "orderModal": {
       "title": "Ordre des catégories"
@@ -4609,13 +4611,34 @@
       "title": "Voilà comment\nFamilyFlow règle ça.",
       "cta": "Continuer →",
       "items": {
-        "scattered": { "problem": "Tout éparpillé dans des applications", "solution": "Un tableau de bord unique — tout en un." },
-        "partner": { "problem": "L'un de vous pas au courant", "solution": "Partagé en famille — même vue, en temps réel." },
-        "groceries": { "problem": "Liste de courses à refaire chaque fois", "solution": "Générée à partir de votre menu de la semaine." },
-        "dinner": { "problem": "Quoi manger ce soir ?", "solution": "Planning repas hebdo + vos recettes favorites." },
-        "budget": { "problem": "Budget découvert en fin de mois", "solution": "Suivi en temps réel, visible d'un coup d'œil." },
-        "photolost": { "problem": "Photos perdues dans le téléphone", "solution": "Photo du jour + journal organisé pour toute la famille." },
-        "birthdays": { "problem": "Anniversaires oubliés", "solution": "Rappels automatiques 3 jours avant." }
+        "scattered": {
+          "problem": "Tout éparpillé dans des applications",
+          "solution": "Un tableau de bord unique — tout en un."
+        },
+        "partner": {
+          "problem": "L'un de vous pas au courant",
+          "solution": "Partagé en famille — même vue, en temps réel."
+        },
+        "groceries": {
+          "problem": "Liste de courses à refaire chaque fois",
+          "solution": "Générée à partir de votre menu de la semaine."
+        },
+        "dinner": {
+          "problem": "Quoi manger ce soir ?",
+          "solution": "Planning repas hebdo + vos recettes favorites."
+        },
+        "budget": {
+          "problem": "Budget découvert en fin de mois",
+          "solution": "Suivi en temps réel, visible d'un coup d'œil."
+        },
+        "photolost": {
+          "problem": "Photos perdues dans le téléphone",
+          "solution": "Photo du jour + journal organisé pour toute la famille."
+        },
+        "birthdays": {
+          "problem": "Anniversaires oubliés",
+          "solution": "Rappels automatiques 3 jours avant."
+        }
       }
     },
     "preferences": {

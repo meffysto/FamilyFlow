@@ -35,7 +35,7 @@ export interface UseVaultTasksResult {
   toggleTask: (task: Task, completed: boolean) => Promise<void>;
   skipTask: (task: Task) => Promise<void>;
   addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string, reminderTime?: string) => Promise<void>;
-  editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string }) => Promise<void>;
+  editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string; xpOverride?: number | null }) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   resetTasks: () => void;
   /** Phase 40 — Souscrit un listener au complete d'une tâche (pattern event-driven,
@@ -163,13 +163,18 @@ export function useVaultTasks(
 
   // ─── editTask ────────────────────────────────────────────────────────────
 
-  const editTask = useCallback(async (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string }) => {
+  const editTask = useCallback(async (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string; xpOverride?: number | null }) => {
     if (!vaultRef.current) return;
     const newText = updates.text ?? task.text;
     const newRecurrence = updates.recurrence !== undefined ? updates.recurrence : (task.recurrence ?? '');
     const newDueDate = updates.dueDate !== undefined ? updates.dueDate : (task.dueDate ?? '');
     const newReminderTime = updates.reminderTime !== undefined ? updates.reminderTime : (task.reminderTime ?? '');
     const newTargetFile = updates.targetFile ?? task.sourceFile;
+    // null = effacer override, number = nouveau override, undefined = conserver existant
+    const newXpOverride: number | undefined =
+      updates.xpOverride !== undefined
+        ? (updates.xpOverride === null ? undefined : updates.xpOverride)
+        : task.xpOverride;
 
     let newSection: string | null = null;
     if (newRecurrence) {
@@ -189,6 +194,7 @@ export function useVaultTasks(
     if (newRecurrence) taskLine += ` \u{1F501} ${newRecurrence}`;
     if (newDueDate) taskLine += ` \u{1F4C5} ${newDueDate}`;
     if (newReminderTime) taskLine += ` \u23F0 ${newReminderTime}`;
+    if (newXpOverride !== undefined) taskLine += ` ⭐ ${newXpOverride}`;
     const fullLine = `- [${task.completed ? 'x' : ' '}] ${taskLine}`;
 
     const fileChanged = newTargetFile !== task.sourceFile;
@@ -227,7 +233,7 @@ export function useVaultTasks(
 
       setTasks(prev => prev.map(t => {
         if (t.sourceFile !== task.sourceFile || t.lineIndex !== task.lineIndex) return t;
-        return { ...t, text: newText, recurrence: newRecurrence || undefined, dueDate: newDueDate || undefined, reminderTime: newReminderTime || undefined };
+        return { ...t, text: newText, recurrence: newRecurrence || undefined, dueDate: newDueDate || undefined, reminderTime: newReminderTime || undefined, xpOverride: newXpOverride };
       }));
     }
     setTimeout(triggerWidgetRefresh, 0);

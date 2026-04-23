@@ -266,6 +266,7 @@ export default function TasksScreen() {
   const [editTaskReminderTime, setEditTaskReminderTime] = useState('');
   const [editTaskTarget, setEditTaskTarget] = useState('');
   const [editTaskAssignees, setEditTaskAssignees] = useState<string[]>([]);
+  const [editTaskXpOverride, setEditTaskXpOverride] = useState<number | undefined>(undefined);
   const [isEditSaving, setIsEditSaving] = useState(false);
 
   // Ordre des sections persisté
@@ -320,7 +321,7 @@ export default function TasksScreen() {
             const { lootAwarded, pointsGained, effectCategoryId, sporeeFirstObtained } = await completeTask(
               activeProfile,
               task.text,
-              { tags: task.tags, section: task.section, sourceFile: task.sourceFile }
+              { tags: task.tags, section: task.section, sourceFile: task.sourceFile, xpOverride: task.xpOverride }
             );
             await refreshGamification();
             // Phase 41 (SPOR-10) — cadeau onboarding stade 3 : afficher tooltip one-shot
@@ -454,6 +455,7 @@ export default function TasksScreen() {
     setEditTaskReminderTime(task.reminderTime ?? '');
     setEditTaskTarget(task.sourceFile);
     setEditTaskAssignees(task.mentions ?? []);
+    setEditTaskXpOverride(task.xpOverride);
     setEditModalVisible(true);
   }, [activeProfile, showToast]);
 
@@ -479,6 +481,7 @@ export default function TasksScreen() {
         recurrence: editTaskRecurrence || undefined,
         reminderTime: editTaskReminderTime || undefined,
         targetFile: editTaskTarget || undefined,
+        xpOverride: editTaskXpOverride ?? null,
       });
       setEditModalVisible(false);
       setEditingTask(null);
@@ -488,7 +491,7 @@ export default function TasksScreen() {
     } finally {
       setIsEditSaving(false);
     }
-  }, [editingTask, editTaskText, editTaskDueDate, editTaskRecurrence, editTaskReminderTime, editTaskTarget, editTaskAssignees, editTask, showToast]);
+  }, [editingTask, editTaskText, editTaskDueDate, editTaskRecurrence, editTaskReminderTime, editTaskTarget, editTaskAssignees, editTaskXpOverride, editTask, showToast]);
 
   const handleDeleteFromEdit = useCallback(() => {
     if (!editingTask) return;
@@ -961,6 +964,19 @@ export default function TasksScreen() {
                   label={t.label}
                   selected={editTaskTarget === t.value}
                   onPress={() => setEditTaskTarget(t.value)}
+                  size="sm"
+                />
+              ))}
+            </View>
+
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.editModal.xpLabel')}</Text>
+            <View style={styles.targetRow}>
+              {([undefined, 0, 5, 10, 15, 20, 30, 50] as (number | undefined)[]).map((val) => (
+                <Chip
+                  key={val ?? 'default'}
+                  label={val === undefined ? `${t('tasks.editModal.xpDefault')} (${POINTS_PER_TASK})` : `⭐ ${val}`}
+                  selected={editTaskXpOverride === val}
+                  onPress={() => setEditTaskXpOverride(val)}
                   size="sm"
                 />
               ))}

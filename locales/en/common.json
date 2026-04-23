@@ -502,7 +502,9 @@
       "recurrenceLabel": "Repeats (optional)",
       "assignLabel": "👤 Assign to",
       "saveToLabel": "Save to",
-      "deleteBtn": "Delete this task"
+      "deleteBtn": "Delete this task",
+      "xpLabel": "XP Points",
+      "xpDefault": "Default"
     },
     "orderModal": {
       "title": "Category order"
@@ -4559,13 +4561,34 @@
       "title": "Here's how\nFamilyFlow fixes that.",
       "cta": "Continue →",
       "items": {
-        "scattered": { "problem": "Everything scattered across apps", "solution": "One dashboard — everything in one place." },
-        "partner": { "problem": "One of you always out of the loop", "solution": "Shared with your family — same view, in real time." },
-        "groceries": { "problem": "Grocery list to redo every time", "solution": "Generated automatically from your planned meals." },
-        "dinner": { "problem": "What to eat tonight?", "solution": "Weekly meal planner + built-in recipes." },
-        "budget": { "problem": "Budget discovered overspent at month end", "solution": "Tracked as you go, visualized instantly." },
-        "photolost": { "problem": "Photos lost in the phone", "solution": "Photo of the day + organized journal for the whole family." },
-        "birthdays": { "problem": "Forgotten birthdays", "solution": "Automatic reminders 3 days before." }
+        "scattered": {
+          "problem": "Everything scattered across apps",
+          "solution": "One dashboard — everything in one place."
+        },
+        "partner": {
+          "problem": "One of you always out of the loop",
+          "solution": "Shared with your family — same view, in real time."
+        },
+        "groceries": {
+          "problem": "Grocery list to redo every time",
+          "solution": "Generated automatically from your planned meals."
+        },
+        "dinner": {
+          "problem": "What to eat tonight?",
+          "solution": "Weekly meal planner + built-in recipes."
+        },
+        "budget": {
+          "problem": "Budget discovered overspent at month end",
+          "solution": "Tracked as you go, visualized instantly."
+        },
+        "photolost": {
+          "problem": "Photos lost in the phone",
+          "solution": "Photo of the day + organized journal for the whole family."
+        },
+        "birthdays": {
+          "problem": "Forgotten birthdays",
+          "solution": "Automatic reminders 3 days before."
+        }
       }
     },
     "preferences": {

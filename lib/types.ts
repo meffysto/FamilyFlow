@@ -21,6 +21,7 @@ export interface Task {
   secret?: boolean;                           // mission secrète
   targetProfileId?: string;                   // profil ciblé par la mission
   secretStatus?: 'active' | 'pending' | 'validated'; // statut de la mission secrète
+  xpOverride?: number;                        // XP personnalisé (⭐ N) — remplace POINTS_PER_TASK
 }
 
 export interface RDV {

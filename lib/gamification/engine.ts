@@ -104,11 +104,13 @@ export function addPoints(
  */
 export function awardTaskCompletion(
   profile: Profile,
-  taskNote: string
+  taskNote: string,
+  xpOverride?: number
 ): { profile: Profile; entry: GamificationEntry; lootAwarded: boolean } {
   const config = getCachedGamiConfig();
-  const basePoints = config.pointsPerTask;
-  const streakBonus = calculateStreakBonus(profile.streak, config.streakBonus);
+  const basePoints = xpOverride ?? config.pointsPerTask;
+  // xpOverride=0 signifie tâche sans récompense — streak bonus ignoré
+  const streakBonus = basePoints === 0 ? 0 : calculateStreakBonus(profile.streak, config.streakBonus);
   const total = basePoints + streakBonus;
 
   const { profile: updated, entry } = addPoints(profile, total, `Tâche: ${taskNote}`);

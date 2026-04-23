@@ -40,6 +40,7 @@ export function LiveActivityGamificationBridge() {
           tags: task.tags,
           section: task.section,
           sourceFile: task.sourceFile,
+          xpOverride: task.xpOverride,
         });
         await refreshGamification();
       } catch (e) {

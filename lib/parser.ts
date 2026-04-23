@@ -74,6 +74,7 @@ const DUE_DATE_REGEX = /📅\s*(\d{4}-\d{2}-\d{2})/;
 const COMPLETED_DATE_REGEX = /✅\s*(\d{4}-\d{2}-\d{2})/;
 const RECURRENCE_REGEX = /🔁\s*(every\s+(?:\d+\s+)?(?:day|week|month)s?)/;
 const REMINDER_TIME_REGEX = /⏰\s*(\d{2}:\d{2})/;
+const XP_OVERRIDE_REGEX = /⭐\s*(\d+)/;
 const TAG_REGEX = /#([a-zA-ZÀ-ÿ0-9_-]+)/g;
 const MENTION_REGEX = /@([a-zA-ZÀ-ÿ0-9_-]+)/g;
 
@@ -83,6 +84,7 @@ function stripEmoji(text: string): string {
     .replace(/🔁\s*every\s+(?:\d+\s+)?(?:day|week|month)s?/g, '')
     .replace(/✅\s*\d{4}-\d{2}-\d{2}/g, '')
     .replace(/⏰\s*\d{2}:\d{2}/g, '')
+    .replace(/⭐\s*\d+/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
@@ -103,6 +105,7 @@ export function parseTask(
   const completedMatch = rawText.match(COMPLETED_DATE_REGEX);
   const recurrenceMatch = rawText.match(RECURRENCE_REGEX);
   const reminderMatch = rawText.match(REMINDER_TIME_REGEX);
+  const xpOverrideMatch = rawText.match(XP_OVERRIDE_REGEX);
 
   const tags: string[] = [];
   let m: RegExpExecArray | null;
@@ -121,6 +124,7 @@ export function parseTask(
     completedDate: completedMatch?.[1],
     recurrence: recurrenceMatch?.[1],
     reminderTime: reminderMatch?.[1],
+    xpOverride: xpOverrideMatch ? parseInt(xpOverrideMatch[1], 10) : undefined,
     tags,
     mentions,
     sourceFile,
