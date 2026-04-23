@@ -28,7 +28,7 @@ Phase: 42
 Plan: 9/9 complétés
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-23
+Last activity: 2026-04-23 - Completed quick task 260423-jw6: Stocker les MP3 ElevenLabs dans le vault + autoGenerate=false pour ReplayStep
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
