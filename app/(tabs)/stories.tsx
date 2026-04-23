@@ -38,8 +38,8 @@ import { FontSize, FontWeight } from '../../constants/typography';
 
 // ─── Constantes animation ───────────────────────────────────────────────────
 
-const TAB_SPRING: { damping: number; stiffness: number } = { damping: 18, stiffness: 180 };
-const TAB_SPRING_SNAP: { damping: number; stiffness: number } = { damping: 32, stiffness: 200 };
+const TAB_SPRING: { damping: number; stiffness: number } = { damping: 32, stiffness: 200 };
+const TAB_SPRING_SNAP = TAB_SPRING;
 
 // ─── Types machine à états ──────────────────────────────────────────────────
 
