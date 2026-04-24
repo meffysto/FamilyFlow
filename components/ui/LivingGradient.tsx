@@ -7,7 +7,8 @@
  */
 
 import React, { forwardRef, useMemo } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -52,7 +53,7 @@ function mixColors(c1: string, c2: string, t: number): string {
 }
 
 interface LivingGradientProps {
-  style?: ViewStyle | ViewStyle[];
+  style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
   /** Intensité du mélange avec la couleur primary du thème (0-1, défaut: 0.3) */
   primaryBlend?: number;
@@ -75,7 +76,7 @@ export const LivingGradient = forwardRef<View, LivingGradientProps>(
     }, [isDark, primary, primaryBlend]);
 
     return (
-      <View ref={ref} style={[style, { overflow: 'hidden' }]}>
+      <Animated.View ref={ref} style={[style, { overflow: 'hidden' }]}>
         <LinearGradient
           colors={[...gradientColors]}
           start={{ x: 0, y: 0 }}
@@ -88,7 +89,7 @@ export const LivingGradient = forwardRef<View, LivingGradientProps>(
           style={StyleSheet.absoluteFill}
         />
         {children}
-      </View>
+      </Animated.View>
     );
   }
 );

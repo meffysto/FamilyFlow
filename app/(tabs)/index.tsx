@@ -16,6 +16,13 @@ import {
   Alert,
   Modal,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+} from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -182,6 +189,26 @@ export default function DashboardScreen() {
   const { primary, tint, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
   const { showToast, showRewardCard } = useToast();
+
+  // Header collapsible au scroll : 0 = repos, 1 = collapsé.
+  const scrollY = useSharedValue(0);
+  const SCROLL_RANGE = 80;
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const greetingAnimStyle = useAnimatedStyle(() => {
+    const t = interpolate(scrollY.value, [0, SCROLL_RANGE], [1, 0], Extrapolation.CLAMP);
+    const h = interpolate(scrollY.value, [0, SCROLL_RANGE], [16, 0], Extrapolation.CLAMP);
+    return { opacity: t, height: h, overflow: 'hidden' };
+  });
+  const headerInnerAnimStyle = useAnimatedStyle(() => {
+    const pb = interpolate(scrollY.value, [0, SCROLL_RANGE], [6, 2], Extrapolation.CLAMP);
+    return { paddingBottom: pb };
+  });
+  const avatarAnimStyle = useAnimatedStyle(() => {
+    const s = interpolate(scrollY.value, [0, SCROLL_RANGE], [1, 0.85], Extrapolation.CLAMP);
+    return { transform: [{ scale: s }] };
+  });
   const {
     isLoading,
     error,
@@ -847,12 +874,13 @@ export default function DashboardScreen() {
         style={[
           styles.header,
           { paddingTop: Math.max(insets.top - 2, 0) },
+          headerInnerAnimStyle,
         ]}
         ref={headerRef}
       >
         <SeasonalParticles />
         <View style={styles.headerLeft}>
-          <View style={styles.avatarWithCompanion}>
+          <Animated.View style={[styles.avatarWithCompanion, avatarAnimStyle]}>
             <TouchableOpacity
               onPress={() => setProfilePickerVisible(true)}
               style={[styles.avatarBtn, { backgroundColor: tint }]}
@@ -878,18 +906,22 @@ export default function DashboardScreen() {
                 size={30}
               />
             )}
-          </View>
+          </Animated.View>
           <View style={styles.headerGreeting}>
-            <Text style={[
-              isChildMode ? styles.greetingChild : styles.greeting,
-              { color: colors.textSub },
-            ]}>
+            <Animated.Text
+              style={[
+                isChildMode ? styles.greetingChild : styles.greeting,
+                { color: colors.textSub },
+                greetingAnimStyle,
+              ]}
+              numberOfLines={1}
+            >
               {isChildMode
                 ? t('index.greeting.child', { name: activeProfile?.name ?? '' })
                 : t(`index.greeting.${getGreetingKey(new Date().getHours())}`, {
                     name: activeProfile?.name ? ` ${activeProfile.name}` : '',
                   })}
-            </Text>
+            </Animated.Text>
             <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
           </View>
         </View>
@@ -939,10 +971,12 @@ export default function DashboardScreen() {
       />
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
         showsVerticalScrollIndicator={false}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
@@ -1149,7 +1183,7 @@ export default function DashboardScreen() {
         })()}
 
         <View style={styles.bottomPad} />
-      </ScrollView>
+      </Animated.ScrollView>
       {/* Dashboard prefs modal */}
       <Modal
         visible={prefsModalVisible}
