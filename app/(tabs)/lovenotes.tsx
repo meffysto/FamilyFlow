@@ -27,8 +27,6 @@ import * as Haptics from 'expo-haptics';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { PillTabSwitcher, ScreenHeader, type PillTab } from '../../components/ui';
@@ -44,7 +42,6 @@ import { useRevealOnForeground } from '../../hooks/useRevealOnForeground';
 import type { LoveNote, LoveNoteStatus } from '../../lib/types';
 import { Spacing } from '../../constants/spacing';
 import { FontSize } from '../../constants/typography';
-import { Shadows } from '../../constants/shadows';
 
 type Segment = 'received' | 'sent' | 'archived';
 
@@ -57,7 +54,6 @@ export default function LoveNotesScreen() {
     updateLoveNoteStatus,
   } = useVault();
   const { colors, primary, isDark } = useThemeColors();
-  const tabBarHeight = useBottomTabBarHeight();
   const [segment, setSegment] = useState<Segment>('received');
   const scrollY = useSharedValue(0);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
@@ -189,6 +185,21 @@ export default function LoveNotesScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title="Boîte aux lettres"
+        actions={
+          activeProfile ? (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setEditorVisible(true);
+              }}
+              style={[styles.addBtn, { backgroundColor: primary }]}
+              accessibilityRole="button"
+              accessibilityLabel="Écrire une love note"
+            >
+              <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+            </Pressable>
+          ) : undefined
+        }
         bottom={
           <PillTabSwitcher<Segment>
             tabs={segments}
@@ -219,25 +230,6 @@ export default function LoveNotesScreen() {
           onScroll={onScrollHandler}
           scrollEventThrottle={16}
         />
-      )}
-
-      {/* FAB Écrire — visible si activeProfile */}
-      {activeProfile && (
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-            setEditorVisible(true);
-          }}
-          style={[
-            styles.fab,
-            { backgroundColor: primary, bottom: tabBarHeight + Spacing['2xl'] },
-            Shadows.md,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Écrire une love note"
-        >
-          <Text style={[styles.fabText, { color: colors.onPrimary }]}>✏️ Écrire</Text>
-        </Pressable>
       )}
 
       {activeProfile && (
@@ -273,16 +265,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fab: {
-    position: 'absolute',
-    right: Spacing['2xl'],
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: 999,
+  addBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  fabText: {
-    // Couleur appliquée inline (colors.onPrimary) — pas de hardcoded ici
-    fontWeight: '600',
-    fontSize: FontSize.body,
+  addBtnText: {
+    fontSize: FontSize.lg,
+    fontWeight: '700',
+    lineHeight: 18,
   },
 });
