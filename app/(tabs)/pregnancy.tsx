@@ -54,6 +54,7 @@ export default function PregnancyScreen() {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [entries, setEntries] = useState<PregnancyWeekEntry[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingWeek, setEditingWeek] = useState<number | null>(null);
   const [formPoids, setFormPoids] = useState('');
   const [formSymptomes, setFormSymptomes] = useState('');
   const [formNotes, setFormNotes] = useState('');
@@ -95,20 +96,34 @@ export default function PregnancyScreen() {
     [entries],
   );
 
-  // Ouvrir le modal de saisie
+  // Ouvrir le modal de saisie (semaine courante)
   const openAdd = useCallback(() => {
+    setEditingWeek(null);
     setFormPoids('');
     setFormSymptomes('');
     setFormNotes('');
     setModalVisible(true);
   }, []);
 
+  // Ouvrir le modal en mode édition (semaine arbitraire via long press)
+  const openEdit = useCallback((week: number, entry?: PregnancyWeekEntry) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setEditingWeek(week);
+    setFormPoids(entry?.poids != null ? String(entry.poids) : '');
+    setFormSymptomes(entry?.symptomes ?? '');
+    setFormNotes(entry?.notes ?? '');
+    setModalVisible(true);
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!vault || !selectedProfile || !pregnancyInfo) return;
     const path = pregnancyJournalPath(selectedProfile.name);
+    const targetWeek = editingWeek ?? pregnancyInfo.currentWeek;
+    // Préserver la date existante si on édite une semaine passée, sinon aujourd'hui
+    const existingEntry = entries.find(e => e.week === targetWeek);
     const newEntry: PregnancyWeekEntry = {
-      week: pregnancyInfo.currentWeek,
-      date: new Date().toISOString().slice(0, 10),
+      week: targetWeek,
+      date: existingEntry?.date ?? new Date().toISOString().slice(0, 10),
       poids: formPoids ? parseFloat(formPoids) : undefined,
       symptomes: formSymptomes.trim() || undefined,
       notes: formNotes.trim() || undefined,
@@ -116,7 +131,7 @@ export default function PregnancyScreen() {
       lineIndex: -1,
     };
     // Remplacer l'entrée de la même semaine si elle existe
-    const filtered = entries.filter(e => e.week !== pregnancyInfo.currentWeek);
+    const filtered = entries.filter(e => e.week !== targetWeek);
     const updated = [...filtered, newEntry];
     try {
       await vault.ensureDir('03 - Journal/Grossesse');
@@ -126,10 +141,11 @@ export default function PregnancyScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showToast(t('pregnancy.toast.saved'), 'success');
       setModalVisible(false);
+      setEditingWeek(null);
     } catch {
       showToast(t('pregnancy.toast.error'), 'error');
     }
-  }, [vault, selectedProfile, pregnancyInfo, entries, formPoids, formSymptomes, formNotes, showToast]);
+  }, [vault, selectedProfile, pregnancyInfo, editingWeek, entries, formPoids, formSymptomes, formNotes, showToast]);
 
   if (pregnancies.length === 0) {
     return (
@@ -194,13 +210,17 @@ export default function PregnancyScreen() {
 
         {/* Timeline semaine par semaine */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('pregnancy.weekByWeek')}</Text>
+        <Text style={[styles.hint, { color: colors.textMuted }]}>{t('pregnancy.longPressHint')}</Text>
 
         {Array.from({ length: (pregnancyInfo?.currentWeek ?? 0) + 1 }, (_, i) => (pregnancyInfo?.currentWeek ?? 0) - i).map(week => {
           const entry = entries.find(e => e.week === week);
           const isCurrent = week === pregnancyInfo?.currentWeek;
           return (
-            <View
+            <TouchableOpacity
               key={week}
+              activeOpacity={0.7}
+              delayLongPress={400}
+              onLongPress={() => openEdit(week, entry)}
               style={[
                 styles.weekCard,
                 { backgroundColor: colors.card, borderColor: isCurrent ? primary : colors.border },
@@ -250,7 +270,7 @@ export default function PregnancyScreen() {
                   <Text style={[styles.weekCta, { color: primary }]}>+ {t('pregnancy.addWeekTracking')}</Text>
                 </TouchableOpacity>
               ) : null}
-            </View>
+            </TouchableOpacity>
           );
         })}
 
@@ -258,11 +278,11 @@ export default function PregnancyScreen() {
       </ScrollView>
 
       {/* Modal saisie */}
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalVisible(false)}>
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setModalVisible(false); setEditingWeek(null); }}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
           <ModalHeader
-            title={`${t('pregnancy.saPrefix')} ${pregnancyInfo?.currentWeek ?? '?'} — ${getFruitForWeek(pregnancyInfo?.currentWeek ?? 0)} ${getFruitLabel(pregnancyInfo?.currentWeek ?? 0)}`}
-            onClose={() => setModalVisible(false)}
+            title={`${t('pregnancy.saPrefix')} ${editingWeek ?? pregnancyInfo?.currentWeek ?? '?'} — ${getFruitForWeek(editingWeek ?? pregnancyInfo?.currentWeek ?? 0)} ${getFruitLabel(editingWeek ?? pregnancyInfo?.currentWeek ?? 0)}`}
+            onClose={() => { setModalVisible(false); setEditingWeek(null); }}
           />
           <View style={styles.modalContent}>
             <Text style={[styles.label, { color: colors.textSub }]}>{t('pregnancy.form.weight')}</Text>
@@ -368,6 +388,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.md,
+  },
+  hint: {
+    fontSize: FontSize.micro,
+    marginBottom: Spacing.sm,
+    marginTop: -Spacing.xs,
   },
   // Timeline
   weekCard: {
