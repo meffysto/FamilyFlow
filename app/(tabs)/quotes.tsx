@@ -18,6 +18,8 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
@@ -37,7 +39,7 @@ import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import type { ChildQuote } from '../../lib/types';
 
 export default function QuotesScreen() {
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();
   const { profiles, quotes, addQuote, editQuote, deleteQuote, refresh } = useVault();
@@ -205,20 +207,23 @@ export default function QuotesScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
-
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('quotes.title')}</Text>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: primary }]}
-          onPress={openModal}
-          accessibilityLabel={t('quotes.addA11y')}
-          accessibilityRole="button"
-        >
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('quotes.title')}
+        icon="💬"
+        subtitle={quotes.length > 0 ? t('quotes.count', { count: quotes.length, defaultValue: `${quotes.length} mots collectés` }) : undefined}
+        actions={
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: primary }]}
+            onPress={openModal}
+            accessibilityLabel={t('quotes.addA11y')}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+          </TouchableOpacity>
+        }
+      />
 
       {/* Filtre par enfant */}
       {enfants.length > 1 && (
@@ -350,28 +355,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
-  },
   addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   addBtnText: {
-    fontSize: FontSize.title,
+    fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    lineHeight: FontSize.title + 2,
+    lineHeight: FontSize.lg + 2,
   },
   list: {
     paddingHorizontal: Spacing.lg,
