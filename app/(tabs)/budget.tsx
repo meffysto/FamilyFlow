@@ -223,6 +223,28 @@ export default function BudgetScreen() {
 
   const isFiltered = !!filterCategory || !!searchQuery.trim();
 
+  // ─── Tri catégories par urgence (dépassées > proches > reste décroissant) ──
+  const sortedCategories = useMemo(() => {
+    return [...budgetConfig.categories]
+      .map((cat) => {
+        const catSpent = sumByCategory(budgetEntries, categoryDisplay(cat));
+        const pct = cat.limit > 0 ? (catSpent / cat.limit) * 100 : 0;
+        return { cat, catSpent, pct, overBudget: catSpent > cat.limit };
+      })
+      .sort((a, b) => {
+        // Dépassées en premier
+        if (a.overBudget && !b.overBudget) return -1;
+        if (!a.overBudget && b.overBudget) return 1;
+        // Puis proches (>80%) avant le reste
+        const aWarn = a.pct > 80 && !a.overBudget;
+        const bWarn = b.pct > 80 && !b.overBudget;
+        if (aWarn && !bWarn) return -1;
+        if (!aWarn && bWarn) return 1;
+        // Enfin, % décroissant
+        return b.pct - a.pct;
+      });
+  }, [budgetConfig, budgetEntries]);
+
   // ─── Calcul évolution des prix ────────────────────────────────
   const priceEvolutions = useMemo((): PriceEvolution[] => {
     if (evoEntries.length === 0) return [];
@@ -509,38 +531,47 @@ export default function BudgetScreen() {
                 ]}
               />
             </View>
+            {/* % utilisé + nb dépenses */}
+            {(() => {
+              const usagePct = budgetTotal > 0 ? Math.round((spent / budgetTotal) * 100) : 0;
+              const entriesCount = budgetEntries.length;
+              return (
+                <Text style={[styles.totalStats, { color: colors.textMuted }]}>
+                  {usagePct}{'% utilisé · '}{entriesCount}{' '}{entriesCount > 1 ? 'dépenses' : 'dépense'}
+                </Text>
+              );
+            })()}
           </View>
 
-          {/* Per category */}
-          {budgetConfig.categories.map((cat) => {
-            const catSpent = sumByCategory(budgetEntries, categoryDisplay(cat));
-            const pct = cat.limit > 0 ? (catSpent / cat.limit) * 100 : 0;
-            const overBudget = catSpent > cat.limit;
-
-            return (
-              <View key={cat.name} style={[styles.catCard, { backgroundColor: colors.card }]}>
-                <View style={styles.catHeader}>
-                  <Text style={[styles.catName, { color: colors.text }]}>
-                    {cat.emoji} {cat.name}
-                  </Text>
-                  <Text style={[styles.catAmount, { color: overBudget ? colors.error : colors.textSub }]}>
-                    {formatAmount(catSpent)} / {formatAmount(cat.limit)}
-                  </Text>
-                </View>
-                <View style={[styles.catBar, { backgroundColor: colors.borderLight }]}>
-                  <View
-                    style={[
-                      styles.catBarFill,
-                      {
-                        width: `${Math.min(pct, 100)}%`,
-                        backgroundColor: overBudget ? colors.error : pct > 80 ? colors.warning : colors.success,
-                      },
-                    ]}
-                  />
-                </View>
+          {/* Catégories triées par urgence */}
+          {sortedCategories.map(({ cat, catSpent, pct, overBudget }) => (
+            <View key={cat.name} style={[styles.catCard, { backgroundColor: colors.card }]}>
+              <View style={styles.catHeader}>
+                <Text style={[styles.catName, { color: colors.text }]}>
+                  {cat.emoji} {cat.name}
+                </Text>
+                <Text style={[styles.catPct, {
+                  color: overBudget ? colors.error : pct > 80 ? colors.warning : colors.textMuted,
+                }]}>
+                  {Math.round(pct)}{'%'}
+                </Text>
+                <Text style={[styles.catAmount, { color: overBudget ? colors.error : colors.textSub }]}>
+                  {formatAmount(catSpent)} / {formatAmount(cat.limit)}
+                </Text>
               </View>
-            );
-          })}
+              <View style={[styles.catBar, { backgroundColor: colors.borderLight }]}>
+                <View
+                  style={[
+                    styles.catBarFill,
+                    {
+                      width: `${Math.min(pct, 100)}%`,
+                      backgroundColor: overBudget ? colors.error : pct > 80 ? colors.warning : colors.success,
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          ))}
           <View style={styles.bottomPad} />
         </ScrollView>
       ) : tab === 'list' ? (
@@ -920,6 +951,7 @@ const styles = StyleSheet.create({
   totalBudget: { fontSize: FontSize.sm, marginTop: 2, marginBottom: Spacing.xl },
   totalBar: { width: '100%', height: 8, borderRadius: Spacing.xs, overflow: 'hidden' },
   totalBarFill: { height: '100%', borderRadius: Spacing.xs },
+  totalStats: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, marginTop: Spacing.md },
 
   // Category cards
   catCard: {
@@ -935,6 +967,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   catName: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
+  catPct: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginHorizontal: Spacing.md },
   catAmount: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   catBar: { height: 6, borderRadius: 3, overflow: 'hidden' },
   catBarFill: { height: '100%', borderRadius: 3 },
