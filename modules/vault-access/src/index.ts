@@ -4,8 +4,9 @@ interface VaultAccessModuleType {
   startFeedingActivity(babyName: string, babyEmoji: string, feedType: string, side: string | null, volumeMl: number | null): Promise<boolean>;
   updateFeedingActivity(isPaused: boolean, side: string | null, volumeMl: number | null): Promise<void>;
   stopFeedingActivity(): Promise<void>;
-  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, bonusText: string | null, nextTaskPayload: string | null, extrasPayload: string | null): Promise<boolean>;
-  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, companionSpriteBase64: string | null, bonusText: string | null, nextTaskPayload: string | null, extrasPayload: string | null): Promise<void>;
+  writeCompanionPoseFile(pose: string, base64: string): Promise<void>;
+  startMascotteActivity(mascotteName: string, tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, pose: string | null, bonusText: string | null, nextTaskPayload: string | null, extrasPayload: string | null): Promise<boolean>;
+  updateMascotteActivity(tasksDone: number, tasksTotal: number, xpGained: number, currentMeal: string | null, stageOverride: string | null, pose: string | null, bonusText: string | null, nextTaskPayload: string | null, extrasPayload: string | null): Promise<void>;
   stopMascotteActivity(): Promise<void>;
   isMascotteActivityActive(): Promise<boolean>;
   consumePendingTaskToggles(): Promise<string[]>;
@@ -198,6 +199,19 @@ export async function stopFeedingActivity(): Promise<void> {
   return VaultAccessNative.stopFeedingActivity();
 }
 
+// ─── Live Activity (Mascotte — poses compagnon App Group) ──────────────────
+
+/**
+ * Phase 260425-0qf — Écrit `companion-sprite-{pose}.png` dans le container
+ * App Group partagé (group.com.familyvault.dev). Appelé 5× en parallèle
+ * avant le start de la Live Activity pour pré-charger toutes les poses.
+ * No-op sur non-iOS.
+ */
+export async function writeCompanionPoseFile(pose: string, base64: string): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.writeCompanionPoseFile(pose, base64);
+}
+
 // ─── Live Activity (Mascotte — journée narrative) ──────────────────────────
 
 /**
@@ -229,6 +243,10 @@ function encodeExtrasPayload(
   return `${nextRdvText ?? ''}\u001F${speechBubble ?? ''}`;
 }
 
+/**
+ * Phase 260425-0qf — `pose` remplace `companionSpriteBase64` (allégement ContentState).
+ * Arité 10 préservée (workaround Swift 6.3 variadic generics > 10 args).
+ */
 export async function startMascotteActivity(
   mascotteName: string,
   tasksDone: number,
@@ -236,7 +254,7 @@ export async function startMascotteActivity(
   xpGained: number,
   currentMeal: string | null,
   stageOverride: string | null = null,
-  companionSpriteBase64: string | null = null,
+  pose: string | null = null,
   bonusText: string | null = null,
   nextTaskText: string | null = null,
   nextTaskId: string | null = null,
@@ -246,11 +264,12 @@ export async function startMascotteActivity(
   if (!VaultAccessNative) return false;
   const taskPayload = encodeNextTaskPayload(nextTaskText, nextTaskId);
   const extrasPayload = encodeExtrasPayload(nextRdvText, speechBubble);
-  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, bonusText, taskPayload, extrasPayload);
+  return VaultAccessNative.startMascotteActivity(mascotteName, tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, pose, bonusText, taskPayload, extrasPayload);
 }
 
 /**
  * Mettre à jour l'état de la Live Activity mascotte (tâches cochées, repas, XP).
+ * Phase 260425-0qf — `pose` remplace `companionSpriteBase64`.
  */
 export async function updateMascotteActivity(
   tasksDone: number,
@@ -258,7 +277,7 @@ export async function updateMascotteActivity(
   xpGained: number,
   currentMeal: string | null,
   stageOverride: string | null = null,
-  companionSpriteBase64: string | null = null,
+  pose: string | null = null,
   bonusText: string | null = null,
   nextTaskText: string | null = null,
   nextTaskId: string | null = null,
@@ -268,7 +287,7 @@ export async function updateMascotteActivity(
   if (!VaultAccessNative) return;
   const taskPayload = encodeNextTaskPayload(nextTaskText, nextTaskId);
   const extrasPayload = encodeExtrasPayload(nextRdvText, speechBubble);
-  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, companionSpriteBase64, bonusText, taskPayload, extrasPayload);
+  return VaultAccessNative.updateMascotteActivity(tasksDone, tasksTotal, xpGained, currentMeal, stageOverride, pose, bonusText, taskPayload, extrasPayload);
 }
 
 /**

@@ -10,24 +10,17 @@ import LiveActivityShared
 // ActivityKit → l'App Intent du widget peut retrouver et mettre à jour la
 // Live Activity démarrée ici.
 
-/// Écrit le PNG du sprite compagnon dans le container App Group partagé.
-/// Retourne un token court (taille+hash prefix) pour cache-buster le widget.
-/// Évite d'embarquer le base64 dans ContentState (limite iOS ~4 KB).
-private func persistCompanionSprite(_ base64: String?) -> String? {
-  guard let base64 = base64, !base64.isEmpty,
+/// Phase 260425-0qf — Écrit `companion-sprite-{pose}.png` dans l'App Group.
+/// Appelé 5× en parallèle (idle/happy/sleeping/eating/celebrating) avant le
+/// start de la Live Activity. Le widget lit ensuite le fichier keyed par pose.
+private func writeCompanionPoseFileToDisk(pose: String, base64: String) throws {
+  guard !pose.isEmpty, !base64.isEmpty,
         let data = Data(base64Encoded: base64),
         let container = FileManager.default.containerURL(
           forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
-        ) else { return nil }
-  let fileURL = container.appendingPathComponent("companion-sprite.png")
-  do {
-    try data.write(to: fileURL, options: .atomic)
-    // Token = taille + prefix hash → change dès que le sprite change
-    let hash = data.hashValue & 0xFFFF
-    return "\(data.count)-\(String(hash, radix: 16))"
-  } catch {
-    return nil
-  }
+        ) else { return }
+  let fileURL = container.appendingPathComponent("companion-sprite-\(pose).png")
+  try data.write(to: fileURL, options: .atomic)
 }
 
 /// Décode le payload "id\u{1F}text" envoyé par le bridge JS. Workaround du bug
@@ -515,13 +508,24 @@ public class VaultAccessModule: Module {
       }
     }
 
+    // ─── Live Activity (Mascotte — poses compagnon App Group) ───────────
+
+    /// Phase 260425-0qf — Écrit companion-sprite-{pose}.png dans l'App Group.
+    /// Appelé 5× en parallèle depuis le JS avant le start de la Live Activity.
+    AsyncFunction("writeCompanionPoseFile") { (pose: String, base64: String) in
+      try self.writeCompanionPoseFileToDisk(pose: pose, base64: base64)
+    }
+
     // ─── Live Activity (Mascotte — journée narrative) ───────────────────
 
-    /// Start the mascotte Live Activity
+    /// Démarre la Live Activity mascotte.
+    /// Phase 260425-0qf : le paramètre `pose` remplace `companionSpriteBase64`.
+    /// Le widget lit companion-sprite-{pose}.png depuis l'App Group (pré-écrit
+    /// par writeCompanionPoseFile avant ce call). Arité 10 préservée.
     // NOTE : `nextTaskText` encode aussi `nextTaskId` au format "id\u{1F}text"
     // (séparateur ASCII Unit Separator). Workaround au bug Swift 6.3 sur les
     // variadic generics qui ne dépassent pas 10 args dans `AsyncFunction`.
-    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, extrasPayload: String?) -> Bool in
+    AsyncFunction("startMascotteActivity") { (mascotteName: String, tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, pose: String?, bonusText: String?, nextTaskText: String?, extrasPayload: String?) -> Bool in
       let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
       let (nextRdvText, speechBubble) = decodeExtrasPayload(extrasPayload)
       if #available(iOS 16.2, *) {
@@ -541,7 +545,7 @@ public class VaultAccessModule: Module {
           xpGained: xpGained,
           currentMeal: currentMeal,
           stageOverride: stageOverride,
-          companionSpriteToken: persistCompanionSprite(companionSpriteBase64),
+          pose: pose ?? "idle",
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
           nextTaskId: nextTaskId,
@@ -563,8 +567,9 @@ public class VaultAccessModule: Module {
       return false
     }
 
-    /// Update the mascotte Live Activity (tâches cochées, repas, XP gagné)
-    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, companionSpriteBase64: String?, bonusText: String?, nextTaskText: String?, extrasPayload: String?) in
+    /// Met à jour la Live Activity mascotte (tâches cochées, repas, XP gagné).
+    /// Phase 260425-0qf : `pose` remplace `companionSpriteBase64`.
+    AsyncFunction("updateMascotteActivity") { (tasksDone: Int, tasksTotal: Int, xpGained: Int, currentMeal: String?, stageOverride: String?, pose: String?, bonusText: String?, nextTaskText: String?, extrasPayload: String?) in
       let (nextTaskTextClean, nextTaskId) = decodeNextTaskPayload(nextTaskText)
       let (nextRdvText, speechBubble) = decodeExtrasPayload(extrasPayload)
       if #available(iOS 16.2, *) {
@@ -575,7 +580,7 @@ public class VaultAccessModule: Module {
           xpGained: xpGained,
           currentMeal: currentMeal,
           stageOverride: stageOverride,
-          companionSpriteToken: persistCompanionSprite(companionSpriteBase64),
+          pose: pose ?? "idle",
           bonusText: bonusText,
           nextTaskText: nextTaskTextClean,
           nextTaskId: nextTaskId,

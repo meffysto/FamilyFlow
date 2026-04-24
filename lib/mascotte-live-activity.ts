@@ -6,6 +6,12 @@
  * - Updates déclenchées sur tâche cochée, repas sélectionné, XP gagné.
  * - Arrêt manuel via stopMascotte() ou automatique par iOS après ~8h.
  *
+ * Phase 260425-0qf :
+ * - companionSpriteBase64 retiré de MascotteSnapshot (allégement ContentState).
+ * - Ajout pose?: CompanionMood dans MascotteSnapshot.
+ * - writeCompanionPosesToAppGroup() écrit les 5 PNG dans l'App Group au start.
+ * - derivePoseFromStage() dérive la pose narrative depuis le stageOverride courant.
+ *
  * Fire-and-forget : aucune erreur ne remonte, l'app continue toujours.
  */
 
@@ -17,6 +23,7 @@ import {
   updateMascotteActivity,
   stopMascotteActivity,
   isMascotteActivityActive,
+  writeCompanionPoseFile,
 } from '../modules/vault-access/src';
 import { COMPANION_SPRITES, type CompanionMood } from './mascot/companion-sprites';
 import type { CompanionSpecies, CompanionStage } from './mascot/companion-types';
@@ -30,8 +37,13 @@ export interface MascotteSnapshot {
   xpGained: number;
   currentMeal: string | null;
   stageOverride?: MascotteStageOverride | null;
-  /** Sprite compagnon encodé base64 (PNG). Affiché sur le Lock Screen. */
-  companionSpriteBase64?: string | null;
+  /**
+   * Pose courante du compagnon. Propagée dans ContentState.pose (String, ~500B)
+   * à la place de l'ancien companionSpriteBase64 (~5-15KB). Les 5 PNG sont
+   * écrits dans l'App Group au start() via writeCompanionPosesToAppGroup().
+   * Phase 260425-0qf — remplace companionSpriteBase64 retiré.
+   */
+  pose?: CompanionMood | null;
   /** Ligne bonus optionnelle affichée en stage recap (ex: level up du jour). */
   bonusText?: string | null;
   /** Prochaine tâche à faire (récurrente prioritaire). Affichée pendant reveil/travail/jeu/routine. */
@@ -49,8 +61,28 @@ export interface MascotteSnapshot {
 let lastSnapshot: MascotteSnapshot | null = null;
 
 /**
- * Charge le PNG d'un compagnon (idle ou happy) et renvoie sa représentation base64.
+ * Dérive la pose narrative depuis le stage actuel et les compteurs de tâches.
+ * Mapping déterministe (Phase 260425-0qf) :
+ *   dodo → sleeping
+ *   midi → eating
+ *   recap & toutes tâches faites → celebrating
+ *   autres → idle
+ */
+export function derivePoseFromStage(
+  stage: MascotteStageOverride | null | undefined,
+  tasksDone: number,
+  tasksTotal: number,
+): CompanionMood {
+  if (stage === 'dodo') return 'sleeping';
+  if (stage === 'midi') return 'eating';
+  if (stage === 'recap' && tasksTotal > 0 && tasksDone >= tasksTotal) return 'celebrating';
+  return 'idle';
+}
+
+/**
+ * Charge le PNG d'un compagnon dans la pose demandée et renvoie sa représentation base64.
  * Retourne null si l'espèce ou le stade n'ont pas de sprite mappé.
+ * 'idle' → idle_1, toutes les autres poses → clé directe dans l'entrée sprites.
  */
 export async function loadCompanionSpriteBase64(
   species: CompanionSpecies,
@@ -60,7 +92,9 @@ export async function loadCompanionSpriteBase64(
   try {
     const entry = COMPANION_SPRITES[species]?.[stage];
     if (!entry) return null;
-    const module = mood === 'happy' ? entry.happy : entry.idle_1;
+    // 'idle' utilise idle_1 ; les autres poses ont leur clé directe
+    const module = mood === 'idle' ? entry.idle_1 : entry[mood];
+    if (!module) return null;
     const asset = Asset.fromModule(module);
     if (!asset.localUri) await asset.downloadAsync();
     if (!asset.localUri) return null;
@@ -68,6 +102,27 @@ export async function loadCompanionSpriteBase64(
   } catch {
     return null;
   }
+}
+
+/**
+ * Phase 260425-0qf — Écrit les 5 PNG (idle/happy/sleeping/eating/celebrating)
+ * dans le container App Group partagé avant le start de la Live Activity.
+ * Ces fichiers restent stables pendant toute la durée de la LA (l'espèce et le
+ * stade ne changent pas) — on ne réécrit qu'au startMascotte().
+ */
+export async function writeCompanionPosesToAppGroup(
+  species: CompanionSpecies,
+  stage: CompanionStage,
+): Promise<void> {
+  const poses: CompanionMood[] = ['idle', 'happy', 'sleeping', 'eating', 'celebrating'];
+  await Promise.all(
+    poses.map(async (pose) => {
+      const base64 = await loadCompanionSpriteBase64(species, stage, pose);
+      if (base64) {
+        await writeCompanionPoseFile(pose, base64);
+      }
+    }),
+  );
 }
 
 /**
@@ -88,6 +143,8 @@ export function buildFeedSpeechBubble(
 /**
  * Démarre la Live Activity mascotte. Idempotent :
  * si une activity tourne déjà, elle est remplacée.
+ * Phase 260425-0qf : écrit les 5 PNG dans l'App Group AVANT de démarrer la LA,
+ * puis passe uniquement la pose courante (String) dans le ContentState.
  */
 export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
   if (Platform.OS !== 'ios') return false;
@@ -95,7 +152,10 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
   const effectiveBubble =
     snap.speechBubble ??
     (snap.feedBuffActive ? buildFeedSpeechBubble(snap.feedBuffActive) : null);
-  lastSnapshot = { ...snap, speechBubble: effectiveBubble };
+  // Phase 260425-0qf — dériver la pose si non fournie explicitement
+  const effectivePose: CompanionMood =
+    snap.pose ?? derivePoseFromStage(snap.stageOverride, snap.tasksDone, snap.tasksTotal);
+  lastSnapshot = { ...snap, speechBubble: effectiveBubble, pose: effectivePose };
   try {
     return await startMascotteActivity(
       snap.mascotteName,
@@ -104,7 +164,7 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
       snap.xpGained,
       snap.currentMeal,
       snap.stageOverride ?? null,
-      snap.companionSpriteBase64 ?? null,
+      effectivePose,
       snap.bonusText ?? null,
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
@@ -120,6 +180,7 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
 /**
  * Met à jour l'état affiché si une activity est active. No-op sinon.
  * Appeler quand une tâche est cochée, un repas mis à jour, ou des XP gagnés.
+ * Phase 260425-0qf : ne réécrit PAS les fichiers App Group (fait au start uniquement).
  */
 export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
   if (Platform.OS !== 'ios') return;
@@ -127,7 +188,10 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
   const effectiveBubble =
     snap.speechBubble ??
     (snap.feedBuffActive ? buildFeedSpeechBubble(snap.feedBuffActive) : null);
-  lastSnapshot = { ...snap, speechBubble: effectiveBubble };
+  // Phase 260425-0qf — dériver la pose si non fournie explicitement
+  const effectivePose: CompanionMood =
+    snap.pose ?? derivePoseFromStage(snap.stageOverride, snap.tasksDone, snap.tasksTotal);
+  lastSnapshot = { ...snap, speechBubble: effectiveBubble, pose: effectivePose };
   try {
     const active = await isMascotteActivityActive();
     if (!active) return;
@@ -137,7 +201,7 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
       snap.xpGained,
       snap.currentMeal,
       snap.stageOverride ?? null,
-      snap.companionSpriteBase64 ?? null,
+      effectivePose,
       snap.bonusText ?? null,
       snap.nextTaskText ?? null,
       snap.nextTaskId ?? null,
