@@ -434,7 +434,8 @@ export default function TasksScreen() {
             try {
               await deleteTask(task.sourceFile, task.lineIndex);
             } catch (e) {
-              Alert.alert(t('tasks.delete.error'), String(e));
+              if (__DEV__) console.warn(e);
+              Alert.alert(t('tasks.delete.error'), t('common.errors.generic'));
             }
           },
         },

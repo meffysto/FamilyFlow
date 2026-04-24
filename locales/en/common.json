@@ -33,7 +33,15 @@
     "tasks": "Tasks",
     "journal": "Journal",
     "calendar": "Calendar",
-    "menu": "Menu"
+    "menu": "Menu",
+    "vacation": {
+      "departIn_one": "Departing in {{count}} day",
+      "departIn_other": "Departing in {{count}} days",
+      "lastDay": "Last day!",
+      "endsIn_one": "Ends in {{count}} day",
+      "endsIn_other": "Ends in {{count}} days",
+      "banner": "☀️ Vacation — {{label}}"
+    }
   },
   "menu": {
     "categories": {
@@ -1300,7 +1308,8 @@
     "tabs": {
       "month": "Month",
       "week": "Week"
-    }
+    },
+    "weekLabel": "Week"
   },
   "dashboard": {
     "seeAll": "See all",
@@ -2044,17 +2053,18 @@
   },
   "pregnancy": {
     "title": "🤰 Pregnancy",
-    "emptyTitle": "No ongoing pregnancy",
-    "emptySubtitle": "Add a pregnancy profile in settings to track progress week by week.",
+    "emptyTitle": "No pregnancy to track yet",
+    "emptySubtitle": "Add a profile with status \"pregnancy\" in settings to follow progress week by week.",
     "thisWeek": "This week",
+    "addThisWeek": "Add this week",
     "saPrefix": "WK",
     "daysLeft": "D-{{count}}",
     "daysOverdue": "D+{{count}}",
     "dueToday": "It's today!",
-    "overdue": "past due",
+    "overdue": "Past due",
     "weightChart": "📈 Weight progress",
     "weekByWeek": "📅 Week by week",
-    "longPressHint": "Long press on a week to edit",
+    "longPressHint": "Press and hold a week to edit it",
     "addWeekTracking": "Add this week's tracking",
     "form": {
       "weight": "Weight (kg)",
@@ -2066,8 +2076,8 @@
       "save": "Save"
     },
     "toast": {
-      "saved": "Week saved!",
-      "error": "Unable to save"
+      "saved": "Tracking saved",
+      "error": "Couldn't save. Please try again."
     },
     "fruits": {
       "sa0": "tiny seed",
@@ -2210,7 +2220,10 @@
     "longPressToReorder": "Long press to reorder",
     "tapToChangeCategory": "Tap to change category",
     "bravo": "Well done!",
-    "pass": "Skip"
+    "pass": "Skip",
+    "errors": {
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "notificationEditor": {
     "enabled": "Enabled",
@@ -2828,6 +2841,10 @@
       "nap": "Nap",
       "note": "Note",
       "medication": "Med."
+    },
+    "empty": {
+      "sleep": "No sleep data",
+      "symptoms": "No symptoms recorded"
     }
   },
   "photosScreen": {
@@ -3237,6 +3254,10 @@
     "completed": "completed",
     "skillCount": "{{unlocked}} / {{total}} skills",
     "unlockedCount": "{{unlocked}} / {{total}} unlocked",
+    "emptyNoChild": "No children in the family yet. Add a child or teen profile in settings to track their skills.",
+    "filterAll": "All",
+    "bracketPickerTitle": "Age bracket",
+    "bracketCurrent": "current",
     "a11y": {
       "changeBracket": "Change age bracket"
     }
@@ -3309,8 +3330,8 @@
   },
   "skills": {
     "detail": {
-      "confirmTitle": "Confirm validation",
-      "confirmMessage": "Confirm validation of this skill? +{{xp}} XP will be awarded.",
+      "confirmTitle": "Validate this skill?",
+      "confirmMessage": "Confirm and grant +{{xp}} XP.",
       "unlocked": "Unlocked ✓",
       "validatedBy": "Validated by {{name}}",
       "validateSkill": "Validate this skill"
@@ -3330,7 +3351,13 @@
   "fab": {
     "closeMenuA11y": "Close quick add menu",
     "addA11y": "Add",
-    "addItemA11y": "Add {{label}}"
+    "addItemA11y": "Add {{label}}",
+    "actions": {
+      "task": "Task",
+      "rdv": "Event",
+      "journal": "Journal",
+      "photo": "Photo"
+    }
   },
   "helpModal": {
     "title": "Guide",
@@ -4664,5 +4691,12 @@
     "sellByGrade": "Sell by quality",
     "gradeColumnLabel": "Quality",
     "sellLinePrefix": "Sell"
+  },
+  "auth": {
+    "pinIncorrect": "Wrong PIN",
+    "pinParentA11y": "Parent PIN"
+  },
+  "more": {
+    "title": "Menu"
   }
 }

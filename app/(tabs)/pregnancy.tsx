@@ -167,7 +167,7 @@ export default function PregnancyScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{t('pregnancy.title')}</Text>
         <TouchableOpacity onPress={openAdd}>
-          <Text style={[styles.addBtn, { color: primary }]}>+ {t('pregnancy.thisWeek')}</Text>
+          <Text style={[styles.addBtn, { color: primary }]}>+ {t('pregnancy.addThisWeek')}</Text>
         </TouchableOpacity>
       </View>
 

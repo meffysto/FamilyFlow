@@ -33,7 +33,15 @@
     "tasks": "Tâches",
     "journal": "Journal",
     "calendar": "Calendrier",
-    "menu": "Menu"
+    "menu": "Menu",
+    "vacation": {
+      "departIn_one": "Départ dans {{count}}j",
+      "departIn_other": "Départ dans {{count}}j",
+      "lastDay": "Dernier jour !",
+      "endsIn_one": "Fin dans {{count}}j",
+      "endsIn_other": "Fin dans {{count}}j",
+      "banner": "☀️ Vacances — {{label}}"
+    }
   },
   "menu": {
     "categories": {
@@ -1308,7 +1316,8 @@
     "tabs": {
       "month": "Mois",
       "week": "Semaine"
-    }
+    },
+    "weekLabel": "Semaine"
   },
   "dashboard": {
     "seeAll": "Voir tout",
@@ -2052,17 +2061,18 @@
   },
   "pregnancy": {
     "title": "🤰 Grossesse",
-    "emptyTitle": "Pas de grossesse en cours",
-    "emptySubtitle": "Ajoutez un profil grossesse dans les réglages pour suivre l'évolution semaine par semaine.",
+    "emptyTitle": "Aucune grossesse à suivre",
+    "emptySubtitle": "Ajoutez un profil avec le statut « grossesse » dans les réglages pour suivre l'évolution semaine par semaine.",
     "thisWeek": "Cette semaine",
+    "addThisWeek": "Ajouter cette semaine",
     "saPrefix": "SA",
     "daysLeft": "J-{{count}}",
     "daysOverdue": "J+{{count}}",
     "dueToday": "C'est pour aujourd'hui !",
-    "overdue": "terme dépassé",
+    "overdue": "Terme dépassé",
     "weightChart": "📈 Évolution du poids",
     "weekByWeek": "📅 Semaine par semaine",
-    "longPressHint": "Appui long sur une semaine pour modifier",
+    "longPressHint": "Maintenez une semaine appuyée pour la modifier",
     "addWeekTracking": "Ajouter le suivi de cette semaine",
     "form": {
       "weight": "Poids (kg)",
@@ -2074,8 +2084,8 @@
       "save": "Enregistrer"
     },
     "toast": {
-      "saved": "Semaine enregistrée !",
-      "error": "Impossible d'enregistrer"
+      "saved": "Suivi enregistré",
+      "error": "Enregistrement impossible. Réessayez."
     },
     "fruits": {
       "sa0": "petite graine",
@@ -2218,7 +2228,10 @@
     "longPressToReorder": "Maintenez appuyé pour réordonner",
     "tapToChangeCategory": "Appuyer pour changer la catégorie",
     "bravo": "Bravo !",
-    "pass": "Passer"
+    "pass": "Passer",
+    "errors": {
+      "generic": "Une erreur est survenue. Réessayez."
+    }
   },
   "notificationEditor": {
     "enabled": "Activée",
@@ -2836,6 +2849,10 @@
       "nap": "Sieste",
       "note": "Note",
       "medication": "Médic."
+    },
+    "empty": {
+      "sleep": "Aucune donnée sommeil",
+      "symptoms": "Aucun symptôme noté"
     }
   },
   "photosScreen": {
@@ -3242,9 +3259,13 @@
   },
   "skillsScreen": {
     "title": "Compétences",
-    "completed": "complété",
+    "completed": "complétées",
     "skillCount": "{{unlocked}} / {{total}} compétences",
     "unlockedCount": "{{unlocked}} / {{total}} débloquées",
+    "emptyNoChild": "Aucun enfant dans la famille. Ajoutez un profil enfant ou ado dans les réglages pour suivre ses compétences.",
+    "filterAll": "Toutes",
+    "bracketPickerTitle": "Tranche d'âge",
+    "bracketCurrent": "actuelle",
     "a11y": {
       "changeBracket": "Changer la tranche d'âge"
     }
@@ -3317,8 +3338,8 @@
   },
   "skills": {
     "detail": {
-      "confirmTitle": "Confirmer la validation",
-      "confirmMessage": "Confirmer la validation de cette compétence ? +{{xp}} XP seront attribués.",
+      "confirmTitle": "Valider cette compétence ?",
+      "confirmMessage": "Valider et accorder +{{xp}} XP.",
       "unlocked": "Débloqué ✓",
       "validatedBy": "Validé par {{name}}",
       "validateSkill": "Valider cette compétence"
@@ -3338,7 +3359,13 @@
   "fab": {
     "closeMenuA11y": "Fermer le menu d'ajout rapide",
     "addA11y": "Ajouter",
-    "addItemA11y": "Ajouter {{label}}"
+    "addItemA11y": "Ajouter {{label}}",
+    "actions": {
+      "task": "Tâche",
+      "rdv": "RDV",
+      "journal": "Journal",
+      "photo": "Photo"
+    }
   },
   "helpModal": {
     "title": "Guide",
@@ -4722,5 +4749,12 @@
     "sellByGrade": "Vendre par qualité",
     "gradeColumnLabel": "Qualité",
     "sellLinePrefix": "Vendre"
+  },
+  "auth": {
+    "pinIncorrect": "PIN incorrect",
+    "pinParentA11y": "PIN parent"
+  },
+  "more": {
+    "title": "Menu"
   }
 }

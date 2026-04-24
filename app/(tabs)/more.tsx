@@ -172,7 +172,7 @@ export default function MoreScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* ── Header ── */}
       <View ref={headerRef} style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Menu</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('more.title')}</Text>
         <PressableScale
           onPress={toggleView}
           style={[styles.viewToggle, {

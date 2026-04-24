@@ -480,7 +480,8 @@ export default function JournalScreen() {
       // Ajouter la date aux dates disponibles
       setAvailableDates((prev) => new Set([...prev, selectedDateStr]));
     } catch (e) {
-      Alert.alert(t('journal.alert.error'), t('journal.alert.createError', { error: String(e) }));
+      if (__DEV__) console.warn(e);
+      Alert.alert(t('journal.alert.error'), t('common.errors.generic'));
     } finally {
       setIsCreating(false);
     }
@@ -561,7 +562,8 @@ export default function JournalScreen() {
       await vault.writeFile(journalPath, newContent);
       setJournalContent(newContent);
     } catch (e) {
-      Alert.alert(t('journal.alert.error'), String(e));
+      if (__DEV__) console.warn(e);
+      Alert.alert(t('journal.alert.error'), t('common.errors.generic'));
     }
   };
 
@@ -585,7 +587,8 @@ export default function JournalScreen() {
               await vault.writeFile(journalPath, lines.join('\n'));
               setJournalContent(lines.join('\n'));
             } catch (e) {
-              Alert.alert(t('journal.alert.error'), String(e));
+              if (__DEV__) console.warn(e);
+              Alert.alert(t('journal.alert.error'), t('common.errors.generic'));
             }
           },
         },
@@ -692,7 +695,7 @@ export default function JournalScreen() {
               </View>
             )) : (
               <View style={styles.emptySection}>
-                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune donnée sommeil</Text>
+                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>{t('journal.empty.sleep')}</Text>
               </View>
             )}
           </View>
@@ -727,7 +730,7 @@ export default function JournalScreen() {
               </TouchableOpacity>
             )) : (
               <View style={styles.emptySection}>
-                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucun symptôme noté</Text>
+                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>{t('journal.empty.symptoms')}</Text>
               </View>
             )}
             {canEdit && (

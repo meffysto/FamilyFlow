@@ -170,7 +170,7 @@ export default function CalendarScreen() {
               >
                 <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
               </TouchableOpacity>
-              <Text style={[styles.monthLabel, { color: colors.text }]}>Semaine</Text>
+              <Text style={[styles.monthLabel, { color: colors.text }]}>{t('calendarScreen.weekLabel')}</Text>
               <TouchableOpacity
                 style={[styles.monthArrow, { backgroundColor: colors.card }]}
                 onPress={() => {

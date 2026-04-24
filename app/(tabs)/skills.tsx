@@ -186,7 +186,7 @@ export default function SkillsScreen() {
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.empty}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Aucun profil enfant configuré.
+            {t('skillsScreen.emptyNoChild')}
           </Text>
         </View>
       </SafeAreaView>
@@ -303,7 +303,7 @@ export default function SkillsScreen() {
 
         {/* Filtre par catégorie — seule bande de chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipStrip}>
-          <Chip label="Tout" selected={selectedCategory === 'all'} onPress={() => setSelectedCategory('all')} />
+          <Chip label={t('skillsScreen.filterAll')} selected={selectedCategory === 'all'} onPress={() => setSelectedCategory('all')} />
           {getCategoriesForBracket(activeBracket).map((cat) => (
             <Chip
               key={cat.id}
@@ -373,7 +373,7 @@ export default function SkillsScreen() {
         >
           <View style={[styles.bracketSheet, { backgroundColor: colors.card }]}>
             <Text style={[styles.bracketSheetTitle, { color: colors.text }]}>
-              Tranche d'âge
+              {t('skillsScreen.bracketPickerTitle')}
             </Text>
             <FlatList
               data={AGE_BRACKETS}
@@ -403,7 +403,7 @@ export default function SkillsScreen() {
                     </Text>
                     {isCurrent && (
                       <View style={[styles.currentBadge, { backgroundColor: primary + '26' }]}>
-                        <Text style={[styles.currentBadgeText, { color: primary }]}>actuel</Text>
+                        <Text style={[styles.currentBadgeText, { color: primary }]}>{t('skillsScreen.bracketCurrent')}</Text>
                       </View>
                     )}
                   </TouchableOpacity>

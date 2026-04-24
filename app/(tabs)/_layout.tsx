@@ -81,6 +81,7 @@ function VacationBanner({ vacationConfig, isVacationActive }: {
   isVacationActive: boolean;
 }) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
   if (!isVacationActive || !vacationConfig) return null;
 
   const now = Date.now();
@@ -90,12 +91,12 @@ function VacationBanner({ vacationConfig, isVacationActive }: {
     ? Math.ceil((start - now) / 86400000)
     : Math.ceil((end - now) / 86400000);
   const label = now < start
-    ? `Départ dans ${daysLeft}j`
-    : daysLeft <= 0 ? 'Dernier jour !' : `Fin dans ${daysLeft}j`;
+    ? t('tabs.vacation.departIn', { count: daysLeft })
+    : daysLeft <= 0 ? t('tabs.vacation.lastDay') : t('tabs.vacation.endsIn', { count: daysLeft });
 
   return (
     <View style={[bannerStyles.bar, { backgroundColor: colors.warningBg, borderTopColor: colors.warning }]}>
-      <Text style={[bannerStyles.text, { color: colors.warningText }]}>☀️ Vacances — {label}</Text>
+      <Text style={[bannerStyles.text, { color: colors.warningText }]}>{t('tabs.vacation.banner', { label })}</Text>
     </View>
   );
 }
@@ -154,10 +155,10 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       setPinError('');
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setPinError('PIN incorrect');
+      setPinError(t('auth.pinIncorrect'));
       setPinInput('');
     }
-  }, [pinInput, verifyPin, pendingProfileId, setActiveProfile]);
+  }, [pinInput, verifyPin, pendingProfileId, setActiveProfile, t]);
 
   const cancelPinPrompt = useCallback(() => {
     setPendingProfileId(null);
@@ -179,13 +180,13 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
   const fabActions: FABAction[] = isChildMode
     ? [
-        { id: 'task', emoji: '\u{1F4CB}', label: 'Tâche', onPress: () => router.push('/tasks?addNew=1') },
+        { id: 'task', emoji: '\u{1F4CB}', label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
       ]
     : [
-        { id: 'task', emoji: '\u{1F4CB}', label: 'Tâche', onPress: () => router.push('/tasks?addNew=1') },
-        { id: 'rdv', emoji: '\u{1F4C5}', label: 'RDV', onPress: () => router.push('/rdv?addNew=1') },
-        { id: 'journal', emoji: '\u{1F4D6}', label: 'Journal', onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
-        { id: 'photo', emoji: '\u{1F4F8}', label: 'Photo', onPress: () => router.push('/photos?addNew=1') },
+        { id: 'task', emoji: '\u{1F4CB}', label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
+        { id: 'rdv', emoji: '\u{1F4C5}', label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
+        { id: 'journal', emoji: '\u{1F4D6}', label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
+        { id: 'photo', emoji: '\u{1F4F8}', label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
       ];
 
   return (
@@ -342,9 +343,9 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                 color: colors.text,
               }]}
               value={pinInput}
-              onChangeText={(t) => {
+              onChangeText={(value) => {
                 setPinError('');
-                const cleaned = t.replace(/[^0-9]/g, '').slice(0, 4);
+                const cleaned = value.replace(/[^0-9]/g, '').slice(0, 4);
                 setPinInput(cleaned);
                 // Auto-submit quand 4 chiffres
                 if (cleaned.length === 4) {
@@ -358,7 +359,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                       setPinError('');
                     } else {
                       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                      setPinError('PIN incorrect');
+                      setPinError(t('auth.pinIncorrect'));
                       setPinInput('');
                     }
                   }, 100);
@@ -371,7 +372,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
               placeholderTextColor={colors.textFaint}
               textAlign="center"
               autoFocus
-              accessibilityLabel="PIN parent"
+              accessibilityLabel={t('auth.pinParentA11y')}
             />
 
             {/* Dots visuels */}
@@ -399,7 +400,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
             ) : null}
 
             <TouchableOpacity onPress={cancelPinPrompt} activeOpacity={0.7} style={pinPromptStyles.cancelBtn}>
-              <Text style={[pinPromptStyles.cancelText, { color: colors.textMuted }]}>Annuler</Text>
+              <Text style={[pinPromptStyles.cancelText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </GlassView>
         </View>
