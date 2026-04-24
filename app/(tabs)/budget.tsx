@@ -103,6 +103,7 @@ export default function BudgetScreen() {
     loadBudgetMonths,
     addExpense,
     deleteExpense,
+    updateBudgetConfig,
     activeProfile,
     refresh,
   } = useVault();
@@ -125,6 +126,10 @@ export default function BudgetScreen() {
   const [tab, setTab] = useState<TabId>('resume');
   const budgetHeaderRef = useRef<View>(null);
   const [addModalVisible, setAddModalVisible] = useState(false);
+
+  // État modal "Configurer le budget"
+  const [configModalVisible, setConfigModalVisible] = useState(false);
+  const [configLimits, setConfigLimits] = useState<Record<string, string>>({});
 
   // Add form state
   const [selectedCategory, setSelectedCategory] = useState<BudgetCategory | null>(null);
@@ -417,6 +422,37 @@ export default function BudgetScreen() {
     setReceiptData(null);
   }, [addExpense, showToast]);
 
+  // ─── Modal "Configurer le budget" ─────────────────────────────────────────
+
+  const handleOpenConfigModal = useCallback(() => {
+    setConfigLimits(
+      Object.fromEntries(budgetConfig.categories.map((c) => [c.name, String(c.limit)]))
+    );
+    setConfigModalVisible(true);
+  }, [budgetConfig]);
+
+  const handleSaveBudgetConfig = useCallback(async () => {
+    for (const cat of budgetConfig.categories) {
+      const raw = (configLimits[cat.name] ?? '').replace(',', '.');
+      const val = parseFloat(raw);
+      if (isNaN(val) || val < 0) {
+        showToast('Montant invalide pour ' + cat.name, 'error');
+        return;
+      }
+    }
+    const newConfig = {
+      ...budgetConfig,
+      categories: budgetConfig.categories.map((c) => ({
+        ...c,
+        limit: parseFloat((configLimits[c.name] ?? '0').replace(',', '.')),
+      })),
+    };
+    await updateBudgetConfig(newConfig);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    showToast('Plafonds mis à jour', 'success');
+    setConfigModalVisible(false);
+  }, [budgetConfig, configLimits, updateBudgetConfig, showToast]);
+
   // ─── Rendu onglet évolution ────────────────────────────────────────────────
 
   const renderEvolutionItem = useCallback(({ item }: { item: PriceEvolution }) => {
@@ -466,6 +502,15 @@ export default function BudgetScreen() {
       <View ref={budgetHeaderRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>{t('budget.title')}</Text>
         <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[styles.scanBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+            onPress={handleOpenConfigModal}
+            activeOpacity={0.7}
+            accessibilityLabel="Configurer les plafonds du budget"
+            accessibilityRole="button"
+          >
+            <Text style={[styles.scanBtnText, { color: primary }]}>Configurer</Text>
+          </TouchableOpacity>
           {aiConfigured && (
             <TouchableOpacity
               style={[styles.scanBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
@@ -889,6 +934,59 @@ export default function BudgetScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Modal "Configurer le budget" */}
+      <Modal
+        visible={configModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setConfigModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={[styles.modalContainer, { backgroundColor: colors.bg }]}
+        >
+          <View style={styles.dragHandleBar}>
+            <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
+          </View>
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Configurer le budget</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Plafond par catégorie (€)</Text>
+            {budgetConfig.categories.map((cat) => (
+              <View key={cat.name} style={styles.configRow}>
+                <Text style={[styles.configCatLabel, { color: colors.text }]}>
+                  {cat.emoji} {cat.name}
+                </Text>
+                <TextInput
+                  style={[styles.configInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+                  keyboardType="decimal-pad"
+                  value={configLimits[cat.name] ?? ''}
+                  onChangeText={(txt) => setConfigLimits((prev) => ({ ...prev, [cat.name]: txt }))}
+                  placeholder="0"
+                  placeholderTextColor={colors.textFaint}
+                  accessibilityLabel={`Plafond ${cat.name}`}
+                />
+              </View>
+            ))}
+            <TouchableOpacity
+              style={[styles.submitBtn, { backgroundColor: primary }]}
+              onPress={handleSaveBudgetConfig}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.submitBtnText, { color: colors.onPrimary }]}>Enregistrer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelBtn}
+              onPress={() => setConfigModalVisible(false)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Annuler</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* Modal review ticket scanné */}
       <ReceiptReview
         visible={receiptReviewVisible}
@@ -1104,6 +1202,29 @@ const styles = StyleSheet.create({
     marginRight: Spacing.xl,
   },
   checkmark: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+
+  // ─── Modal "Configurer le budget" ─────────────────────────────
+  configRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.lg,
+    gap: Spacing.xl,
+  },
+  configCatLabel: {
+    flex: 1,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  configInput: {
+    width: 110,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    fontSize: FontSize.body,
+    textAlign: 'right',
+  },
 
   // ─── Évolution ────────────────────────────────────────────────
   evoPeriodRow: {
