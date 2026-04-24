@@ -9,13 +9,16 @@ import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { View, Text, ScrollView, StyleSheet, Modal, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import * as SecureStore from 'expo-secure-store';
 import { useVault, VAULT_PATH_KEY } from '../../contexts/VaultContext';
 import { VaultPicker } from '../../components/VaultPicker';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { ModalHeader } from '../../components/ui/ModalHeader';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Spacing, Layout } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize } from '../../constants/typography';
 import { calculateLevel, levelProgress, xpForLevel } from '../../lib/gamification';
 import { useToast } from '../../contexts/ToastContext';
 import { useAI } from '../../contexts/AIContext';
@@ -64,7 +67,13 @@ export default function SettingsScreen() {
     isVacationActive, activateVacation, deactivateVacation, addChild, convertToBorn,
     tasks, rdvs, stock,
   } = useVault();
-  const { colors, darkModePreference } = useThemeColors();
+  const { primary, colors, darkModePreference, isDark } = useThemeColors();
+
+  // Scroll handler pour collapse du ScreenHeader
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   const { showRewardCard, showHarvestCard } = useToast();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
@@ -139,10 +148,15 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer]}>
-        <Text style={[styles.screenTitle, { color: colors.text }]}>{t('settingsScreen.title')}</Text>
-
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader title={t('settingsScreen.title')} scrollY={scrollY} />
+      <Animated.ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
+      >
         {/* ── MON COMPTE ── */}
         <SettingsSectionHeader label={t('settingsScreen.sections.myAccount')} />
         <SettingsRow
@@ -361,7 +375,7 @@ export default function SettingsScreen() {
           <Text style={[styles.appInfoText, { color: colors.textFaint }]}>{t('settingsScreen.appInfo.line2')}</Text>
           <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Privacy-first · Offline-first</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* ── Modal unique pour le contenu de la section active ── */}
       <Modal
@@ -468,8 +482,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], paddingBottom: 90 },
-  screenTitle: { fontSize: FontSize.display, fontWeight: FontWeight.heavy },
+  content: { padding: Spacing['2xl'], paddingTop: Spacing.md, paddingBottom: 90 },
   appInfo: { alignItems: 'center', gap: Spacing.xs, paddingVertical: Spacing['3xl'] },
   appInfoText: { fontSize: FontSize.caption, textAlign: 'center' },
   modalSafe: { flex: 1 },

@@ -5,17 +5,18 @@
  * défis, souvenirs, humeurs et mots d'enfants en une seule vue.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   RefreshControl,
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { format, addMonths, subMonths } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -26,25 +27,25 @@ import { useCalendarEvents } from '../../hooks/useCalendarEvents';
 import { CalendarMonthGrid } from '../../components/calendar/CalendarMonthGrid';
 import { CalendarDayDetail } from '../../components/calendar/CalendarDayDetail';
 import { CalendarEventRow } from '../../components/calendar/CalendarEventRow';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher } from '../../components/ui/PillTabSwitcher';
 import { FAB } from '../../components/FAB';
 import { RDVEditor } from '../../components/RDVEditor';
-import { Spacing, Layout } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { useTranslation } from 'react-i18next';
-import type { CalendarEvent } from '../../lib/calendar-types';
 
 type ViewMode = 'mois' | 'semaine';
 
 export default function CalendarScreen() {
   const { t } = useTranslation();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
 
-  const VIEW_TABS: { id: ViewMode; label: string }[] = [
-    { id: 'mois', label: t('calendarScreen.tabs.month') },
-    { id: 'semaine', label: t('calendarScreen.tabs.week') },
-  ];
-  const { refresh, addRDV, deleteRDV, profiles, activeProfile } = useVault();
+  const VIEW_TABS = useMemo(() => [
+    { id: 'mois' as ViewMode, label: t('calendarScreen.tabs.month') },
+    { id: 'semaine' as ViewMode, label: t('calendarScreen.tabs.week') },
+  ], [t]);
+  const { refresh, addRDV, profiles } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
   const router = useRouter();
   const [showRDVEditor, setShowRDVEditor] = useState(false);
@@ -55,9 +56,20 @@ export default function CalendarScreen() {
     () => new Date().toISOString().slice(0, 10),
   );
 
-  const { events, eventsByDate, vacationDates } = useCalendarEvents(currentMonth);
+  const { eventsByDate, vacationDates } = useCalendarEvents(currentMonth);
 
   const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Scroll handler pour collapse du ScreenHeader
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+
+  // Reset du scroll au changement d'onglet (évite collapse fantôme)
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [viewMode]);
 
   // Navigation mois
   const prevMonth = useCallback(() => setCurrentMonth(m => subMonths(m, 1)), []);
@@ -103,32 +115,39 @@ export default function CalendarScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('calendarScreen.title')}</Text>
-        <TouchableOpacity
-          onPress={goToToday}
-          accessibilityLabel={t('calendarScreen.a11y.today')}
-          accessibilityRole="button"
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={[styles.todayBtn, { color: primary }]}>{t('calendarScreen.today')}</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('calendarScreen.title')}
+        actions={
+          <TouchableOpacity
+            style={[styles.todayBtn, { backgroundColor: colors.card }]}
+            onPress={goToToday}
+            accessibilityLabel={t('calendarScreen.a11y.today')}
+            accessibilityRole="button"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={[styles.todayBtnText, { color: primary }]}>{t('calendarScreen.today')}</Text>
+          </TouchableOpacity>
+        }
+        bottom={
+          <PillTabSwitcher
+            tabs={VIEW_TABS}
+            activeTab={viewMode}
+            onTabChange={(id) => setViewMode(id)}
+            primary={primary}
+            colors={colors}
+            marginHorizontal={0}
+          />
+        }
+        scrollY={scrollY}
+      />
 
-      {/* Tabs Mois / Semaine */}
-      <View style={styles.tabBar}>
-        <SegmentedControl
-          segments={VIEW_TABS}
-          value={viewMode}
-          onChange={(id) => setViewMode(id as ViewMode)}
-        />
-      </View>
-
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {viewMode === 'mois' ? (
@@ -247,7 +266,7 @@ export default function CalendarScreen() {
         )}
 
         <View style={{ height: Spacing['4xl'] }} />
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
     <FAB actions={fabActions} />
     <Modal
@@ -273,28 +292,21 @@ export default function CalendarScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
-  },
   todayBtn: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
+    paddingHorizontal: Spacing.md,
+    height: 32,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  tabBar: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
+  todayBtnText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
   scroll: { flex: 1 },
   scrollContent: {
     paddingBottom: 100,
+    paddingTop: Spacing.md,
   },
   monthNav: {
     flexDirection: 'row',

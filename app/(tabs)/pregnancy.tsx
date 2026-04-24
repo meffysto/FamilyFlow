@@ -10,13 +10,14 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   RefreshControl,
   Modal,
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
@@ -27,6 +28,7 @@ import { getFruitForWeek, getFruitLabel, getSizeForWeek } from '../../lib/pregna
 import { pregnancyJournalPath, parsePregnancyJournal, serializePregnancyJournal } from '../../lib/parser';
 import { formatDateLocalized } from '../../lib/date-locale';
 import { ModalHeader } from '../../components/ui/ModalHeader';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/EmptyState';
 import { DotChart } from '../../components/charts/DotChart';
@@ -39,11 +41,17 @@ import type { DataPoint } from '../../lib/stats';
 const TOTAL_SA = 41;
 
 export default function PregnancyScreen() {
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();
   const { profiles, vault, refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
+
+  // Scroll handler pour collapse du ScreenHeader
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   // Profils en grossesse
   const pregnancies = useMemo(
@@ -149,10 +157,9 @@ export default function PregnancyScreen() {
 
   if (pregnancies.length === 0) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('pregnancy.title')}</Text>
-        </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={[]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+        <ScreenHeader title={t('pregnancy.title')} />
         <EmptyState
           emoji="🤰"
           title={t('pregnancy.emptyTitle')}
@@ -163,17 +170,29 @@ export default function PregnancyScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('pregnancy.title')}</Text>
-        <TouchableOpacity onPress={openAdd}>
-          <Text style={[styles.addBtn, { color: primary }]}>+ {t('pregnancy.addThisWeek')}</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('pregnancy.title')}
+        actions={
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: primary }]}
+            onPress={openAdd}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('pregnancy.addThisWeek')}
+          >
+            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+          </TouchableOpacity>
+        }
+        scrollY={scrollY}
+      />
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {/* Carte résumé */}
@@ -275,7 +294,7 @@ export default function PregnancyScreen() {
         })}
 
         <View style={{ height: Spacing['4xl'] }} />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Modal saisie */}
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setModalVisible(false); setEditingWeek(null); }}>
@@ -329,24 +348,22 @@ export default function PregnancyScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
-  },
   addBtn: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    lineHeight: 18,
   },
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
     paddingBottom: Spacing['4xl'],
   },
   // Carte résumé

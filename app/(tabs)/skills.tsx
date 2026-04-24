@@ -5,13 +5,16 @@
  * 1 fichier par enfant : 08 - Compétences/{enfant}.md
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { SkillTreeGraph } from '../../components/SkillTreeGraph';
 import { SkillDetailModal } from '../../components/SkillDetailModal';
 import { CategoryCompleteOverlay } from '../../components/CategoryCompleteOverlay';
@@ -57,8 +60,14 @@ export default function SkillsScreen() {
   const sk = useSkillt();
   const headerRef = useRef<View>(null);
   const { profiles, activeProfile, skillTrees, unlockSkill, refresh } = useVault();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Scroll handler pour collapse du ScreenHeader
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   const [selectedBracket, setSelectedBracket] = useState<AgeBracketId | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<SkillCategoryId | 'all'>('all');
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
@@ -91,6 +100,11 @@ export default function SkillsScreen() {
   }, [selectedChild]);
 
   const activeBracket = selectedBracket ?? detectedBracket;
+
+  // Reset scroll au changement de filtre (évite collapse fantôme)
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [selectedCategory, activeBracket]);
 
   // Infos tranche active
   const activeBracketInfo = useMemo(() =>
@@ -183,7 +197,9 @@ export default function SkillsScreen() {
 
   if (childProfiles.length === 0) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+        <ScreenHeader title={t('skillsScreen.title')} />
         <View style={styles.empty}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
             {t('skillsScreen.emptyNoChild')}
@@ -198,47 +214,61 @@ export default function SkillsScreen() {
     : null;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={headerRef} style={styles.header}>
-        <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.title, { color: colors.text }]}>{t('skillsScreen.title')}</Text>
-          </View>
-          {/* Avatars enfants compacts (si parent avec plusieurs enfants) */}
-          {isParent && childProfiles.length > 1 && (
-            <View style={styles.avatarRow}>
-              {childProfiles.map((child) => {
-                const isActive = child.id === selectedChild?.id;
-                return (
-                  <TouchableOpacity
-                    key={child.id}
-                    style={[
-                      styles.avatarBubble,
-                      {
-                        backgroundColor: isActive ? primary + '20' : colors.cardAlt,
-                        borderColor: isActive ? primary : 'transparent',
-                      },
-                    ]}
-                    onPress={() => setSelectedChildId(child.id)}
-                    accessibilityLabel={child.name}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isActive }}
-                  >
-                    <Text style={styles.avatarEmoji}>{child.avatar}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        </View>
-        <Text style={[styles.subtitle, { color: colors.textSub }]}>
-          {selectedChild?.avatar} {selectedChild?.name}
-        </Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <View ref={headerRef}>
+        <ScreenHeader
+          title={t('skillsScreen.title')}
+          subtitle={selectedChild ? `${selectedChild.avatar} ${selectedChild.name}` : undefined}
+          actions={
+            isParent && childProfiles.length > 1 ? (
+              <View style={styles.avatarRow}>
+                {childProfiles.map((child) => {
+                  const isActive = child.id === selectedChild?.id;
+                  return (
+                    <TouchableOpacity
+                      key={child.id}
+                      style={[
+                        styles.avatarBubble,
+                        {
+                          backgroundColor: isActive ? primary + '20' : colors.card,
+                          borderColor: isActive ? primary : 'transparent',
+                        },
+                      ]}
+                      onPress={() => setSelectedChildId(child.id)}
+                      accessibilityLabel={child.name}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isActive }}
+                    >
+                      <Text style={styles.avatarEmoji}>{child.avatar}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : undefined
+          }
+          bottom={
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipStripContent}>
+              <Chip label={t('skillsScreen.filterAll')} selected={selectedCategory === 'all'} onPress={() => setSelectedCategory('all')} />
+              {getCategoriesForBracket(activeBracket).map((cat) => (
+                <Chip
+                  key={cat.id}
+                  label={`${cat.emoji} ${sk.catLabel(cat.id)}`}
+                  selected={selectedCategory === cat.id}
+                  onPress={() => setSelectedCategory(cat.id)}
+                />
+              ))}
+            </ScrollView>
+          }
+          scrollY={scrollY}
+        />
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {/* Carte de progression avec sélecteur de tranche intégré */}
@@ -301,19 +331,6 @@ export default function SkillsScreen() {
           </View>
         </View>
 
-        {/* Filtre par catégorie — seule bande de chips */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipStrip}>
-          <Chip label={t('skillsScreen.filterAll')} selected={selectedCategory === 'all'} onPress={() => setSelectedCategory('all')} />
-          {getCategoriesForBracket(activeBracket).map((cat) => (
-            <Chip
-              key={cat.id}
-              label={`${cat.emoji} ${sk.catLabel(cat.id)}`}
-              selected={selectedCategory === cat.id}
-              onPress={() => setSelectedCategory(cat.id)}
-            />
-          ))}
-        </ScrollView>
-
         {/* Graph RPG */}
         <SkillTreeGraph
           skills={skills}
@@ -323,7 +340,7 @@ export default function SkillsScreen() {
           )}
           onSkillPress={handleSkillPress}
         />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Modal détail */}
       <SkillDetailModal
@@ -419,39 +436,21 @@ export default function SkillsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing['3xl'],
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.sm,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.heavy,
-  },
-  subtitle: {
-    fontSize: FontSize.sm,
-    marginTop: Spacing.xs,
-  },
-  // Avatars enfants compacts
+  // Avatars enfants compacts (slot actions du ScreenHeader)
   avatarRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   avatarBubble: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
   },
   avatarEmoji: {
-    fontSize: 20,
+    fontSize: 16,
   },
   // Carte progression
   progressSection: {
@@ -521,11 +520,12 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   content: {
+    paddingTop: Spacing.md,
     paddingBottom: 100,
   },
-  chipStrip: {
-    paddingHorizontal: Spacing['2xl'],
-    marginBottom: Spacing.lg,
+  chipStripContent: {
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xxs,
   },
   empty: {
     flex: 1,
