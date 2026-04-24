@@ -18,7 +18,13 @@ import {
   TextInput,
   RefreshControl,
 } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+  useAnimatedScrollHandler,
+} from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,6 +47,8 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import { EmptyState } from '../../components/EmptyState';
 import { useTranslation } from 'react-i18next';
+
+const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 
 type TabId = 'aujourdhui' | 'livre';
 
@@ -198,6 +206,15 @@ export default function GratitudeScreen() {
   const [visibleCount, setVisibleCount] = useState(LOAD_BATCH);
   const { refreshing, onRefresh } = useRefresh(refresh);
 
+  // Header collapsible : scrollY partagé entre les deux onglets, reset au switch.
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  React.useEffect(() => {
+    scrollY.value = 0;
+  }, [activeTab, scrollY]);
+
   // Navigation entre jours
   const goToDay = (offset: number) => {
     const d = offset > 0
@@ -277,15 +294,18 @@ export default function GratitudeScreen() {
             </View>
           ) : undefined
         }
+        bottom={
+          <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} primary={primary} colors={colors} />
+        }
+        scrollY={scrollY}
       />
 
-      {/* Onglets */}
-      <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} primary={primary} colors={colors} />
-
       {activeTab === 'aujourdhui' && (
-        <ScrollView
+        <Animated.ScrollView
           style={styles.scroll}
           contentContainerStyle={[styles.content, Layout.contentContainer]}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
         >
           {/* Navigation date */}
@@ -360,7 +380,7 @@ export default function GratitudeScreen() {
           )}
 
           <View style={styles.bottomPad} />
-        </ScrollView>
+        </Animated.ScrollView>
       )}
 
       {activeTab === 'livre' && (
@@ -374,15 +394,17 @@ export default function GratitudeScreen() {
               onCta={() => { setActiveTab('aujourdhui'); handleOpenWrite(); }}
             />
           ) : (
-            <SectionList
-              sections={bookSections}
-              keyExtractor={(item, index) => `${item.date}-${item.profileId}-${index}`}
+            <AnimatedSectionList
+              sections={bookSections as any}
+              keyExtractor={((item: any, index: number) => `${item.date}-${item.profileId}-${index}`) as any}
               contentContainerStyle={[styles.content, Layout.contentContainer]}
+              onScroll={onScrollHandler}
+              scrollEventThrottle={16}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
-              renderSectionHeader={({ section }) => (
+              renderSectionHeader={({ section }: any) => (
                 <Text style={[styles.sectionDate, { color: colors.textMuted }]}>{section.title}</Text>
               )}
-              renderItem={({ item }) => (
+              renderItem={({ item }: any) => (
                 <SwipeToDelete
                   onDelete={() => handleDeleteEntry(item)}
                   confirmTitle={t('gratitude.deleteTitle')}
