@@ -4,7 +4,7 @@ milestone: v1.7
 milestone_name: Modifiers de plants
 status: Phase 42 complète — shippable sur TestFlight
 last_updated: "2026-04-24T11:59:30.588Z"
-last_activity: "2026-04-24 - Completed quick task 260424-jbt: Fix companion reward algorithm to exclude already-owned companions from being proposed again"
+last_activity: "2026-04-24 - Completed quick task 260424-jhs: Long press sur une semaine dans le suivi de grossesse pour modifier le texte de la semaine"
 progress:
   total_phases: 14
   completed_phases: 9
@@ -71,6 +71,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260424-exi | Améliorer interface Budget: carte totale enrichie, tri catégories urgence, chevrons navigation, chips avec montants | 2026-04-24 | dd08887 | [260424-exi-am-liorer-interface-budget-carte-totale-](./quick/260424-exi-am-liorer-interface-budget-carte-totale-/) |
 | 260424-f4n | Modal "Configurer le budget" — édition plafonds par catégorie, validation, haptique, toast FR | 2026-04-24 | 36e7379 | [260424-f4n-modal-configurer-budget-dition-plafond-p](./quick/260424-f4n-modal-configurer-budget-dition-plafond-p/) |
 | 260424-jbt | Fix companion reward algorithm to exclude already-owned companions from being proposed again | 2026-04-24 | d11f743 | [260424-jbt-fix-companion-reward-algorithm-to-exclud](./quick/260424-jbt-fix-companion-reward-algorithm-to-exclud/) |
+| 260424-jhs | Long press sur une semaine dans le suivi de grossesse pour modifier le texte de la semaine | 2026-04-24 | b964d59 | [260424-jhs-long-press-sur-une-semaine-dans-le-suivi](./quick/260424-jhs-long-press-sur-une-semaine-dans-le-suivi/) |
 
 ## Performance Metrics
 
