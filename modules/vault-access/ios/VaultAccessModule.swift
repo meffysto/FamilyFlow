@@ -513,7 +513,7 @@ public class VaultAccessModule: Module {
     /// Phase 260425-0qf — Écrit companion-sprite-{pose}.png dans l'App Group.
     /// Appelé 5× en parallèle depuis le JS avant le start de la Live Activity.
     AsyncFunction("writeCompanionPoseFile") { (pose: String, base64: String) in
-      try self.writeCompanionPoseFileToDisk(pose: pose, base64: base64)
+      try writeCompanionPoseFileToDisk(pose: pose, base64: base64)
     }
 
     // ─── Live Activity (Mascotte — journée narrative) ───────────────────
