@@ -16,7 +16,15 @@ import {
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+
+const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -89,7 +97,11 @@ interface SectionData {
 
 export default function AnniversairesScreen() {
   const { t } = useTranslation();
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   const { showToast } = useToast();
   const {
     anniversaries,
@@ -261,68 +273,69 @@ export default function AnniversairesScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('anniversairesScreen.title')}</Text>
-          {upcomingSoon > 0 && (
-            <View style={[styles.soonBadge, { backgroundColor: colors.warningBg }]}>
-              <Text style={[styles.soonBadgeText, { color: colors.warningText }]}>
-                {upcomingSoon} {t('anniversairesScreen.thisWeek')}
-              </Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('anniversairesScreen.title')}
+        subtitle={
+          upcomingSoon > 0
+            ? `${upcomingSoon} ${t('anniversairesScreen.thisWeek')}`
+            : undefined
+        }
+        actions={
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: primary }]}
+            onPress={handleAdd}
+            activeOpacity={0.7}
+            accessibilityLabel={t('anniversairesScreen.a11y.addBirthday')}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+          </TouchableOpacity>
+        }
+        bottom={
+          anniversaries.length > 0 ? (
+            <View style={styles.importRow}>
+              <TouchableOpacity
+                style={[styles.importBar, styles.importBarHalf, { backgroundColor: tint, borderColor: primary + '30' }]}
+                onPress={() => setImporterVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.importEmoji}>{'📇'}</Text>
+                <Text style={[styles.importText, { color: primary }]}>
+                  {t('anniversairesScreen.importContacts')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.importBar, styles.importBarHalf, { backgroundColor: tint, borderColor: primary + '30' }]}
+                onPress={() => setCalendarImporterVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.importEmoji}>{'📅'}</Text>
+                <Text style={[styles.importText, { color: primary }]}>
+                  {t('anniversairesScreen.importCalendar')}
+                </Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: primary }]}
-          onPress={handleAdd}
-          activeOpacity={0.7}
-          accessibilityLabel={t('anniversairesScreen.a11y.addBirthday')}
-          accessibilityRole="button"
-        >
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Boutons import */}
-      {anniversaries.length > 0 && (
-        <View style={styles.importRow}>
-          <TouchableOpacity
-            style={[styles.importBar, styles.importBarHalf, { backgroundColor: tint, borderColor: primary + '30' }]}
-            onPress={() => setImporterVisible(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.importEmoji}>{'📇'}</Text>
-            <Text style={[styles.importText, { color: primary }]}>
-              {t('anniversairesScreen.importContacts')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.importBar, styles.importBarHalf, { backgroundColor: tint, borderColor: primary + '30' }]}
-            onPress={() => setCalendarImporterVisible(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.importEmoji}>{'📅'}</Text>
-            <Text style={[styles.importText, { color: primary }]}>
-              {t('anniversairesScreen.importCalendar')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+          ) : undefined
+        }
+        scrollY={scrollY}
+      />
 
       {/* Liste */}
       {anniversaries.length === 0 ? (
         renderEmpty()
       ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => `${item.name}-${item.date}`}
-          renderItem={renderItem}
-          renderSectionHeader={renderSectionHeader}
+        <AnimatedSectionList
+          sections={sections as any}
+          keyExtractor={((item: any) => `${item.name}-${item.date}`) as any}
+          renderItem={renderItem as any}
+          renderSectionHeader={renderSectionHeader as any}
           contentContainerStyle={[styles.listContent, Layout.contentContainer]}
           ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
           stickySectionHeadersEnabled={false}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
         />
       )}
@@ -361,49 +374,21 @@ export default function AnniversairesScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
-    flex: 1,
-  },
-  title: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.heavy,
-  },
-  soonBadge: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-  },
-  soonBadgeText: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-  },
   addBtn: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addBtnText: {
-    fontSize: FontSize.title,
+    fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    lineHeight: 22,
+    lineHeight: 18,
   },
   importRow: {
     flexDirection: 'row',
     gap: Spacing.md,
-    marginHorizontal: Spacing['2xl'],
-    marginTop: Spacing['2xl'],
   },
   importBar: {
     flexDirection: 'row',
