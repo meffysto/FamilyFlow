@@ -45,8 +45,8 @@ import {
 } from '../../lib/budget';
 import { formatDateLocalized } from '../../lib/date-locale';
 import { DateInput } from '../../components/ui/DateInput';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { ReceiptReview } from '../../components/ReceiptReview';
 import { captureAndScanReceipt } from '../../lib/receipt-scanner';
 import type { ScanOutcome } from '../../lib/receipt-scanner';
@@ -545,14 +545,17 @@ export default function BudgetScreen() {
           }
           bottom={
             <View style={styles.tabsWrap}>
-              <SegmentedControl
-                segments={[
+              <PillTabSwitcher
+                tabs={[
                   { id: 'resume', label: t('budget.tabs.summary') },
                   { id: 'list', label: t('budget.tabs.expenses') },
                   { id: 'evolution', label: t('budget.tabs.evolution') },
-                ]}
-                value={tab}
-                onChange={(id) => setTab(id as TabId)}
+                ] as ReadonlyArray<PillTab<TabId>>}
+                activeTab={tab}
+                onTabChange={setTab}
+                primary={primary}
+                colors={colors}
+                marginHorizontal={0}
               />
             </View>
           }
