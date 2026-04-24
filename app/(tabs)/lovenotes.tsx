@@ -15,16 +15,23 @@
  * uniquement par router.push('/(tabs)/lovenotes').
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { ModalHeader, PillTabSwitcher, type PillTab } from '../../components/ui';
+import { PillTabSwitcher, ScreenHeader, type PillTab } from '../../components/ui';
 import { LoveNoteCard, LoveNoteEditor, EnvelopeUnfoldModal } from '../../components/lovenotes';
 import {
   receivedForProfile,
@@ -49,9 +56,16 @@ export default function LoveNotesScreen() {
     addLoveNote,
     updateLoveNoteStatus,
   } = useVault();
-  const { colors, primary } = useThemeColors();
+  const { colors, primary, isDark } = useThemeColors();
   const tabBarHeight = useBottomTabBarHeight();
   const [segment, setSegment] = useState<Segment>('received');
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [segment, scrollY]);
   const [editorVisible, setEditorVisible] = useState(false);
   const [unfoldNote, setUnfoldNote] = useState<LoveNote | null>(null);
 
@@ -171,15 +185,21 @@ export default function LoveNotesScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <ModalHeader title="Boîte aux lettres" />
-      <PillTabSwitcher<Segment>
-        tabs={segments}
-        activeTab={segment}
-        onTabChange={setSegment}
-        primary={primary}
-        colors={colors}
-        marginHorizontal={Spacing['2xl']}
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title="Boîte aux lettres"
+        bottom={
+          <PillTabSwitcher<Segment>
+            tabs={segments}
+            activeTab={segment}
+            onTabChange={setSegment}
+            primary={primary}
+            colors={colors}
+            marginHorizontal={0}
+          />
+        }
+        scrollY={scrollY}
       />
       {data.length === 0 ? (
         <View style={styles.empty}>
@@ -188,14 +208,16 @@ export default function LoveNotesScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={data}
-          keyExtractor={(n) => n.sourceFile}
-          renderItem={renderItem}
+        <AnimatedFlatList
+          data={data as any}
+          keyExtractor={((n: any) => n.sourceFile) as any}
+          renderItem={renderItem as any}
           contentContainerStyle={styles.list}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
           initialNumToRender={10}
           removeClippedSubviews
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
         />
       )}
 

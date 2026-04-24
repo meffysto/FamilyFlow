@@ -16,19 +16,17 @@ import {
   Modal,
   useWindowDimensions,
   TextInput,
-  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
   FadeInDown,
   useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  runOnJS,
+  useAnimatedScrollHandler,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { PillTabSwitcher, ScreenHeader, type PillTab } from '../../components/ui';
 import * as Haptics from 'expo-haptics';
 import {
   format,
@@ -65,122 +63,6 @@ const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 type ViewMode = 'liste' | 'calendrier';
 
-// ─── TabSwitcher pilule animée (cohérent avec Gratitude) ─────────────────────
-
-const TAB_SPRING = { damping: 32, stiffness: 200 };
-
-interface TabSwitcherProps {
-  activeTab: ViewMode;
-  onTabChange: (tab: ViewMode) => void;
-  primary: string;
-  colors: ReturnType<typeof useThemeColors>['colors'];
-}
-
-function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherProps) {
-  const [tabWidth, setTabWidth] = useState(0);
-  const indicatorX = useSharedValue(0);
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: indicatorX.value }],
-  }));
-
-  const handlePress = useCallback(
-    (tab: ViewMode) => {
-      const toIndex = tab === 'liste' ? 0 : 1;
-      indicatorX.value = withSpring(toIndex * tabWidth, TAB_SPRING);
-      onTabChange(tab);
-    },
-    [tabWidth, onTabChange, indicatorX],
-  );
-
-  useEffect(() => {
-    if (tabWidth === 0) return;
-    const idx = activeTab === 'liste' ? 0 : 1;
-    indicatorX.value = withSpring(idx * tabWidth, TAB_SPRING);
-  }, [tabWidth, activeTab, indicatorX]);
-
-  const DRAG_THRESHOLD = 30;
-  const panGesture = Gesture.Pan()
-    .onUpdate((e) => {
-      const base = activeTab === 'liste' ? 0 : tabWidth;
-      indicatorX.value = Math.max(0, Math.min(tabWidth, base + e.translationX));
-    })
-    .onEnd((e) => {
-      if (e.translationX > DRAG_THRESHOLD && activeTab === 'liste') {
-        indicatorX.value = withSpring(tabWidth, TAB_SPRING);
-        runOnJS(Haptics.selectionAsync)();
-        runOnJS(onTabChange)('calendrier');
-      } else if (e.translationX < -DRAG_THRESHOLD && activeTab === 'calendrier') {
-        indicatorX.value = withSpring(0, TAB_SPRING);
-        runOnJS(Haptics.selectionAsync)();
-        runOnJS(onTabChange)('liste');
-      } else {
-        const snap = activeTab === 'liste' ? 0 : tabWidth;
-        indicatorX.value = withSpring(snap, TAB_SPRING);
-      }
-    });
-
-  return (
-    <GestureDetector gesture={panGesture}>
-      <View
-        style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onLayout={(e) => setTabWidth(e.nativeEvent.layout.width / 2)}
-      >
-        <Animated.View
-          style={[tabSwitcherStyles.indicator, indicatorStyle, { backgroundColor: primary, width: tabWidth }]}
-        />
-        <Pressable
-          style={tabSwitcherStyles.tab}
-          onPress={() => handlePress('liste')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'liste' }}
-        >
-          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'liste' ? colors.bg : colors.textMuted }]}>
-            📋 Liste
-          </Text>
-        </Pressable>
-        <Pressable
-          style={tabSwitcherStyles.tab}
-          onPress={() => handlePress('calendrier')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'calendrier' }}
-        >
-          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'calendrier' ? colors.bg : colors.textMuted }]}>
-            🗓 Calendrier
-          </Text>
-        </Pressable>
-      </View>
-    </GestureDetector>
-  );
-}
-
-const tabSwitcherStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    marginHorizontal: Spacing['4xl'],
-    marginVertical: Spacing.lg,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    overflow: 'hidden',
-    height: 40,
-  },
-  indicator: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    borderRadius: Radius.full,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-  },
-});
-
 const TYPE_EMOJI: Record<string, string> = {
   // Médical
   pédiatre: '👨‍⚕️',
@@ -200,7 +82,11 @@ export default function RDVScreen() {
   const { t } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
   const { rdvs, addRDV, updateRDV, deleteRDV, activeProfile, profiles } = useVault();
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   // Taille cellule calendrier dynamique, contrainte sur tablette
   const effectiveCalWidth = Math.min(screenWidth, MAX_CAL_WIDTH);
@@ -440,34 +326,58 @@ export default function RDVScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('rdvScreen.title')}</Text>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
-          onPress={openCreate}
-        >
-          <Text style={[styles.addBtnText, { color: primary }]}>+ Nouveau</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* View mode tabs — pilule animée (cohérent avec Gratitude) */}
-      <TabSwitcher activeTab={viewMode} onTabChange={setViewMode} primary={primary} colors={colors} />
-
-      {/* Search */}
-      <View ref={searchRef} style={[styles.searchContainer, { backgroundColor: colors.card }]}>
-        <TextInput
-          style={[styles.searchInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
-          placeholder={t('rdvScreen.placeholder.search')}
-          placeholderTextColor={colors.textMuted}
-          value={search}
-          onChangeText={setSearch}
-          clearButtonMode="while-editing"
-        />
-      </View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('rdvScreen.title')}
+        subtitle={
+          upcoming.length > 0
+            ? t('rdvScreen.subtitle.upcoming', { count: upcoming.length, defaultValue: `${upcoming.length} à venir` })
+            : undefined
+        }
+        actions={
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: primary }]}
+            onPress={openCreate}
+            accessibilityLabel={t('rdvScreen.a11y.new', { defaultValue: 'Nouveau rendez-vous' })}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+          </TouchableOpacity>
+        }
+        bottom={
+          <View ref={searchRef}>
+            <PillTabSwitcher<ViewMode>
+              tabs={[
+                { id: 'liste', label: '📋 Liste' },
+                { id: 'calendrier', label: '🗓 Calendrier' },
+              ] as ReadonlyArray<PillTab<ViewMode>>}
+              activeTab={viewMode}
+              onTabChange={setViewMode}
+              primary={primary}
+              colors={colors}
+              marginHorizontal={0}
+            />
+            <TextInput
+              style={[styles.searchInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text, marginTop: 8 }]}
+              placeholder={t('rdvScreen.placeholder.search')}
+              placeholderTextColor={colors.textMuted}
+              value={search}
+              onChangeText={setSearch}
+              clearButtonMode="while-editing"
+            />
+          </View>
+        }
+        scrollY={scrollY}
+      />
 
       {viewMode === 'calendrier' ? (
-        <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer, { paddingBottom: 90 }]}>
+        <Animated.ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.content, Layout.contentContainer, { paddingBottom: 90 }]}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
+        >
           <View style={styles.monthNav}>
             <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.card }]} onPress={() => setCalMonth((m) => subMonths(m, 1))}>
               <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
@@ -509,9 +419,14 @@ export default function RDVScreen() {
               );
             })}
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
       ) : (
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer]}>
+      <Animated.ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
+      >
         {/* Upcoming */}
         <View ref={rdvListRef}>
         <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
@@ -538,7 +453,7 @@ export default function RDVScreen() {
             {showPast && past.map((r, index) => renderRDV(r, true, index))}
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
       )}
 
       {/* Day RDVs Modal (calendar tap) */}
@@ -635,24 +550,17 @@ export default function RDVScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
-  },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   addBtn: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  addBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  searchContainer: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
+  addBtnText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    lineHeight: 18,
   },
   searchInput: {
     height: 40,
