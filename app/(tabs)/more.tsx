@@ -26,6 +26,7 @@ import { Shadows } from '../../constants/shadows';
 import { isRdvUpcoming } from '../../lib/parser';
 import { totalSpent, totalBudget } from '../../lib/budget';
 import { isBabyProfile } from '../../lib/types';
+import { withAlpha } from '../../lib/colors';
 import { useTranslation } from 'react-i18next';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
@@ -227,19 +228,19 @@ export default function MoreScreen() {
                       <View
                         style={[styles.row, {
                           backgroundColor: colors.card,
-                          borderColor: accentColor + (isDark ? '20' : '18'),
+                          borderColor: withAlpha(accentColor, isDark ? 0.13 : 0.09),
                         }]}
                         accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
                         accessibilityRole="button"
                       >
                         {/* Fond teinté catégorie (comme DashboardCard tinted) */}
                         <View style={[StyleSheet.absoluteFill, {
-                          backgroundColor: accentColor + (isDark ? '1A' : '0F'),
+                          backgroundColor: withAlpha(accentColor, isDark ? 0.10 : 0.06),
                           borderRadius: Radius.xl,
                         }]} />
 
                         {/* Icône avec teinte plus saturée */}
-                        <View style={[styles.listIcon, { backgroundColor: accentColor + (isDark ? '25' : '1A') }]}>
+                        <View style={[styles.listIcon, { backgroundColor: withAlpha(accentColor, isDark ? 0.15 : 0.10) }]}>
                           <Text style={styles.listEmoji}>{item.emoji}</Text>
                         </View>
 
@@ -254,7 +255,7 @@ export default function MoreScreen() {
                         <View style={styles.rowRight}>
                           {item.badge ? (
                             <View style={[styles.badge, { backgroundColor: accentColor }]}>
-                              <Text style={styles.badgeText}>{item.badge}</Text>
+                              <Text style={[styles.badgeText, { color: colors.onAccent }]}>{item.badge}</Text>
                             </View>
                           ) : null}
                           <Text style={[styles.chevron, { color: colors.textFaint }]}>›</Text>
@@ -281,13 +282,13 @@ export default function MoreScreen() {
                         accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
                         accessibilityRole="button"
                       >
-                        <View style={[styles.gridIcon, { backgroundColor: accentColor + '15' }]}>
+                        <View style={[styles.gridIcon, { backgroundColor: withAlpha(accentColor, 0.08) }]}>
                           <Text style={styles.gridEmoji}>{item.emoji}</Text>
                         </View>
                         <Text style={[styles.gridLabel, { color: colors.textSub }]}>{item.label}</Text>
                         {item.badge ? (
                           <View style={[styles.gridBadge, { backgroundColor: accentColor }]}>
-                            <Text style={styles.badgeText}>{item.badge}</Text>
+                            <Text style={[styles.badgeText, { color: colors.onAccent }]}>{item.badge}</Text>
                           </View>
                         ) : null}
                       </View>
@@ -477,6 +478,5 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: FontSize.code,
     fontWeight: FontWeight.heavy,
-    color: '#FFFFFF',
   },
 });

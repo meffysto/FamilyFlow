@@ -75,8 +75,6 @@ const WEATHER_STAGES = [
   { threshold: 1.00, emoji: '🌈', labelKey: 'tasks.weather.rainbow', messageKey: 'tasks.weather.rainbowMsg' },
 ];
 
-const WEATHER_COLORS = ['#4B5563', '#6B7280', '#93C5FD', '#FDE68A', '#C4B5FD'];
-
 function getWeatherStage(progress: number) {
   for (let i = WEATHER_STAGES.length - 1; i >= 0; i--) {
     if (progress >= WEATHER_STAGES[i].threshold) return i;
@@ -97,11 +95,22 @@ function TaskWeather({ completed, total, t }: { completed: number; total: number
     animProgress.value = withSpring(progress, { damping: 15, stiffness: 90 });
   }, [progress]);
 
+  const weatherColors = useMemo(
+    () => [
+      colors.weather.stormy,
+      colors.weather.cloudy,
+      colors.weather.partly,
+      colors.weather.sunny,
+      colors.weather.bright,
+    ],
+    [colors.weather],
+  );
+
   const bgStyle = useAnimatedStyle(() => {
     const bg = interpolateColor(
       animProgress.value,
       [0, 0.25, 0.5, 0.75, 1],
-      WEATHER_COLORS,
+      weatherColors,
     );
     return { backgroundColor: bg };
   });
@@ -1066,7 +1075,7 @@ export default function TasksScreen() {
           x={windowWidth / 2}
           y={windowHeight / 3}
           reward={1}
-          cropColor={effectBurst.variant === 'golden' ? '#FFD700' : effectBurst.variant === 'rare' ? '#A78BFA' : '#34D399'}
+          cropColor={effectBurst.variant === 'golden' ? colors.loot.golden : effectBurst.variant === 'rare' ? colors.loot.rare : colors.loot.common}
           variant={effectBurst.variant}
           onComplete={() => setEffectBurst(null)}
         />

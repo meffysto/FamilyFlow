@@ -251,7 +251,7 @@ function MiniCalendar({
   const monthLabel = format(viewMonth, 'MMMM yyyy', { locale: getDateLocale() });
 
   return (
-    <View style={[calStyles.container, { backgroundColor: colors.card }]}>
+    <View style={[calStyles.container, { backgroundColor: colors.card, borderBottomColor: colors.overlayLight }]}>
       <View style={calStyles.nav}>
         <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={calStyles.navBtn} accessibilityLabel={t('journal.a11y.prevMonth')} accessibilityRole="button">
           <Text style={[calStyles.navArrow, { color: colors.textMuted }]}>‹</Text>
@@ -970,7 +970,7 @@ export default function JournalScreen() {
         onRequestClose={closeModal}
       >
         <KeyboardAvoidingView
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={closeModal} />
@@ -1137,7 +1137,7 @@ const styles = StyleSheet.create({
   emptySection: { padding: 16, alignItems: 'center' },
   emptySectionText: { fontSize: FontSize.label, fontStyle: 'italic' },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end' },
   modalDismiss: { flex: 1 },
   modalContent: {
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
@@ -1170,7 +1170,6 @@ const calStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   nav: {
     flexDirection: 'row',

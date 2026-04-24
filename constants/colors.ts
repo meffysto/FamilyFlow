@@ -51,8 +51,9 @@ export const LightColors = {
   accentPinkBg:   '#FCE7F3',
   accentPinkText: '#9D174D',
   // Misc
-  overlay:     'rgba(0,0,0,0.5)',
-  overlayLight:'rgba(0,0,0,0.4)',
+  overlay:     'rgba(0,0,0,0.5)',     // scrim modal plein
+  overlayLight:'rgba(0,0,0,0.05)',    // bordure/ligne fine sur fond clair
+  onAccent:    '#FFFFFF',             // texte/icône sur fond accent (toujours blanc)
   switchOff:   '#E5E7EB',
   // Glass / Liquid Glass
   glassBg:     'rgba(255,255,255,0.65)',
@@ -94,6 +95,20 @@ export const LightColors = {
     faible:   '#F97316',
     normal:   '#6B7280',
     abondant: '#10B981',
+  },
+  // Météo (progression tâches enfants — du sombre au lumineux)
+  weather: {
+    stormy: '#4B5563',
+    cloudy: '#6B7280',
+    partly: '#93C5FD',
+    sunny:  '#FDE68A',
+    bright: '#C4B5FD',
+  },
+  // Loot box rarities (visuels HarvestBurst)
+  loot: {
+    golden: '#FFD700',
+    rare:   '#A78BFA',
+    common: '#34D399',
   },
 };
 
@@ -140,8 +155,9 @@ export const DarkColors: typeof LightColors = {
   accentPinkBg:   '#831843',
   accentPinkText: '#FBCFE8',
   // Misc
-  overlay:     'rgba(0,0,0,0.75)',
-  overlayLight:'rgba(0,0,0,0.6)',
+  overlay:     'rgba(0,0,0,0.7)',     // scrim modal plein
+  overlayLight:'rgba(255,255,255,0.08)', // bordure/ligne fine sur fond sombre
+  onAccent:    '#FFFFFF',             // texte/icône sur fond accent (toujours blanc)
   switchOff:   '#334155',
   // Glass / Liquid Glass
   glassBg:     'rgba(28,31,40,0.65)',
@@ -183,6 +199,20 @@ export const DarkColors: typeof LightColors = {
     faible:   '#FDBA74',
     normal:   '#9CA3AF',
     abondant: '#6EE7B7',
+  },
+  // Météo — gris dark un peu plus clairs pour rester visibles sur fond sombre
+  weather: {
+    stormy: '#9CA3AF',
+    cloudy: '#B0B6BF',
+    partly: '#93C5FD',
+    sunny:  '#FDE68A',
+    bright: '#C4B5FD',
+  },
+  // Loot box rarities — restent vifs en dark
+  loot: {
+    golden: '#FFD700',
+    rare:   '#C4B5FD',
+    common: '#6EE7B7',
   },
 };
 

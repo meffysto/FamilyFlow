@@ -1188,7 +1188,7 @@ export default function DashboardScreen() {
         onRequestClose={() => setProfilePickerVisible(false)}
       >
         <TouchableOpacity
-          style={styles.pickerOverlay}
+          style={[styles.pickerOverlay, { backgroundColor: colors.overlay }]}
           activeOpacity={1}
           onPress={() => setProfilePickerVisible(false)}
         >
@@ -1428,7 +1428,6 @@ const styles = StyleSheet.create({
   // Profile picker
   pickerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
