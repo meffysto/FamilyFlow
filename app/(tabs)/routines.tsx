@@ -19,11 +19,13 @@ import {
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import * as SecureStore from 'expo-secure-store';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedScrollHandler,
   withSpring,
   withSequence,
   FadeIn,
@@ -39,6 +41,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
 import { ModalHeader } from '../../components/ui';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Routine, RoutineProgress } from '../../lib/types';
 import { format } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -346,8 +349,13 @@ export default function RoutinesScreen() {
   const { routines, saveRoutines, activeProfile, vault, notifPrefs, refresh } = useVault();
   const { addContribution } = useGarden();
   const { completeTask } = useGamification({ vault, notifPrefs, onContribution: addContribution });
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   const { refreshing, onRefresh } = useRefresh(refresh);
 
@@ -462,26 +470,33 @@ export default function RoutinesScreen() {
   const todayLabel = format(new Date(), "EEEE d MMMM", { locale: getDateLocale() });
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={routineListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <View>
-          <Text style={[styles.title, { color: colors.text }]}>🔄 Routines</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{todayLabel}</Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: primary }]}
-          onPress={() => setEditorRoutine(null)}
-          activeOpacity={0.7}
-          accessibilityLabel={t('routines.a11y.addRoutine')}
-          accessibilityRole="button"
-        >
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <View ref={routineListRef}>
+        <ScreenHeader
+          title="Routines"
+          icon="🔄"
+          subtitle={todayLabel}
+          actions={
+            <TouchableOpacity
+              style={[styles.addBtn, { backgroundColor: primary }]}
+              onPress={() => setEditorRoutine(null)}
+              activeOpacity={0.7}
+              accessibilityLabel={t('routines.a11y.addRoutine')}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+            </TouchableOpacity>
+          }
+          scrollY={scrollY}
+        />
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {routines.length === 0 ? (
@@ -608,7 +623,7 @@ export default function RoutinesScreen() {
             {t('routines.card.hint')}
           </Text>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Player Modal — mode classique (texte) */}
       <Modal
@@ -671,15 +686,6 @@ export default function RoutinesScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
-  },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
-  subtitle: { fontSize: FontSize.sm, marginTop: 2 },
   scroll: { flex: 1 },
   content: { padding: Spacing['2xl'], paddingBottom: 90, gap: Spacing.xl },
 
@@ -742,13 +748,13 @@ const styles = StyleSheet.create({
 
   // Bouton ajouter (header)
   addBtn: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addBtnText: { fontSize: FontSize.titleLg, fontWeight: FontWeight.bold, marginTop: -1 },
+  addBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, lineHeight: 18 },
 
   // Bouton modifier (carte)
   editBtn: {
