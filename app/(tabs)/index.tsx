@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -840,17 +841,12 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
-      {/* Header — étendu derrière la dynamic island avec coins arrondis bas */}
-      <View
-        style={[
-          styles.headerShadow,
-          { shadowColor: isDark ? '#000' : primary },
-        ]}
-      >
+      {/* Header — étendu derrière la dynamic island, fond fondu en bas */}
+      <View style={styles.headerWrap}>
       <LivingGradient
         style={[
           styles.header,
-          { paddingTop: insets.top + 6 },
+          { paddingTop: Math.max(insets.top - 2, 0) },
         ]}
         ref={headerRef}
       >
@@ -935,6 +931,12 @@ export default function DashboardScreen() {
           )}
         </View>
       </LivingGradient>
+      {/* Fondu doux : la couleur du dégradé se dissout dans le fond de page */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={[colors.bg + '00', colors.bg]}
+        style={styles.headerFade}
+      />
       </View>
 
       <ScrollView
@@ -1277,21 +1279,22 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  headerShadow: {
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 8,
-    // Le wrapper ne clip pas → l'ombre peut déborder sous les coins arrondis.
+  headerWrap: {
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 14,
-    paddingBottom: 14,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+    paddingBottom: 8,
+  },
+  headerFade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -16,
+    height: 24,
   },
   headerLeft: {
     flex: 1,
