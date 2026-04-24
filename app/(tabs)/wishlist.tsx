@@ -34,8 +34,6 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Chip } from '../../components/ui/Chip';
-import { SegmentedControl } from '../../components/ui';
-import type { Segment } from '../../components/ui';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { EmptyState } from '../../components/EmptyState';
 import type { WishlistItem, WishBudget, WishOccasion } from '../../lib/types';
@@ -93,9 +91,8 @@ export default function WishlistScreen() {
   const [editNotes, setEditNotes] = useState('');
   const [editUrl, setEditUrl] = useState('');
 
-  // Segments personne pour SegmentedControl
   const personSegments = useMemo(() => {
-    const segs: Segment<string>[] = [{ id: 'tous', label: t('wishlist.all') }];
+    const segs: { id: string; label: string }[] = [{ id: 'tous', label: t('wishlist.all') }];
     const names = new Set(wishlistItems.map((w) => w.profileName));
     for (const name of names) {
       const p = profiles.find((pr) => pr.name === name);
@@ -255,57 +252,78 @@ export default function WishlistScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {isAdult ? t('wishlist.title') : t('wishlist.titleChild')}
-          </Text>
-          {totalToGive > 0 && (
-            <View style={[styles.countBadge, { backgroundColor: primary + '20' }]}>
-              <Text style={[styles.countText, { color: primary }]}>{totalToGive}</Text>
+          <View style={styles.headerLeft}>
+            <View style={styles.headerTitleRow}>
+              <Text style={[styles.title, { color: colors.text }]}>
+                {isAdult ? t('wishlist.title') : t('wishlist.titleChild')}
+              </Text>
+              {totalToGive > 0 && (
+                <View style={[styles.countBadge, { backgroundColor: primary + '20' }]}>
+                  <Text style={[styles.countText, { color: primary }]}>{totalToGive}</Text>
+                </View>
+              )}
             </View>
-          )}
+            {isAdult && (totalToGive > 0 || totalBought > 0) && (
+              <View style={styles.statsRow}>
+                <Text style={[styles.statInline, { color: colors.textMuted }]}>
+                  {t('wishlist.toGive', { count: totalToGive })}
+                </Text>
+                {totalBought > 0 && (
+                  <>
+                    <Text style={[styles.statDot, { color: colors.separator }]}>·</Text>
+                    <Text style={[styles.statInline, { color: colors.success }]}>
+                      {t('wishlist.bought', { count: totalBought })} ✓
+                    </Text>
+                  </>
+                )}
+              </View>
+            )}
+          </View>
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: primary }]}
+            onPress={() => openEditor()}
+            activeOpacity={0.7}
+            accessibilityLabel={t('wishlist.a11y.addWish')}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('wishlist.addBtn')}</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: primary }]}
-          onPress={() => openEditor()}
-          activeOpacity={0.7}
-          accessibilityLabel={t('wishlist.a11y.addWish')}
-          accessibilityRole="button"
-        >
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('wishlist.addBtn')}</Text>
-        </TouchableOpacity>
       </View>
 
-      {/* Filtres — SegmentedControl personne */}
-      <View style={[styles.filterSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <SegmentedControl
-          segments={personSegments}
-          value={personFilter}
-          onChange={setPersonFilter}
-          style={{ marginBottom: Spacing.md }}
-        />
-        <View style={styles.occasionRow}>
+      {/* Filtres — profils ligne 1, occasion ligne 2 */}
+      <View style={[styles.filterSection, { borderBottomColor: colors.border }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+        >
+          {personSegments.map((seg) => (
+            <Chip
+              key={seg.id}
+              label={seg.label}
+              selected={personFilter === seg.id}
+              onPress={() => setPersonFilter(seg.id)}
+              size="sm"
+            />
+          ))}
+        </ScrollView>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.filterScroll, styles.filterScrollSecond]}
+        >
           {occasionChips.map((chip) => (
             <Chip
               key={chip.id}
               label={chip.label}
               selected={occasionFilter === chip.id}
               onPress={() => setOccasionFilter(chip.id)}
+              size="sm"
             />
           ))}
-        </View>
+        </ScrollView>
       </View>
-
-      {/* Stats bar — adultes uniquement */}
-      {isAdult && (
-        <View style={styles.statsBar}>
-          <View style={[styles.statPill, { backgroundColor: primary + '15' }]}>
-            <Text style={[styles.statPillText, { color: primary }]}>{t('wishlist.toGive', { count: totalToGive })}</Text>
-          </View>
-          <View style={[styles.statPill, { backgroundColor: colors.successBg }]}>
-            <Text style={[styles.statPillText, { color: colors.success }]}>{t('wishlist.bought', { count: totalBought })}</Text>
-          </View>
-        </View>
-      )}
 
       {sections.length === 0 ? (
         <EmptyState
@@ -338,7 +356,7 @@ export default function WishlistScreen() {
                   {isAdult && (
                     <View style={styles.sectionProgressRow}>
                       <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-                        <View style={[styles.progressFill, { backgroundColor: colors.success, width: 60 * progress }]} />
+                        <View style={[styles.progressFill, { backgroundColor: colors.success, width: `${Math.round(progress * 100)}%` as any }]} />
                       </View>
                       <Text style={[styles.sectionProgressText, { color: colors.textMuted }]}>
                         {t('wishlist.sectionBought', { count: bought })} / {total}
@@ -559,13 +577,13 @@ export default function WishlistScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
   },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.lg },
+  headerLeft: { flex: 1, gap: Spacing.xs },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   countBadge: {
     paddingHorizontal: Spacing.xl,
@@ -573,6 +591,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   countText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  statsRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  statInline: { fontSize: FontSize.sm },
+  statDot: { fontSize: FontSize.sm },
   addBtn: {
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.md,
@@ -581,32 +602,19 @@ const styles = StyleSheet.create({
   addBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   // Filtres
   filterSection: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
   },
-  occasionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.md,
-  },
-  // Stats bar
-  statsBar: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.lg,
-  },
-  statPill: {
+  filterScroll: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xs,
   },
-  statPillText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
+  filterScrollSecond: {
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.lg,
   },
   // Liste
   listContent: {
@@ -636,7 +644,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   progressBar: {
-    width: 60,
+    flex: 1,
     height: 4,
     borderRadius: Radius.xxs,
     overflow: 'hidden',
