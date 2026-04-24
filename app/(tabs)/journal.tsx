@@ -847,7 +847,7 @@ export default function JournalScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <View ref={childSelectorRef}>
         <ScreenHeader
-          title={`📖 ${t('journal.title')}`}
+          title={t('journal.title')}
           bottom={
             journalTabs.length > 1 ? (
               <View style={styles.tabsWrap}>

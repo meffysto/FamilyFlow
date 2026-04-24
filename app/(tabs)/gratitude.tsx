@@ -285,7 +285,6 @@ export default function GratitudeScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('gratitude.title')}
-        icon="🙏"
         subtitle={streak > 0 ? t('gratitude.streak', { count: streak }) : undefined}
         actions={
           streak > 0 ? (

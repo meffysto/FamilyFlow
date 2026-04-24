@@ -694,7 +694,7 @@ export default function TasksScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <View ref={taskListRef}>
         <ScreenHeader
-          title={isVacationActive ? t('tasks.vacationTitle', '☀️ Vacances') : t('tasks.screenTitle', '📋 Tâches')}
+          title={isVacationActive ? t('tasks.vacationTitle', 'Vacances') : t('tasks.screenTitle', 'Tâches')}
           subtitle={
             !isVacationActive && activeProfile?.role !== 'enfant' && totalCount > 0
               ? t('tasks.remaining', { count: remainingCount })

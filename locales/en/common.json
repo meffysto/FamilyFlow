@@ -532,8 +532,8 @@
       "vacation": "☀️ Vacation Checklist",
       "home": "🏠 Home — Tasks"
     },
-    "screenTitle": "📋 Tasks",
-    "vacationTitle": "☀️ Vacation",
+    "screenTitle": "Tasks",
+    "vacationTitle": "Vacation",
     "remaining": "{{count}} remaining",
     "remaining_other": "{{count}} remaining",
     "hint": "💡 Swipe to delete · Long press to edit",
@@ -988,7 +988,7 @@
     }
   },
   "loot": {
-    "title": "🎁 Rewards",
+    "title": "Rewards",
     "subtitle": "Complete tasks to earn rewards!",
     "tabs": {
       "rewards": "Rewards",
@@ -1303,7 +1303,7 @@
     }
   },
   "calendarScreen": {
-    "title": "📆 Calendar",
+    "title": "Calendar",
     "today": "Today",
     "tabs": {
       "month": "Month",
@@ -2059,7 +2059,7 @@
     }
   },
   "pregnancy": {
-    "title": "🤰 Pregnancy",
+    "title": "Pregnancy",
     "emptyTitle": "No pregnancy to track yet",
     "emptySubtitle": "Add a profile with status \"pregnancy\" in settings to follow progress week by week.",
     "thisWeek": "This week",
@@ -2170,7 +2170,7 @@
     "title": "Stock"
   },
   "quotes": {
-    "title": "💬 Kids' Quotes",
+    "title": "Kids' Quotes",
     "addA11y": "Add a quote",
     "addBtn": "Add a quote",
     "emptyTitle": "No quotes yet",
@@ -2861,8 +2861,8 @@
   },
   "photosScreen": {
     "title": {
-      "photos": "📸 Pictures",
-      "souvenirs": "🌟 Memories"
+      "photos": "Pictures",
+      "souvenirs": "Memories"
     },
     "tabs": {
       "photos": "📸 Pictures",
@@ -2948,7 +2948,7 @@
   },
   "wishlist": {
     "title": "Wishlist",
-    "titleChild": "My wishes ✨",
+    "titleChild": "My wishes",
     "toast": {
       "modified": "Wish modified",
       "added": "Wish added",
@@ -3069,7 +3069,7 @@
     }
   },
   "rdvScreen": {
-    "title": "📅 Appointments",
+    "title": "Appointments",
     "placeholder": {
       "search": "🔍 Search appointments..."
     },
@@ -3157,7 +3157,7 @@
     }
   },
   "moodsScreen": {
-    "title": "🌤️ Mood Weather",
+    "title": "Mood Weather",
     "toast": {
       "saved": "Mood saved {{emoji}}",
       "error": "Unable to save mood"

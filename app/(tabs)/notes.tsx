@@ -264,7 +264,6 @@ export default function NotesScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('notesScreen.title')}
-        icon="📝"
         subtitle={notes.length > 0 ? `${notes.length} note${notes.length > 1 ? 's' : ''}` : undefined}
         actions={
           <TouchableOpacity

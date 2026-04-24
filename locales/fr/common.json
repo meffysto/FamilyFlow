@@ -532,8 +532,8 @@
       "vacation": "☀️ Checklist Vacances",
       "home": "🏠 Maison — Tâches"
     },
-    "screenTitle": "📋 Tâches",
-    "vacationTitle": "☀️ Vacances",
+    "screenTitle": "Tâches",
+    "vacationTitle": "Vacances",
     "remaining": "{{count}} restante",
     "remaining_other": "{{count}} restantes",
     "hint": "💡 Glissez pour supprimer · Appui long pour modifier",
@@ -996,7 +996,7 @@
     }
   },
   "loot": {
-    "title": "🎁 Récompenses",
+    "title": "Récompenses",
     "subtitle": "Complète des tâches pour gagner des récompenses !",
     "tabs": {
       "rewards": "Récompenses",
@@ -1311,7 +1311,7 @@
     }
   },
   "calendarScreen": {
-    "title": "📆 Calendrier",
+    "title": "Calendrier",
     "today": "Aujourd'hui",
     "tabs": {
       "month": "Mois",
@@ -2067,7 +2067,7 @@
     }
   },
   "pregnancy": {
-    "title": "🤰 Grossesse",
+    "title": "Grossesse",
     "emptyTitle": "Aucune grossesse à suivre",
     "emptySubtitle": "Ajoutez un profil avec le statut « grossesse » dans les réglages pour suivre l'évolution semaine par semaine.",
     "thisWeek": "Cette semaine",
@@ -2178,7 +2178,7 @@
     "title": "Stock"
   },
   "quotes": {
-    "title": "💬 Mots d'enfants",
+    "title": "Mots d'enfants",
     "addA11y": "Ajouter un mot",
     "addBtn": "Ajouter un mot",
     "emptyTitle": "Aucun mot enregistré",
@@ -2869,8 +2869,8 @@
   },
   "photosScreen": {
     "title": {
-      "photos": "📸 Photos",
-      "souvenirs": "🌟 Souvenirs"
+      "photos": "Photos",
+      "souvenirs": "Souvenirs"
     },
     "tabs": {
       "photos": "📸 Photos",
@@ -2956,7 +2956,7 @@
   },
   "wishlist": {
     "title": "Souhaits",
-    "titleChild": "Mes souhaits ✨",
+    "titleChild": "Mes souhaits",
     "toast": {
       "modified": "Souhait modifié",
       "added": "Souhait ajouté",
@@ -3077,7 +3077,7 @@
     }
   },
   "rdvScreen": {
-    "title": "📅 Rendez-vous",
+    "title": "Rendez-vous",
     "placeholder": {
       "search": "🔍 Rechercher un rendez-vous..."
     },
@@ -3165,7 +3165,7 @@
     }
   },
   "moodsScreen": {
-    "title": "🌤️ Météo des humeurs",
+    "title": "Météo des humeurs",
     "toast": {
       "saved": "Humeur enregistrée {{emoji}}",
       "error": "Impossible d'enregistrer l'humeur"

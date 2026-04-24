@@ -475,7 +475,6 @@ export default function RoutinesScreen() {
       <View ref={routineListRef}>
         <ScreenHeader
           title="Routines"
-          icon="🔄"
           subtitle={todayLabel}
           actions={
             <TouchableOpacity
