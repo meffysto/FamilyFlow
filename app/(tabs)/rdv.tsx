@@ -16,11 +16,19 @@ import {
   Modal,
   useWindowDimensions,
   TextInput,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import {
   format,
@@ -37,7 +45,6 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui/Chip';
 import { MarkdownText } from '../../components/ui/MarkdownText';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { EmptyState } from '../../components/EmptyState';
 import { RDVEditor } from '../../components/RDVEditor';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
@@ -57,6 +64,122 @@ const MAX_CAL_WIDTH = 700;
 const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 type ViewMode = 'liste' | 'calendrier';
+
+// ─── TabSwitcher pilule animée (cohérent avec Gratitude) ─────────────────────
+
+const TAB_SPRING = { damping: 32, stiffness: 200 };
+
+interface TabSwitcherProps {
+  activeTab: ViewMode;
+  onTabChange: (tab: ViewMode) => void;
+  primary: string;
+  colors: ReturnType<typeof useThemeColors>['colors'];
+}
+
+function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherProps) {
+  const [tabWidth, setTabWidth] = useState(0);
+  const indicatorX = useSharedValue(0);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
+
+  const handlePress = useCallback(
+    (tab: ViewMode) => {
+      const toIndex = tab === 'liste' ? 0 : 1;
+      indicatorX.value = withSpring(toIndex * tabWidth, TAB_SPRING);
+      onTabChange(tab);
+    },
+    [tabWidth, onTabChange, indicatorX],
+  );
+
+  useEffect(() => {
+    if (tabWidth === 0) return;
+    const idx = activeTab === 'liste' ? 0 : 1;
+    indicatorX.value = withSpring(idx * tabWidth, TAB_SPRING);
+  }, [tabWidth, activeTab, indicatorX]);
+
+  const DRAG_THRESHOLD = 30;
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      const base = activeTab === 'liste' ? 0 : tabWidth;
+      indicatorX.value = Math.max(0, Math.min(tabWidth, base + e.translationX));
+    })
+    .onEnd((e) => {
+      if (e.translationX > DRAG_THRESHOLD && activeTab === 'liste') {
+        indicatorX.value = withSpring(tabWidth, TAB_SPRING);
+        runOnJS(Haptics.selectionAsync)();
+        runOnJS(onTabChange)('calendrier');
+      } else if (e.translationX < -DRAG_THRESHOLD && activeTab === 'calendrier') {
+        indicatorX.value = withSpring(0, TAB_SPRING);
+        runOnJS(Haptics.selectionAsync)();
+        runOnJS(onTabChange)('liste');
+      } else {
+        const snap = activeTab === 'liste' ? 0 : tabWidth;
+        indicatorX.value = withSpring(snap, TAB_SPRING);
+      }
+    });
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <View
+        style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onLayout={(e) => setTabWidth(e.nativeEvent.layout.width / 2)}
+      >
+        <Animated.View
+          style={[tabSwitcherStyles.indicator, indicatorStyle, { backgroundColor: primary, width: tabWidth }]}
+        />
+        <Pressable
+          style={tabSwitcherStyles.tab}
+          onPress={() => handlePress('liste')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'liste' }}
+        >
+          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'liste' ? colors.bg : colors.textMuted }]}>
+            📋 Liste
+          </Text>
+        </Pressable>
+        <Pressable
+          style={tabSwitcherStyles.tab}
+          onPress={() => handlePress('calendrier')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'calendrier' }}
+        >
+          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'calendrier' ? colors.bg : colors.textMuted }]}>
+            🗓 Calendrier
+          </Text>
+        </Pressable>
+      </View>
+    </GestureDetector>
+  );
+}
+
+const tabSwitcherStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    marginHorizontal: Spacing['4xl'],
+    marginVertical: Spacing.lg,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    overflow: 'hidden',
+    height: 40,
+  },
+  indicator: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    borderRadius: Radius.full,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+});
 
 const TYPE_EMOJI: Record<string, string> = {
   // Médical
@@ -328,17 +451,8 @@ export default function RDVScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* View mode tabs */}
-      <View style={[styles.modeTabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <SegmentedControl
-          segments={[
-            { id: 'liste', label: '📋 Liste' },
-            { id: 'calendrier', label: '🗓 Calendrier' },
-          ]}
-          value={viewMode}
-          onChange={(m) => setViewMode(m as ViewMode)}
-        />
-      </View>
+      {/* View mode tabs — pilule animée (cohérent avec Gratitude) */}
+      <TabSwitcher activeTab={viewMode} onTabChange={setViewMode} primary={primary} colors={colors} />
 
       {/* Search */}
       <View ref={searchRef} style={[styles.searchContainer, { backgroundColor: colors.card }]}>
@@ -631,10 +745,6 @@ const styles = StyleSheet.create({
   swipeActionLabel: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
-  },
-  modeTabs: {
-    paddingHorizontal: Spacing['2xl'], paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing['2xl'] },
   monthArrow: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },

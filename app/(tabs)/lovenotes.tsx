@@ -24,7 +24,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { ModalHeader, SegmentedControl } from '../../components/ui';
+import { ModalHeader, PillTabSwitcher, type PillTab } from '../../components/ui';
 import { LoveNoteCard, LoveNoteEditor, EnvelopeUnfoldModal } from '../../components/lovenotes';
 import {
   receivedForProfile,
@@ -142,15 +142,11 @@ export default function LoveNotesScreen() {
     [profiles, handleCardPress, handleArchive, segment],
   );
 
-  const segments = useMemo(
+  const segments = useMemo<ReadonlyArray<PillTab<Segment>>>(
     () => [
-      {
-        id: 'received' as Segment,
-        label: 'Reçues',
-        badge: unreadCount || undefined,
-      },
-      { id: 'sent' as Segment, label: 'Envoyées' },
-      { id: 'archived' as Segment, label: 'Archivées' },
+      { id: 'received', label: 'Reçues', badge: unreadCount || undefined },
+      { id: 'sent', label: 'Envoyées' },
+      { id: 'archived', label: 'Archivées' },
     ],
     [unreadCount],
   );
@@ -177,13 +173,14 @@ export default function LoveNotesScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <ModalHeader title="Boîte aux lettres" />
-      <View style={styles.controls}>
-        <SegmentedControl<Segment>
-          segments={segments}
-          value={segment}
-          onChange={setSegment}
-        />
-      </View>
+      <PillTabSwitcher<Segment>
+        tabs={segments}
+        activeTab={segment}
+        onTabChange={setSegment}
+        primary={primary}
+        colors={colors}
+        marginHorizontal={Spacing['2xl']}
+      />
       {data.length === 0 ? (
         <View style={styles.empty}>
           <Text style={{ color: colors.textMuted }}>
@@ -246,10 +243,6 @@ export default function LoveNotesScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  controls: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-  },
   list: {
     padding: Spacing['2xl'],
   },

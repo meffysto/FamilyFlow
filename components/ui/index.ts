@@ -9,3 +9,5 @@ export { GlassView } from './GlassView';
 export { SegmentedControl } from './SegmentedControl';
 export type { Segment } from './SegmentedControl';
 export { PressableScale } from './PressableScale';
+export { PillTabSwitcher } from './PillTabSwitcher';
+export type { PillTab } from './PillTabSwitcher';
