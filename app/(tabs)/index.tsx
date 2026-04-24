@@ -16,7 +16,8 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -177,7 +178,8 @@ function getGreetingKey(hour: number): 'night' | 'morning' | 'afternoon' | 'even
 export default function DashboardScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
+  const insets = useSafeAreaInsets();
   const { showToast, showRewardCard } = useToast();
   const {
     isLoading,
@@ -836,9 +838,22 @@ export default function DashboardScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* Header */}
-      <LivingGradient style={[styles.header, { borderBottomColor: colors.separator }]} ref={headerRef}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      {/* Header — étendu derrière la dynamic island avec coins arrondis bas */}
+      <View
+        style={[
+          styles.headerShadow,
+          { shadowColor: isDark ? '#000' : primary },
+        ]}
+      >
+      <LivingGradient
+        style={[
+          styles.header,
+          { paddingTop: insets.top + 6 },
+        ]}
+        ref={headerRef}
+      >
         <SeasonalParticles />
         <View style={styles.headerLeft}>
           <View style={styles.avatarWithCompanion}>
@@ -920,6 +935,7 @@ export default function DashboardScreen() {
           )}
         </View>
       </LivingGradient>
+      </View>
 
       <ScrollView
         style={styles.scroll}
@@ -1261,13 +1277,21 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
+  headerShadow: {
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+    // Le wrapper ne clip pas → l'ombre peut déborder sous les coins arrondis.
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
   headerLeft: {
     flex: 1,
