@@ -25,6 +25,14 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  interpolate,
+  Extrapolation,
+} from 'react-native-reanimated';
 import { useLocalSearchParams } from 'expo-router';
 import { format, startOfWeek, addWeeks, isSameWeek } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -41,7 +49,8 @@ import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { Shadows } from '../../constants/shadows';
@@ -150,7 +159,7 @@ export default function MealsScreen() {
     toggleFavorite, isFavorite, getFavorites,
     refresh, isLoading,
   } = useVault();
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
   const { config: aiConfig, isConfigured: aiConfigured } = useAI();
   const { showToast } = useToast();
   const { t } = useTranslation();
@@ -158,6 +167,27 @@ export default function MealsScreen() {
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Tab>('repas');
   const [refreshing, setRefreshing] = useState(false);
+
+  // Scroll partagé → collapse du ScreenHeader
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  // Reset au changement d'onglet (évite collapse fantôme)
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [tab]);
+
+  // Collapse renforcée pour l'onglet Courses : après la phase standard (0→60 qui
+  // masque titre/sous-titre), on fait aussi disparaître la pilule de tabs entre
+  // 80 et 160px → la liste de courses profite de toute la hauteur de l'écran.
+  const coursesTabsAnimStyle = useAnimatedStyle(() => {
+    if (tab !== 'courses') return { height: 40, opacity: 1 };
+    return {
+      height: interpolate(scrollY.value, [80, 160], [40, 0], Extrapolation.CLAMP),
+      opacity: interpolate(scrollY.value, [80, 160], [1, 0], Extrapolation.CLAMP),
+    };
+  });
 
   // Open on specific tab when navigating from dashboard
   useEffect(() => {
@@ -1019,23 +1049,31 @@ export default function MealsScreen() {
   // ─── Render ─────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* Header */}
-      <View ref={mealsHeaderRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{headerTitle}</Text>
-        <Text style={[styles.stats, { color: colors.textMuted }]}>{headerStats}</Text>
-      </View>
-
-      {/* Tab bar */}
-      <View ref={tabBarRef} style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
-        <SegmentedControl
-          segments={[
-            { id: 'repas', label: t('meals.tabs.meals') },
-            { id: 'courses', label: t('meals.tabs.shopping'), badge: courses.filter((c) => !c.completed).length || undefined },
-            { id: 'recettes', label: t('meals.tabs.recipes'), badge: recipes.length || undefined },
-          ]}
-          value={tab}
-          onChange={(t) => setTab(t as Tab)}
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <View ref={mealsHeaderRef}>
+        <ScreenHeader
+          title={headerTitle}
+          subtitle={headerStats}
+          bottom={
+            <View ref={tabBarRef}>
+              <Animated.View style={[styles.tabsPillWrap, coursesTabsAnimStyle]}>
+                <PillTabSwitcher
+                  tabs={[
+                    { id: 'repas', label: t('meals.tabs.meals') },
+                    { id: 'courses', label: t('meals.tabs.shopping'), badge: courses.filter((c) => !c.completed).length || undefined },
+                    { id: 'recettes', label: t('meals.tabs.recipes'), badge: recipes.length || undefined },
+                  ] as ReadonlyArray<PillTab<Tab>>}
+                  activeTab={tab}
+                  onTabChange={setTab}
+                  primary={primary}
+                  colors={colors}
+                  marginHorizontal={0}
+                />
+              </Animated.View>
+            </View>
+          }
+          scrollY={scrollY}
         />
       </View>
 
@@ -1071,10 +1109,12 @@ export default function MealsScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-        <ScrollView
+        <Animated.ScrollView
           style={styles.scroll}
           contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
           showsVerticalScrollIndicator={false}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
           }
@@ -1236,16 +1276,18 @@ export default function MealsScreen() {
               </View>
             );
           })}
-        </ScrollView>
+        </Animated.ScrollView>
         )}
         </>
       ) : tab === 'courses' ? (
         /* ─── Courses tab ─────────────────────────────── */
         <View style={styles.coursesContainer}>
-          <ScrollView
+          <Animated.ScrollView
             style={styles.scroll}
             contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
             showsVerticalScrollIndicator={false}
+            onScroll={onScrollHandler}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
             }
@@ -1308,7 +1350,7 @@ export default function MealsScreen() {
                 );
               })
             )}
-          </ScrollView>
+          </Animated.ScrollView>
 
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -1447,10 +1489,12 @@ export default function MealsScreen() {
             ))}
           </ScrollView>
 
-          <ScrollView
+          <Animated.ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            onScroll={onScrollHandler}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
             }
@@ -1491,7 +1535,7 @@ export default function MealsScreen() {
                 />
               ))
             )}
-          </ScrollView>
+          </Animated.ScrollView>
         </View>
       )}
 
@@ -2469,27 +2513,11 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  title: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.heavy,
-  },
-  stats: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.medium,
-  },
-  // Tab bar
-  tabBar: {
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    paddingTop: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  // Wrapper du PillTabSwitcher (collapse renforcée sur l'onglet Courses)
+  tabsPillWrap: {
+    overflow: 'hidden',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xs,
   },
   // Navigation semaine
   weekNav: {
