@@ -25,6 +25,8 @@ import {
   stopMascotte,
   isMascotteActive,
   loadCompanionSpriteBase64,
+  writeCompanionPosesToAppGroup,
+  derivePoseFromStage,
   patchMascotte,
   type MascotteStageOverride,
 } from '../../lib/mascotte-live-activity';
@@ -140,23 +142,17 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     return () => sub.remove();
   }, [refreshActive]);
 
-  // Flash happy sur tâche cochée : patchMascotte avec sprite happy, retour idle après 2s.
-  // Uniquement si la LA tourne — sinon no-op (patchMascotte garde l'invariant lastSnapshot).
+  // Flash happy sur tâche cochée : patchMascotte pose:'happy', retour idle après 2s.
+  // Phase 260425-0qf : plus de double-load base64 — on passe la pose en String.
   const happyFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!active) return;
     const unsub = subscribeTaskComplete(async () => {
-      const companion = activeProfile?.companion;
-      if (!companion) return;
-      const stage = getCompanionStage(calculateLevel(activeProfile?.points ?? 0));
       try {
-        const happyB64 = await loadCompanionSpriteBase64(companion.activeSpecies, stage, 'happy');
-        if (!happyB64) return;
-        await patchMascotte({ companionSpriteBase64: happyB64 });
+        await patchMascotte({ pose: 'happy' });
         if (happyFlashTimerRef.current) clearTimeout(happyFlashTimerRef.current);
-        happyFlashTimerRef.current = setTimeout(async () => {
-          const idleB64 = await loadCompanionSpriteBase64(companion.activeSpecies, stage, 'idle');
-          if (idleB64) patchMascotte({ companionSpriteBase64: idleB64 });
+        happyFlashTimerRef.current = setTimeout(() => {
+          patchMascotte({ pose: 'idle' }).catch(() => {});
         }, 2000);
       } catch { /* silencieux — non critique */ }
     });
@@ -186,10 +182,23 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       const companion = activeProfile?.companion;
       const companionLevel = calculateLevel(activeProfile?.points ?? 0);
-      const companionSpriteBase64 = companionSprite ?? (companion
-        ? await loadCompanionSpriteBase64(companion.activeSpecies, getCompanionStage(companionLevel))
-        : null);
-      if (companionSpriteBase64 && !companionSprite) setCompanionSprite(companionSpriteBase64);
+      const companionStage = getCompanionStage(companionLevel);
+      // Phase 260425-0qf : précharge le sprite pour la carte UI locale (inchangé)
+      if (companion && !companionSprite) {
+        loadCompanionSpriteBase64(companion.activeSpecies, companionStage)
+          .then(b64 => { if (b64) setCompanionSprite(b64); })
+          .catch(() => {});
+      }
+      // Phase 260425-0qf : écriture des 5 PNG dans l'App Group AVANT le start LA
+      if (companion) {
+        await writeCompanionPosesToAppGroup(companion.activeSpecies, companionStage).catch(() => {});
+      }
+      // Dériver la pose narrative depuis le stage horaire actuel
+      const initialPose = derivePoseFromStage(
+        todayData.stage.key as MascotteStageOverride,
+        todayData.done,
+        todayData.total,
+      );
       // Bulle compagnon : tente IA si aiCall dispo, sinon template court sync.
       const laStage = todayData.stage.key as LAStage;
       const speechBubble = aiCall
@@ -219,7 +228,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
         tasksTotal: todayData.total,
         xpGained: todayData.xpGainedToday,
         currentMeal: todayData.meal,
-        companionSpriteBase64,
+        pose: initialPose,
         bonusText: todayData.recapBonusText,
         nextTaskText: todayData.nextTaskText,
         nextTaskId: todayData.nextTaskId,
