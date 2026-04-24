@@ -23,9 +23,11 @@ interface ScreenHeaderProps {
   subtitle?: string;
   /** Élément(s) à afficher à droite (boutons icône, badges…) */
   actions?: React.ReactNode;
+  /** Élément(s) à afficher SOUS le titre, dans la même teinte (filtres, chips, segmented…) */
+  bottom?: React.ReactNode;
 }
 
-export function ScreenHeader({ title, icon, subtitle, actions }: ScreenHeaderProps) {
+export function ScreenHeader({ title, icon, subtitle, actions, bottom }: ScreenHeaderProps) {
   const { primary, colors } = useThemeColors();
   const insets = useSafeAreaInsets();
 
@@ -34,21 +36,24 @@ export function ScreenHeader({ title, icon, subtitle, actions }: ScreenHeaderPro
 
   return (
     <View style={styles.wrap}>
-      <View style={[styles.header, { backgroundColor: tintedBg, paddingTop: insets.top + 4 }]}>
-        <View style={styles.titleRow}>
-          {icon && <Text style={styles.icon}>{icon}</Text>}
-          <View style={styles.titleCol}>
-            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-              {title}
-            </Text>
-            {subtitle && (
-              <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                {subtitle}
+      <View style={[styles.tinted, { backgroundColor: tintedBg, paddingTop: insets.top + 4 }]}>
+        <View style={styles.header}>
+          <View style={styles.titleRow}>
+            {icon && <Text style={styles.icon}>{icon}</Text>}
+            <View style={styles.titleCol}>
+              <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+                {title}
               </Text>
-            )}
+              {subtitle && (
+                <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                  {subtitle}
+                </Text>
+              )}
+            </View>
           </View>
+          {actions && <View style={styles.actions}>{actions}</View>}
         </View>
-        {actions && <View style={styles.actions}>{actions}</View>}
+        {bottom && <View style={styles.bottom}>{bottom}</View>}
       </View>
       {/* Fondu : la teinte se dissout dans le fond de page */}
       <LinearGradient
@@ -64,13 +69,20 @@ const styles = StyleSheet.create({
   wrap: {
     position: 'relative',
   },
+  tinted: {
+    paddingBottom: Spacing.md,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.md,
     paddingHorizontal: Spacing['2xl'],
-    paddingBottom: Spacing.lg,
+    paddingBottom: Spacing.sm,
+  },
+  bottom: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xs,
   },
   titleRow: {
     flex: 1,

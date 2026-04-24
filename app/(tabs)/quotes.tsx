@@ -222,27 +222,27 @@ export default function QuotesScreen() {
             <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
           </TouchableOpacity>
         }
+        bottom={
+          enfants.length > 1 ? (
+            <View style={styles.filterBar}>
+              <Chip
+                label={t('quotes.filterAll')}
+                selected={!filterEnfant}
+                onPress={() => setFilterEnfant(null)}
+              />
+              {enfants.map(e => (
+                <Chip
+                  key={e.id}
+                  label={e.name}
+                  emoji={e.avatar}
+                  selected={filterEnfant === e.name}
+                  onPress={() => setFilterEnfant(filterEnfant === e.name ? null : e.name)}
+                />
+              ))}
+            </View>
+          ) : undefined
+        }
       />
-
-      {/* Filtre par enfant */}
-      {enfants.length > 1 && (
-        <View style={styles.filterBar}>
-          <Chip
-            label={t('quotes.filterAll')}
-            selected={!filterEnfant}
-            onPress={() => setFilterEnfant(null)}
-          />
-          {enfants.map(e => (
-            <Chip
-              key={e.id}
-              label={e.name}
-              emoji={e.avatar}
-              selected={filterEnfant === e.name}
-              onPress={() => setFilterEnfant(filterEnfant === e.name ? null : e.name)}
-            />
-          ))}
-        </View>
-      )}
 
       {quotes.length === 0 ? (
         <EmptyState
@@ -397,9 +397,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.xs,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
   },
   card: {
     borderRadius: Radius.lg,
