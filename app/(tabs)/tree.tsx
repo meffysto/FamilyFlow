@@ -8,7 +8,7 @@
  * - Sélecteur d'espèce (si première fois ou via bouton)
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -2083,14 +2083,31 @@ export default function TreeScreen() {
                 contentContainerStyle={styles.seedSheetContent}
                 showsVerticalScrollIndicator={false}
               >
-                {/* ── Graines normales (achetables) — affichées en premier ── */}
+                {/* ── Graines normales (achetables) — groupées par stade ── */}
                 <View style={styles.seedSectionHeader}>
                   <Text style={styles.seedSectionTitle}>
                     {t('farm.regularSeeds')}
                   </Text>
                 </View>
-                {CROP_CATALOG.filter(c => !c.dropOnly).map(crop => {
-                  const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+                {(() => {
+                  const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'] as const;
+                  const regular = CROP_CATALOG.filter(c => !c.dropOnly);
+                  const grouped = stageOrder
+                    .map(stage => ({
+                      stage,
+                      crops: regular
+                        .filter(c => c.minTreeStage === stage)
+                        .sort((a, b) => a.cost - b.cost),
+                    }))
+                    .filter(g => g.crops.length > 0);
+                  return grouped.map(({ stage, crops }) => (
+                    <React.Fragment key={`stage-${stage}`}>
+                      <View style={styles.seedStageHeader}>
+                        <Text style={styles.seedStageTitle}>
+                          {t(`mascot.stages.${stage}`)}
+                        </Text>
+                      </View>
+                      {crops.map(crop => {
                   const stageUnlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
                   const availableCrops = getAvailableCrops(stageInfo.stage, profile?.farmTech ?? []);
                   const unlocked = stageUnlocked && availableCrops.some(c => c.id === crop.id);
@@ -2161,12 +2178,19 @@ export default function TreeScreen() {
                     </TouchableOpacity>
                   );
                 })}
+                    </React.Fragment>
+                  ));
+                })()}
                 {/* ── Graines rares (possedees + decouverte) — affichées en dernier ── */}
                 {(() => {
+                  const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'] as const;
+                  const byStage = <T extends { minTreeStage: typeof stageOrder[number] }>(list: T[]): T[] =>
+                    [...list].sort((a, b) => stageOrder.indexOf(a.minTreeStage) - stageOrder.indexOf(b.minTreeStage));
                   const rareSeeds = profile?.farmRareSeeds ?? {};
                   const allRare = CROP_CATALOG.filter(c => c.dropOnly);
-                  const ownedRare = allRare.filter(c => (rareSeeds[c.id] ?? 0) > 0);
-                  const lockedRare = allRare.filter(c => (rareSeeds[c.id] ?? 0) === 0);
+                  const ownedRare = byStage(allRare.filter(c => (rareSeeds[c.id] ?? 0) > 0));
+                  const lockedHarvest = byStage(allRare.filter(c => (rareSeeds[c.id] ?? 0) === 0 && !c.expeditionExclusive));
+                  const lockedExpedition = byStage(allRare.filter(c => (rareSeeds[c.id] ?? 0) === 0 && c.expeditionExclusive));
 
                   /** Construit le hint "drop depuis X" pour une graine */
                   const getDropHint = (cropId: string): string => {
@@ -2183,6 +2207,60 @@ export default function TreeScreen() {
                       .join(', ');
                     const pct = Math.round(rule.chance * 100);
                     return t('farm.rareSeedDropHint', { sources: sourceNames, pct });
+                  };
+
+                  const renderLockedRareRow = (crop: typeof CROP_CATALOG[number], isExpeditionOnly: boolean) => {
+                    const effectiveTasksPerStage = Math.max(1, crop.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+                    const totalTasks = effectiveTasksPerStage * 4;
+                    return (
+                      <View
+                        key={crop.id}
+                        style={[
+                          styles.seedRow,
+                          isExpeditionOnly
+                            ? { borderColor: 'rgba(59,130,246,0.4)', borderWidth: 2, opacity: 0.75 }
+                            : { opacity: 0.5 },
+                        ]}
+                      >
+                        <View>
+                          <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
+                          <View style={[styles.rareSeedBadge, { backgroundColor: isExpeditionOnly ? 'rgba(59,130,246,0.7)' : Farm.brownTextSub }]}>
+                            <Text style={styles.rareSeedBadgeText}>{isExpeditionOnly ? '🗺️' : '?'}</Text>
+                          </View>
+                        </View>
+                        <View style={styles.seedRowInfo}>
+                          <View style={styles.seedRowHeader}>
+                            <Text style={styles.seedRowName}>
+                              {t(`farm.crop.${crop.id}`)}
+                            </Text>
+                            {isExpeditionOnly ? (
+                              <View style={[styles.seedSeasonBadge, { backgroundColor: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.4)', borderWidth: 1 }]}>
+                                <Text style={[styles.seedSeasonBadgeText, { color: '#2563EB' }]}>
+                                  {t('mascot.shop.expedition')}
+                                </Text>
+                              </View>
+                            ) : (
+                              <View style={[styles.seedSeasonBadge, { backgroundColor: Farm.parchment }]}>
+                                <Text style={[styles.seedSeasonBadgeText, { color: Farm.brownTextSub }]}>
+                                  {t('farm.rare')}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={[styles.seedRowDesc, isExpeditionOnly && { color: '#2563EB' }]} numberOfLines={2}>
+                            {isExpeditionOnly ? t('mascot.shop.expeditionOnly') : getDropHint(crop.id)}
+                          </Text>
+                          <View style={styles.seedRowStats}>
+                            <Text style={styles.seedRowStat}>
+                              {t('farm.taskCount', { count: totalTasks })}
+                            </Text>
+                            <Text style={styles.seedRowStat}>
+                              {t('farm.rareFree')} → {crop.harvestReward} 🍃
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
                   };
 
                   return (
@@ -2239,61 +2317,23 @@ export default function TreeScreen() {
                           </TouchableOpacity>
                         );
                       })}
-                      {/* Graines non possedees — affichees en grise pour la decouverte */}
-                      {lockedRare.map(crop => {
-                        const effectiveTasksPerStage = Math.max(1, crop.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
-                        const totalTasks = effectiveTasksPerStage * 4;
-                        const isExpeditionOnly = crop.expeditionExclusive === true;
-                        return (
-                          <View
-                            key={crop.id}
-                            style={[
-                              styles.seedRow,
-                              isExpeditionOnly
-                                ? { borderColor: 'rgba(59,130,246,0.4)', borderWidth: 2, opacity: 0.75 }
-                                : { opacity: 0.5 },
-                            ]}
-                          >
-                            <View>
-                              <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
-                              <View style={[styles.rareSeedBadge, { backgroundColor: isExpeditionOnly ? 'rgba(59,130,246,0.7)' : Farm.brownTextSub }]}>
-                                <Text style={styles.rareSeedBadgeText}>{isExpeditionOnly ? '🗺️' : '?'}</Text>
-                              </View>
-                            </View>
-                            <View style={styles.seedRowInfo}>
-                              <View style={styles.seedRowHeader}>
-                                <Text style={styles.seedRowName}>
-                                  {t(`farm.crop.${crop.id}`)}
-                                </Text>
-                                {isExpeditionOnly ? (
-                                  <View style={[styles.seedSeasonBadge, { backgroundColor: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.4)', borderWidth: 1 }]}>
-                                    <Text style={[styles.seedSeasonBadgeText, { color: '#2563EB' }]}>
-                                      {t('mascot.shop.expedition')}
-                                    </Text>
-                                  </View>
-                                ) : (
-                                  <View style={[styles.seedSeasonBadge, { backgroundColor: Farm.parchment }]}>
-                                    <Text style={[styles.seedSeasonBadgeText, { color: Farm.brownTextSub }]}>
-                                      {t('farm.rare')}
-                                    </Text>
-                                  </View>
-                                )}
-                              </View>
-                              <Text style={[styles.seedRowDesc, isExpeditionOnly && { color: '#2563EB' }]} numberOfLines={2}>
-                                {isExpeditionOnly ? t('mascot.shop.expeditionOnly') : getDropHint(crop.id)}
-                              </Text>
-                              <View style={styles.seedRowStats}>
-                                <Text style={styles.seedRowStat}>
-                                  {t('farm.taskCount', { count: totalTasks })}
-                                </Text>
-                                <Text style={styles.seedRowStat}>
-                                  {t('farm.rareFree')} → {crop.harvestReward} 🍃
-                                </Text>
-                              </View>
-                            </View>
-                          </View>
-                        );
-                      })}
+                      {/* Graines non possedees — séparées par source (drop récolte / expédition) */}
+                      {lockedHarvest.length > 0 && (
+                        <View style={styles.seedStageHeader}>
+                          <Text style={styles.seedStageTitle}>
+                            {t('farm.rareHarvestGroup')}
+                          </Text>
+                        </View>
+                      )}
+                      {lockedHarvest.map(crop => renderLockedRareRow(crop, false))}
+                      {lockedExpedition.length > 0 && (
+                        <View style={styles.seedStageHeader}>
+                          <Text style={styles.seedStageTitle}>
+                            {t('farm.rareExpeditionGroup')}
+                          </Text>
+                        </View>
+                      )}
+                      {lockedExpedition.map(crop => renderLockedRareRow(crop, true))}
                     </>
                   );
                 })()}
@@ -3819,15 +3859,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-around',
   },
   seedAwningScallopDot: {
-    width: 8,
+    flex: 1,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: Farm.parchment,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
+    backgroundColor: Farm.woodLight,
   },
   seedCloseBtn: {
     position: 'absolute',
@@ -3964,6 +4002,20 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
     color: Farm.brownText,
+  },
+  seedStageHeader: {
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  seedStageTitle: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   seedRow: {
     flexDirection: 'row',

@@ -4155,6 +4155,8 @@
     "rare": "Rare",
     "rareFree": "Free",
     "regularSeeds": "Regular seeds",
+    "rareHarvestGroup": "Harvest drops",
+    "rareExpeditionGroup": "Expedition exclusives",
     "rareSeedDrop": "{{emoji}} Rare seed obtained: {{name}}!",
     "rareSeedDropHint": "Drop chance when harvesting: {{sources}} ({{pct}}%)",
     "rareSeedDropHintAny": "Drop chance in any harvest (2%)",

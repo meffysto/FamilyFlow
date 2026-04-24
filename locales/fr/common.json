@@ -4169,6 +4169,8 @@
     "rare": "Rare",
     "rareFree": "Gratuit",
     "regularSeeds": "Graines classiques",
+    "rareHarvestGroup": "Drops de récolte",
+    "rareExpeditionGroup": "Exclusivités expédition",
     "rareSeedDrop": "{{emoji}} Graine rare obtenue : {{name}} !",
     "rareSeedDropHint": "Chance d'obtenir en récoltant : {{sources}} ({{pct}}%)",
     "rareSeedDropHintAny": "Chance d'obtenir lors de n'importe quelle récolte (2%)",

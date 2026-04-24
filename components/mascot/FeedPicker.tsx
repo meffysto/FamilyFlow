@@ -1,17 +1,13 @@
 /**
- * FeedPicker.tsx — Sheet picker crops pour nourrir le compagnon (Phase 42 D-02)
+ * FeedPicker.tsx — Sheet picker crops pour nourrir le compagnon
  *
- * Style "cozy farm game" aligné sur TreeShop / BuildingShopSheet :
- *   - cadre bois sombre + auvent rayé + parchemin + close bouton rond
+ * Design compact : tuiles par crop (pas par grade) + filtre affinité + "Meilleur choix" en tête.
+ * Tap sur une tuile ouvre un mini-picker de grade (overlay interne).
  *
- * Liste toutes les combinaisons (cropId, grade) ayant qty > 0 :
- *   • préférés (❤️) : tri en premier + bordure accentuée (D-04)
- *   • détestés (😖) : opacité 0.55 mais sélectionnables (D-03)
- *
- * Conversion grades FR (inventaire) → EN (moteur feed) via GRADE_FR_TO_EN.
+ * Style "cozy farm game" aligné sur TreeShop / BuildingShopSheet.
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,20 +16,22 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Image,
 } from 'react-native';
 import Animated, {
   FadeIn,
+  FadeInDown,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
-import { useThemeColors } from '../../contexts/ThemeContext';
 import { Farm } from '../../constants/farm-theme';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
 import { CROP_CATALOG, type HarvestInventory } from '../../lib/mascot/types';
+import { CROP_ICONS } from '../../lib/mascot/crop-sprites';
 import {
   GRADE_ORDER,
   getGradeEmoji,
@@ -43,6 +41,7 @@ import {
 import {
   getAffinity,
   getBuffForCrop,
+  GRADE_BUFF_TABLE,
   type HarvestGrade as HarvestGradeEn,
   type CompanionSpecies,
   type CropAffinity,
@@ -59,27 +58,25 @@ const GRADE_FR_TO_EN: Record<HarvestGradeFr, HarvestGradeEn> = {
   parfait:   'perfect',
 };
 
+// Grades du meilleur au moins bon (pour affichage)
 const GRADE_DISPLAY_ORDER: HarvestGradeFr[] = ['parfait', 'superbe', 'beau', 'ordinaire'];
 
-const SECTION_META: Record<CropAffinity, { label: string; sub: string; emoji: string; color: string }> = {
-  preferred: {
-    label: 'Préférés',
-    sub:   '❤️ Buff ×1.3 — le compagnon adore !',
-    emoji: '❤️',
-    color: Farm.greenBtn,
-  },
-  neutral: {
-    label: 'Neutres',
-    sub:   'Buff normal — aucun bonus ni malus',
-    emoji: '😊',
-    color: Farm.brownTextSub,
-  },
-  hated: {
-    label: 'Détestés',
-    sub:   '😖 Aucun buff — le compagnon fera « beurk »',
-    emoji: '😖',
-    color: '#C04A3A',
-  },
+// Format durée buff : "90min" ou "1h30"
+function formatBuffDuration(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h}h` : `${h}h${m.toString().padStart(2, '0')}`;
+}
+
+type FilterKey = 'all' | CropAffinity;
+
+const FILTER_META: Record<FilterKey, { emoji: string; label: string; color: string }> = {
+  all:       { emoji: '🌾', label: 'Tous',     color: Farm.brownText },
+  preferred: { emoji: '❤️', label: 'Préférés', color: Farm.greenBtn },
+  neutral:   { emoji: '😊', label: 'Neutres',  color: Farm.brownTextSub },
+  hated:     { emoji: '😖', label: 'Détestés', color: '#C04A3A' },
 };
 
 // ─────────────────────────────────────────────
@@ -92,18 +89,21 @@ export interface FeedPickerProps {
   inventory: HarvestInventory;
   companionSpecies: CompanionSpecies;
   onPick: (cropId: string, grade: HarvestGradeEn) => void;
-  /** iOS — appelé une fois le Modal totalement dismissé (slide terminé). */
   onDismiss?: () => void;
 }
 
-interface Row {
+interface CropCard {
   cropId: string;
   emoji: string;
   labelKey: string;
-  gradeFr: HarvestGradeFr;
-  gradeEn: HarvestGradeEn;
-  qty: number;
+  totalQty: number;
+  byGrade: Partial<Record<HarvestGradeFr, number>>;
   affinity: CropAffinity;
+  bestGrade: HarvestGradeFr | null;
+}
+
+interface BestChoice extends CropCard {
+  buffPct: number;
 }
 
 // ── Auvent rayé ───────────────────────────────
@@ -151,9 +151,20 @@ export function FeedPicker({
   onDismiss,
 }: FeedPickerProps) {
   const { t } = useTranslation();
+  const [filter, setFilter] = useState<FilterKey>('all');
+  const [selectedCropId, setSelectedCropId] = useState<string | null>(null);
 
-  const { preferredRows, neutralRows, hatedRows } = useMemo(() => {
-    const all: Row[] = [];
+  // Reset state quand on ouvre/ferme
+  useEffect(() => {
+    if (!visible) {
+      setFilter('all');
+      setSelectedCropId(null);
+    }
+  }, [visible]);
+
+  // Construire les cartes crops (agrégées toutes grades)
+  const allCards = useMemo<CropCard[]>(() => {
+    const cards: CropCard[] = [];
     for (const [cropId, entry] of Object.entries(inventory || {})) {
       const def = CROP_CATALOG.find(c => c.id === cropId);
       if (!def) continue;
@@ -162,43 +173,102 @@ export function FeedPicker({
           ? { ordinaire: entry }
           : ((entry ?? {}) as Partial<Record<HarvestGradeFr, number>>);
 
-      const affinity = getAffinity(companionSpecies, cropId);
-
+      let totalQty = 0;
+      let bestGrade: HarvestGradeFr | null = null;
       for (const gradeFr of GRADE_DISPLAY_ORDER) {
         const qty = entryRecord[gradeFr] ?? 0;
-        if (qty <= 0) continue;
-        all.push({
-          cropId,
-          emoji: def.emoji,
-          labelKey: def.labelKey,
-          gradeFr,
-          gradeEn: GRADE_FR_TO_EN[gradeFr],
-          qty,
-          affinity,
-        });
+        if (qty > 0) {
+          totalQty += qty;
+          if (!bestGrade) bestGrade = gradeFr;
+        }
       }
+      if (totalQty === 0) continue;
+
+      cards.push({
+        cropId,
+        emoji: def.emoji,
+        labelKey: def.labelKey,
+        totalQty,
+        byGrade: entryRecord,
+        affinity: getAffinity(companionSpecies, cropId),
+        bestGrade,
+      });
     }
-
-    const byGradeDesc = (a: Row, b: Row) =>
-      GRADE_ORDER.indexOf(b.gradeFr) - GRADE_ORDER.indexOf(a.gradeFr);
-
-    return {
-      preferredRows: all.filter(r => r.affinity === 'preferred').sort(byGradeDesc),
-      neutralRows:   all.filter(r => r.affinity === 'neutral').sort(byGradeDesc),
-      hatedRows:     all.filter(r => r.affinity === 'hated').sort(byGradeDesc),
-    };
+    return cards;
   }, [inventory, companionSpecies]);
 
-  const totalRows = preferredRows.length + neutralRows.length + hatedRows.length;
+  // Meilleur choix : top 3 préférés triés par grade desc
+  const bestChoices = useMemo<BestChoice[]>(() => {
+    const preferred = allCards.filter(c => c.affinity === 'preferred' && c.bestGrade);
+    const sorted = [...preferred].sort((a, b) => {
+      const ga = GRADE_ORDER.indexOf(a.bestGrade!);
+      const gb = GRADE_ORDER.indexOf(b.bestGrade!);
+      if (gb !== ga) return gb - ga;
+      return b.totalQty - a.totalQty;
+    });
+    return sorted.slice(0, 3).map(c => {
+      const buff = getBuffForCrop(
+        GRADE_FR_TO_EN[c.bestGrade!],
+        companionSpecies,
+        c.cropId,
+      );
+      const buffPct = buff ? Math.round((buff.multiplier - 1) * 100) : 0;
+      return { ...c, buffPct };
+    });
+  }, [allCards, companionSpecies]);
 
-  const handlePick = useCallback(
-    (row: Row) => {
+  // Cartes filtrées (sans les best choices pour éviter duplication)
+  const filteredCards = useMemo<CropCard[]>(() => {
+    const bestIds = new Set(bestChoices.map(b => b.cropId));
+    const filtered = allCards.filter(c => {
+      if (bestIds.has(c.cropId)) return false;
+      if (filter === 'all') return true;
+      return c.affinity === filter;
+    });
+    // Tri : préférés > neutres > détestés, puis grade desc, puis qty desc
+    const affinityOrder: Record<CropAffinity, number> = { preferred: 0, neutral: 1, hated: 2 };
+    return filtered.sort((a, b) => {
+      const aa = affinityOrder[a.affinity] - affinityOrder[b.affinity];
+      if (aa !== 0) return aa;
+      const ga = a.bestGrade ? GRADE_ORDER.indexOf(a.bestGrade) : -1;
+      const gb = b.bestGrade ? GRADE_ORDER.indexOf(b.bestGrade) : -1;
+      if (gb !== ga) return gb - ga;
+      return b.totalQty - a.totalQty;
+    });
+  }, [allCards, bestChoices, filter]);
+
+  const selectedCard = useMemo(
+    () => allCards.find(c => c.cropId === selectedCropId) ?? null,
+    [allCards, selectedCropId],
+  );
+
+  const handlePickDirect = useCallback(
+    (cropId: string, gradeFr: HarvestGradeFr) => {
       Haptics.selectionAsync().catch(() => {});
-      onPick(row.cropId, row.gradeEn);
+      onPick(cropId, GRADE_FR_TO_EN[gradeFr]);
       onClose();
     },
     [onPick, onClose],
   );
+
+  const handleTileTap = useCallback((card: CropCard) => {
+    Haptics.selectionAsync().catch(() => {});
+    // Si 1 seul grade disponible, feed direct
+    const availableGrades = GRADE_DISPLAY_ORDER.filter(g => (card.byGrade[g] ?? 0) > 0);
+    if (availableGrades.length === 1) {
+      handlePickDirect(card.cropId, availableGrades[0]);
+      return;
+    }
+    setSelectedCropId(card.cropId);
+  }, [handlePickDirect]);
+
+  const totalCount = allCards.length;
+  const counts = useMemo(() => ({
+    all:       allCards.length,
+    preferred: allCards.filter(c => c.affinity === 'preferred').length,
+    neutral:   allCards.filter(c => c.affinity === 'neutral').length,
+    hated:     allCards.filter(c => c.affinity === 'hated').length,
+  }), [allCards]);
 
   return (
     <Modal
@@ -231,11 +301,11 @@ export function FeedPicker({
                 </Text>
               </Animated.View>
 
-              {totalRows === 0 ? (
+              {totalCount === 0 ? (
                 <View style={styles.empty}>
                   <Text style={styles.emptyEmoji}>🌱</Text>
                   <Text style={styles.emptyText}>
-                    Récoltez quelque chose d'abord pour nourrir votre compagnon.
+                    Récoltez quelque chose d&apos;abord pour nourrir votre compagnon.
                   </Text>
                 </View>
               ) : (
@@ -243,90 +313,149 @@ export function FeedPicker({
                   contentContainerStyle={styles.list}
                   showsVerticalScrollIndicator={false}
                 >
-                  {(['preferred', 'neutral', 'hated'] as CropAffinity[]).map(aff => {
-                    const sectionRows =
-                      aff === 'preferred' ? preferredRows :
-                      aff === 'neutral'   ? neutralRows   :
-                      hatedRows;
-                    if (sectionRows.length === 0) return null;
-                    const meta = SECTION_META[aff];
-
-                    return (
-                      <View key={aff} style={styles.section}>
-                        <View style={[styles.sectionHeader, { borderColor: meta.color }]}>
-                          <Text style={[styles.sectionEmoji]}>{meta.emoji}</Text>
-                          <View style={{ flex: 1 }}>
-                            <Text style={[styles.sectionLabel, { color: meta.color }]}>
-                              {meta.label} ({sectionRows.length})
-                            </Text>
-                            <Text style={styles.sectionSub}>{meta.sub}</Text>
-                          </View>
-                        </View>
-
-                        {sectionRows.map((row, idx) => {
-                          const isHated = row.affinity === 'hated';
-                          const isPreferred = row.affinity === 'preferred';
-                          const cropName = t(row.labelKey);
-                          const gradeLabel = t(getGradeLabelKey(row.gradeFr));
-
-                          return (
-                            <Animated.View
-                              key={`${row.cropId}-${row.gradeFr}-${idx}`}
-                              entering={FadeIn.delay(idx * 30).duration(220)}
-                            >
-                              <Pressable
-                                onPress={() => handlePick(row)}
-                                style={({ pressed }) => [
-                                  styles.row,
-                                  isPreferred && styles.rowPreferred,
-                                  isHated && styles.rowHated,
-                                  pressed && { opacity: 0.8 },
-                                ]}
-                              >
-                                <View style={styles.emojiCircle}>
-                                  <Text style={styles.emoji}>{row.emoji}</Text>
-                                </View>
-
-                                <View style={styles.info}>
-                                  <Text style={styles.name} numberOfLines={1}>
-                                    {cropName}
-                                  </Text>
-                                  <View style={styles.gradeRow}>
-                                    <Text style={styles.gradeEmoji}>{getGradeEmoji(row.gradeFr)}</Text>
-                                    <Text style={styles.gradeLabel}>{gradeLabel}</Text>
-                                  </View>
-                                </View>
-
-                                <View style={styles.rightCol}>
-                                  {(() => {
-                                    const buff = getBuffForCrop(row.gradeEn, companionSpecies, row.cropId);
-                                    if (!buff) {
-                                      return (
-                                        <View style={[styles.buffBadge, styles.buffBadgeNone]}>
-                                          <Text style={styles.buffBadgeNoneText}>0%</Text>
-                                        </View>
-                                      );
-                                    }
-                                    const pct = Math.round((buff.multiplier - 1) * 100);
-                                    return (
-                                      <View style={[styles.buffBadge, isPreferred ? styles.buffBadgePreferred : styles.buffBadgeNeutral]}>
-                                        <Text style={[styles.buffBadgeText, isPreferred && { color: '#FFFFFF' }]}>
-                                          +{pct}% XP
-                                        </Text>
-                                      </View>
-                                    );
-                                  })()}
-                                  <View style={styles.qtyBadge}>
-                                    <Text style={styles.qtyText}>×{row.qty}</Text>
-                                  </View>
-                                </View>
-                              </Pressable>
-                            </Animated.View>
-                          );
-                        })}
+                  {/* ── Meilleur choix ─────────────────────── */}
+                  {bestChoices.length > 0 && (
+                    <View style={styles.bestSection}>
+                      <View style={styles.bestHeader}>
+                        <Text style={styles.bestHeaderEmoji}>⭐</Text>
+                        <Text style={styles.bestHeaderLabel}>Meilleur choix</Text>
                       </View>
-                    );
-                  })}
+                      <View style={styles.bestRow}>
+                        {bestChoices.map((b, idx) => (
+                          <Animated.View
+                            key={b.cropId}
+                            entering={FadeInDown.delay(idx * 60).springify().damping(14)}
+                            style={styles.bestTileWrap}
+                          >
+                            <Pressable
+                              onPress={() => handlePickDirect(b.cropId, b.bestGrade!)}
+                              style={({ pressed }) => [
+                                styles.bestTile,
+                                pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+                              ]}
+                            >
+                              <View style={styles.bestTileHeart}>
+                                <Text style={styles.bestTileHeartText}>❤️</Text>
+                              </View>
+                              {CROP_ICONS[b.cropId] ? (
+                                <Image source={CROP_ICONS[b.cropId]} style={styles.bestTileSprite} />
+                              ) : (
+                                <Text style={styles.bestTileEmoji}>{b.emoji}</Text>
+                              )}
+                              <Text style={styles.bestTileName} numberOfLines={1}>
+                                {t(b.labelKey)}
+                              </Text>
+                              <View style={styles.bestTileMeta}>
+                                <Text style={styles.bestTileGrade}>
+                                  {getGradeEmoji(b.bestGrade!)}
+                                </Text>
+                                <View style={styles.bestTileBuff}>
+                                  <Text style={styles.bestTileBuffText}>+{b.buffPct}%</Text>
+                                </View>
+                              </View>
+                              <Text style={styles.bestTileDuration}>
+                                ⏱ {formatBuffDuration(GRADE_BUFF_TABLE[GRADE_FR_TO_EN[b.bestGrade!]].durationSec)}
+                              </Text>
+                            </Pressable>
+                          </Animated.View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* ── Filtre segmenté ─────────────────────── */}
+                  <View style={styles.filterRow}>
+                    {(['all', 'preferred', 'neutral', 'hated'] as FilterKey[]).map(key => {
+                      const meta = FILTER_META[key];
+                      const isActive = filter === key;
+                      const count = counts[key];
+                      return (
+                        <Pressable
+                          key={key}
+                          onPress={() => {
+                            Haptics.selectionAsync().catch(() => {});
+                            setFilter(key);
+                          }}
+                          style={({ pressed }) => [
+                            styles.filterBtn,
+                            isActive && { backgroundColor: meta.color, borderColor: meta.color },
+                            pressed && { opacity: 0.8 },
+                          ]}
+                        >
+                          <Text style={styles.filterEmoji}>{meta.emoji}</Text>
+                          <Text
+                            style={[
+                              styles.filterCount,
+                              isActive && { color: '#FFFFFF' },
+                            ]}
+                          >
+                            {count}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  {/* ── Grille crops ────────────────────────── */}
+                  {filteredCards.length === 0 ? (
+                    <View style={styles.emptyFilter}>
+                      <Text style={styles.emptyFilterText}>
+                        Aucun crop dans cette catégorie.
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.grid}>
+                      {filteredCards.map((card, idx) => {
+                        const isHated = card.affinity === 'hated';
+                        const isPreferred = card.affinity === 'preferred';
+                        const borderColor = isPreferred
+                          ? Farm.greenBtn
+                          : isHated
+                            ? '#C04A3A'
+                            : Farm.woodHighlight;
+                        return (
+                          <Animated.View
+                            key={card.cropId}
+                            entering={FadeIn.delay(idx * 25).duration(220)}
+                            style={styles.gridItem}
+                          >
+                            <Pressable
+                              onPress={() => handleTileTap(card)}
+                              style={({ pressed }) => [
+                                styles.tile,
+                                { borderColor },
+                                isPreferred && styles.tilePreferred,
+                                isHated && { opacity: 0.65 },
+                                pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+                              ]}
+                            >
+                              <View style={styles.tileAffinity}>
+                                <Text style={styles.tileAffinityEmoji}>
+                                  {FILTER_META[card.affinity].emoji}
+                                </Text>
+                              </View>
+                              {CROP_ICONS[card.cropId] ? (
+                                <Image source={CROP_ICONS[card.cropId]} style={styles.tileSprite} />
+                              ) : (
+                                <Text style={styles.tileEmoji}>{card.emoji}</Text>
+                              )}
+                              <Text style={styles.tileName} numberOfLines={1}>
+                                {t(card.labelKey)}
+                              </Text>
+                              <View style={styles.tileFooter}>
+                                <Text style={styles.tileQty}>×{card.totalQty}</Text>
+                                {card.bestGrade && (
+                                  <Text style={styles.tileGrade}>
+                                    {getGradeEmoji(card.bestGrade)}
+                                  </Text>
+                                )}
+                              </View>
+                            </Pressable>
+                          </Animated.View>
+                        );
+                      })}
+                    </View>
+                  )}
 
                   <Text style={styles.footerHint}>
                     Astuce : nourrir avec un crop préféré + grade parfait donne
@@ -345,6 +474,93 @@ export function FeedPicker({
             >
               <Text style={styles.closeBtnText}>{'✕'}</Text>
             </TouchableOpacity>
+
+            {/* ── Grade picker overlay (sub-sheet) ─── */}
+            {selectedCard && (
+              <Pressable
+                style={styles.gradeOverlay}
+                onPress={() => setSelectedCropId(null)}
+              >
+                <Animated.View
+                  entering={FadeIn.duration(160)}
+                  style={styles.gradeCard}
+                >
+                  <Pressable onPress={() => {}} style={styles.gradeCardInner}>
+                    <View style={styles.gradeCardHeader}>
+                      {CROP_ICONS[selectedCard.cropId] ? (
+                        <Image source={CROP_ICONS[selectedCard.cropId]} style={styles.gradeCardSprite} />
+                      ) : (
+                        <Text style={styles.gradeCardEmoji}>{selectedCard.emoji}</Text>
+                      )}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.gradeCardName}>{t(selectedCard.labelKey)}</Text>
+                        <Text style={styles.gradeCardSub}>Choisir un grade</Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => setSelectedCropId(null)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        style={styles.gradeCardClose}
+                      >
+                        <Text style={styles.gradeCardCloseText}>{'✕'}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {GRADE_DISPLAY_ORDER.map(gradeFr => {
+                      const qty = selectedCard.byGrade[gradeFr] ?? 0;
+                      if (qty <= 0) return null;
+                      const gradeEn = GRADE_FR_TO_EN[gradeFr];
+                      const buff = getBuffForCrop(gradeEn, companionSpecies, selectedCard.cropId);
+                      const pct = buff ? Math.round((buff.multiplier - 1) * 100) : 0;
+                      return (
+                        <Pressable
+                          key={gradeFr}
+                          onPress={() => handlePickDirect(selectedCard.cropId, gradeFr)}
+                          style={({ pressed }) => [
+                            styles.gradeOption,
+                            pressed && { opacity: 0.8, backgroundColor: Farm.parchment },
+                          ]}
+                        >
+                          <View style={styles.gradeOptionIconWrap}>
+                            {CROP_ICONS[selectedCard.cropId] ? (
+                              <Image
+                                source={CROP_ICONS[selectedCard.cropId]}
+                                style={styles.gradeOptionSprite}
+                              />
+                            ) : (
+                              <Text style={styles.gradeOptionEmoji}>{selectedCard.emoji}</Text>
+                            )}
+                            <View style={styles.gradeOptionBadge}>
+                              <Text style={styles.gradeOptionBadgeText}>
+                                {getGradeEmoji(gradeFr)}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.gradeOptionLabel}>
+                              {t(getGradeLabelKey(gradeFr))}
+                            </Text>
+                            <Text style={styles.gradeOptionQty}>
+                              ×{qty} · ⏱ {formatBuffDuration(GRADE_BUFF_TABLE[gradeEn].durationSec)}
+                            </Text>
+                          </View>
+                          <View style={[
+                            styles.gradeOptionBuff,
+                            pct > 0 ? styles.gradeOptionBuffPositive : styles.gradeOptionBuffNone,
+                          ]}>
+                            <Text style={[
+                              styles.gradeOptionBuffText,
+                              pct > 0 && { color: '#FFFFFF' },
+                            ]}>
+                              {pct > 0 ? `+${pct}%` : '0%'}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </Pressable>
+                </Animated.View>
+              </Pressable>
+            )}
           </View>
         </View>
       </View>
@@ -374,7 +590,7 @@ const styles = StyleSheet.create({
     backgroundColor: Farm.woodDark,
     padding: 5,
     ...Shadows.xl,
-    maxHeight: '85%',
+    maxHeight: '88%',
   },
   woodFrameInner: {
     borderRadius: Radius.xl,
@@ -386,21 +602,10 @@ const styles = StyleSheet.create({
   },
 
   // ── Auvent ──
-  awning: {
-    height: 36,
-    overflow: 'hidden',
-  },
-  awningStripes: {
-    flexDirection: 'row',
-    height: 28,
-  },
-  awningStripe: {
-    flex: 1,
-  },
-  awningShadow: {
-    height: 4,
-    backgroundColor: 'rgba(0,0,0,0.12)',
-  },
+  awning: { height: 36, overflow: 'hidden' },
+  awningStripes: { flexDirection: 'row', height: 28 },
+  awningStripe: { flex: 1 },
+  awningShadow: { height: 4, backgroundColor: 'rgba(0,0,0,0.12)' },
   awningScallop: {
     flexDirection: 'row',
     position: 'absolute',
@@ -445,149 +650,325 @@ const styles = StyleSheet.create({
 
   // ── Liste ──
   list: {
-    paddingHorizontal: Spacing['2xl'],
+    paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.md,
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
 
-  // ── Section affinité ──
-  section: {
+  // ── Meilleur choix ──
+  bestSection: {
     gap: Spacing.sm,
-    marginBottom: Spacing.xl,
   },
-  sectionHeader: {
+  bestHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+  },
+  bestHeaderEmoji: {
+    fontSize: 18,
+  },
+  bestHeaderLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  bestRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  bestTileWrap: {
+    flex: 1,
+  },
+  bestTile: {
+    borderRadius: Radius.xl,
+    borderWidth: 2,
+    borderColor: Farm.greenBtn,
+    backgroundColor: Farm.parchment,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 120,
+    ...Shadows.sm,
+  },
+  bestTileHeart: {
+    position: 'absolute',
+    top: 4,
+    right: 6,
+  },
+  bestTileHeartText: {
+    fontSize: 14,
+  },
+  bestTileEmoji: {
+    fontSize: 32,
+  },
+  bestTileSprite: {
+    width: 44,
+    height: 44,
+    resizeMode: 'contain',
+  },
+  bestTileName: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textAlign: 'center',
+  },
+  bestTileMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  bestTileGrade: {
+    fontSize: FontSize.sm,
+  },
+  bestTileBuff: {
+    backgroundColor: Farm.greenBtn,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  bestTileBuffText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
+  },
+  bestTileDuration: {
+    fontSize: FontSize.caption,
+    color: Farm.brownTextSub,
+    fontWeight: FontWeight.semibold,
+    marginTop: 2,
+  },
+
+  // ── Filtre ──
+  filterRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+  },
+  filterBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.parchment,
+    borderWidth: 1.5,
+    borderColor: Farm.woodHighlight,
+  },
+  filterEmoji: {
+    fontSize: FontSize.body,
+  },
+  filterCount: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+
+  // ── Grille ──
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  gridItem: {
+    width: '48.5%',
+  },
+  tile: {
+    borderRadius: Radius.xl,
+    borderWidth: 2,
+    backgroundColor: Farm.parchmentDark,
+    padding: Spacing.md,
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 110,
+  },
+  tilePreferred: {
+    backgroundColor: Farm.parchment,
+  },
+  tileAffinity: {
+    position: 'absolute',
+    top: 4,
+    right: 6,
+  },
+  tileAffinityEmoji: {
+    fontSize: 14,
+  },
+  tileEmoji: {
+    fontSize: 32,
+    marginTop: 2,
+  },
+  tileSprite: {
+    width: 44,
+    height: 44,
+    marginTop: 2,
+    resizeMode: 'contain',
+  },
+  tileName: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+    textAlign: 'center',
+  },
+  tileFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  tileQty: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  tileGrade: {
+    fontSize: FontSize.body,
+  },
+
+  emptyFilter: {
+    paddingVertical: Spacing['2xl'],
+    alignItems: 'center',
+  },
+  emptyFilterText: {
+    fontSize: FontSize.body,
+    color: Farm.brownTextSub,
+    fontStyle: 'italic',
+  },
+
+  // ── Grade picker overlay ──
+  gradeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  gradeCard: {
+    width: '100%',
+    maxWidth: 360,
+  },
+  gradeCardInner: {
+    backgroundColor: Farm.parchmentDark,
+    borderRadius: Radius['2xl'],
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+    ...Shadows.xl,
+  },
+  gradeCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderLeftWidth: 4,
-    backgroundColor: Farm.parchment,
-    borderTopRightRadius: Radius.md,
-    borderBottomRightRadius: Radius.md,
+    paddingBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Farm.woodHighlight,
   },
-  sectionEmoji: {
-    fontSize: 24,
+  gradeCardEmoji: {
+    fontSize: 32,
   },
-  sectionLabel: {
-    fontSize: FontSize.sm,
+  gradeCardSprite: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
+  gradeCardName: {
+    fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: Farm.brownText,
   },
-  sectionSub: {
+  gradeCardSub: {
+    fontSize: FontSize.label,
+    color: Farm.brownTextSub,
+    marginTop: 2,
+  },
+  gradeCardClose: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.woodDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gradeCardCloseText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+    color: Farm.parchment,
+  },
+  gradeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    backgroundColor: Farm.parchmentDark,
+  },
+  gradeOptionEmoji: {
+    fontSize: 22,
+  },
+  gradeOptionIconWrap: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gradeOptionSprite: {
+    width: 36,
+    height: 36,
+    resizeMode: 'contain',
+  },
+  gradeOptionBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -6,
+    backgroundColor: Farm.parchment,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
+    borderRadius: Radius.full,
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gradeOptionBadgeText: {
+    fontSize: 12,
+  },
+  gradeOptionLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Farm.brownText,
+  },
+  gradeOptionQty: {
     fontSize: FontSize.label,
     color: Farm.brownTextSub,
     marginTop: 1,
   },
-
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: Radius.xl,
-    borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
-    padding: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  rowPreferred: {
-    borderWidth: 2,
-    borderColor: Farm.greenBtn,
-    backgroundColor: Farm.parchment,
-  },
-  rowHated: {
-    opacity: 0.55,
-  },
-  emojiCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    backgroundColor: Farm.parchment,
-    borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emoji: {
-    fontSize: 28,
-  },
-  info: {
-    flex: 1,
-    gap: 2,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    flexWrap: 'wrap',
-  },
-  name: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-    color: Farm.brownText,
-  },
-  affinityBadge: {
-    fontSize: FontSize.body,
-  },
-  gradeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  gradeEmoji: {
-    fontSize: FontSize.sm,
-  },
-  gradeLabel: {
-    fontSize: FontSize.label,
-    color: Farm.brownTextSub,
-  },
-  rightCol: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  buffBadge: {
+  gradeOptionBuff: {
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: Radius.full,
-    borderWidth: 1,
-    minWidth: 68,
+    minWidth: 56,
     alignItems: 'center',
+    borderWidth: 1,
   },
-  buffBadgePreferred: {
+  gradeOptionBuffPositive: {
     backgroundColor: Farm.greenBtn,
     borderColor: Farm.greenBtnShadow,
   },
-  buffBadgeNeutral: {
-    backgroundColor: Farm.parchment,
-    borderColor: Farm.woodHighlight,
-  },
-  buffBadgeNone: {
+  gradeOptionBuffNone: {
     backgroundColor: 'rgba(192,74,58,0.12)',
     borderColor: '#C04A3A',
   },
-  buffBadgeText: {
+  gradeOptionBuffText: {
     fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-    color: Farm.brownText,
-  },
-  buffBadgeNoneText: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-    color: '#C04A3A',
-  },
-  qtyBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    backgroundColor: Farm.parchment,
-    borderWidth: 1,
-    borderColor: Farm.woodHighlight,
-    minWidth: 44,
-    alignItems: 'center',
-  },
-  qtyText: {
-    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     color: Farm.brownText,
   },
@@ -614,7 +995,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
     fontStyle: 'italic',
     textAlign: 'center',
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
     paddingHorizontal: Spacing.md,
     lineHeight: 18,
     color: Farm.brownTextSub,
