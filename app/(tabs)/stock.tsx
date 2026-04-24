@@ -5,7 +5,7 @@
  * avec des sections repliables pour les sous-catégories, recherche, et +/- quantité.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -19,11 +19,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeIn,
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedScrollHandler,
   withTiming,
 } from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
@@ -32,6 +34,7 @@ import { categorizeIngredient } from '../../lib/cooklang';
 import { useToast } from '../../contexts/ToastContext';
 import { StockEditor } from '../../components/StockEditor';
 import { EmptyState } from '../../components/EmptyState';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { StockItem } from '../../lib/types';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
@@ -153,10 +156,15 @@ export default function StockScreen() {
     addCourseItem,
     refresh,
   } = useVault();
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();
   const { refreshing, onRefresh } = useRefresh(refresh);
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   const stockListRef = useRef<View>(null);
   const [selectedEmplacement, setSelectedEmplacement] = useState<EmplacementId>('tous');
@@ -300,6 +308,11 @@ export default function StockScreen() {
   // ─── Emplacement courant (pour l'empty state) ───────────────────────
   const currentEmplacement = EMPLACEMENTS.find((e) => e.id === selectedEmplacement);
 
+  // Reset scroll au changement d'onglet (évite collapse fantôme)
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [selectedEmplacement]);
+
   // ─── Rendu d'un item ─────────────────────────────────────────────────
   const renderItem = (item: StockItem, index: number) => {
     const statusColor = getStatusColor(item);
@@ -387,120 +400,132 @@ export default function StockScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* ─── Header ────────────────────────────────────────── */}
-      <View ref={stockListRef} style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('stock.title')}</Text>
-          {lowStockCount > 0 && (
-            <TouchableOpacity
-              style={[
-                styles.lowBadge,
-                { backgroundColor: showLowStockOnly ? colors.error : colors.errorBg },
-              ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setShowLowStockOnly((v) => !v);
-              }}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={t('stock.a11y.filterLowStock')}
-              accessibilityState={{ selected: showLowStockOnly }}
-            >
-              <Text style={[styles.lowBadgeText, { color: showLowStockOnly ? colors.onPrimary : colors.error }]}>
-                {lowStockCount} {t('stock.low')}{showLowStockOnly ? ' ✕' : ''}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
-          onPress={openCreate}
-          accessibilityRole="button"
-          accessibilityLabel={t('stock.a11y.addProduct')}
-        >
-          <Text style={[styles.addBtnText, { color: primary }]}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* ─── Onglets emplacement ───────────────────────────── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabsContainer}
-        style={styles.tabsScroll}
-      >
-        {EMPLACEMENTS.map((emp) => {
-          const isSelected = emp.id === selectedEmplacement;
-          const count = countsByEmplacement[emp.id] ?? 0;
-          return (
-            <TouchableOpacity
-              key={emp.id}
-              style={[
-                styles.tab,
-                { backgroundColor: colors.cardAlt },
-                isSelected && { backgroundColor: tint, borderColor: primary, borderWidth: 1.5 },
-              ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setSelectedEmplacement(emp.id);
-                setSearch('');
-              }}
-              activeOpacity={0.7}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: isSelected }}
-              accessibilityLabel={`${getEmplacementDisplayLabel(emp.id)}, ${count} ${t('stock.productCount', { count })}`}
-            >
-              <Text style={styles.tabEmoji}>{emp.emoji}</Text>
-              <Text
-                style={[
-                  styles.tabLabel,
-                  { color: colors.textMuted },
-                  isSelected && { color: primary, fontWeight: FontWeight.bold },
-                ]}
-              >
-                {getEmplacementDisplayLabel(emp.id)}
-              </Text>
-              {count > 0 && (
-                <View
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <View ref={stockListRef}>
+        <ScreenHeader
+          title={t('stock.title')}
+          subtitle={
+            lowStockCount > 0
+              ? `${lowStockCount} ${t('stock.low')}${showLowStockOnly ? ' · filtre actif' : ''}`
+              : undefined
+          }
+          actions={
+            <>
+              {lowStockCount > 0 && (
+                <TouchableOpacity
                   style={[
-                    styles.tabBadge,
-                    { backgroundColor: isSelected ? primary : colors.textMuted },
+                    styles.lowBadge,
+                    { backgroundColor: showLowStockOnly ? colors.error : colors.errorBg },
                   ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setShowLowStockOnly((v) => !v);
+                  }}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('stock.a11y.filterLowStock')}
+                  accessibilityState={{ selected: showLowStockOnly }}
                 >
-                  <Text style={[styles.tabBadgeText, { color: colors.onPrimary }]}>
-                    {count}
+                  <Text style={[styles.lowBadgeText, { color: showLowStockOnly ? colors.onPrimary : colors.error }]}>
+                    {lowStockCount}{showLowStockOnly ? ' ✕' : ''}
                   </Text>
-                </View>
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {/* ─── Barre de recherche ────────────────────────────── */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={[
-            styles.searchInput,
-            {
-              backgroundColor: colors.inputBg,
-              borderColor: colors.inputBorder,
-              color: colors.text,
-            },
-          ]}
-          placeholder={t('stock.searchPlaceholder')}
-          placeholderTextColor={colors.textMuted}
-          value={search}
-          onChangeText={setSearch}
-          clearButtonMode="while-editing"
+              <TouchableOpacity
+                style={[styles.addBtn, { backgroundColor: primary }]}
+                onPress={openCreate}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('stock.a11y.addProduct')}
+              >
+                <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+              </TouchableOpacity>
+            </>
+          }
+          bottom={
+            <View>
+              <View style={styles.searchRow}>
+                <TextInput
+                  style={[
+                    styles.searchInput,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
+                  placeholder={t('stock.searchPlaceholder')}
+                  placeholderTextColor={colors.textMuted}
+                  value={search}
+                  onChangeText={setSearch}
+                  clearButtonMode="while-editing"
+                />
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.tabsContainer}
+              >
+                {EMPLACEMENTS.map((emp) => {
+                  const isSelected = emp.id === selectedEmplacement;
+                  const count = countsByEmplacement[emp.id] ?? 0;
+                  return (
+                    <TouchableOpacity
+                      key={emp.id}
+                      style={[
+                        styles.tab,
+                        { backgroundColor: colors.cardAlt },
+                        isSelected && { backgroundColor: tint, borderColor: primary, borderWidth: 1.5 },
+                      ]}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setSelectedEmplacement(emp.id);
+                        setSearch('');
+                      }}
+                      activeOpacity={0.7}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityLabel={`${getEmplacementDisplayLabel(emp.id)}, ${count} ${t('stock.productCount', { count })}`}
+                    >
+                      <Text style={styles.tabEmoji}>{emp.emoji}</Text>
+                      <Text
+                        style={[
+                          styles.tabLabel,
+                          { color: colors.textMuted },
+                          isSelected && { color: primary, fontWeight: FontWeight.bold },
+                        ]}
+                      >
+                        {getEmplacementDisplayLabel(emp.id)}
+                      </Text>
+                      {count > 0 && (
+                        <View
+                          style={[
+                            styles.tabBadge,
+                            { backgroundColor: isSelected ? primary : colors.textMuted },
+                          ]}
+                        >
+                          <Text style={[styles.tabBadgeText, { color: colors.onPrimary }]}>
+                            {count}
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          }
+          scrollY={scrollY}
         />
       </View>
 
       {/* ─── Contenu ───────────────────────────────────────── */}
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
@@ -551,7 +576,7 @@ export default function StockScreen() {
 
         {/* Espacement bas pour le tab bar */}
         <View style={styles.bottomSpacer} />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* ─── Modal StockEditor ─────────────────────────────── */}
       <Modal visible={editorVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setEditorVisible(false); setEditingItem(undefined); }}>
@@ -598,53 +623,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.heavy,
-  },
+  // Header actions
   lowBadge: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xxs,
+    height: 32,
+    minWidth: 32,
     borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   lowBadgeText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
   },
   addBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.base,
-    borderWidth: 1.5,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addBtnText: {
-    fontSize: FontSize.title,
+    fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
+    lineHeight: 18,
   },
 
   // Onglets emplacement
-  tabsScroll: {
-    flexGrow: 0,
-  },
   tabsContainer: {
-    paddingHorizontal: Spacing['2xl'],
-    gap: Spacing.md,
-    paddingBottom: Spacing.md,
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   tab: {
     flexDirection: 'row',
@@ -677,9 +685,8 @@ const styles = StyleSheet.create({
   },
 
   // Recherche
-  searchContainer: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingBottom: Spacing.md,
+  searchRow: {
+    paddingVertical: Spacing.xxs,
   },
   searchInput: {
     height: 40,
