@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: Phase 42 complète — shippable sur TestFlight
-last_updated: "2026-04-23T12:06:52.109Z"
-last_activity: 2026-04-23
+last_updated: "2026-04-24T08:50:45.277Z"
+last_activity: "2026-04-24 - Completed quick task 260424-exi: Améliorer interface Budget (carte totale enrichie, tri catégories urgence, chevrons navigation, chips avec montants)"
 progress:
   total_phases: 14
   completed_phases: 9
@@ -68,6 +68,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260423-jh5 | Fix lag au tap lootbox — onOpen() en parallèle + haptics fire-and-forget | 2026-04-23 | e19edc7 | [260423-jh5-fix-lag-au-tap-lootbox-lancer-onopen-en-](./quick/260423-jh5-fix-lag-au-tap-lootbox-lancer-onopen-en-/) |
 | 260423-jw6 | Persister MP3 ElevenLabs/Fish Audio dans le vault iCloud + blocage regénération ReplayStep | 2026-04-23 | 86c8cb8 | [260423-jw6-stocker-les-mp3-elevenlabs-dans-le-vault](./quick/260423-jw6-stocker-les-mp3-elevenlabs-dans-le-vault/) |
 | 260423-l1j | Onglet Bibliothèque histoires — groupes univers, filtre enfant, badge audio async, retour tab-aware | 2026-04-23 | 6d44fe4 | [260423-l1j-ajouter-onglet-biblioth-que-dans-stories](./quick/260423-l1j-ajouter-onglet-biblioth-que-dans-stories/) |
+| 260424-exi | Améliorer interface Budget: carte totale enrichie, tri catégories urgence, chevrons navigation, chips avec montants | 2026-04-24 | dd08887 | [260424-exi-am-liorer-interface-budget-carte-totale-](./quick/260424-exi-am-liorer-interface-budget-carte-totale-/) |
 
 ## Performance Metrics
 
@@ -384,5 +385,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-23T12:06:52.105Z
+Last session: 2026-04-24T08:50:45.264Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
