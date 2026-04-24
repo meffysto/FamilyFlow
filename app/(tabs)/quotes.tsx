@@ -211,7 +211,6 @@ export default function QuotesScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('quotes.title')}
-        icon="💬"
         subtitle={quotes.length > 0 ? t('quotes.count', { count: quotes.length, defaultValue: `${quotes.length} mots collectés` }) : undefined}
         actions={
           <TouchableOpacity
