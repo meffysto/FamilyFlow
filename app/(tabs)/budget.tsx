@@ -223,6 +223,22 @@ export default function BudgetScreen() {
 
   const isFiltered = !!filterCategory || !!searchQuery.trim();
 
+  // ─── Montants par catégorie pour les chips de filtre ──────────
+  const categorySpentMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const cat of budgetConfig.categories) {
+      const display = categoryDisplay(cat);
+      map.set(display, sumByCategory(sortedEntries, display));
+    }
+    return map;
+  }, [budgetConfig, sortedEntries]);
+
+  // ─── Total montant des entrées filtrées ───────────────────────
+  const filteredTotalAmount = useMemo(
+    () => filteredEntries.reduce((sum, e) => sum + e.amount, 0),
+    [filteredEntries]
+  );
+
   // ─── Tri catégories par urgence (dépassées > proches > reste décroissant) ──
   const sortedCategories = useMemo(() => {
     return [...budgetConfig.categories]
@@ -483,11 +499,11 @@ export default function BudgetScreen() {
       {tab !== 'evolution' && (
         <View style={[styles.monthNav, { backgroundColor: colors.card }]}>
           <TouchableOpacity onPress={() => handleMonthChange('prev')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.a11y.prevMonth')} accessibilityRole="button">
-            <Text style={[styles.monthArrow, { color: primary }]}>{'<'}</Text>
+            <Text style={[styles.monthArrow, { color: primary }]}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={[styles.monthLabel, { color: colors.text }]} accessibilityLabel={t('budget.month', { month: formatMonthLabel(budgetMonth) })}>{formatMonthLabel(budgetMonth)}</Text>
           <TouchableOpacity onPress={() => handleMonthChange('next')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.a11y.nextMonth')} accessibilityRole="button">
-            <Text style={[styles.monthArrow, { color: primary }]}>{'>'}</Text>
+            <Text style={[styles.monthArrow, { color: primary }]}>{'›'}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -614,6 +630,7 @@ export default function BudgetScreen() {
               {budgetConfig.categories.map((cat) => {
                 const catDisplay = categoryDisplay(cat);
                 const isActive = filterCategory === catDisplay;
+                const catSpent = categorySpentMap.get(catDisplay) ?? 0;
                 return (
                   <TouchableOpacity
                     key={cat.name}
@@ -628,13 +645,13 @@ export default function BudgetScreen() {
                     activeOpacity={0.7}
                   >
                     <Text style={[styles.chipText, { color: isActive ? colors.onPrimary : colors.text }]}>
-                      {cat.emoji} {cat.name}
+                      {cat.emoji} {cat.name}{' · '}{formatAmount(catSpent)}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </ScrollView>
-            {/* Compteur de résultats */}
+            {/* Compteur de résultats + total montant filtré */}
             <Text style={[styles.resultCount, { color: colors.textMuted }]}>
               {isFiltered
                 ? t('budget.filter.resultFiltered', {
@@ -645,6 +662,7 @@ export default function BudgetScreen() {
                     count: sortedEntries.length,
                   })
               }
+              {' · '}{formatAmount(filteredTotalAmount)}
             </Text>
           </View>
 
@@ -928,7 +946,12 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     gap: Spacing['4xl'],
   },
-  monthArrow: { fontSize: FontSize.titleLg, fontWeight: FontWeight.bold },
+  monthArrow: {
+    fontSize: FontSize.hero,
+    fontWeight: FontWeight.medium,
+    lineHeight: FontSize.hero,
+    paddingHorizontal: Spacing.md,
+  },
   monthLabel: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
   tabBar: {
     paddingHorizontal: Spacing['2xl'],
