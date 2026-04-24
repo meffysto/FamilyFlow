@@ -6,7 +6,7 @@
  * Fichier vault : 05 - Famille/Humeurs.md
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -17,9 +17,9 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { format, subDays } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -33,13 +33,14 @@ import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Button } from '../../components/ui/Button';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { MOOD_EMOJIS, type MoodLevel } from '../../lib/types';
 
 type TabId = 'aujourdhui' | 'historique';
 const MOOD_LEVELS: MoodLevel[] = [1, 2, 3, 4, 5];
 const HISTORY_DAYS = 30;
 
-const TAB_SPRING = { damping: 32, stiffness: 200 };
 const BTN_SPRING = { damping: 14, stiffness: 300 };
 
 // Couleurs heatmap humeur (fond cellule historique)
@@ -50,117 +51,6 @@ const MOOD_COLORS: Record<MoodLevel, string> = {
   4: '#22c55e30',
   5: '#8b5cf630',
 };
-
-// ─── TabSwitcher pilule animée ───────────────────────────────────────────────
-
-interface TabSwitcherProps {
-  activeTab: TabId;
-  onTabChange: (tab: TabId) => void;
-  primary: string;
-  colors: ReturnType<typeof useThemeColors>['colors'];
-}
-
-function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherProps) {
-  const [tabWidth, setTabWidth] = useState(0);
-  const indicatorX = useSharedValue(0);
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: indicatorX.value }],
-  }));
-
-  const handlePress = useCallback((tab: TabId) => {
-    const toIndex = tab === 'aujourdhui' ? 0 : 1;
-    indicatorX.value = withSpring(toIndex * tabWidth, TAB_SPRING);
-    onTabChange(tab);
-  }, [tabWidth, onTabChange, indicatorX]);
-
-  React.useEffect(() => {
-    if (tabWidth === 0) return;
-    const idx = activeTab === 'aujourdhui' ? 0 : 1;
-    indicatorX.value = withSpring(idx * tabWidth, TAB_SPRING);
-  }, [tabWidth, activeTab, indicatorX]);
-
-  const DRAG_THRESHOLD = 30;
-  const panGesture = Gesture.Pan()
-    .onUpdate((e) => {
-      const base = activeTab === 'aujourdhui' ? 0 : tabWidth;
-      indicatorX.value = Math.max(0, Math.min(tabWidth, base + e.translationX));
-    })
-    .onEnd((e) => {
-      if (e.translationX > DRAG_THRESHOLD && activeTab === 'aujourdhui') {
-        indicatorX.value = withSpring(tabWidth, TAB_SPRING);
-        runOnJS(Haptics.selectionAsync)();
-        runOnJS(onTabChange)('historique');
-      } else if (e.translationX < -DRAG_THRESHOLD && activeTab === 'historique') {
-        indicatorX.value = withSpring(0, TAB_SPRING);
-        runOnJS(Haptics.selectionAsync)();
-        runOnJS(onTabChange)('aujourdhui');
-      } else {
-        const snap = activeTab === 'aujourdhui' ? 0 : tabWidth;
-        indicatorX.value = withSpring(snap, TAB_SPRING);
-      }
-    });
-
-  return (
-    <GestureDetector gesture={panGesture}>
-      <View
-        style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onLayout={e => setTabWidth(e.nativeEvent.layout.width / 2)}
-      >
-        <Animated.View
-          style={[tabSwitcherStyles.indicator, indicatorStyle, { backgroundColor: primary, width: tabWidth }]}
-        />
-        <Pressable
-          style={tabSwitcherStyles.tab}
-          onPress={() => handlePress('aujourdhui')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'aujourdhui' }}
-        >
-          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'aujourdhui' ? colors.bg : colors.textMuted }]}>
-            ☀️ Aujourd'hui
-          </Text>
-        </Pressable>
-        <Pressable
-          style={tabSwitcherStyles.tab}
-          onPress={() => handlePress('historique')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'historique' }}
-        >
-          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'historique' ? colors.bg : colors.textMuted }]}>
-            📅 Historique
-          </Text>
-        </Pressable>
-      </View>
-    </GestureDetector>
-  );
-}
-
-const tabSwitcherStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    marginHorizontal: Spacing['4xl'],
-    marginVertical: Spacing.lg,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    overflow: 'hidden',
-    height: 40,
-  },
-  indicator: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    borderRadius: Radius.full,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-  },
-});
 
 // ─── Bouton humeur animé ─────────────────────────────────────────────────────
 
@@ -222,12 +112,26 @@ function MoodBtn({ level, selected, primary, colors, onPress, size = 'lg', acces
 
 export default function MoodsScreen() {
   const { t } = useTranslation();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const { profiles, activeProfile, moods, addMood, refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
 
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+
   const [activeTab, setActiveTab] = useState<TabId>('aujourdhui');
+
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [activeTab]);
+
+  const moodTabs: ReadonlyArray<PillTab<TabId>> = useMemo(() => ([
+    { id: 'aujourdhui', label: "☀️ Aujourd'hui" },
+    { id: 'historique', label: '📅 Historique' },
+  ]), []);
   const [noteModal, setNoteModal] = useState<{ visible: boolean; level: MoodLevel | null; profileId: string | null; profileName: string | null }>({ visible: false, level: null, profileId: null, profileName: null });
   const [noteText, setNoteText] = useState('');
 
@@ -291,21 +195,31 @@ export default function MoodsScreen() {
   }, [noteModal.profileId, noteModal.profileName, noteModal.level, noteText, addMood, showToast]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('moodsScreen.title')}</Text>
-      </View>
-
-      <TabSwitcher
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        primary={primary}
-        colors={colors}
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('moodsScreen.title')}
+        icon="🌈"
+        bottom={
+          <View style={styles.tabsWrap}>
+            <PillTabSwitcher
+              tabs={moodTabs}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              primary={primary}
+              colors={colors}
+              marginHorizontal={0}
+            />
+          </View>
+        }
+        scrollY={scrollY}
       />
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {activeTab === 'aujourdhui' ? (
@@ -421,7 +335,7 @@ export default function MoodsScreen() {
             ))}
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Modal note */}
       <Modal visible={noteModal.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNoteModal({ visible: false, level: null, profileId: null, profileName: null })}>
@@ -448,14 +362,8 @@ export default function MoodsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xs,
-  },
-  title: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
+  tabsWrap: {
+    paddingVertical: Spacing.xs,
   },
   scroll: { flex: 1 },
   scrollContent: {

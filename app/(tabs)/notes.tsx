@@ -18,8 +18,10 @@ import {
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -33,6 +35,9 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { NoteEditor } from '../../components/NoteEditor';
 import { NoteViewer } from '../../components/NoteViewer';
 import { EmptyState } from '../../components/EmptyState';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 const CATEGORY_KEY_MAP: Record<string, string> = {
   '📋 Administratif': 'administratif',
@@ -50,8 +55,13 @@ export default function NotesScreen() {
     return key ? t(`notesScreen.categories.${key}`) : cat;
   };
   const { notes, addNote, updateNote, deleteNote, activeProfile, refresh } = useVault();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   const { addNew, importUrl } = useLocalSearchParams<{ addNew?: string; importUrl?: string }>();
   const [search, setSearch] = useState('');
@@ -166,10 +176,16 @@ export default function NotesScreen() {
     setEditorVisible(true);
   }, []);
 
+  // Reset scroll au changement de filtre (évite collapse fantôme)
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [selectedCategory]);
+
   // Adultes uniquement
   if (isChildMode) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} translucent />
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
             {t('notesScreen.childOnly')}
@@ -244,57 +260,63 @@ export default function NotesScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('notesScreen.title')}</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('notesScreen.title')}
+        icon="📝"
+        subtitle={notes.length > 0 ? `${notes.length} note${notes.length > 1 ? 's' : ''}` : undefined}
+        actions={
           <TouchableOpacity
             onPress={() => openEditor()}
             style={[styles.addButton, { backgroundColor: primary }]}
+            activeOpacity={0.7}
             accessibilityLabel={t('notesScreen.a11y.addNote')}
             accessibilityRole="button"
           >
             <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>+</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Barre de recherche */}
-        <TextInput
-          style={[
-            styles.searchInput,
-            {
-              backgroundColor: colors.inputBg,
-              borderColor: colors.inputBorder,
-              color: colors.text,
-            },
-          ]}
-          placeholder={t('notesScreen.placeholder.search')}
-          placeholderTextColor={colors.textFaint}
-          value={search}
-          onChangeText={setSearch}
-          autoCorrect={false}
-          accessibilityLabel={t('notesScreen.a11y.searchNote')}
-          accessibilityRole="search"
-        />
-
-        {/* Filtre catégories */}
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={[null, ...NOTE_CATEGORIES]}
-          keyExtractor={(item) => item ?? 'all'}
-          contentContainerStyle={styles.chipRow}
-          renderItem={({ item: cat }) => (
-            <Chip
-              label={cat ? translateCategory(cat) : t('notesScreen.allCategories', { defaultValue: 'All' })}
-              selected={selectedCategory === cat}
-              onPress={() => setSelectedCategory(cat)}
-              size="sm"
+        }
+        bottom={
+          <View>
+            <View style={styles.searchRow}>
+              <TextInput
+                style={[
+                  styles.searchInput,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder={t('notesScreen.placeholder.search')}
+                placeholderTextColor={colors.textFaint}
+                value={search}
+                onChangeText={setSearch}
+                autoCorrect={false}
+                accessibilityLabel={t('notesScreen.a11y.searchNote')}
+                accessibilityRole="search"
+              />
+            </View>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={[null, ...NOTE_CATEGORIES]}
+              keyExtractor={(item) => item ?? 'all'}
+              contentContainerStyle={styles.chipRow}
+              renderItem={({ item: cat }) => (
+                <Chip
+                  label={cat ? translateCategory(cat) : t('notesScreen.allCategories', { defaultValue: 'All' })}
+                  selected={selectedCategory === cat}
+                  onPress={() => setSelectedCategory(cat)}
+                  size="sm"
+                />
+              )}
             />
-          )}
-        />
-      </View>
+          </View>
+        }
+        scrollY={scrollY}
+      />
 
       {/* Liste */}
       {listData.length === 0 ? (
@@ -308,12 +330,13 @@ export default function NotesScreen() {
           onCta={search || selectedCategory ? undefined : () => openEditor()}
         />
       ) : (
-        <FlatList
-          data={listData}
-          keyExtractor={(item, index) =>
-            item.type === 'header' ? `h-${item.category}` : `n-${item.note.sourceFile}`
-          }
-          renderItem={renderItem}
+        <AnimatedFlatList
+          data={listData as any}
+          keyExtractor={((item: any) =>
+            item.type === 'header' ? `h-${item.category}` : `n-${item.note.sourceFile}`) as any}
+          renderItem={renderItem as any}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
           contentContainerStyle={[styles.listContent, Layout.contentContainer]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
         />
@@ -351,32 +374,20 @@ export default function NotesScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.md,
-    gap: Spacing.md,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.heavy,
-  },
   addButton: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addButtonText: {
-    fontSize: FontSize.heading,
+    fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    lineHeight: FontSize.heading + 2,
+    lineHeight: 18,
+  },
+  searchRow: {
+    paddingVertical: Spacing.xxs,
   },
   searchInput: {
     borderWidth: 1,
@@ -387,7 +398,7 @@ const styles = StyleSheet.create({
   },
   chipRow: {
     gap: Spacing.xs,
-    paddingVertical: Spacing.xxs,
+    paddingVertical: Spacing.xs,
   },
   listContent: {
     padding: Spacing.xl,
