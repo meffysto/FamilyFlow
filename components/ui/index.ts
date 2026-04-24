@@ -11,3 +11,4 @@ export type { Segment } from './SegmentedControl';
 export { PressableScale } from './PressableScale';
 export { PillTabSwitcher } from './PillTabSwitcher';
 export type { PillTab } from './PillTabSwitcher';
+export { ScreenHeader } from './ScreenHeader';

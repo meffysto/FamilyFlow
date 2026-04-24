@@ -22,6 +22,8 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import * as Haptics from 'expo-haptics';
 import { format, addDays, subDays } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -183,7 +185,7 @@ export function computeGratitudeStreak(days: GratitudeDay[], totalProfiles: numb
 
 export default function GratitudeScreen() {
   const { t } = useTranslation();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const { profiles, activeProfile, gratitudeDays, addGratitudeEntry, deleteGratitudeEntry, refresh } = useVault();
 
@@ -262,15 +264,20 @@ export default function GratitudeScreen() {
   }, [selectedDate, isToday]);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('gratitude.title')}</Text>
-        {streak > 0 && (
-          <View style={[styles.streakBadge, { backgroundColor: colors.info + '20' }]}>
-            <Text style={[styles.streakText, { color: colors.info }]}>{t('gratitude.streak', { count: streak })}</Text>
-          </View>
-        )}
-      </View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('gratitude.title')}
+        icon="🙏"
+        subtitle={streak > 0 ? t('gratitude.streak', { count: streak }) : undefined}
+        actions={
+          streak > 0 ? (
+            <View style={[styles.streakBadge, { backgroundColor: colors.info + '20' }]}>
+              <Text style={[styles.streakText, { color: colors.info }]}>🔥 {streak}</Text>
+            </View>
+          ) : undefined
+        }
+      />
 
       {/* Onglets */}
       <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} primary={primary} colors={colors} />
@@ -489,17 +496,9 @@ export default function GratitudeScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
-  },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   streakBadge: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
   },
   streakText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
