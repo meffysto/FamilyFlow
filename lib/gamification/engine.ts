@@ -173,6 +173,47 @@ function drawRarityWithPity(role: Profile['role'], pityCounter: number): { rarit
 
 // ─── Loot box ───────────────────────────────────────────────────────────────
 
+/**
+ * Vérifie si une récompense correspond à un item déjà possédé par le profil.
+ * Couvre les 3 rewardTypes avec un inventaire distinct :
+ *   - 'companion'  → profile.companion.unlockedSpecies
+ *   - 'mascot_deco' → profile.mascotDecorations
+ *   - 'mascot_hab'  → profile.mascotInhabitants
+ */
+function isRewardAlreadyOwned(reward: RewardDefinition, profile: Profile): boolean {
+  if (!reward.mascotItemId) return false;
+  if (reward.rewardType === 'companion') {
+    const unlocked = profile.companion?.unlockedSpecies ?? [];
+    return unlocked.includes(reward.mascotItemId as any);
+  }
+  if (reward.rewardType === 'mascot_deco') {
+    return profile.mascotDecorations.includes(reward.mascotItemId);
+  }
+  if (reward.rewardType === 'mascot_hab') {
+    return profile.mascotInhabitants.includes(reward.mascotItemId);
+  }
+  return false;
+}
+
+/**
+ * Tire une récompense depuis le pool en excluant tous les items déjà possédés.
+ * Fallback : si tout le pool est possédé, retourne une récompense générique
+ * (points/reward sans mascotItemId). Jamais de crash, jamais de doublon compagnon.
+ */
+function drawRewardExcludingOwned(pool: RewardDefinition[], profile: Profile): RewardDefinition {
+  const available = pool.filter((r) => !isRewardAlreadyOwned(r, profile));
+  if (available.length > 0) {
+    return available[Math.floor(Math.random() * available.length)];
+  }
+  // Fallback : tous les items mascotte possédés → récompenses génériques (points/reward)
+  const generic = pool.filter((r) => !r.mascotItemId);
+  if (generic.length > 0) {
+    return generic[Math.floor(Math.random() * generic.length)];
+  }
+  // Ultime fallback : premier item du pool (ne devrait jamais arriver)
+  return pool[0];
+}
+
 /** Draw a random loot box reward based on profile role, with pity system and active rewards */
 export function openLootBox(
   profile: Profile,
@@ -194,17 +235,11 @@ export function openLootBox(
   const seasonalDraw = trySeasonalDraw(rarity);
   let rewardDef: RewardDefinition = seasonalDraw
     ? seasonalDraw.reward
-    : REWARDS[rarity][Math.floor(Math.random() * REWARDS[rarity].length)];
+    : drawRewardExcludingOwned(REWARDS[rarity], profile);
 
-  // Si c'est un item mascotte déjà possédé, re-draw un reward non-mascotte
-  if (rewardDef.mascotItemId) {
-    const owned = rewardDef.rewardType === 'mascot_deco'
-      ? profile.mascotDecorations
-      : profile.mascotInhabitants;
-    if (owned.includes(rewardDef.mascotItemId)) {
-      const nonMascot = REWARDS[rarity].filter((r) => !r.mascotItemId);
-      rewardDef = nonMascot[Math.floor(Math.random() * nonMascot.length)];
-    }
+  // Si le drop saisonnier propose un item déjà possédé, re-draw depuis le pool normal
+  if (seasonalDraw && isRewardAlreadyOwned(rewardDef, profile)) {
+    rewardDef = drawRewardExcludingOwned(REWARDS[rarity], profile);
   }
 
   const seasonalEventId = seasonalDraw?.eventId;
@@ -431,7 +466,7 @@ export function openAgentSecretLootBox(
     rarity = 'épique';
   }
 
-  const rewardDef: RewardDefinition = REWARDS[rarity][Math.floor(Math.random() * REWARDS[rarity].length)];
+  const rewardDef: RewardDefinition = drawRewardExcludingOwned(REWARDS[rarity], profile);
   const now = new Date().toISOString();
 
   const box: LootBox = {
