@@ -303,7 +303,21 @@ struct MascotteLiveActivity: Widget {
             let headEmoji = stage.emoji
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    companionCompactView(state: context.state, fallbackEmoji: headEmoji)
+                    // Phase 260425-0qf — sprite pose au lieu de l'emoji pur ; taille
+                    // adaptée à la région DI expanded leading (~40pt pour matcher
+                    // l'ancien rendu emoji 32pt avec marge pixel art).
+                    let pose = context.state.pose ?? "idle"
+                    if let uiImage = CompanionSpriteCache.image(for: pose) {
+                        Image(uiImage: uiImage)
+                            .interpolation(.none)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 40, height: 40)
+                            .accessibilityLabel("Compagnon \(context.attributes.mascotteName)")
+                    } else {
+                        Text(headEmoji)
+                            .font(.system(size: 32))
+                    }
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .leading, spacing: 2) {
