@@ -19,7 +19,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+} from 'react-native-reanimated';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+
+const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
@@ -42,6 +48,10 @@ export default function QuotesScreen() {
   const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   const { profiles, quotes, addQuote, editQuote, deleteQuote, refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
 
@@ -212,6 +222,7 @@ export default function QuotesScreen() {
       <ScreenHeader
         title={t('quotes.title')}
         subtitle={quotes.length > 0 ? t('quotes.count', { count: quotes.length, defaultValue: `${quotes.length} mots collectés` }) : undefined}
+        scrollY={scrollY}
         actions={
           <TouchableOpacity
             style={[styles.addBtn, { backgroundColor: primary }]}
@@ -253,11 +264,11 @@ export default function QuotesScreen() {
           onCta={openModal}
         />
       ) : (
-        <SectionList
-          sections={displaySections}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          renderSectionHeader={({ section }) => {
+        <AnimatedSectionList
+          sections={displaySections as any}
+          keyExtractor={keyExtractor as any}
+          renderItem={renderItem as any}
+          renderSectionHeader={({ section }: any) => {
             const collapsed = collapsedMonths.has(section.key);
             return (
               <TouchableOpacity
@@ -276,6 +287,8 @@ export default function QuotesScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
           }
           stickySectionHeadersEnabled={false}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
         />
       )}
 

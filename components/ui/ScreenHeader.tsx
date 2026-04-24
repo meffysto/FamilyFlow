@@ -12,6 +12,12 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing } from '../../constants/spacing';
@@ -25,19 +31,36 @@ interface ScreenHeaderProps {
   actions?: React.ReactNode;
   /** Élément(s) à afficher SOUS le titre, dans la même teinte (filtres, chips, segmented…) */
   bottom?: React.ReactNode;
+  /**
+   * SharedValue du scrollY de la liste sous-jacente. Si fourni, la ligne
+   * titre/sous-titre/actions collapse au scroll (le slot bottom reste visible).
+   */
+  scrollY?: SharedValue<number>;
 }
 
-export function ScreenHeader({ title, icon, subtitle, actions, bottom }: ScreenHeaderProps) {
+const COLLAPSE_RANGE = 60;
+
+export function ScreenHeader({ title, icon, subtitle, actions, bottom, scrollY }: ScreenHeaderProps) {
   const { primary, colors } = useThemeColors();
   const insets = useSafeAreaInsets();
 
   // Fond légèrement teinté : 8% de primary sur bg.
   const tintedBg = primary + '14';
 
+  const titleAnimStyle = useAnimatedStyle(() => {
+    if (!scrollY) return {};
+    const y = scrollY.value;
+    return {
+      opacity: interpolate(y, [0, COLLAPSE_RANGE], [1, 0], Extrapolation.CLAMP),
+      height: interpolate(y, [0, COLLAPSE_RANGE], [44, 0], Extrapolation.CLAMP),
+      overflow: 'hidden',
+    };
+  });
+
   return (
     <View style={styles.wrap}>
       <View style={[styles.tinted, { backgroundColor: tintedBg, paddingTop: insets.top + 4 }]}>
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, titleAnimStyle]}>
           <View style={styles.titleRow}>
             {icon && <Text style={styles.icon}>{icon}</Text>}
             <View style={styles.titleCol}>
@@ -52,7 +75,7 @@ export function ScreenHeader({ title, icon, subtitle, actions, bottom }: ScreenH
             </View>
           </View>
           {actions && <View style={styles.actions}>{actions}</View>}
-        </View>
+        </Animated.View>
         {bottom && <View style={styles.bottom}>{bottom}</View>}
       </View>
       {/* Fondu : la teinte se dissout dans le fond de page */}
