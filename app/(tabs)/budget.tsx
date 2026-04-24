@@ -503,13 +503,13 @@ export default function BudgetScreen() {
         <Text style={[styles.title, { color: colors.text }]}>{t('budget.title')}</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={[styles.scanBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+            style={[styles.configBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
             onPress={handleOpenConfigModal}
             activeOpacity={0.7}
             accessibilityLabel="Configurer les plafonds du budget"
             accessibilityRole="button"
           >
-            <Text style={[styles.scanBtnText, { color: primary }]}>Configurer</Text>
+            <Text style={styles.configBtnIcon}>⚙️</Text>
           </TouchableOpacity>
           {aiConfigured && (
             <TouchableOpacity
@@ -1022,6 +1022,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
   },
+  configBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius['2xl'],
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  configBtnIcon: { fontSize: FontSize.body },
   scanBtn: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
