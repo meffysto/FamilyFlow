@@ -1,15 +1,16 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View, Text, FlatList, TextInput, ScrollView, Pressable,
-  StyleSheet, SafeAreaView, ActivityIndicator, Alert, Modal,
+  StyleSheet, ActivityIndicator, Alert, Modal,
   ActionSheetIOS, Platform, useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import * as Speech from 'expo-speech';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat,
   cancelAnimation, runOnJS,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -35,11 +36,12 @@ import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymi
 import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryVoiceEngine, StoryLength, Profile, Memory, ChildQuote } from '../../lib/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 
 // ─── Constantes animation ───────────────────────────────────────────────────
 
-const TAB_SPRING: { damping: number; stiffness: number } = { damping: 32, stiffness: 200 };
-const TAB_SPRING_SNAP = TAB_SPRING;
+const TAB_SPRING = { damping: 32, stiffness: 200 };
 
 // ─── Types machine à états ──────────────────────────────────────────────────
 
@@ -64,133 +66,6 @@ function computeAge(birthdate?: string): string {
     return '6 ans';
   }
 }
-
-// ─── TabSwitcher ─────────────────────────────────────────────────────────────
-
-interface TabSwitcherProps {
-  activeTab: 'nouvelle' | 'bibliotheque';
-  onTabChange: (tab: 'nouvelle' | 'bibliotheque') => void;
-  primary: string;
-  colors: ReturnType<typeof useThemeColors>['colors'];
-}
-
-function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherProps) {
-  const [tabWidth, setTabWidth] = React.useState(0);
-  const indicatorX = useSharedValue(0);
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: indicatorX.value }],
-  }));
-
-  const handlePress = useCallback((tab: 'nouvelle' | 'bibliotheque') => {
-    const toIndex = tab === 'nouvelle' ? 0 : 1;
-    indicatorX.value = withSpring(toIndex * tabWidth, TAB_SPRING);
-    onTabChange(tab);
-  }, [tabWidth, onTabChange, indicatorX]);
-
-  // Synchroniser l'indicateur quand tabWidth change ou activeTab change
-  React.useEffect(() => {
-    if (tabWidth === 0) return;
-    const idx = activeTab === 'nouvelle' ? 0 : 1;
-    indicatorX.value = withSpring(idx * tabWidth, TAB_SPRING);
-  }, [tabWidth, activeTab, indicatorX]);
-
-  // Pan gesture : glisser la pillule gauche/droite
-  const DRAG_THRESHOLD = 30;
-  const panGesture = Gesture.Pan()
-    .onUpdate((e) => {
-      const base = activeTab === 'nouvelle' ? 0 : tabWidth;
-      indicatorX.value = Math.max(0, Math.min(tabWidth, base + e.translationX));
-    })
-    .onEnd((e) => {
-      if (e.translationX > DRAG_THRESHOLD && activeTab === 'nouvelle') {
-        indicatorX.value = withSpring(tabWidth, TAB_SPRING_SNAP);
-        runOnJS(Haptics.selectionAsync)();
-        runOnJS(onTabChange)('bibliotheque');
-      } else if (e.translationX < -DRAG_THRESHOLD && activeTab === 'bibliotheque') {
-        indicatorX.value = withSpring(0, TAB_SPRING_SNAP);
-        runOnJS(Haptics.selectionAsync)();
-        runOnJS(onTabChange)('nouvelle');
-      } else {
-        // Snap back
-        const snap = activeTab === 'nouvelle' ? 0 : tabWidth;
-        indicatorX.value = withSpring(snap, TAB_SPRING_SNAP);
-      }
-    });
-
-  return (
-    <GestureDetector gesture={panGesture}>
-      <View
-        style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onLayout={e => setTabWidth(e.nativeEvent.layout.width / 2)}
-      >
-        {/* Indicateur animé */}
-        <Animated.View
-          style={[
-            tabSwitcherStyles.indicator,
-            indicatorStyle,
-            { backgroundColor: primary, width: tabWidth },
-          ]}
-        />
-        {/* Onglet Nouvelle histoire */}
-        <Pressable
-          style={tabSwitcherStyles.tab}
-          onPress={() => handlePress('nouvelle')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'nouvelle' }}
-        >
-          <Text style={[
-            tabSwitcherStyles.tabText,
-            { color: activeTab === 'nouvelle' ? colors.bg : colors.textMuted },
-          ]}>
-            ✨ Nouvelle
-          </Text>
-        </Pressable>
-        {/* Onglet Bibliothèque */}
-        <Pressable
-          style={tabSwitcherStyles.tab}
-          onPress={() => handlePress('bibliotheque')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'bibliotheque' }}
-        >
-          <Text style={[
-            tabSwitcherStyles.tabText,
-            { color: activeTab === 'bibliotheque' ? colors.bg : colors.textMuted },
-          ]}>
-            📚 Bibliothèque
-          </Text>
-        </Pressable>
-      </View>
-    </GestureDetector>
-  );
-}
-
-const tabSwitcherStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    marginHorizontal: Spacing['4xl'],
-    marginVertical: Spacing.lg,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    overflow: 'hidden',
-    height: 40,
-  },
-  indicator: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    borderRadius: Radius.full,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-  },
-});
 
 // ─── StoryCard ───────────────────────────────────────────────────────────────
 
@@ -611,7 +486,7 @@ const biblioStyles = StyleSheet.create({
 
 export default function StoriesScreen() {
   const router = useRouter();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { config: aiConfig, storyConfig } = useAI();
   const { voiceConfig, elevenLabsKey, isElevenLabsConfigured, fishAudioKey, isFishAudioConfigured, setVoiceConfig } = useStoryVoice();
   const { reduceMotion } = useAnimConfig();
@@ -1916,33 +1791,45 @@ export default function StoriesScreen() {
     replay: 'Relire',
   };
 
-  return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        {step.etape !== 'choisir_enfant' && step.etape !== 'fin' && (
-          <Pressable style={styles.backButton} onPress={goBack} accessibilityLabel="Retour">
-            <Text style={[styles.backText, { color: primary }]}>‹</Text>
-          </Pressable>
-        )}
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          {STEP_TITLES[step.etape] ?? 'Histoires du soir'}
-        </Text>
-        <View style={styles.headerRight} />
-      </View>
+  const storyTabs: ReadonlyArray<PillTab<'nouvelle' | 'bibliotheque'>> = [
+    { id: 'nouvelle', label: '✨ Nouvelle' },
+    { id: 'bibliotheque', label: '📚 Bibliothèque' },
+  ];
 
-      {/* Onglets Nouvelle histoire / Bibliothèque — visibles seulement à l'étape choisir_enfant */}
-      {step.etape === 'choisir_enfant' && (
-        <TabSwitcher
-          activeTab={activeTab}
-          onTabChange={(tab) => {
-            Haptics.selectionAsync();
-            setActiveTab(tab);
-          }}
-          primary={primary}
-          colors={colors}
-        />
-      )}
+  const showBackBtn = step.etape !== 'choisir_enfant' && step.etape !== 'fin';
+  const showStoryTabs = step.etape === 'choisir_enfant';
+
+  return (
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={STEP_TITLES[step.etape] ?? 'Histoires du soir'}
+        leading={
+          showBackBtn ? (
+            <Pressable style={styles.backButton} onPress={goBack} accessibilityLabel="Retour">
+              <Text style={[styles.backText, { color: primary }]}>‹</Text>
+            </Pressable>
+          ) : undefined
+        }
+        bottom={
+          showStoryTabs ? (
+            <View style={styles.tabsWrap}>
+              <PillTabSwitcher
+                tabs={storyTabs}
+                activeTab={activeTab}
+                onTabChange={(tab) => {
+                  Haptics.selectionAsync();
+                  setActiveTab(tab);
+                }}
+                primary={primary}
+                colors={colors}
+                marginHorizontal={0}
+              />
+            </View>
+          ) : undefined
+        }
+      />
+
 
       {/* Confettis */}
       <ConfettiCannon
@@ -1979,11 +1866,9 @@ export default function StoriesScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing['4xl'], paddingVertical: Spacing['2xl'], borderBottomWidth: StyleSheet.hairlineWidth },
-  backButton: { width: 36, alignItems: 'flex-start' },
-  backText: { fontSize: 30, lineHeight: 34 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
-  headerRight: { width: 36 },
+  backButton: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  backText: { fontSize: 30, lineHeight: 32 },
+  tabsWrap: { paddingVertical: Spacing.xs },
   content: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['6xl'] },
   stepTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing.md },

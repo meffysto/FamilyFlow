@@ -29,6 +29,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -45,6 +46,7 @@ import {
 import { formatDateLocalized } from '../../lib/date-locale';
 import { DateInput } from '../../components/ui/DateInput';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { ReceiptReview } from '../../components/ReceiptReview';
 import { captureAndScanReceipt } from '../../lib/receipt-scanner';
 import type { ScanOutcome } from '../../lib/receipt-scanner';
@@ -93,7 +95,7 @@ type TabId = 'resume' | 'list' | 'evolution';
 
 export default function BudgetScreen() {
   const { t } = useTranslation();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const {
     budgetEntries,
@@ -497,47 +499,64 @@ export default function BudgetScreen() {
   }, [colors, t]);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* Header */}
-      <View ref={budgetHeaderRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('budget.title')}</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.configBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
-            onPress={handleOpenConfigModal}
-            activeOpacity={0.7}
-            accessibilityLabel="Configurer les plafonds du budget"
-            accessibilityRole="button"
-          >
-            <Text style={styles.configBtnIcon}>⚙️</Text>
-          </TouchableOpacity>
-          {aiConfigured && (
-            <TouchableOpacity
-              style={[styles.scanBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
-              onPress={handleScanReceipt}
-              activeOpacity={0.7}
-              disabled={scanning}
-              accessibilityLabel={scanning ? t('budget.scan.scanning') : t('budget.scan.button')}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: scanning }}
-            >
-              {scanning ? (
-                <ActivityIndicator size="small" color={primary} />
-              ) : (
-                <Text style={[styles.scanBtnText, { color: primary }]}>{t('budget.scan.ticket')}</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <View ref={budgetHeaderRef}>
+        <ScreenHeader
+          title={t('budget.title')}
+          actions={
+            <>
+              <TouchableOpacity
+                style={[styles.headerIconBtn, { backgroundColor: colors.card }]}
+                onPress={handleOpenConfigModal}
+                activeOpacity={0.7}
+                accessibilityLabel="Configurer les plafonds du budget"
+                accessibilityRole="button"
+              >
+                <Text style={styles.headerIconText}>⚙️</Text>
+              </TouchableOpacity>
+              {aiConfigured && (
+                <TouchableOpacity
+                  style={[styles.headerIconBtn, { backgroundColor: colors.card }]}
+                  onPress={handleScanReceipt}
+                  activeOpacity={0.7}
+                  disabled={scanning}
+                  accessibilityLabel={scanning ? t('budget.scan.scanning') : t('budget.scan.button')}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: scanning }}
+                >
+                  {scanning ? (
+                    <ActivityIndicator size="small" color={primary} />
+                  ) : (
+                    <Text style={styles.headerIconText}>📸</Text>
+                  )}
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={[styles.addBtn, { backgroundColor: primary }]}
-            onPress={() => setAddModalVisible(true)}
-            activeOpacity={0.7}
-            accessibilityLabel={t('budget.header.addExpenseA11y')}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('budget.header.addExpense')}</Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={[styles.addBtn, { backgroundColor: primary }]}
+                onPress={() => setAddModalVisible(true)}
+                activeOpacity={0.7}
+                accessibilityLabel={t('budget.header.addExpenseA11y')}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+              </TouchableOpacity>
+            </>
+          }
+          bottom={
+            <View style={styles.tabsWrap}>
+              <SegmentedControl
+                segments={[
+                  { id: 'resume', label: t('budget.tabs.summary') },
+                  { id: 'list', label: t('budget.tabs.expenses') },
+                  { id: 'evolution', label: t('budget.tabs.evolution') },
+                ]}
+                value={tab}
+                onChange={(id) => setTab(id as TabId)}
+              />
+            </View>
+          }
+        />
       </View>
 
       {/* Month navigation — masquée sur l'onglet évolution */}
@@ -552,19 +571,6 @@ export default function BudgetScreen() {
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Tabs */}
-      <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <SegmentedControl
-          segments={[
-            { id: 'resume', label: t('budget.tabs.summary') },
-            { id: 'list', label: t('budget.tabs.expenses') },
-            { id: 'evolution', label: t('budget.tabs.evolution') },
-          ]}
-          value={tab}
-          onChange={(id) => setTab(id as TabId)}
-        />
-      </View>
 
       {tab === 'resume' ? (
         <ScrollView
@@ -1009,43 +1015,27 @@ export default function BudgetScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Radius['lg+'],
-  },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  configBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius['2xl'],
-    borderWidth: 1,
+  headerIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  configBtnIcon: { fontSize: FontSize.body },
-  scanBtn: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius['2xl'],
-    borderWidth: 1,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  scanBtnText: { fontWeight: FontWeight.bold, fontSize: FontSize.sm },
+  headerIconText: { fontSize: FontSize.sm },
   addBtn: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-    borderRadius: Radius['2xl'],
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  addBtnText: { fontWeight: FontWeight.bold, fontSize: FontSize.sm },
+  addBtnText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    lineHeight: 18,
+  },
+  tabsWrap: { paddingVertical: Spacing.xs },
   monthNav: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1060,11 +1050,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   monthLabel: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
-  tabBar: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
   scroll: { flex: 1 },
   content: { padding: Spacing['2xl'], paddingBottom: 90 },
 
