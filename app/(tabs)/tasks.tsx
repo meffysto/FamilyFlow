@@ -646,6 +646,8 @@ export default function TasksScreen() {
               onPress={() => setOrderModalVisible(true)}
               style={[styles.orderBtn, { backgroundColor: colors.card }]}
               accessibilityLabel={t('tasks.a11y.reorder')}
+              accessibilityRole="button"
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             >
               <Text style={[styles.orderBtnText, { color: primary }]}>↕️</Text>
             </TouchableOpacity>
@@ -809,7 +811,11 @@ export default function TasksScreen() {
       {/* Add Task Modal */}
       <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAddModalVisible(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
-          <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
+          <View
+            style={[styles.dragHandle, { backgroundColor: colors.separator }]}
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
           <ModalHeader
             title={t('tasks.addModal.title')}
             onClose={() => setAddModalVisible(false)}
@@ -906,7 +912,11 @@ export default function TasksScreen() {
       {/* Edit Task Modal */}
       <Modal visible={editModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setEditModalVisible(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
-          <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
+          <View
+            style={[styles.dragHandle, { backgroundColor: colors.separator }]}
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
           <ModalHeader
             title={t('tasks.editModal.title')}
             onClose={() => setEditModalVisible(false)}
@@ -1032,6 +1042,9 @@ export default function TasksScreen() {
                       disabled={idx === 0}
                       style={[styles.orderArrowBtn, idx === 0 && { opacity: 0.3 }]}
                       accessibilityLabel={t('tasks.a11y.moveUp')}
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: idx === 0 }}
+                      hitSlop={{ top: 14, bottom: 14, left: 6, right: 6 }}
                     >
                       <Text style={[styles.orderArrow, { color: primary }]}>▲</Text>
                     </TouchableOpacity>
@@ -1040,6 +1053,9 @@ export default function TasksScreen() {
                       disabled={idx === sections.length - 1}
                       style={[styles.orderArrowBtn, idx === sections.length - 1 && { opacity: 0.3 }]}
                       accessibilityLabel={t('tasks.a11y.moveDown')}
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: idx === sections.length - 1 }}
+                      hitSlop={{ top: 14, bottom: 14, left: 6, right: 6 }}
                     >
                       <Text style={[styles.orderArrow, { color: primary }]}>▼</Text>
                     </TouchableOpacity>

@@ -1309,7 +1309,14 @@
       "month": "Month",
       "week": "Week"
     },
-    "weekLabel": "Week"
+    "weekLabel": "Week",
+    "a11y": {
+      "today": "Go to today",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "previousWeek": "Previous week",
+      "nextWeek": "Next week"
+    }
   },
   "dashboard": {
     "seeAll": "See all",
@@ -2685,7 +2692,12 @@
       "activeProfile": "Active profile: {{name}}. Tap to switch.",
       "search": "Search in vault",
       "sendRecap": "Send recap to grandparents",
-      "configureSections": "Configure sections"
+      "configureSections": "Configure sections",
+      "openPregnancy": "View pregnancy tracking for {{name}}",
+      "markBabyBorn": "Mark baby as born",
+      "upgradeAge": "Update tasks for {{name}}",
+      "dismissAgeUpgrade": "Postpone age upgrade",
+      "dismissPicker": "Dismiss profile picker"
     },
     "header": {
       "search": "Search",

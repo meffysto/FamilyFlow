@@ -945,6 +945,8 @@ export default function DashboardScreen() {
               style={[styles.welcomeBtn, { backgroundColor: primary }]}
               onPress={() => router.push('/(tabs)/settings')}
               activeOpacity={0.8}
+              accessibilityLabel={t('index.welcome.openSettings')}
+              accessibilityRole="button"
             >
               <Text style={[styles.welcomeBtnText, { color: colors.onPrimary }]}>{t('index.welcome.openSettings')}</Text>
             </TouchableOpacity>
@@ -962,7 +964,13 @@ export default function DashboardScreen() {
           const sizeCm = getSizeForWeek(weeksElapsed);
           const progress = Math.min(1, Math.max(0, daysElapsed / totalDays));
           return (
-            <TouchableOpacity key={p.id} onPress={() => router.push('/(tabs)/pregnancy' as any)} activeOpacity={0.8}>
+            <TouchableOpacity
+              key={p.id}
+              onPress={() => router.push('/(tabs)/pregnancy' as any)}
+              activeOpacity={0.8}
+              accessibilityLabel={t('index.a11y.openPregnancy', { name: p.name })}
+              accessibilityRole="button"
+            >
             <GlassView style={styles.pregnancyCard}>
               <View style={styles.pregnancyRow}>
                 <Text style={styles.pregnancyFruit}>{fruitEmoji}</Text>
@@ -989,6 +997,8 @@ export default function DashboardScreen() {
                         : Alert.alert(t('index.alert.babyBorn'), t('index.alert.babyBornMsg'));
                     }}
                     activeOpacity={0.7}
+                    accessibilityLabel={t('index.a11y.markBabyBorn')}
+                    accessibilityRole="button"
                   >
                     <Text style={[styles.pregnancyCtaText, { color: colors.onPrimary }]}>{t('index.pregnancy.born')}</Text>
                   </TouchableOpacity>
@@ -1026,6 +1036,8 @@ export default function DashboardScreen() {
                     );
                   }}
                   activeOpacity={0.7}
+                  accessibilityLabel={t('index.a11y.upgradeAge', { name: upgrade.childName })}
+                  accessibilityRole="button"
                 >
                   <Text style={[styles.ageUpgradeBtnText, { color: colors.onPrimary }]}>{t('index.ageUpgrade.update')}</Text>
                 </TouchableOpacity>
@@ -1033,6 +1045,8 @@ export default function DashboardScreen() {
                   style={styles.ageUpgradeDismiss}
                   onPress={() => dismissAgeUpgrade(upgrade.profileId)}
                   activeOpacity={0.7}
+                  accessibilityLabel={t('index.a11y.dismissAgeUpgrade')}
+                  accessibilityRole="button"
                 >
                   <Text style={[styles.ageUpgradeDismissText, { color: colors.textMuted }]}>{t('index.ageUpgrade.later')}</Text>
                 </TouchableOpacity>
@@ -1191,6 +1205,8 @@ export default function DashboardScreen() {
           style={[styles.pickerOverlay, { backgroundColor: colors.overlay }]}
           activeOpacity={1}
           onPress={() => setProfilePickerVisible(false)}
+          accessibilityLabel={t('index.a11y.dismissPicker')}
+          accessibilityRole="button"
         >
           <View style={[styles.pickerCard, { backgroundColor: colors.card }]}>
             <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('index.profilePicker.title')}</Text>
@@ -1203,6 +1219,9 @@ export default function DashboardScreen() {
                     { backgroundColor: colors.cardAlt },
                     p.id === activeProfile?.id && { borderColor: primary, borderWidth: 2 },
                   ]}
+                  accessibilityLabel={t('settings.profiles.profileA11y', { name: p.name })}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: p.id === activeProfile?.id }}
                   onPress={async () => {
                     const currentIsChild = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
                     const targetIsAdult = p.role === 'adulte';

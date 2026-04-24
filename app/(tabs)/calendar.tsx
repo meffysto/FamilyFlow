@@ -107,7 +107,12 @@ export default function CalendarScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{t('calendarScreen.title')}</Text>
-        <TouchableOpacity onPress={goToToday}>
+        <TouchableOpacity
+          onPress={goToToday}
+          accessibilityLabel={t('calendarScreen.a11y.today')}
+          accessibilityRole="button"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Text style={[styles.todayBtn, { color: primary }]}>{t('calendarScreen.today')}</Text>
         </TouchableOpacity>
       </View>
@@ -130,11 +135,23 @@ export default function CalendarScreen() {
           <>
             {/* Navigation mois */}
             <View style={styles.monthNav}>
-              <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.card }]} onPress={prevMonth}>
+              <TouchableOpacity
+                style={[styles.monthArrow, { backgroundColor: colors.card }]}
+                onPress={prevMonth}
+                accessibilityLabel={t('calendarScreen.a11y.previousMonth')}
+                accessibilityRole="button"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
                 <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
               </TouchableOpacity>
               <Text style={[styles.monthLabel, { color: colors.text }]}>{monthLabel}</Text>
-              <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.card }]} onPress={nextMonth}>
+              <TouchableOpacity
+                style={[styles.monthArrow, { backgroundColor: colors.card }]}
+                onPress={nextMonth}
+                accessibilityLabel={t('calendarScreen.a11y.nextMonth')}
+                accessibilityRole="button"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
                 <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
               </TouchableOpacity>
             </View>
@@ -167,6 +184,9 @@ export default function CalendarScreen() {
                     setCurrentMonth(d);
                   }
                 }}
+                accessibilityLabel={t('calendarScreen.a11y.previousWeek')}
+                accessibilityRole="button"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
                 <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
               </TouchableOpacity>
@@ -181,6 +201,9 @@ export default function CalendarScreen() {
                     setCurrentMonth(d);
                   }
                 }}
+                accessibilityLabel={t('calendarScreen.a11y.nextWeek')}
+                accessibilityRole="button"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
                 <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
               </TouchableOpacity>

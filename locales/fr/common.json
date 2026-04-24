@@ -1317,7 +1317,14 @@
       "month": "Mois",
       "week": "Semaine"
     },
-    "weekLabel": "Semaine"
+    "weekLabel": "Semaine",
+    "a11y": {
+      "today": "Aller à aujourd'hui",
+      "previousMonth": "Mois précédent",
+      "nextMonth": "Mois suivant",
+      "previousWeek": "Semaine précédente",
+      "nextWeek": "Semaine suivante"
+    }
   },
   "dashboard": {
     "seeAll": "Voir tout",
@@ -2693,7 +2700,12 @@
       "activeProfile": "Profil actif : {{name}}. Appuyer pour changer.",
       "search": "Rechercher dans le vault",
       "sendRecap": "Envoyer le récap aux grands-parents",
-      "configureSections": "Configurer les sections"
+      "configureSections": "Configurer les sections",
+      "openPregnancy": "Voir le suivi de grossesse de {{name}}",
+      "markBabyBorn": "Marquer le bébé comme né",
+      "upgradeAge": "Mettre à jour les tâches pour {{name}}",
+      "dismissAgeUpgrade": "Reporter la mise à jour d'âge",
+      "dismissPicker": "Fermer le sélecteur de profil"
     },
     "header": {
       "search": "Chercher",

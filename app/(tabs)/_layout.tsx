@@ -46,7 +46,7 @@ function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   }));
 
   return (
-    <View style={tabIconStyles.container}>
+    <View style={tabIconStyles.container} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Animated.View style={[tabIconStyles.pill, { backgroundColor: tint }, pillStyle]} />
       <Animated.Text style={[tabIconStyles.emoji, emojiStyle]}>{emoji}</Animated.Text>
     </View>
@@ -307,6 +307,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                   style={[pickerStyles.profileBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
                   onPress={() => handleProfileSelect(p.id)}
                   activeOpacity={0.7}
+                  accessibilityLabel={t('settings.profiles.profileA11y', { name: p.name })}
+                  accessibilityRole="button"
                 >
                   <CompanionAvatarMini
                     companion={p.companion}
@@ -376,7 +378,11 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
             />
 
             {/* Dots visuels */}
-            <View style={pinPromptStyles.dots}>
+            <View
+              style={pinPromptStyles.dots}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
               {Array.from({ length: 4 }).map((_, i) => (
                 <View
                   key={i}
@@ -399,7 +405,14 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
               <Text style={[pinPromptStyles.error, { color: colors.error }]}>{pinError}</Text>
             ) : null}
 
-            <TouchableOpacity onPress={cancelPinPrompt} activeOpacity={0.7} style={pinPromptStyles.cancelBtn}>
+            <TouchableOpacity
+              onPress={cancelPinPrompt}
+              activeOpacity={0.7}
+              style={pinPromptStyles.cancelBtn}
+              accessibilityLabel={t('common.cancel')}
+              accessibilityRole="button"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Text style={[pinPromptStyles.cancelText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </GlassView>
