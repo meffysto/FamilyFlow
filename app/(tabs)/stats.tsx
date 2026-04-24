@@ -27,7 +27,6 @@ import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
 } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -52,7 +51,6 @@ import { useTranslation } from 'react-i18next';
 
 export default function StatsScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const { primary, colors, isDark } = useThemeColors();
   const { tasks, meals, profiles, refresh, rdvs, moods, stock } = useVault();
   const scrollY = useSharedValue(0);
@@ -150,17 +148,6 @@ export default function StatsScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('statsScreen.title')}
-        leading={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            hitSlop={12}
-            accessibilityLabel={t('statsScreen.a11y.back')}
-            accessibilityRole="button"
-            style={styles.backBtnWrap}
-          >
-            <Text style={[styles.backBtn, { color: primary }]}>{t('statsScreen.backBtn')}</Text>
-          </TouchableOpacity>
-        }
         scrollY={scrollY}
       />
 
@@ -278,13 +265,6 @@ export default function StatsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  backBtnWrap: {
-    paddingRight: Spacing.sm,
-  },
-  backBtn: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-  },
   scroll: { flex: 1 },
   content: {
     padding: Spacing['2xl'],

@@ -6,7 +6,7 @@
  * Modal détail pour voir la progression + check-in
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -27,14 +27,16 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  useAnimatedScrollHandler,
 } from 'react-native-reanimated';
+import { StatusBar } from 'expo-status-bar';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Chip, SegmentedControl } from '../../components/ui';
+import { Chip, PillTabSwitcher, ScreenHeader, type PillTab } from '../../components/ui';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import {
@@ -697,7 +699,7 @@ const detailStyles = StyleSheet.create({
 // ─── Écran principal ───────────────────────────────────────────────────────
 
 export default function DefisScreen() {
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { profiles, defis, createDefi, checkInDefi, completeDefi, deleteDefi, activeProfile, refresh } = useVault();
@@ -716,6 +718,13 @@ export default function DefisScreen() {
 
   const [activeTab, setActiveTab] = useState<TabId>('actifs');
   const defisContentRef = useRef<View>(null);
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [activeTab, scrollY]);
   const [configModal, setConfigModal] = useState<{ visible: boolean; template?: DefiTemplate }>({ visible: false });
   const [detailDefiId, setDetailDefiId] = useState<string | null>(null);
   const detailDefi = detailDefiId ? visibleDefis.find((d) => d.id === detailDefiId) ?? null : null;
@@ -763,31 +772,38 @@ export default function DefisScreen() {
     return map;
   }, []);
 
-  const tabs: { id: TabId; label: string; count?: number }[] = [
-    { id: 'actifs', label: t('defis.tabs.active'), count: activeDefis.length || undefined },
+  const tabs: ReadonlyArray<PillTab<TabId>> = [
+    { id: 'actifs', label: t('defis.tabs.active'), badge: activeDefis.length || undefined },
     { id: 'templates', label: t('defis.tabs.templates') },
-    { id: 'historique', label: t('defis.tabs.history'), count: historyDefis.length || undefined },
+    { id: 'historique', label: t('defis.tabs.history'), badge: historyDefis.length || undefined },
   ];
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={defisContentRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('defis.screenTitle')}</Text>
-      </View>
-
-      {/* Onglets */}
-      <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <SegmentedControl
-          segments={tabs}
-          value={activeTab}
-          onChange={(id) => setActiveTab(id as TabId)}
-        />
-      </View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('defis.screenTitle')}
+        bottom={
+          <View ref={defisContentRef}>
+            <PillTabSwitcher<TabId>
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              primary={primary}
+              colors={colors}
+              marginHorizontal={0}
+            />
+          </View>
+        }
+        scrollY={scrollY}
+      />
 
       {/* Contenu */}
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {activeTab === 'actifs' && (
@@ -898,7 +914,7 @@ export default function DefisScreen() {
         )}
 
         <View style={styles.bottomPad} />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Modal config */}
       <Modal visible={configModal.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setConfigModal({ visible: false })}>
