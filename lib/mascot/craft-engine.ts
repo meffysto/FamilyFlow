@@ -431,6 +431,31 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     sellValue: 1600, // (600+120) x 2.2
     minTreeStage: 'arbre',
   },
+  // ── Expédition exclusive — mousse_etoile (pousse/arbuste) ──
+  {
+    id: 'omelette_etoilee',
+    labelKey: 'craft.recipe.omelette_etoilee',
+    emoji: '🌟',
+    ingredients: [
+      { itemId: 'mousse_etoile', quantity: 1, source: 'crop' },
+      { itemId: 'oeuf', quantity: 2, source: 'building' },
+    ],
+    xpBonus: 40,
+    sellValue: 1080, // (350+80+80) × 2.1
+    minTreeStage: 'pousse',
+  },
+  {
+    id: 'infusion_celeste',
+    labelKey: 'craft.recipe.infusion_celeste',
+    emoji: '✨',
+    ingredients: [
+      { itemId: 'mousse_etoile', quantity: 2, source: 'crop' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 70,
+    sellValue: 1960, // (350+350+120) × 2.4
+    minTreeStage: 'arbuste',
+  },
   // ── Expédition exclusive — fleur_lave (arbre) ──
   {
     id: 'huile_phenix',
