@@ -312,7 +312,7 @@ struct MascotteLiveActivity: Widget {
                             .interpolation(.none)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 40, height: 40)
+                            .frame(width: 52, height: 52)
                             .accessibilityLabel("Compagnon \(context.attributes.mascotteName)")
                     } else {
                         Text(headEmoji)
