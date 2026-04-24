@@ -2815,11 +2815,43 @@ export default function TreeScreen() {
           />
         ) : canStartQuest ? (
           <TouchableOpacity
-            onPress={() => setShowQuestPicker(true)}
-            style={{ padding: Spacing.sm, alignItems: 'center' }}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              setShowQuestPicker(true);
+            }}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Démarrer une nouvelle quête familiale"
+            style={{
+              marginHorizontal: Spacing['2xl'],
+              marginBottom: Spacing.md,
+              paddingVertical: Spacing.md,
+              paddingHorizontal: Spacing.lg,
+              borderRadius: Radius.lg,
+              borderWidth: 1.5,
+              borderStyle: 'dashed',
+              borderColor: colors.border,
+              backgroundColor: colors.cardAlt,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: Spacing.sm,
+            }}
           >
-            <Text style={{ color: primary, fontSize: 14 }}>
-              + Nouvelle quête familiale
+            <View style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: FontWeight.bold, lineHeight: 18 }}>
+                +
+              </Text>
+            </View>
+            <Text style={{ color: colors.text, fontSize: FontSize.sm, fontWeight: FontWeight.semibold }}>
+              Nouvelle quête familiale
             </Text>
           </TouchableOpacity>
         ) : null}
