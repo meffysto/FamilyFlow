@@ -56,6 +56,14 @@ export interface MascotteSnapshot {
   speechBubble?: string | null;
   /** Phase 42 — Buff XP actif (D-22). Override speechBubble par défaut en "Boosté ! +X%". */
   feedBuffActive?: { multiplier: number; expiresAtIso: string } | null;
+  /**
+   * Phase 260425-0qf — Espèce + stade du compagnon actif. Utilisés par
+   * startMascotte() pour écrire les 5 PNG de poses dans l'App Group.
+   * Si absents → fallback emoji côté widget. Optionnels pour rétro-compat
+   * avec les dev menus, mais REQUIS pour avoir le sprite pixel art.
+   */
+  companionSpecies?: CompanionSpecies | null;
+  companionStage?: CompanionStage | null;
 }
 
 let lastSnapshot: MascotteSnapshot | null = null;
@@ -156,6 +164,18 @@ export async function startMascotte(snap: MascotteSnapshot): Promise<boolean> {
   const effectivePose: CompanionMood =
     snap.pose ?? derivePoseFromStage(snap.stageOverride, snap.tasksDone, snap.tasksTotal);
   lastSnapshot = { ...snap, speechBubble: effectiveBubble, pose: effectivePose };
+  // Phase 260425-0qf — Écrit les 5 PNG dans l'App Group AVANT le start de la LA.
+  // Sans ça, le widget fallback sur l'emoji. Erreur non bloquante (LA démarre quand
+  // même avec emoji si le write échoue), mais loggée en DEV pour diagnostic.
+  if (snap.companionSpecies && snap.companionStage) {
+    try {
+      await writeCompanionPosesToAppGroup(snap.companionSpecies, snap.companionStage);
+    } catch (e) {
+      if (__DEV__) console.warn('[mascotte] writeCompanionPosesToAppGroup failed:', e);
+    }
+  } else if (__DEV__) {
+    console.warn('[mascotte] companionSpecies/companionStage manquants → fallback emoji');
+  }
   try {
     return await startMascotteActivity(
       snap.mascotteName,

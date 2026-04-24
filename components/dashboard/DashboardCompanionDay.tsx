@@ -25,7 +25,6 @@ import {
   stopMascotte,
   isMascotteActive,
   loadCompanionSpriteBase64,
-  writeCompanionPosesToAppGroup,
   derivePoseFromStage,
   patchMascotte,
   type MascotteStageOverride,
@@ -189,10 +188,9 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
           .then(b64 => { if (b64) setCompanionSprite(b64); })
           .catch(() => {});
       }
-      // Phase 260425-0qf : écriture des 5 PNG dans l'App Group AVANT le start LA
-      if (companion) {
-        await writeCompanionPosesToAppGroup(companion.activeSpecies, companionStage).catch(() => {});
-      }
+      // Phase 260425-0qf : write des 5 PNG délégué à startMascotte() via
+      // companionSpecies/companionStage dans le snap (garantit que TOUS les
+      // callers — y compris dev menus — écrivent correctement).
       // Dériver la pose narrative depuis le stage horaire actuel
       const initialPose = derivePoseFromStage(
         todayData.stage.key as MascotteStageOverride,
@@ -234,6 +232,8 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
         nextTaskId: todayData.nextTaskId,
         nextRdvText: todayData.nextRdvText,
         speechBubble,
+        companionSpecies: companion?.activeSpecies ?? null,
+        companionStage,
       });
       setCurrentBubble(speechBubble);
       if (!ok) {

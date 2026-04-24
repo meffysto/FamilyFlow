@@ -303,8 +303,7 @@ struct MascotteLiveActivity: Widget {
             let headEmoji = stage.emoji
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Text(headEmoji)
-                        .font(.system(size: 32))
+                    companionCompactView(state: context.state, fallbackEmoji: headEmoji)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .leading, spacing: 2) {

@@ -148,6 +148,8 @@ function RootLayout() {
           tasksTotal: 5,
           xpGained: 15,
           currentMeal: 'Pâtes carbo',
+          companionSpecies: 'chat',
+          companionStage: 'jeune',
         });
         console.log('[Mascotte] Started:', ok);
       });
@@ -165,6 +167,8 @@ function RootLayout() {
           xpGained: stageIdx * 12,
           currentMeal: 'Pâtes carbo',
           stageOverride: stage,
+          companionSpecies: 'chat' as const,
+          companionStage: 'jeune' as const,
         } as const;
         const active = await isMascotteActive();
         if (active) await refreshMascotte(snap);
