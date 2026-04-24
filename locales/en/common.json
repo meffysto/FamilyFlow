@@ -2054,6 +2054,7 @@
     "overdue": "past due",
     "weightChart": "📈 Weight progress",
     "weekByWeek": "📅 Week by week",
+    "longPressHint": "Long press on a week to edit",
     "addWeekTracking": "Add this week's tracking",
     "form": {
       "weight": "Weight (kg)",

@@ -2062,6 +2062,7 @@
     "overdue": "terme dépassé",
     "weightChart": "📈 Évolution du poids",
     "weekByWeek": "📅 Semaine par semaine",
+    "longPressHint": "Appui long sur une semaine pour modifier",
     "addWeekTracking": "Ajouter le suivi de cette semaine",
     "form": {
       "weight": "Poids (kg)",
