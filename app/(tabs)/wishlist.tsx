@@ -24,7 +24,15 @@ import {
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+
+const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 import { useLocalSearchParams } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -60,7 +68,11 @@ type OccasionFilter = 'tous' | '🎂' | '🎄';
 
 export default function WishlistScreen() {
   const { t } = useTranslation();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   const { showToast } = useToast();
   const {
     profiles,
@@ -249,81 +261,71 @@ export default function WishlistScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <View style={styles.headerTitleRow}>
-              <Text style={[styles.title, { color: colors.text }]}>
-                {isAdult ? t('wishlist.title') : t('wishlist.titleChild')}
-              </Text>
-              {totalToGive > 0 && (
-                <View style={[styles.countBadge, { backgroundColor: primary + '20' }]}>
-                  <Text style={[styles.countText, { color: primary }]}>{totalToGive}</Text>
-                </View>
-              )}
-            </View>
-            {isAdult && (totalToGive > 0 || totalBought > 0) && (
-              <View style={styles.statsRow}>
-                <Text style={[styles.statInline, { color: colors.textMuted }]}>
-                  {t('wishlist.toGive', { count: totalToGive })}
-                </Text>
-                {totalBought > 0 && (
-                  <>
-                    <Text style={[styles.statDot, { color: colors.separator }]}>·</Text>
-                    <Text style={[styles.statInline, { color: colors.success }]}>
-                      {t('wishlist.bought', { count: totalBought })} ✓
-                    </Text>
-                  </>
-                )}
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={isAdult ? t('wishlist.title') : t('wishlist.titleChild')}
+        subtitle={
+          isAdult && (totalToGive > 0 || totalBought > 0)
+            ? totalBought > 0
+              ? `${t('wishlist.toGive', { count: totalToGive })} · ${t('wishlist.bought', { count: totalBought })} ✓`
+              : t('wishlist.toGive', { count: totalToGive })
+            : undefined
+        }
+        actions={
+          <>
+            {totalToGive > 0 && (
+              <View style={[styles.countBadge, { backgroundColor: primary + '20' }]}>
+                <Text style={[styles.countText, { color: primary }]}>{totalToGive}</Text>
               </View>
             )}
+            <TouchableOpacity
+              style={[styles.addBtn, { backgroundColor: primary }]}
+              onPress={() => openEditor()}
+              activeOpacity={0.7}
+              accessibilityLabel={t('wishlist.a11y.addWish')}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('wishlist.addBtn')}</Text>
+            </TouchableOpacity>
+          </>
+        }
+        bottom={
+          <View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterScroll}
+            >
+              {personSegments.map((seg) => (
+                <Chip
+                  key={seg.id}
+                  label={seg.label}
+                  selected={personFilter === seg.id}
+                  onPress={() => setPersonFilter(seg.id)}
+                  size="sm"
+                />
+              ))}
+            </ScrollView>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={[styles.filterScroll, styles.filterScrollSecond]}
+            >
+              {occasionChips.map((chip) => (
+                <Chip
+                  key={chip.id}
+                  label={chip.label}
+                  selected={occasionFilter === chip.id}
+                  onPress={() => setOccasionFilter(chip.id)}
+                  size="sm"
+                />
+              ))}
+            </ScrollView>
           </View>
-          <TouchableOpacity
-            style={[styles.addBtn, { backgroundColor: primary }]}
-            onPress={() => openEditor()}
-            activeOpacity={0.7}
-            accessibilityLabel={t('wishlist.a11y.addWish')}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('wishlist.addBtn')}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Filtres — profils ligne 1, occasion ligne 2 */}
-      <View style={[styles.filterSection, { borderBottomColor: colors.border }]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterScroll}
-        >
-          {personSegments.map((seg) => (
-            <Chip
-              key={seg.id}
-              label={seg.label}
-              selected={personFilter === seg.id}
-              onPress={() => setPersonFilter(seg.id)}
-              size="sm"
-            />
-          ))}
-        </ScrollView>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.filterScroll, styles.filterScrollSecond]}
-        >
-          {occasionChips.map((chip) => (
-            <Chip
-              key={chip.id}
-              label={chip.label}
-              selected={occasionFilter === chip.id}
-              onPress={() => setOccasionFilter(chip.id)}
-              size="sm"
-            />
-          ))}
-        </ScrollView>
-      </View>
+        }
+        scrollY={scrollY}
+      />
 
       {sections.length === 0 ? (
         <EmptyState
@@ -334,13 +336,15 @@ export default function WishlistScreen() {
           onCta={() => openEditor()}
         />
       ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
+        <AnimatedSectionList
+          sections={sections as any}
+          keyExtractor={((item: any) => item.id) as any}
           contentContainerStyle={[styles.listContent, Layout.contentContainer]}
           stickySectionHeadersEnabled={false}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
-          renderSectionHeader={({ section }) => {
+          renderSectionHeader={({ section }: any) => {
             const stats = sectionStats.get(section.title);
             const bought = stats?.bought ?? 0;
             const total = stats?.total ?? 0;
@@ -366,13 +370,13 @@ export default function WishlistScreen() {
                 </View>
                 {!isAdult && (
                   <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
-                    {t('wishlist.sectionWish', { count: section.data.filter((d) => !d.bought).length })}
+                    {t('wishlist.sectionWish', { count: section.data.filter((d: WishlistItem) => !d.bought).length })}
                   </Text>
                 )}
               </View>
             );
           }}
-          renderItem={({ item }) => {
+          renderItem={({ item }: any) => {
             const icon = getWishIconStyle(item.occasion);
             return (
               <SwipeToDelete
@@ -576,45 +580,27 @@ export default function WishlistScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing['3xl'],
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.md,
-  },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.lg },
-  headerLeft: { flex: 1, gap: Spacing.xs },
-  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   countBadge: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xxs,
     borderRadius: Radius.full,
   },
   countText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  statsRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  statInline: { fontSize: FontSize.sm },
-  statDot: { fontSize: FontSize.sm },
   addBtn: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
     borderRadius: Radius.full,
   },
   addBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   // Filtres
-  filterSection: {
-    borderBottomWidth: 1,
-  },
   filterScroll: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingHorizontal: Spacing['2xl'],
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xs,
+    paddingVertical: Spacing.xxs,
   },
   filterScrollSecond: {
     paddingTop: Spacing.xs,
-    paddingBottom: Spacing.lg,
   },
   // Liste
   listContent: {
