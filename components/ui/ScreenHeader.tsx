@@ -57,9 +57,26 @@ export function ScreenHeader({ title, icon, subtitle, actions, bottom, scrollY }
     };
   });
 
+  const tintedAnimStyle = useAnimatedStyle(() => {
+    if (!scrollY) return { paddingTop: insets.top + 4, paddingBottom: 12 };
+    const y = scrollY.value;
+    return {
+      paddingTop: interpolate(y, [0, COLLAPSE_RANGE], [insets.top + 4, insets.top], Extrapolation.CLAMP),
+      paddingBottom: interpolate(y, [0, COLLAPSE_RANGE], [12, 6], Extrapolation.CLAMP),
+    };
+  });
+
+  const bottomAnimStyle = useAnimatedStyle(() => {
+    if (!scrollY) return {};
+    const y = scrollY.value;
+    return {
+      paddingTop: interpolate(y, [0, COLLAPSE_RANGE], [4, 0], Extrapolation.CLAMP),
+    };
+  });
+
   return (
     <View style={styles.wrap}>
-      <View style={[styles.tinted, { backgroundColor: tintedBg, paddingTop: insets.top + 4 }]}>
+      <Animated.View style={[styles.tinted, { backgroundColor: tintedBg }, tintedAnimStyle]}>
         <Animated.View style={[styles.header, titleAnimStyle]}>
           <View style={styles.titleRow}>
             {icon && <Text style={styles.icon}>{icon}</Text>}
@@ -76,8 +93,8 @@ export function ScreenHeader({ title, icon, subtitle, actions, bottom, scrollY }
           </View>
           {actions && <View style={styles.actions}>{actions}</View>}
         </Animated.View>
-        {bottom && <View style={styles.bottom}>{bottom}</View>}
-      </View>
+        {bottom && <Animated.View style={[styles.bottom, bottomAnimStyle]}>{bottom}</Animated.View>}
+      </Animated.View>
       {/* Fondu : la teinte se dissout dans le fond de page */}
       <LinearGradient
         pointerEvents="none"
@@ -93,7 +110,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tinted: {
-    paddingBottom: Spacing.md,
+    // paddingTop / paddingBottom gérés par tintedAnimStyle (collapse au scroll).
   },
   header: {
     flexDirection: 'row',
