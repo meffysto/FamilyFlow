@@ -66,6 +66,10 @@ export const Layout = {
     maxWidth: 700,
     alignSelf: 'center' as const,
   },
+  /** Hauteur de la tab bar (sans safe area) */
+  tabBarHeight: 70,
+  /** Offset vertical du FAB depuis le bas (au-dessus de la tab bar) */
+  fabBottomOffset: 90,
 } as const;
 
 export type SpacingKey = keyof typeof Spacing;

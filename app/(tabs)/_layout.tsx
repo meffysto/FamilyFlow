@@ -23,6 +23,7 @@ import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { GlassView } from '../../components/ui/GlassView';
 import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Layout } from '../../constants/spacing';
 
 const SPRING_CONFIG = { damping: 10, stiffness: 180 };
 
@@ -166,6 +167,16 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
     setPinError('');
   }, []);
 
+  // Auto-submit PIN une fois 4 chiffres saisis.
+  // Délai de 100ms pour que le 4ᵉ point s'affiche avant la vérification (UX).
+  useEffect(() => {
+    if (pinInput.length !== 4) return;
+    const timer = setTimeout(() => {
+      handlePinConfirm();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [pinInput, handlePinConfirm]);
+
   // FAB uniquement sur le dashboard (évite de bloquer les boutons des autres écrans)
   const activeTab = segments[segments.length - 1];
   const showFAB = !activeTab || activeTab === '(tabs)' || (activeTab as string) === 'index';
@@ -205,7 +216,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
               borderTopColor: colors.glassBorder,
               borderTopWidth: StyleSheet.hairlineWidth,
               paddingBottom: 6,
-              height: 70,
+              height: Layout.tabBarHeight,
               elevation: 0,
             },
           tabBarBackground: () => (
@@ -304,7 +315,10 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                 return (
                 <TouchableOpacity
                   key={p.id}
-                  style={[pickerStyles.profileBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
+                  style={[
+                    pickerStyles.profileBtn,
+                    { width: isTablet ? '30%' : '47%', backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
+                  ]}
                   onPress={() => handleProfileSelect(p.id)}
                   activeOpacity={0.7}
                   accessibilityLabel={t('settings.profiles.profileA11y', { name: p.name })}
@@ -349,23 +363,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                 setPinError('');
                 const cleaned = value.replace(/[^0-9]/g, '').slice(0, 4);
                 setPinInput(cleaned);
-                // Auto-submit quand 4 chiffres
-                if (cleaned.length === 4) {
-                  setTimeout(() => {
-                    const ok = verifyPin(cleaned);
-                    if (ok) {
-                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                      if (pendingProfileId) setActiveProfile(pendingProfileId);
-                      setPendingProfileId(null);
-                      setPinInput('');
-                      setPinError('');
-                    } else {
-                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                      setPinError(t('auth.pinIncorrect'));
-                      setPinInput('');
-                    }
-                  }, 100);
-                }
+                // Auto-submit géré par useEffect([pinInput])
               }}
               keyboardType="number-pad"
               maxLength={4}
@@ -473,7 +471,6 @@ const pickerStyles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 16,
     padding: 16,
-    width: 140,
     borderWidth: StyleSheet.hairlineWidth,
   },
   avatar: {

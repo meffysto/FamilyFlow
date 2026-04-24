@@ -630,6 +630,49 @@ export default function TasksScreen() {
     ? vacationTasks.length
     : activeTasks.length + completedTasks.length;
 
+  // ── SectionList renderers (memoized) ──
+  const keyExtractor = useCallback((item: Task) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: Task; index: number }) => (
+      <Animated.View entering={FadeInDown.delay(Math.min(index * 30, 300))}>
+        <SwipeToDelete
+          onDelete={() => handleDeleteTask(item)}
+          skipConfirm
+          disabled={item.completed}
+          hintId="tasks"
+        >
+          <TaskCard task={item} onToggle={handleTaskToggle} onSkip={handleTaskSkip} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
+        </SwipeToDelete>
+      </Animated.View>
+    ),
+    [handleDeleteTask, handleTaskToggle, handleTaskSkip, handleOpenEdit, isChildMode],
+  );
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: { title: string; data: Task[] } }) => (
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
+        <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.data.length}</Text>
+      </View>
+    ),
+    [colors.textMuted, colors.textFaint],
+  );
+
+  // ── Réorganisation des catégories (modal) ──
+  const moveSection = useCallback(
+    (idx: number, dir: -1 | 1) => {
+      const currentFiles = sections.map((s) => s.sourceFile);
+      const newIdx = idx + dir;
+      if (newIdx < 0 || newIdx >= currentFiles.length) return;
+      const reordered = [...currentFiles];
+      [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
+      saveSectionOrder(reordered);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    },
+    [sections, saveSectionOrder],
+  );
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
@@ -672,25 +715,9 @@ export default function TasksScreen() {
       {/* Task list */}
       <SectionList
         sections={sections}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <Animated.View entering={FadeInDown.delay(Math.min(index * 30, 300))}>
-            <SwipeToDelete
-              onDelete={() => handleDeleteTask(item)}
-              skipConfirm
-              disabled={item.completed}
-              hintId="tasks"
-            >
-              <TaskCard task={item} onToggle={handleTaskToggle} onSkip={handleTaskSkip} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
-            </SwipeToDelete>
-          </Animated.View>
-        )}
-        renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
-            <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.data.length}</Text>
-          </View>
-        )}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        renderSectionHeader={renderSectionHeader}
         ListHeaderComponent={
           <>
             <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
@@ -1019,18 +1046,7 @@ export default function TasksScreen() {
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.bg }]}>
           <ModalHeader title={t('tasks.orderModal.title')} onClose={() => setOrderModalVisible(false)} />
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
-            {(() => {
-              // Construire la liste ordonnée des sections actuelles
-              const currentFiles = sections.map(s => s.sourceFile);
-              const moveSection = (idx: number, dir: -1 | 1) => {
-                const newIdx = idx + dir;
-                if (newIdx < 0 || newIdx >= currentFiles.length) return;
-                const reordered = [...currentFiles];
-                [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
-                saveSectionOrder(reordered);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              };
-              return sections.map((sec, idx) => (
+            {sections.map((sec, idx) => (
                 <View key={sec.sourceFile} style={[styles.orderRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.orderRowInfo}>
                     <Text style={[styles.orderRowTitle, { color: colors.text }]}>{sec.title}</Text>
@@ -1061,8 +1077,7 @@ export default function TasksScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
-              ));
-            })()}
+              ))}
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -1193,7 +1208,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: Spacing['2xl'],
-    paddingBottom: 90,
+    paddingBottom: Layout.fabBottomOffset,
     gap: Spacing.xs,
   },
   sectionHeader: {
@@ -1228,7 +1243,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: Spacing['3xl'],
-    bottom: 90,
+    bottom: Layout.fabBottomOffset,
     width: 56,
     height: 56,
     borderRadius: 28,

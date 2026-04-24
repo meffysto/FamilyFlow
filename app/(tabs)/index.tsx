@@ -167,6 +167,14 @@ function getDefaultSections(t: (key: string) => string, role?: string): SectionP
   return allSections;
 }
 
+/** Sélectionne la clé i18n du salutation selon l'heure courante. */
+function getGreetingKey(hour: number): 'night' | 'morning' | 'afternoon' | 'evening' {
+  if (hour < 6) return 'night';
+  if (hour < 12) return 'morning';
+  if (hour < 18) return 'afternoon';
+  return 'evening';
+}
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
@@ -868,14 +876,9 @@ export default function DashboardScreen() {
             ]}>
               {isChildMode
                 ? t('index.greeting.child', { name: activeProfile?.name ?? '' })
-                : (() => {
-                    const h = new Date().getHours();
-                    const name = activeProfile?.name ? ` ${activeProfile.name}` : '';
-                    if (h < 6) return t('index.greeting.night', { name });
-                    if (h < 12) return t('index.greeting.morning', { name });
-                    if (h < 18) return t('index.greeting.afternoon', { name });
-                    return t('index.greeting.evening', { name });
-                  })()}
+                : t(`index.greeting.${getGreetingKey(new Date().getHours())}`, {
+                    name: activeProfile?.name ? ` ${activeProfile.name}` : '',
+                  })}
             </Text>
             <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
           </View>
