@@ -21,7 +21,8 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, interpolateColor, useDerivedValue } from 'react-native-reanimated';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, interpolateColor, useDerivedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
@@ -39,9 +40,9 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Shadows } from '../../constants/shadows';
 import { EmptyState } from '../../components/EmptyState';
 import { AllDoneOverlay } from '../../components/AllDoneOverlay';
 import { POINTS_PER_TASK, calculateLevel, levelProgress, xpForLevel } from '../../lib/gamification';
@@ -57,6 +58,8 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { HarvestBurst } from '../../components/mascot/HarvestBurst';
 import { CATEGORY_VARIANT } from '../../lib/semantic/effect-toasts';
 import type { HarvestBurstVariant } from '../../lib/semantic/effect-toasts';
+
+const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 
 interface FilterDef {
   id: string;
@@ -212,9 +215,15 @@ export default function TasksScreen() {
   const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission, contributeFamilyQuest } = useVault();
   const { addContribution } = useGarden();
   const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest, onContribution: addContribution });
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
   const { showToast, showRewardCard } = useToast();
   const { t } = useTranslation();
+
+  // Scroll partagé pour collapse du ScreenHeader
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   // Phase 41 (SPOR-10) — tooltip one-shot premier obtention Sporée (source : cadeau onboarding stade 3)
   const { hasSeenScreen } = useHelp();
   const [showSporeeTooltip, setShowSporeeTooltip] = useState(false);
@@ -245,6 +254,11 @@ export default function TasksScreen() {
   useEffect(() => {
     if (filterParam) setFilter(filterParam);
   }, [filterParam]);
+
+  // Reset scroll position when filter changes (évite collapse fantôme)
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [filter]);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -672,29 +686,84 @@ export default function TasksScreen() {
     [sections, saveSectionOrder],
   );
 
+  const remainingCount = totalCount - completedCount;
+  const showReorderBtn = !isVacationActive && sections.length > 1;
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* Header */}
-      <View ref={taskListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{isVacationActive ? t('tasks.vacationTitle', '☀️ Vacances') : t('tasks.screenTitle', '📋 Tâches')}</Text>
-        <View style={styles.headerRight}>
-          {(activeProfile?.role !== 'enfant') && (
-            <Text style={[styles.stats, { color: colors.textMuted }]}>
-              {t('tasks.remaining', { count: totalCount - completedCount })}
-            </Text>
-          )}
-          {!isVacationActive && sections.length > 1 && (
-            <TouchableOpacity
-              onPress={() => setOrderModalVisible(true)}
-              style={[styles.orderBtn, { backgroundColor: colors.card }]}
-              accessibilityLabel={t('tasks.a11y.reorder')}
-              accessibilityRole="button"
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Text style={[styles.orderBtnText, { color: primary }]}>↕️</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <View ref={taskListRef}>
+        <ScreenHeader
+          title={isVacationActive ? t('tasks.vacationTitle', '☀️ Vacances') : t('tasks.screenTitle', '📋 Tâches')}
+          subtitle={
+            !isVacationActive && activeProfile?.role !== 'enfant' && totalCount > 0
+              ? t('tasks.remaining', { count: remainingCount })
+              : undefined
+          }
+          actions={
+            <>
+              {showReorderBtn && (
+                <TouchableOpacity
+                  onPress={() => setOrderModalVisible(true)}
+                  style={[styles.headerIconBtn, { backgroundColor: colors.card }]}
+                  accessibilityLabel={t('tasks.a11y.reorder')}
+                  accessibilityRole="button"
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Text style={styles.headerIconText}>↕️</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.addBtn, { backgroundColor: primary }]}
+                onPress={() => {
+                  setNewTaskTarget(isVacationActive ? '02 - Maison/Vacances.md' : (targetFiles[0]?.value ?? ''));
+                  setAddModalVisible(true);
+                }}
+                activeOpacity={0.7}
+                accessibilityLabel={t('tasks.a11y.addTask')}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+              </TouchableOpacity>
+            </>
+          }
+          bottom={
+            <View>
+              <View style={styles.searchRow}>
+                <TextInput
+                  style={[styles.searchInput, { backgroundColor: colors.inputBg, color: colors.text }]}
+                  placeholder={t('tasks.search')}
+                  placeholderTextColor={colors.textFaint}
+                  value={search}
+                  onChangeText={setSearch}
+                  clearButtonMode="while-editing"
+                  accessibilityLabel={t('tasks.a11y.search')}
+                  accessibilityRole="search"
+                />
+              </View>
+              <View ref={filterRef}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.filterScroll}
+                  directionalLockEnabled
+                >
+                  {filters.map((f) => (
+                    <Chip
+                      key={f.id}
+                      label={f.label}
+                      emoji={f.emoji}
+                      selected={filter === f.id}
+                      onPress={() => setFilter(f.id)}
+                      size="sm"
+                    />
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          }
+          scrollY={scrollY}
+        />
       </View>
 
       {/* Météo des tâches (enfants uniquement) */}
@@ -712,43 +781,15 @@ export default function TasksScreen() {
       )}
 
       {/* Task list */}
-      <SectionList
-        sections={sections}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        renderSectionHeader={renderSectionHeader}
+      <AnimatedSectionList
+        sections={sections as any}
+        keyExtractor={keyExtractor as any}
+        renderItem={renderItem as any}
+        renderSectionHeader={renderSectionHeader as any}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         ListHeaderComponent={
           <>
-            <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
-              <TextInput
-                style={[styles.searchInput, { backgroundColor: colors.inputBg, color: colors.text }]}
-                placeholder={t('tasks.search')}
-                placeholderTextColor={colors.textFaint}
-                value={search}
-                onChangeText={setSearch}
-                clearButtonMode="while-editing"
-                accessibilityLabel={t('tasks.a11y.search')}
-                accessibilityRole="search"
-              />
-            </View>
-            <View ref={filterRef} style={[styles.filterWrapper, { backgroundColor: colors.bg }]}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterContainer}
-                directionalLockEnabled
-              >
-                {filters.map((f) => (
-                  <Chip
-                    key={f.id}
-                    label={f.label}
-                    emoji={f.emoji}
-                    selected={filter === f.id}
-                    onPress={() => setFilter(f.id)}
-                  />
-                ))}
-              </ScrollView>
-            </View>
             {sections.length > 0 && (
               <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
                 <Text style={[styles.deleteTipText, { color: colors.warningText }]}>{t('tasks.hint')}</Text>
@@ -819,20 +860,6 @@ export default function TasksScreen() {
         ) : null}
         stickySectionHeadersEnabled={false}
       />
-
-      {/* FAB */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: primary }]}
-        onPress={() => {
-          setNewTaskTarget(isVacationActive ? '02 - Maison/Vacances.md' : (targetFiles[0]?.value ?? ''));
-          setAddModalVisible(true);
-        }}
-        activeOpacity={0.8}
-        accessibilityLabel={t('tasks.a11y.addTask')}
-        accessibilityRole="button"
-      >
-        <Text style={[styles.fabText, { color: colors.onPrimary }]}>+</Text>
-      </TouchableOpacity>
 
       {/* Add Task Modal */}
       <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAddModalVisible(false)}>
@@ -1135,40 +1162,42 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing['2xl'],
-  },
-  title: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.heavy,
-  },
-  stats: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.medium,
-  },
-  searchContainer: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
+  searchRow: {
+    paddingVertical: Spacing.xxs,
   },
   searchInput: {
     borderRadius: Radius.base,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
     fontSize: FontSize.body,
   },
-  filterWrapper: {
-    height: 56,
-  },
-  filterContainer: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    gap: Spacing.md,
+  filterScroll: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 56,
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  headerIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIconText: {
+    fontSize: FontSize.sm,
+  },
+  addBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    lineHeight: 18,
   },
   vacationBanner: {
     paddingHorizontal: Spacing['2xl'],
@@ -1227,22 +1256,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
   },
-  fab: {
-    position: 'absolute',
-    right: Spacing['3xl'],
-    bottom: Layout.fabBottomOffset,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.lg,
-  },
-  fabText: {
-    fontSize: FontSize.icon,
-    fontWeight: FontWeight.bold,
-    lineHeight: 30,
-  },
   modalSafe: { flex: 1 },
   dragHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: Spacing.md, marginBottom: Spacing.xs },
   modalScroll: { flex: 1 },
@@ -1285,21 +1298,6 @@ const styles = StyleSheet.create({
   toggleCompletedText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  orderBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.base,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  orderBtnText: {
-    fontSize: FontSize.body,
   },
   orderRow: {
     flexDirection: 'row',
