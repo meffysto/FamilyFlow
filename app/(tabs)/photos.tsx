@@ -43,6 +43,7 @@ import { EmptyState } from '../../components/EmptyState';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedScrollHandler,
   withRepeat,
   withSequence,
   withTiming,
@@ -54,7 +55,8 @@ import { PhotoViewer } from '../../components/PhotoViewer';
 import { computePhotoStats } from '../../lib/photo-stats';
 import { PhotoGallery } from '../../components/PhotoGallery';
 import { MarkdownText } from '../../components/ui/MarkdownText';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { PillTabSwitcher, ScreenHeader, type PillTab } from '../../components/ui';
+import { StatusBar } from 'expo-status-bar';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { Layout } from '../../constants/spacing';
@@ -134,13 +136,20 @@ export default function PhotosScreen() {
   const { t, i18n } = useTranslation();
   const weekdayLabels = i18n.language === 'en' ? WEEKDAY_LABELS_EN : WEEKDAY_LABELS_FR;
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory, updateMemory } = useVault();
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number>(-1);
   const [activeTab, setActiveTab] = useState<TabMode>('photos');
+  useEffect(() => {
+    scrollY.value = 0;
+  }, [activeTab, scrollY]);
   const photoGridRef = useRef<View>(null);
   const [photoCacheBust, setPhotoCacheBust] = useState(0);
   const router = useRouter();
@@ -299,16 +308,17 @@ export default function PhotosScreen() {
   const TYPE_LABEL = { 'premières-fois': t('photosScreen.typeLabel.firstTime'), 'moment-fort': t('photosScreen.typeLabel.highlight') };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={photoGridRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          {activeTab === 'photos' ? t('photosScreen.title.photos') : t('photosScreen.title.souvenirs')}
-        </Text>
-        <View style={styles.headerRight}>
-          <Text style={[styles.stats, { color: colors.textMuted }]}>
-            {activeTab === 'photos' ? t('photosScreen.stats.photos', { count: photoCount }) : t('photosScreen.stats.souvenirs', { count: filteredMemories.length })}
-          </Text>
-          {activeTab === 'photos' && (
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={activeTab === 'photos' ? t('photosScreen.title.photos') : t('photosScreen.title.souvenirs')}
+        subtitle={
+          activeTab === 'photos'
+            ? t('photosScreen.stats.photos', { count: photoCount })
+            : t('photosScreen.stats.souvenirs', { count: filteredMemories.length })
+        }
+        actions={
+          activeTab === 'photos' ? (
             <>
               <TouchableOpacity
                 style={[styles.viewToggle, { backgroundColor: colors.cardAlt }]}
@@ -331,45 +341,46 @@ export default function PhotosScreen() {
                 </Text>
               </TouchableOpacity>
             </>
-          )}
-        </View>
-      </View>
-
-      {/* Barre unique : segment Photos/Souvenirs + enfants */}
-      <View style={[styles.navBlock, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
-        {/* Segment control */}
-        <SegmentedControl
-          segments={[
-            { id: 'photos', label: t('photosScreen.tabs.photos') },
-            { id: 'souvenirs', label: t('photosScreen.tabs.souvenirs') },
-          ]}
-          value={activeTab}
-          onChange={(t) => setActiveTab(t as TabMode)}
-        />
-
-        {/* Enfants */}
-        {enfants.length > 1 && (
-          <View style={styles.enfantRow}>
-            {enfants.map((e, idx) => (
-              <TouchableOpacity
-                key={e.id}
-                style={[
-                  styles.enfantChip,
-                  { borderColor: colors.borderLight },
-                  idx === selectedEnfantIdx && { borderColor: primary, backgroundColor: tint },
-                ]}
-                onPress={() => setSelectedEnfantIdx(idx)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.enfantEmoji}>{e.avatar}</Text>
-                <Text style={[styles.enfantLabel, { color: colors.textMuted }, idx === selectedEnfantIdx && { color: primary, fontWeight: FontWeight.bold }]}>
-                  {e.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          ) : undefined
+        }
+        bottom={
+          <View ref={photoGridRef}>
+            <PillTabSwitcher<TabMode>
+              tabs={[
+                { id: 'photos', label: t('photosScreen.tabs.photos') },
+                { id: 'souvenirs', label: t('photosScreen.tabs.souvenirs') },
+              ] as ReadonlyArray<PillTab<TabMode>>}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              primary={primary}
+              colors={colors}
+              marginHorizontal={0}
+            />
+            {enfants.length > 1 && (
+              <View style={styles.enfantRow}>
+                {enfants.map((e, idx) => (
+                  <TouchableOpacity
+                    key={e.id}
+                    style={[
+                      styles.enfantChip,
+                      { borderColor: colors.borderLight },
+                      idx === selectedEnfantIdx && { borderColor: primary, backgroundColor: tint },
+                    ]}
+                    onPress={() => setSelectedEnfantIdx(idx)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.enfantEmoji}>{e.avatar}</Text>
+                    <Text style={[styles.enfantLabel, { color: colors.textMuted }, idx === selectedEnfantIdx && { color: primary, fontWeight: FontWeight.bold }]}>
+                      {e.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
-        )}
-      </View>
+        }
+        scrollY={scrollY}
+      />
 
       {activeTab === 'photos' ? (
         <>
@@ -403,10 +414,12 @@ export default function PhotosScreen() {
           )}
 
           {viewMode === 'calendar' ? (
-            <ScrollView
+            <Animated.ScrollView
               style={styles.scroll}
               contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
               showsVerticalScrollIndicator={false}
+              onScroll={onScrollHandler}
+              scrollEventThrottle={16}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
               }
@@ -488,7 +501,7 @@ export default function PhotosScreen() {
                   );
                 })}
               </View>
-            </ScrollView>
+            </Animated.ScrollView>
           ) : (
             <PhotoGallery
               photoDates={selectedEnfant ? (photoDates[selectedEnfant.id] ?? []) : []}
@@ -518,10 +531,12 @@ export default function PhotosScreen() {
         </>
       ) : (
         <>
-          <ScrollView
+          <Animated.ScrollView
             style={styles.scroll}
             contentContainerStyle={[styles.souvenirContent, Layout.contentContainer]}
             showsVerticalScrollIndicator={false}
+            onScroll={onScrollHandler}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
             }
@@ -577,7 +592,7 @@ export default function PhotosScreen() {
                 </View>
               ))
             )}
-          </ScrollView>
+          </Animated.ScrollView>
 
           <TouchableOpacity
             style={[styles.fab, { backgroundColor: primary, shadowColor: primary, bottom: 70 + Math.max(insets.bottom, 20) }]}
