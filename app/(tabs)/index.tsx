@@ -875,7 +875,7 @@ export default function DashboardScreen() {
                 companion={activeProfile.companion}
                 level={activeProfile.level}
                 fallbackEmoji=""
-                size={36}
+                size={30}
               />
             )}
           </View>
@@ -1286,8 +1286,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingBottom: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 6,
   },
   headerFade: {
     position: 'absolute',
@@ -1300,16 +1300,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   avatarWithCompanion: {
     alignItems: 'center',
     gap: 2,
   },
   avatarBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1317,15 +1317,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: FontSize.caption,
+    fontSize: FontSize.code,
     fontWeight: FontWeight.medium,
   },
   greetingChild: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.body,
     fontWeight: FontWeight.heavy,
   },
   dateText: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     textTransform: 'capitalize',
   },
@@ -1337,16 +1337,16 @@ const styles = StyleSheet.create({
   headerBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
     gap: 1,
-    borderRadius: 10,
+    borderRadius: 9,
   },
   headerBtnIcon: {
-    fontSize: FontSize.title,
+    fontSize: FontSize.lg,
   },
   headerBtnLabel: {
-    fontSize: FontSize.code,
+    fontSize: 10,
     fontWeight: FontWeight.semibold,
     letterSpacing: 0.2,
   },
