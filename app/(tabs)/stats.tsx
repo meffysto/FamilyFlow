@@ -22,7 +22,13 @@ import {
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+} from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useStatsData } from '../../hooks/useStatsData';
@@ -47,8 +53,12 @@ import { useTranslation } from 'react-i18next';
 export default function StatsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { tasks, meals, profiles, refresh, rdvs, moods, stock } = useVault();
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   // Pas de copie inutile — tasks n'est jamais muté localement
   const allTasks = tasks;
@@ -136,18 +146,29 @@ export default function StatsScreen() {
   const hasData = totalTasks > 0 || calendarData.length > 0 || moodValid.length > 0 || mealData.length > 0 || stockData.length > 0 || sleepPerChild.length > 0;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={12} accessibilityLabel={t('statsScreen.a11y.back')} accessibilityRole="button">
-          <Text style={[styles.backBtn, { color: primary }]}>{t('statsScreen.backBtn')}</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>{t('statsScreen.title')}</Text>
-        <View style={{ width: 60 }} />
-      </View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('statsScreen.title')}
+        leading={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            hitSlop={12}
+            accessibilityLabel={t('statsScreen.a11y.back')}
+            accessibilityRole="button"
+            style={styles.backBtnWrap}
+          >
+            <Text style={[styles.backBtn, { color: primary }]}>{t('statsScreen.backBtn')}</Text>
+          </TouchableOpacity>
+        }
+        scrollY={scrollY}
+      />
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {isLoading && (
@@ -250,27 +271,19 @@ export default function StatsScreen() {
         )}
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
+  backBtnWrap: {
+    paddingRight: Spacing.sm,
   },
   backBtn: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-  },
-  title: {
-    fontSize: FontSize.heading,
-    fontWeight: FontWeight.heavy,
   },
   scroll: { flex: 1 },
   content: {

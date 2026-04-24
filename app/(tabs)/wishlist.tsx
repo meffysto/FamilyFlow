@@ -286,7 +286,7 @@ export default function WishlistScreen() {
               accessibilityLabel={t('wishlist.a11y.addWish')}
               accessibilityRole="button"
             >
-              <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('wishlist.addBtn')}</Text>
+              <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
             </TouchableOpacity>
           </>
         }
@@ -587,11 +587,17 @@ const styles = StyleSheet.create({
   },
   countText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   addBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    width: 32,
+    height: 32,
     borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  addBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  addBtnText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    lineHeight: 18,
+  },
   // Filtres
   filterScroll: {
     flexDirection: 'row',

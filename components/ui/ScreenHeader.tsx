@@ -27,6 +27,8 @@ interface ScreenHeaderProps {
   title: string;
   icon?: string;
   subtitle?: string;
+  /** Élément(s) à afficher à gauche du titre (bouton retour, par ex) */
+  leading?: React.ReactNode;
   /** Élément(s) à afficher à droite (boutons icône, badges…) */
   actions?: React.ReactNode;
   /** Élément(s) à afficher SOUS le titre, dans la même teinte (filtres, chips, segmented…) */
@@ -40,7 +42,7 @@ interface ScreenHeaderProps {
 
 const COLLAPSE_RANGE = 60;
 
-export function ScreenHeader({ title, icon, subtitle, actions, bottom, scrollY }: ScreenHeaderProps) {
+export function ScreenHeader({ title, icon, subtitle, leading, actions, bottom, scrollY }: ScreenHeaderProps) {
   const { primary, colors } = useThemeColors();
   const insets = useSafeAreaInsets();
 
@@ -79,6 +81,7 @@ export function ScreenHeader({ title, icon, subtitle, actions, bottom, scrollY }
       <Animated.View style={[styles.tinted, { backgroundColor: tintedBg }, tintedAnimStyle]}>
         <Animated.View style={[styles.header, titleAnimStyle]}>
           <View style={styles.titleRow}>
+            {leading}
             {icon && <Text style={styles.icon}>{icon}</Text>}
             <View style={styles.titleCol}>
               <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
