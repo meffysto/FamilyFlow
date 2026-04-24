@@ -14,12 +14,15 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { unreadForProfile } from '../../lib/lovenotes/selectors';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { PressableScale } from '../../components/ui';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -80,6 +83,11 @@ export default function MoreScreen() {
   const { primary, colors, isDark } = useThemeColors();
   const { t } = useTranslation();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   useEffect(() => {
@@ -170,35 +178,43 @@ export default function MoreScreen() {
   }, [router]);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* ── Header ── */}
-      <View ref={headerRef} style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('more.title')}</Text>
-        <PressableScale
-          onPress={toggleView}
-          style={[styles.viewToggle, {
-            backgroundColor: colors.card,
-            borderColor: colors.border,
-          }]}
-          scaleValue={0.93}
-        >
-          <View style={styles.viewToggleRow}>
-            <Text style={[
-              styles.viewToggleIcon,
-              { color: viewMode === 'list' ? primary : colors.textFaint },
-            ]}>☰</Text>
-            <View style={[styles.viewToggleSep, { backgroundColor: colors.border }]} />
-            <Text style={[
-              styles.viewToggleIcon,
-              { color: viewMode === 'grid' ? primary : colors.textFaint },
-            ]}>⊞</Text>
-          </View>
-        </PressableScale>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <View ref={headerRef}>
+        <ScreenHeader
+          title={t('more.title')}
+          subtitle={t('more.subtitle', { count: visibleItems.length, defaultValue: `${visibleItems.length} raccourcis` })}
+          actions={
+            <PressableScale
+              onPress={toggleView}
+              style={[styles.viewToggle, {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              }]}
+              scaleValue={0.93}
+            >
+              <View style={styles.viewToggleRow}>
+                <Text style={[
+                  styles.viewToggleIcon,
+                  { color: viewMode === 'list' ? primary : colors.textFaint },
+                ]}>☰</Text>
+                <View style={[styles.viewToggleSep, { backgroundColor: colors.border }]} />
+                <Text style={[
+                  styles.viewToggleIcon,
+                  { color: viewMode === 'grid' ? primary : colors.textFaint },
+                ]}>⊞</Text>
+              </View>
+            </PressableScale>
+          }
+          scrollY={scrollY}
+        />
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
         {(['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'] as const).map((cat) => {
@@ -299,7 +315,7 @@ export default function MoreScreen() {
             </View>
           );
         })}
-      </ScrollView>
+      </Animated.ScrollView>
 
       <ScreenGuide
         screenId="more"
@@ -314,25 +330,13 @@ export default function MoreScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
 
-  // ── Header ──
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['3xl'],
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing['2xl'],
-  },
-  title: {
-    fontSize: FontSize.display,
-    fontWeight: FontWeight.heavy,
-    letterSpacing: -0.5,
-  },
+  // ── Toggle vue liste/grille ──
   viewToggle: {
-    borderRadius: Radius.base,
+    height: 32,
+    borderRadius: Radius.full,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    justifyContent: 'center',
     ...Shadows.xs,
   },
   viewToggleRow: {
