@@ -18,7 +18,6 @@ import {
   TextInput,
   SectionList,
   Modal,
-  Platform,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -51,7 +50,7 @@ import {
   buildAllTasksDoneContext,
 } from '../../lib/notifications';
 import { useTranslation } from 'react-i18next';
-import { Task, CourseItem, Profile } from '../../lib/types';
+import { Task, Profile } from '../../lib/types';
 import { formatDateLocalized } from '../../lib/date-locale';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
@@ -1227,18 +1226,6 @@ const styles = StyleSheet.create({
   sectionCount: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: Spacing['6xl'],
-    gap: Spacing.xl,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-  },
-  emptyText: {
-    fontSize: FontSize.lg,
-    textAlign: 'center',
   },
   fab: {
     position: 'absolute',

@@ -44,7 +44,6 @@ import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
 import { isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
 import { GlobalSearch } from '../../components/GlobalSearch';
-import { getTheme } from '../../constants/themes';
 import { generateInsights, type InsightInput } from '../../lib/insights';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';

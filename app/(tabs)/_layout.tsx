@@ -23,7 +23,7 @@ import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { GlassView } from '../../components/ui/GlassView';
 import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Layout } from '../../constants/spacing';
+import { Layout, Spacing, Radius } from '../../constants/spacing';
 
 const SPRING_CONFIG = { damping: 10, stiffness: 180 };
 
@@ -444,7 +444,7 @@ const pickerStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: Spacing['4xl'],
   },
   card: {
     padding: 28,
@@ -455,27 +455,23 @@ const pickerStyles = StyleSheet.create({
   title: {
     fontSize: FontSize.display,
     fontWeight: FontWeight.heavy,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   subtitle: {
     fontSize: FontSize.body,
-    marginBottom: 24,
+    marginBottom: Spacing['4xl'],
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 12,
+    gap: Spacing.xl,
   },
   profileBtn: {
     alignItems: 'center',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: Radius.xl,
+    padding: Spacing['2xl'],
     borderWidth: StyleSheet.hairlineWidth,
-  },
-  avatar: {
-    fontSize: 40,
-    marginBottom: 8,
   },
   name: {
     fontSize: FontSize.lg,
@@ -483,15 +479,15 @@ const pickerStyles = StyleSheet.create({
   },
   role: {
     fontSize: FontSize.caption,
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
 });
 
 const pinPromptStyles = StyleSheet.create({
   input: {
     borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: 20,
+    borderRadius: Radius.base,
+    paddingHorizontal: Spacing['3xl'],
     paddingVertical: 14,
     fontSize: FontSize.icon,
     fontWeight: FontWeight.bold,
@@ -502,23 +498,23 @@ const pinPromptStyles = StyleSheet.create({
   dots: {
     flexDirection: 'row',
     gap: 14,
-    marginTop: 8,
+    marginTop: Spacing.md,
   },
   dot: {
     width: 12,
     height: 12,
-    borderRadius: 9999,
+    borderRadius: Radius.full,
     borderWidth: 2,
   },
   error: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
   cancelBtn: {
-    marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
   },
   cancelText: {
     fontSize: FontSize.body,
@@ -528,8 +524,8 @@ const pinPromptStyles = StyleSheet.create({
 
 const bannerStyles = StyleSheet.create({
   bar: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing['2xl'],
     borderTopWidth: 1,
     alignItems: 'center',
   },

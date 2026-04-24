@@ -25,7 +25,7 @@ import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn, isFuture } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
-import { todayJournalPath, journalPathForDate, generateJournalTemplate, todayAdultJournalPath, adultJournalPathForDate, generateAdultJournalTemplate } from '../../lib/parser';
+import { journalPathForDate, generateJournalTemplate, adultJournalPathForDate, generateAdultJournalTemplate } from '../../lib/parser';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { useThemeColors } from '../../contexts/ThemeContext';
