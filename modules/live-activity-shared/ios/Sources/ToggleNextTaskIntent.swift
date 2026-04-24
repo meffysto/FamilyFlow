@@ -63,7 +63,7 @@ public struct ToggleNextTaskIntent: LiveActivityIntent {
     /// taskId tapé. Incrémente `tasksDone`, clear `nextTaskText/Id` pour
     /// faire disparaître visuellement la ligne prochaine-tâche.
     ///
-    /// Les autres champs (xpGained, companionSpriteToken, etc.) sont
+    /// Les autres champs (xpGained, pose, etc.) sont
     /// intentionnellement préservés — ils seront mis à jour par l'app au
     /// prochain foreground avec les vraies valeurs gamification.
     private func applyOptimisticUpdate(taskId: String) async {
@@ -77,7 +77,7 @@ public struct ToggleNextTaskIntent: LiveActivityIntent {
                 xpGained: currentState.xpGained,
                 currentMeal: currentState.currentMeal,
                 stageOverride: currentState.stageOverride,
-                companionSpriteToken: currentState.companionSpriteToken,
+                pose: currentState.pose,
                 bonusText: currentState.bonusText,
                 nextTaskText: nil,
                 nextTaskId: nil,
