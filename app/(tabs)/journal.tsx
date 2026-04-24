@@ -21,6 +21,8 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn, isFuture } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -31,7 +33,8 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 import { MarkdownText } from '../../components/ui/MarkdownText';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { Layout } from '../../constants/spacing';
@@ -317,7 +320,7 @@ function MiniCalendar({
 export default function JournalScreen() {
   const { t } = useTranslation();
   const { vault, profiles, activeProfile } = useVault();
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
   const { enfant: enfantParam } = useLocalSearchParams<{ enfant?: string }>();
 
   const FIELD_CONFIGS = useMemo(() => getFieldConfigs(t), [t]);
@@ -353,6 +356,17 @@ export default function JournalScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
   const [availableDates, setAvailableDates] = useState<Set<string>>(new Set());
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  useEffect(() => { scrollY.value = 0; }, [selectedTab, selectedDate]);
+
+  const journalTabs: ReadonlyArray<PillTab<string>> = useMemo(() => [
+    ...(isAdultMode ? [{ id: 'adulte', label: `${activeProfile?.avatar ?? '📖'} ${t('journal.myJournal')}` }] : []),
+    ...enfants.map((e) => ({ id: e.id, label: `${e.avatar} ${e.name}` })),
+  ], [isAdultMode, activeProfile, enfants, t]);
 
   const isToday = isTodayFn(selectedDate);
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -829,20 +843,26 @@ export default function JournalScreen() {
   const fieldConfigs = FIELD_CONFIGS[modal.type];
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>📖 {t('journal.title')}</Text>
-      </View>
-
-      {/* Onglets enfant / adulte */}
-      <View ref={childSelectorRef} style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <SegmentedControl
-          segments={[
-            ...(isAdultMode ? [{ id: 'adulte', label: `${activeProfile?.avatar ?? '📖'} ${t('journal.myJournal')}` }] : []),
-            ...enfants.map((e) => ({ id: e.id, label: `${e.avatar} ${e.name}` })),
-          ]}
-          value={selectedTab}
-          onChange={setSelectedTab}
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <View ref={childSelectorRef}>
+        <ScreenHeader
+          title={`📖 ${t('journal.title')}`}
+          bottom={
+            journalTabs.length > 1 ? (
+              <View style={styles.tabsWrap}>
+                <PillTabSwitcher
+                  tabs={journalTabs}
+                  activeTab={selectedTab}
+                  onTabChange={setSelectedTab}
+                  primary={primary}
+                  colors={colors}
+                  marginHorizontal={0}
+                />
+              </View>
+            ) : undefined
+          }
+          scrollY={scrollY}
         />
       </View>
 
@@ -881,7 +901,12 @@ export default function JournalScreen() {
         />
       )}
 
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer]}>
+      <Animated.ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
+      >
         {!journalExists ? (
           <View style={styles.createContainer}>
             <Text style={styles.createEmoji}>{isViewingAdultTab ? (activeProfile?.avatar ?? '📖') : (selectedEnfant?.avatar ?? '👶')}</Text>
@@ -961,7 +986,7 @@ export default function JournalScreen() {
             {renderSections(journalContent)}
           </View>
         ) : null}
-      </ScrollView>
+      </Animated.ScrollView>
 
       <Modal
         visible={modal.visible}
@@ -1042,16 +1067,7 @@ const COL_WIDTH = 86;
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  title: { fontSize: FontSize.title, fontWeight: FontWeight.heavy },
-  tabs: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+  tabsWrap: { paddingVertical: 4 },
 
   dateNav: {
     flexDirection: 'row',

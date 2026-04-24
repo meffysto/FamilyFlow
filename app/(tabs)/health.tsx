@@ -19,8 +19,9 @@ import {
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -29,6 +30,8 @@ import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { ModalHeader, DateInput } from '../../components/ui';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { HealthRecord, GrowthEntry, VaccineEntry } from '../../lib/types';
 import { formatDateLocalized } from '../../lib/date-locale';
 import { GrowthChart } from '../../components/growth/GrowthChart';
@@ -338,7 +341,7 @@ function InfoEditor({
 
 export default function HealthScreen() {
   const { profiles, healthRecords, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry, refresh } = useVault();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();
 
@@ -346,6 +349,17 @@ export default function HealthScreen() {
   const [selectedEnfantId, setSelectedEnfantId] = useState<string>(enfants[0]?.id || '');
   const [activeTab, setActiveTab] = useState<TabId>('croissance');
   const { refreshing, onRefresh } = useRefresh(refresh);
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  useEffect(() => { scrollY.value = 0; }, [activeTab, selectedEnfantId]);
+
+  const tabs: ReadonlyArray<PillTab<TabId>> = useMemo(
+    () => TAB_IDS.map(tab => ({ id: tab.id, label: `${tab.emoji} ${t(tab.labelKey)}` })),
+    [t],
+  );
 
   // Sync selectedEnfantId quand les profils chargent
   useEffect(() => {
@@ -430,10 +444,9 @@ export default function HealthScreen() {
 
   if (enfants.length === 0) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.bg }]}>
-          <Text style={[styles.title, { color: colors.text }]}>{`🏥 ${t('health.screenTitle')}`}</Text>
-        </View>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+        <ScreenHeader title={`🏥 ${t('health.screenTitle')}`} />
         <EmptyState
           emoji="🏥"
           title={t('health.empty.noChildTitle')}
@@ -444,54 +457,53 @@ export default function HealthScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{`🏥 ${t('health.screenTitle')}`}</Text>
-      </View>
-
-      {/* Sélecteur enfant */}
-      {enfants.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.enfantPicker} contentContainerStyle={styles.enfantPickerContent}>
-          {enfants.map(e => (
-            <TouchableOpacity
-              key={e.id}
-              style={[
-                styles.enfantChip,
-                { backgroundColor: e.id === selectedEnfantId ? primary + '20' : colors.cardAlt, borderColor: e.id === selectedEnfantId ? primary : 'transparent' },
-              ]}
-              onPress={() => setSelectedEnfantId(e.id)}
-            >
-              <Text style={styles.enfantAvatar}>{e.avatar}</Text>
-              <Text style={[styles.enfantName, { color: e.id === selectedEnfantId ? primary : colors.textSub }]}>
-                {e.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
-
-      {/* Onglets */}
-      <View style={[styles.tabBar, { borderBottomColor: colors.border }]}>
-        {TAB_IDS.map(tab => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[
-              styles.tab,
-              activeTab === tab.id && { borderBottomColor: primary, borderBottomWidth: 2 },
-            ]}
-            onPress={() => setActiveTab(tab.id)}
-          >
-            <Text style={[styles.tabText, { color: activeTab === tab.id ? primary : colors.textMuted }]}>
-              {tab.emoji} {t(tab.labelKey)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={`🏥 ${t('health.screenTitle')}`}
+        subtitle={selectedEnfant ? `${selectedEnfant.avatar} ${selectedEnfant.name}` : undefined}
+        bottom={
+          <View>
+            {enfants.length > 1 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.enfantPickerContent}>
+                {enfants.map(e => (
+                  <TouchableOpacity
+                    key={e.id}
+                    style={[
+                      styles.enfantChip,
+                      { backgroundColor: e.id === selectedEnfantId ? primary + '20' : colors.cardAlt, borderColor: e.id === selectedEnfantId ? primary : 'transparent' },
+                    ]}
+                    onPress={() => setSelectedEnfantId(e.id)}
+                  >
+                    <Text style={styles.enfantAvatar}>{e.avatar}</Text>
+                    <Text style={[styles.enfantName, { color: e.id === selectedEnfantId ? primary : colors.textSub }]}>
+                      {e.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            <View style={styles.tabsWrap}>
+              <PillTabSwitcher
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                primary={primary}
+                colors={colors}
+                marginHorizontal={0}
+              />
+            </View>
+          </View>
+        }
+        scrollY={scrollY}
+      />
 
       {/* Contenu */}
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {activeTab === 'croissance' && (
@@ -503,7 +515,7 @@ export default function HealthScreen() {
         {activeTab === 'infos' && (
           <InfosTab record={record} onEdit={() => setShowInfoEditor(true)} />
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Modals */}
       <Modal visible={showGrowthForm} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowGrowthForm(false)}>
@@ -876,45 +888,27 @@ function InfosTab({ record, onEdit }: { record: HealthRecord; onEdit: () => void
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
-  },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   scroll: { flex: 1 },
   content: { paddingBottom: 90 },
 
   // Sélecteur enfant
-  enfantPicker: { maxHeight: 56 },
   enfantPickerContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    gap: Spacing.md,
+    paddingVertical: Spacing.xs,
+    gap: Spacing.sm,
     flexDirection: 'row',
   },
   enfantChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
     borderWidth: 1.5,
     gap: Spacing.sm,
   },
   enfantAvatar: { fontSize: FontSize.heading },
   enfantName: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
-
-  // Onglets
-  tabBar: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: Spacing.lg,
-    alignItems: 'center',
-  },
-  tabText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  tabsWrap: { paddingVertical: Spacing.xs },
 
   // Contenu tab
   tabContent: { padding: Spacing.xl, gap: Spacing.xl },
