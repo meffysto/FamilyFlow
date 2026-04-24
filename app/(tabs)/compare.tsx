@@ -11,13 +11,16 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   FlatList,
   Image,
   useWindowDimensions,
   Alert,
   ListRenderItemInfo,
 } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -26,6 +29,8 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 
 const THUMB_SIZE = 52;
 
@@ -40,7 +45,12 @@ export default function CompareScreen() {
   const router = useRouter();
   const { initialDate } = useLocalSearchParams<{ initialDate?: string }>();
   const { profiles, photoDates, getPhotoUri } = useVault();
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   // Hauteur zone photo dynamique selon la largeur ecran
   const photoAreaHeight = Math.min(screenWidth, 700) * 0.65;
@@ -207,16 +217,27 @@ export default function CompareScreen() {
 
   const thumbKeyExtractor = useCallback((item: DateThumb) => item.date, []);
 
+  const enfantTabs: ReadonlyArray<PillTab<string>> = useMemo(
+    () => enfants.map((e) => ({ id: e.id, label: `${e.avatar} ${e.name}` })),
+    [enfants],
+  );
+
+  const leadingBack = (
+    <Pressable
+      onPress={() => router.back()}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityLabel={t('compare.a11y.back')}
+      accessibilityRole="button"
+    >
+      <Text style={{ fontSize: 30, color: primary, lineHeight: 32 }}>‹</Text>
+    </Pressable>
+  );
+
   if (!selectedEnfant) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.bg }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel={t('compare.a11y.back')} accessibilityRole="button">
-            <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Comparer</Text>
-          <View style={styles.headerRight} />
-        </View>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+        <ScreenHeader title={t('compare.title')} leading={leadingBack} />
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
             Aucun enfant configuré
@@ -230,45 +251,30 @@ export default function CompareScreen() {
   const rightUri = rightDate ? getPhotoUriForDate(rightDate) : null;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel={t('compare.a11y.back')} accessibilityRole="button">
-          <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Comparer</Text>
-        <View style={styles.headerRight} />
-      </View>
-
-      {/* Sélecteur enfant */}
-      {enfants.length > 1 && (
-        <View style={[styles.enfantBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          {enfants.map((e, idx) => (
-            <TouchableOpacity
-              key={e.id}
-              style={[
-                styles.enfantTab,
-                { backgroundColor: colors.cardAlt },
-                idx === selectedEnfantIdx && { backgroundColor: tint },
-              ]}
-              onPress={() => setSelectedEnfantIdx(idx)}
-              activeOpacity={0.7}
-              accessibilityLabel={`${e.name}`}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: idx === selectedEnfantIdx }}
-            >
-              <Text style={styles.enfantEmoji}>{e.avatar}</Text>
-              <Text style={[
-                styles.enfantName,
-                { color: colors.textMuted },
-                idx === selectedEnfantIdx && { color: primary },
-              ]}>
-                {e.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('compare.title')}
+        leading={leadingBack}
+        scrollY={scrollY}
+        bottom={
+          enfants.length > 1 ? (
+            <View style={styles.tabsWrap}>
+              <PillTabSwitcher
+                tabs={enfantTabs}
+                activeTab={selectedEnfant.id}
+                onTabChange={(id) => {
+                  const idx = enfants.findIndex((e) => e.id === id);
+                  if (idx >= 0) setSelectedEnfantIdx(idx);
+                }}
+                primary={primary}
+                colors={colors}
+                marginHorizontal={0}
+              />
+            </View>
+          ) : undefined
+        }
+      />
 
       {dates.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -433,52 +439,8 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.xl,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backBtnText: {
-    fontSize: FontSize.display,
-    fontWeight: FontWeight.normal,
-  },
-  headerTitle: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.heavy,
-  },
-  headerRight: {
-    width: 36,
-  },
-  enfantBar: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-    gap: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  enfantTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius['2xl'],
-  },
-  enfantEmoji: {
-    fontSize: FontSize.lg,
-  },
-  enfantName: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
+  tabsWrap: {
+    paddingVertical: Spacing.xs,
   },
   content: {
     flex: 1,

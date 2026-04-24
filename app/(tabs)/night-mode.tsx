@@ -12,9 +12,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   StatusBar,
 } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
@@ -28,11 +28,14 @@ import {
 } from '../../lib/parser';
 import { useTranslation } from 'react-i18next';
 import TimerRing from '../../components/TimerRing';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { NightColors } from '../../constants/nightMode';
 import { isBabyProfile } from '../../lib/types';
 import type { FeedType, BreastSide, NightFeedEntry, Profile } from '../../lib/types';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Layout } from '../../constants/spacing';
+import { Layout, Radius, Spacing } from '../../constants/spacing';
+import { useThemeColors } from '../../contexts/ThemeContext';
 import {
   startFeedingActivity,
   updateFeedingActivity,
@@ -56,6 +59,12 @@ export default function NightModeScreen() {
   const params = useLocalSearchParams<{ startLive?: string }>();
   const { t } = useTranslation();
   const { profiles, vault } = useVault();
+  const { primary, colors } = useThemeColors();
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   // Bébés = profils bébé, triés du plus jeune au plus vieux
   const babies = useMemo(
@@ -278,11 +287,30 @@ export default function NightModeScreen() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Onglets bébés (uniquement si plusieurs)
+  const babyTabs: ReadonlyArray<PillTab<string>> = useMemo(
+    () => babies.map((b) => ({ id: b.id, label: `${b.avatar} ${b.name}` })),
+    [babies],
+  );
+
   // ─── Pas de bébé ───────────────────────────────────────────────────────────
   if (babies.length === 0) {
     return (
-      <SafeAreaView style={s.safe}>
+      <SafeAreaView style={[s.safe, { backgroundColor: colors.bg }]} edges={[]}>
         <StatusBar hidden />
+        <ScreenHeader
+          title={t('nightMode.title') || 'Mode nuit'}
+          actions={
+            <TouchableOpacity
+              style={[s.closeX, { backgroundColor: colors.card }]}
+              onPress={handleClose}
+              accessibilityLabel={t('nightMode.a11y.close')}
+              accessibilityRole="button"
+            >
+              <Text style={[s.closeXText, { color: colors.textSub }]}>✕</Text>
+            </TouchableOpacity>
+          }
+        />
         <View style={s.center}>
           <Text style={s.emptyText}>{t('nightMode.noBaby')}</Text>
           <TouchableOpacity style={s.closeBtn} onPress={handleClose} accessibilityLabel={t('nightMode.a11y.close')} accessibilityRole="button">
@@ -295,37 +323,47 @@ export default function NightModeScreen() {
 
   // ─── Rendu principal ───────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, { backgroundColor: NightColors.bg }]} edges={[]}>
       <StatusBar hidden />
 
-      {/* Header */}
-      <View style={s.header}>
-        {/* Sélecteur bébé si plusieurs */}
-        {babies.length > 1 ? (
-          <View style={s.babyPicker}>
-            {babies.map((b) => (
-              <TouchableOpacity
-                key={b.id}
-                style={[s.babyChip, selectedBaby?.id === b.id && s.babyChipActive]}
-                onPress={() => setSelectedBaby(b)}
-                accessibilityLabel={b.name}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: selectedBaby?.id === b.id }}
-              >
-                <Text style={s.babyChipText}>{b.avatar} {b.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <Text style={s.babyName}>{selectedBaby?.avatar} {selectedBaby?.name}</Text>
-        )}
+      <ScreenHeader
+        title={babies.length === 1 ? `${selectedBaby?.avatar ?? ''} ${selectedBaby?.name ?? ''}` : (t('nightMode.title') || 'Mode nuit')}
+        actions={
+          <TouchableOpacity
+            style={[s.closeX, { backgroundColor: colors.card }]}
+            onPress={handleClose}
+            accessibilityLabel={t('nightMode.a11y.close')}
+            accessibilityRole="button"
+          >
+            <Text style={[s.closeXText, { color: colors.textSub }]}>✕</Text>
+          </TouchableOpacity>
+        }
+        bottom={
+          babies.length > 1 && selectedBaby ? (
+            <View style={s.tabsWrap}>
+              <PillTabSwitcher
+                tabs={babyTabs}
+                activeTab={selectedBaby.id}
+                onTabChange={(id) => {
+                  const next = babies.find((b) => b.id === id);
+                  if (next) setSelectedBaby(next);
+                }}
+                primary={primary}
+                colors={colors}
+                marginHorizontal={0}
+              />
+            </View>
+          ) : undefined
+        }
+        scrollY={scrollY}
+      />
 
-        <TouchableOpacity style={s.closeX} onPress={handleClose} accessibilityLabel={t('nightMode.a11y.close')} accessibilityRole="button">
-          <Text style={s.closeXText}>✕</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={s.scroll} contentContainerStyle={[s.scrollContent, Layout.contentContainer]}>
+      <Animated.ScrollView
+        style={s.scroll}
+        contentContainerStyle={[s.scrollContent, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
+      >
         {/* ─── État IDLE : sélection type ─── */}
         {state === 'idle' && (
           <View style={s.idleContainer}>
@@ -475,7 +513,7 @@ export default function NightModeScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
@@ -512,50 +550,18 @@ const s = StyleSheet.create({
   },
 
   // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  babyName: {
-    color: NightColors.text,
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
-  },
-  babyPicker: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  babyChip: {
-    backgroundColor: NightColors.buttonBg,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: NightColors.border,
-  },
-  babyChipActive: {
-    borderColor: NightColors.accentBright,
-    backgroundColor: NightColors.accent + '40',
-  },
-  babyChipText: {
-    color: NightColors.text,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+  tabsWrap: {
+    paddingVertical: Spacing.xs,
   },
   closeX: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: NightColors.buttonBg,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeXText: {
-    color: NightColors.textSub,
-    fontSize: FontSize.title,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
 

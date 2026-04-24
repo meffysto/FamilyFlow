@@ -8,7 +8,7 @@
  * - Last 10 history entries
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,11 @@ import {
   RefreshControl,
   Modal,
 } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
@@ -48,14 +52,19 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { SeasonalBanner } from '../../components/SeasonalBanner';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Layout } from '../../constants/spacing';
+import { Layout, Spacing, Radius } from '../../constants/spacing';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
 
 export default function LootScreen() {
   const { profiles, gamiData, activeProfile, markLootUsed, notifPrefs, vault, refresh, isLoading } = useVault();
   const { openLootBox, isProcessing } = useGamification({ vault, notifPrefs });
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, tint, colors, isDark } = useThemeColors();
+
+  const scrollY = useSharedValue(0);
+  const onScrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   const { showToast } = useToast();
   const { t } = useTranslation();
 
@@ -64,7 +73,10 @@ export default function LootScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const lootSectionRef = useRef<View>(null);
   const [showDropRates, setShowDropRates] = useState(false);
-  const [activeTab, setActiveTab] = useState<'rewards' | 'collection' | 'mes-recompenses'>('rewards');
+  type LootTabId = 'rewards' | 'collection' | 'mes-recompenses';
+  const [activeTab, setActiveTab] = useState<LootTabId>('rewards');
+
+  useEffect(() => { scrollY.value = 0; }, [activeTab, scrollY]);
   const [rewardsSubTab, setRewardsSubTab] = useState<'to-use' | 'used'>('to-use');
   const activeEvent = getActiveEvent();
   const nextEvent = !activeEvent ? getNextEvent() : null;
@@ -129,32 +141,52 @@ export default function LootScreen() {
     (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
   );
 
+  const lootTabs: ReadonlyArray<PillTab<LootTabId>> = [
+    { id: 'rewards', label: t('loot.tabs.rewards') },
+    { id: 'collection', label: t('loot.tabs.collection') },
+    { id: 'mes-recompenses', label: 'Cadeaux', badge: toUseLoots.length },
+  ];
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <ScrollView
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <ScreenHeader
+        title={t('loot.title')}
+        subtitle={t('loot.subtitle')}
+        actions={
+          <TouchableOpacity
+            style={[styles.dropRatesBtn, { backgroundColor: colors.card }]}
+            onPress={() => setShowDropRates(true)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t('loot.a11y.showDropRates')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.dropRatesBtnText}>📊</Text>
+          </TouchableOpacity>
+        }
+        bottom={
+          <View style={styles.tabsWrap}>
+            <PillTabSwitcher
+              tabs={lootTabs}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              primary={primary}
+              colors={colors}
+              marginHorizontal={0}
+            />
+          </View>
+        }
+        scrollY={scrollY}
+      />
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, Layout.contentContainer]}
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
       >
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: primary }]}>
-          <View style={styles.headerTop}>
-            <Text style={[styles.title, { color: colors.onPrimary }]}>{t('loot.title')}</Text>
-            <TouchableOpacity
-              style={styles.dropRatesBtn}
-              onPress={() => setShowDropRates(true)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={t('loot.a11y.showDropRates')}
-              accessibilityRole="button"
-            >
-              <Text style={styles.dropRatesBtnText}>📊</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.subtitle, { color: tint }]}>{t('loot.subtitle')}</Text>
-        </View>
-
         {/* Bandeau événement saisonnier */}
         {activeEvent && (
           <SeasonalBanner
@@ -172,30 +204,6 @@ export default function LootScreen() {
             </Text>
           </View>
         )}
-
-        {/* Onglets internes */}
-        <View style={[styles.tabRow, { borderBottomColor: colors.borderLight }]}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'rewards' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-            onPress={() => setActiveTab('rewards')}
-          >
-            <Text style={[styles.tabText, { color: activeTab === 'rewards' ? primary : colors.textMuted }]}>{t('loot.tabs.rewards')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'collection' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-            onPress={() => setActiveTab('collection')}
-          >
-            <Text style={[styles.tabText, { color: activeTab === 'collection' ? primary : colors.textMuted }]}>{t('loot.tabs.collection')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'mes-recompenses' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
-            onPress={() => setActiveTab('mes-recompenses')}
-          >
-            <Text style={[styles.tabText, { color: activeTab === 'mes-recompenses' ? primary : colors.textMuted }]}>
-              {'Cadeaux'}{toUseLoots.length > 0 ? ` (${toUseLoots.length})` : ''}
-            </Text>
-          </TouchableOpacity>
-        </View>
 
         {activeTab === 'rewards' && <>
         {/* Loot box cards per profile */}
@@ -475,7 +483,7 @@ export default function LootScreen() {
         )}
 
         <View style={{ height: 32 }} />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Drop Rates Modal */}
       <Modal visible={showDropRates} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowDropRates(false)}>
@@ -618,28 +626,17 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 90 },
-  header: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    gap: 4,
+  tabsWrap: {
+    paddingVertical: Spacing.xs,
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   dropRatesBtn: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dropRatesBtnText: { fontSize: FontSize.heading },
-  subtitle: { fontSize: FontSize.sm },
+  dropRatesBtnText: { fontSize: FontSize.sm },
   nextEventCard: {
     borderRadius: 12,
     paddingHorizontal: 14,
@@ -648,23 +645,6 @@ const styles = StyleSheet.create({
   },
   nextEventText: {
     fontSize: FontSize.label,
-    textAlign: 'center',
-  },
-  tabRow: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    borderBottomWidth: 1,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
     textAlign: 'center',
   },
   section: { marginBottom: 16, gap: 8 },
