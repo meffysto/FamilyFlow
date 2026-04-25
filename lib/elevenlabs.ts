@@ -5,6 +5,7 @@
  * combinaison (histoire + voix) — évite un appel API inutile.
  */
 import * as FileSystem from 'expo-file-system/legacy';
+import type { StoryAudioAlignment } from './types';
 
 export interface ElevenLabsOptions {
   model?: string;
@@ -13,6 +14,9 @@ export interface ElevenLabsOptions {
 }
 
 type GenerateResult = { audioUri: string } | { error: string };
+type GenerateWithTimestampsResult =
+  | { audioUri: string; alignment: StoryAudioAlignment }
+  | { error: string };
 
 // Dossier persistant (non purgé par iOS contrairement à cacheDirectory)
 const AUDIO_DIR = `${FileSystem.documentDirectory}stories-audio/`;
@@ -160,6 +164,112 @@ async function performGenerateSpeech(
     });
 
     return { audioUri: uri };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Erreur ElevenLabs' };
+  }
+}
+
+// ─── V2.3 — Génération avec alignement caractère→timestamp ───────────────────
+// Endpoint `/v1/text-to-speech/{voice_id}/with-timestamps` retourne un JSON :
+//   { audio_base64: string, alignment: { characters: string[],
+//     character_start_times_seconds: number[], character_end_times_seconds: number[] } }
+// On persiste le MP3 (cache local) ET l'alignment (caller s'occupe du sidecar vault).
+
+const inflightTsRequests = new Map<string, Promise<GenerateWithTimestampsResult>>();
+
+/**
+ * Génère le MP3 d'une histoire AVEC alignement caractère→timestamp.
+ * - Si un MP3 existe déjà en cache : NE le réutilise PAS (on a besoin de l'alignment),
+ *   sauf si l'appelant a déjà l'alignment d'autre part. Le caller (StoryPlayer) gère
+ *   le shortcut "alignment déjà chargé depuis sidecar → pas de regen".
+ * - Cache MP3 écrit au même chemin que `generateSpeech` → cohabitation propre
+ *   (un appel ultérieur de `getCachedStoryAudio` retournera le bon MP3).
+ */
+export async function generateSpeechWithTimestamps(
+  apiKey: string,
+  text: string,
+  voiceId: string,
+  storyId: string,
+  options: ElevenLabsOptions = {},
+): Promise<GenerateWithTimestampsResult> {
+  const key = `${storyId}|${voiceId}|ts`;
+  const existing = inflightTsRequests.get(key);
+  if (existing) return existing;
+
+  const promise = performGenerateWithTimestamps(apiKey, text, voiceId, storyId, options)
+    .finally(() => { inflightTsRequests.delete(key); });
+
+  inflightTsRequests.set(key, promise);
+  return promise;
+}
+
+async function performGenerateWithTimestamps(
+  apiKey: string,
+  text: string,
+  voiceId: string,
+  storyId: string,
+  options: ElevenLabsOptions,
+): Promise<GenerateWithTimestampsResult> {
+  const {
+    model = 'eleven_multilingual_v2',
+    stability = 0.5,
+    similarityBoost = 0.75,
+  } = options;
+
+  try {
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          text,
+          model_id: model,
+          voice_settings: {
+            stability,
+            similarity_boost: similarityBoost,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const err = await response.text().catch(() => `${response.status}`);
+      return { error: `ElevenLabs ${response.status}: ${err}` };
+    }
+
+    const json: unknown = await response.json();
+    if (!json || typeof json !== 'object') {
+      return { error: 'ElevenLabs: réponse JSON invalide' };
+    }
+    const obj = json as Record<string, unknown>;
+    const audioB64 = typeof obj.audio_base64 === 'string' ? obj.audio_base64 : null;
+    const align = obj.alignment as Record<string, unknown> | undefined;
+
+    if (!audioB64) return { error: 'ElevenLabs: audio_base64 manquant' };
+    if (!align) return { error: 'ElevenLabs: alignment manquant' };
+
+    const chars = Array.isArray(align.characters) ? align.characters as string[] : null;
+    const starts = Array.isArray(align.character_start_times_seconds)
+      ? align.character_start_times_seconds as number[] : null;
+    const ends = Array.isArray(align.character_end_times_seconds)
+      ? align.character_end_times_seconds as number[] : null;
+
+    if (!chars || !starts || !ends || chars.length !== starts.length || chars.length !== ends.length) {
+      return { error: 'ElevenLabs: alignment mal formé' };
+    }
+
+    await ensureAudioDir();
+    const uri = storyAudioPath(storyId, voiceId);
+    await FileSystem.writeAsStringAsync(uri, audioB64, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    return { audioUri: uri, alignment: { chars, starts, ends } };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Erreur ElevenLabs' };
   }

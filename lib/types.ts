@@ -690,6 +690,8 @@ export type StoryVoiceEngine = 'expo-speech' | 'elevenlabs' | 'fish-audio';
 
 export type StoryLength = 'courte' | 'moyenne' | 'longue' | 'tres-longue';
 
+export type StoryAudioMode = 'off' | 'doux' | 'spectacle';
+
 export interface StoryVoiceConfig {
   engine: StoryVoiceEngine;
   language: 'fr' | 'en';
@@ -697,7 +699,10 @@ export interface StoryVoiceConfig {
   fishAudioReferenceId?: string; // reference_id voix Fish Audio (clonée ou prédéfinie)
   voiceIdentifier?: string; // identifier voix iOS Enhanced/Premium (expo-speech)
   length?: StoryLength;     // préférence taille histoire — défaut 'moyenne'
-  spectacle?: boolean;      // mode spectacle : ambiance sonore jouée sous la voix
+  /** @deprecated remplacé par audioMode — conservé pour compatibilité ascendante */
+  spectacle?: boolean;
+  audioMode?: StoryAudioMode;   // off = voix seule, doux = + ambiance, spectacle = + SFX
+  ambienceVolume?: number;      // 0..1 — défaut 0.4 (constante AMBIENCE_VOLUME)
 }
 
 export interface BedtimeStory {
@@ -712,10 +717,29 @@ export interface BedtimeStory {
   duree_lecture: number;
   voice: StoryVoiceConfig;
   length?: StoryLength; // taille choisie à la génération (pour info/réutilisation)
-  spectacle?: boolean;  // ambiance sonore active pour cette histoire
+  /** @deprecated remplacé par audioMode — conservé pour compatibilité ascendante */
+  spectacle?: boolean;
+  audioMode?: StoryAudioMode;   // off = voix seule, doux = + ambiance, spectacle = + SFX
+  ambienceVolume?: number;      // 0..1 — défaut 0.4
   script?: StoryScript; // V2 — screenplay structuré avec SFX (chargé depuis sidecar .script.json)
+  alignment?: StoryAudioAlignment; // V2.3 — alignement caractère→timestamp (sidecar .alignment.json)
   version: number;
   sourceFile: string;
+}
+
+/**
+ * V2.3 — Alignement caractère→timestamp retourné par ElevenLabs `/with-timestamps`.
+ * Stocké dans un sidecar `<storyId>.alignment.json` à côté du `.md`.
+ *
+ * - `chars[i]` : caractère i du texte tel qu'envoyé à l'API
+ * - `starts[i]` : timestamp début de prononciation en secondes
+ * - `ends[i]`   : timestamp fin de prononciation en secondes
+ * Les trois tableaux ont la même longueur.
+ */
+export interface StoryAudioAlignment {
+  chars: string[];
+  starts: number[];
+  ends: number[];
 }
 
 // ─── V2 : Script structuré (Mode Spectacle enrichi) ───────────────────────────
