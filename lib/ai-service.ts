@@ -1023,6 +1023,7 @@ RÈGLES STRICTES pour le script :
 - Place chaque bruitage IMMÉDIATEMENT APRÈS le beat de narration qui le déclenche dans le récit
 - Choisis des bruitages cohérents avec le texte (ex : "porte qui grince" → "door_creak_slow")
 - Ne mets pas deux bruitages côte à côte sans narration entre eux
+- Le tout DERNIER bruitage du script DOIT être "yawn_sleepy" placé en avant-dernière position (juste avant la dernière phrase de narration), pour finir l'histoire sur un signal d'endormissement subtil
 - Format obligatoire des beats :
   - { "kind": "narration", "text": "phrase de l'histoire" }
   - { "kind": "sfx", "tag": "tag_de_la_bibliotheque" }

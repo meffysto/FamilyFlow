@@ -3229,6 +3229,8 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
   if (story.voice.fishAudioReferenceId) lines.push(`fish_audio_ref: ${story.voice.fishAudioReferenceId}`);
   if (story.length) lines.push(`length: ${story.length}`);
   if (story.spectacle) lines.push(`spectacle: true`);
+  if (story.audioMode) lines.push(`audio_mode: ${story.audioMode}`);
+  if (typeof story.ambienceVolume === 'number') lines.push(`ambience_volume: ${story.ambienceVolume.toFixed(2)}`);
   lines.push(
     `version: ${story.version}`,
     '---',
@@ -3327,6 +3329,12 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
       voice: voiceConfig,
       length,
       spectacle: d.spectacle === 'true' ? true : undefined,
+      audioMode: (d.audio_mode === 'off' || d.audio_mode === 'doux' || d.audio_mode === 'spectacle')
+        ? d.audio_mode as import('./types').StoryAudioMode
+        : undefined,
+      ambienceVolume: d.ambience_volume && !Number.isNaN(Number(d.ambience_volume))
+        ? Math.max(0, Math.min(1, Number(d.ambience_volume)))
+        : undefined,
       version: Number(d.version || 1),
       sourceFile,
     };
