@@ -288,8 +288,20 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
   const sfxTriggeredRef = useRef<Set<number>>(new Set());
   // Dernier ratio de progression observé (sert à détecter un skip arrière)
   const lastProgressRatioRef = useRef<number>(0);
-  // État alignment : transmis depuis l'histoire OU récupéré post-génération
+  // État alignment : transmis depuis l'histoire OU récupéré post-génération.
+  // On sync sur le prop histoire.alignment au cas où le parent met à jour la story
+  // (ex. après saveStory + re-render avec sidecar chargé).
   const [alignment, setAlignment] = useState<StoryAudioAlignment | undefined>(histoire.alignment);
+  useEffect(() => {
+    if (histoire.alignment && histoire.alignment !== alignment) {
+      setAlignment(histoire.alignment);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [histoire.alignment]);
+  // Garde anti-boucle : on n'essaie JAMAIS deux fois de fetch l'alignment pour
+  // la même histoire dans cette session, même si le state alignment est reset
+  // entre les renders (ex. parent remount).
+  const alignmentFetchAttemptedRef = useRef<string | null>(null);
   const scriptForPlayer = spectacleActive ? histoire.script : undefined;
   const alignmentForPlayer = spectacleActive ? alignment : undefined;
 
@@ -386,9 +398,16 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
 
     if (alignmentForPlayer) {
       const aligned = computeSfxScheduleFromAlignment(scriptForPlayer, alignmentForPlayer);
+      if (__DEV__) {
+        console.log('[StoryPlayer] V2.3 attempt:', {
+          alignChars: alignmentForPlayer.chars.length,
+          scriptBeats: scriptForPlayer.beats.length,
+          alignedResult: aligned === null ? 'null' : `${aligned.length} entries`,
+        });
+      }
       if (aligned && aligned.length > 0) {
         schedule = aligned.map(s => ({ tag: s.tag, atSec: s.atSec }));
-        if (__DEV__) console.log('[StoryPlayer] SFX schedule (V2.3 word-level):', schedule.length);
+        if (__DEV__) console.log('[StoryPlayer] SFX schedule (V2.3 word-level):', schedule.length, schedule.map(s => `${s.tag}@${s.atSec?.toFixed(2)}s`));
       }
     }
 
@@ -613,14 +632,18 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         // V2.3 — si Spectacle + ElevenLabs + script + pas d'alignment, on doit
         // quand même récupérer l'alignment via /with-timestamps. Sinon le player
         // restera en V2.2 fallback pour une histoire censée avoir du word-level.
+        // Garde anti-boucle : un seul tentative par session/storyId.
+        const alreadyAttempted = alignmentFetchAttemptedRef.current === histoire.id;
         const needsAlignmentFetch = isElevenLabs
           && spectacleActive
           && !!histoire.script
-          && !alignment;
+          && !alignment
+          && !alreadyAttempted;
         if (__DEV__) {
-          console.log('[StoryPlayer] cache hit:', { needsAlignmentFetch });
+          console.log('[StoryPlayer] cache hit:', { needsAlignmentFetch, alreadyAttempted });
         }
         if (!needsAlignmentFetch) return;
+        alignmentFetchAttemptedRef.current = histoire.id;
         // sinon on continue vers runGeneration pour fetch l'alignment
       }
 
