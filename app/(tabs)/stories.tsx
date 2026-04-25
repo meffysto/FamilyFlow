@@ -1416,7 +1416,7 @@ export default function StoriesScreen() {
           const MODELS: { key: import('../../lib/types').ElevenLabsModel; label: string; hint: string }[] = [
             { key: 'eleven_multilingual_v2', label: 'Premium',   hint: 'Qualité max — coût standard' },
             { key: 'eleven_turbo_v2_5',      label: 'Économique', hint: '−50% crédits — qualité quasi identique' },
-            { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−80% crédits — voix plus mécanique' },
+            { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−50% crédits — voix plus mécanique' },
           ];
           return (
             <View style={{ marginTop: Spacing.lg }}>

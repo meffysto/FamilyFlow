@@ -710,7 +710,7 @@ export interface StoryVoiceConfig {
   spectacle?: boolean;
   audioMode?: StoryAudioMode;   // off = voix seule, doux = + ambiance, spectacle = + SFX
   ambienceVolume?: number;      // 0..1 — défaut 0.4 (constante AMBIENCE_VOLUME)
-  elevenLabsModel?: ElevenLabsModel; // défaut multilingual_v2 — turbo = -50% coût, flash = -80% (qualité ↓)
+  elevenLabsModel?: ElevenLabsModel; // défaut multilingual_v2 — turbo et flash = -50% coût (flash = qualité ↓)
 }
 
 export interface BedtimeStory {
