@@ -2058,7 +2058,7 @@ const styles = StyleSheet.create({
   bookCarousel: { marginHorizontal: -Spacing['2xl'], paddingVertical: 40, overflow: 'visible' },
   universCarouselWrapper: { flex: 1, justifyContent: 'center', paddingTop: 80 },
   stepTitleCentered: { textAlign: 'center', paddingHorizontal: Spacing['4xl'] },
-  universBottomBar: { paddingHorizontal: Spacing['4xl'], paddingBottom: Spacing['2xl'] },
+  universBottomBar: { paddingHorizontal: Spacing['4xl'], paddingBottom: 120 },
   primaryButtonFull: { width: '100%' },
   emptyState: { alignItems: 'center', paddingTop: Spacing['6xl'] },
   emptyEmoji: { fontSize: 64, marginBottom: Spacing['2xl'] },
