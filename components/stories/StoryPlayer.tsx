@@ -332,6 +332,9 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
 
     return () => {
       Speech.stop();
+      // Stoppe le waveform au démontage (nav back, etape change, etc.) sinon
+      // l'audio continue à jouer en arrière-plan.
+      waveformRef.current?.stopPlayer().catch(() => { /* non-critique */ });
     };
   }, []);
 
@@ -1015,7 +1018,28 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
             ))}
       </View>
 
-      <Pressable style={styles.finishButton} onPress={onFinish}>
+      <Pressable
+        style={styles.finishButton}
+        onPress={async () => {
+          // Stoppe tout audio en cours avant de remonter au parent : voix
+          // (waveform ou expo-speech), ambience, et SFX en pool.
+          try {
+            if (isApiVoice) {
+              await waveformRef.current?.stopPlayer().catch(() => {});
+            } else {
+              Speech.stop();
+            }
+          } catch { /* non-critique */ }
+          try {
+            const amb = ambienceSoundRef.current;
+            if (amb) await amb.stopAsync().catch(() => {});
+          } catch { /* non-critique */ }
+          try {
+            sfxPoolRef.current.forEach(s => s.stopAsync().catch(() => {}));
+          } catch { /* non-critique */ }
+          onFinish();
+        }}
+      >
         <Text style={[styles.finishText, { color: colors.textMuted }]}>
           Terminer l'histoire →
         </Text>
