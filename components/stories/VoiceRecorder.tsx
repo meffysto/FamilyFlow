@@ -1,5 +1,8 @@
 /**
- * VoiceRecorder.tsx — Composant d'enregistrement vocal (1-2 min) + upload ElevenLabs IVC.
+ * VoiceRecorder.tsx — Composant d'enregistrement vocal avec deux modes :
+ *  - 'instant' (IVC) : 1 prise de 1-2 min, upload immédiat → voice_id (compat existante)
+ *  - 'professional' (PVC) : multi-prises de ≥30s chacune, training asynchrone (~3-4h)
+ *
  * Waveform réelle pilotée par le metering dB d'Audio.Recording (expo-av),
  * avec 40 barres qui défilent de droite à gauche au rythme du son.
  */
@@ -8,7 +11,6 @@ import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator, Alert
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
 } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -16,7 +18,17 @@ import { ImpactFeedbackStyle } from 'expo-haptics';
 import { Audio } from 'expo-av';
 import { uploadVoiceClone } from '../../lib/voice-clone';
 import { uploadVoiceCloneFish } from '../../lib/voice-clone-fish';
-import { VOICE_CLONE_SCRIPT_FR, VOICE_CLONE_SCRIPT_EN } from '../../lib/stories';
+import {
+  createPvcVoice,
+  addPvcSamples,
+  triggerPvcTraining,
+} from '../../lib/voice-clone-pro';
+import {
+  VOICE_CLONE_SCRIPT_FR,
+  VOICE_CLONE_SCRIPT_EN,
+  VOICE_CLONE_SCRIPT_FR_PRO,
+  VOICE_CLONE_SCRIPT_EN_PRO,
+} from '../../lib/stories';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -28,12 +40,17 @@ const BAR_WIDTH = 5;
 const BAR_GAP = 3;
 const BAR_MIN_H = 4;
 const BAR_MAX_H = 48;
-// Plage dB exploitable : -60 dB (quasi-silence) → 0 dB (saturation)
 const METERING_FLOOR = -60;
 const METERING_CEIL = 0;
 
+// IVC : auto-stop à 2 min. PVC : auto-stop à 5 min par prise (l'utilisateur cumule plusieurs prises).
+const IVC_AUTO_STOP_MS = 120_000;
+const PVC_AUTO_STOP_MS = 300_000;
+const PVC_MIN_SAMPLE_SECS = 30;
+// Seuil recommandé d'audio total avant proposition de training (5 min — ElevenLabs recommande 30 min idéalement).
+const PVC_RECOMMENDED_TOTAL_SECS = 300;
+
 // ─── LiveBar ──────────────────────────────────────────────────────────────────
-// Lit sa hauteur dans un sharedValue tableau partagé par position.
 
 interface LiveBarProps {
   index: number;
@@ -66,19 +83,30 @@ const LiveBar = React.memo(function LiveBar({ index, amplitudes, color }: LiveBa
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
+export type VoiceCloneSource =
+  | 'elevenlabs-cloned'
+  | 'fish-audio-cloned'
+  | 'elevenlabs-cloned-pro';
+
 export interface VoiceRecorderProps {
-  /** Identifiant du profil — conserve pour coherence de signature (non utilise pour l'upload) */
   profileId: string;
-  /** Nom affiche comme label de voix dans le service TTS */
   profileName: string;
-  /** Callback appele a la fin de l'upload avec le voice_id et la source */
-  onVoiceReady: (voiceId: string, source: 'elevenlabs-cloned' | 'fish-audio-cloned') => void;
-  /** Cle API passee depuis le parent (pas de re-lecture SecureStore) */
+  /**
+   * Callback de fin :
+   *  - IVC : déclenché immédiatement après upload, voiceId utilisable.
+   *  - PVC : déclenché après triggerPvcTraining ; voiceId NON utilisable tant que
+   *          le training n'est pas terminé (~3-4h). status='training' à ce moment.
+   */
+  onVoiceReady: (
+    voiceId: string,
+    source: VoiceCloneSource,
+    status: 'ready' | 'training',
+  ) => void;
   apiKey: string;
-  /** Moteur de clonage — defaut 'elevenlabs' */
   cloneEngine?: 'elevenlabs' | 'fish-audio';
-  /** Langue du script de lecture a afficher — defaut 'fr' */
   language?: 'fr' | 'en';
+  /** 'instant' (défaut, comportement actuel) ou 'professional' (multi-prises + training). */
+  cloneType?: 'instant' | 'professional';
 }
 
 // ─── Options d'enregistrement avec metering activé ───────────────────────────
@@ -90,40 +118,60 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
 
 // ─── VoiceRecorder ───────────────────────────────────────────────────────────
 
-function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKey, cloneEngine = 'elevenlabs', language = 'fr' }: VoiceRecorderProps) {
+interface PvcTake {
+  uri: string;
+  durationSecs: number;
+  sampleId?: string; // rempli après upload effectif
+}
+
+function VoiceRecorder({
+  profileId: _profileId,
+  profileName,
+  onVoiceReady,
+  apiKey,
+  cloneEngine = 'elevenlabs',
+  language = 'fr',
+  cloneType = 'instant',
+}: VoiceRecorderProps) {
   const { primary, colors } = useThemeColors();
-  const script = language === 'en' ? VOICE_CLONE_SCRIPT_EN : VOICE_CLONE_SCRIPT_FR;
-  const instructionText = language === 'en'
-    ? 'Read the text below in a natural voice, as if telling your child a bedtime story. About 1 to 2 minutes, in a quiet place.'
-    : 'Lisez le texte ci-dessous à voix naturelle, comme si vous racontiez une histoire à votre enfant. Environ 1 à 2 minutes, dans un endroit calme.';
-  const [status, setStatus] = useState<'idle' | 'recording' | 'uploading' | 'done'>('idle');
+  const isPvc = cloneType === 'professional';
+
+  const script = isPvc
+    ? (language === 'en' ? VOICE_CLONE_SCRIPT_EN_PRO : VOICE_CLONE_SCRIPT_FR_PRO)
+    : (language === 'en' ? VOICE_CLONE_SCRIPT_EN : VOICE_CLONE_SCRIPT_FR);
+
+  const instructionText = isPvc
+    ? (language === 'en'
+        ? 'Pro cloning: record several takes (≥30s each) varying tone — calm, joyful, whispered, dialogue. Aim for 5+ minutes total. Training takes ~3-4 hours after you finish.'
+        : 'Clonage Pro : faites plusieurs prises (≥30s chacune) en variant le ton — calme, joyeux, chuchoté, dialogue. Visez 5 min minimum au total. L\'entraînement prend ~3-4h après validation.')
+    : (language === 'en'
+        ? 'Read the text below in a natural voice, as if telling your child a bedtime story. About 1 to 2 minutes, in a quiet place.'
+        : 'Lisez le texte ci-dessous à voix naturelle, comme si vous racontiez une histoire à votre enfant. Environ 1 à 2 minutes, dans un endroit calme.');
+
+  const [status, setStatus] = useState<'idle' | 'recording' | 'uploading' | 'training' | 'done'>('idle');
   const [elapsed, setElapsed] = useState(0);
+  // PVC : voice_id créé au 1er sample, conservé pour les suivants
+  const [pvcVoiceId, setPvcVoiceId] = useState<string | null>(null);
+  const [pvcTakes, setPvcTakes] = useState<PvcTake[]>([]);
 
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // SharedValue d'un tableau de BAR_COUNT valeurs normalisées (0-1)
   const amplitudes = useSharedValue<number[]>(new Array(BAR_COUNT).fill(0));
 
-  // Réinitialise la waveform à l'état de repos
   const resetAmplitudes = useCallback(() => {
     amplitudes.value = new Array(BAR_COUNT).fill(0);
   }, [amplitudes]);
 
-  // Callback appelé par Audio.Recording à chaque tick de metering.
-  // On convertit les dB (-160..0) en valeur normalisée (0..1) et on shift
-  // le tableau d'amplitudes à gauche en insérant la nouvelle valeur à droite.
   const onRecordingStatus = useCallback((s: Audio.RecordingStatus) => {
     if (!s.isRecording || s.metering == null) return;
     const clamped = Math.max(METERING_FLOOR, Math.min(METERING_CEIL, s.metering));
     const normalized = (clamped - METERING_FLOOR) / (METERING_CEIL - METERING_FLOOR);
-    // Petit boost visuel — le metering ElevenLabs reste souvent bas
     const boosted = Math.min(1, Math.pow(normalized, 0.5) * 1.1);
     amplitudes.value = [...amplitudes.value.slice(1), boosted];
   }, [amplitudes]);
 
-  // Nettoyage au démontage
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -132,9 +180,8 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
     };
   }, []);
 
-  const stopRecording = useCallback(async () => {
-    Haptics.impactAsync(ImpactFeedbackStyle.Medium);
-
+  // ── IVC : flow original (1 prise → upload → done) ────────────────────────
+  const stopRecordingIvc = useCallback(async () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (autoStopRef.current) { clearTimeout(autoStopRef.current); autoStopRef.current = null; }
 
@@ -153,7 +200,6 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
       return;
     }
 
-    // Restaurer le mode lecture audio
     try {
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
     } catch (e) {
@@ -165,15 +211,79 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
       const voiceId = cloneEngine === 'fish-audio'
         ? await uploadVoiceCloneFish(uri, profileName, apiKey)
         : await uploadVoiceClone(uri, profileName, apiKey);
-      const source = cloneEngine === 'fish-audio' ? 'fish-audio-cloned' as const : 'elevenlabs-cloned' as const;
+      const source: VoiceCloneSource = cloneEngine === 'fish-audio'
+        ? 'fish-audio-cloned'
+        : 'elevenlabs-cloned';
       setStatus('done');
-      onVoiceReady(voiceId, source);
+      onVoiceReady(voiceId, source, 'ready');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Impossible de creer la voix.';
       Alert.alert('Erreur upload', msg);
       setStatus('idle');
     }
   }, [profileName, apiKey, cloneEngine, onVoiceReady, resetAmplitudes]);
+
+  // ── PVC : stop d'une prise → upload sample → reste en mode "ajout" ─────────
+  const stopRecordingPvc = useCallback(async () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (autoStopRef.current) { clearTimeout(autoStopRef.current); autoStopRef.current = null; }
+
+    const elapsedSecs = elapsed;
+    try {
+      await recordingRef.current?.stopAndUnloadAsync();
+    } catch (e) {
+      if (__DEV__) console.warn('VoiceRecorder: stopAndUnloadAsync failed:', e);
+    }
+
+    const uri = recordingRef.current?.getURI();
+    resetAmplitudes();
+
+    try {
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+    } catch (e) {
+      if (__DEV__) console.warn('VoiceRecorder: restauration mode audio failed:', e);
+    }
+
+    if (!uri) {
+      Alert.alert('Erreur', 'Enregistrement introuvable.');
+      setStatus('idle');
+      return;
+    }
+
+    if (elapsedSecs < PVC_MIN_SAMPLE_SECS) {
+      Alert.alert(
+        'Prise trop courte',
+        `Chaque enregistrement doit durer au moins ${PVC_MIN_SAMPLE_SECS} secondes pour le clonage Pro. Recommencez la prise.`,
+      );
+      setStatus('idle');
+      return;
+    }
+
+    setStatus('uploading');
+    try {
+      // Crée la voix au premier sample, sinon réutilise le voice_id existant
+      let voiceId = pvcVoiceId;
+      if (!voiceId) {
+        voiceId = await createPvcVoice(apiKey, profileName, language);
+        setPvcVoiceId(voiceId);
+      }
+      const uploaded = await addPvcSamples(apiKey, voiceId, [uri]);
+      const sampleId = uploaded[0]?.sampleId;
+      const durationSecs = uploaded[0]?.durationSecs ?? elapsedSecs;
+      setPvcTakes(prev => [...prev, { uri, durationSecs, sampleId }]);
+      setStatus('idle');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Impossible d\'ajouter cette prise.';
+      Alert.alert('Erreur upload', msg);
+      setStatus('idle');
+    }
+  }, [elapsed, pvcVoiceId, apiKey, profileName, language, resetAmplitudes]);
+
+  const stopRecording = useCallback(async () => {
+    Haptics.impactAsync(ImpactFeedbackStyle.Medium);
+    if (isPvc) await stopRecordingPvc();
+    else await stopRecordingIvc();
+  }, [isPvc, stopRecordingIvc, stopRecordingPvc]);
 
   const startRecording = useCallback(async () => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
@@ -188,7 +298,6 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const recording = new Audio.Recording();
       await recording.prepareToRecordAsync(RECORDING_OPTIONS);
-      // Tick metering ~16/s — fréquence confortable pour la waveform
       recording.setProgressUpdateInterval(60);
       recording.setOnRecordingStatusUpdate(onRecordingStatus);
       await recording.startAsync();
@@ -198,35 +307,57 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
       setElapsed(0);
       resetAmplitudes();
       timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
-      autoStopRef.current = setTimeout(() => stopRecording(), 120_000);
+      autoStopRef.current = setTimeout(
+        () => stopRecording(),
+        isPvc ? PVC_AUTO_STOP_MS : IVC_AUTO_STOP_MS,
+      );
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       Alert.alert('Erreur micro', msg);
       setStatus('idle');
     }
-  }, [stopRecording, onRecordingStatus, resetAmplitudes]);
+  }, [stopRecording, onRecordingStatus, resetAmplitudes, isPvc]);
+
+  // PVC : valider → déclencher training
+  const finishPvc = useCallback(async () => {
+    if (!pvcVoiceId) return;
+    setStatus('training');
+    try {
+      await triggerPvcTraining(apiKey, pvcVoiceId);
+      onVoiceReady(pvcVoiceId, 'elevenlabs-cloned-pro', 'training');
+      setStatus('done');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Impossible de lancer l\'entraînement.';
+      Alert.alert('Erreur entraînement', msg);
+      setStatus('idle');
+    }
+  }, [pvcVoiceId, apiKey, onVoiceReady]);
 
   const handlePress = useCallback(() => {
     if (status === 'idle') startRecording();
     else if (status === 'recording') stopRecording();
   }, [status, startRecording, stopRecording]);
 
-  // Formatage du timer m:ss
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
   const timerLabel = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-  const isDisabled = status === 'uploading' || status === 'done';
+  const isDisabled = status === 'uploading' || status === 'training' || status === 'done';
   const barColor = status === 'recording' ? primary : colors.border;
+
+  // PVC stats
+  const pvcTotalSecs = pvcTakes.reduce((sum, t) => sum + t.durationSecs, 0);
+  const pvcTotalMin = Math.floor(pvcTotalSecs / 60);
+  const pvcTotalSec = Math.floor(pvcTotalSecs % 60);
+  const pvcReadyToTrain = pvcTakes.length > 0 && pvcTotalSecs >= PVC_MIN_SAMPLE_SECS;
+  const pvcRecommendedReached = pvcTotalSecs >= PVC_RECOMMENDED_TOTAL_SECS;
 
   return (
     <View style={styles.container}>
-      {/* Consignes de lecture */}
       <Text style={[styles.instruction, { color: colors.textMuted }]}>
         {instructionText}
       </Text>
 
-      {/* Script à lire — encadré défilable */}
       <ScrollView
         style={[styles.scriptBox, { backgroundColor: colors.card, borderColor: colors.border }]}
         contentContainerStyle={styles.scriptContent}
@@ -237,35 +368,55 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
         </Text>
       </ScrollView>
 
-      {/* Waveform : BAR_COUNT barres pilotées par le metering */}
       <View style={styles.waveformRow}>
         {Array.from({ length: BAR_COUNT }, (_, i) => (
           <LiveBar key={i} index={i} amplitudes={amplitudes} color={barColor} />
         ))}
       </View>
 
-      {/* Timer — visible uniquement pendant l'enregistrement */}
       {(status === 'recording') && (
         <Text style={[styles.timer, { color: colors.text }]}>{timerLabel}</Text>
       )}
 
-      {/* Zone de statut selon l'état */}
+      {/* PVC : récap des prises accumulées */}
+      {isPvc && pvcTakes.length > 0 && status !== 'done' && (
+        <View style={[styles.pvcRecap, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <Text style={[styles.pvcRecapTitle, { color: colors.text }]}>
+            {pvcTakes.length} prise{pvcTakes.length > 1 ? 's' : ''} — {pvcTotalMin}:{pvcTotalSec.toString().padStart(2, '0')} au total
+          </Text>
+          <Text style={[styles.pvcRecapSub, { color: colors.textMuted }]}>
+            {pvcRecommendedReached
+              ? '✓ Durée recommandée atteinte. Tu peux ajouter d\'autres prises ou lancer l\'entraînement.'
+              : `Encore ${Math.max(0, PVC_RECOMMENDED_TOTAL_SECS - Math.floor(pvcTotalSecs))}s pour atteindre les 5 min recommandées.`}
+          </Text>
+        </View>
+      )}
+
       {status === 'uploading' && (
         <View style={styles.uploadRow}>
           <ActivityIndicator color={primary} />
           <Text style={[styles.uploadText, { color: colors.textMuted }]}>
-            Création de votre voix…
+            {isPvc ? 'Envoi de la prise…' : 'Création de votre voix…'}
+          </Text>
+        </View>
+      )}
+
+      {status === 'training' && (
+        <View style={styles.uploadRow}>
+          <ActivityIndicator color={primary} />
+          <Text style={[styles.uploadText, { color: colors.textMuted }]}>
+            Lancement de l'entraînement…
           </Text>
         </View>
       )}
 
       {status === 'done' && (
         <Text style={[styles.doneText, { color: primary }]}>
-          ✓ Voix créée !
+          {isPvc ? '✓ Entraînement lancé ! La voix sera prête dans ~3-4h.' : '✓ Voix créée !'}
         </Text>
       )}
 
-      {/* Bouton principal */}
+      {/* Bouton principal d'enregistrement */}
       {(status === 'idle' || status === 'recording') && (
         <Pressable
           onPress={handlePress}
@@ -278,7 +429,23 @@ function VoiceRecorder({ profileId: _profileId, profileName, onVoiceReady, apiKe
           accessibilityLabel={status === 'idle' ? 'Commencer l\'enregistrement' : 'Arrêter l\'enregistrement'}
         >
           <Text style={styles.buttonText}>
-            {status === 'idle' ? '🎤 Commencer' : '⏹ Arrêter'}
+            {status === 'idle'
+              ? (isPvc && pvcTakes.length > 0 ? '🎤 Ajouter une prise' : '🎤 Commencer')
+              : '⏹ Arrêter'}
+          </Text>
+        </Pressable>
+      )}
+
+      {/* PVC : bouton "Lancer l'entraînement" (apparaît dès qu'on a au moins 1 prise valide) */}
+      {isPvc && status === 'idle' && pvcReadyToTrain && (
+        <Pressable
+          onPress={finishPvc}
+          style={[styles.button, { backgroundColor: colors.success ?? primary, marginTop: Spacing.md }]}
+          accessibilityRole="button"
+          accessibilityLabel="Lancer l'entraînement"
+        >
+          <Text style={styles.buttonText}>
+            {pvcRecommendedReached ? '✨ Lancer l\'entraînement' : '⚡ Lancer (durée minimale)'}
           </Text>
         </Pressable>
       )}
@@ -336,6 +503,7 @@ const styles = StyleSheet.create({
   doneText: {
     fontSize: FontSize.subtitle,
     fontWeight: FontWeight.bold,
+    textAlign: 'center',
   },
   button: {
     paddingHorizontal: Spacing['4xl'],
@@ -347,5 +515,20 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
     color: '#fff',
+  },
+  pvcRecap: {
+    width: '100%',
+    padding: Spacing.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    gap: Spacing.xs,
+  },
+  pvcRecapTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  pvcRecapSub: {
+    fontSize: FontSize.sm,
+    lineHeight: 18,
   },
 });

@@ -116,6 +116,44 @@ Le ruisseau gargouilla joyeusement, comme s'il avait compris. Soudain, un petit 
 
 Le renard inclina la tête, puis il se mit à trottiner sur un sentier étroit. Lila le suivit, émerveillée. Ensemble, ils traversèrent un champ de fleurs bleues et violettes, grimpèrent une petite colline, et découvrirent un lac immense où se reflétaient mille lumières scintillantes.`;
 
+// Script PVC FR — destiné au clonage Pro (Professional Voice Cloning).
+// Sections étiquetées : l'utilisateur peut faire plusieurs prises (5-10 prises de 1-3 min)
+// pour atteindre les 30 min recommandés par ElevenLabs. Variation tonale = clé.
+export const VOICE_CLONE_SCRIPT_FR_PRO = `[Ton calme — voix posée, comme si tu lisais doucement le soir]
+
+Le vent caressait les feuilles du grand chêne pendant que la nuit tombait sur la vallée. Au loin, on entendait seulement le bruit léger d'une rivière qui suivait son chemin entre les pierres. La petite Lila, blottie sous une couverture en laine, respirait doucement et regardait les étoiles à travers la fenêtre entrouverte.
+
+[Voix narrative — rythme naturel, comme un conte de fées]
+
+Il était une fois, dans un royaume oublié des cartes, un vieux jardinier qui parlait aux fleurs. Chaque matin, il leur racontait les nouvelles du village, et chaque soir, les pétales se refermaient en chuchotant des secrets que personne d'autre n'entendait jamais.
+
+[Exclamation joyeuse — voix forte, surprise heureuse]
+
+« Oh ! Regarde ! C'est une étoile filante ! Vite, fais un vœu ! Allez, ferme les yeux, dépêche-toi avant qu'elle ne disparaisse ! »
+
+[Chuchoté — voix très douce, comme un secret]
+
+Approche, je vais te dire quelque chose… Promets-moi de garder le secret. Au fond du jardin, sous la grande pierre plate, il y a une petite porte que seuls les enfants peuvent voir. Elle mène à un endroit où le temps s'arrête.
+
+[Dialogue — deux voix différentes, animation]
+
+« Qui es-tu ? demanda Lila en s'avançant prudemment.
+— Je suis le gardien des rêves perdus, répondit la silhouette dans la brume. Et toi, petite voyageuse, qu'est-ce qui t'amène ici à cette heure tardive ?
+— Je cherche mon doudou. Il s'est échappé pendant que je dormais.
+— Ah ! fit le gardien en souriant. Alors tu es au bon endroit. »
+
+[Voix grave — comme un grand méchant amusant]
+
+Je suis le grand ours des montagnes, et personne, tu m'entends, personne ne traverse mon pont sans répondre à mes trois questions ! Hahaha !
+
+[Voix aiguë et joyeuse — comme un personnage de fée]
+
+Bonjour bonjour ! Je suis Pétale, la fée des coquelicots ! Tu veux danser avec moi dans la prairie ? Il y a tellement de papillons aujourd'hui, on va bien s'amuser !
+
+[Ton apaisé — pour la fin de l'histoire]
+
+Et c'est ainsi que Lila s'endormit, le sourire aux lèvres, en tenant fermement son doudou retrouvé. Dehors, la lune veillait, et toutes les étoiles, une par une, lui souhaitaient bonne nuit.`;
+
 // English voice cloning script (~180 words, ~75-90 seconds at calm pace).
 // Designed for ElevenLabs IVC : bedtime story excerpt with varied phonetics
 // (soft and hard consonants, long/short vowels, dialogue for intonation).
@@ -128,6 +166,42 @@ The stream gurgled cheerfully, as if it had understood her. Suddenly, a small re
 "Don't be afraid," Lila said in a calm voice. "I'm only searching for the land of dreams."
 
 The fox tilted his head, then began trotting along a narrow path through the ferns. Lila followed, enchanted. Together, they crossed a field of blue and violet flowers, climbed a gentle hill, and discovered a vast lake where a thousand tiny lights were reflected on the water.`;
+
+// English PVC script — labelled sections for multi-take recording sessions.
+export const VOICE_CLONE_SCRIPT_EN_PRO = `[Calm tone — soft and slow, like reading at bedtime]
+
+The wind whispered through the leaves of the great oak as night settled over the valley. Far away, only the gentle sound of a river could be heard, finding its way between the stones. Little Lila, wrapped in a wool blanket, breathed softly and watched the stars through the open window.
+
+[Narrative voice — natural pace, fairy tale]
+
+Once upon a time, in a kingdom forgotten by mapmakers, there lived an old gardener who spoke to flowers. Every morning, he told them news from the village, and every evening, the petals closed up, whispering secrets no one else would ever hear.
+
+[Joyful exclamation — louder, happy surprise]
+
+"Oh! Look! A shooting star! Quick, make a wish! Come on, close your eyes, hurry before it disappears!"
+
+[Whispered — very soft, as a secret]
+
+Come closer, I want to tell you something… Promise you'll keep this secret. At the bottom of the garden, under the great flat stone, there is a tiny door only children can see. It leads to a place where time stands still.
+
+[Dialogue — two distinct voices]
+
+"Who are you?" Lila asked, stepping forward carefully.
+"I am the keeper of lost dreams," answered the figure in the mist. "And you, little traveler, what brings you here at this late hour?"
+"I'm looking for my teddy. He ran away while I was sleeping."
+"Ah!" said the keeper, smiling. "Then you've come to the right place."
+
+[Deep voice — playful big bad]
+
+I am the great mountain bear, and no one, do you hear me, no one crosses my bridge without answering my three questions! Hahaha!
+
+[High and cheerful — fairy character]
+
+Hello hello! I'm Petal, the poppy fairy! Want to dance with me in the meadow? There are so many butterflies today, we'll have such fun!
+
+[Soothing tone — story ending]
+
+And so Lila fell asleep, a smile on her lips, holding her teddy tight again. Outside, the moon kept watch, and all the stars, one by one, wished her goodnight.`;
 
 export function storyFileName(enfantName: string, date: string, universId: StoryUniverseId): string {
   return `${STORIES_DIR}/${enfantName}/${date}-${universId}.md`;
