@@ -1841,9 +1841,12 @@ export default function StoriesScreen() {
             fishAudioKey={fishAudioKey}
             onFinish={() => goTo({ etape: 'fin', histoire: currentStory })}
             onAlignmentReady={(alignment) => {
-              const updated = { ...currentStory, alignment };
-              setCurrentStory(updated);
-              saveStory(updated).catch(() => { /* non-critique — sidecar best-effort */ });
+              // On évite setCurrentStory ici : ça déclenche un re-render du
+              // parent qui remount le StoryPlayer (GenerationStep est un
+              // composant inline) et perd son état. Le player a son cache
+              // module-level, et saveStory persiste le sidecar pour les
+              // ouvertures futures de l'histoire.
+              saveStory({ ...currentStory, alignment }).catch(() => { /* non-critique */ });
             }}
           />
         )}

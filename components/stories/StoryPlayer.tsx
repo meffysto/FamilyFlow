@@ -213,6 +213,15 @@ const sparkleStyles = StyleSheet.create({
   },
 });
 
+// ─── Cache module-level survivant aux remounts ──────────────────────────────
+// Le parent (stories.tsx GenerationStep) est un composant inline qui se
+// re-crée à chaque render, ce qui force StoryPlayer à remount. Sans ce cache,
+// l'alignment fetché serait perdu et on re-payerait /with-timestamps en boucle.
+// Clé : storyId. Valeur : alignment (chars/starts/ends).
+const alignmentMemCache = new Map<string, StoryAudioAlignment>();
+// Garde anti-fetch qui survit au remount (set au premier essai par storyId).
+const alignmentFetchAttemptedSet = new Set<string>();
+
 // ─── Vitesses selon le moteur ────────────────────────────────────────────────
 // expo-speech: vitesses natives fines (0.8 / 1.0 / 1.2)
 // ElevenLabs Waveform: lib limitée à 1.0 / 1.5 / 2.0 (type PlaybackSpeedType)
@@ -289,19 +298,18 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
   // Dernier ratio de progression observé (sert à détecter un skip arrière)
   const lastProgressRatioRef = useRef<number>(0);
   // État alignment : transmis depuis l'histoire OU récupéré post-génération.
-  // On sync sur le prop histoire.alignment au cas où le parent met à jour la story
-  // (ex. après saveStory + re-render avec sidecar chargé).
-  const [alignment, setAlignment] = useState<StoryAudioAlignment | undefined>(histoire.alignment);
+  // Init multi-source : prop histoire > cache module-level (survit au remount).
+  const [alignment, setAlignment] = useState<StoryAudioAlignment | undefined>(
+    () => histoire.alignment ?? alignmentMemCache.get(histoire.id),
+  );
+  // Sync prop → state si le parent met à jour
   useEffect(() => {
     if (histoire.alignment && histoire.alignment !== alignment) {
       setAlignment(histoire.alignment);
+      alignmentMemCache.set(histoire.id, histoire.alignment);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [histoire.alignment]);
-  // Garde anti-boucle : on n'essaie JAMAIS deux fois de fetch l'alignment pour
-  // la même histoire dans cette session, même si le state alignment est reset
-  // entre les renders (ex. parent remount).
-  const alignmentFetchAttemptedRef = useRef<string | null>(null);
   const scriptForPlayer = spectacleActive ? histoire.script : undefined;
   const alignmentForPlayer = spectacleActive ? alignment : undefined;
 
@@ -590,6 +598,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         // V2.3 : alignment dispo → state local + remontée parent (persistance sidecar)
         const maybeAlignment = (result as { alignment?: StoryAudioAlignment }).alignment;
         if (maybeAlignment) {
+          alignmentMemCache.set(histoire.id, maybeAlignment); // survit au remount
           setAlignment(maybeAlignment);
           if (onAlignmentReady) {
             try { onAlignmentReady(maybeAlignment); } catch { /* non-critique */ }
@@ -632,18 +641,20 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         // V2.3 — si Spectacle + ElevenLabs + script + pas d'alignment, on doit
         // quand même récupérer l'alignment via /with-timestamps. Sinon le player
         // restera en V2.2 fallback pour une histoire censée avoir du word-level.
-        // Garde anti-boucle : un seul tentative par session/storyId.
-        const alreadyAttempted = alignmentFetchAttemptedRef.current === histoire.id;
+        // Garde anti-boucle : Set module-level qui survit aux remounts.
+        const alreadyAttempted = alignmentFetchAttemptedSet.has(histoire.id);
+        const hasMemAlignment = alignmentMemCache.has(histoire.id);
         const needsAlignmentFetch = isElevenLabs
           && spectacleActive
           && !!histoire.script
           && !alignment
+          && !hasMemAlignment
           && !alreadyAttempted;
         if (__DEV__) {
-          console.log('[StoryPlayer] cache hit:', { needsAlignmentFetch, alreadyAttempted });
+          console.log('[StoryPlayer] cache hit:', { needsAlignmentFetch, alreadyAttempted, hasMemAlignment });
         }
         if (!needsAlignmentFetch) return;
-        alignmentFetchAttemptedRef.current = histoire.id;
+        alignmentFetchAttemptedSet.add(histoire.id);
         // sinon on continue vers runGeneration pour fetch l'alignment
       }
 
