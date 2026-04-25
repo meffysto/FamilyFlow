@@ -153,6 +153,8 @@ function VoiceRecorder({
   // PVC : voice_id créé au 1er sample, conservé pour les suivants
   const [pvcVoiceId, setPvcVoiceId] = useState<string | null>(null);
   const [pvcTakes, setPvcTakes] = useState<PvcTake[]>([]);
+  // PVC option C : mode "lecture libre" (pas de script imposé) — utile pour les longues sessions
+  const [pvcFreeReading, setPvcFreeReading] = useState(false);
 
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -358,15 +360,68 @@ function VoiceRecorder({
         {instructionText}
       </Text>
 
-      <ScrollView
-        style={[styles.scriptBox, { backgroundColor: colors.card, borderColor: colors.border }]}
-        contentContainerStyle={styles.scriptContent}
-        showsVerticalScrollIndicator
-      >
-        <Text style={[styles.scriptText, { color: colors.text }]}>
-          {script}
-        </Text>
-      </ScrollView>
+      {/* PVC : toggle script vs lecture libre — caché pour IVC */}
+      {isPvc && status === 'idle' && (
+        <View style={styles.modeToggleRow}>
+          <Pressable
+            style={[
+              styles.modeToggleChip,
+              {
+                backgroundColor: !pvcFreeReading ? primary : colors.card,
+                borderColor: !pvcFreeReading ? primary : colors.border,
+              },
+            ]}
+            onPress={() => setPvcFreeReading(false)}
+          >
+            <Text style={[styles.modeToggleText, { color: !pvcFreeReading ? '#fff' : colors.text }]}>
+              📖 Suivre le script
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.modeToggleChip,
+              {
+                backgroundColor: pvcFreeReading ? primary : colors.card,
+                borderColor: pvcFreeReading ? primary : colors.border,
+              },
+            ]}
+            onPress={() => setPvcFreeReading(true)}
+          >
+            <Text style={[styles.modeToggleText, { color: pvcFreeReading ? '#fff' : colors.text }]}>
+              🎙 Lecture libre
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Script ou consignes lecture libre */}
+      {(!isPvc || !pvcFreeReading) ? (
+        <ScrollView
+          style={[styles.scriptBox, { backgroundColor: colors.card, borderColor: colors.border }]}
+          contentContainerStyle={styles.scriptContent}
+          showsVerticalScrollIndicator
+        >
+          <Text style={[styles.scriptText, { color: colors.text }]}>
+            {script}
+          </Text>
+        </ScrollView>
+      ) : (
+        <View style={[styles.scriptBox, styles.freeReadingBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.freeReadingTitle, { color: colors.text }]}>
+            🎙 Lecture libre
+          </Text>
+          <Text style={[styles.freeReadingText, { color: colors.textMuted }]}>
+            {language === 'en'
+              ? 'Read anything you like — a favorite book, a story you remember, even improvise. Vary your tone across takes:'
+              : 'Lis ce que tu veux — un livre que tu aimes, une histoire que tu connais par cœur, ou improvise. Varie le ton entre les prises :'}
+          </Text>
+          <Text style={[styles.freeReadingText, { color: colors.textMuted }]}>
+            {language === 'en'
+              ? '• Calm reading — like bedtime\n• Joyful, with exclamations\n• Whispered, like a secret\n• Dialogues with different character voices\n• Suspense, with pauses\n\nEach take must be at least 30 seconds. Aim for 5+ minutes total across multiple takes.'
+              : '• Lecture calme — comme au coucher\n• Joyeuse, avec des exclamations\n• Chuchotée, comme un secret\n• Dialogues avec voix de personnages différents\n• Suspense, avec des pauses\n\nChaque prise doit durer au moins 30 secondes. Vise 5 min minimum au total sur plusieurs prises.'}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.waveformRow}>
         {Array.from({ length: BAR_COUNT }, (_, i) => (
@@ -530,5 +585,34 @@ const styles = StyleSheet.create({
   pvcRecapSub: {
     fontSize: FontSize.sm,
     lineHeight: 18,
+  },
+  modeToggleRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    width: '100%',
+  },
+  modeToggleChip: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  modeToggleText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  freeReadingBox: {
+    padding: Spacing['2xl'],
+    gap: Spacing.lg,
+  },
+  freeReadingTitle: {
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.bold,
+  },
+  freeReadingText: {
+    fontSize: FontSize.body,
+    lineHeight: 22,
   },
 });
