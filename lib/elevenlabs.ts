@@ -85,6 +85,37 @@ async function ensureAudioDir(): Promise<void> {
 // Clé : storyId + voiceId. Nettoyée à la fin de chaque requête.
 const inflightRequests = new Map<string, Promise<GenerateResult>>();
 
+// ─── Rate-limit local : protège ton quota ElevenLabs si l'app boucle ───
+// Max RATE_LIMIT_MAX appels TTS (avec ou sans timestamps) par storyId
+// dans une fenêtre glissante de RATE_LIMIT_WINDOW_MS.
+// Le 3ème appel dans la fenêtre est refusé et retourne une erreur.
+const RATE_LIMIT_MAX = 2;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const ttsCallHistory = new Map<string, number[]>();
+
+/**
+ * Filtre les timestamps dans la fenêtre, retourne true si on peut faire un
+ * nouvel appel et enregistre le timestamp courant. Sinon retourne false.
+ */
+function checkAndRecordTtsCall(storyId: string): boolean {
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW_MS;
+  const prev = ttsCallHistory.get(storyId) ?? [];
+  const recent = prev.filter(t => t >= cutoff);
+  if (recent.length >= RATE_LIMIT_MAX) {
+    ttsCallHistory.set(storyId, recent);
+    if (__DEV__) {
+      console.warn(`[elevenlabs] rate-limit local atteint pour ${storyId}: ${recent.length}/${RATE_LIMIT_MAX} dans les ${RATE_LIMIT_WINDOW_MS / 1000}s — refus de l'appel.`);
+    }
+    return false;
+  }
+  recent.push(now);
+  ttsCallHistory.set(storyId, recent);
+  return true;
+}
+
+const RATE_LIMIT_ERROR = `Trop d'appels ElevenLabs récents pour cette histoire (${RATE_LIMIT_MAX} max / ${RATE_LIMIT_WINDOW_MS / 1000}s). Réessaie dans une minute.`;
+
 /**
  * Génère (ou réutilise) le MP3 d'une histoire.
  * - Si un fichier persistant existe déjà pour ce couple (storyId, voiceId) → réutilisé, aucun appel API
@@ -110,7 +141,12 @@ export async function generateSpeech(
   const existing = inflightRequests.get(key);
   if (existing) return existing;
 
-  // 3. Génération réelle
+  // 3. Rate-limit local (filet de sécurité contre boucles)
+  if (!checkAndRecordTtsCall(storyId)) {
+    return { error: RATE_LIMIT_ERROR };
+  }
+
+  // 4. Génération réelle
   const promise = performGenerateSpeech(apiKey, text, voiceId, storyId, options)
     .finally(() => { inflightRequests.delete(key); });
 
@@ -195,6 +231,11 @@ export async function generateSpeechWithTimestamps(
   const key = `${storyId}|${voiceId}|ts`;
   const existing = inflightTsRequests.get(key);
   if (existing) return existing;
+
+  // Rate-limit local partagé avec generateSpeech (compte les deux endpoints)
+  if (!checkAndRecordTtsCall(storyId)) {
+    return { error: RATE_LIMIT_ERROR };
+  }
 
   const promise = performGenerateWithTimestamps(apiKey, text, voiceId, storyId, options)
     .finally(() => { inflightTsRequests.delete(key); });
