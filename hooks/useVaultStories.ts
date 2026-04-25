@@ -5,7 +5,7 @@
 import { useState, useCallback } from 'react';
 import type { MutableRefObject, Dispatch, SetStateAction } from 'react';
 import type { VaultManager } from '../lib/vault';
-import type { BedtimeStory, StoryScript } from '../lib/types';
+import type { BedtimeStory, StoryAudioAlignment, StoryScript } from '../lib/types';
 import { parseBedtimeStory, serializeBedtimeStory } from '../lib/parser';
 import { parseStoryScript } from '../lib/story-script';
 import { STORIES_DIR } from '../lib/stories';
@@ -14,6 +14,27 @@ import { deleteStoryAudios } from '../lib/elevenlabs';
 /** Convertit `xxx.md` en `xxx.script.json` (sidecar V2) */
 function scriptSidecarPath(mdPath: string): string {
   return mdPath.replace(/\.md$/, '.script.json');
+}
+
+/** Convertit `xxx.md` en `xxx.alignment.json` (sidecar V2.3 — alignement TTS) */
+function alignmentSidecarPath(mdPath: string): string {
+  return mdPath.replace(/\.md$/, '.alignment.json');
+}
+
+/** Parse tolérant d'un sidecar alignment JSON */
+function parseAlignment(raw: string): StoryAudioAlignment | null {
+  try {
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return null;
+    const chars = Array.isArray(data.chars) ? data.chars : null;
+    const starts = Array.isArray(data.starts) ? data.starts : null;
+    const ends = Array.isArray(data.ends) ? data.ends : null;
+    if (!chars || !starts || !ends) return null;
+    if (chars.length !== starts.length || chars.length !== ends.length) return null;
+    return { chars, starts, ends };
+  } catch {
+    return null;
+  }
 }
 
 export interface UseVaultStoriesResult {
@@ -57,6 +78,13 @@ export function useVaultStories(
                 const script = parseStoryScript(sidecar);
                 if (script) story.script = script;
               } catch { /* sidecar absent — histoire spectacle V1 (ambiance seule) */ }
+
+              // V2.3 — alignement caractère→timestamp (best-effort)
+              try {
+                const raw = await vault.readFile(alignmentSidecarPath(relPath));
+                const align = parseAlignment(raw);
+                if (align) story.alignment = align;
+              } catch { /* alignment absent — fallback ratio en V2.2 */ }
             }
 
             allStories.push(story);
@@ -110,6 +138,19 @@ export function useVaultStories(
           if (__DEV__) console.warn('[useVaultStories] sidecar failed:', e);
         }
       }
+
+      // V2.3 — sidecar alignment.json (timing SFX word-level)
+      if (story.alignment) {
+        try {
+          await vault.writeFile(
+            alignmentSidecarPath(story.sourceFile),
+            JSON.stringify(story.alignment),
+          );
+          if (__DEV__) console.log('[useVaultStories] saveStory: alignment sidecar OK');
+        } catch (e) {
+          if (__DEV__) console.warn('[useVaultStories] alignment sidecar failed:', e);
+        }
+      }
     } catch (e) {
       if (__DEV__) console.warn('[useVaultStories] vault persist failed (history still in memory):', e);
       throw e; // signale au caller pour qu'il puisse afficher un toast non-bloquant
@@ -124,6 +165,10 @@ export function useVaultStories(
     // V2 — supprime aussi le sidecar script.json si présent
     try {
       await vaultRef.current.deleteFile(scriptSidecarPath(sourceFile));
+    } catch { /* sidecar absent — pas grave */ }
+    // V2.3 — supprime aussi le sidecar alignment.json si présent
+    try {
+      await vaultRef.current.deleteFile(alignmentSidecarPath(sourceFile));
     } catch { /* sidecar absent — pas grave */ }
     setStories(prev => {
       const story = prev.find(s => s.sourceFile === sourceFile);
