@@ -121,7 +121,9 @@ export function computeSfxScheduleFromAlignment(
 
   const schedule: { tag: StorySfxTag; atSec: number }[] = [];
   let pos = 0;
-  let mismatchBudget = Math.max(40, Math.floor(alignment.chars.length * 0.05));
+  // Budget plus généreux : 10% des chars (ou min 80) pour absorber les
+  // ponctuations typographiques (« » … œ ç) et les changements de paragraphe.
+  let mismatchBudget = Math.max(80, Math.floor(alignment.chars.length * 0.1));
 
   // Avance le curseur d'un caractère cible — retourne true si trouvé/sauté
   const advanceOne = (target: string): boolean => {
@@ -150,16 +152,28 @@ export function computeSfxScheduleFromAlignment(
     return true;
   };
 
-  for (const beat of script.beats) {
+  for (let beatIdx = 0; beatIdx < script.beats.length; beatIdx++) {
+    const beat = script.beats[beatIdx];
     if (beat.kind === 'narration' || beat.kind === 'dialogue') {
       for (let i = 0; i < beat.text.length; i++) {
         if (!advanceOne(beat.text[i])) {
           // Trop de mismatch — abandon
+          if (typeof __DEV__ !== 'undefined' && __DEV__) {
+            // eslint-disable-next-line no-console
+            console.warn('[computeSfxScheduleFromAlignment] abandon:', {
+              beatIdx, charInBeat: i, posInAlign: pos,
+              expected: beat.text.slice(Math.max(0, i - 5), i + 10),
+              gotAround: alignment.chars.slice(Math.max(0, pos - 5), pos + 10).join(''),
+            });
+          }
           return null;
         }
       }
-      // Espace virtuel entre beats (cohérent avec flattenScriptToText)
-      if (pos < alignment.chars.length && /\s/.test(alignment.chars[pos] ?? '')) {
+      // Skip TOUS les whitespace consécutifs entre beats (paragraphes \n\n,
+      // espaces doubles, tabulations…). Avec le découpage 1-phrase-par-beat,
+      // certains changements de paragraphe contiennent 2+ caractères
+      // whitespace dans l'alignment, et un seul skip ne suffit pas.
+      while (pos < alignment.chars.length && /\s/.test(alignment.chars[pos] ?? '')) {
         pos++;
       }
     } else if (beat.kind === 'sfx') {
