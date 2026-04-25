@@ -1020,12 +1020,16 @@ ${sfxList}
 
 RÈGLES STRICTES pour le script :
 - Insère 4 à 8 bruitages bien choisis, jamais plus
-- Place chaque bruitage IMMÉDIATEMENT APRÈS le beat de narration qui le déclenche dans le récit
+- **DÉCOUPAGE FIN OBLIGATOIRE** : chaque beat "narration" doit contenir UNE SEULE phrase (de "majuscule" à "ponctuation finale .!?"). N'agrège JAMAIS deux phrases dans un même beat narration. Ce découpage permet une synchronisation précise des bruitages.
+- Place chaque bruitage IMMÉDIATEMENT APRÈS le beat de narration QUI CONTIENT le mot-déclencheur (et pas après une autre phrase). Exemple : si la phrase "Les oiseaux chantent dans les arbres." déclenche "chirp_bird", alors la séquence DOIT être :
+  { "kind": "narration", "text": "Les oiseaux chantent dans les arbres." }
+  { "kind": "sfx", "tag": "chirp_bird" }
+  ...phrase suivante...
 - Choisis des bruitages cohérents avec le texte (ex : "porte qui grince" → "door_creak_slow")
 - Ne mets pas deux bruitages côte à côte sans narration entre eux
 - Le tout DERNIER bruitage du script DOIT être "yawn_sleepy" placé en avant-dernière position (juste avant la dernière phrase de narration), pour finir l'histoire sur un signal d'endormissement subtil
 - Format obligatoire des beats :
-  - { "kind": "narration", "text": "phrase de l'histoire" }
+  - { "kind": "narration", "text": "Une seule phrase complète." }
   - { "kind": "sfx", "tag": "tag_de_la_bibliotheque" }
 - La concaténation des beats narration (avec un espace entre eux) doit reformer EXACTEMENT le champ "texte"
 ` : '';
