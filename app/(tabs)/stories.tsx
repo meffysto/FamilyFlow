@@ -936,7 +936,8 @@ export default function StoriesScreen() {
       const spectacle = audioMode === 'spectacle' ? true : undefined;
       const ambienceVolume = voiceConfig.ambienceVolume;
       const length = voiceConfig.length;
-      const base = { language: lang, spectacle, audioMode, ambienceVolume, length } as const;
+      const elevenLabsModel = voiceConfig.elevenLabsModel;
+      const base = { language: lang, spectacle, audioMode, ambienceVolume, length, elevenLabsModel } as const;
       if (localVoiceEngine === 'elevenlabs') {
         if (voiceSelectedParentId) {
           const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
@@ -1404,6 +1405,45 @@ export default function StoriesScreen() {
             ))}
           </View>
         )}
+
+        {/* Sélecteur de modèle ElevenLabs (compromis qualité/coût) */}
+        {localVoiceEngine === 'elevenlabs' && (() => {
+          const currentModel = voiceConfig.elevenLabsModel ?? 'eleven_multilingual_v2';
+          const MODELS: { key: import('../../lib/types').ElevenLabsModel; label: string; hint: string }[] = [
+            { key: 'eleven_multilingual_v2', label: 'Premium',   hint: 'Qualité max — coût standard' },
+            { key: 'eleven_turbo_v2_5',      label: 'Économique', hint: '−50% crédits — qualité quasi identique' },
+            { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−80% crédits — voix plus mécanique' },
+          ];
+          return (
+            <View style={{ marginTop: Spacing.lg }}>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Modèle ElevenLabs</Text>
+              <View style={styles.audioModeRow}>
+                {MODELS.map(m => {
+                  const selected = currentModel === m.key;
+                  return (
+                    <Pressable
+                      key={m.key}
+                      style={[
+                        styles.audioModeChip,
+                        {
+                          backgroundColor: selected ? primary : colors.card,
+                          borderColor: selected ? primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setVoiceConfig({ ...voiceConfig, elevenLabsModel: m.key });
+                      }}
+                    >
+                      <Text style={[styles.audioModeLabel, { color: selected ? '#fff' : colors.text }]}>{m.label}</Text>
+                      <Text style={[styles.audioModeHint, { color: selected ? '#ffffffcc' : colors.textMuted }]}>{m.hint}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })()}
 
         {/* Fish Audio — profils adultes avec clonage */}
         {localVoiceEngine === 'fish-audio' && adultProfiles.length > 0 && (

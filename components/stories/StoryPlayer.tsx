@@ -588,11 +588,14 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         });
       }
 
+      const elevenLabsOptions = voiceConfig.elevenLabsModel
+        ? { model: voiceConfig.elevenLabsModel }
+        : undefined;
       const result = isFishAudio
         ? await generateSpeechFish(apiKey, histoire.texte, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
         : useTimestamps
-          ? await generateSpeechWithTimestamps(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id)
-          : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id);
+          ? await generateSpeechWithTimestamps(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions)
+          : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions);
       if (__DEV__) {
         if ('error' in result) {
           console.warn('[StoryPlayer] generation error:', result.error);
