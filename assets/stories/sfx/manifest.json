@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "description": "Bibliothèque de bruitages bundlés (Mode Spectacle V2). Chaque tag = un MP3 one-shot court généré via ElevenLabs Sound Generation API. Claude est contraint de ne citer que ces tags dans les scripts d'histoire. ~58 tags couvrent 95% des récits enfants.",
+  "model": "eleven_text_to_sound_v2",
+  "prompt_influence": 0.5,
+  "loop": false,
+  "default_duration_seconds": 2,
+  "entries": [
+    { "tag": "door_creak_slow",       "duration": 2.5, "prompt": "Old wooden door slowly creaking open, gentle and slightly eerie, single creak, no other sounds" },
+    { "tag": "door_slam",             "duration": 1.0, "prompt": "Wooden door slamming shut firmly, single quick impact, slight reverb" },
+    { "tag": "door_open_squeak",      "duration": 1.5, "prompt": "Light door opening with a small squeak, gentle and brief, single motion" },
+
+    { "tag": "footsteps_wood",        "duration": 2.0, "prompt": "Soft footsteps on wooden floor, three or four steps at calm walking pace, no other ambience" },
+    { "tag": "footsteps_grass",       "duration": 2.0, "prompt": "Footsteps walking on grass and dry leaves, three or four steps, gentle rustling" },
+    { "tag": "footsteps_snow",        "duration": 2.0, "prompt": "Footsteps crunching softly on fresh snow, three or four steps at calm pace" },
+    { "tag": "footsteps_stone",       "duration": 2.0, "prompt": "Footsteps on stone floor, three or four steps echoing slightly in a stone hall" },
+
+    { "tag": "roar_dragon",           "duration": 2.5, "prompt": "Mighty dragon roar, deep guttural sound, powerful but short, single roar with slight echo" },
+    { "tag": "roar_lion",             "duration": 2.0, "prompt": "Single loud lion roar, deep and proud, no other animals" },
+    { "tag": "roar_bear",             "duration": 1.8, "prompt": "Single bear growl-roar, low rumble, short and clear" },
+    { "tag": "growl_wolf",            "duration": 1.5, "prompt": "Wolf low growl rising slightly, single short menacing growl, no howl" },
+
+    { "tag": "meow_cat",              "duration": 1.0, "prompt": "Single soft cat meow, gentle and friendly, kitten-like" },
+    { "tag": "bark_dog",              "duration": 1.0, "prompt": "Friendly dog bark, two short barks, medium-sized dog" },
+    { "tag": "hoot_owl",              "duration": 2.0, "prompt": "Owl hooting twice softly in a quiet forest, gentle nighttime call" },
+    { "tag": "chirp_bird",            "duration": 1.5, "prompt": "Single small bird chirp, cheerful and short, no background" },
+    { "tag": "squeak_mouse",          "duration": 0.8, "prompt": "Tiny mouse squeak, very short and cute, single high-pitched squeak" },
+    { "tag": "whimper_puppy",         "duration": 1.5, "prompt": "Soft puppy whimper-whine, gentle and brief, sad but cute" },
+
+    { "tag": "wind_soft",             "duration": 3.0, "prompt": "Gentle soft wind blowing through leaves, calm breeze, peaceful" },
+    { "tag": "wind_storm",            "duration": 3.0, "prompt": "Strong gusting wind, no rain, powerful but not violent, dramatic" },
+    { "tag": "rain_light",            "duration": 3.0, "prompt": "Light rain pattering on leaves, calm and gentle, no thunder" },
+    { "tag": "thunder_distant",       "duration": 2.5, "prompt": "Single distant rolling thunder rumble, far away, soft and deep, no rain" },
+
+    { "tag": "fire_crackle",          "duration": 3.0, "prompt": "Cozy fireplace crackling and popping softly, warm and intimate, small fire" },
+    { "tag": "water_splash",          "duration": 1.0, "prompt": "Single medium splash of water, like a small object dropped in a pond" },
+    { "tag": "water_drip",            "duration": 2.0, "prompt": "Slow water drops dripping in a quiet cave, three drops with reverb" },
+    { "tag": "water_stream",          "duration": 3.0, "prompt": "Small forest stream gently flowing over stones, peaceful babbling brook" },
+
+    { "tag": "sparkle_short",         "duration": 1.2, "prompt": "Magical sparkle shimmer, bright twinkling sound, brief and enchanting, no music" },
+    { "tag": "magic_whoosh",          "duration": 1.5, "prompt": "Magical whoosh as a spell is cast, ascending shimmer, brief and ethereal" },
+    { "tag": "transform_shimmer",     "duration": 2.0, "prompt": "Magical transformation effect, shimmer rising and resolving, fairytale style" },
+    { "tag": "spell_zap",             "duration": 1.0, "prompt": "Quick magical zap-pop, single spell impact, sparkly not aggressive" },
+    { "tag": "magic_chime",           "duration": 1.5, "prompt": "Single soft magical chime, fairy bell tone, ascending shimmer, gentle" },
+
+    { "tag": "clock_tick",            "duration": 2.0, "prompt": "Old grandfather clock ticking slowly, four steady ticks, peaceful" },
+    { "tag": "gear_creak",            "duration": 1.5, "prompt": "Mechanical gears slowly turning and creaking, brief metallic motion" },
+    { "tag": "robot_beep",            "duration": 1.0, "prompt": "Friendly robot beep-boop, short cute electronic sequence, three notes" },
+    { "tag": "machine_hum",           "duration": 2.5, "prompt": "Soft electronic machine hum activating, gentle rising tone, sci-fi" },
+
+    { "tag": "bell_small",            "duration": 1.5, "prompt": "Single small bell ringing once, like a bicycle bell or door chime, clear and bright" },
+    { "tag": "bell_large",            "duration": 2.5, "prompt": "Single large church bell tolling once, deep resonant, single strike with decay" },
+    { "tag": "harp_glissando",        "duration": 2.0, "prompt": "Soft harp glissando ascending, magical fairytale, single sweep" },
+    { "tag": "music_box",             "duration": 3.0, "prompt": "Gentle music box melody playing four notes, vintage and dreamy, no other sounds" },
+
+    { "tag": "ship_creak",            "duration": 2.5, "prompt": "Old wooden ship creaking with gentle sea movement, calm and atmospheric" },
+    { "tag": "horse_gallop",          "duration": 2.0, "prompt": "Horse galloping briefly, four hoofbeats, no other sounds" },
+    { "tag": "train_whistle",         "duration": 2.0, "prompt": "Distant train whistle blowing once, nostalgic, brief and clear" },
+
+    { "tag": "laugh_child",           "duration": 1.5, "prompt": "Single short happy child laugh, joyful and innocent, no other sounds" },
+    { "tag": "gasp_surprise",         "duration": 0.8, "prompt": "Single small surprised gasp, soft and gentle, child-like" },
+    { "tag": "sneeze_cute",           "duration": 1.0, "prompt": "Tiny cute sneeze, soft and brief, child or animal" },
+    { "tag": "yawn_sleepy",           "duration": 2.0, "prompt": "Soft sleepy yawn, gentle and relaxed, ending with a small sigh" },
+
+    { "tag": "coin_drop",             "duration": 1.0, "prompt": "Single gold coin dropping onto a hard surface and bouncing, bright metallic" },
+    { "tag": "treasure_chest_open",   "duration": 2.0, "prompt": "Old wooden treasure chest creaking open with metallic clasps, single motion" },
+    { "tag": "jingle_keys",           "duration": 1.5, "prompt": "Bunch of metal keys jingling once, brief and clear" },
+
+    { "tag": "mysterious_whoosh",     "duration": 2.0, "prompt": "Mysterious low whoosh passing by, slightly eerie but gentle, single sweep" },
+    { "tag": "ghost_woo",             "duration": 2.5, "prompt": "Soft playful friendly ghost woo, gentle and brief, not scary" },
+    { "tag": "creak_floorboard",      "duration": 1.5, "prompt": "Single old floorboard creaking under weight, gentle and brief" },
+
+    { "tag": "book_page_turn",        "duration": 1.0, "prompt": "Single page of an old book turning gently, soft paper rustle" },
+    { "tag": "pop_bubble",            "duration": 0.8, "prompt": "Single small soap bubble popping, soft and cute" },
+    { "tag": "splash_small",          "duration": 1.0, "prompt": "Tiny water splash like a pebble in a pond, brief and gentle" },
+    { "tag": "tap_knock",             "duration": 1.2, "prompt": "Three soft knocks on a wooden door, polite and clear" },
+
+    { "tag": "crowd_cheer",           "duration": 2.5, "prompt": "Small crowd cheering happily for a moment, warm and joyful, brief" },
+    { "tag": "crowd_gasp",            "duration": 1.5, "prompt": "Small crowd gasping in surprise once, brief collective inhale" }
+  ]
+}

@@ -964,6 +964,10 @@ export interface StoryGenerationConfig {
   language: 'fr' | 'en';
   length?: import('./types').StoryLength;
   context: StoryPersonalizationContext;
+  /** V2 Mode Spectacle : demander à Claude de produire aussi un script avec SFX */
+  spectacle?: boolean;
+  /** V2 : tags SFX disponibles dans la bibliothèque bundlée (Claude doit s'y limiter) */
+  availableSfxTags?: string[];
 }
 
 export async function generateBedtimeStory(
@@ -999,6 +1003,36 @@ export async function generateBedtimeStory(
   // Template JSON adapté au nombre de paragraphes
   const paragraphesTemplate = Array.from({ length: lengthCfg.paragraphs }, (_, i) => `paragraphe${i + 1}`).join('\\n\\n');
 
+  // V2 Mode Spectacle : enrichit le format de sortie avec un script de bruitages
+  const spectacleEnabled = story.spectacle === true && (story.availableSfxTags?.length ?? 0) > 0;
+  const sfxList = spectacleEnabled
+    ? (story.availableSfxTags ?? []).join(', ')
+    : '';
+
+  const spectacleRules = spectacleEnabled ? `
+
+MODE SPECTACLE — Bruitages :
+Tu dois ÉGALEMENT produire un champ "script" qui balise les moments où un bruitage doit être joué.
+Le script est un tableau de "beats" qui décompose l'histoire dans l'ordre, avec UN beat de narration par phrase clé et UN beat de bruitage placé JUSTE APRÈS le beat de narration concerné.
+
+Bibliothèque de bruitages disponibles (UTILISE UNIQUEMENT CES TAGS, jamais d'autres) :
+${sfxList}
+
+RÈGLES STRICTES pour le script :
+- Insère 4 à 8 bruitages bien choisis, jamais plus
+- Place chaque bruitage IMMÉDIATEMENT APRÈS le beat de narration qui le déclenche dans le récit
+- Choisis des bruitages cohérents avec le texte (ex : "porte qui grince" → "door_creak_slow")
+- Ne mets pas deux bruitages côte à côte sans narration entre eux
+- Format obligatoire des beats :
+  - { "kind": "narration", "text": "phrase de l'histoire" }
+  - { "kind": "sfx", "tag": "tag_de_la_bibliotheque" }
+- La concaténation des beats narration (avec un espace entre eux) doit reformer EXACTEMENT le champ "texte"
+` : '';
+
+  const outputFormat = spectacleEnabled
+    ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ { "kind": "narration", "text": "..." }, { "kind": "sfx", "tag": "..." }, ... ] } }`
+    : `{ "titre": "...", "texte": "${paragraphesTemplate}" }`;
+
   const systemPrompt = `Tu es un conteur d'histoires pour enfants expert. Tu crées des histoires du soir douces et apaisantes, parfaites pour endormir un enfant de ${story.enfantAge}.
 
 RÈGLES STRICTES :
@@ -1012,8 +1046,8 @@ RÈGLES STRICTES :
 ${moodContext ? `- Adapte le ton selon l'humeur : ${moodContext}` : ''}
 ${quotesContext ? `- Intègre subtilement une expression de l'enfant : ${quotesContext}` : ''}
 ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesContext}` : ''}
-${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}
-- Répondre UNIQUEMENT en JSON valide : { "titre": "...", "texte": "${paragraphesTemplate}" }
+${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${spectacleRules}
+- Répondre UNIQUEMENT en JSON valide : ${outputFormat}
 - Aucun texte en dehors du JSON`;
 
   const userMessage = `Crée une histoire du soir pour ${story.enfantAnon} (${story.enfantAge}) dans l'univers "${story.universTitre}"${story.detail ? `. Détail du jour à intégrer : ${story.detail}` : ''}.`;
@@ -1028,7 +1062,8 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
       },
       body: JSON.stringify({
         model: config.model,
-        max_tokens: lengthCfg.maxTokens,
+        // Spectacle = +script JSON dans la réponse → +30% de tokens
+        max_tokens: spectacleEnabled ? Math.round(lengthCfg.maxTokens * 1.4) : lengthCfg.maxTokens,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),

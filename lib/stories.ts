@@ -133,6 +133,38 @@ export function storyFileName(enfantName: string, date: string, universId: Story
   return `${STORIES_DIR}/${enfantName}/${date}-${universId}.md`;
 }
 
+/**
+ * Calcule le prochain nom de fichier disponible pour la combinaison
+ * date+univers+enfant. La 1re histoire du jour pour cet univers garde la base
+ * `<date>-<universe>.md` (rétrocompat). Les suivantes deviennent
+ * `<date>-<universe>-2.md`, `-3.md`, etc.
+ *
+ * `existingIds` doit être l'ensemble des `BedtimeStory.id` déjà connus pour
+ * cet enfant — on évite ainsi à la fois les collisions disque et les collisions
+ * mémoire (histoire optimistic-saved pas encore re-relue).
+ */
+export function nextStoryFileName(
+  enfantName: string,
+  date: string,
+  universId: StoryUniverseId,
+  existingIds: Set<string>,
+): { sourceFile: string; id: string } {
+  const base = `${date}-${universId}`;
+  if (!existingIds.has(base)) {
+    return { sourceFile: `${STORIES_DIR}/${enfantName}/${base}.md`, id: base };
+  }
+  let n = 2;
+  while (existingIds.has(`${base}-${n}`)) n++;
+  const id = `${base}-${n}`;
+  return { sourceFile: `${STORIES_DIR}/${enfantName}/${id}.md`, id };
+}
+
+/** Extrait l'id (= nom de fichier sans .md) depuis un sourceFile relatif */
+export function storyIdFromSourceFile(sourceFile: string): string {
+  const file = sourceFile.split('/').pop() ?? '';
+  return file.replace(/\.md$/, '');
+}
+
 /** Sélectionne un univers aléatoire en évitant les répétitions récentes */
 export function pickSurpriseUniverse(recentIds: StoryUniverseId[]): StoryUniverseId {
   const nonSurprise = STORY_UNIVERSES.filter(u => u.id !== 'surprise');

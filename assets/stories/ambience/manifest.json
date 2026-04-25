@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "description": "Ambiances sonores bouclées (Mode Spectacle). Générées via ElevenLabs Sound Generation API (eleven_text_to_sound_v2 + loop:true, 22s). Un MP3 par univers, bundlé dans l'app pour zéro coût runtime.",
+  "model": "eleven_text_to_sound_v2",
+  "duration_seconds": 22,
+  "loop": true,
+  "prompt_influence": 0.3,
+  "entries": [
+    {
+      "universId": "espace",
+      "file": "espace.mp3",
+      "prompt": "Deep space ambience, soft distant cosmic hum, gentle sparkle of distant stars, ethereal synth pad, very calm and peaceful, no musical melody, loopable"
+    },
+    {
+      "universId": "ocean",
+      "file": "ocean.mp3",
+      "prompt": "Underwater ocean ambience, soft muffled waves and gentle bubbles, distant whale calls very faint, calm deep water, peaceful and mysterious, loopable"
+    },
+    {
+      "universId": "foret",
+      "file": "foret.mp3",
+      "prompt": "Enchanted forest at night, gentle breeze through leaves, distant soft owl hoots, subtle magical sparkles, crickets very quiet, peaceful and mysterious, loopable"
+    },
+    {
+      "universId": "dinosaures",
+      "file": "dinosaures.mp3",
+      "prompt": "Prehistoric jungle ambience, distant large footsteps very faint, gentle tropical wind through giant ferns, soft bird-like calls far away, calm and warm, loopable"
+    },
+    {
+      "universId": "princesse",
+      "file": "princesse.mp3",
+      "prompt": "Fairy tale castle ambience, soft distant harp notes, gentle wind through stone halls, twinkling magical sparkles, warm and dreamy, loopable"
+    },
+    {
+      "universId": "super-heros",
+      "file": "super-heros.mp3",
+      "prompt": "City skyline at night soft ambience, gentle wind at altitude, very distant muffled city hum, subtle energetic pulse, calm but heroic, loopable"
+    },
+    {
+      "universId": "pirates",
+      "file": "pirates.mp3",
+      "prompt": "Wooden ship at sea, gentle creaking of planks, soft waves lapping hull, distant seagull far away, calm ocean breeze, peaceful adventure, loopable"
+    },
+    {
+      "universId": "robots",
+      "file": "robots.mp3",
+      "prompt": "Futuristic spaceship interior, soft electronic hum, gentle computer beeps very subtle, distant mechanical pulse, calm sci-fi ambience, loopable"
+    },
+    {
+      "universId": "surprise",
+      "file": "surprise.mp3",
+      "prompt": "Dreamlike magical ambience, soft twinkling sparkles, gentle ethereal pad, subtle wind chimes very distant, warm and wondrous, loopable"
+    }
+  ]
+}

@@ -697,6 +697,7 @@ export interface StoryVoiceConfig {
   fishAudioReferenceId?: string; // reference_id voix Fish Audio (clonée ou prédéfinie)
   voiceIdentifier?: string; // identifier voix iOS Enhanced/Premium (expo-speech)
   length?: StoryLength;     // préférence taille histoire — défaut 'moyenne'
+  spectacle?: boolean;      // mode spectacle : ambiance sonore jouée sous la voix
 }
 
 export interface BedtimeStory {
@@ -711,8 +712,70 @@ export interface BedtimeStory {
   duree_lecture: number;
   voice: StoryVoiceConfig;
   length?: StoryLength; // taille choisie à la génération (pour info/réutilisation)
+  spectacle?: boolean;  // ambiance sonore active pour cette histoire
+  script?: StoryScript; // V2 — screenplay structuré avec SFX (chargé depuis sidecar .script.json)
   version: number;
   sourceFile: string;
+}
+
+// ─── V2 : Script structuré (Mode Spectacle enrichi) ───────────────────────────
+// Stocké dans un fichier sidecar `<storyId>.script.json` à côté du .md.
+// Quand présent, le StoryPlayer joue les SFX bundlés aux moments clés du récit.
+
+/**
+ * Tags SFX disponibles. Chaque tag correspond à un MP3 court bundlé dans
+ * `assets/stories/sfx/<tag>.mp3` (généré one-shot via ElevenLabs).
+ * Claude ne peut citer que ces tags dans le script — bibliothèque fermée.
+ */
+export type StorySfxTag =
+  // Portes / portails
+  | 'door_creak_slow' | 'door_slam' | 'door_open_squeak'
+  // Pas
+  | 'footsteps_wood' | 'footsteps_grass' | 'footsteps_snow' | 'footsteps_stone'
+  // Grands animaux
+  | 'roar_dragon' | 'roar_lion' | 'roar_bear' | 'growl_wolf'
+  // Petits animaux
+  | 'meow_cat' | 'bark_dog' | 'hoot_owl' | 'chirp_bird' | 'squeak_mouse' | 'whimper_puppy'
+  // Vent / météo
+  | 'wind_soft' | 'wind_storm' | 'rain_light' | 'thunder_distant'
+  // Eau / feu
+  | 'fire_crackle' | 'water_splash' | 'water_drip' | 'water_stream'
+  // Magie
+  | 'sparkle_short' | 'magic_whoosh' | 'transform_shimmer' | 'spell_zap' | 'magic_chime'
+  // Mécanique
+  | 'clock_tick' | 'gear_creak' | 'robot_beep' | 'machine_hum'
+  // Cloches / musique
+  | 'bell_small' | 'bell_large' | 'harp_glissando' | 'music_box'
+  // Véhicules
+  | 'ship_creak' | 'horse_gallop' | 'train_whistle'
+  // Réactions humaines
+  | 'laugh_child' | 'gasp_surprise' | 'sneeze_cute' | 'yawn_sleepy'
+  // Trésors
+  | 'coin_drop' | 'treasure_chest_open' | 'jingle_keys'
+  // Mystère
+  | 'mysterious_whoosh' | 'ghost_woo' | 'creak_floorboard'
+  // Petites actions
+  | 'book_page_turn' | 'pop_bubble' | 'splash_small' | 'tap_knock'
+  // Foule
+  | 'crowd_cheer' | 'crowd_gasp';
+
+/** Speaker reconnu par le player (V2.0 = narrateur seul, multi-voix V2.4) */
+export type StoryBeatSpeaker = 'narrator' | 'character';
+
+/** Émotion narrative (utilisée plus tard par v3 multi-voix, ignorée pour l'instant) */
+export type StoryBeatEmotion = 'calm' | 'excited' | 'scared' | 'tender' | 'playful' | 'mysterious';
+
+/** Un beat = un atome de la mise en scène (texte, SFX, ou pause) */
+export type StoryBeat =
+  | { kind: 'narration'; text: string; emotion?: StoryBeatEmotion }
+  | { kind: 'dialogue'; speaker: string; text: string; emotion?: StoryBeatEmotion }
+  | { kind: 'sfx'; tag: StorySfxTag }
+  | { kind: 'pause'; durationSec: number };
+
+/** Script structuré complet d'une histoire */
+export interface StoryScript {
+  version: 2;
+  beats: StoryBeat[];
 }
 
 export interface StoryUniverse {

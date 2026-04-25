@@ -19,6 +19,15 @@ import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig } from '../../li
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { generateSpeech, getCachedStoryAudio, storyVaultAudioRelPath } from '../../lib/elevenlabs';
 import { generateSpeechFish, getCachedStoryAudioFish } from '../../lib/fish-audio';
+import {
+  STORY_AMBIENCE_ASSETS,
+  AMBIENCE_VOLUME,
+  AMBIENCE_FADE_IN_SECONDS,
+  AMBIENCE_FADE_OUT_SECONDS,
+} from '../../lib/ambience';
+import { STORY_SFX_ASSETS, SFX_VOLUME } from '../../lib/sfx';
+import { getSfxTagsFromScript } from '../../lib/story-script';
+import type { StorySfxTag } from '../../lib/types';
 import { useVault } from '../../contexts/VaultContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -242,6 +251,33 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
   const waveformRef = useRef<IWaveformRef>(null);
   const playProgress = useSharedValue(0); // 0-1 pour le sparkle
 
+  // ─── Mode Spectacle : piste d'ambiance sous la voix ───────────────────────
+  const ambienceSoundRef = useRef<Audio.Sound | null>(null);
+  const [ambienceReady, setAmbienceReady] = useState(false);
+  // Volume courant de l'ambiance, utilisé pour throttler le fade-out continu
+  // depuis la progress callback (qui se déclenche à haute fréquence).
+  const ambienceVolumeRef = useRef<number>(AMBIENCE_VOLUME);
+  // True dès que la voix a démarré au moins une fois → autorise le fade-out
+  // en fin de piste (évite que le fade-in initial soit écrasé par 0).
+  const ambienceFadeInDoneRef = useRef(false);
+  const spectacleActive = histoire.spectacle === true;
+  const ambienceAsset = spectacleActive ? STORY_AMBIENCE_ASSETS[histoire.univers] : undefined;
+
+  // ─── V2 : SFX déclenchés par le script (timing approximatif par paragraphe)
+  // Pool de Sound préchargés pour chaque tag utilisé, déclenchés au passage
+  // du curseur waveform via onWaveformProgress.
+  const sfxPoolRef = useRef<Map<StorySfxTag, Audio.Sound>>(new Map());
+  const sfxScheduleRef = useRef<{ tag: StorySfxTag; ratio: number }[]>([]);
+  const sfxTriggeredRef = useRef<Set<number>>(new Set());
+  const scriptForPlayer = spectacleActive ? histoire.script : undefined;
+
+  if (__DEV__) {
+    // Diagnostic au premier render uniquement (ces valeurs sont stables par histoire)
+    console.log('[StoryPlayer] spectacle:', spectacleActive,
+      '| univers:', histoire.univers,
+      '| ambienceAsset:', ambienceAsset ? 'présent' : 'absent');
+  }
+
   // ─── Montage : session audio + pré-génération ElevenLabs si besoin ─────────
   useEffect(() => {
     Audio.setAudioModeAsync({
@@ -256,6 +292,153 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       Speech.stop();
     };
   }, []);
+
+  // ─── Mode Spectacle : chargement de l'ambiance au montage ────────────────
+  useEffect(() => {
+    if (!ambienceAsset) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // S'assure que la session audio iOS est active (silent switch bypass)
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          allowsRecordingIOS: false,
+          staysActiveInBackground: false,
+        }).catch(() => {});
+
+        if (__DEV__) console.log('[StoryPlayer] ambience: loading…');
+        const { sound } = await Audio.Sound.createAsync(
+          ambienceAsset as number,
+          { isLooping: true, volume: 0, shouldPlay: false },
+        );
+        if (cancelled) {
+          await sound.unloadAsync().catch(() => {});
+          return;
+        }
+        ambienceSoundRef.current = sound;
+        setAmbienceReady(true);
+        if (__DEV__) console.log('[StoryPlayer] ambience: ready');
+      } catch (e) {
+        if (__DEV__) console.warn('[StoryPlayer] ambience load failed:', e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      const s = ambienceSoundRef.current;
+      ambienceSoundRef.current = null;
+      setAmbienceReady(false);
+      if (s) s.unloadAsync().catch(() => {});
+    };
+  }, [ambienceAsset]);
+
+  // ─── V2 : précharge des SFX utilisés + calcul du planning ratio ──────────
+  useEffect(() => {
+    if (!scriptForPlayer) return;
+    let cancelled = false;
+
+    // 1. Calcul des ratios de déclenchement (cumul caractères narration/dialogue)
+    let cumulChars = 0;
+    let totalChars = 0;
+    for (const b of scriptForPlayer.beats) {
+      if (b.kind === 'narration' || b.kind === 'dialogue') totalChars += b.text.length + 1;
+    }
+    if (totalChars === 0) return;
+
+    const schedule: { tag: StorySfxTag; ratio: number }[] = [];
+    for (const b of scriptForPlayer.beats) {
+      if (b.kind === 'narration' || b.kind === 'dialogue') {
+        cumulChars += b.text.length + 1;
+      } else if (b.kind === 'sfx') {
+        schedule.push({ tag: b.tag, ratio: cumulChars / totalChars });
+      }
+    }
+    sfxScheduleRef.current = schedule;
+    sfxTriggeredRef.current.clear();
+    if (__DEV__) console.log('[StoryPlayer] SFX schedule:', schedule.length, 'beats');
+
+    // 2. Précharge unique de chaque tag utilisé
+    const tags = getSfxTagsFromScript(scriptForPlayer);
+    (async () => {
+      for (const tag of tags) {
+        const asset = STORY_SFX_ASSETS[tag];
+        if (!asset) continue;
+        try {
+          const { sound } = await Audio.Sound.createAsync(
+            asset as number,
+            { shouldPlay: false, volume: SFX_VOLUME },
+          );
+          if (cancelled) {
+            await sound.unloadAsync().catch(() => {});
+            return;
+          }
+          sfxPoolRef.current.set(tag, sound);
+        } catch (e) {
+          if (__DEV__) console.warn('[StoryPlayer] SFX preload failed:', tag, e);
+        }
+      }
+      if (__DEV__) console.log('[StoryPlayer] SFX pool ready:', sfxPoolRef.current.size);
+    })();
+
+    return () => {
+      cancelled = true;
+      const pool = sfxPoolRef.current;
+      sfxPoolRef.current = new Map();
+      pool.forEach(s => s.unloadAsync().catch(() => {}));
+    };
+  }, [scriptForPlayer]);
+
+  // ─── V2 : reset du compteur de SFX déclenchés à chaque play (relecture) ──
+  useEffect(() => {
+    if (isPlaying) sfxTriggeredRef.current.clear();
+  }, [isPlaying]);
+
+  // ─── Mode Spectacle : sync play/pause avec la voix narrée ────────────────
+  useEffect(() => {
+    if (!ambienceAsset || !ambienceReady) return;
+    const sound = ambienceSoundRef.current;
+    if (!sound) return;
+
+    let cancelled = false;
+    const FADE_STEP_MS = 80;
+    const fadeSteps = Math.max(1, Math.round((AMBIENCE_FADE_IN_SECONDS * 1000) / FADE_STEP_MS));
+
+    (async () => {
+      try {
+        if (isPlaying) {
+          if (__DEV__) console.log('[StoryPlayer] ambience: play + fade in');
+          ambienceFadeInDoneRef.current = false;
+          await sound.setVolumeAsync(0);
+          ambienceVolumeRef.current = 0;
+          await sound.playAsync();
+          for (let i = 1; i <= fadeSteps; i++) {
+            if (cancelled) return;
+            const vol = (AMBIENCE_VOLUME * i) / fadeSteps;
+            await sound.setVolumeAsync(vol);
+            ambienceVolumeRef.current = vol;
+            await new Promise(r => setTimeout(r, FADE_STEP_MS));
+          }
+          ambienceFadeInDoneRef.current = true;
+        } else {
+          if (__DEV__) console.log('[StoryPlayer] ambience: fade out + pause');
+          ambienceFadeInDoneRef.current = false;
+          for (let i = fadeSteps; i >= 0; i--) {
+            if (cancelled) return;
+            const vol = (AMBIENCE_VOLUME * i) / fadeSteps;
+            await sound.setVolumeAsync(vol);
+            ambienceVolumeRef.current = vol;
+            await new Promise(r => setTimeout(r, FADE_STEP_MS / 2));
+          }
+          await sound.pauseAsync();
+        }
+      } catch (e) {
+        if (__DEV__) console.warn('[StoryPlayer] ambience sync failed:', e);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [isPlaying, ambienceAsset, ambienceReady]);
 
   // Construit l'URI absolue du fichier MP3 dans le vault iCloud
   const vaultUri = React.useMemo(() => {
@@ -456,10 +639,48 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
     }
   }, [playProgress]);
 
-  // ─── Progression lecture → sharedValue pour le sparkle ────────────────────
+  // ─── Progression lecture → sharedValue pour le sparkle + fade-out ambiance
   const onWaveformProgress = useCallback((current: number, duration: number) => {
     if (duration > 0) {
       playProgress.value = current / duration;
+    }
+
+    // Fade-out progressif de l'ambiance sur les dernières secondes (endormissement).
+    // Démarre seulement après la fin du fade-in initial, pour ne pas se battre avec.
+    if (!ambienceFadeInDoneRef.current) return;
+    const sound = ambienceSoundRef.current;
+    if (!sound) return;
+    const remainingSec = (duration - current) / 1000;
+    if (remainingSec < 0 || !Number.isFinite(remainingSec)) return;
+
+    let target: number;
+    if (remainingSec >= AMBIENCE_FADE_OUT_SECONDS) {
+      target = AMBIENCE_VOLUME;
+    } else {
+      const ratio = Math.max(0, remainingSec / AMBIENCE_FADE_OUT_SECONDS);
+      target = AMBIENCE_VOLUME * ratio;
+    }
+    // Throttle : ne pousse setVolumeAsync que sur un delta significatif (~3%)
+    if (Math.abs(target - ambienceVolumeRef.current) >= 0.012) {
+      ambienceVolumeRef.current = target;
+      sound.setVolumeAsync(target).catch(() => { /* non-critique */ });
+    }
+
+    // ─── V2 : déclenche les SFX dont le ratio est dépassé ─────────────────
+    if (duration > 0 && sfxScheduleRef.current.length > 0) {
+      const ratio = current / duration;
+      sfxScheduleRef.current.forEach((beat, idx) => {
+        if (sfxTriggeredRef.current.has(idx)) return;
+        if (ratio < beat.ratio) return;
+        sfxTriggeredRef.current.add(idx);
+        const sound = sfxPoolRef.current.get(beat.tag);
+        if (!sound) return;
+        if (__DEV__) console.log('[StoryPlayer] SFX play:', beat.tag, '@', ratio.toFixed(2));
+        // Replay depuis 0 puis play (fire-and-forget, async)
+        sound.setPositionAsync(0)
+          .then(() => sound.playAsync())
+          .catch((e) => { if (__DEV__) console.warn('[StoryPlayer] SFX play failed:', beat.tag, e); });
+      });
     }
   }, [playProgress]);
 

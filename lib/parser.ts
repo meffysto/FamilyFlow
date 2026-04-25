@@ -3228,6 +3228,7 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
   if (story.voice.elevenLabsVoiceId) lines.push(`voice_id: ${story.voice.elevenLabsVoiceId}`);
   if (story.voice.fishAudioReferenceId) lines.push(`fish_audio_ref: ${story.voice.fishAudioReferenceId}`);
   if (story.length) lines.push(`length: ${story.length}`);
+  if (story.spectacle) lines.push(`spectacle: true`);
   lines.push(
     `version: ${story.version}`,
     '---',
@@ -3308,8 +3309,13 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
     const length = d.length && validLengths.has(d.length)
       ? (d.length as import('./types').StoryLength)
       : undefined;
+    // Id dérivé du nom de fichier — supporte les suffixes de séquence
+    // (`2026-04-25-foret-2.md`) sans casser les histoires existantes
+    // dont le filename est exactement `${date}-${univers}.md`.
+    const fileBase = (sourceFile.split('/').pop() ?? '').replace(/\.md$/, '');
+    const id = fileBase || `${d.date}-${d.univers}`;
     return {
-      id: `${d.date}-${d.univers}`,
+      id,
       titre: d.title,
       enfant: d.enfant,
       enfantId: d.enfant_id || d.enfant.toLowerCase().replace(/\s+/g, '_'),
@@ -3320,6 +3326,7 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
       duree_lecture: Number(d.duree_lecture || 0),
       voice: voiceConfig,
       length,
+      spectacle: d.spectacle === 'true' ? true : undefined,
       version: Number(d.version || 1),
       sourceFile,
     };

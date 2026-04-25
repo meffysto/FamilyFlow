@@ -5,10 +5,16 @@
 import { useState, useCallback } from 'react';
 import type { MutableRefObject, Dispatch, SetStateAction } from 'react';
 import type { VaultManager } from '../lib/vault';
-import type { BedtimeStory } from '../lib/types';
+import type { BedtimeStory, StoryScript } from '../lib/types';
 import { parseBedtimeStory, serializeBedtimeStory } from '../lib/parser';
+import { parseStoryScript } from '../lib/story-script';
 import { STORIES_DIR } from '../lib/stories';
 import { deleteStoryAudios } from '../lib/elevenlabs';
+
+/** Convertit `xxx.md` en `xxx.script.json` (sidecar V2) */
+function scriptSidecarPath(mdPath: string): string {
+  return mdPath.replace(/\.md$/, '.script.json');
+}
 
 export interface UseVaultStoriesResult {
   stories: BedtimeStory[];
@@ -42,7 +48,18 @@ export function useVaultStories(
             const relPath = `${dir}/${file}`;
             const content = await vault.readFile(relPath);
             const story = parseBedtimeStory(relPath, content);
-            if (story) allStories.push(story);
+            if (!story) return;
+
+            // V2 — charger le sidecar script.json si présent (best-effort)
+            if (story.spectacle) {
+              try {
+                const sidecar = await vault.readFile(scriptSidecarPath(relPath));
+                const script = parseStoryScript(sidecar);
+                if (script) story.script = script;
+              } catch { /* sidecar absent — histoire spectacle V1 (ambiance seule) */ }
+            }
+
+            allStories.push(story);
           } catch {
             // fichier illisible — ignorer
           }
@@ -57,16 +74,46 @@ export function useVaultStories(
   }, []);
 
   const saveStory = useCallback(async (story: BedtimeStory) => {
-    if (!vaultRef.current) return;
-    const vault = vaultRef.current;
-    const dir = `${STORIES_DIR}/${story.enfant}`;
-    await vault.ensureDir(dir);
-    const content = serializeBedtimeStory(story);
-    await vault.writeFile(story.sourceFile, content);
+    // 1) Optimistic update — l'histoire apparaît IMMÉDIATEMENT dans la bibliothèque,
+    //    même si la sync vault échoue ou tarde. Le MP3 ElevenLabs est de toute façon
+    //    caché indépendamment dans documentDirectory/stories-audio/.
     setStories(prev => {
       const without = prev.filter(s => s.sourceFile !== story.sourceFile);
-      return [story, ...without].sort((a, b) => b.date.localeCompare(a.date));
+      const next = [story, ...without].sort((a, b) => b.date.localeCompare(a.date));
+      if (__DEV__) console.log('[useVaultStories] saveStory: optimistic', prev.length, '→', next.length);
+      return next;
     });
+
+    // 2) Persistance vault en best-effort. Si elle échoue (iCloud lent, vault non
+    //    initialisé), on log mais on ne re-throw pas : l'histoire reste visible
+    //    en mémoire pour la session, et sera re-tentée à un prochain saveStory.
+    if (!vaultRef.current) {
+      if (__DEV__) console.warn('[useVaultStories] saveStory: vaultRef null, persistance différée');
+      return;
+    }
+
+    const vault = vaultRef.current;
+    const dir = `${STORIES_DIR}/${story.enfant}`;
+
+    try {
+      await vault.ensureDir(dir);
+      const content = serializeBedtimeStory(story);
+      await vault.writeFile(story.sourceFile, content);
+      if (__DEV__) console.log('[useVaultStories] saveStory: vault write OK', story.sourceFile);
+
+      // V2 — sidecar script.json (Mode Spectacle enrichi)
+      if (story.script) {
+        try {
+          await vault.writeFile(scriptSidecarPath(story.sourceFile), JSON.stringify(story.script, null, 2));
+          if (__DEV__) console.log('[useVaultStories] saveStory: sidecar OK');
+        } catch (e) {
+          if (__DEV__) console.warn('[useVaultStories] sidecar failed:', e);
+        }
+      }
+    } catch (e) {
+      if (__DEV__) console.warn('[useVaultStories] vault persist failed (history still in memory):', e);
+      throw e; // signale au caller pour qu'il puisse afficher un toast non-bloquant
+    }
   }, [vaultRef]);
 
   const deleteStory = useCallback(async (sourceFile: string) => {
@@ -74,6 +121,10 @@ export function useVaultStories(
     try {
       await vaultRef.current.deleteFile(sourceFile);
     } catch { /* non-critique */ }
+    // V2 — supprime aussi le sidecar script.json si présent
+    try {
+      await vaultRef.current.deleteFile(scriptSidecarPath(sourceFile));
+    } catch { /* sidecar absent — pas grave */ }
     setStories(prev => {
       const story = prev.find(s => s.sourceFile === sourceFile);
       if (story) {

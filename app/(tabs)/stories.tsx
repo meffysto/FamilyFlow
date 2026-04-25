@@ -12,7 +12,7 @@ import Animated, {
   cancelAnimation, runOnJS,
 } from 'react-native-reanimated';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
 import { useVault } from '../../contexts/VaultContext';
@@ -29,9 +29,11 @@ import { getCachedStoryAudioFish } from '../../lib/fish-audio';
 import {
   STORY_UNIVERSES, STORY_SUGGESTIONS, ELEVENLABS_FRENCH_VOICES, ELEVENLABS_ENGLISH_VOICES,
   STORY_LENGTHS, STORY_LENGTH_ORDER,
-  storyFileName, pickSurpriseUniverse,
+  nextStoryFileName, pickSurpriseUniverse,
 } from '../../lib/stories';
 import { generateBedtimeStory } from '../../lib/ai-service';
+import { getAvailableSfxTags } from '../../lib/sfx';
+import { parseStoryScript } from '../../lib/story-script';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
 import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryVoiceEngine, StoryLength, Profile, Memory, ChildQuote } from '../../lib/types';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -659,6 +661,19 @@ export default function StoriesScreen() {
     }
   }, [step.etape]);
 
+  // Reset à l'ouverture/refocus de l'écran : si on était bloqué sur fin/replay/generation,
+  // repartir d'une étape neutre pour éviter de revenir sur une vieille histoire à la réouverture.
+  useFocusEffect(
+    useCallback(() => {
+      setStep((current) => {
+        if (current.etape === 'fin' || current.etape === 'replay' || current.etape === 'generation') {
+          return { etape: 'choisir_enfant' };
+        }
+        return current;
+      });
+    }, [])
+  );
+
   // Transition animation
   const opacity = useSharedValue(1);
   const translateY = useSharedValue(0);
@@ -917,6 +932,8 @@ export default function StoriesScreen() {
 
     const buildFinalVoiceConfig = (): StoryVoiceConfig => {
       const lang = voiceConfig.language;
+      const spectacle = voiceConfig.spectacle;
+      const length = voiceConfig.length;
       if (localVoiceEngine === 'elevenlabs') {
         if (voiceSelectedParentId) {
           const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
@@ -924,25 +941,27 @@ export default function StoriesScreen() {
             const BELLA_ID = 'EXAVITQu4vr4xnSDxMaL';
             const ADAM_ID = 'pNInz6obpgDQGcFmaJgB';
             const voiceId = parent.voiceElevenLabsId ?? (parent.gender === 'fille' ? BELLA_ID : ADAM_ID);
-            return { engine: 'elevenlabs', language: lang, elevenLabsVoiceId: voiceId };
+            return { engine: 'elevenlabs', language: lang, elevenLabsVoiceId: voiceId, spectacle, length };
           }
         }
-        return { engine: 'elevenlabs', language: lang, elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId };
+        return { engine: 'elevenlabs', language: lang, elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId, spectacle, length };
       }
       if (localVoiceEngine === 'fish-audio') {
         if (voiceSelectedParentId) {
           const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
           if (parent?.voiceFishAudioId) {
-            return { engine: 'fish-audio', language: lang, fishAudioReferenceId: parent.voiceFishAudioId };
+            return { engine: 'fish-audio', language: lang, fishAudioReferenceId: parent.voiceFishAudioId, spectacle, length };
           }
         }
-        return { engine: 'fish-audio', language: lang, fishAudioReferenceId: voiceConfig.fishAudioReferenceId };
+        return { engine: 'fish-audio', language: lang, fishAudioReferenceId: voiceConfig.fishAudioReferenceId, spectacle, length };
       }
       // expo-speech — voix Premium/Enhanced optionnelle (persistee si choisie)
       return {
         engine: 'expo-speech',
         language: lang,
         voiceIdentifier: voiceSelectedPersonalVoice?.identifier,
+        spectacle,
+        length,
       };
     };
 
@@ -1202,6 +1221,29 @@ export default function StoriesScreen() {
             );
           })}
         </View>
+
+        {/* Toggle Mode Spectacle — ambiance sonore sous la voix */}
+        <Pressable
+          style={[styles.spectacleToggle, {
+            backgroundColor: voiceConfig.spectacle ? primary : colors.card,
+            borderColor: voiceConfig.spectacle ? primary : colors.border,
+          }]}
+          onPress={() => {
+            Haptics.selectionAsync();
+            setVoiceConfig({ ...voiceConfig, spectacle: !voiceConfig.spectacle });
+          }}
+        >
+          <Text style={styles.spectacleEmoji}>🎭</Text>
+          <View style={styles.spectacleTextWrap}>
+            <Text style={[styles.spectacleLabel, { color: voiceConfig.spectacle ? '#fff' : colors.text }]}>
+              Mode Spectacle
+            </Text>
+            <Text style={[styles.spectacleHint, { color: voiceConfig.spectacle ? '#ffffffcc' : colors.textMuted }]}>
+              Ambiance sonore immersive sous la voix
+            </Text>
+          </View>
+          <Text style={[styles.spectacleCheck, { color: voiceConfig.spectacle ? '#fff' : 'transparent' }]}>✓</Text>
+        </Pressable>
 
         {/* Sélecteur voix unifié */}
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Voix de narration</Text>
@@ -1530,6 +1572,8 @@ export default function StoriesScreen() {
         detail: detail ? anonymize(detail, anonMap) : undefined,
         language: voiceConfig.language,
         length,
+        spectacle: voiceConfig.spectacle === true,
+        availableSfxTags: voiceConfig.spectacle === true ? getAvailableSfxTags() : undefined,
         context: {
           recentMoods: childMoods.map(m => ({ level: m.level, note: m.note ? anonymize(m.note, anonMap) : undefined, date: m.date })),
           recentQuotes: childQuotes.map(q => ({ citation: anonymize(q.citation, anonMap), contexte: q.contexte ? anonymize(q.contexte, anonMap) : undefined, date: q.date })),
@@ -1546,10 +1590,26 @@ export default function StoriesScreen() {
 
       let titre = 'Histoire du soir';
       let texte = resp.text;
+      let script: import('../../lib/types').StoryScript | undefined;
       try {
         const parsed = JSON.parse(resp.text);
         titre = deanonymize(parsed.titre ?? titre, anonMap);
         texte = deanonymize(parsed.texte ?? texte, anonMap);
+        // V2 — extrait le script si Claude l'a fourni (Mode Spectacle)
+        if (parsed.script) {
+          const validated = parseStoryScript(parsed.script);
+          if (validated) {
+            // Dé-anonymise les textes des beats narration/dialogue
+            script = {
+              ...validated,
+              beats: validated.beats.map(b => {
+                if (b.kind === 'narration') return { ...b, text: deanonymize(b.text, anonMap) };
+                if (b.kind === 'dialogue') return { ...b, text: deanonymize(b.text, anonMap) };
+                return b;
+              }),
+            };
+          }
+        }
       } catch {
         texte = deanonymize(resp.text, anonMap);
       }
@@ -1567,10 +1627,15 @@ export default function StoriesScreen() {
           setDisplayedText(texte);
           setShowPlayer(true);
 
-          // Sauvegarder dans le vault
+          // Sauvegarder dans le vault — calcule un id unique si une histoire
+          // avec même date+univers existe déjà (suffixe -2, -3, etc.)
           const today = format(new Date(), 'yyyy-MM-dd');
+          const existingIds = new Set(
+            stories.filter(s => s.enfantId === enfantId).map(s => s.id),
+          );
+          const { sourceFile, id } = nextStoryFileName(enfantName, today, universId, existingIds);
           const story: BedtimeStory = {
-            id: `${today}-${universId}`,
+            id,
             titre,
             texte,
             enfant: enfantName,
@@ -1581,12 +1646,20 @@ export default function StoriesScreen() {
             duree_lecture: Math.round(texte.length / 15),
             voice: voiceConfig,
             length,
+            spectacle: voiceConfig.spectacle || undefined,
+            script: script,
             version: 1,
-            sourceFile: storyFileName(enfantName, today, universId),
+            sourceFile,
           };
           generationCacheRef.current = { titre, texte, story };
           setCurrentStory(story);
-          saveStory(story).catch(() => { /* non-critique */ });
+          // saveStory fait l'optimistic update en interne (l'histoire apparaît
+          // tout de suite dans la bibliothèque). Si la sync vault échoue,
+          // l'histoire reste utilisable pour la session — l'audio ElevenLabs
+          // est caché à part, donc rien n'est perdu côté crédits.
+          saveStory(story).catch((e) => {
+            if (__DEV__) console.warn('[stories] vault sync failed (story still in memory):', e);
+          });
         }
       }, 18);
     }, [enfantId, enfantName, universId, detail]);
@@ -1934,6 +2007,21 @@ const styles = StyleSheet.create({
   lengthEmoji: { fontSize: 22, marginBottom: Spacing.xs },
   lengthLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.bold, marginBottom: 2, textAlign: 'center' },
   lengthDuration: { fontSize: FontSize.micro, textAlign: 'center' },
+  spectacleToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+    gap: Spacing.md,
+  },
+  spectacleEmoji: { fontSize: 24 },
+  spectacleTextWrap: { flex: 1 },
+  spectacleLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold, marginBottom: 2 },
+  spectacleHint: { fontSize: FontSize.caption },
+  spectacleCheck: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
   previousStoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
