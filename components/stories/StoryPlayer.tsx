@@ -15,9 +15,14 @@ import {
   type IWaveformRef,
   PlayerState,
 } from '@simform_solutions/react-native-audio-waveform';
-import type { BedtimeStory, StoryReadingSpeed, StoryVoiceConfig } from '../../lib/types';
+import type { BedtimeStory, StoryAudioAlignment, StoryReadingSpeed, StoryVoiceConfig } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { generateSpeech, getCachedStoryAudio, storyVaultAudioRelPath } from '../../lib/elevenlabs';
+import {
+  generateSpeech,
+  generateSpeechWithTimestamps,
+  getCachedStoryAudio,
+  storyVaultAudioRelPath,
+} from '../../lib/elevenlabs';
 import { generateSpeechFish, getCachedStoryAudioFish } from '../../lib/fish-audio';
 import {
   STORY_AMBIENCE_ASSETS,
@@ -26,7 +31,7 @@ import {
   AMBIENCE_FADE_OUT_SECONDS,
 } from '../../lib/ambience';
 import { STORY_SFX_ASSETS, SFX_VOLUME } from '../../lib/sfx';
-import { getSfxTagsFromScript } from '../../lib/story-script';
+import { computeSfxScheduleFromAlignment, getSfxTagsFromScript } from '../../lib/story-script';
 import type { StorySfxTag } from '../../lib/types';
 import { useVault } from '../../contexts/VaultContext';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -225,9 +230,12 @@ interface Props {
   fishAudioKey?: string;
   onFinish: () => void;
   autoGenerate?: boolean; // défaut true
+  /** V2.3 — appelé quand l'alignement caractère→timestamp vient d'être généré.
+   *  Le parent doit persister via saveStory pour sidecar `.alignment.json`. */
+  onAlignmentReady?: (alignment: StoryAudioAlignment) => void;
 }
 
-function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish, autoGenerate = true }: Props) {
+function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish, autoGenerate = true, onAlignmentReady }: Props) {
   const { primary, colors } = useThemeColors();
   const { vault } = useVault();
   const isElevenLabs = voiceConfig.engine === 'elevenlabs';
@@ -260,16 +268,30 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
   // True dès que la voix a démarré au moins une fois → autorise le fade-out
   // en fin de piste (évite que le fade-in initial soit écrasé par 0).
   const ambienceFadeInDoneRef = useRef(false);
-  const spectacleActive = histoire.spectacle === true;
-  const ambienceAsset = spectacleActive ? STORY_AMBIENCE_ASSETS[histoire.univers] : undefined;
+  // Mode audio effectif (avec compat ascendante : `spectacle: true` → 'spectacle')
+  const audioMode = histoire.audioMode ?? (histoire.spectacle === true ? 'spectacle' : 'off');
+  const ambienceActive = audioMode !== 'off';
+  const spectacleActive = audioMode === 'spectacle';
+  // Volume d'ambiance (override par histoire ou défaut constante)
+  const ambienceTargetVolume = typeof histoire.ambienceVolume === 'number'
+    ? Math.max(0, Math.min(1, histoire.ambienceVolume))
+    : AMBIENCE_VOLUME;
+  const ambienceAsset = ambienceActive ? STORY_AMBIENCE_ASSETS[histoire.univers] : undefined;
 
   // ─── V2 : SFX déclenchés par le script (timing approximatif par paragraphe)
   // Pool de Sound préchargés pour chaque tag utilisé, déclenchés au passage
   // du curseur waveform via onWaveformProgress.
   const sfxPoolRef = useRef<Map<StorySfxTag, Audio.Sound>>(new Map());
-  const sfxScheduleRef = useRef<{ tag: StorySfxTag; ratio: number }[]>([]);
+  // V2.3 : si `atSec` présent → planning absolu (alignment word-level).
+  // Sinon `ratio` → fallback V2.2 (proportionnel cumul caractères).
+  const sfxScheduleRef = useRef<{ tag: StorySfxTag; ratio?: number; atSec?: number }[]>([]);
   const sfxTriggeredRef = useRef<Set<number>>(new Set());
+  // Dernier ratio de progression observé (sert à détecter un skip arrière)
+  const lastProgressRatioRef = useRef<number>(0);
+  // État alignment : transmis depuis l'histoire OU récupéré post-génération
+  const [alignment, setAlignment] = useState<StoryAudioAlignment | undefined>(histoire.alignment);
   const scriptForPlayer = spectacleActive ? histoire.script : undefined;
+  const alignmentForPlayer = spectacleActive ? alignment : undefined;
 
   if (__DEV__) {
     // Diagnostic au premier render uniquement (ces valeurs sont stables par histoire)
@@ -333,30 +355,65 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
     };
   }, [ambienceAsset]);
 
-  // ─── V2 : précharge des SFX utilisés + calcul du planning ratio ──────────
+  // ─── Endormissement : opacité d'overlay sombre sur les 30 dernières secondes
+  const SLEEP_DIM_SECONDS = 30;
+  const SLEEP_DIM_MAX_OPACITY = 0.55;
+  const dimOpacity = useSharedValue(0);
+  const dimStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
+
+  // ─── Indicateur visuel SFX : pulse global déclenché à chaque trigger ─────
+  const sfxPulse = useSharedValue(0);
+  const sfxPulseStyle = useAnimatedStyle(() => ({
+    opacity: sfxPulse.value,
+    transform: [{ scale: 0.9 + sfxPulse.value * 0.2 }],
+  }));
+  const triggerSfxPulse = useCallback(() => {
+    'worklet';
+    sfxPulse.value = withSequence(
+      withTiming(1, { duration: 120, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }),
+    );
+  }, [sfxPulse]);
+
+  // ─── V2 : précharge des SFX utilisés + calcul du planning ──────────────
+  // V2.3 : si `alignmentForPlayer` est dispo → planning absolu en secondes (word-level).
+  // Sinon → fallback V2.2 ratio (cumul caractères narration/dialogue).
   useEffect(() => {
     if (!scriptForPlayer) return;
     let cancelled = false;
 
-    // 1. Calcul des ratios de déclenchement (cumul caractères narration/dialogue)
-    let cumulChars = 0;
-    let totalChars = 0;
-    for (const b of scriptForPlayer.beats) {
-      if (b.kind === 'narration' || b.kind === 'dialogue') totalChars += b.text.length + 1;
-    }
-    if (totalChars === 0) return;
+    let schedule: { tag: StorySfxTag; ratio?: number; atSec?: number }[] = [];
 
-    const schedule: { tag: StorySfxTag; ratio: number }[] = [];
-    for (const b of scriptForPlayer.beats) {
-      if (b.kind === 'narration' || b.kind === 'dialogue') {
-        cumulChars += b.text.length + 1;
-      } else if (b.kind === 'sfx') {
-        schedule.push({ tag: b.tag, ratio: cumulChars / totalChars });
+    if (alignmentForPlayer) {
+      const aligned = computeSfxScheduleFromAlignment(scriptForPlayer, alignmentForPlayer);
+      if (aligned && aligned.length > 0) {
+        schedule = aligned.map(s => ({ tag: s.tag, atSec: s.atSec }));
+        if (__DEV__) console.log('[StoryPlayer] SFX schedule (V2.3 word-level):', schedule.length);
       }
     }
+
+    // Fallback ratio si pas d'alignment exploitable
+    if (schedule.length === 0) {
+      let cumulChars = 0;
+      let totalChars = 0;
+      for (const b of scriptForPlayer.beats) {
+        if (b.kind === 'narration' || b.kind === 'dialogue') totalChars += b.text.length + 1;
+      }
+      if (totalChars > 0) {
+        for (const b of scriptForPlayer.beats) {
+          if (b.kind === 'narration' || b.kind === 'dialogue') {
+            cumulChars += b.text.length + 1;
+          } else if (b.kind === 'sfx') {
+            schedule.push({ tag: b.tag, ratio: cumulChars / totalChars });
+          }
+        }
+        if (__DEV__) console.log('[StoryPlayer] SFX schedule (V2.2 ratio fallback):', schedule.length);
+      }
+    }
+
     sfxScheduleRef.current = schedule;
     sfxTriggeredRef.current.clear();
-    if (__DEV__) console.log('[StoryPlayer] SFX schedule:', schedule.length, 'beats');
+    if (schedule.length === 0) return;
 
     // 2. Précharge unique de chaque tag utilisé
     const tags = getSfxTagsFromScript(scriptForPlayer);
@@ -387,12 +444,18 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       sfxPoolRef.current = new Map();
       pool.forEach(s => s.unloadAsync().catch(() => {}));
     };
-  }, [scriptForPlayer]);
+  }, [scriptForPlayer, alignmentForPlayer]);
 
   // ─── V2 : reset du compteur de SFX déclenchés à chaque play (relecture) ──
   useEffect(() => {
-    if (isPlaying) sfxTriggeredRef.current.clear();
-  }, [isPlaying]);
+    if (isPlaying) {
+      sfxTriggeredRef.current.clear();
+      lastProgressRatioRef.current = 0;
+    } else {
+      // Reset overlay d'endormissement quand on met en pause
+      dimOpacity.value = withTiming(0, { duration: 250 });
+    }
+  }, [isPlaying, dimOpacity]);
 
   // ─── Mode Spectacle : sync play/pause avec la voix narrée ────────────────
   useEffect(() => {
@@ -414,7 +477,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
           await sound.playAsync();
           for (let i = 1; i <= fadeSteps; i++) {
             if (cancelled) return;
-            const vol = (AMBIENCE_VOLUME * i) / fadeSteps;
+            const vol = (ambienceTargetVolume * i) / fadeSteps;
             await sound.setVolumeAsync(vol);
             ambienceVolumeRef.current = vol;
             await new Promise(r => setTimeout(r, FADE_STEP_MS));
@@ -425,7 +488,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
           ambienceFadeInDoneRef.current = false;
           for (let i = fadeSteps; i >= 0; i--) {
             if (cancelled) return;
-            const vol = (AMBIENCE_VOLUME * i) / fadeSteps;
+            const vol = (ambienceTargetVolume * i) / fadeSteps;
             await sound.setVolumeAsync(vol);
             ambienceVolumeRef.current = vol;
             await new Promise(r => setTimeout(r, FADE_STEP_MS / 2));
@@ -469,14 +532,32 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
     }
 
     try {
+      // V2.3 : si Mode Spectacle + ElevenLabs + script présent ET alignment absent,
+      // on appelle l'endpoint /with-timestamps pour récupérer l'alignement caractère→temps.
+      // Sinon (mode doux/off, Fish Audio, ou alignment déjà en cache), endpoint classique.
+      const useTimestamps = isElevenLabs
+        && spectacleActive
+        && !!histoire.script
+        && !alignment;
+
       const result = isFishAudio
         ? await generateSpeechFish(apiKey, histoire.texte, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
-        : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id);
+        : useTimestamps
+          ? await generateSpeechWithTimestamps(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id)
+          : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id);
       if (signal.cancelled) return;
       if ('error' in result) {
         setGenError(result.error);
       } else {
         setAudioPath(result.audioUri);
+        // V2.3 : alignment dispo → state local + remontée parent (persistance sidecar)
+        const maybeAlignment = (result as { alignment?: StoryAudioAlignment }).alignment;
+        if (maybeAlignment) {
+          setAlignment(maybeAlignment);
+          if (onAlignmentReady) {
+            try { onAlignmentReady(maybeAlignment); } catch { /* non-critique */ }
+          }
+        }
         // Persister dans le vault iCloud (best-effort silencieux)
         if (vault) {
           vault
@@ -489,7 +570,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
     } finally {
       if (!signal.cancelled) setIsLoading(false);
     }
-  }, [isFishAudio, fishAudioKey, elevenLabsKey, histoire.texte, histoire.id, histoire.enfant, voiceConfig.fishAudioReferenceId, voiceConfig.elevenLabsVoiceId, vault]);
+  }, [isFishAudio, isElevenLabs, spectacleActive, fishAudioKey, elevenLabsKey, histoire.texte, histoire.id, histoire.enfant, histoire.script, alignment, voiceConfig.fishAudioReferenceId, voiceConfig.elevenLabsVoiceId, vault, onAlignmentReady]);
 
   // Pre-generation API voice (ElevenLabs ou Fish Audio) au montage (une fois)
   useEffect(() => {
@@ -645,20 +726,50 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       playProgress.value = current / duration;
     }
 
+    // ─── Détection skip arrière : reset des SFX déjà tirés au-delà du curseur
+    if (duration > 0) {
+      const ratio = current / duration;
+      const last = lastProgressRatioRef.current;
+      if (last - ratio > 0.05 && sfxScheduleRef.current.length > 0) {
+        const currentSec = current / 1000;
+        sfxTriggeredRef.current.forEach((idx) => {
+          const beat = sfxScheduleRef.current[idx];
+          if (!beat) return;
+          // V2.3 : compare en secondes — V2.2 fallback : compare en ratio
+          if (typeof beat.atSec === 'number') {
+            if (beat.atSec > currentSec) sfxTriggeredRef.current.delete(idx);
+          } else if (typeof beat.ratio === 'number') {
+            if (beat.ratio > ratio) sfxTriggeredRef.current.delete(idx);
+          }
+        });
+        if (__DEV__) console.log('[StoryPlayer] SFX retrigger après skip arrière', { from: last.toFixed(2), to: ratio.toFixed(2) });
+      }
+      lastProgressRatioRef.current = ratio;
+    }
+
+    // ─── Endormissement : overlay sombre sur les 30 dernières secondes
+    const remainingSec = (duration - current) / 1000;
+    if (Number.isFinite(remainingSec) && remainingSec >= 0) {
+      const dimRatio = Math.max(0, Math.min(1, 1 - remainingSec / SLEEP_DIM_SECONDS));
+      const targetDim = dimRatio * SLEEP_DIM_MAX_OPACITY;
+      if (Math.abs(targetDim - dimOpacity.value) > 0.02) {
+        dimOpacity.value = withTiming(targetDim, { duration: 400 });
+      }
+    }
+
     // Fade-out progressif de l'ambiance sur les dernières secondes (endormissement).
     // Démarre seulement après la fin du fade-in initial, pour ne pas se battre avec.
     if (!ambienceFadeInDoneRef.current) return;
     const sound = ambienceSoundRef.current;
     if (!sound) return;
-    const remainingSec = (duration - current) / 1000;
     if (remainingSec < 0 || !Number.isFinite(remainingSec)) return;
 
     let target: number;
     if (remainingSec >= AMBIENCE_FADE_OUT_SECONDS) {
-      target = AMBIENCE_VOLUME;
+      target = ambienceTargetVolume;
     } else {
       const ratio = Math.max(0, remainingSec / AMBIENCE_FADE_OUT_SECONDS);
-      target = AMBIENCE_VOLUME * ratio;
+      target = ambienceTargetVolume * ratio;
     }
     // Throttle : ne pousse setVolumeAsync que sur un delta significatif (~3%)
     if (Math.abs(target - ambienceVolumeRef.current) >= 0.012) {
@@ -666,28 +777,52 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       sound.setVolumeAsync(target).catch(() => { /* non-critique */ });
     }
 
-    // ─── V2 : déclenche les SFX dont le ratio est dépassé ─────────────────
+    // ─── V2 : déclenche les SFX dont le seuil est dépassé ────────────────
+    // V2.3 : compare en secondes absolues si `atSec` présent (alignment word-level)
+    // V2.2 : fallback ratio sinon
     if (duration > 0 && sfxScheduleRef.current.length > 0) {
       const ratio = current / duration;
+      const currentSec = current / 1000;
       sfxScheduleRef.current.forEach((beat, idx) => {
         if (sfxTriggeredRef.current.has(idx)) return;
-        if (ratio < beat.ratio) return;
+        let reached = false;
+        if (typeof beat.atSec === 'number') {
+          reached = currentSec >= beat.atSec;
+        } else if (typeof beat.ratio === 'number') {
+          reached = ratio >= beat.ratio;
+        }
+        if (!reached) return;
         sfxTriggeredRef.current.add(idx);
         const sound = sfxPoolRef.current.get(beat.tag);
         if (!sound) return;
-        if (__DEV__) console.log('[StoryPlayer] SFX play:', beat.tag, '@', ratio.toFixed(2));
+        if (__DEV__) {
+          const at = typeof beat.atSec === 'number'
+            ? `${beat.atSec.toFixed(2)}s`
+            : `r=${(beat.ratio ?? 0).toFixed(2)}`;
+          console.log('[StoryPlayer] SFX play:', beat.tag, '@', at);
+        }
+        // Pulse visuel synchronisé (UI thread)
+        triggerSfxPulse();
         // Replay depuis 0 puis play (fire-and-forget, async)
         sound.setPositionAsync(0)
           .then(() => sound.playAsync())
           .catch((e) => { if (__DEV__) console.warn('[StoryPlayer] SFX play failed:', beat.tag, e); });
       });
     }
-  }, [playProgress]);
+  }, [playProgress, dimOpacity, triggerSfxPulse]);
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: colors.text }]}>{histoire.titre}</Text>
+
+      {/* Indicateur visuel SFX : halo coloré qui pulse à chaque trigger */}
+      {spectacleActive && (
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.sfxPulse, { backgroundColor: primary }, sfxPulseStyle]}
+        />
+      )}
 
       {/* Waveform : vraie pour ElevenLabs/Fish Audio, decorative pour expo-speech */}
       {isApiVoice ? (
@@ -822,6 +957,12 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
           Terminer l'histoire →
         </Text>
       </Pressable>
+
+      {/* Overlay endormissement : assombrit progressivement les 30 dernières secondes */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.sleepDim, dimStyle]}
+      />
     </View>
   );
 }
@@ -846,4 +987,18 @@ const styles = StyleSheet.create({
   finishText: { fontSize: FontSize.sm },
   generateButton: { paddingHorizontal: Spacing['2xl'], paddingVertical: Spacing.lg, borderRadius: Radius.lg, alignItems: 'center' },
   generateButtonText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold, color: '#fff' },
+  sleepDim: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#000',
+  },
+  sfxPulse: {
+    position: 'absolute',
+    top: Spacing['2xl'],
+    alignSelf: 'center',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    opacity: 0,
+  },
 });

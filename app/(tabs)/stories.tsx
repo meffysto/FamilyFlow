@@ -932,8 +932,11 @@ export default function StoriesScreen() {
 
     const buildFinalVoiceConfig = (): StoryVoiceConfig => {
       const lang = voiceConfig.language;
-      const spectacle = voiceConfig.spectacle;
+      const audioMode = voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off');
+      const spectacle = audioMode === 'spectacle' ? true : undefined;
+      const ambienceVolume = voiceConfig.ambienceVolume;
       const length = voiceConfig.length;
+      const base = { language: lang, spectacle, audioMode, ambienceVolume, length } as const;
       if (localVoiceEngine === 'elevenlabs') {
         if (voiceSelectedParentId) {
           const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
@@ -941,27 +944,25 @@ export default function StoriesScreen() {
             const BELLA_ID = 'EXAVITQu4vr4xnSDxMaL';
             const ADAM_ID = 'pNInz6obpgDQGcFmaJgB';
             const voiceId = parent.voiceElevenLabsId ?? (parent.gender === 'fille' ? BELLA_ID : ADAM_ID);
-            return { engine: 'elevenlabs', language: lang, elevenLabsVoiceId: voiceId, spectacle, length };
+            return { engine: 'elevenlabs', elevenLabsVoiceId: voiceId, ...base };
           }
         }
-        return { engine: 'elevenlabs', language: lang, elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId, spectacle, length };
+        return { engine: 'elevenlabs', elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId, ...base };
       }
       if (localVoiceEngine === 'fish-audio') {
         if (voiceSelectedParentId) {
           const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
           if (parent?.voiceFishAudioId) {
-            return { engine: 'fish-audio', language: lang, fishAudioReferenceId: parent.voiceFishAudioId, spectacle, length };
+            return { engine: 'fish-audio', fishAudioReferenceId: parent.voiceFishAudioId, ...base };
           }
         }
-        return { engine: 'fish-audio', language: lang, fishAudioReferenceId: voiceConfig.fishAudioReferenceId, spectacle, length };
+        return { engine: 'fish-audio', fishAudioReferenceId: voiceConfig.fishAudioReferenceId, ...base };
       }
       // expo-speech — voix Premium/Enhanced optionnelle (persistee si choisie)
       return {
         engine: 'expo-speech',
-        language: lang,
         voiceIdentifier: voiceSelectedPersonalVoice?.identifier,
-        spectacle,
-        length,
+        ...base,
       };
     };
 
@@ -1222,28 +1223,85 @@ export default function StoriesScreen() {
           })}
         </View>
 
-        {/* Toggle Mode Spectacle — ambiance sonore sous la voix */}
-        <Pressable
-          style={[styles.spectacleToggle, {
-            backgroundColor: voiceConfig.spectacle ? primary : colors.card,
-            borderColor: voiceConfig.spectacle ? primary : colors.border,
-          }]}
-          onPress={() => {
+        {/* Mode audio — 3 paliers : Off (voix seule) / Doux (+ ambiance) / Spectacle (+ SFX) */}
+        {(() => {
+          const currentMode: import('../../lib/types').StoryAudioMode =
+            voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off');
+          const ambienceVol = typeof voiceConfig.ambienceVolume === 'number'
+            ? voiceConfig.ambienceVolume
+            : 0.4;
+          const MODES: { key: import('../../lib/types').StoryAudioMode; emoji: string; label: string; hint: string }[] = [
+            { key: 'off',       emoji: '🔇', label: 'Off',       hint: 'Voix seule' },
+            { key: 'doux',      emoji: '🌙', label: 'Doux',      hint: 'Ambiance' },
+            { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: 'Ambiance + SFX' },
+          ];
+          const setMode = (mode: import('../../lib/types').StoryAudioMode) => {
             Haptics.selectionAsync();
-            setVoiceConfig({ ...voiceConfig, spectacle: !voiceConfig.spectacle });
-          }}
-        >
-          <Text style={styles.spectacleEmoji}>🎭</Text>
-          <View style={styles.spectacleTextWrap}>
-            <Text style={[styles.spectacleLabel, { color: voiceConfig.spectacle ? '#fff' : colors.text }]}>
-              Mode Spectacle
-            </Text>
-            <Text style={[styles.spectacleHint, { color: voiceConfig.spectacle ? '#ffffffcc' : colors.textMuted }]}>
-              Ambiance sonore immersive sous la voix
-            </Text>
-          </View>
-          <Text style={[styles.spectacleCheck, { color: voiceConfig.spectacle ? '#fff' : 'transparent' }]}>✓</Text>
-        </Pressable>
+            setVoiceConfig({
+              ...voiceConfig,
+              audioMode: mode,
+              spectacle: mode === 'spectacle' ? true : undefined,
+            });
+          };
+          const adjustVolume = (delta: number) => {
+            Haptics.selectionAsync();
+            const next = Math.max(0, Math.min(1, Math.round((ambienceVol + delta) * 10) / 10));
+            setVoiceConfig({ ...voiceConfig, ambienceVolume: next });
+          };
+          return (
+            <>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Mode audio</Text>
+              <View style={styles.audioModeRow}>
+                {MODES.map(m => {
+                  const selected = currentMode === m.key;
+                  return (
+                    <Pressable
+                      key={m.key}
+                      style={[
+                        styles.audioModeChip,
+                        {
+                          backgroundColor: selected ? primary : colors.card,
+                          borderColor: selected ? primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => setMode(m.key)}
+                    >
+                      <Text style={styles.audioModeEmoji}>{m.emoji}</Text>
+                      <Text style={[styles.audioModeLabel, { color: selected ? '#fff' : colors.text }]}>
+                        {m.label}
+                      </Text>
+                      <Text style={[styles.audioModeHint, { color: selected ? '#ffffffcc' : colors.textMuted }]}>
+                        {m.hint}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {currentMode !== 'off' && (
+                <View style={[styles.volumeRow, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                  <Text style={[styles.volumeLabel, { color: colors.textMuted }]}>Volume ambiance</Text>
+                  <Pressable
+                    style={[styles.volumeButton, { borderColor: colors.border }]}
+                    onPress={() => adjustVolume(-0.1)}
+                    disabled={ambienceVol <= 0}
+                    accessibilityLabel="Baisser le volume"
+                  >
+                    <Text style={[styles.volumeButtonText, { color: colors.text }]}>−</Text>
+                  </Pressable>
+                  <Text style={[styles.volumeValue, { color: colors.text }]}>{Math.round(ambienceVol * 100)}%</Text>
+                  <Pressable
+                    style={[styles.volumeButton, { borderColor: colors.border }]}
+                    onPress={() => adjustVolume(0.1)}
+                    disabled={ambienceVol >= 1}
+                    accessibilityLabel="Augmenter le volume"
+                  >
+                    <Text style={[styles.volumeButtonText, { color: colors.text }]}>+</Text>
+                  </Pressable>
+                </View>
+              )}
+            </>
+          );
+        })()}
 
         {/* Sélecteur voix unifié */}
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Voix de narration</Text>
@@ -1572,8 +1630,8 @@ export default function StoriesScreen() {
         detail: detail ? anonymize(detail, anonMap) : undefined,
         language: voiceConfig.language,
         length,
-        spectacle: voiceConfig.spectacle === true,
-        availableSfxTags: voiceConfig.spectacle === true ? getAvailableSfxTags() : undefined,
+        spectacle: (voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off')) === 'spectacle',
+        availableSfxTags: (voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off')) === 'spectacle' ? getAvailableSfxTags() : undefined,
         context: {
           recentMoods: childMoods.map(m => ({ level: m.level, note: m.note ? anonymize(m.note, anonMap) : undefined, date: m.date })),
           recentQuotes: childQuotes.map(q => ({ citation: anonymize(q.citation, anonMap), contexte: q.contexte ? anonymize(q.contexte, anonMap) : undefined, date: q.date })),
@@ -1647,6 +1705,8 @@ export default function StoriesScreen() {
             voice: voiceConfig,
             length,
             spectacle: voiceConfig.spectacle || undefined,
+            audioMode: voiceConfig.audioMode,
+            ambienceVolume: voiceConfig.ambienceVolume,
             script: script,
             version: 1,
             sourceFile,
@@ -1745,6 +1805,11 @@ export default function StoriesScreen() {
             elevenLabsKey={elevenLabsKey}
             fishAudioKey={fishAudioKey}
             onFinish={() => goTo({ etape: 'fin', histoire: currentStory })}
+            onAlignmentReady={(alignment) => {
+              const updated = { ...currentStory, alignment };
+              setCurrentStory(updated);
+              saveStory(updated).catch(() => { /* non-critique — sidecar best-effort */ });
+            }}
           />
         )}
       </ScrollView>
@@ -1777,6 +1842,9 @@ export default function StoriesScreen() {
             elevenLabsKey={elevenLabsKey}
             fishAudioKey={fishAudioKey}
             onFinish={() => setShowPlayer(false)}
+            onAlignmentReady={(alignment) => {
+              saveStory({ ...histoire, alignment }).catch(() => { /* non-critique */ });
+            }}
           />
         ) : (
           <>
@@ -1817,6 +1885,9 @@ export default function StoriesScreen() {
             // activeTab reste inchangé — si 'bibliotheque', on y revient naturellement
           }}
           autoGenerate={false}
+          onAlignmentReady={(alignment) => {
+            saveStory({ ...histoire, alignment }).catch(() => { /* non-critique */ });
+          }}
         />
       </ScrollView>
     );
@@ -2022,6 +2093,39 @@ const styles = StyleSheet.create({
   spectacleLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold, marginBottom: 2 },
   spectacleHint: { fontSize: FontSize.caption },
   spectacleCheck: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
+  audioModeRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
+  audioModeChip: {
+    flex: 1,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  audioModeEmoji: { fontSize: 22, marginBottom: Spacing.xs },
+  audioModeLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.bold, marginBottom: 2, textAlign: 'center' },
+  audioModeHint: { fontSize: FontSize.micro, textAlign: 'center' },
+  volumeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+  },
+  volumeLabel: { flex: 1, fontSize: FontSize.caption },
+  volumeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  volumeButtonText: { fontSize: 18, fontWeight: FontWeight.bold, lineHeight: 20 },
+  volumeValue: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, minWidth: 44, textAlign: 'center' },
   previousStoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
