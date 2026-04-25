@@ -1699,7 +1699,11 @@ export default function StoriesScreen() {
       // n'écrit RIEN dans le vault (évite "texte = JSON brut" affiché à l'écran).
       if (!texte) {
         setGenError("L'IA a renvoyé une réponse mal formée. Réessaie — ton crédit Claude est consommé mais aucune histoire n'a été enregistrée.");
-        if (__DEV__) console.warn('[generate] parse failed, raw response:', resp.text.slice(0, 300));
+        if (__DEV__) {
+          console.warn('[generate] parse failed, longueur réponse:', resp.text.length);
+          console.warn('[generate] début:', resp.text.slice(0, 500));
+          console.warn('[generate] fin:', resp.text.slice(-500));
+        }
         return;
       }
 

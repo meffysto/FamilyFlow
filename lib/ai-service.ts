@@ -1063,8 +1063,10 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
       },
       body: JSON.stringify({
         model: config.model,
-        // Spectacle = +script JSON dans la réponse → +30% de tokens
-        max_tokens: spectacleEnabled ? Math.round(lengthCfg.maxTokens * 1.4) : lengthCfg.maxTokens,
+        // Spectacle = +script JSON volumineux dans la réponse → +150% de tokens
+        // (script avec ~10 beats narration/dialogue + 5 SFX coûte ~600 tokens
+        // en plus du `texte`, donc +30% étaient insuffisants → réponse tronquée).
+        max_tokens: spectacleEnabled ? Math.round(lengthCfg.maxTokens * 2.5) : lengthCfg.maxTokens,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
@@ -1076,6 +1078,16 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
 
     const data = await response.json();
     const rawText: string = data.content?.[0]?.text ?? '';
+    const stopReason: string | undefined = data.stop_reason;
+
+    // Détection truncation explicite (max_tokens atteint) → erreur claire
+    if (stopReason === 'max_tokens') {
+      if (__DEV__) console.warn('[generateBedtimeStory] réponse tronquée (max_tokens atteint)');
+      return {
+        text: '',
+        error: 'Réponse Claude tronquée (limite de tokens atteinte). Réessaie avec une longueur plus courte ou désactive le Mode Spectacle.',
+      };
+    }
 
     // Extraire le JSON de la réponse
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
