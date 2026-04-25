@@ -539,12 +539,30 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         && spectacleActive
         && !!histoire.script
         && !alignment;
+      if (__DEV__) {
+        console.log('[StoryPlayer] runGeneration decision:', {
+          isElevenLabs, isFishAudio, spectacleActive,
+          hasScript: !!histoire.script, hasAlignment: !!alignment,
+          useTimestamps,
+        });
+      }
 
       const result = isFishAudio
         ? await generateSpeechFish(apiKey, histoire.texte, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
         : useTimestamps
           ? await generateSpeechWithTimestamps(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id)
           : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id);
+      if (__DEV__) {
+        if ('error' in result) {
+          console.warn('[StoryPlayer] generation error:', result.error);
+        } else {
+          const alignFromResult = (result as { alignment?: StoryAudioAlignment }).alignment;
+          console.log('[StoryPlayer] generation OK:', {
+            hasAlignment: !!alignFromResult,
+            alignChars: alignFromResult?.chars.length,
+          });
+        }
+      }
       if (signal.cancelled) return;
       if ('error' in result) {
         setGenError(result.error);
@@ -592,10 +610,21 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
 
       if (cached) {
         setAudioPath(cached);
-        return;
+        // V2.3 — si Spectacle + ElevenLabs + script + pas d'alignment, on doit
+        // quand même récupérer l'alignment via /with-timestamps. Sinon le player
+        // restera en V2.2 fallback pour une histoire censée avoir du word-level.
+        const needsAlignmentFetch = isElevenLabs
+          && spectacleActive
+          && !!histoire.script
+          && !alignment;
+        if (__DEV__) {
+          console.log('[StoryPlayer] cache hit:', { needsAlignmentFetch });
+        }
+        if (!needsAlignmentFetch) return;
+        // sinon on continue vers runGeneration pour fetch l'alignment
       }
 
-      // Aucun cache disponible
+      // Aucun cache disponible (ou cache + besoin d'alignment)
       if (!autoGenerate) {
         setNeedsGeneration(true);
         return;

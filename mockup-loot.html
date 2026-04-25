@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=375">
+<title>Mockup — Loot Screen</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0e0e1a;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    display: flex;
+    gap: 32px;
+    padding: 40px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    min-height: 100vh;
+  }
+
+  /* ── Phone frame ── */
+  .phone {
+    width: 375px;
+    min-height: 812px;
+    background: #f2f2f7;
+    border-radius: 44px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .phone-label {
+    color: #888;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .phone.dark { background: #1a0f35; }
+  .phone.dark-gold { background: #120b00; }
+
+  /* ── Status bar ── */
+  .status-bar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-bar.light { color: #1c1c1e; }
+  .status-bar.dark { color: white; }
+
+  /* ── Scroll content ── */
+  .screen { padding: 0 16px 32px; overflow: hidden; }
+
+  /* ── SCREEN 1 : Liste loot ── */
+  .header-card {
+    background: #7c3aed;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-title { color: white; font-size: 22px; font-weight: 800; }
+  .header-subtitle { color: #c4b5fd; font-size: 13px; }
+  .icon-btn {
+    background: rgba(255,255,255,0.2);
+    width: 34px; height: 34px;
+    border-radius: 17px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer; border: none;
+    flex-shrink: 0;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid #e5e5ea;
+    margin-bottom: 16px;
+  }
+  .tab {
+    flex: 1;
+    padding: 11px 4px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #8e8e93;
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+  }
+  .tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+
+  /* Section title */
+  .section-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1c1c1e;
+    margin-bottom: 10px;
+  }
+
+  /* Profile loot cards */
+  .loot-card {
+    background: white;
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;        /* ← FIX : tous centrés sur le même axe */
+    justify-content: space-between;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    gap: 10px;
+  }
+  .loot-card-left {
+    display: flex;
+    align-items: center;        /* ← FIX */
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .avatar { font-size: 32px; line-height: 1; flex-shrink: 0; }
+  .profile-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .profile-name { font-size: 15px; font-weight: 700; color: #1c1c1e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .profile-level { font-size: 12px; font-weight: 600; }
+  .level-aven { color: #f59e0b; }
+  .level-hero { color: #6366f1; }
+  .level-legend { color: #ef4444; }
+
+  /* Right side — button or badge */
+  .open-btn {
+    background: #7c3aed;
+    border-radius: 12px;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    border: none; cursor: pointer;
+  }
+  .open-btn span { color: white; font-size: 12px; font-weight: 700; }
+  .open-btn-emoji { font-size: 15px; }
+
+  .no-loot-badge {
+    background: #f2f2f7;
+    border-radius: 10px;
+    padding: 7px 11px;
+    flex-shrink: 0;
+  }
+  .no-loot-text { font-size: 12px; font-weight: 600; color: #8e8e93; }
+
+  /* Leaderboard */
+  .leaderboard-card {
+    background: white;
+    border-radius: 16px;
+    padding: 4px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .lb-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f2f2f7;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { width: 22px; text-align: center; font-size: 13px; font-weight: 800; }
+  .rank-1 { color: #f59e0b; }
+  .rank-2 { color: #8e8e93; }
+  .rank-3 { color: #c4a35a; }
+  .lb-avatar { font-size: 22px; }
+  .lb-info { flex: 1 }
+  .lb-name { font-size: 14px; font-weight: 700; color: #1c1c1e; }
+  .lb-level { font-size: 11px; color: #8e8e93; font-weight: 600; }
+  .lb-pts { font-size: 13px; font-weight: 800; color: #7c3aed; }
+
+  /* Badge grid — collection tab */
+  .badge-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);   /* ← FIX : 5 colonnes fixes, pas flexWrap */
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .badge-cell {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: 2px solid #e5e5ea;
+    background: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    position: relative;
+    opacity: 0.35;
+  }
+  .badge-cell.earned { border-color: #6366f1; background: #f0f0ff; opacity: 1; }
+  .badge-cell.earned.rare { border-color: #f59e0b; background: #fff8e6; }
+  .badge-cell.earned.epic { border-color: #a855f7; background: #f5f0ff; }
+  .rarity-dot {
+    position: absolute;
+    bottom: 3px; right: 3px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #6366f1;
+  }
+  .rarity-dot.rare { background: #f59e0b; }
+  .rarity-dot.epic { background: #a855f7; }
+
+  /* ── SCREEN 2 : Opener idle ── */
+  .opener-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px 0;
+  }
+  .opener-profile { color: white; font-size: 17px; font-weight: 700; }
+  .close-btn { color: rgba(255,255,255,0.4); font-size: 20px; font-weight: 600; cursor: pointer; background: none; border: none; padding: 8px; }
+
+  .opener-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 32px;
+    flex: 1;
+    gap: 0;
+    margin-top: 80px;
+  }
+  .pack-title { color: white; font-size: 34px; font-weight: 900; text-align: center; margin-bottom: 6px; }
+  .pack-subtitle { color: #a78bfa; font-size: 17px; font-weight: 600; text-align: center; margin-bottom: 44px; }
+
+  /* Pack visual */
+  .pack-wrap {
+    position: relative;
+    width: 140px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .pack-glow {
+    position: absolute;
+    width: 180px; height: 180px;
+    border-radius: 90px;
+    background: radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%);
+    /* ← FIX : centré exactement avec le pack */
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .pack {
+    width: 90px;
+    height: 130px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid rgba(196,160,0,0.5);
+    position: relative;
+    z-index: 1;
+    /* ← FIX : pas de décalage, centré dans son conteneur */
+  }
+  .pack-seal { height: 16px; background: #b8860b; display: flex; align-items: center; justify-content: center; }
+  .pack-seal-stripe { width: 70%; height: 2px; background: rgba(255,255,255,0.35); border-radius: 1px; }
+  .pack-body {
+    flex: 1;
+    background: #e3350d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    height: 98px;
+  }
+  .pack-shine {
+    position: absolute;
+    top: -20px; right: -8px;
+    width: 24px; height: 140px;
+    background: rgba(255,255,255,0.1);
+    transform: rotate(25deg);
+  }
+  /* Pokéball emblem */
+  .pokeball {
+    width: 40px; height: 40px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 2.5px solid #1a1a2e;
+    position: relative; z-index: 1;
+  }
+  .pokeball-top { height: 50%; background: white; }
+  .pokeball-mid { height: 5px; background: #1a1a2e; display: flex; align-items: center; justify-content: center; }
+  .pokeball-dot { width: 10px; height: 10px; border-radius: 5px; background: white; border: 2px solid #1a1a2e; margin-top: -7px; }
+  .pokeball-bot { height: calc(50% - 5px); background: #e3350d; }
+
+  .pack-tap-hint { color: #a78bfa; font-size: 16px; font-weight: 600; text-align: center; }
+
+  /* ── SCREEN 3 : Reveal légendaire ── */
+  .reveal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    margin-top: 60px;
+    gap: 0;
+  }
+
+  /* "SUPER !" banner */
+  .incredible-banner {
+    background: rgba(0,0,0,0.7);
+    border: 2px solid #f59e0b;
+    border-radius: 10px;
+    padding: 8px 24px;
+    margin-bottom: 16px;
+  }
+  .incredible-text {
+    color: #fde68a;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-align: center;
+  }
+
+  /* Glow rings + card wrapper */
+  .card-with-glow {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  /* ← FIX : les rings sont centrés sur le centre de la carte, pas décalés */
+  .glow-ring {
+    position: absolute;
+    border-radius: 50%;
+    border-style: solid;
+    /* centré via margin auto dans flex */
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .ring-1 { width: 240px; height: 240px; border-width: 3px; border-color: rgba(245,158,11,0.5); }
+  .ring-2 { width: 310px; height: 310px; border-width: 2px; border-color: rgba(253,230,138,0.3); }
+
+  .glow-blob {
+    position: absolute;
+    width: 150px; height: 150px;
+    border-radius: 75px;
+    background: radial-gradient(circle, rgba(245,158,11,0.25) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Reward card */
+  .reward-card {
+    background: rgba(255,255,255,0.09);
+    border-radius: 24px;
+    border: 2px solid #f59e0b;
+    padding: 24px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 0 40px rgba(245,158,11,0.2);
+  }
+  .rarity-badge {
+    background: #f59e0b;
+    border-radius: 20px;
+    padding: 5px 16px;
+  }
+  .rarity-label { color: white; font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+
+  .reward-emoji-big { font-size: 76px; line-height: 1; }
+  .reward-text { color: white; font-size: 18px; font-weight: 800; text-align: center; }
+  .bonus-pill { background: #f59e0b; border-radius: 20px; padding: 7px 16px; }
+  .bonus-text { color: white; font-size: 14px; font-weight: 700; }
+
+  .cta-btn {
+    background: #7c3aed;
+    border-radius: 24px;
+    padding: 15px 0;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+    color: white;
+    font-size: 17px;
+    font-weight: 800;
+    border: none; cursor: pointer;
+  }
+
+  /* Confetti dots */
+  .confetti { position: absolute; border-radius: 50%; opacity: 0.7; pointer-events: none; }
+
+  /* Annotation callouts */
+  .annotation {
+    position: absolute;
+    background: #f59e0b;
+    color: #000;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 3px 8px;
+    white-space: nowrap;
+    z-index: 50;
+    pointer-events: none;
+  }
+  .annotation::before {
+    content: '';
+    position: absolute;
+    width: 0; height: 0;
+  }
+
+  /* ── Section labels ── */
+  .label-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+  }
+  .fix-tag {
+    background: #10b981;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    text-transform: uppercase;
+  }
+  .bug-tag {
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ SCREEN 1 : Liste loot ═════ -->
+<div>
+  <div class="phone-label">① Liste — onglet Récompenses</div>
+  <div class="phone">
+    <div class="status-bar light">
+      <span>9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="screen">
+
+      <!-- Header -->
+      <div class="header-card">
+        <div class="header-top">
+          <span class="header-title">🎁 Récompenses</span>
+          <button class="icon-btn">📊</button>
+        </div>
+        <span class="header-subtitle">Ouvre tes loot boxes !</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active">Récompenses</div>
+        <div class="tab">Collection</div>
+        <div class="tab">Cadeaux (2)</div>
+      </div>
+
+      <!-- Section -->
+      <div class="label-row">
+        <span class="section-title" style="margin-bottom:0">À ouvrir</span>
+      </div>
+      <div style="margin-bottom:10px"></div>
+
+      <!-- Cards — FIX alignement vertical -->
+      <div style="position:relative">
+        <!-- Annotation fix -->
+        <div style="position:absolute;right:-8px;top:8px;z-index:10">
+          <span class="fix-tag">FIX</span>
+        </div>
+        <div class="loot-card">
+          <div class="loot-card-left">
+            <span class="avatar">🦁</span>
+            <div class="profile-info">
+              <span class="profile-name">Lucas</span>
+              <span class="profile-level level-aven">⭐ Aventurier · Nv.12</span>
+            </div>
+          </div>
+          <button class="open-btn">
+            <span class="open-btn-emoji">🎁</span>
+            <span>Ouvrir</span>
+          </button>
+        </div>
+
+        <div class="loot-card">
+          <div class="loot-card-left">
+            <span class="avatar">🌸</span>
+            <div class="profile-info">
+              <span class="profile-name">Emma</span>
+              <span class="profile-level level-hero">💎 Héros · Nv.18</span>
+            </div>
+          </div>
+          <button class="open-btn">
+            <span class="open-btn-emoji">🎁</span>
+            <span>2 boîtes</span>
+          </button>
+        </div>
+
+        <div class="loot-card">
+          <div class="loot-card-left">
+            <span class="avatar">👨</span>
+            <div class="profile-info">
+              <span class="profile-name">Papa</span>
+              <span class="profile-level level-legend">🏆 Légende · Nv.25</span>
+            </div>
+          </div>
+          <div class="no-loot-badge">
+            <span class="no-loot-text">45/100 pts</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="section-title">Classement</div>
+      <div class="leaderboard-card">
+        <div class="lb-row">
+          <span class="lb-rank rank-1">🥇</span>
+          <span class="lb-avatar">🌸</span>
+          <div class="lb-info">
+            <div class="lb-name">Emma</div>
+            <div class="lb-level">💎 Héros · Nv.18</div>
+          </div>
+          <span class="lb-pts">2 450 pts</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank rank-2">🥈</span>
+          <span class="lb-avatar">👨</span>
+          <div class="lb-info">
+            <div class="lb-name">Papa</div>
+            <div class="lb-level">🏆 Légende · Nv.25</div>
+          </div>
+          <span class="lb-pts">1 980 pts</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank rank-3">🥉</span>
+          <span class="lb-avatar">🦁</span>
+          <div class="lb-info">
+            <div class="lb-name">Lucas</div>
+            <div class="lb-level">⭐ Aventurier · Nv.12</div>
+          </div>
+          <span class="lb-pts">1 120 pts</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SCREEN 1b : Collection badges ═════ -->
+<div>
+  <div class="phone-label">② Collection — grille badges</div>
+  <div class="phone">
+    <div class="status-bar light">
+      <span>9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="screen">
+
+      <div class="header-card">
+        <div class="header-top">
+          <span class="header-title">🎁 Récompenses</span>
+          <button class="icon-btn">📊</button>
+        </div>
+        <span class="header-subtitle">Ouvre tes loot boxes !</span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab">Récompenses</div>
+        <div class="tab active">Collection</div>
+        <div class="tab">Cadeaux (2)</div>
+      </div>
+
+      <!-- Profile badge section -->
+      <div style="background:white;border-radius:16px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:26px">🦁</span>
+          <span style="font-size:15px;font-weight:700;color:#1c1c1e;flex:1">Lucas</span>
+          <span style="font-size:12px;font-weight:600;color:#8e8e93">4/18</span>
+        </div>
+        <!-- Progress bar -->
+        <div style="height:6px;border-radius:3px;background:#f2f2f7;overflow:hidden;margin-bottom:12px">
+          <div style="height:100%;width:22%;background:#7c3aed;border-radius:3px"></div>
+        </div>
+
+        <!-- Badge grid — FIX : 5 colonnes fixes, alignement parfait -->
+        <div style="position:relative">
+          <div style="position:absolute;right:-8px;top:-8px;z-index:10">
+            <span class="fix-tag">FIX · 5 cols</span>
+          </div>
+          <div class="badge-grid">
+            <div class="badge-cell earned">⭐<div class="rarity-dot"></div></div>
+            <div class="badge-cell earned rare">🌟<div class="rarity-dot rare"></div></div>
+            <div class="badge-cell earned epic">💎<div class="rarity-dot epic"></div></div>
+            <div class="badge-cell earned">🏅<div class="rarity-dot"></div></div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+            <div class="badge-cell">❓</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SCREEN 3 : Opener idle ═════ -->
+<div>
+  <div class="phone-label">③ Opener — Idle (avant tap)</div>
+  <div class="phone dark">
+    <div class="status-bar dark">
+      <span>9:41</span>
+      <span>●●●</span>
+    </div>
+
+    <!-- Header opener -->
+    <div class="opener-header">
+      <span class="opener-profile">🦁 Lucas</span>
+      <button class="close-btn">✕</button>
+    </div>
+
+    <div class="opener-content">
+      <div class="pack-title">Booster Pack</div>
+      <div class="pack-subtitle">1 boîte disponible</div>
+
+      <!-- Pack centré avec glow concentriques -->
+      <div class="pack-wrap">
+        <div class="pack-glow"></div>
+        <div class="pack" style="display:flex;flex-direction:column">
+          <div class="pack-seal"><div class="pack-seal-stripe"></div></div>
+          <div class="pack-body">
+            <div class="pack-shine"></div>
+            <div class="pokeball">
+              <div class="pokeball-top"></div>
+              <div class="pokeball-mid"><div class="pokeball-dot"></div></div>
+              <div class="pokeball-bot"></div>
+            </div>
+          </div>
+          <div class="pack-seal"><div class="pack-seal-stripe"></div></div>
+        </div>
+      </div>
+
+      <div class="pack-tap-hint">Appuie pour ouvrir</div>
+    </div>
+
+    <!-- Annotation fix -->
+    <div style="position:absolute;bottom:130px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;white-space:nowrap">
+      <span style="color:#a78bfa;font-size:11px;font-weight:700">✓ Glow centré sur le pack (transform: translate(-50%,-50%))</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SCREEN 4 : Reveal légendaire ═════ -->
+<div>
+  <div class="phone-label">④ Opener — Reveal (légendaire)</div>
+  <div class="phone dark-gold" style="position:relative;overflow:hidden">
+
+    <!-- Confetti -->
+    <div class="confetti" style="width:8px;height:8px;background:#ffd700;top:60px;left:40px"></div>
+    <div class="confetti" style="width:6px;height:6px;background:#ef4444;top:80px;left:120px"></div>
+    <div class="confetti" style="width:10px;height:5px;background:#fff;top:50px;left:200px;border-radius:2px"></div>
+    <div class="confetti" style="width:7px;height:7px;background:#ffa500;top:90px;left:280px"></div>
+    <div class="confetti" style="width:5px;height:9px;background:#ffd700;top:40px;left:160px;border-radius:2px"></div>
+    <div class="confetti" style="width:8px;height:4px;background:#ef4444;top:110px;left:60px;border-radius:2px"></div>
+    <div class="confetti" style="width:6px;height:6px;background:#fff;top:70px;left:320px"></div>
+
+    <div class="status-bar dark">
+      <span>9:41</span>
+      <span>●●●</span>
+    </div>
+
+    <div class="opener-header">
+      <span class="opener-profile">🦁 Lucas</span>
+      <button class="close-btn">✕</button>
+    </div>
+
+    <div class="reveal-content">
+
+      <!-- Banner -->
+      <div class="incredible-banner">
+        <div class="incredible-text">SUPER !</div>
+      </div>
+
+      <!-- Card + rings (tous centrés sur le même point) -->
+      <div class="card-with-glow">
+        <!-- FIX : rings via transform translate(-50%,-50%) centrés exactement -->
+        <div class="glow-blob"></div>
+        <div class="glow-ring ring-2"></div>
+        <div class="glow-ring ring-1"></div>
+        <div class="reward-card">
+          <div class="rarity-badge">
+            <span class="rarity-label">⭐ Légendaire</span>
+          </div>
+          <div class="reward-emoji-big">🍕</div>
+          <div class="reward-text">Pizza party en famille !</div>
+          <div class="bonus-pill">
+            <span class="bonus-text">+50 pts bonus</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <button class="cta-btn">🎉 Super !</button>
+    </div>
+
+    <!-- Annotation rings -->
+    <div style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);border:1px solid #f59e0b;border-radius:8px;padding:8px 14px;white-space:nowrap;z-index:20">
+      <span style="color:#fde68a;font-size:11px;font-weight:700">✓ Rings centrés via transform translate(-50%,-50%)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ NOTES DE PERF ═════ -->
+<div style="max-width:320px;padding-top:28px">
+  <div style="color:#e5e7eb;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">Notes de fix</div>
+
+  <div style="background:#1e1b2e;border-radius:14px;padding:18px;margin-bottom:12px;border-left:3px solid #10b981">
+    <div style="color:#10b981;font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:8px">Fix 1 — Alignement cartes (loot-card)</div>
+    <div style="color:#d1d5db;font-size:13px;line-height:1.6">
+      Ajouter <code style="background:#111;padding:1px 5px;border-radius:4px;color:#a78bfa">alignItems: 'center'</code> sur <code>lootCardLeft</code> ET sur <code>lootCard</code>. Actuellement l'avatar est aligné en haut et le bouton en bas → décalage visuel.
+    </div>
+  </div>
+
+  <div style="background:#1e1b2e;border-radius:14px;padding:18px;margin-bottom:12px;border-left:3px solid #10b981">
+    <div style="color:#10b981;font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:8px">Fix 2 — Grille badges (Collection)</div>
+    <div style="color:#d1d5db;font-size:13px;line-height:1.6">
+      Remplacer <code style="background:#111;padding:1px 5px;border-radius:4px;color:#a78bfa">flexWrap: 'wrap'</code> par une grille 5 colonnes fixes avec <code>width: (screenWidth - 32 - 16*4) / 5</code>. Les badges 52px ne divisent pas proprement → rangées inégales.
+    </div>
+  </div>
+
+  <div style="background:#1e1b2e;border-radius:14px;padding:18px;margin-bottom:12px;border-left:3px solid #10b981">
+    <div style="color:#10b981;font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:8px">Fix 3 — Glow & rings centrés</div>
+    <div style="color:#d1d5db;font-size:13px;line-height:1.6">
+      Sur <code>packGlow</code> et les <code>GlowRing</code>, utiliser <code>position: 'absolute'</code> + <code>top: '50%'</code> + <code>left: '50%'</code> + <code>marginTop: -r</code> / <code>marginLeft: -r</code>. Sans ça ils partent du coin top-left du conteneur.
+    </div>
+  </div>
+
+  <div style="background:#1e1b2e;border-radius:14px;padding:18px;border-left:3px solid #f59e0b">
+    <div style="color:#f59e0b;font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:8px">Perf — Lag au tap</div>
+    <div style="color:#d1d5db;font-size:13px;line-height:1.6">
+      Déclencher <code>onOpen()</code> <strong>immédiatement</strong> au tap, en parallèle du shake. Actuellement le code attend 600ms, puis l'API, puis 500ms → ~1.5s de latence visible avant le reveal.<br><br>
+      Pattern : lancer le fetch pendant le shake, afficher le résultat dès que les deux sont prêts (fetch ET durée minimale 800ms).
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
