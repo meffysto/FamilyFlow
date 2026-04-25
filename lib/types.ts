@@ -793,7 +793,15 @@ export type StoryBeatEmotion = 'calm' | 'excited' | 'scared' | 'tender' | 'playf
 export type StoryBeat =
   | { kind: 'narration'; text: string; emotion?: StoryBeatEmotion }
   | { kind: 'dialogue'; speaker: string; text: string; emotion?: StoryBeatEmotion }
-  | { kind: 'sfx'; tag: StorySfxTag }
+  | {
+      kind: 'sfx';
+      tag: StorySfxTag;
+      /** V2.3 — mot/phrase exact dans la narration précédente qui déclenche
+       * le SFX. Le player cherche ce mot dans l'alignment et fait jouer le
+       * SFX au début de sa pronunciation (overlap word-level). Si absent,
+       * fallback : SFX joué à la fin du beat narration précédent. */
+      triggerWord?: string;
+    }
   | { kind: 'pause'; durationSec: number };
 
 /** Script structuré complet d'une histoire */

@@ -1026,16 +1026,20 @@ RÈGLES STRICTES pour le script :
   { "kind": "sfx", "tag": "chirp_bird" }
   ...phrase suivante...
 - Choisis des bruitages cohérents avec le texte (ex : "porte qui grince" → "door_creak_slow")
-- Ne mets pas deux bruitages côte à côte sans narration entre eux
+- Ne mets jamais deux bruitages côte à côte sans narration entre eux (un seul SFX par paire narration→sfx)
 - Le tout DERNIER bruitage du script DOIT être "yawn_sleepy" placé en avant-dernière position (juste avant la dernière phrase de narration), pour finir l'histoire sur un signal d'endormissement subtil
+- **CHAQUE beat sfx DOIT avoir un champ "triggerWord"** : le mot OU groupe de 2-3 mots EXACTS, copiés tels quels depuis la phrase narration précédente, qui correspond à l'évènement sonore. Ce mot servira à synchroniser le SFX précisément quand il est prononcé. Exemples :
+  - narration "Les oiseaux chantent dans les arbres." → sfx { tag: "chirp_bird", triggerWord: "chantent" }
+  - narration "La porte grince doucement." → sfx { tag: "door_creak_slow", triggerWord: "grince" }
+  - narration "Maxence pose un pied dans l'herbe." → sfx { tag: "footsteps_grass", triggerWord: "pose un pied" }
 - Format obligatoire des beats :
   - { "kind": "narration", "text": "Une seule phrase complète." }
-  - { "kind": "sfx", "tag": "tag_de_la_bibliotheque" }
+  - { "kind": "sfx", "tag": "tag_de_la_bibliotheque", "triggerWord": "mot exact de la phrase précédente" }
 - La concaténation des beats narration (avec un espace entre eux) doit reformer EXACTEMENT le champ "texte"
 ` : '';
 
   const outputFormat = spectacleEnabled
-    ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ { "kind": "narration", "text": "..." }, { "kind": "sfx", "tag": "..." }, ... ] } }`
+    ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ { "kind": "narration", "text": "..." }, { "kind": "sfx", "tag": "...", "triggerWord": "..." }, ... ] } }`
     : `{ "titre": "...", "texte": "${paragraphesTemplate}" }`;
 
   const systemPrompt = `Tu es un conteur d'histoires pour enfants expert. Tu crées des histoires du soir douces et apaisantes, parfaites pour endormir un enfant de ${story.enfantAge}.

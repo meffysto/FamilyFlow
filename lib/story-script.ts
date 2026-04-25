@@ -55,7 +55,10 @@ export function parseStoryScript(raw: string | unknown): StoryScript | null {
         if (typeof beat.tag !== 'string') continue;
         // Skip silencieusement les tags inconnus ou non bundlés
         if (!hasSfxAsset(beat.tag as StorySfxTag)) continue;
-        beats.push({ kind: 'sfx', tag: beat.tag as StorySfxTag });
+        const triggerWord = typeof beat.triggerWord === 'string' && beat.triggerWord.trim()
+          ? beat.triggerWord.trim()
+          : undefined;
+        beats.push({ kind: 'sfx', tag: beat.tag as StorySfxTag, triggerWord });
         break;
       }
       case 'pause': {
@@ -152,9 +155,15 @@ export function computeSfxScheduleFromAlignment(
     return true;
   };
 
+  // Mémorise les bornes [start, end) dans alignment.chars du dernier beat
+  // narration/dialogue traversé, pour pouvoir y chercher le triggerWord.
+  let lastNarrationStart = 0;
+  let lastNarrationEnd = 0;
+
   for (let beatIdx = 0; beatIdx < script.beats.length; beatIdx++) {
     const beat = script.beats[beatIdx];
     if (beat.kind === 'narration' || beat.kind === 'dialogue') {
+      lastNarrationStart = pos;
       for (let i = 0; i < beat.text.length; i++) {
         if (!advanceOne(beat.text[i])) {
           // Trop de mismatch — abandon
@@ -169,6 +178,7 @@ export function computeSfxScheduleFromAlignment(
           return null;
         }
       }
+      lastNarrationEnd = pos;
       // Skip TOUS les whitespace consécutifs entre beats (paragraphes \n\n,
       // espaces doubles, tabulations…). Avec le découpage 1-phrase-par-beat,
       // certains changements de paragraphe contiennent 2+ caractères
@@ -177,10 +187,23 @@ export function computeSfxScheduleFromAlignment(
         pos++;
       }
     } else if (beat.kind === 'sfx') {
-      // Timestamp = fin du dernier caractère narré + offset
-      const refIdx = Math.max(0, Math.min(alignment.ends.length - 1, pos - 1));
-      const endSec = alignment.ends[refIdx];
-      const atSec = (Number.isFinite(endSec) ? endSec : 0) + SFX_OFFSET_AFTER_LAST_CHAR;
+      // V2.3.1 — Si le beat fournit un triggerWord, on cherche sa position
+      // dans la dernière narration et on utilise alignment.starts[wordPos]
+      // pour overlap au mot près. Sinon fallback : end-of-sentence + offset.
+      let atSec: number | undefined;
+      if (beat.triggerWord && lastNarrationEnd > lastNarrationStart) {
+        const found = findWordStartIndex(
+          alignment.chars, beat.triggerWord, lastNarrationStart, lastNarrationEnd,
+        );
+        if (found !== -1 && Number.isFinite(alignment.starts[found])) {
+          atSec = alignment.starts[found];
+        }
+      }
+      if (atSec === undefined) {
+        const refIdx = Math.max(0, Math.min(alignment.ends.length - 1, pos - 1));
+        const endSec = alignment.ends[refIdx];
+        atSec = (Number.isFinite(endSec) ? endSec : 0) + SFX_OFFSET_AFTER_LAST_CHAR;
+      }
       schedule.push({ tag: beat.tag, atSec });
     } else if (beat.kind === 'pause') {
       // Une pause n'a pas d'ancre dans l'audio — on ignore (le TTS gère ses pauses)
@@ -191,6 +214,41 @@ export function computeSfxScheduleFromAlignment(
   // Tri par sécurité (devrait déjà être ordonné)
   schedule.sort((a, b) => a.atSec - b.atSec);
   return schedule;
+}
+
+/**
+ * Cherche la position du début d'un mot/expression dans alignment.chars,
+ * dans une fenêtre [start, end). Tolérante : normalize NFD + lowercase +
+ * strip diacritics + skip whitespace équivalents. Retourne l'index du
+ * premier caractère du mot, ou -1 si introuvable.
+ */
+function findWordStartIndex(
+  chars: string[],
+  word: string,
+  start: number,
+  end: number,
+): number {
+  const target = word
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim();
+  if (!target) return -1;
+  // Reconstruit la fenêtre comme une string normalisée + map chars→original index
+  const indexMap: number[] = [];
+  let normalized = '';
+  for (let i = start; i < Math.min(end, chars.length); i++) {
+    const c = chars[i];
+    if (!c) continue;
+    const n = c.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    for (const ch of n) {
+      indexMap.push(i);
+      normalized += ch;
+    }
+  }
+  const idx = normalized.indexOf(target);
+  if (idx === -1) return -1;
+  return indexMap[idx] ?? -1;
 }
 
 /**

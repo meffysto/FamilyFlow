@@ -418,7 +418,14 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       }
       if (aligned && aligned.length > 0) {
         schedule = aligned.map(s => ({ tag: s.tag, atSec: s.atSec }));
-        if (__DEV__) console.log('[StoryPlayer] SFX schedule (V2.3 word-level):', schedule.length, schedule.map(s => `${s.tag}@${s.atSec?.toFixed(2)}s`));
+        if (__DEV__) {
+          const triggerWordCount = scriptForPlayer.beats
+            .filter(b => b.kind === 'sfx' && (b as { triggerWord?: string }).triggerWord)
+            .length;
+          console.log('[StoryPlayer] SFX schedule (V2.3 word-level):', schedule.length,
+            'triggerWords:', triggerWordCount, '/', schedule.length,
+            schedule.map(s => `${s.tag}@${s.atSec?.toFixed(2)}s`));
+        }
       }
     }
 
