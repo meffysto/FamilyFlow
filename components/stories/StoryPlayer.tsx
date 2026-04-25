@@ -285,6 +285,10 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
   const ambienceTargetVolume = typeof histoire.ambienceVolume === 'number'
     ? Math.max(0, Math.min(1, histoire.ambienceVolume))
     : AMBIENCE_VOLUME;
+  // Le slider "Volume ambiance" pilote AUSSI les SFX proportionnellement.
+  // Ratio par rapport au défaut : ambienceTargetVolume / AMBIENCE_VOLUME.
+  // SFX_VOLUME (0.7) reste la base ; à défaut 0.4, SFX inchangés. À 0.2, SFX/2.
+  const sfxScaledVolume = Math.max(0, Math.min(1, SFX_VOLUME * (ambienceTargetVolume / AMBIENCE_VOLUME)));
   const ambienceAsset = ambienceActive ? STORY_AMBIENCE_ASSETS[histoire.univers] : undefined;
 
   // ─── V2 : SFX déclenchés par le script (timing approximatif par paragraphe)
@@ -461,7 +465,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         try {
           const { sound } = await Audio.Sound.createAsync(
             asset as number,
-            { shouldPlay: false, volume: SFX_VOLUME },
+            { shouldPlay: false, volume: sfxScaledVolume },
           );
           if (cancelled) {
             await sound.unloadAsync().catch(() => {});
@@ -876,8 +880,10 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         }
         // Pulse visuel synchronisé (UI thread)
         triggerSfxPulse();
-        // Replay depuis 0 puis play (fire-and-forget, async)
+        // Replay depuis 0 + setVolume (au cas où le slider a changé en cours
+        // de session) puis play (fire-and-forget, async)
         sound.setPositionAsync(0)
+          .then(() => sound.setVolumeAsync(sfxScaledVolume))
           .then(() => sound.playAsync())
           .catch((e) => { if (__DEV__) console.warn('[StoryPlayer] SFX play failed:', beat.tag, e); });
       });
