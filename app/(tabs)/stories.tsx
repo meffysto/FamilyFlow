@@ -1647,17 +1647,31 @@ export default function StoriesScreen() {
       }
 
       let titre = 'Histoire du soir';
-      let texte = resp.text;
+      let texte = '';
       let script: import('../../lib/types').StoryScript | undefined;
-      try {
-        const parsed = JSON.parse(resp.text);
-        titre = deanonymize(parsed.titre ?? titre, anonMap);
-        texte = deanonymize(parsed.texte ?? texte, anonMap);
+      // Parsing robuste : Claude renvoie parfois du JSON avec quotes non échappées
+      // (surtout en Mode Spectacle où le script ajoute beaucoup de strings).
+      // 1. Tentative parse direct ; 2. tentative repair (smart quotes, trailing commas)
+      const tryParseJson = (raw: string): Record<string, unknown> | null => {
+        try { return JSON.parse(raw); } catch { /* tombe sur le repair */ }
+        try {
+          const repaired = raw
+            .replace(/[“”]/g, '"')   // guillemets typographiques
+            .replace(/[‘’]/g, "'")
+            .replace(/,(\s*[}\]])/g, '$1');     // trailing commas
+          return JSON.parse(repaired);
+        } catch { return null; }
+      };
+
+      const parsed = tryParseJson(resp.text);
+      if (parsed) {
+        if (typeof parsed.titre === 'string') titre = deanonymize(parsed.titre, anonMap);
+        if (typeof parsed.texte === 'string') texte = deanonymize(parsed.texte, anonMap);
+
         // V2 — extrait le script si Claude l'a fourni (Mode Spectacle)
         if (parsed.script) {
           const validated = parseStoryScript(parsed.script);
           if (validated) {
-            // Dé-anonymise les textes des beats narration/dialogue
             script = {
               ...validated,
               beats: validated.beats.map(b => {
@@ -1668,8 +1682,25 @@ export default function StoriesScreen() {
             };
           }
         }
-      } catch {
-        texte = deanonymize(resp.text, anonMap);
+
+        // Si Claude n'a pas fourni `texte` mais qu'on a un script valide,
+        // on reconstruit le texte depuis les beats narration/dialogue.
+        if (!texte && script) {
+          const flat = script.beats
+            .filter(b => b.kind === 'narration' || b.kind === 'dialogue')
+            .map(b => (b as { text: string }).text)
+            .join(' ')
+            .trim();
+          if (flat) texte = flat;
+        }
+      }
+
+      // Dernier recours : on n'a pas pu parser proprement → on signale et on
+      // n'écrit RIEN dans le vault (évite "texte = JSON brut" affiché à l'écran).
+      if (!texte) {
+        setGenError("L'IA a renvoyé une réponse mal formée. Réessaie — ton crédit Claude est consommé mais aucune histoire n'a été enregistrée.");
+        if (__DEV__) console.warn('[generate] parse failed, raw response:', resp.text.slice(0, 300));
+        return;
       }
 
       setStoryTitle(titre);
