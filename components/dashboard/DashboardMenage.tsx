@@ -69,9 +69,9 @@ export const DashboardMenage = React.memo(DashboardMenageInner);
 
 const styles = StyleSheet.create({
   emptyHint: {
-    fontSize: FontSize.label,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
     textAlign: 'center',
-    fontStyle: 'italic',
     paddingVertical: 4,
   },
   sentence: {
