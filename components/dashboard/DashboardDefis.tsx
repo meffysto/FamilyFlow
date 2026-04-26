@@ -48,7 +48,7 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
         )}
         {todayDone && <Text style={{ color: colors.success, fontSize: FontSize.heading }}>✅</Text>}
       </View>
-      <View style={[styles.defiProgressBg, { backgroundColor: colors.cardAlt }]}>
+      <View style={[styles.defiProgressBg, { backgroundColor: colors.brand.wash }]}>
         <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
       </View>
       <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} {t('dashboard.defis.days')}</Text>
