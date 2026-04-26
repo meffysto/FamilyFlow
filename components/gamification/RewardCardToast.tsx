@@ -1,13 +1,11 @@
 /**
- * RewardCardToast.tsx — Carte reward animée pour la validation de tâche
+ * RewardCardToast.tsx — Bandeau reward animé pour la validation de tâche
  *
- * Slide-up spring depuis le bas, affiche :
- *   - Avatar emoji + nom du profil
- *   - Tâche barrée
- *   - Compteur XP animé 0→N pts
- *   - Barre de progression niveau animée
+ * Slide-up spring depuis le bas, layout compact une ligne :
+ *   - Emoji (🎁 si loot, sinon avatar profil) + nom du profil
+ *   - Compteur XP animé "+N pts" + niveau
+ *   - Fine barre de progression sous la ligne
  *   - Sparkles au pop
- *   - Badge cadeau si loot
  *
  * Géré par ToastContext.showRewardCard().
  */
@@ -141,7 +139,6 @@ function AnimatedCounter({ visible, targetValue, reduceMotion, color }: Animated
       return;
     }
 
-    // Interpolation easeOutCubic JS-side (~60fps pendant 850ms)
     let elapsed = 0;
     const TICK = 16;
     const DURATION = 850;
@@ -163,9 +160,7 @@ function AnimatedCounter({ visible, targetValue, reduceMotion, color }: Animated
     };
   }, [visible, targetValue, reduceMotion]);
 
-  return (
-    <Text style={[styles.xpCounter, { color }]}>+{displayVal} pts</Text>
-  );
+  return <Text style={[styles.xpCounter, { color }]}>+{displayVal} pts</Text>;
 }
 
 // ─── Barre de progression niveau ─────────────────────────────────────────────
@@ -173,13 +168,12 @@ function AnimatedCounter({ visible, targetValue, reduceMotion, color }: Animated
 interface XPBarProps {
   visible: boolean;
   progress: number;
-  level: number;
   reduceMotion: boolean;
-  primaryColor: string;
+  fillColor: string;
   trackColor: string;
 }
 
-function XPBar({ visible, progress, level, reduceMotion, primaryColor, trackColor }: XPBarProps) {
+function XPBar({ visible, progress, reduceMotion, fillColor, trackColor }: XPBarProps) {
   const barWidth = useSharedValue(0);
 
   useEffect(() => {
@@ -203,13 +197,8 @@ function XPBar({ visible, progress, level, reduceMotion, primaryColor, trackColo
   }));
 
   return (
-    <View style={styles.xpBarRow}>
-      <View style={[styles.xpBarTrack, { backgroundColor: trackColor }]}>
-        <Animated.View
-          style={[styles.xpBarFill, { backgroundColor: primaryColor }, fillStyle]}
-        />
-      </View>
-      <Text style={[styles.levelLabel, { color: 'rgba(255,255,255,0.9)' }]}>Niv. {level}</Text>
+    <View style={[styles.xpBarTrack, { backgroundColor: trackColor }]}>
+      <Animated.View style={[styles.xpBarFill, { backgroundColor: fillColor }, fillStyle]} />
     </View>
   );
 }
@@ -218,7 +207,7 @@ function XPBar({ visible, progress, level, reduceMotion, primaryColor, trackColo
 
 export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastProps) {
   const insets = useSafeAreaInsets();
-  const { primary } = useThemeColors();
+  const { primary, colors } = useThemeColors();
   const reduceMotion = useReducedMotion();
 
   const translateY = useSharedValue(200);
@@ -226,7 +215,6 @@ export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastPro
 
   useEffect(() => {
     if (visible) {
-      // Entrée : slide-up spring
       if (reduceMotion) {
         translateY.value = 0;
         opacity.value = 1;
@@ -235,7 +223,6 @@ export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastPro
         opacity.value = withTiming(1, { duration: 250 });
       }
     } else {
-      // Sortie : spring vers le bas
       if (reduceMotion) {
         translateY.value = 200;
         opacity.value = 0;
@@ -253,10 +240,6 @@ export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastPro
 
   if (!data) return null;
 
-  const taskShort = data.taskTitle.length > 30
-    ? data.taskTitle.slice(0, 30) + '…'
-    : data.taskTitle;
-
   return (
     <Animated.View
       pointerEvents="none"
@@ -272,47 +255,37 @@ export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastPro
       <Sparkle visible={visible} offsetX={-50} offsetY={-30} delay={150} reduceMotion={reduceMotion ?? false} />
       <Sparkle visible={visible} offsetX={70}  offsetY={-60} delay={200} reduceMotion={reduceMotion ?? false} />
 
-      {/* Carte principale */}
       <View style={[
-        styles.card,
+        styles.bandeau,
         {
-          backgroundColor: primary + 'F0',
-          borderColor: primary + '33',
+          backgroundColor: colors.brand.cardSurface,
+          borderColor: colors.brand.bark,
         },
       ]}>
-        {/* Gauche : avatar + nom */}
-        <View style={styles.avatarCol}>
-          <Text style={styles.avatarEmoji}>{data.profileEmoji}</Text>
-          <Text style={[styles.profileName, { color: 'rgba(255,255,255,0.9)' }]} numberOfLines={1}>
+        <View style={styles.bandeauRow}>
+          <Text style={styles.bandeauEmoji}>{data.hasLoot ? '🎁' : data.profileEmoji}</Text>
+          <Text
+            style={[styles.bandeauName, { color: colors.textMuted }]}
+            numberOfLines={1}
+          >
             {data.profileName}
           </Text>
-        </View>
-
-        {/* Centre : tâche + XP + barre */}
-        <View style={styles.centerCol}>
-          <Text style={[styles.taskTitle, { color: 'rgba(255,255,255,0.85)' }]} numberOfLines={1}>
-            {taskShort}
-          </Text>
+          <View style={styles.bandeauSpacer} />
           <AnimatedCounter
             visible={visible}
             targetValue={data.xpGained}
             reduceMotion={reduceMotion ?? false}
-            color="#FFFFFF"
+            color={primary}
           />
-          <XPBar
-            visible={visible}
-            progress={data.levelProgress}
-            level={data.level}
-            reduceMotion={reduceMotion ?? false}
-            primaryColor="#FFFFFF"
-            trackColor="rgba(255,255,255,0.25)"
-          />
+          <Text style={[styles.bandeauLevel, { color: colors.textMuted }]}>· Niv. {data.level}</Text>
         </View>
-
-        {/* Droite : badge loot (optionnel) */}
-        {data.hasLoot && (
-          <Text style={styles.lootBadge}>🎁</Text>
-        )}
+        <XPBar
+          visible={visible}
+          progress={data.levelProgress}
+          reduceMotion={reduceMotion ?? false}
+          fillColor={primary}
+          trackColor={colors.brand.wash}
+        />
       </View>
     </Animated.View>
   );
@@ -335,70 +308,50 @@ const styles = StyleSheet.create({
   sparkleText: {
     fontSize: 20,
   },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xl,
-    borderRadius: Radius.xl,
+  bandeau: {
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  avatarCol: {
-    alignItems: 'center',
-    gap: Spacing.xs,
-    minWidth: 40,
-  },
-  avatarEmoji: {
-    fontSize: FontSize.hero,
-    lineHeight: 36,
-  },
-  profileName: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.medium,
-    textAlign: 'center',
-  },
-  centerCol: {
-    flex: 1,
-    gap: Spacing.xs,
-  },
-  taskTitle: {
-    fontSize: FontSize.sm,
-    textDecorationLine: 'line-through',
-    opacity: 0.7,
-  },
-  xpCounter: {
-    fontSize: FontSize.display,
-    fontWeight: FontWeight.bold,
-    lineHeight: 28,
-  },
-  xpBarRow: {
+  bandeauRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  xpBarTrack: {
+  bandeauEmoji: {
+    fontSize: FontSize.subtitle,
+  },
+  bandeauName: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    flexShrink: 1,
+  },
+  bandeauSpacer: {
     flex: 1,
-    height: 6,
+  },
+  bandeauLevel: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
+  },
+  xpCounter: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    lineHeight: 20,
+  },
+  xpBarTrack: {
+    height: 4,
     borderRadius: Radius.xxs,
     overflow: 'hidden',
   },
   xpBarFill: {
     height: '100%',
     borderRadius: Radius.xxs,
-  },
-  levelLabel: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.medium,
-    opacity: 0.7,
-  },
-  lootBadge: {
-    fontSize: FontSize.icon,
-    lineHeight: 32,
   },
 });
