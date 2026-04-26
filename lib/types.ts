@@ -711,7 +711,11 @@ export interface StoryVoiceConfig {
   audioMode?: StoryAudioMode;   // off = voix seule, doux = + ambiance, spectacle = + SFX
   ambienceVolume?: number;      // 0..1 — défaut 0.4 (constante AMBIENCE_VOLUME)
   elevenLabsModel?: ElevenLabsModel; // défaut multilingual_v2 — turbo et flash = -50% coût (flash = qualité ↓)
+  multiVoice?: boolean; // V2.4 — distribue les dialogues sur des voix de personnages (ElevenLabs only)
 }
+
+/** Tranche d'âge cible d'une histoire — applique des règles de vocabulaire et de thèmes (Phase livre/chapitres) */
+export type StoryAgeRange = '3-5' | '6-8' | '9+';
 
 export interface BedtimeStory {
   id: string;
@@ -733,6 +737,21 @@ export interface BedtimeStory {
   alignment?: StoryAudioAlignment; // V2.3 — alignement caractère→timestamp (sidecar .alignment.json)
   version: number;
   sourceFile: string;
+  // ─── Livre/chapitres (rétrocompat 100% — tous optionnels) ───────────────
+  /** Slug stable du livre auquel appartient ce chapitre (absent = histoire isolée legacy) */
+  livreId?: string;
+  /** Titre du livre (peut différer du titre du chapitre) */
+  livreTitre?: string;
+  /** Numéro du chapitre dans le livre, base 1 */
+  chapitre?: number;
+  /** Titre spécifique du chapitre (souvent identique à `titre`) */
+  chapitreTitre?: string;
+  /** Slugs des personnages (casting du livre) introduits dans ce chapitre */
+  personnages?: string[];
+  /** Résumé neutre 4-5 phrases pour transmettre la continuité au chapitre suivant */
+  memorySummary?: string;
+  /** Tranche d'âge appliquée à ce chapitre — verrouillée par le livre */
+  trancheAge?: StoryAgeRange;
 }
 
 /**

@@ -3243,6 +3243,19 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
   if (story.spectacle) lines.push(`spectacle: true`);
   if (story.audioMode) lines.push(`audio_mode: ${story.audioMode}`);
   if (typeof story.ambienceVolume === 'number') lines.push(`ambience_volume: ${story.ambienceVolume.toFixed(2)}`);
+  // ─── Livre/chapitres (frontmatter snake_case, optionnels) ───────────────
+  if (story.livreId) lines.push(`livre_id: ${story.livreId}`);
+  if (story.livreTitre) lines.push(`livre_titre: "${story.livreTitre.replace(/"/g, "'")}"`);
+  if (typeof story.chapitre === 'number' && !Number.isNaN(story.chapitre)) lines.push(`chapitre: ${story.chapitre}`);
+  if (story.chapitreTitre) lines.push(`chapitre_titre: "${story.chapitreTitre.replace(/"/g, "'")}"`);
+  if (story.personnages && story.personnages.length > 0) {
+    lines.push(`personnages: [${story.personnages.join(', ')}]`);
+  }
+  if (story.memorySummary) {
+    // Échappe les " internes pour roundtrip safe avec parseStoryFrontmatter
+    lines.push(`memory_summary: "${story.memorySummary.replace(/"/g, '\\"')}"`);
+  }
+  if (story.trancheAge) lines.push(`tranche_age: ${story.trancheAge}`);
   lines.push(
     `version: ${story.version}`,
     '---',
@@ -3328,6 +3341,21 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
     // dont le filename est exactement `${date}-${univers}.md`.
     const fileBase = (sourceFile.split('/').pop() ?? '').replace(/\.md$/, '');
     const id = fileBase || `${d.date}-${d.univers}`;
+    // ─── Champs livre/chapitres (rétrocompat : tous optionnels) ────────────
+    const validAgeRanges = new Set<string>(['3-5', '6-8', '9+']);
+    const trancheAge = d.tranche_age && validAgeRanges.has(d.tranche_age)
+      ? (d.tranche_age as import('./types').StoryAgeRange)
+      : undefined;
+    const chapitreNum = d.chapitre !== undefined && d.chapitre !== '' && !Number.isNaN(Number(d.chapitre))
+      ? Number(d.chapitre)
+      : undefined;
+    let personnages: string[] | undefined;
+    if (d.personnages) {
+      // Format unique ligne : `[a, b, c]` — trim crochets, split, trim, filter
+      const inner = d.personnages.replace(/^\[/, '').replace(/\]$/, '');
+      const slugs = inner.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      personnages = slugs.length > 0 ? slugs : undefined;
+    }
     return {
       id,
       titre: d.title,
@@ -3349,6 +3377,14 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
         : undefined,
       version: Number(d.version || 1),
       sourceFile,
+      // Livre/chapitres
+      livreId: d.livre_id || undefined,
+      livreTitre: d.livre_titre || undefined,
+      chapitre: chapitreNum,
+      chapitreTitre: d.chapitre_titre || undefined,
+      personnages,
+      memorySummary: d.memory_summary || undefined,
+      trancheAge,
     };
   } catch (e) {
     if (__DEV__) console.warn(`[parseBedtimeStory] ${sourceFile} — exception:`, e);
