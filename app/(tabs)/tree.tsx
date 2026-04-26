@@ -3188,8 +3188,12 @@ export default function TreeScreen() {
         onClose={handleCloseChest}
       />
 
-      {/* Phase 18-04 : tutoriel ferme — overlay au-dessus du HUD, refs cibles pour étapes 2-4 */}
-      <FarmTutorialOverlay profile={profile} targetRefs={farmTutorialTargetRefs} />
+      {/* Phase 18-04 : tutoriel ferme — overlay au-dessus du HUD, refs cibles pour étapes 2-4.
+          ⚠️ Monter UNIQUEMENT après que CompanionPicker est fermé ET qu'un compagnon existe :
+          sinon iOS empile deux Modals (picker + tutorial) → l'app freeze au dismiss du picker. */}
+      {!showCompanionPicker && companion && (
+        <FarmTutorialOverlay profile={profile} targetRefs={farmTutorialTargetRefs} />
+      )}
 
       {/* Phase 41 (SPOR-10) — Tooltip one-shot premier drop Sporée (harvest + expedition) */}
       <SporeeOnboardingTooltip
