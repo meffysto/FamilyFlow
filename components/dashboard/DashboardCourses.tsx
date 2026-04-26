@@ -10,7 +10,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 function DashboardCoursesInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -23,7 +23,10 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
 
   return (
     <DashboardCard key="courses" title={t('dashboard.courses.title')} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })} hideMoreLink style={{ flex: 1 }}>
-      <Text style={[styles.courseCount, { color: colors.catOrganisation }]}>{unchecked.length}</Text>
+      <Text style={[styles.courseSentence, { color: colors.text }]}>
+        <Text style={[styles.courseCount, { color: colors.brand.soil }]}>{unchecked.length}</Text>
+        {' à prendre'}
+      </Text>
       {topCourses.slice(0, 3).map((item) => (
         <Text key={item.id} style={[styles.courseMicro, { color: colors.textMuted }]} numberOfLines={1}>
           • {item.text}
@@ -39,11 +42,16 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
 export const DashboardCourses = React.memo(DashboardCoursesInner);
 
 const styles = StyleSheet.create({
+  courseSentence: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.normal,
+    lineHeight: 26,
+    marginBottom: 4,
+  },
   courseCount: {
-    fontSize: 38,
-    fontWeight: FontWeight.bold,
-    lineHeight: 42,
-    letterSpacing: -1,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.titleLg,
+    letterSpacing: -0.3,
   },
   courseMicro: {
     fontSize: FontSize.micro,
