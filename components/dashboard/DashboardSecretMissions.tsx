@@ -24,7 +24,7 @@ import { DashboardCard } from '../DashboardCard';
 import { SecretMissionCard } from '../SecretMissionCard';
 import type { DashboardSectionProps } from './types';
 import { Spacing } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -90,7 +90,7 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
         color={colors.catJeux}
         tinted
       >
-        <Text style={[styles.parentSubtitle, { color: colors.textMuted }]}>
+        <Text style={[styles.parentSubtitle, { color: colors.brand.soilMuted }]}>
           {t('dashboard.secretMissions.pendingValidation', { count: pendingMissions.length })}
         </Text>
         {pendingMissions.slice(0, 3).map((mission) => (
@@ -123,14 +123,15 @@ export const DashboardSecretMissions = React.memo(DashboardSecretMissionsInner);
 
 const styles = StyleSheet.create({
   childText: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.titleLg,
+    letterSpacing: -0.3,
     textAlign: 'center',
     paddingVertical: Spacing.md,
   },
   parentSubtitle: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
     marginBottom: Spacing.md,
   },
   seeAllText: {
