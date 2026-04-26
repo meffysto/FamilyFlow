@@ -14,6 +14,7 @@ import { useAI, AVAILABLE_MODELS } from '../../contexts/AIContext';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
+import { SectionHeader } from '../ui/SectionHeader';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -63,7 +64,7 @@ export function SettingsAI() {
   return (
     <>
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.ai.sectionA11y')}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.ai.sectionTitle')}</Text>
+        <SectionHeader title={t('settings.ai.sectionTitle')} flush />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.ai.apiLabel')}</Text>
@@ -173,13 +174,6 @@ export function SettingsAI() {
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.md,
-  },
   card: {
     borderRadius: Radius.lg,
     padding: Spacing['2xl'],

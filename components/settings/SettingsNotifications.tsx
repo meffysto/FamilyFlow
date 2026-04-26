@@ -8,6 +8,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useVault } from '../../contexts/VaultContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
+import { SectionHeader } from '../ui/SectionHeader';
 import { buildAndSendWeeklySummary } from '../../lib/telegram';
 import {
   loadNotifConfig,
@@ -130,7 +131,7 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
       {/* Notifications locales iOS */}
       {config && (
         <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.notifications.localA11y')}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.notifications.localTitle')}</Text>
+          <SectionHeader title={t('settings.notifications.localTitle')} flush />
           <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
             <Text style={[styles.hint, { color: colors.textFaint }]}>
               {t('settings.notifications.localHint')}
@@ -245,7 +246,7 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
       {/* Telegram notifications */}
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.notifications.telegramA11y')}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.notifications.telegramTitle')}</Text>
+        <SectionHeader title={t('settings.notifications.telegramTitle')} flush />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.notifications.telegramLabel')}</Text>
@@ -269,7 +270,6 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Spacing.md },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   rowLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },

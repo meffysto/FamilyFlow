@@ -8,6 +8,7 @@ import { testTelegram } from '../../lib/telegram';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { ModalHeader } from '../ui/ModalHeader';
+import { SectionHeader } from '../ui/SectionHeader';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -55,7 +56,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
   return (
     <>
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.telegram.sectionA11y')}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.telegram.sectionTitle')}</Text>
+        <SectionHeader title={t('settings.telegram.sectionTitle')} flush />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.telegram.botLabel')}</Text>
@@ -157,13 +158,6 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.md,
-  },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   rowLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },

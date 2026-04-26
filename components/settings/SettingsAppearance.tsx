@@ -6,6 +6,7 @@ import { setAppLanguage, getSavedLanguage } from '../../lib/i18n';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { SectionHeader } from '../ui/SectionHeader';
 
 type LangPref = 'fr' | 'en' | 'auto';
 
@@ -25,7 +26,7 @@ export function SettingsAppearance() {
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.appearance.sectionA11y')}>
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.appearance.sectionTitle')}</Text>
+      <SectionHeader title={t('settings.appearance.sectionTitle')} flush />
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.label, { color: colors.textSub }]}>{t('settings.appearance.darkModeLabel')}</Text>
         <View style={styles.row}>
@@ -92,7 +93,6 @@ export function SettingsAppearance() {
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Spacing.md },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
   label: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: Spacing.lg },
   row: { flexDirection: 'row', gap: Spacing.md },

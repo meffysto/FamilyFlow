@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
+import { SectionHeader } from '../ui/SectionHeader';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -61,7 +62,7 @@ export function SettingsVault({ vaultPath, onChangeVault }: SettingsVaultProps) 
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.vault.sectionA11y')}>
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.vault.sectionTitle')}</Text>
+      <SectionHeader title={t('settings.vault.sectionTitle')} flush />
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <View style={styles.row}>
           <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.vault.pathLabel')}</Text>
@@ -84,7 +85,9 @@ export function SettingsVault({ vaultPath, onChangeVault }: SettingsVaultProps) 
         )}
       </View>
 
-      <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: Spacing['3xl'] }]}>{t('settings.vault.dataSectionTitle')}</Text>
+      <View style={{ marginTop: Spacing['3xl'] }}>
+        <SectionHeader title={t('settings.vault.dataSectionTitle')} flush />
+      </View>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Button label={t('settings.vault.replayBtn')} onPress={handleReplayOnboarding} variant="secondary" size="sm" fullWidth />
         <View style={[styles.hint, { backgroundColor: colors.warningBg }]}>
@@ -100,13 +103,6 @@ export function SettingsVault({ vaultPath, onChangeVault }: SettingsVaultProps) 
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.md,
-  },
   card: {
     borderRadius: Radius.xl,
     padding: Spacing['2xl'],

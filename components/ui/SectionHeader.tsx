@@ -28,6 +28,9 @@ interface SectionHeaderProps {
   diamondColor?: string;
   /** Si false, masque le losange (titre nu) */
   showDiamond?: boolean;
+  /** Si true, retire le padding horizontal (usage dans contextes déjà paddés
+   * comme les panels settings). Garde le padding vertical pour la rythmique. */
+  flush?: boolean;
 }
 
 export const SectionHeader = React.memo(function SectionHeader({
@@ -36,11 +39,12 @@ export const SectionHeader = React.memo(function SectionHeader({
   action,
   diamondColor,
   showDiamond = true,
+  flush = false,
 }: SectionHeaderProps) {
   const { colors } = useThemeColors();
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, flush && styles.rowFlush]}>
       <View style={styles.titleCol}>
         <View style={styles.titleRow}>
           {showDiamond && (
@@ -82,6 +86,9 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.md,
     gap: Spacing.md,
+  },
+  rowFlush: {
+    paddingHorizontal: 0,
   },
   titleCol: {
     flex: 1,

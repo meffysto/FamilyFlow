@@ -5,6 +5,7 @@ import { formatDateLocalized } from '../../lib/date-locale';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { DateInput } from '../ui/DateInput';
+import { SectionHeader } from '../ui/SectionHeader';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -69,7 +70,7 @@ export function SettingsVacation({ vacationConfig, isVacationActive, activateVac
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.vacation.sectionA11y')}>
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.vacation.sectionTitle')}</Text>
+      <SectionHeader title={t('settings.vacation.sectionTitle')} flush />
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         {isVacationActive && vacationConfig ? (
           <>
@@ -107,7 +108,6 @@ export function SettingsVacation({ vacationConfig, isVacationActive, activateVac
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Spacing.md },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   rowLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
