@@ -5,6 +5,8 @@
     "retry": "Réessayer"
   },
   "nightMode": {
+    "title": "Mode nuit",
+    "subtitle": "la nuit est calme avec bébé",
     "breastfeeding": "Allaitement",
     "bottle": "Biberon",
     "left": "Gauche",
@@ -2778,6 +2780,7 @@
     }
   },
   "journal": {
+    "subtitle": "les petits moments du quotidien",
     "alert": {
       "error": "Erreur",
       "createError": "Impossible de créer le journal : {{error}}",
@@ -3184,6 +3187,7 @@
   },
   "moodsScreen": {
     "title": "Météo des humeurs",
+    "subtitle": "comment ça va aujourd'hui",
     "toast": {
       "saved": "Humeur enregistrée {{emoji}}",
       "error": "Impossible d'enregistrer l'humeur"
@@ -3207,6 +3211,7 @@
   },
   "compare": {
     "title": "Comparer",
+    "subtitle": "voir grandir, semaine après semaine",
     "noChild": "Aucun enfant configuré",
     "alert": {
       "soonTitle": "Bientôt",
@@ -3262,6 +3267,7 @@
     },
     "backBtn": "← Retour",
     "title": "Statistiques",
+    "subtitle": "ce que la famille a accompli",
     "tasksCompleted": "📋 Tâches complétées",
     "tasksSummary_one": "{{count}} tâche cette semaine",
     "tasksSummary_other": "{{count}} tâches cette semaine",

@@ -199,6 +199,7 @@ export default function MoodsScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('moodsScreen.title')}
+        subtitle={t('moodsScreen.subtitle')}
         bottom={
           <View style={styles.tabsWrap}>
             <PillTabSwitcher

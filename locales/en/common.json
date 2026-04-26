@@ -5,6 +5,8 @@
     "retry": "Retry"
   },
   "nightMode": {
+    "title": "Night mode",
+    "subtitle": "the night is calm with baby",
     "breastfeeding": "Breastfeeding",
     "bottle": "Bottle",
     "left": "Left",
@@ -2770,6 +2772,7 @@
     }
   },
   "journal": {
+    "subtitle": "the little moments of every day",
     "alert": {
       "error": "Error",
       "createError": "Unable to create journal: {{error}}",
@@ -3176,6 +3179,7 @@
   },
   "moodsScreen": {
     "title": "Mood Weather",
+    "subtitle": "how are you feeling today",
     "toast": {
       "saved": "Mood saved {{emoji}}",
       "error": "Unable to save mood"
@@ -3199,6 +3203,7 @@
   },
   "compare": {
     "title": "Compare",
+    "subtitle": "watching them grow, week by week",
     "noChild": "No child configured",
     "alert": {
       "soonTitle": "Coming soon",
@@ -3254,6 +3259,7 @@
     },
     "backBtn": "← Back",
     "title": "Statistics",
+    "subtitle": "what the family has accomplished",
     "tasksCompleted": "📋 Completed tasks",
     "tasksSummary_one": "{{count}} task this week",
     "tasksSummary_other": "{{count}} tasks this week",

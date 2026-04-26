@@ -300,6 +300,7 @@ export default function NightModeScreen() {
         <StatusBar hidden />
         <ScreenHeader
           title={t('nightMode.title') || 'Mode nuit'}
+          subtitle={t('nightMode.subtitle')}
           actions={
             <TouchableOpacity
               style={[s.closeX, { backgroundColor: colors.card }]}
@@ -328,6 +329,7 @@ export default function NightModeScreen() {
 
       <ScreenHeader
         title={babies.length === 1 ? `${selectedBaby?.avatar ?? ''} ${selectedBaby?.name ?? ''}` : (t('nightMode.title') || 'Mode nuit')}
+        subtitle={t('nightMode.subtitle')}
         actions={
           <TouchableOpacity
             style={[s.closeX, { backgroundColor: colors.card }]}

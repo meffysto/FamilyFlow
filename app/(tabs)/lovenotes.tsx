@@ -185,6 +185,7 @@ export default function LoveNotesScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title="Boîte aux lettres"
+        subtitle="des mots tendres, glissés discrètement"
         actions={
           activeProfile ? (
             <Pressable

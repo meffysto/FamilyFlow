@@ -237,7 +237,7 @@ export default function CompareScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
         <StatusBar style={isDark ? 'light' : 'dark'} translucent />
-        <ScreenHeader title={t('compare.title')} leading={leadingBack} />
+        <ScreenHeader title={t('compare.title')} subtitle={t('compare.subtitle')} leading={leadingBack} />
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
             Aucun enfant configuré
@@ -255,6 +255,7 @@ export default function CompareScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('compare.title')}
+        subtitle={t('compare.subtitle')}
         leading={leadingBack}
         scrollY={scrollY}
         bottom={

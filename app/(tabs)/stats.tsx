@@ -148,6 +148,7 @@ export default function StatsScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('statsScreen.title')}
+        subtitle={t('statsScreen.subtitle')}
         scrollY={scrollY}
       />
 

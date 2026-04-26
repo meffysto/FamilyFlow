@@ -2140,6 +2140,7 @@ export default function StoriesScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={STEP_TITLES[step.etape] ?? 'Histoires du soir'}
+        subtitle="il était une fois, ce soir…"
         tint="rgba(126,90,107,0.10)"
         leading={
           showBackBtn ? (
