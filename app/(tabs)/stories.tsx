@@ -24,7 +24,7 @@ import StoryBookCard, { BOOK_WIDTH, BOOK_GAP } from '../../components/stories/St
 import StoryPlayer from '../../components/stories/StoryPlayer';
 import VoiceRecorder from '../../components/stories/VoiceRecorder';
 import { getPersonalVoices } from '../../lib/personal-voice';
-import { getCachedStoryAudio } from '../../lib/elevenlabs';
+import { getCachedStoryAudio, stripAllPerformanceTags } from '../../lib/elevenlabs';
 import { getCachedStoryAudioFish } from '../../lib/fish-audio';
 import {
   STORY_UNIVERSES, STORY_SUGGESTIONS, ELEVENLABS_FRENCH_VOICES, ELEVENLABS_ENGLISH_VOICES,
@@ -1433,9 +1433,10 @@ export default function StoriesScreen() {
 
         {/* Sélecteur de modèle ElevenLabs (compromis qualité/coût) */}
         {localVoiceEngine === 'elevenlabs' && (() => {
-          const currentModel = voiceConfig.elevenLabsModel ?? 'eleven_multilingual_v2';
+          const currentModel = voiceConfig.elevenLabsModel ?? 'eleven_v3';
           const MODELS: { key: import('../../lib/types').ElevenLabsModel; label: string; hint: string }[] = [
-            { key: 'eleven_multilingual_v2', label: 'Premium',   hint: 'Qualité max — coût standard' },
+            { key: 'eleven_v3',              label: 'Cinéma v3',  hint: 'Émotions + tags (chuchotement, rire…)' },
+            { key: 'eleven_multilingual_v2', label: 'Premium',    hint: 'Qualité stable — coût standard' },
             { key: 'eleven_turbo_v2_5',      label: 'Économique', hint: '−50% crédits — qualité quasi identique' },
             { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−50% crédits — voix plus mécanique' },
           ];
@@ -1958,7 +1959,7 @@ export default function StoriesScreen() {
         {storyTitle ? (
           <Text style={[styles.storyTitle, { color: colors.text }]}>{storyTitle}</Text>
         ) : null}
-        <Text style={[styles.storyText, { color: colors.text }]}>{displayedText}</Text>
+        <Text style={[styles.storyText, { color: colors.text }]}>{stripAllPerformanceTags(displayedText)}</Text>
         {showPlayer && currentStory && (
           <StoryPlayer
             histoire={currentStory}
@@ -2037,7 +2038,7 @@ export default function StoriesScreen() {
     return (
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={[styles.storyTitle, { color: colors.text }]}>{histoire.titre}</Text>
-        <Text style={[styles.storyText, { color: colors.text }]}>{histoire.texte}</Text>
+        <Text style={[styles.storyText, { color: colors.text }]}>{stripAllPerformanceTags(histoire.texte)}</Text>
         <StoryPlayer
           histoire={histoire}
           voiceConfig={histoire.voice}

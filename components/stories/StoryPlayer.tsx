@@ -22,6 +22,7 @@ import {
   generateSpeechWithTimestamps,
   getCachedStoryAudio,
   storyVaultAudioRelPath,
+  stripAllPerformanceTags,
 } from '../../lib/elevenlabs';
 import { generateSpeechFish, getCachedStoryAudioFish } from '../../lib/fish-audio';
 import {
@@ -580,10 +581,14 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       // V2.3 : si Mode Spectacle + ElevenLabs + script présent ET alignment absent,
       // on appelle l'endpoint /with-timestamps pour récupérer l'alignement caractère→temps.
       // Sinon (mode doux/off, Fish Audio, ou alignment déjà en cache), endpoint classique.
+      // Note : eleven_v3 (alpha) ne supporte pas /with-timestamps de manière fiable —
+      // on retombe sur l'endpoint classique + fallback ratio pour les SFX.
+      const modelSupportsTimestamps = voiceConfig.elevenLabsModel !== 'eleven_v3';
       const useTimestamps = isElevenLabs
         && spectacleActive
         && !!histoire.script
-        && !alignment;
+        && !alignment
+        && modelSupportsTimestamps;
       if (__DEV__) {
         console.log('[StoryPlayer] runGeneration decision:', {
           isElevenLabs, isFishAudio, spectacleActive,
@@ -592,14 +597,25 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         });
       }
 
+      if (__DEV__) {
+        console.log('[StoryPlayer] voiceConfig snapshot:', {
+          engine: voiceConfig.engine,
+          elevenLabsModel: voiceConfig.elevenLabsModel,
+          elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId?.slice(0, 8) + '…',
+          audioMode: voiceConfig.audioMode,
+        });
+      }
       const elevenLabsOptions = voiceConfig.elevenLabsModel
         ? { model: voiceConfig.elevenLabsModel }
         : undefined;
+      // Fish Audio n'interprète pas les tags de performance — on les strip pour
+      // éviter qu'ils soient lus à voix haute. ElevenLabs les garde (sanitize côté lib).
+      const textForTts = isFishAudio ? stripAllPerformanceTags(histoire.texte) : histoire.texte;
       const result = isFishAudio
-        ? await generateSpeechFish(apiKey, histoire.texte, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
+        ? await generateSpeechFish(apiKey, textForTts, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
         : useTimestamps
-          ? await generateSpeechWithTimestamps(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions)
-          : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions);
+          ? await generateSpeechWithTimestamps(apiKey, textForTts, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions)
+          : await generateSpeech(apiKey, textForTts, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions);
       if (__DEV__) {
         if ('error' in result) {
           console.warn('[StoryPlayer] generation error:', result.error);
@@ -650,10 +666,12 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         ? (voiceConfig.fishAudioReferenceId ?? '')
         : (voiceConfig.elevenLabsVoiceId ?? '');
 
-      // Vérifier le cache local (et fallback vault si disponible)
+      // Vérifier le cache local (et fallback vault si disponible).
+      // Pour ElevenLabs, on inclut le modèle dans la clé : changer Cinéma v3 ↔ Premium v2
+      // force la régénération (sinon on relit l'ancien MP3 sans tags honorés).
       const cached = isFishAudio
         ? await getCachedStoryAudioFish(histoire.id, voiceId, vaultUri)
-        : await getCachedStoryAudio(histoire.id, voiceId, vaultUri);
+        : await getCachedStoryAudio(histoire.id, voiceId, vaultUri, voiceConfig.elevenLabsModel);
 
       if (signal.cancelled) return;
 
@@ -736,7 +754,8 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       }
     }
 
-    Speech.speak(histoire.texte, {
+    // Apple AVSpeechSynthesizer ne comprend pas les tags ElevenLabs — strip avant lecture.
+    Speech.speak(stripAllPerformanceTags(histoire.texte), {
       language: targetLang,
       voice: voiceId,
       rate: expoSpeed,
@@ -811,7 +830,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
             interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
           });
         } catch { /* non-critique */ }
-        Speech.speak(histoire.texte, {
+        Speech.speak(stripAllPerformanceTags(histoire.texte), {
           language: targetLang,
           voice: voiceConfig.voiceIdentifier,
           rate: newSpeed,
