@@ -224,6 +224,17 @@ async function performGenerateSpeech(
   } = options;
 
   const sanitized = sanitizePerformanceTags(text);
+  const bodyObj = {
+    text: sanitized,
+    model_id: model,
+    voice_settings: {
+      stability,
+      similarity_boost: similarityBoost,
+      style,
+      use_speaker_boost: useSpeakerBoost,
+    },
+  };
+  const bodyString = JSON.stringify(bodyObj);
   if (__DEV__) {
     const tagsBefore: string[] = text.match(/\[[^\]\n]{1,30}\]/g) ?? [];
     const tagsAfter: string[] = sanitized.match(/\[[^\]\n]{1,30}\]/g) ?? [];
@@ -235,7 +246,9 @@ async function performGenerateSpeech(
       textLen: sanitized.length,
       tagsKept: tagsAfter,
       tagsStripped: tagsBefore.filter(t => !tagsAfter.includes(t)),
-      sample: sanitized.slice(0, 120),
+      bodyBytes: bodyString.length,
+      bodyHead: bodyString.slice(0, 200),
+      bodyTail: bodyString.slice(-200),
     });
   }
   try {
@@ -246,16 +259,7 @@ async function performGenerateSpeech(
         'Content-Type': 'application/json',
         'xi-api-key': apiKey,
       },
-      body: JSON.stringify({
-        text: sanitized,
-        model_id: model,
-        voice_settings: {
-          stability,
-          similarity_boost: similarityBoost,
-          style,
-          use_speaker_boost: useSpeakerBoost,
-        },
-      }),
+      body: bodyString,
     });
     if (__DEV__) console.log('[elevenlabs] ← tts', response.status, response.ok ? 'OK' : 'FAIL');
 
@@ -347,6 +351,7 @@ async function performGenerateWithTimestamps(
       tagsKept: tagsAfter,
       tagsStripped: tagsBefore.filter(t => !tagsAfter.includes(t)),
       sample: sanitized.slice(0, 120),
+      fullText: sanitized,
     });
   }
   try {
