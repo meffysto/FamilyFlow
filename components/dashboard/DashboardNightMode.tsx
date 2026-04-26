@@ -29,7 +29,7 @@ function DashboardNightModeInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard key="nightMode" title={t('dashboard.nightMode.title')} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/night-mode')}>
       <TouchableOpacity
-        style={[styles.nightModeBtn, { backgroundColor: colors.cardAlt }]}
+        style={[styles.nightModeBtn, { backgroundColor: colors.brand.wash, borderWidth: 1, borderColor: colors.brand.bark }]}
         onPress={() => router.push('/(tabs)/night-mode')}
         activeOpacity={0.7}
       >

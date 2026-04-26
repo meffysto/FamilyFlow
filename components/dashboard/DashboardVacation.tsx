@@ -43,7 +43,7 @@ function DashboardVacationInner({ handleTaskToggle, handleTaskSkip }: DashboardS
     <DashboardCard key="vacation" title={t('dashboard.vacation.title')} color={colors.catSysteme} tinted onPressMore={() => router.push('/(tabs)/tasks')}>
       <Text style={[styles.vacCountdown, { color: colors.warning }]}>{vacCountdown}</Text>
       <View style={styles.vacProgressRow}>
-        <View style={[styles.vacProgressBg, { backgroundColor: colors.borderLight }]}>
+        <View style={[styles.vacProgressBg, { backgroundColor: colors.brand.wash }]}>
           <View style={[styles.vacProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
         </View>
         <Text style={[styles.vacProgressText, { color: colors.textMuted }]}>{vacCompleted}/{vacTotal}</Text>
