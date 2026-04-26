@@ -119,6 +119,11 @@ export const LightColors = {
     parchment:  '#FFF8EC',
     bark:       'rgba(107,66,38,0.18)',
     wash:       'rgba(107,66,38,0.07)',
+    miel:       '#FFF4DA',
+    or:         '#E8C858',
+    orDeep:     '#C49A4A',
+    nuit:       '#1A1A2E',
+    nuitSoft:   '#3D3D56',
   },
 };
 
@@ -233,6 +238,11 @@ export const DarkColors: typeof LightColors = {
     parchment:  '#F5EFE5',
     bark:       'rgba(196,162,101,0.15)',
     wash:       'rgba(196,162,101,0.08)',
+    miel:       '#3A3326',          // dark mode : miel fonce → gris-or chaud lisible
+    or:         '#E8C858',
+    orDeep:     '#C49A4A',
+    nuit:       '#0F0F1F',
+    nuitSoft:   '#2A2A3D',
   },
 };
 
