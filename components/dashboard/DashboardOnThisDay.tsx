@@ -12,7 +12,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { Spacing } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
 import type { DashboardSectionProps } from './types';
 
 interface OnThisDayItem {
@@ -102,7 +102,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
               <Text style={[styles.title, { color: colors.text }]}>
                 {item.emoji} {item.label}
               </Text>
-              <Text style={[styles.meta, { color: colors.textMuted }]}>
+              <Text style={[styles.meta, { color: colors.brand.soilMuted }]}>
                 {yearsLabel} · {item.detail}
               </Text>
             </View>
@@ -124,11 +124,12 @@ const styles = StyleSheet.create({
     gap: Spacing.xxs,
   },
   title: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.lg,
+    letterSpacing: -0.2,
   },
   meta: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
   },
 });
