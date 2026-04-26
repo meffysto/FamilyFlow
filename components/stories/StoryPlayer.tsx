@@ -581,9 +581,11 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       // V2.3 : si Mode Spectacle + ElevenLabs + script présent ET alignment absent,
       // on appelle l'endpoint /with-timestamps pour récupérer l'alignement caractère→temps.
       // Sinon (mode doux/off, Fish Audio, ou alignment déjà en cache), endpoint classique.
-      // Note : eleven_v3 (alpha) ne supporte pas /with-timestamps de manière fiable —
-      // on retombe sur l'endpoint classique + fallback ratio pour les SFX.
-      const modelSupportsTimestamps = voiceConfig.elevenLabsModel !== 'eleven_v3';
+      // Note : eleven_v3 ne supporte pas /with-timestamps de manière fiable — on retombe
+      // sur l'endpoint classique + fallback ratio V2.2 pour les SFX. Le défaut côté
+      // elevenlabs.ts étant v3, on traite undefined comme v3 ici.
+      const effectiveModel = voiceConfig.elevenLabsModel ?? 'eleven_v3';
+      const modelSupportsTimestamps = effectiveModel !== 'eleven_v3';
       const useTimestamps = isElevenLabs
         && spectacleActive
         && !!histoire.script
