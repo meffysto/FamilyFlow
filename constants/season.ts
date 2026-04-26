@@ -34,8 +34,13 @@ export const SEASON_THEME: Record<Season, SeasonTheme> = {
   spring: {
     label: 'Printemps',
     mood: 'pollen au vent',
-    gradient: ['#C8E2A8', '#E8D9A8', '#F4D6A0', '#B85C3D'],
-    gradientDark: ['#3D4A2C', '#3F3D28', '#3D3220', '#4A2820'],
+    // 4-stops vert tendre → beige doré → pêche claire → coral pollen.
+    // Avant : terminait sur terracotta #B85C3D qui muddait la palette en automne foncé.
+    // Maintenant : `#E89B7A` coral léger qui garde la chaleur sans assombrir.
+    gradient: ['#D4EBB8', '#EDDCAE', '#F8DCAA', '#E89B7A'],
+    // Dark : olive léger → beige cuir → pêche désaturée → coral muted.
+    // Avant : tout en muddy brown #4A2820. Maintenant : retient un soupçon de printemps.
+    gradientDark: ['#4A5832', '#4A4530', '#4A3A28', '#5D3A2E'],
   },
   summer: {
     label: 'Été',

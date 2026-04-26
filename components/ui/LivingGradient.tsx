@@ -62,8 +62,10 @@ function shiftBySlot(g: SeasonGradient, slot: TimeSlot): readonly string[] {
       mixColors(g[3], '#0E121A', 0.75),
     ] as const;
   }
-  // afternoon : conserve mais légèrement assombrie au bas
-  return [g[0], g[1], mixColors(g[2], '#000000', 0.05), mixColors(g[3], '#000000', 0.08)] as const;
+  // afternoon : conserve mais TRÈS légèrement assombrie au bas (0.02/0.04
+  // au lieu de 0.05/0.08 qui tapait trop fort sur les palettes claires
+  // comme printemps — rendait le hero muddy en pleine journée).
+  return [g[0], g[1], mixColors(g[2], '#000000', 0.02), mixColors(g[3], '#000000', 0.04)] as const;
 }
 
 interface LivingGradientProps {
@@ -96,9 +98,11 @@ export const LivingGradient = forwardRef<View, LivingGradientProps>(
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-        {/* Léger blur pour adoucir les transitions de stops */}
+        {/* Léger blur pour adoucir les transitions de stops.
+         * Light mode : intensity 4 (au lieu de 8) — évitait le voile milky qui
+         * cassait la luminosité au printemps/été. */}
         <BlurView
-          intensity={8}
+          intensity={isDark ? 8 : 4}
           tint={isDark ? 'dark' : 'light'}
           style={StyleSheet.absoluteFill}
         />
