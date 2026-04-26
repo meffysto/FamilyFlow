@@ -12,22 +12,25 @@ import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useSeason } from '../../hooks/useSeason';
 
 // Palettes par moment de la journée — [couleur haute, couleur basse]
+// Palette warm brand : aurore parchemin → terracotta, matin miel, après-midi
+// ocre, coucher prune, nuit bleu nuit doux. Plus de Tailwind candy froid.
 const TIME_PALETTES = {
   light: {
-    dawn:      ['#E879A8', '#F59E0B'], // rose vif → or
-    morning:   ['#3B82F6', '#F59E0B'], // bleu franc → ambre
-    afternoon: ['#0EA5E9', '#8B5CF6'], // cyan → violet
-    sunset:    ['#F97316', '#EC4899'], // orange → rose
-    night:     ['#6366F1', '#1E293B'], // indigo → ardoise
+    dawn:      ['#F4D6A0', '#B85C3D'], // parchemin clair → terracotta
+    morning:   ['#F4D6A0', '#C49A4A'], // parchemin → ocre miel
+    afternoon: ['#E8B87A', '#A0784C'], // miel doré → bois clair
+    sunset:    ['#C49A4A', '#7E5A6B'], // ocre → prune sourde
+    night:     ['#5A6B7E', '#1D2438'], // bleu nuit doux → bleu nuit profond
   },
   dark: {
-    dawn:      ['#9D174D', '#B45309'],
-    morning:   ['#1D4ED8', '#15803D'],
-    afternoon: ['#1E40AF', '#7C3AED'],
-    sunset:    ['#C2410C', '#BE185D'],
-    night:     ['#3730A3', '#0F172A'],
+    dawn:      ['#7A4A2E', '#4A2820'], // bois sombre → bois deep
+    morning:   ['#6B4226', '#3A2418'], // bois → bois deep
+    afternoon: ['#5A4030', '#2E2018'], // bois sourd → wenge
+    sunset:    ['#5C3D44', '#2A1E22'], // prune deep → night plum
+    night:     ['#2A2E40', '#0E1018'], // bleu nuit → noir
   },
 };
 
@@ -62,6 +65,7 @@ interface LivingGradientProps {
 export const LivingGradient = forwardRef<View, LivingGradientProps>(
   ({ style, children, primaryBlend = 0.5 }, ref) => {
     const { primary, isDark } = useThemeColors();
+    const { theme: seasonTheme } = useSeason();
 
     const gradientColors = useMemo(() => {
       const hour = new Date().getHours();
@@ -69,11 +73,15 @@ export const LivingGradient = forwardRef<View, LivingGradientProps>(
       const palette = isDark ? TIME_PALETTES.dark : TIME_PALETTES.light;
       const [top, bottom] = palette[currentSlot];
 
-      // Mélanger avec la couleur primary du thème pour personnaliser
-      const blendedTop = mixColors(top, primary, primaryBlend);
+      // Mix temps × saison × thème enfant. La saison teinte subtilement
+      // l'ambiance globale (~0.2-0.3) pour donner 4 personnalités à l'app
+      // sans casser la lisibilité time-of-day.
+      const seasonedTop = mixColors(top, seasonTheme.tint, seasonTheme.blend);
+      const seasonedBottom = mixColors(bottom, seasonTheme.tint, seasonTheme.blend * 0.6);
+      const blendedTop = mixColors(seasonedTop, primary, primaryBlend);
 
-      return [blendedTop, bottom] as const;
-    }, [isDark, primary, primaryBlend]);
+      return [blendedTop, seasonedBottom] as const;
+    }, [isDark, primary, primaryBlend, seasonTheme]);
 
     return (
       <Animated.View ref={ref} style={[style, { overflow: 'hidden' }]}>
