@@ -16,47 +16,44 @@
 
 export type Season = 'winter' | 'spring' | 'summer' | 'autumn';
 
+/** Gradient 4-stops (haut-gauche → bas-droite) du hero dashboard. */
+export type SeasonGradient = readonly [string, string, string, string];
+
 export interface SeasonTheme {
   /** Label FR pour usage UI (sub-titles, footers Caveat, etc.) */
   label: string;
   /** Ambiance courte FR pour copy contextuel (« matin doré », « soir givré ») */
   mood: string;
-  /**
-   * Tint warm injecté dans LivingGradient. Mixé avec la palette time-of-day
-   * pour colorer subtilement l'ambiance globale par saison.
-   */
-  tint: string;
-  /**
-   * Poids du mix (0–1). Plus c'est élevé, plus la saison domine sur l'heure.
-   * 0.25 = palette time reste lisible, saison ajoute une teinte.
-   */
-  blend: number;
+  /** Gradient 4-stops pour le hero du dashboard (mode light) */
+  gradient: SeasonGradient;
+  /** Variante dark (warm-deep, jamais bleu froid) */
+  gradientDark: SeasonGradient;
 }
 
 export const SEASON_THEME: Record<Season, SeasonTheme> = {
   spring: {
     label: 'Printemps',
     mood: 'pollen au vent',
-    tint: '#9DAE7E', // mousse claire
-    blend: 0.22,
+    gradient: ['#C8E2A8', '#E8D9A8', '#F4D6A0', '#B85C3D'],
+    gradientDark: ['#3D4A2C', '#3F3D28', '#3D3220', '#4A2820'],
   },
   summer: {
     label: 'Été',
     mood: 'lumière haute',
-    tint: '#E8C858', // or doux
-    blend: 0.20,
+    gradient: ['#FFE9B0', '#E8C858', '#C49A4A', '#A4502B'],
+    gradientDark: ['#3D3520', '#3A2E18', '#2E2418', '#3A1E14'],
   },
   autumn: {
     label: 'Automne',
     mood: 'feuilles qui tombent',
-    tint: '#B85C3D', // terracotta
-    blend: 0.28,
+    gradient: ['#E8C5A0', '#C4824D', '#A4502B', '#7C3F1C'],
+    gradientDark: ['#352820', '#2E1F18', '#28160E', '#1E1108'],
   },
   winter: {
     label: 'Hiver',
     mood: 'premier givre',
-    tint: '#5A6B7E', // bleu nuit doux
-    blend: 0.30,
+    gradient: ['#C8D4E1', '#9DB1C7', '#5A6B7E', '#2C3D54'],
+    gradientDark: ['#1E2A38', '#1A2030', '#141A24', '#0E121A'],
   },
 };
 
