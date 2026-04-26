@@ -21,8 +21,6 @@ import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, FontFamily } from '../constants/typography';
-import { Shadows } from '../constants/shadows';
-import { GlassView } from './ui/GlassView';
 import { PressableScale } from './ui/PressableScale';
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -47,8 +45,6 @@ interface DashboardCardProps {
   cardId?: string;
   /** État initial si pas de préférence persistée. Default: false (ouvert). */
   defaultCollapsed?: boolean;
-  /** Effet Liquid Glass (fond translucide + blur). Default: false */
-  glass?: boolean;
   /** Fond subtil coloré basé sur color. Default: false */
   tinted?: boolean;
   /** Masque le lien "Voir tout →" dans le header (garde le tap sur la carte). */
@@ -81,7 +77,6 @@ export function DashboardCard({
   collapsible = false,
   cardId,
   defaultCollapsed = false,
-  glass = true,
   tinted = false,
   hideMoreLink = false,
   onTitleLongPress,
@@ -252,11 +247,17 @@ export function DashboardCard({
   if (variant === 'metric') {
     const card = (
       <View
-        style={[styles.card, { backgroundColor: colors.card }, Shadows.sm, style]}
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.brand.parchment,
+            borderWidth: 1,
+            borderColor: colors.brand.bark,
+          },
+          style,
+        ]}
         {...a11yProps}
       >
-        {/* Liseré warm haut — signature "métrique calme" */}
-        <View style={[styles.metricAccent, { backgroundColor: colors.brand.soilMuted }]} />
         {cardContent}
       </View>
     );
@@ -292,32 +293,22 @@ export function DashboardCard({
     ) : card;
   }
 
-  // ── Default (glass + tinted optionnels) ─────────────────────────────────
-  if (glass) {
-    const glassCard = (
-      <GlassView
-        style={[styles.card, style]}
-        intensity={35}
-        borderRadius={Radius.xl}
-        {...a11yProps}
-      >
-        {tintBg && <View style={[StyleSheet.absoluteFill, { backgroundColor: tintBg, borderRadius: Radius.xl }]} />}
-        {cardContent}
-      </GlassView>
-    );
-    if (onPressMore) {
-      return (
-        <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
-          {glassCard}
-        </PressableScale>
-      );
-    }
-    return glassCard;
-  }
-
-  const plainCard = (
+  // ── Default warm — parchemin + bordure bark ─────────────────────────────
+  // Aligné sur le mockup `.card-new` : background parchemin, bordure
+  // rgba(196,162,101,0.30), pas d'ombre, juste la bordure pour structurer.
+  // L'ancien glass est conservé en opt-in pour les cas spéciaux (companion
+  // bubble, pregnancy card) qui le câblent eux-mêmes via GlassView direct.
+  const warmCard = (
     <View
-      style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.brand.parchment,
+          borderWidth: 1,
+          borderColor: colors.brand.bark,
+        },
+        style,
+      ]}
       {...a11yProps}
     >
       {tintBg && <View style={[StyleSheet.absoluteFill, { backgroundColor: tintBg, borderRadius: Radius.xl }]} />}
@@ -328,11 +319,11 @@ export function DashboardCard({
   if (onPressMore) {
     return (
       <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
-        {plainCard}
+        {warmCard}
       </PressableScale>
     );
   }
-  return plainCard;
+  return warmCard;
 }
 
 const styles = StyleSheet.create({
@@ -395,14 +386,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     paddingVertical: Spacing.lg,
     marginBottom: Spacing.xl,
-  },
-  metricAccent: {
-    position: 'absolute',
-    top: 0,
-    left: Spacing['2xl'] + 2,
-    right: Spacing['2xl'] + 2,
-    height: 3,
-    borderBottomLeftRadius: Radius.xs,
-    borderBottomRightRadius: Radius.xs,
   },
 });
