@@ -12,6 +12,29 @@ import LiveActivityShared
 // peut retrouver la Live Activity via `Activity<MascotteActivityAttributes>
 // .activities` et faire l'update optimiste (tasksDone+1, clear nextTask).
 
+// MARK: - Warm Palette
+//
+// Refonte visuelle Trajectoire B — la Live Activity adopte la palette brand
+// warm (parchemin / miel / soil / vert-grass / or) au lieu des couleurs
+// SwiftUI génériques (.white / .green / .yellow / .cyan / .black). Pas de
+// custom font (DM Serif/Caveat non bundlés dans le widget) → on garde SF.
+
+@available(iOS 16.2, *)
+private enum WarmPalette {
+    static let parchemin = Color(red: 1.0, green: 0.973, blue: 0.925)        // #FFF8EC
+    static let parcheminMuted = Color(red: 1.0, green: 0.973, blue: 0.925).opacity(0.78)
+    static let parcheminFaint = Color(red: 1.0, green: 0.973, blue: 0.925).opacity(0.55)
+    static let miel = Color(red: 1.0, green: 0.957, blue: 0.855)             // #FFF4DA
+    static let soilPale = Color(red: 0.769, green: 0.635, blue: 0.396)       // #C4A265
+    static let or = Color(red: 0.910, green: 0.784, blue: 0.345)             // #E8C858
+    static let vertGrass = Color(red: 0.494, green: 0.702, blue: 0.290)      // #7EB34A
+    static let vertDeep = Color(red: 0.306, green: 0.541, blue: 0.227)       // #4E8A3A
+    static let bois = Color(red: 0.420, green: 0.259, blue: 0.149)           // #6B4226
+    static let nuitWarm = Color(red: 0.106, green: 0.094, blue: 0.082)       // #1B1815
+    static let chipFill = Color(red: 1.0, green: 0.973, blue: 0.925).opacity(0.10)
+    static let trackFill = Color(red: 1.0, green: 0.973, blue: 0.925).opacity(0.18)
+}
+
 // MARK: - Stage Narrative
 
 @available(iOS 16.2, *)
@@ -163,16 +186,17 @@ private func shouldShowNextTask(stage: MascotteStage) -> Bool {
 }
 
 /// Sprite pixel-art du compagnon pour la DI compact (leading + minimal).
-/// Si le sprite n'est pas disponible dans le state, fallback sur l'emoji de stage.
-/// Taille fixe ~20pt adaptée à la pilule ; `interpolation(.none)` préserve le pixel-art.
+/// Phase 260425-0qf : lit companion-sprite-{pose}.png depuis l'App Group.
+/// Fallback sur l'emoji de stage si le fichier est absent ou non lisible.
+/// Taille fixe ~28pt adaptée à la pilule ; `interpolation(.none)` préserve le pixel-art.
 @available(iOS 16.2, *)
 @ViewBuilder
 private func companionCompactView(
     state: MascotteActivityAttributes.ContentState,
     fallbackEmoji: String
 ) -> some View {
-    if let token = state.companionSpriteToken,
-       let uiImage = CompanionSpriteCache.image(for: token) {
+    let pose = state.pose ?? "idle"
+    if let uiImage = CompanionSpriteCache.image(for: pose) {
         Image(uiImage: uiImage)
             .interpolation(.none)
             .resizable()
@@ -186,21 +210,23 @@ private func companionCompactView(
     }
 }
 
-/// Cache mémoire du sprite compagnon indexé par `companionSpriteToken`.
+/// Cache mémoire du sprite compagnon indexé par nom de pose.
+/// Phase 260425-0qf : keyed par pose ("idle"/"happy"/"sleeping"/"eating"/"celebrating")
+/// plutôt que par token — lit companion-sprite-{pose}.png dans l'App Group.
 /// Évite la relecture disque à chaque render (compactLeading + minimal +
-/// Lock Screen = 3× par refresh). Invalidé automatiquement quand l'app
-/// change le token après régénération du sprite.
+/// Lock Screen = 3× par refresh). Cache partagé pour toute la durée de la LA.
 @available(iOS 16.2, *)
 private enum CompanionSpriteCache {
     private static var cache: [String: UIImage] = [:]
 
-    static func image(for token: String?) -> UIImage? {
-        let key = token ?? "__default__"
+    /// Retourne l'image pour la pose donnée. Lit depuis l'App Group si absent du cache.
+    static func image(for pose: String) -> UIImage? {
+        let key = pose.isEmpty ? "idle" : pose
         if let cached = cache[key] { return cached }
         guard let container = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
         ) else { return nil }
-        let fileURL = container.appendingPathComponent("companion-sprite.png")
+        let fileURL = container.appendingPathComponent("companion-sprite-\(key).png")
         guard let data = try? Data(contentsOf: fileURL),
               let image = UIImage(data: data) else { return nil }
         cache[key] = image
@@ -227,25 +253,26 @@ private func compactTrailingView(
         } else if state.tasksTotal > 0 && state.tasksDone >= state.tasksTotal {
             Image(systemName: "checkmark.circle.fill")
                 .font(.caption)
-                .foregroundColor(.green)
+                .foregroundColor(WarmPalette.vertGrass)
         } else if state.tasksTotal > 0 {
             Text("\(state.tasksDone)/\(state.tasksTotal)")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(WarmPalette.parchemin)
         } else {
             Text(stage.compactLabel)
                 .font(.caption2)
                 .fontWeight(.semibold)
+                .foregroundColor(WarmPalette.miel)
         }
     } else if state.tasksTotal > 0 && state.tasksDone > 0 {
         let progress = min(1.0, Double(state.tasksDone) / Double(state.tasksTotal))
         let justFlashed = state.justCompletedAt != nil
         ZStack {
             Circle()
-                .stroke(Color.white.opacity(0.25), lineWidth: 2.5)
+                .stroke(WarmPalette.trackFill, lineWidth: 2.5)
             Circle()
                 .trim(from: 0, to: progress)
-                .stroke(Color.green, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .stroke(WarmPalette.vertGrass, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             // Pendant le flash post-tap : ✓ bondissant au centre (feedback
             // immédiat). Sinon : le compteur numérique tasksDone.
@@ -253,17 +280,17 @@ private func compactTrailingView(
                 if #available(iOS 17.0, *) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 11, weight: .heavy))
-                        .foregroundColor(.green)
+                        .foregroundColor(WarmPalette.vertGrass)
                         .symbolEffect(.bounce, value: state.justCompletedAt)
                 } else {
                     Image(systemName: "checkmark")
                         .font(.system(size: 11, weight: .heavy))
-                        .foregroundColor(.green)
+                        .foregroundColor(WarmPalette.vertGrass)
                 }
             } else {
                 Text("\(state.tasksDone)")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(WarmPalette.parchemin)
                     .monospacedDigit()
             }
         }
@@ -276,6 +303,7 @@ private func compactTrailingView(
         Text(stage.compactLabel)
             .font(.caption2)
             .fontWeight(.semibold)
+            .foregroundColor(WarmPalette.miel)
     }
 }
 
@@ -300,19 +328,32 @@ struct MascotteLiveActivity: Widget {
             let headEmoji = stage.emoji
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Text(headEmoji)
-                        .font(.system(size: 32))
+                    // Phase 260425-0qf — sprite pose au lieu de l'emoji pur ; taille
+                    // adaptée à la région DI expanded leading (~40pt pour matcher
+                    // l'ancien rendu emoji 32pt avec marge pixel art).
+                    let pose = context.state.pose ?? "idle"
+                    if let uiImage = CompanionSpriteCache.image(for: pose) {
+                        Image(uiImage: uiImage)
+                            .interpolation(.none)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 52, height: 52)
+                            .accessibilityLabel("Compagnon \(context.attributes.mascotteName)")
+                    } else {
+                        Text(headEmoji)
+                            .font(.system(size: 32))
+                    }
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title)
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(WarmPalette.miel)
                             .lineLimit(1)
                         Text(subtitle)
                             .font(.caption2)
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundColor(WarmPalette.soilPale)
                             .lineLimit(1)
                     }
                 }
@@ -323,19 +364,19 @@ struct MascotteLiveActivity: Widget {
                                 HStack(spacing: 6) {
                                     Image(systemName: "book.fill")
                                         .font(.caption2)
-                                        .foregroundColor(.yellow)
+                                        .foregroundColor(WarmPalette.or)
                                     Text("Lire une histoire")
                                         .font(.caption2)
                                         .fontWeight(.semibold)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(WarmPalette.parchemin)
                                     Spacer(minLength: 0)
                                     Image(systemName: "chevron.right")
                                         .font(.caption2)
-                                        .foregroundColor(.white.opacity(0.6))
+                                        .foregroundColor(WarmPalette.parcheminFaint)
                                 }
                                 .padding(.vertical, 4)
                                 .padding(.horizontal, 8)
-                                .background(Color.white.opacity(0.08))
+                                .background(WarmPalette.chipFill)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         } else if stage == .routine {
@@ -343,19 +384,19 @@ struct MascotteLiveActivity: Widget {
                                 HStack(spacing: 6) {
                                     Image(systemName: "checklist")
                                         .font(.caption2)
-                                        .foregroundColor(.cyan)
+                                        .foregroundColor(WarmPalette.vertGrass)
                                     Text("Ouvrir une routine")
                                         .font(.caption2)
                                         .fontWeight(.semibold)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(WarmPalette.parchemin)
                                     Spacer(minLength: 0)
                                     Image(systemName: "chevron.right")
                                         .font(.caption2)
-                                        .foregroundColor(.white.opacity(0.6))
+                                        .foregroundColor(WarmPalette.parcheminFaint)
                                 }
                                 .padding(.vertical, 4)
                                 .padding(.horizontal, 8)
-                                .background(Color.white.opacity(0.08))
+                                .background(WarmPalette.chipFill)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
@@ -364,10 +405,10 @@ struct MascotteLiveActivity: Widget {
                             HStack(spacing: 6) {
                                 Image(systemName: "circle")
                                     .font(.caption2)
-                                    .foregroundColor(.green)
+                                    .foregroundColor(WarmPalette.vertGrass)
                                 Text(next)
                                     .font(.caption2)
-                                    .foregroundColor(.white.opacity(0.85))
+                                    .foregroundColor(WarmPalette.parcheminMuted)
                                     .lineLimit(1)
                                 Spacer(minLength: 0)
                                 if #available(iOS 17.0, *),
@@ -377,7 +418,7 @@ struct MascotteLiveActivity: Widget {
                                             .font(.caption2)
                                             .labelStyle(.titleAndIcon)
                                     }
-                                    .tint(.green)
+                                    .tint(WarmPalette.vertGrass)
                                     .buttonStyle(.bordered)
                                     .controlSize(.mini)
                                 }
@@ -388,7 +429,7 @@ struct MascotteLiveActivity: Widget {
                         } currentValueLabel: {
                             EmptyView()
                         }
-                        .tint(.green)
+                        .tint(WarmPalette.vertGrass)
                     }
                 }
             } compactLeading: {
@@ -416,7 +457,7 @@ struct MascotteLockScreenView: View {
         return HStack(spacing: 14) {
                 companionAvatar(fallbackEmoji: stage.emoji)
                     .frame(width: 72, height: 72)
-                    .background(Color.white.opacity(0.08))
+                    .background(WarmPalette.chipFill)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -428,29 +469,29 @@ struct MascotteLockScreenView: View {
                             if #available(iOS 17.0, *) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.green)
+                                    .foregroundColor(WarmPalette.vertGrass)
                                     .symbolEffect(.bounce, value: context.state.justCompletedAt)
                             } else {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.green)
+                                    .foregroundColor(WarmPalette.vertGrass)
                             }
                         } else {
                             Circle()
-                                .fill(Color.green)
+                                .fill(WarmPalette.vertGrass)
                                 .frame(width: 6, height: 6)
                         }
                         Text("La journée de \(context.attributes.mascotteName)")
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(WarmPalette.miel)
                         if context.state.justCompletedAt != nil {
                             Text("+1 fait")
                                 .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(.green)
+                                .foregroundColor(WarmPalette.vertGrass)
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
-                                .background(Color.green.opacity(0.15))
+                                .background(WarmPalette.vertGrass.opacity(0.18))
                                 .clipShape(Capsule())
                         }
                     }
@@ -458,28 +499,28 @@ struct MascotteLockScreenView: View {
                         Text("Journée accomplie 🌙")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                            .foregroundColor(WarmPalette.parchemin)
                             .lineLimit(1)
                         Text(recapLine(state: context.state))
                             .font(.caption2)
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(WarmPalette.soilPale)
                             .lineLimit(2)
                     } else {
                         Text(stage.title(name: context.attributes.mascotteName))
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                            .foregroundColor(WarmPalette.parchemin)
                             .lineLimit(1)
                         if let bubble = context.state.speechBubble, !bubble.isEmpty {
                             Text("\u{201C}\(bubble)\u{201D}")
                                 .font(.caption2)
                                 .italic()
-                                .foregroundColor(.white.opacity(0.85))
+                                .foregroundColor(WarmPalette.parcheminMuted)
                                 .lineLimit(2)
                         } else {
                             Text(stage.subtitle(state: context.state))
                                 .font(.caption2)
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(WarmPalette.soilPale)
                                 .lineLimit(1)
                         }
                     }
@@ -488,26 +529,26 @@ struct MascotteLockScreenView: View {
                     } currentValueLabel: {
                         EmptyView()
                     }
-                    .tint(.green)
+                    .tint(WarmPalette.vertGrass)
                     .padding(.top, 2)
                     if stage == .dodo {
                         Link(destination: MascotteDeepLink.stories.url) {
                             HStack(spacing: 6) {
                                 Image(systemName: "book.fill")
                                     .font(.caption2)
-                                    .foregroundColor(.yellow)
+                                    .foregroundColor(WarmPalette.or)
                                 Text("Lire une histoire")
                                     .font(.caption2)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(WarmPalette.parchemin)
                                 Spacer(minLength: 0)
                                 Image(systemName: "chevron.right")
                                     .font(.caption2)
-                                    .foregroundColor(.white.opacity(0.6))
+                                    .foregroundColor(WarmPalette.parcheminFaint)
                             }
                             .padding(.vertical, 5)
                             .padding(.horizontal, 9)
-                            .background(Color.white.opacity(0.08))
+                            .background(WarmPalette.chipFill)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .padding(.top, 4)
@@ -516,19 +557,19 @@ struct MascotteLockScreenView: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "checklist")
                                     .font(.caption2)
-                                    .foregroundColor(.cyan)
+                                    .foregroundColor(WarmPalette.vertGrass)
                                 Text("Ouvrir une routine")
                                     .font(.caption2)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(WarmPalette.parchemin)
                                 Spacer(minLength: 0)
                                 Image(systemName: "chevron.right")
                                     .font(.caption2)
-                                    .foregroundColor(.white.opacity(0.6))
+                                    .foregroundColor(WarmPalette.parcheminFaint)
                             }
                             .padding(.vertical, 5)
                             .padding(.horizontal, 9)
-                            .background(Color.white.opacity(0.08))
+                            .background(WarmPalette.chipFill)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .padding(.top, 4)
@@ -538,10 +579,10 @@ struct MascotteLockScreenView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "circle")
                                 .font(.caption2)
-                                .foregroundColor(.green)
+                                .foregroundColor(WarmPalette.vertGrass)
                             Text(next)
                                 .font(.caption2)
-                                .foregroundColor(.white.opacity(0.75))
+                                .foregroundColor(WarmPalette.parcheminMuted)
                                 .lineLimit(1)
                             Spacer(minLength: 0)
                             if #available(iOS 17.0, *),
@@ -551,7 +592,7 @@ struct MascotteLockScreenView: View {
                                         .font(.caption2)
                                         .labelStyle(.titleAndIcon)
                                 }
-                                .tint(.green)
+                                .tint(WarmPalette.vertGrass)
                                 .buttonStyle(.bordered)
                                 .controlSize(.mini)
                             }
@@ -563,18 +604,17 @@ struct MascotteLockScreenView: View {
                 Spacer(minLength: 0)
             }
         .padding(14)
-        .activityBackgroundTint(colorScheme == .dark
-            ? Color.black.opacity(0.85)
-            : Color(white: 0.12).opacity(0.92))
+        .activityBackgroundTint(WarmPalette.nuitWarm.opacity(colorScheme == .dark ? 0.92 : 0.96))
     }
 
-    /// Affiche le sprite pixel art du compagnon si disponible dans le ContentState,
-    /// sinon fallback sur l'emoji du stage narratif.
+    /// Affiche le sprite pixel art du compagnon depuis l'App Group (keyed par pose).
+    /// Phase 260425-0qf : lit companion-sprite-{pose}.png — plus de companionSpriteToken.
+    /// Fallback sur l'emoji du stage narratif si le fichier est absent.
     @ViewBuilder
     private func companionAvatar(fallbackEmoji: String) -> some View {
         let label = "Compagnon \(context.attributes.mascotteName)"
-        if let token = context.state.companionSpriteToken,
-           let uiImage = CompanionSpriteCache.image(for: token) {
+        let pose = context.state.pose ?? "idle"
+        if let uiImage = CompanionSpriteCache.image(for: pose) {
             Image(uiImage: uiImage)
                 .interpolation(.none)
                 .resizable()
