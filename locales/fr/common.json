@@ -463,7 +463,7 @@
     },
     "empty": {
       "title": "Bravo, tout est fait !",
-      "subtitle": "Profite bien de ton temps libre 🎉",
+      "subtitle": "profite bien de ton temps libre",
       "filterTitle": "Aucune tâche ici",
       "filterSubtitle": "Essaie un autre filtre",
       "searchTitle": "Aucun résultat",
@@ -507,7 +507,7 @@
       "saveToLabel": "Enregistrer pour",
       "targetLabel": "📁 Catégorie",
       "secretMission": "🕵️ Créer une mission secrète",
-      "reminderLabel": "⏰ Rappel (optionnel)",
+      "reminderLabel": "Rappel (optionnel)",
       "reminderPlaceholder": "Choisir une heure"
     },
     "editModal": {
@@ -544,7 +544,7 @@
     "vacationTitle": "Vacances",
     "remaining": "il en reste {{count}} aujourd'hui",
     "remaining_other": "il en reste {{count}} aujourd'hui",
-    "hint": "💡 Glissez pour supprimer · Maintenez pour modifier",
+    "hint": "Glissez pour supprimer · maintenez pour modifier",
     "secretMissions": "🕵️ Missions secrètes",
     "targetFiles": {
       "home": "🏠 Maison"
@@ -745,7 +745,7 @@
       "dose_one": "{{count}} dose",
       "dose_other": "{{count}} doses",
       "nextDue": "💉 Prochain vaccin à prévoir : {{name}}",
-      "allDone": "✅ Tous les vaccins à jour"
+      "allDone": "Tous les vaccins à jour"
     },
     "info": {
       "medicalRecord": "Fiche médicale",
@@ -864,16 +864,16 @@
       "cookReadyPlain": "Fichier .cook prêt",
       "servingsLabel": "👤 {{count}} pers.",
       "prepLabel": "⏱ Prep {{time}}",
-      "cookLabel": "🔥 Cuisson {{time}}",
-      "ingredientsCount_one": "🥕 {{count}} ingrédient",
-      "ingredientsCount_other": "🥕 {{count}} ingrédients",
+      "cookLabel": "Cuisson {{time}}",
+      "ingredientsCount_one": "{{count}} ingrédient",
+      "ingredientsCount_other": "{{count}} ingrédients",
       "stepsCount_one": "{{count}} étape",
       "stepsCount_other": "{{count}} étapes",
       "categoryLabel": "Catégorie",
       "categoryPlaceholder": "Ex: Plats, Desserts, Entrées…",
-      "saveToVault": "✅ Sauvegarder dans le vault",
+      "saveToVault": "Sauvegarder dans le vault",
       "saveToVaultNoIcon": "Sauvegarder dans le vault",
-      "importToVault": "✅ Importer dans le vault"
+      "importToVault": "Importer dans le vault"
     },
     "scanner": {
       "modalTitle": "Scanner le vault",
@@ -1032,7 +1032,7 @@
     "history": {
       "loot": "🎁 Loot",
       "skill": "🧠 Compétence",
-      "challenge": "🎯 Défi",
+      "challenge": "Défi",
       "bonus": "✨ Bonus",
       "task": "📋 Tâche"
     },
@@ -1052,7 +1052,7 @@
       "close": "Fermer"
     },
     "pity": {
-      "title": "🎯 Garantie",
+      "title": "Garantie",
       "description": "Après {{threshold}} récompenses sans obtenir Épique ou mieux, la suivante est <bold>garantie Épique minimum</bold>."
     },
     "a11y": {
@@ -1071,7 +1071,7 @@
       "parentApproval": "À valider par un parent !",
       "multiplier": "⚡ Multiplicateur ×{{multiplier}} activé pour {{tasks}} tâches !",
       "doubleLoot": "🎁🎁 +2 loot boxes ajoutées !",
-      "vacation": "🏖️ 2 jours sans tâches activés !",
+      "vacation": "2 jours sans tâches activés",
       "crown": "👑 Tu choisis le menu toute la semaine !",
       "skipAll": "🧹✨ Toutes les tâches de demain sont annulées !",
       "familyBonus": "🌈✨ Toute la famille reçoit +{{points}} pts !",
@@ -1306,7 +1306,7 @@
       "dateLabel": "Date",
       "datePlaceholder": "Choisir une date",
       "typeOptions": {
-        "firstTime": "🌟 Première fois",
+        "firstTime": "Première fois",
         "highlight": "💛 Moment fort"
       },
       "toast": {
@@ -1493,7 +1493,7 @@
     },
     "nightMode": {
       "title": "Mode nuit bébé",
-      "openBtn": "🌙 Ouvrir le mode nuit",
+      "openBtn": "Ouvrir le mode nuit",
       "subtitle": "Écran sombre pour les tétées nocturnes"
     },
     "onThisDay": {
@@ -1707,7 +1707,7 @@
       "firstNameA11y": "Prénom de l'enfant",
       "avatarSectionLabel": "😀 Avatar",
       "avatarSelectA11y": "Avatar {{emoji}}",
-      "pregnancyToggleLabel": "🤰 Grossesse en cours",
+      "pregnancyToggleLabel": "Grossesse en cours",
       "pregnancyToggleHint": "Active le suivi grossesse au lieu des tâches bébé",
       "pregnancyToggleA11y": "Grossesse en cours",
       "dueDateLabel": "📅 Date terme prévue",
@@ -1746,7 +1746,7 @@
       "weekBtn": "📤 Semaine",
       "monthBtn": "📊 Mois",
       "testBtn": "Tester",
-      "grossesseBtn": "🤰 Grossesse",
+      "grossesseBtn": "Grossesse",
       "shareSheetHint": "Choisissez le groupe ou contact dans le Share sheet",
       "addContact": "+ Ajouter un contact",
       "sendToAll": "Envoyer à tous",
@@ -1847,7 +1847,7 @@
     "telegram": {
       "sectionTitle": "Telegram",
       "sectionA11y": "Section Telegram",
-      "botLabel": "📱 Bot Telegram",
+      "botLabel": "Bot Telegram",
       "configured": "🟢 Configuré",
       "notConfigured": "🔴 Non configuré",
       "tokenHint": "Token : {{token}}...",
@@ -1855,11 +1855,11 @@
       "testBtn": "Tester",
       "missingParams": "Paramètres manquants",
       "missingParamsMsg": "Entrez le token et le chat ID d'abord.",
-      "testSuccess": "✅ Succès !",
+      "testSuccess": "Succès !",
       "testSuccessMsg": "Message Telegram envoyé avec succès.",
       "testFail": "❌ Échec",
       "testFailMsg": "Impossible d'envoyer le message. Vérifiez le token et le chat ID.",
-      "savedTitle": "✅ Sauvegardé",
+      "savedTitle": "Sauvegardé",
       "savedMsg": "Les paramètres Telegram ont été sauvegardés.",
       "modalTitle": "Configuration Telegram",
       "step1Title": "🤖 Étape 1 — Créer le bot",
@@ -2074,7 +2074,7 @@
     "appearance": {
       "sectionTitle": "Apparence",
       "sectionA11y": "Section Apparence",
-      "darkModeLabel": "🌙 Mode sombre",
+      "darkModeLabel": "Mode sombre",
       "auto": "Auto",
       "light": "Clair",
       "dark": "Sombre",
@@ -2358,7 +2358,7 @@
     "chooseChild": "👦 Choisir l'enfant",
     "missionText": "📝 Texte de la mission",
     "missionPlaceholder": "Ex : Ranger ta chambre en secret...",
-    "suggestions": "💡 Suggestions",
+    "suggestions": "Suggestions",
     "sendMission": "🕵️ Envoyer la mission",
     "sendMissionA11y": "Envoyer la mission",
     "rewardInfo": "🎁 L'enfant recevra un coffre Agent Secret (épique minimum) à la validation",
@@ -2526,7 +2526,7 @@
     "validateA11y": "Valider la mission",
     "notYet": "Pas encore",
     "notYetA11y": "Remettre la mission en cours",
-    "validated": "✅ Mission validée ! 🎉"
+    "validated": "Mission validée !"
   },
   "contactImporter": {
     "title": "Importer des contacts",
@@ -2647,7 +2647,7 @@
     "smartSortNote": "L'ordre manuel ci-dessous sert de base — le tri intelligent le réajuste selon le contexte.",
     "reorderHint": "Maintenez appuyé pour réordonner",
     "priorities": {
-      "high": "⭐ Essentielles",
+      "high": "Essentielles",
       "medium": "📌 Secondaires",
       "low": "💤 Optionnelles"
     }
@@ -2771,7 +2771,7 @@
     "recap": {
       "weekTo": "📤 Recap semaine → {{name}}",
       "monthTo": "📊 Bilan du mois → {{name}}",
-      "pregnancyTo": "🤰 Suivi grossesse → {{name}}",
+      "pregnancyTo": "Suivi grossesse → {{name}}",
       "weekAll": "📤 Recap semaine → Tous",
       "monthAll": "📊 Bilan du mois → Tous",
       "pregnancyAll": "🤰 Suivi grossesse → Tous",
@@ -2960,7 +2960,7 @@
       "allStepsComplete": "Bravo, toutes les étapes sont complétées !",
       "stepsProgress": "{{done}}/{{total}} étapes",
       "stepNumber": "Étape {{step}}",
-      "stepDone": "✅ Fait !",
+      "stepDone": "Fait !",
       "stepFinish": "✓ Terminé"
     },
     "empty": {
@@ -2971,8 +2971,8 @@
     "card": {
       "steps": "{{count}} étapes",
       "visual": "· 👶 Visuel",
-      "done": "✅ Fait",
-      "hint": "💡 Appui long sur une routine pour la réinitialiser. Touchez ✏️ pour modifier ou + pour en ajouter une nouvelle."
+      "done": "Fait",
+      "hint": "Appui long sur une routine pour la réinitialiser. Touche le crayon pour modifier ou + pour en ajouter une nouvelle."
     }
   },
   "wishlist": {
