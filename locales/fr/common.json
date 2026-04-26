@@ -2696,11 +2696,11 @@
       "taskComplete": "{{emoji}} Bravo {{name}} ! {{task}} → +{{points}} pts"
     },
     "greeting": {
-      "child": "Salut {{name}} ! 🌟",
-      "night": "Bonne nuit {{name}} 🌙",
-      "morning": "Bon matin {{name}} ☀️",
-      "afternoon": "Bon après-midi {{name}} 🌤️",
-      "evening": "Bonsoir {{name}} 🌙"
+      "child": "Salut{{name}}",
+      "night": "Bonne nuit{{name}}",
+      "morning": "Bon matin{{name}}",
+      "afternoon": "Bon après-midi{{name}}",
+      "evening": "Bonsoir{{name}}"
     },
     "a11y": {
       "activeProfile": "Profil actif : {{name}}. Appuyer pour changer.",

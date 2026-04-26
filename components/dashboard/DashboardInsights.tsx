@@ -52,7 +52,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
   };
 
   return (
-    <DashboardCard key="insights" title={t('dashboard.insights.title')} icon="💡" count={hasInsights ? insights.length : undefined} color={colors.catFamille} tinted collapsible cardId="insights">
+    <DashboardCard key="insights" title={t('dashboard.insights.title')} count={hasInsights ? insights.length : undefined} color={colors.brand.soilMuted} variant="narrative" collapsible cardId="insights">
       {topInsights.map((insight, idx) => {
         const isFirst = idx === 0;
         const priorityColor = insight.priority === 'high' ? colors.error

@@ -2688,11 +2688,11 @@
       "taskComplete": "{{emoji}} Well done {{name}}! {{task}} → +{{points}} pts"
     },
     "greeting": {
-      "child": "Hey {{name}}! 🌟",
-      "night": "Good night {{name}} 🌙",
-      "morning": "Good morning {{name}} ☀️",
-      "afternoon": "Good afternoon {{name}} 🌤️",
-      "evening": "Good evening {{name}} 🌙"
+      "child": "Hey{{name}}",
+      "night": "Good night{{name}}",
+      "morning": "Good morning{{name}}",
+      "afternoon": "Good afternoon{{name}}",
+      "evening": "Good evening{{name}}"
     },
     "a11y": {
       "activeProfile": "Active profile: {{name}}. Tap to switch.",

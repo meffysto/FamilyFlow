@@ -63,7 +63,7 @@ import { SectionErrorBoundary } from '../../components/SectionErrorBoundary';
 import * as Haptics from 'expo-haptics';
 import { EnvelopeCard } from '../../components/lovenotes';
 import { unreadForProfile } from '../../lib/lovenotes/selectors';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Layout } from '../../constants/spacing';
 import type { CardTemplateContext } from '../../lib/card-templates';
 import { useTranslation } from 'react-i18next';
@@ -928,7 +928,7 @@ export default function DashboardScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => setSearchVisible(true)}
-            style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
+            style={[styles.headerBtn, { backgroundColor: colors.brand.wash }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel={t('index.a11y.search')}
             accessibilityRole="search"
@@ -939,7 +939,7 @@ export default function DashboardScreen() {
           {!isChildMode && (
             <TouchableOpacity
               onPress={handleSendRecap}
-              style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
+              style={[styles.headerBtn, { backgroundColor: colors.brand.wash }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               disabled={isSendingRecap}
               accessibilityLabel={t('index.a11y.sendRecap')}
@@ -952,7 +952,7 @@ export default function DashboardScreen() {
           {!isChildMode && (
             <TouchableOpacity
               onPress={() => setPrefsModalVisible(true)}
-              style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
+              style={[styles.headerBtn, { backgroundColor: colors.brand.wash }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={t('index.a11y.configureSections')}
               accessibilityRole="button"
@@ -1351,17 +1351,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: FontSize.code,
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
   },
   greetingChild: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.heavy,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.title,
+    letterSpacing: -0.3,
   },
   dateText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.title,
     textTransform: 'capitalize',
+    letterSpacing: -0.3,
   },
   headerActions: {
     flexDirection: 'row',

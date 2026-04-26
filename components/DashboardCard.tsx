@@ -20,7 +20,7 @@ import Animated, {
 import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
-import { FontSize, FontWeight } from '../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
 import { GlassView } from './ui/GlassView';
 import { PressableScale } from './ui/PressableScale';
@@ -55,6 +55,15 @@ interface DashboardCardProps {
   hideMoreLink?: boolean;
   /** Appui long sur le titre — ex: renommer. */
   onTitleLongPress?: () => void;
+  /**
+   * Variante visuelle warm — modifie le chrome de la carte.
+   *  - `default`    : verre + ombre standard
+   *  - `critical`   : cadre warm-red 1.5px (Overdue), bg parchemin léger
+   *  - `narrative`  : transparent sans chrome (Insights — paragraphe pur)
+   *  - `metric`     : carte sobre + accent line warm en haut (Budget, Stats)
+   *  - `ambient`    : gradient miel + bordure pointillée bois (Loot, ferme)
+   */
+  variant?: 'default' | 'critical' | 'narrative' | 'metric' | 'ambient';
 }
 
 const STORAGE_PREFIX = 'dashboard_collapsed_';
@@ -76,6 +85,7 @@ export function DashboardCard({
   tinted = false,
   hideMoreLink = false,
   onTitleLongPress,
+  variant = 'default',
 }: DashboardCardProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
@@ -199,6 +209,90 @@ export function DashboardCard({
     accessibilityLabel: `Section ${title}${count !== undefined ? `, ${count} éléments` : ''}`,
   };
 
+  // ── Variants warm ───────────────────────────────────────────────────────
+  // Chaque variant override le chrome de la card. Le contenu reste identique.
+  if (variant === 'narrative') {
+    // Aucun chrome : paragraphe libre dans le flow (Insights, dictons, etc.).
+    const plain = (
+      <View style={[styles.narrativeWrap, style]} {...a11yProps}>
+        {cardContent}
+      </View>
+    );
+    return onPressMore ? (
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
+        {plain}
+      </PressableScale>
+    ) : plain;
+  }
+
+  if (variant === 'critical') {
+    const card = (
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.brand.parchment,
+            borderWidth: 1.5,
+            borderColor: colors.error,
+          },
+          style,
+        ]}
+        {...a11yProps}
+      >
+        {cardContent}
+      </View>
+    );
+    return onPressMore ? (
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
+        {card}
+      </PressableScale>
+    ) : card;
+  }
+
+  if (variant === 'metric') {
+    const card = (
+      <View
+        style={[styles.card, { backgroundColor: colors.card }, Shadows.sm, style]}
+        {...a11yProps}
+      >
+        {/* Liseré warm haut — signature "métrique calme" */}
+        <View style={[styles.metricAccent, { backgroundColor: colors.brand.soilMuted }]} />
+        {cardContent}
+      </View>
+    );
+    return onPressMore ? (
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
+        {card}
+      </PressableScale>
+    ) : card;
+  }
+
+  if (variant === 'ambient') {
+    const card = (
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: '#FFF4DA', // miel
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: colors.brand.soilMuted,
+          },
+          style,
+        ]}
+        {...a11yProps}
+      >
+        {cardContent}
+      </View>
+    );
+    return onPressMore ? (
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
+        {card}
+      </PressableScale>
+    ) : card;
+  }
+
+  // ── Default (glass + tinted optionnels) ─────────────────────────────────
   if (glass) {
     const glassCard = (
       <GlassView
@@ -271,8 +365,9 @@ const styles = StyleSheet.create({
     fontSize: FontSize.subtitle + 3, // 20px
   },
   title: {
-    fontSize: FontSize.subtitle,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.subtitle + 2, // 19px DM Serif, sentence case
+    letterSpacing: -0.2,
   },
   badge: {
     borderRadius: Radius.base,
@@ -294,5 +389,20 @@ const styles = StyleSheet.create({
   },
   body: {
     gap: Spacing.sm,
+  },
+  // Variants warm
+  narrativeWrap: {
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  metricAccent: {
+    position: 'absolute',
+    top: 0,
+    left: Spacing['2xl'] + 2,
+    right: Spacing['2xl'] + 2,
+    height: 3,
+    borderBottomLeftRadius: Radius.xs,
+    borderBottomRightRadius: Radius.xs,
   },
 });
