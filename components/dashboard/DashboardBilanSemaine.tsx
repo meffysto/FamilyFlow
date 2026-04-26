@@ -16,7 +16,7 @@ import { BilanSemaineCard } from '../BilanSemaineCard';
 import { buildWeeklyRecapData, formatRecapForAI, WeeklyRecapData } from '../../lib/weekly-recap';
 import { generateWeeklyBilan } from '../../lib/ai-service';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/spacing';
 
 // ─── Types internes ──────────────────────────────────────────────────────────
@@ -343,8 +343,9 @@ const styles = StyleSheet.create({
     fontSize: FontSize.title,
   },
   previewStatValue: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.titleLg,
+    letterSpacing: -0.3,
   },
   previewStatLabel: {
     fontSize: FontSize.caption,
