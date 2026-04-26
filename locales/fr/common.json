@@ -1477,15 +1477,15 @@
       "title": "Repas du jour",
       "emptyDescription": "Planifiez les repas de la semaine pour toute la famille",
       "activateLabel": "Importer le modèle",
-      "noMealsToday": "Aucun repas planifié aujourd'hui"
+      "noMealsToday": "Rien de prévu — laissez-vous porter"
     },
     "menage": {
       "title": "Tâches maison du jour",
       "emptyDescription": "Organisez les tâches de la maison avec des récurrences",
       "activateLabel": "Importer le modèle",
       "allDone": "tout est fait pour aujourd'hui",
-      "remaining": "faites · il en reste {{count}}",
-      "remaining_one": "faites · il en reste {{count}}"
+      "remaining": "faites",
+      "remaining_one": "faites"
     },
     "moods": {
       "title": "Humeurs",
@@ -1505,9 +1505,9 @@
     "overdue": {
       "title": "En retard",
       "metricWord": "tâches",
-      "metricSentence_one": "tâche à rattraper",
-      "metricSentence_other": "tâches à rattraper",
-      "metricSub": "à régler avant ce soir"
+      "metricSentence_one": "tâche reportée",
+      "metricSentence_other": "tâches reportées",
+      "metricSub": "à finir quand tu peux"
     },
     "photos": {
       "title": "Photo du jour",

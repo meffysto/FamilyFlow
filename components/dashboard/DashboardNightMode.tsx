@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Moon } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { isBabyProfile } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
@@ -27,7 +28,7 @@ function DashboardNightModeInner(_props: DashboardSectionProps) {
   if (!isNightTime) return null;
 
   return (
-    <DashboardCard key="nightMode" title={t('dashboard.nightMode.title')} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/night-mode')}>
+    <DashboardCard key="nightMode" title={t('dashboard.nightMode.title')} IconComponent={Moon} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/night-mode')}>
       <TouchableOpacity
         style={[styles.nightModeBtn, { backgroundColor: colors.brand.wash, borderWidth: 1, borderColor: colors.brand.bark }]}
         onPress={() => router.push('/(tabs)/night-mode')}

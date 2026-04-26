@@ -9,7 +9,9 @@ import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { Trophy } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
+import { AnimatedProgressBar } from './AnimatedProgressBar';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -30,13 +32,13 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
   const todayDone = activeProfile ? mainDefi.progress.some((p) => p.date === todayStr2 && p.profileId === activeProfile.id && p.completed) : false;
 
   return (
-    <DashboardCard key="defis" title={t('dashboard.defis.title')} count={activeDefis.length} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/defis')}>
+    <DashboardCard key="defis" title={t('dashboard.defis.title')} IconComponent={Trophy} count={activeDefis.length} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/defis')}>
       <View style={styles.defiHeader}>
         <Text style={styles.defiEmoji}>{mainDefi.emoji}</Text>
         <Text style={[styles.defiTitle, { color: colors.text }]} numberOfLines={1}>{mainDefi.title}</Text>
         {!todayDone && activeProfile && (
           <TouchableOpacity
-            style={[styles.defiCheckBtn, { backgroundColor: colors.warning }]}
+            style={[styles.defiCheckBtn, { backgroundColor: colors.catJeux }]}
             onPress={async () => {
               await checkInDefi(mainDefi.id, activeProfile.id, true);
               showToast(t('dashboard.defis.checkinToast', { emoji: mainDefi.emoji, title: mainDefi.title }));
@@ -48,9 +50,8 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
         )}
         {todayDone && <Text style={{ color: colors.success, fontSize: FontSize.heading }}>✅</Text>}
       </View>
-      <View style={[styles.defiProgressBg, { backgroundColor: colors.brand.wash }]}>
-        <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
-      </View>
+      <AnimatedProgressBar progress={progress} color={colors.catJeux} backgroundColor={colors.brand.wash} height={6} />
+
       <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} {t('dashboard.defis.days')}</Text>
       {activeDefis.length > 1 && (
         <TouchableOpacity onPress={() => router.push('/(tabs)/defis')} activeOpacity={0.7}>
@@ -77,16 +78,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.heading,
     fontWeight: FontWeight.bold,
     flex: 1,
-  },
-  defiProgressBg: {
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  defiProgressFill: {
-    height: '100%',
-    borderRadius: 4,
   },
   defiMeta: {
     fontSize: FontSize.caption,

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Quote } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontFamily } from '../../constants/typography';
@@ -23,7 +24,7 @@ function DashboardQuotesInner(_props: DashboardSectionProps) {
 
   if (!latest) {
     return (
-      <DashboardCard key="quotes" title={t('dashboard.quotes.title')} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)} hideMoreLink style={{ flex: 1 }}>
+      <DashboardCard key="quotes" title={t('dashboard.quotes.title')} IconComponent={Quote} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)} hideMoreLink style={{ flex: 1 }}>
         <Text style={[styles.empty, { color: colors.textMuted }]}>
           {t('dashboard.quotes.empty')}
         </Text>
@@ -32,7 +33,7 @@ function DashboardQuotesInner(_props: DashboardSectionProps) {
   }
 
   return (
-    <DashboardCard key="quotes" title={t('dashboard.quotes.title')} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)} hideMoreLink style={{ flex: 1 }}>
+    <DashboardCard key="quotes" title={t('dashboard.quotes.title')} IconComponent={Quote} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)} hideMoreLink style={{ flex: 1 }}>
       <View style={[styles.citationBox, { backgroundColor: colors.brand.wash, borderLeftColor: colors.brand.bark }]}>
         <Text style={[styles.citation, { color: colors.text }]} numberOfLines={3}>
           « {latest.citation} »

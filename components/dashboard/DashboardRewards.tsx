@@ -7,6 +7,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Award } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { processActiveRewards } from '../../lib/gamification';
 import type { DashboardSectionProps } from './types';
@@ -45,7 +46,7 @@ function DashboardRewardsInner({ isChildMode }: DashboardSectionProps) {
   if (activeRewards.length === 0) return null;
 
   return (
-    <DashboardCard key="rewards" title={isChildMode ? t('dashboard.rewards.titleChild') : t('dashboard.rewards.titleAdult')} color={colors.catJeux} tinted>
+    <DashboardCard key="rewards" title={isChildMode ? t('dashboard.rewards.titleChild') : t('dashboard.rewards.titleAdult')} IconComponent={Award} color={colors.catJeux} tinted>
       {activeRewards.map((reward) => {
         const ownerProfile = profiles.find((p) => p.id === reward.profileId);
         const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? colors.error : colors.warning;

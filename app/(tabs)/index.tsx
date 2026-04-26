@@ -61,11 +61,12 @@ import { getCardTemplate } from '../../lib/card-templates';
 import { getFruitForWeek, getSizeForWeek, getFruitLabel } from '../../lib/pregnancy';
 import { GlassView } from '../../components/ui/GlassView';
 import { SectionErrorBoundary } from '../../components/SectionErrorBoundary';
+import { SectionEnter } from '../../components/dashboard/SectionEnter';
 import * as Haptics from 'expo-haptics';
 import { EnvelopeCard } from '../../components/lovenotes';
 import { unreadForProfile } from '../../lib/lovenotes/selectors';
 import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
-import { Layout } from '../../constants/spacing';
+import { Layout, Spacing } from '../../constants/spacing';
 import type { CardTemplateContext } from '../../lib/card-templates';
 import { useTranslation } from 'react-i18next';
 
@@ -1198,9 +1199,9 @@ export default function DashboardScreen() {
             const zone = SECTION_ZONE[id] ?? 'none';
             if (zone !== 'none' && zone !== prevZone) {
               rendered.push(
-                <ZoneLabel key={`zone-${zone}-${id}`}>
-                  {t(`dashboard.zones.${zone}`)}
-                </ZoneLabel>
+                <SectionEnter key={`zone-${zone}-${id}`} index={rendered.length}>
+                  <ZoneLabel>{t(`dashboard.zones.${zone}`)}</ZoneLabel>
+                </SectionEnter>
               );
               prevZone = zone;
             } else if (zone !== 'none') {
@@ -1215,33 +1216,39 @@ export default function DashboardScreen() {
             if (s.size === 'half' && i + 1 < visibleSections.length && visibleSections[i + 1].size === 'half') {
               const s2 = visibleSections[i + 1];
               rendered.push(
-                <View key={`pair-${s.id}-${s2.id}`} style={styles.halfRow}>
-                  <View style={styles.halfCol}>
-                    <SectionErrorBoundary name={s.label}>
-                      {renderSection(s.id)}
-                    </SectionErrorBoundary>
+                <SectionEnter key={`pair-${s.id}-${s2.id}`} index={rendered.length}>
+                  <View style={styles.halfRow}>
+                    <View style={styles.halfCol}>
+                      <SectionErrorBoundary name={s.label}>
+                        {renderSection(s.id)}
+                      </SectionErrorBoundary>
+                    </View>
+                    <View style={styles.halfCol}>
+                      <SectionErrorBoundary name={s2.label}>
+                        {renderSection(s2.id)}
+                      </SectionErrorBoundary>
+                    </View>
                   </View>
-                  <View style={styles.halfCol}>
-                    <SectionErrorBoundary name={s2.label}>
-                      {renderSection(s2.id)}
-                    </SectionErrorBoundary>
-                  </View>
-                </View>
+                </SectionEnter>
               );
               i += 2;
             } else if (s.size === 'half') {
               // Half seul (impair) → afficher en full
               rendered.push(
-                <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
-                  {renderSection(s.id)}
-                </SectionErrorBoundary>
+                <SectionEnter key={`eb-${s.id}`} index={rendered.length}>
+                  <SectionErrorBoundary name={s.label}>
+                    {renderSection(s.id)}
+                  </SectionErrorBoundary>
+                </SectionEnter>
               );
               i++;
             } else {
               rendered.push(
-                <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
-                  {renderSection(s.id)}
-                </SectionErrorBoundary>
+                <SectionEnter key={`eb-${s.id}`} index={rendered.length}>
+                  <SectionErrorBoundary name={s.label}>
+                    {renderSection(s.id)}
+                  </SectionErrorBoundary>
+                </SectionEnter>
               );
               i++;
             }
@@ -1488,7 +1495,7 @@ const styles = StyleSheet.create({
   },
   halfRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: Spacing.xl,
     alignItems: 'stretch',
   },
   halfCol: {

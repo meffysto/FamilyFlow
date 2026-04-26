@@ -27,6 +27,7 @@ import Animated, {
   useAnimatedScrollHandler,
 } from 'react-native-reanimated';
 import { PillTabSwitcher, ScreenHeader, type PillTab } from '../../components/ui';
+import { ClipboardList, CalendarDays } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import {
   format,
@@ -349,8 +350,8 @@ export default function RDVScreen() {
           <View ref={searchRef}>
             <PillTabSwitcher<ViewMode>
               tabs={[
-                { id: 'liste', label: '📋 Liste' },
-                { id: 'calendrier', label: '🗓 Calendrier' },
+                { id: 'liste', label: 'Liste', Icon: ClipboardList },
+                { id: 'calendrier', label: 'Calendrier', Icon: CalendarDays },
               ] as ReadonlyArray<PillTab<ViewMode>>}
               activeTab={viewMode}
               onTabChange={setViewMode}

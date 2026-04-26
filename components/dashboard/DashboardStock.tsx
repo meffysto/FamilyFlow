@@ -13,7 +13,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { DashboardSectionProps } from './types';
-import { AlertCircle, ShoppingCart } from 'lucide-react-native';
+import { AlertCircle, ShoppingCart, Package } from 'lucide-react-native';
 import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 function DashboardStockInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
@@ -26,7 +26,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   const lowCount = stock.length > 0 ? stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil).length : 0;
 
   if (!vaultFileExists.stock) return (
-    <DashboardCard key="stock" title={t('dashboard.stock.title')} color={colors.catOrganisation} tinted>
+    <DashboardCard key="stock" title={t('dashboard.stock.title')} IconComponent={Package} color={colors.catOrganisation} tinted>
       <DashboardEmptyState
         description={t('dashboard.stock.emptyDescription')}
         onActivate={() => activateCardTemplate('stock')}
@@ -36,7 +36,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   );
 
   return (
-    <DashboardCard key="stock" title={t('dashboard.stock.title')} count={lowCount > 0 ? lowCount : undefined} color={colors.catOrganisation} tinted collapsible cardId="stock">
+    <DashboardCard key="stock" title={t('dashboard.stock.title')} count={lowCount > 0 ? lowCount : undefined} IconComponent={Package} color={colors.catOrganisation} tinted collapsible cardId="stock">
       {stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil + 1).map((item) => {
         const isLow = item.tracked !== false && item.seuil > 0 && item.quantite <= item.seuil;
         const statusColor = isLow ? colors.error : colors.warning;

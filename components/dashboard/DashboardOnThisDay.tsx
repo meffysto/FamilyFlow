@@ -10,6 +10,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Clock } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontFamily } from '../../constants/typography';
@@ -83,7 +84,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       title={t('dashboard.onThisDay.title')}
-
+      IconComponent={Clock}
       count={items.length}
       color={colors.catSouvenirs}
       tinted

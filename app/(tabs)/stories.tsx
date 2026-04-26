@@ -40,6 +40,7 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
+import { Sparkles, Library } from 'lucide-react-native';
 
 // ─── Constantes animation ───────────────────────────────────────────────────
 
@@ -2128,8 +2129,8 @@ export default function StoriesScreen() {
   };
 
   const storyTabs: ReadonlyArray<PillTab<'nouvelle' | 'bibliotheque'>> = [
-    { id: 'nouvelle', label: '✨ Nouvelle' },
-    { id: 'bibliotheque', label: '📚 Bibliothèque' },
+    { id: 'nouvelle', label: 'Nouvelle', Icon: Sparkles },
+    { id: 'bibliotheque', label: 'Bibliothèque', Icon: Library },
   ];
 
   const showBackBtn = step.etape !== 'choisir_enfant' && step.etape !== 'fin';

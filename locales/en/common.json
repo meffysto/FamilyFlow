@@ -1469,15 +1469,15 @@
       "title": "Today's meals",
       "emptyDescription": "Plan the week's meals for the whole family",
       "activateLabel": "Import template",
-      "noMealsToday": "No meals planned today"
+      "noMealsToday": "Nothing planned — open to inspiration"
     },
     "menage": {
       "title": "Household chores",
       "emptyDescription": "Organize household tasks with recurring schedules",
       "activateLabel": "Import template",
       "allDone": "all done for today",
-      "remaining": "done · {{count}} left",
-      "remaining_one": "done · {{count}} left"
+      "remaining": "done",
+      "remaining_one": "done"
     },
     "moods": {
       "title": "Moods",
@@ -1497,9 +1497,9 @@
     "overdue": {
       "title": "Overdue",
       "metricWord": "tasks",
-      "metricSentence_one": "task to catch up on",
-      "metricSentence_other": "tasks to catch up on",
-      "metricSub": "to clear before tonight"
+      "metricSentence_one": "task postponed",
+      "metricSentence_other": "tasks postponed",
+      "metricSub": "finish when you can"
     },
     "photos": {
       "title": "Photo of the day",

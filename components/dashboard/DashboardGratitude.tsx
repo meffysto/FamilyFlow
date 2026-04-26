@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Heart } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { computeGratitudeStreak } from '../../app/(tabs)/gratitude';
 import { isBabyProfile } from '../../lib/types';
@@ -35,7 +36,7 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
   const firstEntry = todayGrat?.entries[0];
 
   return (
-    <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/gratitude' as any)} hideMoreLink style={{ flex: 1 }}>
+    <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} IconComponent={Heart} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/gratitude' as any)} hideMoreLink style={{ flex: 1 }}>
       {firstEntry ? (
         <>
           <View style={[styles.quoteBorder, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>

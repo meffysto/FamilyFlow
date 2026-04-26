@@ -8,8 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Smile } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
-import { MOOD_EMOJIS } from '../../lib/types';
+import { MOOD_ICONS, getMoodIconColor } from '../../lib/mood-ui';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
@@ -32,7 +33,7 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
   );
 
   return (
-    <DashboardCard key="moods" title={t('dashboard.moods.title')} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/moods' as any)} hideMoreLink style={{ flex: 1 }}>
+    <DashboardCard key="moods" title={t('dashboard.moods.title')} IconComponent={Smile} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/moods' as any)} hideMoreLink style={{ flex: 1 }}>
       {todayMoods.length === 0 ? (
         <Text style={[styles.empty, { color: colors.textMuted }]}>
           {t('dashboard.moods.empty')}
@@ -42,9 +43,10 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
           {moodableProfiles.map(p => {
             const entry = todayMoods.find(m => m.profileId === p.id);
             if (!entry) return null;
+            const Icon = MOOD_ICONS[entry.level];
             return (
               <View key={p.id} style={styles.moodItem}>
-                <Text style={styles.emoji}>{MOOD_EMOJIS[entry.level]}</Text>
+                <Icon size={28} strokeWidth={1.75} color={getMoodIconColor(entry.level, colors)} />
                 <Text style={[styles.name, { color: colors.textMuted }]} numberOfLines={1}>{p.name}</Text>
               </View>
             );

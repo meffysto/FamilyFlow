@@ -16,6 +16,7 @@ import type { CalendarEvent } from '../../lib/calendar-types';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
+import { CalendarDays } from 'lucide-react-native';
 
 const PREVIEW_DAYS = 3;
 
@@ -52,6 +53,7 @@ function DashboardCalendarInner(_props: DashboardSectionProps) {
       title={t('dashboard.calendar.title')}
 
       count={totalEvents}
+      IconComponent={CalendarDays}
       color={colors.catOrganisation}
       tinted
       onPressMore={() => router.push('/(tabs)/calendar' as any)}

@@ -5,7 +5,7 @@
  * Props collapsible + cardId pour activer et persister l'état.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -21,19 +21,14 @@ import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, FontFamily } from '../constants/typography';
+import { withAlpha } from '../lib/colors';
 import { PressableScale } from './ui/PressableScale';
-
-function hexToRgba(hex: string, alpha: number): string {
-  if (hex.startsWith('rgb')) return hex.replace(/[\d.]+\)$/, `${alpha})`);
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
 
 interface DashboardCardProps {
   title: string;
   icon?: string;
+  /** Icône Lucide affichée dans une pastille tintée à la couleur de la card. */
+  IconComponent?: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
   count?: number;
   color?: string;
   onPressMore?: () => void;
@@ -69,6 +64,7 @@ const ANIM_EASING = Easing.bezier(0.4, 0, 0.2, 1);
 export function DashboardCard({
   title,
   icon,
+  IconComponent,
   count,
   color,
   onPressMore,
@@ -86,7 +82,14 @@ export function DashboardCard({
   const { primary, colors, isDark } = useThemeColors();
   const reduceMotion = useReducedMotion();
   const accentColor = color ?? primary;
-  const tintBg = tinted && accentColor ? hexToRgba(accentColor, isDark ? 0.10 : 0.06) : undefined;
+  const tintBg = useMemo(
+    () => (tinted && accentColor ? withAlpha(accentColor, isDark ? 0.10 : 0.06) : undefined),
+    [tinted, accentColor, isDark],
+  );
+  const pastilleBg = useMemo(
+    () => withAlpha(accentColor, isDark ? 0.22 : 0.20),
+    [accentColor, isDark],
+  );
   const badgeScale = useSharedValue(reduceMotion ? 1 : 0);
 
   // -- Collapse state --
@@ -157,7 +160,17 @@ export function DashboardCard({
         {...headerProps}
       >
         <View style={styles.titleRow}>
-          {icon && <Text style={styles.icon}>{icon}</Text>}
+          {IconComponent ? (
+            <View
+              style={[styles.iconPastille, { backgroundColor: pastilleBg }]}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              <IconComponent size={20} strokeWidth={1.75} color={accentColor} />
+            </View>
+          ) : icon ? (
+            <Text style={styles.icon}>{icon}</Text>
+          ) : null}
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           {count !== undefined && (
             <Animated.View style={[styles.badge, { backgroundColor: accentColor }, badgeAnimStyle]}>
@@ -330,7 +343,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.xl,
     padding: Spacing['2xl'] + 2, // 18px
-    marginBottom: Spacing['lg+' as keyof typeof Spacing] ?? 14,
+    marginBottom: Spacing.xl,
     overflow: 'hidden',
   },
   header: {
@@ -354,6 +367,13 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: FontSize.subtitle + 3, // 20px
+  },
+  iconPastille: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontFamily: FontFamily.serif,
@@ -379,7 +399,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
   },
   body: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   // Variants warm
   narrativeWrap: {

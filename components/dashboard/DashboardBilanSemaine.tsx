@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
+import { LineChart } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { BilanSemaineCard } from '../BilanSemaineCard';
 import { buildWeeklyRecapData, formatRecapForAI, WeeklyRecapData } from '../../lib/weekly-recap';
@@ -208,7 +209,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
     return (
       <DashboardCard
         title={t('dashboard.bilanSemaine.title')}
-
+        IconComponent={LineChart}
         color={colors.catSouvenirs}
         tinted
       >
@@ -247,7 +248,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       title={t('dashboard.bilanSemaine.title')}
-
+      IconComponent={LineChart}
       color={colors.catSouvenirs}
       tinted
     >

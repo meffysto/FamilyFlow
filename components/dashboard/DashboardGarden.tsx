@@ -376,7 +376,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
             {/* Section Cultures */}
             {crops.length > 0 && (
               <>
-                <Text style={[styles.sectionLabel, { color: colors.brand.soilMuted }]}>Cultures</Text>
+                <Text style={[styles.sectionLabel, { color: colors.catJeux }]}>Cultures</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}

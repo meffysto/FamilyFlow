@@ -24,6 +24,8 @@ export interface PillTab<T extends string> {
   id: T;
   label: string;
   badge?: number;
+  /** Icône Lucide optionnelle, affichée avant le label. */
+  Icon?: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 }
 
 interface PillTabSwitcherProps<T extends string> {
@@ -136,6 +138,9 @@ export function PillTabSwitcher<T extends string>({
               accessibilityState={{ selected: active }}
               accessibilityLabel={tab.label}
             >
+              {tab.Icon && (
+                <tab.Icon size={14} strokeWidth={2} color={color} />
+              )}
               <Text style={[styles.tabText, { color }]} numberOfLines={1}>
                 {tab.label}
               </Text>

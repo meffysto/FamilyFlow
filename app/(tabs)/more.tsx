@@ -277,19 +277,19 @@ export default function MoreScreen() {
                       <View
                         style={[styles.row, {
                           backgroundColor: colors.card,
-                          borderColor: withAlpha(accentColor, isDark ? 0.13 : 0.09),
+                          borderColor: withAlpha(accentColor, isDark ? 0.13 : 0.18),
                         }]}
                         accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
                         accessibilityRole="button"
                       >
                         {/* Fond teinté catégorie (comme DashboardCard tinted) */}
                         <View style={[StyleSheet.absoluteFill, {
-                          backgroundColor: withAlpha(accentColor, isDark ? 0.10 : 0.06),
+                          backgroundColor: withAlpha(accentColor, isDark ? 0.10 : 0.12),
                           borderRadius: Radius.xl,
                         }]} />
 
                         {/* Icône avec teinte plus saturée */}
-                        <View style={[styles.listIcon, { backgroundColor: withAlpha(accentColor, isDark ? 0.15 : 0.10) }]}>
+                        <View style={[styles.listIcon, { backgroundColor: withAlpha(accentColor, isDark ? 0.15 : 0.20) }]}>
                           <item.Icon size={24} strokeWidth={1.75} color={accentColor} />
                         </View>
 
@@ -331,7 +331,7 @@ export default function MoreScreen() {
                         accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
                         accessibilityRole="button"
                       >
-                        <View style={[styles.gridIcon, { backgroundColor: withAlpha(accentColor, 0.08) }]}>
+                        <View style={[styles.gridIcon, { backgroundColor: withAlpha(accentColor, isDark ? 0.08 : 0.16) }]}>
                           <item.Icon size={26} strokeWidth={1.75} color={accentColor} />
                         </View>
                         <Text style={[styles.gridLabel, { color: colors.textSub }]}>{item.label}</Text>

@@ -11,6 +11,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Cake } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
@@ -108,13 +109,15 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       title={t('dashboard.anniversaires.title')}
+      IconComponent={Cake}
+      color={colors.catFamille}
       count={upcoming.length > 1 ? upcoming.length : undefined}
       collapsible
       cardId="anniversaires"
       style={{ flex: 1 }}
     >
       <Text style={[styles.sentence, { color: colors.text }]} numberOfLines={2}>
-        <Text style={[styles.countdown, { color: isToday ? colors.error : colors.brand.soil }]}>
+        <Text style={[styles.countdown, { color: isToday ? colors.error : colors.catFamille }]}>
           {mainLabel}
         </Text>
         {' — '}
@@ -124,7 +127,7 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
         </Text>
       </Text>
       {upcoming.length > 1 && (
-        <Text style={[styles.otherMicro, { color: colors.brand.soilMuted }]}>
+        <Text style={[styles.otherMicro, { color: colors.textMuted }]}>
           +{upcoming.length - 1} {t('dashboard.anniversaires.otherSoon')}
         </Text>
       )}

@@ -32,6 +32,7 @@ import { Shadows } from '../../constants/shadows';
 import { ModalHeader, DateInput } from '../../components/ui';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
+import { Ruler, Syringe, FileText } from 'lucide-react-native';
 import { HealthRecord, GrowthEntry, VaccineEntry } from '../../lib/types';
 import { formatDateLocalized } from '../../lib/date-locale';
 import { GrowthChart } from '../../components/growth/GrowthChart';
@@ -40,10 +41,10 @@ import { EmptyState } from '../../components/EmptyState';
 
 type TabId = 'croissance' | 'vaccins' | 'infos';
 
-const TAB_IDS: { id: TabId; emoji: string; labelKey: string }[] = [
-  { id: 'croissance', emoji: '📏', labelKey: 'health.tabs.growth' },
-  { id: 'vaccins', emoji: '💉', labelKey: 'health.tabs.vaccines' },
-  { id: 'infos', emoji: '📋', labelKey: 'health.tabs.info' },
+const TAB_IDS: { id: TabId; Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; labelKey: string }[] = [
+  { id: 'croissance', Icon: Ruler, labelKey: 'health.tabs.growth' },
+  { id: 'vaccins', Icon: Syringe, labelKey: 'health.tabs.vaccines' },
+  { id: 'infos', Icon: FileText, labelKey: 'health.tabs.info' },
 ];
 
 const formatDateDisplay = formatDateLocalized;
@@ -357,7 +358,7 @@ export default function HealthScreen() {
   useEffect(() => { scrollY.value = 0; }, [activeTab, selectedEnfantId]);
 
   const tabs: ReadonlyArray<PillTab<TabId>> = useMemo(
-    () => TAB_IDS.map(tab => ({ id: tab.id, label: `${tab.emoji} ${t(tab.labelKey)}` })),
+    () => TAB_IDS.map(tab => ({ id: tab.id, label: t(tab.labelKey), Icon: tab.Icon })),
     [t],
   );
 

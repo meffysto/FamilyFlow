@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { AlertTriangle } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
@@ -29,7 +30,7 @@ function DashboardOverdueInner({ handleTaskToggle, handleTaskSkip }: DashboardSe
   if (overdueTasks.length === 0) return null;
 
   return (
-    <DashboardCard key="overdue" title={t('dashboard.overdue.title')} count={overdueTasks.length} color={colors.error} variant="critical" onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'retard' } })}>
+    <DashboardCard key="overdue" title={t('dashboard.overdue.title')} IconComponent={AlertTriangle} count={overdueTasks.length} color={colors.error} variant="critical" onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'retard' } })}>
       <Text style={[styles.metricSentence, { color: colors.text }]}>
         <Text style={[styles.metricNum, { color: colors.error }]}>{overdueTasks.length}</Text>
         {' '}

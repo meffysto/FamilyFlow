@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { UtensilsCrossed } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { AppRecipe } from '../../lib/cooklang';
@@ -34,7 +35,7 @@ function DashboardMealsInner({ vaultFileExists, activateCardTemplate, onViewReci
   const todayMeals = meals.filter((m) => m.day === todayDayName && m.text.length > 0);
 
   if (!vaultFileExists.meals) return (
-    <DashboardCard key="meals" title={t('dashboard.meals.title')} color={colors.catOrganisation} tinted>
+    <DashboardCard key="meals" title={t('dashboard.meals.title')} IconComponent={UtensilsCrossed} color={colors.catOrganisation} tinted>
       <DashboardEmptyState
         description={t('dashboard.meals.emptyDescription')}
         onActivate={() => activateCardTemplate('meals')}
@@ -44,13 +45,13 @@ function DashboardMealsInner({ vaultFileExists, activateCardTemplate, onViewReci
   );
 
   if (todayMeals.length === 0) return (
-    <DashboardCard key="meals" title={t('dashboard.meals.title')} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+    <DashboardCard key="meals" title={t('dashboard.meals.title')} IconComponent={UtensilsCrossed} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
       <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.meals.noMealsToday')}</Text>
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="meals" title={t('dashboard.meals.title')} count={todayMeals.length} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+    <DashboardCard key="meals" title={t('dashboard.meals.title')} IconComponent={UtensilsCrossed} count={todayMeals.length} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
       {todayMeals.map((meal) => {
         const linkedRecipe = meal.recipeRef ? recipes.find(r => {
           const ref = r.sourceFile.replace('03 - Cuisine/Recettes/', '').replace('.cook', '');

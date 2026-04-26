@@ -11,6 +11,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
+import { ShoppingCart } from 'lucide-react-native';
 
 function DashboardCoursesInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -22,9 +23,9 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
   const topCourses = unchecked.slice(-5).reverse();
 
   return (
-    <DashboardCard key="courses" title={t('dashboard.courses.title')} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })} hideMoreLink style={{ flex: 1 }}>
+    <DashboardCard key="courses" title={t('dashboard.courses.title')} IconComponent={ShoppingCart} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })} hideMoreLink style={{ flex: 1 }}>
       <Text style={[styles.courseSentence, { color: colors.text }]}>
-        <Text style={[styles.courseCount, { color: colors.brand.soil }]}>{unchecked.length}</Text>
+        <Text style={[styles.courseCount, { color: colors.catOrganisation }]}>{unchecked.length}</Text>
         {' à prendre'}
       </Text>
       {topCourses.slice(0, 3).map((item) => (

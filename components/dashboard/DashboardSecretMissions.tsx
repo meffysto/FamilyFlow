@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Lock } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { SecretMissionCard } from '../SecretMissionCard';
 import type { DashboardSectionProps } from './types';
@@ -66,7 +67,7 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
         onPress={() => router.push('/(tabs)/tasks')}
         activeOpacity={0.8}
       >
-        <DashboardCard title={t('dashboard.secretMissions.title')} color={colors.catJeux} tinted>
+        <DashboardCard title={t('dashboard.secretMissions.title')} IconComponent={Lock} color={colors.catJeux} tinted>
           <Animated.View style={pulseStyle}>
             <Text style={[styles.childText, { color: colors.text }]}>
               {t('dashboard.secretMissions.childText', { count: myMissions.length })}
@@ -85,7 +86,7 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
     return (
       <DashboardCard
         title={t('dashboard.secretMissions.title')}
-
+        IconComponent={Lock}
         count={pendingMissions.length}
         color={colors.catJeux}
         tinted

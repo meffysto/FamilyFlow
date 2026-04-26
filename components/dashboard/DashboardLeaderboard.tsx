@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Medal } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { buildLeaderboard } from '../../lib/gamification';
 import type { DashboardSectionProps } from './types';
@@ -25,7 +26,7 @@ function DashboardLeaderboardInner(_props: DashboardSectionProps) {
   const first = leaderboard[0];
 
   return (
-    <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/loot')} hideMoreLink style={{ flex: 1 }}>
+    <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} IconComponent={Medal} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/loot')} hideMoreLink style={{ flex: 1 }}>
       <Text style={styles.medal}>🥇</Text>
       <Text style={[styles.firstName, { color: colors.text }]} numberOfLines={1}>{first.name}</Text>
       <Text style={[styles.firstPts, { color: colors.textMuted }]}>{first.points ?? 0} pts</Text>

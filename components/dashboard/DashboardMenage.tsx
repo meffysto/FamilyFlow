@@ -10,10 +10,12 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
+import { AnimatedProgressBar } from './AnimatedProgressBar';
 import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
 import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
+import { Sparkles } from 'lucide-react-native';
 
 function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTaskToggle, handleTaskSkip }: DashboardSectionWithTaskToggleProps) {
   const { t } = useTranslation();
@@ -32,7 +34,7 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
   const progress = totalMaison > 0 ? doneMaison / totalMaison : 0;
 
   if (!vaultFileExists.menage) return (
-    <DashboardCard key="menage" title={t('dashboard.menage.title')} variant="metric">
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} variant="metric" IconComponent={Sparkles} color={colors.catOrganisation}>
       <DashboardEmptyState
         description={t('dashboard.menage.emptyDescription')}
         onActivate={() => activateCardTemplate('menage')}
@@ -42,21 +44,20 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
   );
 
   if (pendingMaison.length === 0) return (
-    <DashboardCard key="menage" title={t('dashboard.menage.title')} variant="metric">
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} variant="metric" IconComponent={Sparkles} color={colors.catOrganisation}>
       <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.menage.allDone')}</Text>
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="menage" title={t('dashboard.menage.title')} variant="metric" onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'maison' } })}>
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} variant="metric" IconComponent={Sparkles} color={colors.catOrganisation} onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'maison' } })}>
       <Text style={[styles.sentence, { color: colors.text }]}>
-        <Text style={[styles.metricNum, { color: colors.brand.soil }]}>{doneMaison}/{totalMaison}</Text>
+        <Text style={[styles.metricNum, { color: colors.catOrganisation }]}>{doneMaison}/{totalMaison}</Text>
         {' '}
         {t('dashboard.menage.remaining', { count: pendingMaison.length })}
       </Text>
-      <View style={[styles.progressBg, { backgroundColor: colors.brand.wash }]}>
-        <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.brand.soil }]} />
-      </View>
+      <AnimatedProgressBar progress={progress} color={colors.catOrganisation} backgroundColor={colors.brand.wash} height={6} />
+
       <View style={[styles.divider, { backgroundColor: colors.brand.bark }]} />
       {pendingMaison.slice(0, 3).map((task) => (
         <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} onSkip={handleTaskSkip} hideSection compact />
@@ -84,16 +85,6 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.serif,
     fontSize: FontSize.heading + 4, // 22px DM Serif intégré
     letterSpacing: -0.3,
-  },
-  progressBg: {
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: Spacing.xs,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
   },
   divider: {
     height: 1,

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { BarChart3 } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
 import type { DashboardSectionProps } from './types';
@@ -33,13 +34,15 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
     <DashboardCard
       key="weeklyStats"
       title={t('dashboard.weeklyStats.title')}
+      IconComponent={BarChart3}
+      color={colors.catJeux}
       variant="metric"
       onPressMore={() => router.push('/(tabs)/stats')}
       hideMoreLink
       style={{ flex: 1 }}
     >
       <Text style={[styles.statSentence, { color: colors.text }]}>
-        <Text style={[styles.statNumber, { color: colors.brand.soil }]}>{weekTotal}</Text>
+        <Text style={[styles.statNumber, { color: colors.catJeux }]}>{weekTotal}</Text>
         {' '}
         {t('dashboard.weeklyStats.summary', { count: weekTotal })}
       </Text>
