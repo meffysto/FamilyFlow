@@ -12,6 +12,7 @@ import { Button } from '../ui/Button';
 import { ModalHeader } from '../ui/ModalHeader';
 import { SectionHeader } from '../ui/SectionHeader';
 import { Mic } from 'lucide-react-native';
+import { SettingsElevenLabsQuota } from './SettingsElevenLabsQuota';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -98,6 +99,9 @@ export function SettingsElevenLabs() {
           Votre clé est chiffrée localement et ne quitte jamais votre appareil.
         </Text>
       </View>
+
+      {/* Cap quotidien — visible uniquement si clé configurée */}
+      {isElevenLabsConfigured && <SettingsElevenLabsQuota />}
 
       {/* Modal saisie clé API */}
       <Modal
