@@ -9,6 +9,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Cake } from 'lucide-react-native';
@@ -54,6 +55,7 @@ function getDaysUntilAnniversary(mmdd: string, now: Date): number {
 function DashboardAnniversairesInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
   const { colors } = useThemeColors();
+  const router = useRouter();
   const { anniversaries } = useVault();
 
   const upcoming = useMemo(() => {
@@ -112,8 +114,8 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
       IconComponent={Cake}
       color={colors.catFamille}
       count={upcoming.length > 1 ? upcoming.length : undefined}
-      collapsible
-      cardId="anniversaires"
+      onPressMore={() => router.push('/(tabs)/anniversaires' as any)}
+      hideMoreLink
       style={{ flex: 1 }}
     >
       <Text style={[styles.sentence, { color: colors.text }]} numberOfLines={2}>
