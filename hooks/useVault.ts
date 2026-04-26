@@ -2028,6 +2028,48 @@ export function useVaultInternal(): VaultState {
               }
             : p,
         ));
+        // 5. XP direct au feed (fire-and-forget, non-critical)
+        if (result.xpAwarded > 0) {
+          (async () => {
+            try {
+              const gFile = gamiFile(profileId);
+              const gamiContent = await vaultRef.current!.readFile(gFile).catch(() => '');
+              const gami = parseGamification(gamiContent);
+              const familleContent = await vaultRef.current!.readFile(FAMILLE_FILE);
+              const currentProfiles = mergeProfiles(familleContent, gamiContent);
+              const gamiProfile = currentProfiles.find(p => p.id === profileId);
+              if (!gamiProfile) return;
+              const { profile: updatedGami, entry, activeRewards: updatedRewards } = addPoints(gamiProfile, result.xpAwarded, 'Repas compagnon', gami.activeRewards);
+              const newGami = {
+                ...gami,
+                profiles: gami.profiles.map(p =>
+                  (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase())
+                    ? { ...p, points: updatedGami.points, level: updatedGami.level, multiplierRemaining: updatedGami.multiplierRemaining, multiplier: updatedGami.multiplier }
+                    : p,
+                ),
+                history: [...gami.history, entry],
+                activeRewards: updatedRewards ?? gami.activeRewards,
+              };
+              const singleData: GamificationData = {
+                profiles: newGami.profiles.filter(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()),
+                history: newGami.history.filter(e => e.profileId === profileId),
+                activeRewards: (newGami.activeRewards ?? []).filter(r => r.profileId === profileId),
+                usedLoots: (newGami.usedLoots ?? []).filter(u => u.profileId === profileId),
+              };
+              setGamiData(prev => {
+                if (!prev) return prev;
+                const updatedProf = singleData.profiles[0];
+                return {
+                  ...prev,
+                  profiles: updatedProf ? prev.profiles.map(p => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? updatedProf : p) : prev.profiles,
+                  history: [...prev.history, entry],
+                  activeRewards: newGami.activeRewards ?? prev.activeRewards,
+                };
+              });
+              await vaultRef.current!.writeFile(gFile, serializeGamification(singleData));
+            } catch { /* XP feed — non-critical */ }
+          })();
+        }
         // Phase 42 — Push message contextualisé + Live Activity (fire-and-forget, D-21/D-22/D-24)
         try {
           const cropDef = CROP_CATALOG.find(c => c.id === cropId);

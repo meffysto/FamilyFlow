@@ -6,6 +6,7 @@ import {
   COMPANION_STAGES,
   COMPANION_XP_BONUS,
   SPECIES_PERSONALITY,
+  FEED_BASE_XP,
   getAffinity,
   getBuffForCrop,
   isBuffActive,
@@ -125,6 +126,13 @@ export function getCompanionXpBonus(
 
 // ── Phase 42 — Nourrissage compagnon ────────────────────
 
+/** Retourne l'XP direct accordé pour un repas (0 si détesté, ×2 si préféré). */
+export function computeFeedXp(grade: HarvestGrade, affinity: CropAffinity): number {
+  if (affinity === 'hated') return 0;
+  const base = FEED_BASE_XP[grade];
+  return affinity === 'preferred' ? base * 2 : base;
+}
+
 /** Résultat structuré d'une tentative de nourrissage */
 export interface FeedResult {
   /** Nouvel objet CompanionData (jamais mutation de l'argument) */
@@ -137,6 +145,8 @@ export interface FeedResult {
   newBuff: FeedBuff | null;
   /** ms restantes avant prochain feed autorisé (0 si applied=true) */
   cooldownMs: number;
+  /** XP direct accordé (0 si hated ou cooldown actif) */
+  xpAwarded: number;
 }
 
 /**
@@ -160,6 +170,7 @@ export function feedCompanion(
       applied: false,
       newBuff: null,
       cooldownMs,
+      xpAwarded: 0,
     };
   }
   const newBuff = getBuffForCrop(grade, companion.activeSpecies, cropId, nowMs);
@@ -168,7 +179,7 @@ export function feedCompanion(
     lastFedAt: new Date(nowMs).toISOString(),
     feedBuff: newBuff, // null si hated — D-06
   };
-  return { updated, affinity, applied: true, newBuff, cooldownMs: 0 };
+  return { updated, affinity, applied: true, newBuff, cooldownMs: 0, xpAwarded: computeFeedXp(grade, affinity) };
 }
 
 /**

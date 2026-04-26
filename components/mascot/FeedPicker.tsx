@@ -46,6 +46,7 @@ import {
   type CompanionSpecies,
   type CropAffinity,
 } from '../../lib/mascot/companion-types';
+import { computeFeedXp } from '../../lib/mascot/companion-engine';
 
 // ─────────────────────────────────────────────
 // Conversion grades FR (inventaire) → EN (moteur feed)
@@ -413,6 +414,9 @@ export function FeedPicker({
                           : isHated
                             ? '#C04A3A'
                             : Farm.woodHighlight;
+                        const tileXp = card.bestGrade
+                          ? computeFeedXp(GRADE_FR_TO_EN[card.bestGrade], card.affinity)
+                          : 0;
                         return (
                           <Animated.View
                             key={card.cropId}
@@ -450,6 +454,11 @@ export function FeedPicker({
                                   </Text>
                                 )}
                               </View>
+                              {tileXp > 0 && (
+                                <View style={styles.tileXpBadge}>
+                                  <Text style={styles.tileXpBadgeText}>+{tileXp} XP</Text>
+                                </View>
+                              )}
                             </Pressable>
                           </Animated.View>
                         );
@@ -509,8 +518,7 @@ export function FeedPicker({
                       const qty = selectedCard.byGrade[gradeFr] ?? 0;
                       if (qty <= 0) return null;
                       const gradeEn = GRADE_FR_TO_EN[gradeFr];
-                      const buff = getBuffForCrop(gradeEn, companionSpecies, selectedCard.cropId);
-                      const pct = buff ? Math.round((buff.multiplier - 1) * 100) : 0;
+                      const xp = computeFeedXp(gradeEn, selectedCard.affinity);
                       return (
                         <Pressable
                           key={gradeFr}
@@ -545,13 +553,13 @@ export function FeedPicker({
                           </View>
                           <View style={[
                             styles.gradeOptionBuff,
-                            pct > 0 ? styles.gradeOptionBuffPositive : styles.gradeOptionBuffNone,
+                            xp > 0 ? styles.gradeOptionBuffPositive : styles.gradeOptionBuffNone,
                           ]}>
                             <Text style={[
                               styles.gradeOptionBuffText,
-                              pct > 0 && { color: '#FFFFFF' },
+                              xp > 0 && { color: '#FFFFFF' },
                             ]}>
-                              {pct > 0 ? `+${pct}%` : '0%'}
+                              {xp > 0 ? `+${xp} XP` : '0 XP'}
                             </Text>
                           </View>
                         </Pressable>
@@ -828,6 +836,18 @@ const styles = StyleSheet.create({
   },
   tileGrade: {
     fontSize: FontSize.body,
+  },
+  tileXpBadge: {
+    backgroundColor: Farm.greenBtn,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    marginTop: 2,
+  },
+  tileXpBadgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
   },
 
   emptyFilter: {

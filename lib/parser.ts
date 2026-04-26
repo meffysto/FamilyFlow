@@ -938,6 +938,14 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         voiceSource: (['ios-personal', 'elevenlabs-cloned', 'elevenlabs-preset', 'fish-audio-cloned', 'expo-speech'].includes(currentProps.voiceSource)
           ? (currentProps.voiceSource as Profile['voiceSource'])
           : undefined),
+        voiceCloneType: (['instant', 'professional'].includes(currentProps.voiceCloneType)
+          ? (currentProps.voiceCloneType as Profile['voiceCloneType'])
+          : undefined),
+        voiceTrainingStatus: (['idle', 'samples', 'training', 'ready', 'failed'].includes(currentProps.voiceTrainingStatus)
+          ? (currentProps.voiceTrainingStatus as Profile['voiceTrainingStatus'])
+          : undefined),
+        voiceTrainingStartedAt: currentProps.voiceTrainingStartedAt || undefined,
+        voiceTrainingMessage: currentProps.voiceTrainingMessage || undefined,
         // Farm/mascot/companion fields live in farm-{profileId}.md — defaults here
         treeSpecies: undefined,
         mascotDecorations: [],
@@ -1004,6 +1012,10 @@ export function serializeFamille(
     if (profile.voiceFishAudioId) lines.push(`voiceFishAudioId: ${profile.voiceFishAudioId}`);
     if (profile.voicePersonalId) lines.push(`voicePersonalId: ${profile.voicePersonalId}`);
     if (profile.voiceSource) lines.push(`voiceSource: ${profile.voiceSource}`);
+    if (profile.voiceCloneType) lines.push(`voiceCloneType: ${profile.voiceCloneType}`);
+    if (profile.voiceTrainingStatus) lines.push(`voiceTrainingStatus: ${profile.voiceTrainingStatus}`);
+    if (profile.voiceTrainingStartedAt) lines.push(`voiceTrainingStartedAt: ${profile.voiceTrainingStartedAt}`);
+    if (profile.voiceTrainingMessage) lines.push(`voiceTrainingMessage: ${profile.voiceTrainingMessage}`);
     if (profile.sagaTitle) lines.push(`sagaTitle: ${profile.sagaTitle}`);
     // Préférences alimentaires — omises si vides (lisibilité Obsidian)
     if (profile.foodAllergies && profile.foodAllergies.length > 0) {

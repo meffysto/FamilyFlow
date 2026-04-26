@@ -47,8 +47,9 @@ import type { JournalSummaryEntry } from './ai-service';
 // v6 : Phase B grades (260421-obd) — HarvestInventory shape change (cropId → grade → qty)
 //                + CraftedItem.grade optional
 // v7 : Phase 42 — CompanionData étendu (lastFedAt?: string + feedBuff?: FeedBuff | null)
-const CACHE_VERSION = 7;
-const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v7.json';
+// v8 : Stories — Profile étendu (voiceCloneType, voiceTrainingStatus, voiceTrainingStartedAt, voiceTrainingMessage)
+const CACHE_VERSION = 8;
+const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v8.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {
@@ -67,6 +68,10 @@ export interface ProfileCacheEntry {
   voiceFishAudioId?: string;
   voicePersonalId?: string;
   voiceSource?: Profile['voiceSource'];
+  voiceCloneType?: Profile['voiceCloneType'];
+  voiceTrainingStatus?: Profile['voiceTrainingStatus'];
+  voiceTrainingStartedAt?: string;
+  voiceTrainingMessage?: string;
   foodAllergies?: string[];
   foodIntolerances?: string[];
   foodRegimes?: string[];
@@ -122,6 +127,10 @@ export function stripProfileForCache(p: Profile): ProfileCacheEntry {
     voiceFishAudioId: p.voiceFishAudioId,
     voicePersonalId: p.voicePersonalId,
     voiceSource: p.voiceSource,
+    voiceCloneType: p.voiceCloneType,
+    voiceTrainingStatus: p.voiceTrainingStatus,
+    voiceTrainingStartedAt: p.voiceTrainingStartedAt,
+    voiceTrainingMessage: p.voiceTrainingMessage,
     foodAllergies: p.foodAllergies,
     foodIntolerances: p.foodIntolerances,
     foodRegimes: p.foodRegimes,

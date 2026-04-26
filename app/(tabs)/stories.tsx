@@ -24,7 +24,7 @@ import StoryBookCard, { BOOK_WIDTH, BOOK_GAP } from '../../components/stories/St
 import StoryPlayer from '../../components/stories/StoryPlayer';
 import VoiceRecorder from '../../components/stories/VoiceRecorder';
 import { getPersonalVoices } from '../../lib/personal-voice';
-import { getCachedStoryAudio } from '../../lib/elevenlabs';
+import { getCachedStoryAudio, stripAllPerformanceTags } from '../../lib/elevenlabs';
 import { getCachedStoryAudioFish } from '../../lib/fish-audio';
 import {
   STORY_UNIVERSES, STORY_SUGGESTIONS, ELEVENLABS_FRENCH_VOICES, ELEVENLABS_ENGLISH_VOICES,
@@ -541,6 +541,10 @@ export default function StoriesScreen() {
   const [voicePersonalVoices, setVoicePersonalVoices] = useState<Speech.Voice[]>([]);
   const [voicePersonalLoading, setVoicePersonalLoading] = useState(false);
   const [voiceRecorderProfileId, setVoiceRecorderProfileId] = useState<string | null>(null);
+  // Mode de clonage choisi pour la prochaine ouverture du VoiceRecorder.
+  // 'instant' = comportement actuel (1 prise, voix prête immédiatement).
+  // 'professional' = multi-prises + training ~3-4h (qualité supérieure, plan Creator+).
+  const [voiceCloneMode, setVoiceCloneMode] = useState<'instant' | 'professional'>('instant');
 
   // Auto-fetch des voix Enhanced/Premium à l'entrée de l'étape personnaliser
   // et à chaque changement de langue. Re-fetch explicite via bouton "Rafraîchir".
@@ -556,6 +560,17 @@ export default function StoriesScreen() {
     });
     return () => { cancelled = true; };
   }, [step.etape, localVoiceEngine, voiceConfig.language]);
+
+  // Mode Spectacle nécessite ElevenLabs ou Fish Audio (timestamps ou ratio script).
+  // Si on bascule vers la voix système alors qu'on est en spectacle, retombe automatiquement
+  // sur "doux" pour ne pas garder une config silencieusement incompatible.
+  useEffect(() => {
+    if (localVoiceEngine !== 'expo-speech') return;
+    const current = voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off');
+    if (current !== 'spectacle') return;
+    setVoiceConfig({ ...voiceConfig, audioMode: 'doux', spectacle: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localVoiceEngine]);
 
   // Réhydrater la voix sélectionnée depuis le voiceIdentifier persisté
   // une fois la liste chargée.
@@ -1231,12 +1246,17 @@ export default function StoriesScreen() {
           const ambienceVol = typeof voiceConfig.ambienceVolume === 'number'
             ? voiceConfig.ambienceVolume
             : 0.4;
+          // Spectacle (SFX automatiques) marche avec ElevenLabs (synchro mot-à-mot via
+          // timestamps) et Fish Audio (synchro ratio basée sur la position dans le script).
+          // Indisponible avec la voix système (expo-speech) qui n'expose ni l'un ni l'autre.
+          const spectacleAvailable = localVoiceEngine !== 'expo-speech';
           const MODES: { key: import('../../lib/types').StoryAudioMode; emoji: string; label: string; hint: string }[] = [
             { key: 'off',       emoji: '🔇', label: 'Off',       hint: 'Voix seule' },
             { key: 'doux',      emoji: '🌙', label: 'Doux',      hint: 'Ambiance' },
-            { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: 'Ambiance + SFX' },
+            { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: spectacleAvailable ? 'Ambiance + SFX' : 'ElevenLabs ou Fish Audio' },
           ];
           const setMode = (mode: import('../../lib/types').StoryAudioMode) => {
+            if (mode === 'spectacle' && !spectacleAvailable) return;
             Haptics.selectionAsync();
             setVoiceConfig({
               ...voiceConfig,
@@ -1255,17 +1275,22 @@ export default function StoriesScreen() {
               <View style={styles.audioModeRow}>
                 {MODES.map(m => {
                   const selected = currentMode === m.key;
+                  const disabled = m.key === 'spectacle' && !spectacleAvailable;
                   return (
                     <Pressable
                       key={m.key}
+                      disabled={disabled}
                       style={[
                         styles.audioModeChip,
                         {
                           backgroundColor: selected ? primary : colors.card,
                           borderColor: selected ? primary : colors.border,
+                          opacity: disabled ? 0.45 : 1,
                         },
                       ]}
                       onPress={() => setMode(m.key)}
+                      accessibilityState={{ disabled, selected }}
+                      accessibilityHint={disabled ? 'Sélectionnez ElevenLabs ou Fish Audio pour activer le mode Spectacle' : undefined}
                     >
                       <Text style={styles.audioModeEmoji}>{m.emoji}</Text>
                       <Text style={[styles.audioModeLabel, { color: selected ? '#fff' : colors.text }]}>
@@ -1408,11 +1433,12 @@ export default function StoriesScreen() {
 
         {/* Sélecteur de modèle ElevenLabs (compromis qualité/coût) */}
         {localVoiceEngine === 'elevenlabs' && (() => {
-          const currentModel = voiceConfig.elevenLabsModel ?? 'eleven_multilingual_v2';
+          const currentModel = voiceConfig.elevenLabsModel ?? 'eleven_v3';
           const MODELS: { key: import('../../lib/types').ElevenLabsModel; label: string; hint: string }[] = [
-            { key: 'eleven_multilingual_v2', label: 'Premium',   hint: 'Qualité max — coût standard' },
+            { key: 'eleven_v3',              label: 'Cinéma v3',  hint: 'Émotions + tags (chuchotement, rire…)' },
+            { key: 'eleven_multilingual_v2', label: 'Premium',    hint: 'Qualité stable — coût standard' },
             { key: 'eleven_turbo_v2_5',      label: 'Économique', hint: '−50% crédits — qualité quasi identique' },
-            { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−80% crédits — voix plus mécanique' },
+            { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−50% crédits — voix plus mécanique' },
           ];
           return (
             <View style={{ marginTop: Spacing.lg }}>
@@ -1573,6 +1599,45 @@ export default function StoriesScreen() {
                 <Text style={[styles.voiceModalClose, { color: primary }]}>Fermer</Text>
               </Pressable>
             </View>
+            {/* Sélecteur Standard/Pro — uniquement pour ElevenLabs (Fish Audio n'a pas de PVC) */}
+            {localVoiceEngine === 'elevenlabs' && (
+              <View style={[styles.cloneModeRow, { borderBottomColor: colors.border }]}>
+                <Pressable
+                  style={[
+                    styles.cloneModeChip,
+                    {
+                      backgroundColor: voiceCloneMode === 'instant' ? primary : colors.card,
+                      borderColor: voiceCloneMode === 'instant' ? primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => setVoiceCloneMode('instant')}
+                >
+                  <Text style={[
+                    styles.cloneModeChipText,
+                    { color: voiceCloneMode === 'instant' ? '#fff' : colors.text },
+                  ]}>
+                    Standard · 1 prise
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.cloneModeChip,
+                    {
+                      backgroundColor: voiceCloneMode === 'professional' ? primary : colors.card,
+                      borderColor: voiceCloneMode === 'professional' ? primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => setVoiceCloneMode('professional')}
+                >
+                  <Text style={[
+                    styles.cloneModeChipText,
+                    { color: voiceCloneMode === 'professional' ? '#fff' : colors.text },
+                  ]}>
+                    Pro · multi-prises (~3-4h)
+                  </Text>
+                </Pressable>
+              </View>
+            )}
             {voiceRecorderProfileId !== null && (() => {
               const target = adultProfiles.find((p: Profile) => p.id === voiceRecorderProfileId);
               if (!target) return null;
@@ -1583,11 +1648,33 @@ export default function StoriesScreen() {
                   apiKey={localVoiceEngine === 'fish-audio' ? fishAudioKey : elevenLabsKey}
                   cloneEngine={localVoiceEngine === 'fish-audio' ? 'fish-audio' : 'elevenlabs'}
                   language={voiceConfig.language}
-                  onVoiceReady={async (voiceId, source) => {
+                  cloneType={localVoiceEngine === 'elevenlabs' ? voiceCloneMode : 'instant'}
+                  onVoiceReady={async (voiceId, source, trainingStatus) => {
                     try {
-                      const profileUpdate = source === 'fish-audio-cloned'
-                        ? { voiceFishAudioId: voiceId, voiceSource: source }
-                        : { voiceElevenLabsId: voiceId, voiceSource: source };
+                      let profileUpdate: Partial<Profile>;
+                      if (source === 'fish-audio-cloned') {
+                        profileUpdate = {
+                          voiceFishAudioId: voiceId,
+                          voiceSource: source,
+                        };
+                      } else if (source === 'elevenlabs-cloned-pro') {
+                        // PVC : voix encore en training, on note l'état
+                        profileUpdate = {
+                          voiceElevenLabsId: voiceId,
+                          voiceSource: 'elevenlabs-cloned',
+                          voiceCloneType: 'professional',
+                          voiceTrainingStatus: trainingStatus === 'training' ? 'training' : 'ready',
+                          voiceTrainingStartedAt: new Date().toISOString(),
+                        };
+                      } else {
+                        // IVC standard
+                        profileUpdate = {
+                          voiceElevenLabsId: voiceId,
+                          voiceSource: source,
+                          voiceCloneType: 'instant',
+                          voiceTrainingStatus: 'ready',
+                        };
+                      }
                       await updateProfile(target.id, profileUpdate);
                       setVoiceSelectedParentId(target.id);
                       setVoiceRecorderProfileId(null);
@@ -1872,7 +1959,7 @@ export default function StoriesScreen() {
         {storyTitle ? (
           <Text style={[styles.storyTitle, { color: colors.text }]}>{storyTitle}</Text>
         ) : null}
-        <Text style={[styles.storyText, { color: colors.text }]}>{displayedText}</Text>
+        <Text style={[styles.storyText, { color: colors.text }]}>{stripAllPerformanceTags(displayedText)}</Text>
         {showPlayer && currentStory && (
           <StoryPlayer
             histoire={currentStory}
@@ -1951,7 +2038,7 @@ export default function StoriesScreen() {
     return (
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={[styles.storyTitle, { color: colors.text }]}>{histoire.titre}</Text>
-        <Text style={[styles.storyText, { color: colors.text }]}>{histoire.texte}</Text>
+        <Text style={[styles.storyText, { color: colors.text }]}>{stripAllPerformanceTags(histoire.texte)}</Text>
         <StoryPlayer
           histoire={histoire}
           voiceConfig={histoire.voice}
@@ -2234,6 +2321,26 @@ const styles = StyleSheet.create({
   voiceModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing['4xl'], borderBottomWidth: 1 },
   voiceModalTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
   voiceModalClose: { fontSize: FontSize.body, fontWeight: FontWeight.medium },
+  cloneModeRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing['4xl'],
+    paddingVertical: Spacing.lg,
+    borderBottomWidth: 1,
+  },
+  cloneModeChip: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  cloneModeChipText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+  },
   contextCard: {
     flexDirection: 'row',
     alignItems: 'center',

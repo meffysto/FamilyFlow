@@ -1042,6 +1042,32 @@ RÈGLES STRICTES pour le script :
     ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ { "kind": "narration", "text": "..." }, { "kind": "sfx", "tag": "...", "triggerWord": "..." }, ... ] } }`
     : `{ "titre": "...", "texte": "${paragraphesTemplate}" }`;
 
+  // Tags de performance vocale ElevenLabs (interprétés par le moteur TTS).
+  // Reste en ANGLAIS même quand l'histoire est en français : c'est la convention API.
+  // Parcimonie volontaire : trop de tags = lecture théâtrale fatigante.
+  const performanceTagsRules = `
+
+PERFORMANCE VOCALE — Tags d'expression (interprétés par le moteur de voix) :
+Pour rendre la lecture plus immersive, tu peux insérer ces tags ENTRE CROCHETS directement dans le texte. Le moteur TTS les transforme en effet vocal (chuchotement, rire, soupir…). Les tags ne sont PAS lus à voix haute.
+
+Tags autorisés (anglais obligatoire, même en français) :
+- [whispers] — chuchotement (idéal pour le mystère, le secret, l'approche du sommeil)
+- [sighs] — soupir (transition douce, soulagement)
+- [gasps] — sursaut de surprise
+- [chuckles] — petit rire complice (pour la joie discrète)
+- [laughs] — rire franc (pour la joie ouverte)
+- [pause] — silence court (~0.5s)
+- [long pause] — silence marqué (~1.5s)
+
+RÈGLES de placement :
+- MAXIMUM 1 tag par paragraphe, JAMAIS deux tags consécutifs sur la même phrase
+- Place le tag JUSTE AVANT la phrase ou portion qu'il modifie. Exemple : "Le petit chat avait peur du noir. [whispers] Mais une étoile veillait sur lui."
+- Privilégie [whispers], [sighs] et [pause] pour une histoire du coucher (apaisants)
+- Pour exprimer la joie, utilise [chuckles] (discret) ou [laughs] (franc) — pas autre chose
+- Évite [laughs] dans les 2 derniers paragraphes (ralentissement vers le sommeil)
+- N'utilise JAMAIS d'autres tags que ceux listés (les tags inconnus seront supprimés)
+- Les tags doivent apparaître DANS le champ "texte"${spectacleEnabled ? ' ET dans les beats narration correspondants (concaténation préservée)' : ''}`;
+
   const systemPrompt = `Tu es un conteur d'histoires pour enfants expert. Tu crées des histoires du soir douces et apaisantes, parfaites pour endormir un enfant de ${story.enfantAge}.
 
 RÈGLES STRICTES :
@@ -1055,7 +1081,7 @@ RÈGLES STRICTES :
 ${moodContext ? `- Adapte le ton selon l'humeur : ${moodContext}` : ''}
 ${quotesContext ? `- Intègre subtilement une expression de l'enfant : ${quotesContext}` : ''}
 ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesContext}` : ''}
-${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${spectacleRules}
+${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${performanceTagsRules}${spectacleRules}
 - Répondre UNIQUEMENT en JSON valide : ${outputFormat}
 - Aucun texte en dehors du JSON`;
 

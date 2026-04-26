@@ -8,7 +8,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
+import { Audio, InterruptionModeIOS } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
 import {
   Waveform,
@@ -22,6 +22,7 @@ import {
   generateSpeechWithTimestamps,
   getCachedStoryAudio,
   storyVaultAudioRelPath,
+  stripAllPerformanceTags,
 } from '../../lib/elevenlabs';
 import { generateSpeechFish, getCachedStoryAudioFish } from '../../lib/fish-audio';
 import {
@@ -330,6 +331,9 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       playsInSilentModeIOS: true,
       allowsRecordingIOS: false,
       staysActiveInBackground: false,
+      // Force le mixage explicite : ambiance + voix (expo-speech / ElevenLabs) cohabitent
+      // sans que AVSpeechSynthesizer interrompe la boucle d'ambiance.
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
     }).then(() => primeAudioSession()).catch((e) => {
       if (__DEV__) console.warn('StoryPlayer: audio prime failed', e);
     });
@@ -354,6 +358,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
           playsInSilentModeIOS: true,
           allowsRecordingIOS: false,
           staysActiveInBackground: false,
+          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
         }).catch(() => {});
 
         if (__DEV__) console.log('[StoryPlayer] ambience: loading…');
@@ -576,10 +581,16 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       // V2.3 : si Mode Spectacle + ElevenLabs + script présent ET alignment absent,
       // on appelle l'endpoint /with-timestamps pour récupérer l'alignement caractère→temps.
       // Sinon (mode doux/off, Fish Audio, ou alignment déjà en cache), endpoint classique.
+      // Note : eleven_v3 ne supporte pas /with-timestamps de manière fiable — on retombe
+      // sur l'endpoint classique + fallback ratio V2.2 pour les SFX. Le défaut côté
+      // elevenlabs.ts étant v3, on traite undefined comme v3 ici.
+      const effectiveModel = voiceConfig.elevenLabsModel ?? 'eleven_v3';
+      const modelSupportsTimestamps = effectiveModel !== 'eleven_v3';
       const useTimestamps = isElevenLabs
         && spectacleActive
         && !!histoire.script
-        && !alignment;
+        && !alignment
+        && modelSupportsTimestamps;
       if (__DEV__) {
         console.log('[StoryPlayer] runGeneration decision:', {
           isElevenLabs, isFishAudio, spectacleActive,
@@ -588,14 +599,25 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         });
       }
 
+      if (__DEV__) {
+        console.log('[StoryPlayer] voiceConfig snapshot:', {
+          engine: voiceConfig.engine,
+          elevenLabsModel: voiceConfig.elevenLabsModel,
+          elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId?.slice(0, 8) + '…',
+          audioMode: voiceConfig.audioMode,
+        });
+      }
       const elevenLabsOptions = voiceConfig.elevenLabsModel
         ? { model: voiceConfig.elevenLabsModel }
         : undefined;
+      // Fish Audio n'interprète pas les tags de performance — on les strip pour
+      // éviter qu'ils soient lus à voix haute. ElevenLabs les garde (sanitize côté lib).
+      const textForTts = isFishAudio ? stripAllPerformanceTags(histoire.texte) : histoire.texte;
       const result = isFishAudio
-        ? await generateSpeechFish(apiKey, histoire.texte, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
+        ? await generateSpeechFish(apiKey, textForTts, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
         : useTimestamps
-          ? await generateSpeechWithTimestamps(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions)
-          : await generateSpeech(apiKey, histoire.texte, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions);
+          ? await generateSpeechWithTimestamps(apiKey, textForTts, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions)
+          : await generateSpeech(apiKey, textForTts, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions);
       if (__DEV__) {
         if ('error' in result) {
           console.warn('[StoryPlayer] generation error:', result.error);
@@ -646,10 +668,12 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         ? (voiceConfig.fishAudioReferenceId ?? '')
         : (voiceConfig.elevenLabsVoiceId ?? '');
 
-      // Vérifier le cache local (et fallback vault si disponible)
+      // Vérifier le cache local (et fallback vault si disponible).
+      // Pour ElevenLabs, on inclut le modèle dans la clé : changer Cinéma v3 ↔ Premium v2
+      // force la régénération (sinon on relit l'ancien MP3 sans tags honorés).
       const cached = isFishAudio
         ? await getCachedStoryAudioFish(histoire.id, voiceId, vaultUri)
-        : await getCachedStoryAudio(histoire.id, voiceId, vaultUri);
+        : await getCachedStoryAudio(histoire.id, voiceId, vaultUri, voiceConfig.elevenLabsModel);
 
       if (signal.cancelled) return;
 
@@ -704,7 +728,36 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       }
     }
 
-    Speech.speak(histoire.texte, {
+    // Réaffirme le mode mixage juste avant que AVSpeechSynthesizer ne claime
+    // la session audio iOS — sinon il coupe la boucle d'ambiance qui tourne en parallèle.
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        allowsRecordingIOS: false,
+        staysActiveInBackground: false,
+        interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      });
+    } catch {
+      /* non-critique */
+    }
+
+    // Pré-démarre l'ambiance AVANT Speech.speak : si on attend le useEffect (qui
+    // tourne sur setIsPlaying), AVSpeechSynthesizer a déjà claim la session iOS
+    // et bloque playAsync. En démarrant ici, l'ambiance "occupe" la session en
+    // premier et iOS accepte ensuite de mixer la voix par-dessus.
+    const ambSound = ambienceSoundRef.current;
+    if (ambSound && ambienceActive && ambienceReady) {
+      try {
+        await ambSound.setVolumeAsync(0);
+        await ambSound.playAsync();
+        if (__DEV__) console.log('[StoryPlayer] ambience: pre-started before Speech.speak');
+      } catch (e) {
+        if (__DEV__) console.warn('[StoryPlayer] ambience pre-start failed:', e);
+      }
+    }
+
+    // Apple AVSpeechSynthesizer ne comprend pas les tags ElevenLabs — strip avant lecture.
+    Speech.speak(stripAllPerformanceTags(histoire.texte), {
       language: targetLang,
       voice: voiceId,
       rate: expoSpeed,
@@ -717,7 +770,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       },
     });
     setIsPlaying(true);
-  }, [voiceConfig, histoire.texte, expoSpeed]);
+  }, [voiceConfig, histoire.texte, expoSpeed, ambienceActive, ambienceReady]);
 
   const stopExpoSpeech = useCallback(() => {
     Speech.stop();
@@ -769,9 +822,17 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
     if (isPlaying) {
       stopExpoSpeech();
       setExpoSpeed(newSpeed);
-      setTimeout(() => {
+      setTimeout(async () => {
         const targetLang = voiceConfig.language === 'en' ? 'en-US' : 'fr-FR';
-        Speech.speak(histoire.texte, {
+        try {
+          await Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+            allowsRecordingIOS: false,
+            staysActiveInBackground: false,
+            interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+          });
+        } catch { /* non-critique */ }
+        Speech.speak(stripAllPerformanceTags(histoire.texte), {
           language: targetLang,
           voice: voiceConfig.voiceIdentifier,
           rate: newSpeed,

@@ -81,11 +81,16 @@ export interface Profile {
   weight_override?: WagerAgeCategory; // Phase 39 — override poids pondération Sporée
   dateTerme?: string;        // YYYY-MM-DD expected due date (grossesse only)
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
-  // ─── Voix TTS (IVC ElevenLabs + iOS Personal Voice) ───────────
+  // ─── Voix TTS (IVC + PVC ElevenLabs + iOS Personal Voice) ──────
   voiceElevenLabsId?: string;   // voice_id ElevenLabs (cloné ou prédéfini)
   voiceFishAudioId?: string;    // reference_id Fish Audio (cloné via /model)
   voicePersonalId?: string;     // identifier iOS Personal Voice
   voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'fish-audio-cloned' | 'expo-speech';
+  // ─── Clonage Pro (PVC) — précisions sur voiceElevenLabsId ──────
+  voiceCloneType?: 'instant' | 'professional';                                // type de clonage (défaut 'instant' si absent)
+  voiceTrainingStatus?: 'idle' | 'samples' | 'training' | 'ready' | 'failed'; // état du training PVC
+  voiceTrainingStartedAt?: string;                                            // ISO datetime du déclenchement /train
+  voiceTrainingMessage?: string;                                              // dernier message d'erreur/info ElevenLabs
   gardenName?: string;           // nom personnalisé du jardin (fallback "Mon jardin")
   treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
   mascotDecorations: string[];   // IDs des décorations achetées
@@ -692,7 +697,7 @@ export type StoryLength = 'courte' | 'moyenne' | 'longue' | 'tres-longue';
 
 export type StoryAudioMode = 'off' | 'doux' | 'spectacle';
 
-export type ElevenLabsModel = 'eleven_multilingual_v2' | 'eleven_turbo_v2_5' | 'eleven_flash_v2_5';
+export type ElevenLabsModel = 'eleven_v3' | 'eleven_multilingual_v2' | 'eleven_turbo_v2_5' | 'eleven_flash_v2_5';
 
 export interface StoryVoiceConfig {
   engine: StoryVoiceEngine;
@@ -705,7 +710,7 @@ export interface StoryVoiceConfig {
   spectacle?: boolean;
   audioMode?: StoryAudioMode;   // off = voix seule, doux = + ambiance, spectacle = + SFX
   ambienceVolume?: number;      // 0..1 — défaut 0.4 (constante AMBIENCE_VOLUME)
-  elevenLabsModel?: ElevenLabsModel; // défaut multilingual_v2 — turbo = -50% coût, flash = -80% (qualité ↓)
+  elevenLabsModel?: ElevenLabsModel; // défaut multilingual_v2 — turbo et flash = -50% coût (flash = qualité ↓)
 }
 
 export interface BedtimeStory {

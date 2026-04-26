@@ -11,6 +11,10 @@ export interface ElevenLabsOptions {
   model?: string;
   stability?: number;
   similarityBoost?: number;
+  /** 0..1 — pour PVC, garder à 0 (recommandation officielle ElevenLabs : évite artefacts/hallucinations). */
+  style?: number;
+  /** Améliore la ressemblance avec la voix clonée — recommandé true sur PVC. */
+  useSpeakerBoost?: boolean;
 }
 
 type GenerateResult = { audioUri: string } | { error: string };
@@ -21,13 +25,62 @@ type GenerateWithTimestampsResult =
 // Dossier persistant (non purgé par iOS contrairement à cacheDirectory)
 const AUDIO_DIR = `${FileSystem.documentDirectory}stories-audio/`;
 
+// ─── Performance tags (ElevenLabs v2/v3) ─────────────────────────────────────
+// Whitelist des tags interprétés par le moteur TTS. Tout tag entre crochets
+// hors de cette liste est supprimé avant envoi pour éviter qu'il soit lu à
+// voix haute (ex. "crochet whispers crochet" ou un tag halluciné par le LLM).
+// Synchro avec la liste exposée au LLM dans ai-service.ts.
+// Whitelist resserrée aux tags fiables sur voix PVC (entraînées sur v2) :
+// [excited] et [mysteriously] sont inconstants et retirés volontairement.
+// La joie passe par [laughs]/[chuckles], le suspense par [whispers] + [pause].
+const ALLOWED_PERFORMANCE_TAGS = new Set([
+  'whispers', 'sighs', 'gasps', 'chuckles', 'laughs',
+  'pause', 'long pause',
+]);
+
 /**
- * Chemin du MP3 persistant pour une histoire + voix données.
- * Clé déterministe : une même histoire relue avec la même voix réutilise le fichier.
+ * Strip les tags entre crochets non whitelistés avant envoi à ElevenLabs.
+ * Conserve les tags reconnus tels quels. Insensible à la casse.
+ * Exporté pour usage par le caller si besoin (ex. preview).
  */
-export function storyAudioPath(storyId: string, voiceId: string): string {
+export function sanitizePerformanceTags(text: string): string {
+  return text.replace(/\[([^\]\n]{1,30})\]/g, (_full, inner: string) => {
+    const norm = inner.trim().toLowerCase();
+    return ALLOWED_PERFORMANCE_TAGS.has(norm) ? `[${norm}]` : '';
+  }).replace(/[ \t]{2,}/g, ' ');
+}
+
+/**
+ * Strip TOUS les tags de performance (whitelistés ou non).
+ * À utiliser pour les moteurs TTS qui ne les interprètent pas (expo-speech Apple,
+ * Fish Audio) — sinon ils seraient lus à voix haute littéralement.
+ */
+export function stripAllPerformanceTags(text: string): string {
+  return text
+    .replace(/\[([^\]\n]{1,30})\]/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\s+([.,!?…])/g, '$1');
+}
+
+/**
+ * Suffixe court par modèle pour différencier les MP3 cachés.
+ * v2 = pas de suffixe (rétro-compat des anciens caches).
+ */
+function modelSuffix(model?: string): string {
+  if (!model || model === 'eleven_multilingual_v2') return '';
+  if (model === 'eleven_v3') return '_v3';
+  if (model === 'eleven_turbo_v2_5') return '_t25';
+  if (model === 'eleven_flash_v2_5') return '_f25';
+  return `_${model.replace(/[^a-z0-9]/gi, '').slice(0, 8)}`;
+}
+
+/**
+ * Chemin du MP3 persistant pour une histoire + voix + modèle.
+ * Clé déterministe : changer le modèle force une regénération (cache séparé).
+ */
+export function storyAudioPath(storyId: string, voiceId: string, model?: string): string {
   // storyId contient déjà date + universId (caractères sûrs), voiceId est alphanumérique
-  return `${AUDIO_DIR}${storyId}_${voiceId}.mp3`;
+  return `${AUDIO_DIR}${storyId}_${voiceId}${modelSuffix(model)}.mp3`;
 }
 
 /**
@@ -48,9 +101,10 @@ export async function getCachedStoryAudio(
   storyId: string,
   voiceId: string,
   vaultUri?: string,
+  model?: string,
 ): Promise<string | null> {
   try {
-    const path = storyAudioPath(storyId, voiceId);
+    const path = storyAudioPath(storyId, voiceId, model);
     const info = await FileSystem.getInfoAsync(path);
     if (info.exists) return path;
 
@@ -129,15 +183,15 @@ export async function generateSpeech(
   storyId: string,
   options: ElevenLabsOptions = {},
 ): Promise<GenerateResult> {
-  // 1. Réutilisation du cache persistant
-  const cached = await getCachedStoryAudio(storyId, voiceId);
+  // 1. Réutilisation du cache persistant (clé incluant le modèle pour invalider sur switch)
+  const cached = await getCachedStoryAudio(storyId, voiceId, undefined, options.model);
   if (cached) {
     if (__DEV__) console.log('[elevenlabs] MP3 réutilisé depuis cache persistant:', cached);
     return { audioUri: cached };
   }
 
   // 2. Dedup des requêtes en vol
-  const key = `${storyId}|${voiceId}`;
+  const key = `${storyId}|${voiceId}|${options.model ?? 'v2'}`;
   const existing = inflightRequests.get(key);
   if (existing) return existing;
 
@@ -162,11 +216,41 @@ async function performGenerateSpeech(
   options: ElevenLabsOptions,
 ): Promise<GenerateResult> {
   const {
-    model = 'eleven_multilingual_v2',
+    model = 'eleven_v3',
     stability = 0.5,
     similarityBoost = 0.75,
+    style = 0,
+    useSpeakerBoost = true,
   } = options;
 
+  const sanitized = sanitizePerformanceTags(text);
+  const bodyObj = {
+    text: sanitized,
+    model_id: model,
+    voice_settings: {
+      stability,
+      similarity_boost: similarityBoost,
+      style,
+      use_speaker_boost: useSpeakerBoost,
+    },
+  };
+  const bodyString = JSON.stringify(bodyObj);
+  if (__DEV__) {
+    const tagsBefore: string[] = text.match(/\[[^\]\n]{1,30}\]/g) ?? [];
+    const tagsAfter: string[] = sanitized.match(/\[[^\]\n]{1,30}\]/g) ?? [];
+    console.log('[elevenlabs] → POST tts', {
+      storyId,
+      voiceId: voiceId.slice(0, 8) + '…',
+      model,
+      stability, similarityBoost, style, useSpeakerBoost,
+      textLen: sanitized.length,
+      tagsKept: tagsAfter,
+      tagsStripped: tagsBefore.filter(t => !tagsAfter.includes(t)),
+      bodyBytes: bodyString.length,
+      bodyHead: bodyString.slice(0, 200),
+      bodyTail: bodyString.slice(-200),
+    });
+  }
   try {
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
@@ -175,15 +259,9 @@ async function performGenerateSpeech(
         'Content-Type': 'application/json',
         'xi-api-key': apiKey,
       },
-      body: JSON.stringify({
-        text,
-        model_id: model,
-        voice_settings: {
-          stability,
-          similarity_boost: similarityBoost,
-        },
-      }),
+      body: bodyString,
     });
+    if (__DEV__) console.log('[elevenlabs] ← tts', response.status, response.ok ? 'OK' : 'FAIL');
 
     if (!response.ok) {
       const err = await response.text().catch(() => `${response.status}`);
@@ -194,10 +272,11 @@ async function performGenerateSpeech(
     const base64 = uint8ArrayToBase64(new Uint8Array(arrayBuffer));
 
     await ensureAudioDir();
-    const uri = storyAudioPath(storyId, voiceId);
+    const uri = storyAudioPath(storyId, voiceId, model);
     await FileSystem.writeAsStringAsync(uri, base64, {
       encoding: FileSystem.EncodingType.Base64,
     });
+    if (__DEV__) console.log('[elevenlabs] MP3 généré:', uri, '· model:', model);
 
     return { audioUri: uri };
   } catch (e) {
@@ -228,7 +307,7 @@ export async function generateSpeechWithTimestamps(
   storyId: string,
   options: ElevenLabsOptions = {},
 ): Promise<GenerateWithTimestampsResult> {
-  const key = `${storyId}|${voiceId}|ts`;
+  const key = `${storyId}|${voiceId}|${options.model ?? 'v2'}|ts`;
   const existing = inflightTsRequests.get(key);
   if (existing) return existing;
 
@@ -252,11 +331,29 @@ async function performGenerateWithTimestamps(
   options: ElevenLabsOptions,
 ): Promise<GenerateWithTimestampsResult> {
   const {
-    model = 'eleven_multilingual_v2',
+    model = 'eleven_v3',
     stability = 0.5,
     similarityBoost = 0.75,
+    style = 0,
+    useSpeakerBoost = true,
   } = options;
 
+  const sanitized = sanitizePerformanceTags(text);
+  if (__DEV__) {
+    const tagsBefore: string[] = text.match(/\[[^\]\n]{1,30}\]/g) ?? [];
+    const tagsAfter: string[] = sanitized.match(/\[[^\]\n]{1,30}\]/g) ?? [];
+    console.log('[elevenlabs] → POST tts/with-timestamps', {
+      storyId,
+      voiceId: voiceId.slice(0, 8) + '…',
+      model,
+      stability, similarityBoost, style, useSpeakerBoost,
+      textLen: sanitized.length,
+      tagsKept: tagsAfter,
+      tagsStripped: tagsBefore.filter(t => !tagsAfter.includes(t)),
+      sample: sanitized.slice(0, 120),
+      fullText: sanitized,
+    });
+  }
   try {
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`,
@@ -268,15 +365,18 @@ async function performGenerateWithTimestamps(
           'xi-api-key': apiKey,
         },
         body: JSON.stringify({
-          text,
+          text: sanitized,
           model_id: model,
           voice_settings: {
             stability,
             similarity_boost: similarityBoost,
+            style,
+            use_speaker_boost: useSpeakerBoost,
           },
         }),
       },
     );
+    if (__DEV__) console.log('[elevenlabs] ← tts/with-timestamps', response.status, response.ok ? 'OK' : 'FAIL');
 
     if (!response.ok) {
       const err = await response.text().catch(() => `${response.status}`);
@@ -305,10 +405,11 @@ async function performGenerateWithTimestamps(
     }
 
     await ensureAudioDir();
-    const uri = storyAudioPath(storyId, voiceId);
+    const uri = storyAudioPath(storyId, voiceId, model);
     await FileSystem.writeAsStringAsync(uri, audioB64, {
       encoding: FileSystem.EncodingType.Base64,
     });
+    if (__DEV__) console.log('[elevenlabs] MP3+timestamps généré:', uri, '· model:', model);
 
     return { audioUri: uri, alignment: { chars, starts, ends } };
   } catch (e) {
