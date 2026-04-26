@@ -119,6 +119,7 @@ export default function CalendarScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('calendarScreen.title')}
+        subtitle={t('calendarScreen.subtitle', { count: (eventsByDate[todayStr] ?? []).length })}
         tint="rgba(123,142,90,0.10)"
         actions={
           <TouchableOpacity

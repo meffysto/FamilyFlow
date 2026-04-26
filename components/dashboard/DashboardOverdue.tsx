@@ -12,7 +12,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
 
 function DashboardOverdueInner({ handleTaskToggle, handleTaskSkip }: DashboardSectionWithTaskToggleProps) {
@@ -30,14 +30,15 @@ function DashboardOverdueInner({ handleTaskToggle, handleTaskSkip }: DashboardSe
 
   return (
     <DashboardCard key="overdue" title={t('dashboard.overdue.title')} count={overdueTasks.length} color={colors.error} variant="critical" onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'retard' } })}>
-      <View style={styles.metricRow}>
+      <Text style={[styles.metricSentence, { color: colors.text }]}>
         <Text style={[styles.metricNum, { color: colors.error }]}>{overdueTasks.length}</Text>
-        <View style={styles.metricLabel}>
-          <Text style={[styles.metricWord, { color: colors.error }]}>{t('dashboard.overdue.metricWord')}</Text>
-          <Text style={[styles.metricSub, { color: colors.textMuted }]}>{t('dashboard.overdue.metricSub')}</Text>
-        </View>
-      </View>
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        {' '}
+        {t('dashboard.overdue.metricSentence', { count: overdueTasks.length })}
+      </Text>
+      <Text style={[styles.metricSub, { color: colors.brand.soilMuted }]}>
+        {t('dashboard.overdue.metricSub')}
+      </Text>
+      <View style={[styles.divider, { backgroundColor: colors.brand.bark }]} />
       {overdueTasks.slice(0, 3).map((task) => (
         <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} onSkip={handleTaskSkip} hideSection compact />
       ))}
@@ -46,37 +47,25 @@ function DashboardOverdueInner({ handleTaskToggle, handleTaskSkip }: DashboardSe
 }
 
 const styles = StyleSheet.create({
-  metricRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.lg,
-    marginBottom: 0,
+  metricSentence: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.normal,
+    lineHeight: 28,
   },
   metricNum: {
-    fontSize: 48,
-    fontWeight: FontWeight.bold,
-    lineHeight: 52,
-    letterSpacing: -1,
-  },
-  metricLabel: {
-    paddingBottom: Spacing.xs,
-    gap: 2,
-  },
-  metricWord: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    opacity: 0.7,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.display, // 24px DM Serif intégré dans la phrase
+    letterSpacing: -0.4,
   },
   metricSub: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    marginTop: 2,
   },
   divider: {
     height: 1,
-    marginTop: Spacing.xs,
-    marginBottom: 0,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xs,
   },
 });
 

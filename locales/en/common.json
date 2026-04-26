@@ -540,7 +540,7 @@
     },
     "screenTitle": "Tasks",
     "vacationTitle": "Vacation",
-    "remaining": "{{count}} remaining",
+    "remaining": "{{count}} left for today",
     "remaining_other": "{{count}} remaining",
     "hint": "💡 Swipe to delete · Hold to edit",
     "secretMissions": "🕵️ Secret missions",
@@ -1311,6 +1311,9 @@
   "calendarScreen": {
     "title": "Calendar",
     "today": "Today",
+    "subtitle": "nothing on today",
+    "subtitle_one": "one event today",
+    "subtitle_other": "{{count}} events today",
     "tabs": {
       "month": "Month",
       "week": "Week"
@@ -1491,7 +1494,9 @@
     "overdue": {
       "title": "Overdue",
       "metricWord": "tasks",
-      "metricSub": "overdue"
+      "metricSentence_one": "task to catch up on",
+      "metricSentence_other": "tasks to catch up on",
+      "metricSub": "to clear before tonight"
     },
     "photos": {
       "title": "Photo of the day",

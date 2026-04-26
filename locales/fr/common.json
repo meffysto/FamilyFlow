@@ -540,8 +540,8 @@
     },
     "screenTitle": "Tâches",
     "vacationTitle": "Vacances",
-    "remaining": "{{count}} restante",
-    "remaining_other": "{{count}} restantes",
+    "remaining": "il en reste {{count}} aujourd'hui",
+    "remaining_other": "il en reste {{count}} aujourd'hui",
     "hint": "💡 Glissez pour supprimer · Maintenez pour modifier",
     "secretMissions": "🕵️ Missions secrètes",
     "targetFiles": {
@@ -1319,6 +1319,9 @@
   "calendarScreen": {
     "title": "Calendrier",
     "today": "Aujourd'hui",
+    "subtitle": "rien de prévu aujourd'hui",
+    "subtitle_one": "un événement aujourd'hui",
+    "subtitle_other": "{{count}} événements aujourd'hui",
     "tabs": {
       "month": "Mois",
       "week": "Semaine"
@@ -1499,7 +1502,9 @@
     "overdue": {
       "title": "En retard",
       "metricWord": "tâches",
-      "metricSub": "en retard"
+      "metricSentence_one": "tâche à rattraper",
+      "metricSentence_other": "tâches à rattraper",
+      "metricSub": "à régler avant ce soir"
     },
     "photos": {
       "title": "Photo du jour",
