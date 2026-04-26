@@ -44,7 +44,7 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
   return (
     <DashboardCard key="recipes" title={t('dashboard.recipes.title')} count={recipes.length} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'recettes' } })}>
       <TouchableOpacity
-        style={[styles.recipeSuggestion, { backgroundColor: colors.cardAlt }]}
+        style={[styles.recipeSuggestion, { backgroundColor: colors.brand.wash, borderWidth: 1, borderColor: colors.brand.bark }]}
         onPress={() => onViewRecipe(suggestedRecipe)}
         activeOpacity={0.7}
       >
