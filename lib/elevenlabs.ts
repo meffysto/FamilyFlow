@@ -30,9 +30,12 @@ const AUDIO_DIR = `${FileSystem.documentDirectory}stories-audio/`;
 // hors de cette liste est supprimé avant envoi pour éviter qu'il soit lu à
 // voix haute (ex. "crochet whispers crochet" ou un tag halluciné par le LLM).
 // Synchro avec la liste exposée au LLM dans ai-service.ts.
+// Whitelist resserrée aux tags fiables sur voix PVC (entraînées sur v2) :
+// [excited] et [mysteriously] sont inconstants et retirés volontairement.
+// La joie passe par [laughs]/[chuckles], le suspense par [whispers] + [pause].
 const ALLOWED_PERFORMANCE_TAGS = new Set([
   'whispers', 'sighs', 'gasps', 'chuckles', 'laughs',
-  'excited', 'mysteriously', 'pause', 'long pause',
+  'pause', 'long pause',
 ]);
 
 /**

@@ -1054,10 +1054,8 @@ Tags autorisés (anglais obligatoire, même en français) :
 - [whispers] — chuchotement (idéal pour le mystère, le secret, l'approche du sommeil)
 - [sighs] — soupir (transition douce, soulagement)
 - [gasps] — sursaut de surprise
-- [chuckles] — petit rire complice
-- [laughs] — rire franc
-- [excited] — voix qui s'illumine (joie contenue)
-- [mysteriously] — ton bas, suspense feutré
+- [chuckles] — petit rire complice (pour la joie discrète)
+- [laughs] — rire franc (pour la joie ouverte)
 - [pause] — silence court (~0.5s)
 - [long pause] — silence marqué (~1.5s)
 
@@ -1065,7 +1063,8 @@ RÈGLES de placement :
 - MAXIMUM 1 tag par paragraphe, JAMAIS deux tags consécutifs sur la même phrase
 - Place le tag JUSTE AVANT la phrase ou portion qu'il modifie. Exemple : "Le petit chat avait peur du noir. [whispers] Mais une étoile veillait sur lui."
 - Privilégie [whispers], [sighs] et [pause] pour une histoire du coucher (apaisants)
-- Évite [laughs] et [excited] dans les 2 derniers paragraphes (ralentissement vers le sommeil)
+- Pour exprimer la joie, utilise [chuckles] (discret) ou [laughs] (franc) — pas autre chose
+- Évite [laughs] dans les 2 derniers paragraphes (ralentissement vers le sommeil)
 - N'utilise JAMAIS d'autres tags que ceux listés (les tags inconnus seront supprimés)
 - Les tags doivent apparaître DANS le champ "texte"${spectacleEnabled ? ' ET dans les beats narration correspondants (concaténation préservée)' : ''}`;
 
