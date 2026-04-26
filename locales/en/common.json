@@ -763,14 +763,14 @@
   },
   "meals": {
     "tabs": {
-      "meals": "🍽️ Meals",
-      "shopping": "🛒 Shopping",
-      "recipes": "📖 Recipes"
+      "meals": "Meals",
+      "shopping": "Shopping",
+      "recipes": "Recipes"
     },
     "header": {
-      "mealsTitle": "🍽️ Meals",
-      "shoppingTitle": "🛒 Shopping",
-      "recipesTitle": "📖 Recipes",
+      "mealsTitle": "Meals",
+      "shoppingTitle": "Shopping",
+      "recipesTitle": "Recipes",
       "mealsStats": "{{filled}}/{{total}} planned",
       "shoppingStats": "{{done}}/{{total}} bought",
       "recipesStats_one": "{{count}} recipe",

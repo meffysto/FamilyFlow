@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { CalendarPlus, CheckSquare } from 'lucide-react-native';
 import { format, addMonths, subMonths } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
@@ -109,8 +110,8 @@ export default function CalendarScreen() {
   }, [selectedDate]);
 
   const fabActions = useMemo(() => [
-    { id: 'rdv', emoji: '📅', label: 'RDV', onPress: () => setShowRDVEditor(true) },
-    { id: 'tache', emoji: '✅', label: 'Tâche', onPress: () => router.push('/(tabs)/tasks') },
+    { id: 'rdv', Icon: CalendarPlus, label: 'RDV', onPress: () => setShowRDVEditor(true) },
+    { id: 'tache', Icon: CheckSquare, label: 'Tâche', onPress: () => router.push('/(tabs)/tasks') },
   ], [router]);
 
   return (

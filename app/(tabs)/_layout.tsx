@@ -30,6 +30,9 @@ import {
   BookOpen,
   Calendar as CalendarIcon,
   LayoutGrid,
+  ClipboardList,
+  CalendarPlus,
+  Camera,
   type LucideIcon,
 } from 'lucide-react-native';
 
@@ -202,13 +205,13 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
   const fabActions: FABAction[] = isChildMode
     ? [
-        { id: 'task', emoji: '\u{1F4CB}', label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
+        { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
       ]
     : [
-        { id: 'task', emoji: '\u{1F4CB}', label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
-        { id: 'rdv', emoji: '\u{1F4C5}', label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
-        { id: 'journal', emoji: '\u{1F4D6}', label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
-        { id: 'photo', emoji: '\u{1F4F8}', label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
+        { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
+        { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
+        { id: 'journal', Icon: BookOpen, label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
+        { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
       ];
 
   return (

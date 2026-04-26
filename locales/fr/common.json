@@ -763,14 +763,14 @@
   },
   "meals": {
     "tabs": {
-      "meals": "🍽️ Repas",
-      "shopping": "🛒 Courses",
-      "recipes": "📖 Recettes"
+      "meals": "Repas",
+      "shopping": "Courses",
+      "recipes": "Recettes"
     },
     "header": {
-      "mealsTitle": "🍽️ Repas",
-      "shoppingTitle": "🛒 Courses",
-      "recipesTitle": "📖 Recettes",
+      "mealsTitle": "Repas",
+      "shoppingTitle": "Courses",
+      "recipesTitle": "Recettes",
       "mealsStats": "{{filled}}/{{total}} planifiés",
       "shoppingStats": "{{done}}/{{total}} achetés",
       "recipesStats_one": "{{count}} recette",
