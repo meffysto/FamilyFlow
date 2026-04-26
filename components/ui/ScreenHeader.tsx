@@ -1,8 +1,8 @@
 /**
  * ScreenHeader.tsx — Header soigné pour écrans secondaires.
  *
- * Edge-to-edge sous la dynamic island, fond légèrement teinté primary,
- * titre + icône optionnelle + sous-titre + slot actions à droite.
+ * Edge-to-edge sous la dynamic island, fond warm parchemin (ou tint custom),
+ * titre serif + sous-titre italique tendre + slot actions à droite.
  * Fondu doux en bas pour fondre dans le contenu de la page.
  *
  * Pour le hero (dashboard) → utiliser LivingGradient + composition custom.
@@ -21,7 +21,7 @@ import Animated, {
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 interface ScreenHeaderProps {
   title: string;
@@ -38,16 +38,22 @@ interface ScreenHeaderProps {
    * titre/sous-titre/actions collapse au scroll (le slot bottom reste visible).
    */
   scrollY?: SharedValue<number>;
+  /**
+   * Color signature de l'écran (wash warm). Si omis → `colors.brand.wash`.
+   * Permet à chaque tab d'avoir une teinte propre (terracotta pour Photos,
+   * mousse pour Calendar, etc.) tout en restant warm-aligned.
+   */
+  tint?: string;
 }
 
 const COLLAPSE_RANGE = 60;
 
-export function ScreenHeader({ title, icon, subtitle, leading, actions, bottom, scrollY }: ScreenHeaderProps) {
-  const { primary, colors } = useThemeColors();
+export function ScreenHeader({ title, icon, subtitle, leading, actions, bottom, scrollY, tint }: ScreenHeaderProps) {
+  const { colors } = useThemeColors();
   const insets = useSafeAreaInsets();
 
-  // Fond légèrement teinté : 8% de primary sur bg.
-  const tintedBg = primary + '14';
+  // Fond warm : tint custom si fourni, sinon wash brand par défaut.
+  const tintedBg = tint ?? colors.brand.wash;
 
   const titleAnimStyle = useAnimatedStyle(() => {
     if (!scrollY) return {};
@@ -88,7 +94,7 @@ export function ScreenHeader({ title, icon, subtitle, leading, actions, bottom, 
                 {title}
               </Text>
               {subtitle && (
-                <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                <Text style={[styles.subtitle, { color: colors.brand.soilMuted }]} numberOfLines={1}>
                   {subtitle}
                 </Text>
               )}
@@ -140,14 +146,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.heavy,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.display,
     letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
-    marginTop: 1,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.normal,
+    marginTop: 2,
   },
   actions: {
     flexDirection: 'row',

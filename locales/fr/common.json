@@ -442,7 +442,7 @@
   },
   "tasks": {
     "weather": {
-      "storm": "Orage…",
+      "storm": "Orage",
       "stormMsg": "Allez, on commence !",
       "rain": "Pluie",
       "rainMsg": "Continue comme ça !",
@@ -461,34 +461,40 @@
     },
     "empty": {
       "title": "Bravo, tout est fait !",
-      "subtitle": "Profite bien de ton temps libre 🎉"
+      "subtitle": "Profite bien de ton temps libre 🎉",
+      "filterTitle": "Aucune tâche ici",
+      "filterSubtitle": "Essaie un autre filtre",
+      "searchTitle": "Aucun résultat",
+      "searchSubtitle": "Vérifie l'orthographe ou élargis la recherche",
+      "onboardTitle": "Aucune tâche pour l'instant",
+      "onboardSubtitle": "Appuie sur + pour en ajouter une"
     },
     "completed": {
       "hide": "🔼 Masquer les terminées",
-      "show": "🔽 Terminées ({{count}})"
+      "show": "🔽 Voir les terminées ({{count}})"
     },
     "taskCount_one": "{{count}} tâche",
     "taskCount_other": "{{count}} tâches",
     "toast": {
       "textRequired": "Le texte de la tâche est obligatoire",
-      "invalidDate": "Date incorrecte (format : 2026-03-15)",
+      "invalidDate": "Date incorrecte — utilise le format JJ/MM/AAAA",
       "edited": "Tâche modifiée",
       "childCantDelete": "🔒 Seuls les adultes peuvent supprimer des tâches",
-      "childCantEdit": "Seuls les adultes peuvent modifier des tâches"
+      "childCantEdit": "🔒 Seuls les adultes peuvent modifier des tâches"
     },
     "delete": {
       "title": "🗑️ Supprimer la tâche",
       "message": "Supprimer « {{name}} » ?",
       "cancel": "Annuler",
       "confirm": "Supprimer",
-      "error": "Erreur"
+      "error": "Impossible de supprimer"
     },
     "addModal": {
       "title": "Nouvelle tâche",
       "add": "Ajouter",
       "taskLabel": "📝 Tâche *",
       "placeholder": "Ex: Acheter cadeau anniversaire",
-      "dueLabel": "📅 Date d'échéance (optionnel)",
+      "dueLabel": "📅 Date limite (optionnel)",
       "duePlaceholder": "Choisir une date",
       "recurrenceLabel": "🔁 Se répète (optionnel)",
       "none": "Aucune",
@@ -497,7 +503,7 @@
       "monthly": "Chaque mois",
       "assignLabel": "👤 Attribuer à (optionnel)",
       "saveToLabel": "Enregistrer pour",
-      "targetLabel": "📁 Enregistrer pour",
+      "targetLabel": "📁 Catégorie",
       "secretMission": "🕵️ Créer une mission secrète",
       "reminderLabel": "⏰ Rappel (optionnel)",
       "reminderPlaceholder": "Choisir une heure"
@@ -505,11 +511,11 @@
     "editModal": {
       "title": "Modifier la tâche",
       "save": "Enregistrer",
-      "taskLabel": "Tâche *",
-      "dueLabel": "Date d'échéance (optionnel)",
-      "recurrenceLabel": "Se répète (optionnel)",
+      "taskLabel": "📝 Tâche *",
+      "dueLabel": "📅 Date limite (optionnel)",
+      "recurrenceLabel": "🔁 Se répète (optionnel)",
       "assignLabel": "👤 Attribuer à",
-      "saveToLabel": "Enregistrer pour",
+      "saveToLabel": "📁 Catégorie",
       "deleteBtn": "Supprimer cette tâche",
       "xpLabel": "Points XP",
       "xpDefault": "Défaut"
@@ -527,16 +533,16 @@
       "hideCompleted": "Masquer les terminées",
       "showCompleted": "Afficher les terminées ({{count}})"
     },
-    "search": "Rechercher...",
+    "search": "Rechercher",
     "fileLabels": {
       "vacation": "☀️ Checklist Vacances",
-      "home": "🏠 Maison — Tâches"
+      "home": "🏠 Maison"
     },
     "screenTitle": "Tâches",
     "vacationTitle": "Vacances",
     "remaining": "{{count}} restante",
     "remaining_other": "{{count}} restantes",
-    "hint": "💡 Glissez pour supprimer · Appui long pour modifier",
+    "hint": "💡 Glissez pour supprimer · Maintenez pour modifier",
     "secretMissions": "🕵️ Missions secrètes",
     "targetFiles": {
       "home": "🏠 Maison"

@@ -54,3 +54,20 @@ export const LineHeight = {
 } as const;
 
 export type FontSizeKey = keyof typeof FontSize;
+
+/**
+ * FontFamily — fonts brand chargées dans `app/_layout.tsx` via @expo-google-fonts.
+ * Fallback système si la charge échoue (ne jamais bloquer le rendu).
+ *
+ *   serif     → DM Serif Display 400. Titres section, hero, ancres ("Tâches",
+ *               "Aujourd'hui", chiffres hero).
+ *   handwrite → Caveat 400/600. Voix tendre, sous-titres, footers, empty
+ *               states, mascotte ("bonjour Gabriel", "il reste un tiers").
+ *   sans      → undefined → laisse le système choisir (San Francisco / Roboto)
+ *               pour 95 % du body. Centralisé ici pour swap facile plus tard.
+ */
+export const FontFamily = {
+  serif:             'DMSerifDisplay_400Regular',
+  handwrite:         'Caveat_400Regular',
+  handwriteSemibold: 'Caveat_600SemiBold',
+} as const;

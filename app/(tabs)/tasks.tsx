@@ -636,6 +636,19 @@ export default function TasksScreen() {
     }));
   }, [completedTasks]);
 
+  const emptyStateProps = useMemo(() => {
+    if (search.trim()) {
+      return { emoji: '🔍', title: t('tasks.empty.searchTitle'), subtitle: t('tasks.empty.searchSubtitle') };
+    }
+    if (filter !== 'tous') {
+      return { emoji: '📭', title: t('tasks.empty.filterTitle'), subtitle: t('tasks.empty.filterSubtitle') };
+    }
+    if (completedTasks.length > 0) {
+      return { emoji: '✅', title: t('tasks.empty.title'), subtitle: t('tasks.empty.subtitle') };
+    }
+    return { emoji: '📝', title: t('tasks.empty.onboardTitle'), subtitle: t('tasks.empty.onboardSubtitle') };
+  }, [search, filter, completedTasks.length, t]);
+
   const completedCount = isVacationActive
     ? vacationTasks.filter((t) => t.completed).length
     : completedTasks.length;
@@ -821,7 +834,7 @@ export default function TasksScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
         ListEmptyComponent={
-          <EmptyState emoji="✅" title={t('tasks.empty.title')} subtitle={t('tasks.empty.subtitle')} />
+          <EmptyState emoji={emptyStateProps.emoji} title={emptyStateProps.title} subtitle={emptyStateProps.subtitle} />
         }
         ListFooterComponent={completedTasks.length > 0 ? (
           <View style={styles.completedSection}>

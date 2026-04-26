@@ -442,7 +442,7 @@
   },
   "tasks": {
     "weather": {
-      "storm": "Storm…",
+      "storm": "Storm",
       "stormMsg": "Let's get started!",
       "rain": "Rain",
       "rainMsg": "Keep it up!",
@@ -461,27 +461,33 @@
     },
     "empty": {
       "title": "Well done, all finished!",
-      "subtitle": "Enjoy your free time 🎉"
+      "subtitle": "Enjoy your free time 🎉",
+      "filterTitle": "Nothing here",
+      "filterSubtitle": "Try a different filter",
+      "searchTitle": "No results",
+      "searchSubtitle": "Check the spelling or broaden your search",
+      "onboardTitle": "No tasks yet",
+      "onboardSubtitle": "Tap + to add your first task"
     },
     "completed": {
       "hide": "🔼 Hide completed",
-      "show": "🔽 Completed ({{count}})"
+      "show": "🔽 Show completed ({{count}})"
     },
     "taskCount_one": "{{count}} task",
     "taskCount_other": "{{count}} tasks",
     "toast": {
       "textRequired": "Task text is required",
-      "invalidDate": "Invalid date (format: 2026-03-15)",
+      "invalidDate": "Invalid date — use DD/MM/YYYY format",
       "edited": "Task updated",
       "childCantDelete": "🔒 Only adults can delete tasks",
-      "childCantEdit": "Only adults can edit tasks"
+      "childCantEdit": "🔒 Only adults can edit tasks"
     },
     "delete": {
       "title": "🗑️ Delete task",
       "message": "Delete \"{{name}}\"?",
       "cancel": "Cancel",
       "confirm": "Delete",
-      "error": "Error"
+      "error": "Could not delete task"
     },
     "addModal": {
       "title": "New task",
@@ -497,7 +503,7 @@
       "monthly": "Every month",
       "assignLabel": "👤 Assign to (optional)",
       "saveToLabel": "Save to",
-      "targetLabel": "📁 Save for",
+      "targetLabel": "📁 Category",
       "secretMission": "🕵️ Create a secret mission",
       "reminderLabel": "⏰ Reminder (optional)",
       "reminderPlaceholder": "Pick a time"
@@ -505,11 +511,11 @@
     "editModal": {
       "title": "Edit task",
       "save": "Save",
-      "taskLabel": "Task *",
-      "dueLabel": "Due date (optional)",
-      "recurrenceLabel": "Repeats (optional)",
+      "taskLabel": "📝 Task *",
+      "dueLabel": "📅 Due date (optional)",
+      "recurrenceLabel": "🔁 Repeats (optional)",
       "assignLabel": "👤 Assign to",
-      "saveToLabel": "Save to",
+      "saveToLabel": "📁 Category",
       "deleteBtn": "Delete this task",
       "xpLabel": "XP Points",
       "xpDefault": "Default"
@@ -527,16 +533,16 @@
       "hideCompleted": "Hide completed",
       "showCompleted": "Show completed ({{count}})"
     },
-    "search": "Search...",
+    "search": "Search",
     "fileLabels": {
       "vacation": "☀️ Vacation Checklist",
-      "home": "🏠 Home — Tasks"
+      "home": "🏠 Home"
     },
     "screenTitle": "Tasks",
     "vacationTitle": "Vacation",
     "remaining": "{{count}} remaining",
     "remaining_other": "{{count}} remaining",
-    "hint": "💡 Swipe to delete · Long press to edit",
+    "hint": "💡 Swipe to delete · Hold to edit",
     "secretMissions": "🕵️ Secret missions",
     "targetFiles": {
       "home": "🏠 Home"

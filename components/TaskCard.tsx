@@ -19,12 +19,11 @@ import Animated, {
 import { FloatingPoints } from './FloatingPoints';
 import * as Haptics from 'expo-haptics';
 import { Task, Profile } from '../lib/types';
-import { formatDateLocalized } from '../lib/date-locale';
+import { formatDateShort } from '../lib/date-locale';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { useTranslation } from 'react-i18next';
-import { Shadows } from '../constants/shadows';
 
 interface TaskCardProps {
   task: Task;
@@ -120,8 +119,7 @@ export const TaskCard = React.memo(function TaskCard({
     <TouchableOpacity
       style={[
         styles.card,
-        { backgroundColor: colors.card },
-        task.completed && { backgroundColor: colors.cardAlt, opacity: 0.7 },
+        task.completed && { opacity: 0.45 },
         compact && { padding: Spacing.md, marginBottom: Spacing.xs, gap: Spacing.md },
       ]}
       onLongPress={onLongPress}
@@ -141,40 +139,48 @@ export const TaskCard = React.memo(function TaskCard({
         <TouchableOpacity
           style={styles.checkbox}
           onPress={handleToggle}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: task.completed }}
         >
           <Animated.View style={[
             styles.checkboxInner,
-            { borderColor: colors.separator, backgroundColor: colors.card },
-            task.completed && { backgroundColor: primary, borderColor: primary },
+            { borderColor: colors.brand.soilMuted, backgroundColor: 'transparent' },
+            task.completed && { backgroundColor: colors.brand.soil, borderColor: colors.brand.soil },
+            isOverdue && !task.completed && { borderColor: colors.error },
             checkAnimStyle,
           ]}>
-            <Animated.Text style={[styles.checkmark, { color: colors.onPrimary }, checkmarkAnimStyle]}>✓</Animated.Text>
+            <Animated.Text style={[styles.checkmark, { color: colors.brand.parchment }, checkmarkAnimStyle]}>✓</Animated.Text>
           </Animated.View>
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
-        <Animated.Text
-          style={[
-            styles.taskText,
-            { color: colors.text },
-            task.completed && [styles.completedText, { color: colors.textFaint }],
-            isOverdue && { color: colors.error },
-            textAnimStyle,
-          ]}
-          numberOfLines={2}
-        >
-          {task.text}
-        </Animated.Text>
+        <View style={styles.taskRow}>
+          <Animated.Text
+            style={[
+              styles.taskText,
+              { color: colors.text },
+              task.completed && [styles.completedText, { color: colors.textFaint }],
+              isOverdue && { color: colors.error },
+              textAnimStyle,
+            ]}
+            numberOfLines={2}
+          >
+            {task.text}
+          </Animated.Text>
+          {task.dueDate && !task.completed && (
+            <Text style={[styles.inlineDue, { color: isOverdue ? colors.error : colors.textMuted }, compact && { fontSize: FontSize.micro }]}>
+              {formatDateShort(task.dueDate)}
+            </Text>
+          )}
+        </View>
 
         <View style={[styles.meta, compact && styles.metaCompact]}>
           {showSkip && (
             <TouchableOpacity
               onPress={handleSkip}
-              style={[styles.skipButton, { backgroundColor: colors.cardAlt }, compact && styles.badgeCompact]}
+              style={[styles.skipButton, { backgroundColor: colors.brand.wash }, compact && styles.badgeCompact]}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               accessibilityLabel={t('taskCard.skip')}
               accessibilityRole="button"
@@ -183,31 +189,18 @@ export const TaskCard = React.memo(function TaskCard({
             </TouchableOpacity>
           )}
           {showSource && (
-            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, compact && styles.badgeCompact]}>
-              <Text style={[styles.sourceLabel, { color: colors.textMuted }, compact && { fontSize: FontSize.micro }]}>{getSourceLabel(task.sourceFile, profiles, t)}</Text>
-            </View>
+            <Text style={[styles.metaText, { color: colors.textFaint }, compact && { fontSize: FontSize.micro }]}>{getSourceLabel(task.sourceFile, profiles, t)}</Text>
           )}
           {task.section && !showSource && !hideSection && !task.recurrence && (
-            <View style={[styles.sectionBadge, { backgroundColor: tint }, compact && styles.badgeCompact]}>
-              <Text style={[styles.sectionLabel, { color: primary }, compact && { fontSize: FontSize.micro }]}>{task.section}</Text>
-            </View>
-          )}
-          {task.dueDate && !task.completed && (
-            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && { backgroundColor: colors.errorBg }, compact && styles.badgeCompact]}>
-              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: FontWeight.bold }, compact && { fontSize: FontSize.micro }]}>
-                📅 {formatDateLocalized(task.dueDate)}
-              </Text>
-            </View>
+            <Text style={[styles.metaText, { color: primary }, compact && { fontSize: FontSize.micro }]}>{task.section}</Text>
           )}
           {task.recurrence && (
-            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, compact && styles.badgeCompact]}>
-              <Text style={[styles.recurrenceBadge, { color: colors.textFaint }, compact && { fontSize: FontSize.micro }]}>
-                🔁 {/every\s+day/i.test(task.recurrence) ? t('taskCard.recurrenceDaily')
-                    : /every\s+week/i.test(task.recurrence) ? t('taskCard.recurrenceWeekly')
-                    : /every\s+month/i.test(task.recurrence) ? t('taskCard.recurrenceMonthly')
-                    : task.recurrence}
-              </Text>
-            </View>
+            <Text style={[styles.metaText, { color: colors.textFaint }, compact && { fontSize: FontSize.micro }]}>
+              🔁 {/every\s+day/i.test(task.recurrence) ? t('taskCard.recurrenceDaily')
+                  : /every\s+week/i.test(task.recurrence) ? t('taskCard.recurrenceWeekly')
+                  : /every\s+month/i.test(task.recurrence) ? t('taskCard.recurrenceMonthly')
+                  : task.recurrence}
+            </Text>
           )}
         </View>
 
@@ -235,6 +228,8 @@ export const TaskCard = React.memo(function TaskCard({
           </View>
         )}
       </View>
+
+      <View style={[styles.separator, { backgroundColor: colors.brand.bark }]} />
     </TouchableOpacity>
   );
 });
@@ -245,8 +240,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     borderRadius: Radius.lg,
     padding: Spacing.xl,
-    marginBottom: Spacing.lg,
-    ...Shadows.sm,
+    paddingBottom: Spacing.lg,
+    marginBottom: Spacing.xs,
     gap: Spacing.xl,
   },
   checkboxWrapper: {
@@ -256,9 +251,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xxs,
   },
   checkboxInner: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
+    width: 24,
+    height: 24,
+    borderRadius: Radius.sm,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -269,12 +264,23 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: 5,
+    gap: Spacing.xs,
+  },
+  taskRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.md,
   },
   taskText: {
+    flex: 1,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.medium,
     lineHeight: LineHeight.body,
+  },
+  inlineDue: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+    flexShrink: 0,
   },
   completedText: {
     textDecorationLine: 'line-through',
@@ -291,36 +297,13 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: 0,
   },
-  badge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
+  metaText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
   },
   badgeCompact: {
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-  },
-  sectionBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  sourceLabel: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
-  },
-  sectionLabel: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
-  },
-  dueDate: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.medium,
-  },
-  overdueBadgeContainer: {},
-  overdueBadge: {},
-  recurrenceBadge: {
-    fontSize: FontSize.caption,
+    paddingVertical: Spacing.xxs,
   },
   tags: {
     flexDirection: 'row',
@@ -348,5 +331,13 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: FontSize.caption,
+  },
+  separator: {
+    position: 'absolute',
+    bottom: 0,
+    left: Spacing.xl,
+    right: 0,
+    height: 1,
+    opacity: 0.6,
   },
 });

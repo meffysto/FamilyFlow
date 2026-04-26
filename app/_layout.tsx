@@ -28,6 +28,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
+import { useFonts as useDMSerif, DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display';
+import { Caveat_400Regular, Caveat_600SemiBold } from '@expo-google-fonts/caveat';
 import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
@@ -129,6 +131,15 @@ function VaultRedirect({ langReady }: { langReady: boolean }) {
 function RootLayout() {
   const [langReady, setLangReady] = useState(false);
   const systemScheme = useColorScheme();
+  // Charge les fonts brand (DM Serif Display pour titres serif, Caveat pour
+  // voix tendre italique). Si la charge échoue, on continue avec les fallbacks
+  // système — ne jamais bloquer l'app.
+  const [fontsLoaded, fontsError] = useDMSerif({
+    DMSerifDisplay_400Regular,
+    Caveat_400Regular,
+    Caveat_600SemiBold,
+  });
+  const fontsReady = fontsLoaded || !!fontsError;
 
   useEffect(() => {
     if (__DEV__) {
@@ -266,7 +277,7 @@ function RootLayout() {
                   <Stack.Screen name="(tabs)" />
                 </Stack>
                 <VaultRedirect langReady={langReady} />
-                {!langReady && (
+                {(!langReady || !fontsReady) && (
                   <View style={[styles.loading, { backgroundColor: systemScheme === 'dark' ? DarkColors.bg : LightColors.cardAlt }]} pointerEvents="auto">
                     <ActivityIndicator size="large" color="#7C3AED" />
                   </View>
