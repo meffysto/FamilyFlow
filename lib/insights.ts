@@ -9,6 +9,26 @@
 
 import { format, differenceInCalendarDays, isToday, isTomorrow, isYesterday, parseISO, addDays } from 'date-fns';
 import { t } from 'i18next';
+import {
+  AlertTriangle,
+  HeartPulse,
+  Syringe,
+  AlertCircle,
+  Package,
+  UtensilsCrossed,
+  ClipboardList,
+  Camera,
+  Flame,
+  HandHeart,
+  Award,
+  ShoppingCart,
+  Home,
+  Gift,
+  Cake,
+  PartyPopper,
+  TreePine,
+  type LucideIcon,
+} from 'lucide-react-native';
 import type { Task, RDV, StockItem, MealItem, CourseItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData, Anniversary } from './types';
 import { isRdvUpcoming } from './parser';
 import { formatDateLocalized } from './date-locale';
@@ -31,7 +51,7 @@ export interface InsightAction {
 
 export interface Insight {
   id: string;
-  icon: string;
+  Icon: LucideIcon;
   title: string;
   body: string;
   priority: InsightPriority;
@@ -105,7 +125,7 @@ function overdueTaskInsights(input: InsightInput, tc: TimeContext): Insight[] {
     const oldest = Math.max(...critical.map((tk) => daysSince(tc.now, tk.dueDate!)));
     insights.push({
       id: 'overdue-critical',
-      icon: '🚨',
+      Icon: AlertTriangle,
       title: t('insights:overdueCritical.title', { count: critical.length }),
       body: t('insights:overdueCritical.body', { days: oldest }),
       priority: 'high',
@@ -115,7 +135,7 @@ function overdueTaskInsights(input: InsightInput, tc: TimeContext): Insight[] {
   } else if (overdue.length > 0) {
     insights.push({
       id: 'overdue-tasks',
-      icon: '⚠️',
+      Icon: AlertTriangle,
       title: t('insights:overdueTasks.title', { count: overdue.length }),
       body: overdue.slice(0, 3).map((tk) => tk.text).join(', '),
       priority: 'medium',
@@ -142,7 +162,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
       ? '' : t('insights:rdvImminent.prepareQuestions');
     insights.push({
       id: `rdv-imminent-${rdv.sourceFile}`,
-      icon: '🏥',
+      Icon: HeartPulse,
       title: `${rdv.type_rdv} ${rdv.enfant} ${quand}`,
       body: `${rdv.heure || ''} — ${rdv.lieu || rdv.médecin || ''}${questionsNote}`,
       priority: 'high',
@@ -159,7 +179,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
   for (const rdv of vaccins) {
     insights.push({
       id: `rdv-vaccin-${rdv.sourceFile}`,
-      icon: '💉',
+      Icon: Syringe,
       title: t('insights:rdvVaccin.title', { child: rdv.enfant, when: formatRelativeDate(tc.now, rdv.date_rdv) }),
       body: t('insights:rdvVaccin.body', { time: rdv.heure, doctor: rdv.médecin || rdv.lieu || '' }),
       priority: 'medium',
@@ -180,7 +200,7 @@ function stockInsights(input: InsightInput): Insight[] {
   if (critical.length > 0) {
     insights.push({
       id: 'stock-critical',
-      icon: '🔴',
+      Icon: AlertCircle,
       title: t('insights:stockCritical.title', { products: critical.map((s) => s.produit).join(', ') }),
       body: t('insights:stockCritical.body'),
       priority: 'high',
@@ -200,7 +220,7 @@ function stockInsights(input: InsightInput): Insight[] {
     if (notInCourses.length > 0) {
       insights.push({
         id: 'stock-low',
-        icon: '📦',
+        Icon: Package,
         title: t('insights:stockLow.title', { count: notInCourses.length }),
         body: notInCourses.map((s) => `${s.produit} (${s.quantite}/${s.seuil})`).join(', '),
         priority: 'medium',
@@ -247,7 +267,7 @@ function mealInsights(input: InsightInput, tc: TimeContext): Insight[] {
     if (relevant.length > 0) {
       insights.push({
         id: 'meals-missing',
-        icon: '🍽️',
+        Icon: UtensilsCrossed,
         title: t('insights:mealsMissing.title', { count: relevant.length }),
         body: relevant.map((m) => m.mealType).join(', ') + ` — ${todayDayDisplay}`,
         priority: 'medium',
@@ -270,7 +290,7 @@ function mealInsights(input: InsightInput, tc: TimeContext): Insight[] {
     if (tomorrowMissing.length >= 2) {
       insights.push({
         id: 'meals-tomorrow',
-        icon: '📋',
+        Icon: ClipboardList,
         title: t('insights:mealsTomorrow.title', { count: tomorrowMissing.length }),
         body: `${tomorrowDayDisplay} : ${tomorrowMissing.map((m) => m.mealType).join(', ')}`,
         priority: 'low',
@@ -313,7 +333,7 @@ function photoInsights(input: InsightInput, tc: TimeContext): Insight[] {
     if (bodyParts.length > 0) {
       insights.push({
         id: 'photos-missing-long',
-        icon: '📸',
+        Icon: Camera,
         title: t('insights:photosMissingLong.title'),
         body: bodyParts.join(', '),
         priority: 'medium',
@@ -323,7 +343,7 @@ function photoInsights(input: InsightInput, tc: TimeContext): Insight[] {
     } else if (missingPhoto.length > 0) {
       insights.push({
         id: 'photos-missing-today',
-        icon: '📸',
+        Icon: Camera,
         title: t('insights:photosMissingToday.title'),
         body: t('insights:photosMissingToday.body', { names: missingPhoto.map((e) => e.name).join(', ') }),
         priority: 'low',
@@ -345,7 +365,7 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
   if (profile.streak >= 5) {
     insights.push({
       id: 'streak-tasks',
-      icon: '🔥',
+      Icon: Flame,
       title: t('insights:streakTasks.title', { count: profile.streak }),
       body: t('insights:streakTasks.body'),
       priority: 'low',
@@ -364,7 +384,7 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
   if (!hasGratitudeToday && hasGratitudeYesterday) {
     insights.push({
       id: 'gratitude-reminder',
-      icon: '🙏',
+      Icon: HandHeart,
       title: t('insights:gratitudeReminder.title'),
       body: t('insights:gratitudeReminder.body'),
       priority: 'low',
@@ -389,7 +409,7 @@ function defiInsights(input: InsightInput, tc: TimeContext): Insight[] {
     if (daysLeft <= 2 && daysLeft >= 0) {
       insights.push({
         id: `defi-ending-${defi.id}`,
-        icon: '🏅',
+        Icon: Award,
         title: t('insights:defiEnding.title', { title: defi.title, when: formatRelativeDate(tc.now, defi.endDate) }),
         body: t('insights:defiEnding.body', { emoji: defi.emoji, count: daysLeft }),
         priority: 'high',
@@ -406,7 +426,7 @@ function defiInsights(input: InsightInput, tc: TimeContext): Insight[] {
       if (!todayEntry && daysLeft >= 0) {
         insights.push({
           id: `defi-checkin-${defi.id}`,
-          icon: defi.emoji,
+          Icon: Award,
           title: t('insights:defiCheckin.title', { title: defi.title }),
           body: t('insights:defiCheckin.body'),
           priority: 'medium',
@@ -426,7 +446,7 @@ function coursesInsights(input: InsightInput): Insight[] {
   if (pending.length >= 15) {
     insights.push({
       id: 'courses-long',
-      icon: '🛒',
+      Icon: ShoppingCart,
       title: t('insights:coursesLong.title', { count: pending.length }),
       body: t('insights:coursesLong.body'),
       priority: 'medium',
@@ -447,7 +467,7 @@ function vacationInsights(input: InsightInput, tc: TimeContext): Insight[] {
   if (daysLeft <= 1 && daysLeft >= 0) {
     insights.push({
       id: 'vacation-ending',
-      icon: '🏠',
+      Icon: Home,
       title: t('insights:vacationEnding.title'),
       body: daysLeft === 0 ? t('insights:vacationEnding.bodyToday') : t('insights:vacationEnding.bodyTomorrow'),
       priority: 'medium',
@@ -473,7 +493,7 @@ function gamificationInsights(input: InsightInput): Insight[] {
     if (remaining <= 20 && remaining > 0) {
       insights.push({
         id: 'loot-close',
-        icon: '🎁',
+        Icon: Gift,
         title: t('insights:lootClose.title', { remaining }),
         body: t('insights:lootClose.body'),
         priority: 'low',
@@ -486,7 +506,7 @@ function gamificationInsights(input: InsightInput): Insight[] {
   if (profile.lootBoxesAvailable > 0) {
     insights.push({
       id: 'loot-available',
-      icon: '🎁',
+      Icon: Gift,
       title: t('insights:lootAvailable.title', { count: profile.lootBoxesAvailable }),
       body: t('insights:lootAvailable.body'),
       priority: 'medium',
@@ -527,7 +547,7 @@ function anniversaryInsights(input: InsightInput, tc: TimeContext): Insight[] {
     if (days === 0) {
       insights.push({
         id: `anniversary-today-${a.name}`,
-        icon: '🎂',
+        Icon: Cake,
         title: t('insights:anniversaryToday.title', { name: a.name }),
         body: t('insights:anniversaryToday.body', { name: a.name, age: ageText }),
         priority: 'high',
@@ -537,7 +557,7 @@ function anniversaryInsights(input: InsightInput, tc: TimeContext): Insight[] {
       const quand = days === 1 ? t('insights:relative.tomorrow') : t('insights:relative.inDays', { count: days });
       insights.push({
         id: `anniversary-soon-${a.name}`,
-        icon: '🎈',
+        Icon: PartyPopper,
         title: t('insights:anniversarySoon.title', { name: a.name, when: quand }),
         body: `${a.name}${ageText}${a.category ? ` · ${a.category}` : ''}`,
         priority: days === 1 ? 'medium' : 'low',
@@ -589,7 +609,7 @@ function skillTreeInsights(input: InsightInput): Insight[] {
       const first = redFlags[0];
       insights.push({
         id: `skill-redflag-${child.id}`,
-        icon: '⚠️',
+        Icon: AlertTriangle,
         title: t('insights:skillRedFlag.title', { name: child.name }),
         body: t('insights:skillRedFlag.body', { label: first.label, months: months - first.expectedMonths! }),
         priority: 'high',
@@ -603,7 +623,7 @@ function skillTreeInsights(input: InsightInput): Insight[] {
       // Nouveau profil avec beaucoup de jalons en retard → message d'accueil
       insights.push({
         id: `skill-onboard-${child.id}`,
-        icon: '🌳',
+        Icon: TreePine,
         title: t('insights:skillOnboard.title', { name: child.name, months }),
         body: t('insights:skillOnboard.body', { count: dueJalons.length }),
         priority: 'medium',
@@ -618,7 +638,7 @@ function skillTreeInsights(input: InsightInput): Insight[] {
       const cat = SKILL_CATEGORIES.find((c) => c.id === mostRecent.categoryId);
       insights.push({
         id: `skill-due-${child.id}`,
-        icon: cat?.emoji ?? '🌳',
+        Icon: TreePine,
         title: t('insights:skillDue.title', { name: child.name }),
         body: t('insights:skillDue.body', { label: mostRecent.label, months: mostRecent.expectedMonths }),
         priority: 'medium',

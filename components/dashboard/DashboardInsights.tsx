@@ -86,7 +86,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
               onPress={handlePress}
             >
               <View style={[styles.insightIconBadgeMain, { backgroundColor: priorityColor + '18' }]}>
-                <Text style={styles.insightIconMain}>{insight.icon}</Text>
+                <insight.Icon size={20} strokeWidth={1.75} color={priorityColor} />
               </View>
               <View style={styles.insightContent}>
                 <Text style={[styles.insightTitleMain, { color: colors.text }]} numberOfLines={2}>{insight.title}</Text>
@@ -109,7 +109,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
             onPress={handlePress}
           >
             <View style={[styles.insightIconBadge, { backgroundColor: priorityColor + '18' }]}>
-              <Text style={styles.insightIcon}>{insight.icon}</Text>
+              <insight.Icon size={14} strokeWidth={1.75} color={priorityColor} />
             </View>
             <View style={styles.insightContent}>
               <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
@@ -179,9 +179,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  insightIconMain: {
-    fontSize: FontSize.icon,
-  },
   insightTitleMain: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
@@ -206,9 +203,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  insightIcon: {
-    fontSize: FontSize.body,
   },
   insightContent: {
     flex: 1,

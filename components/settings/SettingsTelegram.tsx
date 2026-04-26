@@ -9,7 +9,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { ModalHeader } from '../ui/ModalHeader';
 import { SectionHeader } from '../ui/SectionHeader';
-import { Send } from 'lucide-react-native';
+import { Send, Lightbulb } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -133,9 +133,10 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
               </Text>
             </View>
 
-            <View style={[styles.tip, { backgroundColor: colors.warningBg, borderColor: colors.warning }]}>
-              <Text style={[styles.tipText, { color: colors.warningText }]}>
-                💡 <Text style={[styles.bold, { color: colors.text }]}>{t('settings.telegram.groupTip')}</Text>
+            <View style={[styles.tip, { backgroundColor: colors.warningBg, borderColor: colors.warning, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }]}>
+              <Lightbulb size={16} strokeWidth={1.75} color={colors.warningText} style={{ marginTop: 2 }} />
+              <Text style={[styles.tipText, { color: colors.warningText, flex: 1 }]}>
+                <Text style={[styles.bold, { color: colors.text }]}>{t('settings.telegram.groupTip')}</Text>
               </Text>
             </View>
 
