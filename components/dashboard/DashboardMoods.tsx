@@ -11,7 +11,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { MOOD_EMOJIS } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
-import { FontSize } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
 
 function DashboardMoodsInner(_props: DashboardSectionProps) {
@@ -34,7 +34,7 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard key="moods" title={t('dashboard.moods.title')} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/moods' as any)} hideMoreLink style={{ flex: 1 }}>
       {todayMoods.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.textMuted }]}>
+        <Text style={[styles.empty, { color: colors.brand.soilMuted }]}>
           {t('dashboard.moods.empty')}
         </Text>
       ) : (
@@ -45,7 +45,7 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
             return (
               <View key={p.id} style={styles.moodItem}>
                 <Text style={styles.emoji}>{MOOD_EMOJIS[entry.level]}</Text>
-                <Text style={[styles.name, { color: colors.textSub }]} numberOfLines={1}>{p.name}</Text>
+                <Text style={[styles.name, { color: colors.brand.soilMuted }]} numberOfLines={1}>{p.name}</Text>
               </View>
             );
           })}
@@ -59,8 +59,8 @@ export const DashboardMoods = React.memo(DashboardMoodsInner);
 
 const styles = StyleSheet.create({
   empty: {
-    fontSize: FontSize.caption,
-    fontStyle: 'italic',
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
   },
   row: {
     flexDirection: 'row',
@@ -75,7 +75,8 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   name: {
-    fontSize: FontSize.caption,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.sm,
     marginTop: Spacing.xs,
   },
 });
