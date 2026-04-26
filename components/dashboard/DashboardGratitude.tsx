@@ -38,7 +38,7 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
     <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/gratitude' as any)} hideMoreLink style={{ flex: 1 }}>
       {firstEntry ? (
         <>
-          <View style={[styles.quoteBorder, { backgroundColor: colors.cardAlt }]}>
+          <View style={[styles.quoteBorder, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
             <Text style={[styles.quoteText, { color: colors.text }]} numberOfLines={3}>
               "{firstEntry.text}"
             </Text>
