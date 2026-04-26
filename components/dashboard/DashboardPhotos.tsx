@@ -8,11 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import * as ImagePicker from 'expo-image-picker';
+import { Check, Camera } from 'lucide-react-native';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize } from '../../constants/typography';
 
 function DashboardPhotosInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -106,7 +107,11 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
             activeOpacity={0.7}
           >
             <Text style={styles.avatarEmoji}>{e.avatar}</Text>
-            <Text style={styles.avatarStatus}>{e.hasPhoto ? '✅' : '📷'}</Text>
+            {e.hasPhoto ? (
+              <Check size={14} strokeWidth={2.25} color={colors.success} />
+            ) : (
+              <Camera size={14} strokeWidth={1.75} color={colors.brand.soilMuted} />
+            )}
           </TouchableOpacity>
         ))}
       </View>
@@ -129,8 +134,5 @@ const styles = StyleSheet.create({
   },
   avatarEmoji: {
     fontSize: 28,
-  },
-  avatarStatus: {
-    fontSize: FontSize.caption,
   },
 });
