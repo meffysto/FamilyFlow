@@ -32,6 +32,9 @@
           "whatsapp",
           "sms",
           "tel"
+        ],
+        "UIBackgroundModes": [
+          "audio"
         ]
       },
       "buildNumber": "24"
