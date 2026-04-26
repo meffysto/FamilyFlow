@@ -33,12 +33,45 @@ import { withAlpha } from '../../lib/colors';
 import { useTranslation } from 'react-i18next';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import {
+  Repeat,
+  CalendarDays,
+  UtensilsCrossed,
+  ChefHat,
+  ShoppingCart,
+  Package,
+  Salad,
+  HeartPulse,
+  CloudSun,
+  Moon,
+  Baby,
+  Camera,
+  MessageCircle,
+  HandHeart,
+  BookOpen,
+  Sprout,
+  Trees,
+  Sparkles,
+  Award,
+  Cake,
+  Gift,
+  Wallet,
+  NotebookPen,
+  Mail,
+  BarChart3,
+  Settings as SettingsIcon,
+  ClipboardList,
+  Heart as HeartIcon,
+  Gamepad2,
+  Users as UsersIcon,
+  type LucideIcon,
+} from 'lucide-react-native';
 
 const VIEW_PREF_KEY = 'more_view_mode';
 type ViewMode = 'list' | 'grid';
 
 interface MenuItem {
-  emoji: string;
+  Icon: LucideIcon;
   label: string;
   route: string;
   params?: Record<string, string>;
@@ -56,14 +89,14 @@ const CATEGORY_LABEL_KEYS = {
   systeme: 'menu.categories.system',
 } as const;
 
-const CATEGORY_EMOJIS = {
-  organisation: '📋',
-  sante: '💜',
-  souvenirs: '✨',
-  jeux: '🎮',
-  famille: '👨‍👩‍👧‍👦',
-  systeme: '⚙️',
-} as const;
+const CATEGORY_ICONS: Record<'organisation' | 'sante' | 'souvenirs' | 'jeux' | 'famille' | 'systeme', LucideIcon> = {
+  organisation: ClipboardList,
+  sante: HeartIcon,
+  souvenirs: Sparkles,
+  jeux: Gamepad2,
+  famille: UsersIcon,
+  systeme: SettingsIcon,
+};
 
 type CategoryKey = keyof typeof CATEGORY_LABEL_KEYS;
 
@@ -133,37 +166,37 @@ export default function MoreScreen() {
 
     return [
       // Organisation — teal
-      { emoji: '🔄', label: t('menu.items.routines'), route: '/(tabs)/routines', color: colors.catOrganisation, category: 'organisation' as const },
-      { emoji: '📅', label: t('menu.items.appointments'), route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.catOrganisation, category: 'organisation' as const },
-      { emoji: '🍽️', label: t('menu.items.meals'), route: '/(tabs)/meals', color: colors.catOrganisation, category: 'organisation' as const },
-      { emoji: '📖', label: t('menu.items.recipes'), route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.catOrganisation, category: 'organisation' as const },
-      { emoji: '🛒', label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.catOrganisation, category: 'organisation' as const },
-      { emoji: '📦', label: t('menu.items.stock'), route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.catOrganisation, category: 'organisation' as const },
+      { Icon: Repeat, label: t('menu.items.routines'), route: '/(tabs)/routines', color: colors.catOrganisation, category: 'organisation' as const },
+      { Icon: CalendarDays, label: t('menu.items.appointments'), route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.catOrganisation, category: 'organisation' as const },
+      { Icon: UtensilsCrossed, label: t('menu.items.meals'), route: '/(tabs)/meals', color: colors.catOrganisation, category: 'organisation' as const },
+      { Icon: ChefHat, label: t('menu.items.recipes'), route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.catOrganisation, category: 'organisation' as const },
+      { Icon: ShoppingCart, label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.catOrganisation, category: 'organisation' as const },
+      { Icon: Package, label: t('menu.items.stock'), route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.catOrganisation, category: 'organisation' as const },
       // Santé & Bien-être — violet
-      { emoji: '🥗', label: 'Préférences alimentaires', route: '/dietary', color: colors.catSante, category: 'sante' as const },
-      { emoji: '🏥', label: t('menu.items.health'), route: '/(tabs)/health', color: colors.catSante, category: 'sante' as const },
-      { emoji: '🌤️', label: t('menu.items.moods'), route: '/(tabs)/moods', color: colors.catSante, category: 'sante' as const },
-      ...(hasBaby ? [{ emoji: '🌙', label: t('menu.items.nightMode'), route: '/(tabs)/night-mode', color: colors.catSante, category: 'sante' as const }] : []),
-      ...(profiles.some(p => p.statut === 'grossesse') ? [{ emoji: '🤰', label: t('menu.items.pregnancy'), route: '/(tabs)/pregnancy' as const, color: colors.catSante, category: 'sante' as const }] : []),
+      { Icon: Salad, label: 'Préférences alimentaires', route: '/dietary', color: colors.catSante, category: 'sante' as const },
+      { Icon: HeartPulse, label: t('menu.items.health'), route: '/(tabs)/health', color: colors.catSante, category: 'sante' as const },
+      { Icon: CloudSun, label: t('menu.items.moods'), route: '/(tabs)/moods', color: colors.catSante, category: 'sante' as const },
+      ...(hasBaby ? [{ Icon: Moon, label: t('menu.items.nightMode'), route: '/(tabs)/night-mode', color: colors.catSante, category: 'sante' as const }] : []),
+      ...(profiles.some(p => p.statut === 'grossesse') ? [{ Icon: Baby, label: t('menu.items.pregnancy'), route: '/(tabs)/pregnancy' as const, color: colors.catSante, category: 'sante' as const }] : []),
       // Souvenirs & Émotions — orange doré
-      { emoji: '📸', label: t('menu.items.photos'), route: '/(tabs)/photos', color: colors.catSouvenirs, category: 'souvenirs' as const },
-      { emoji: '💬', label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: colors.catSouvenirs, category: 'souvenirs' as const },
-      { emoji: '🙏', label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: colors.catSouvenirs, category: 'souvenirs' as const },
-      { emoji: '📖', label: 'Histoires du soir', route: '/(tabs)/stories', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { Icon: Camera, label: t('menu.items.photos'), route: '/(tabs)/photos', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { Icon: MessageCircle, label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { Icon: HandHeart, label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { Icon: BookOpen, label: 'Histoires du soir', route: '/(tabs)/stories', color: colors.catSouvenirs, category: 'souvenirs' as const },
       // Jeux & Progrès — vert
-      { emoji: '🌱', label: t('menu.items.skills'), route: '/(tabs)/skills', color: colors.catJeux, category: 'jeux' as const },
-      { emoji: '🌳', label: activeProfile?.gardenName || t('menu.items.tree'), route: '/(tabs)/tree' as any, color: colors.catJeux, category: 'jeux' as const },
-      { emoji: '🎰', label: t('menu.items.rewards'), route: '/(tabs)/loot', badge: lootBoxes || undefined, color: colors.catJeux, category: 'jeux' as const },
-      { emoji: '🏅', label: t('menu.items.challenges'), route: '/(tabs)/defis', badge: activeDefis || undefined, color: colors.catJeux, category: 'jeux' as const },
+      { Icon: Sprout, label: t('menu.items.skills'), route: '/(tabs)/skills', color: colors.catJeux, category: 'jeux' as const },
+      { Icon: Trees, label: activeProfile?.gardenName || t('menu.items.tree'), route: '/(tabs)/tree' as any, color: colors.catJeux, category: 'jeux' as const },
+      { Icon: Sparkles, label: t('menu.items.rewards'), route: '/(tabs)/loot', badge: lootBoxes || undefined, color: colors.catJeux, category: 'jeux' as const },
+      { Icon: Award, label: t('menu.items.challenges'), route: '/(tabs)/defis', badge: activeDefis || undefined, color: colors.catJeux, category: 'jeux' as const },
       // Vie de famille — rose
-      { emoji: '🎂', label: t('menu.items.birthdays'), route: '/(tabs)/anniversaires', badge: upcomingBirthdays || undefined, color: colors.catFamille, category: 'famille' as const },
-      { emoji: '🎁', label: t('menu.items.wishlist'), route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: colors.catFamille, category: 'famille' as const },
-      { emoji: '💰', label: t('menu.items.budget'), route: '/(tabs)/budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, color: colors.catFamille, category: 'famille' as const },
-      { emoji: '📝', label: t('menu.items.notes'), route: '/(tabs)/notes', badge: notes.length || undefined, color: colors.catFamille, category: 'famille' as const },
-      { emoji: '💌', label: 'Love Notes', route: '/(tabs)/lovenotes' as any, badge: loveNoteUnreadCount || undefined, color: colors.catFamille, category: 'famille' as const },
-      { emoji: '📊', label: t('menu.items.stats'), route: '/(tabs)/stats', color: colors.catFamille, category: 'famille' as const },
+      { Icon: Cake, label: t('menu.items.birthdays'), route: '/(tabs)/anniversaires', badge: upcomingBirthdays || undefined, color: colors.catFamille, category: 'famille' as const },
+      { Icon: Gift, label: t('menu.items.wishlist'), route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: colors.catFamille, category: 'famille' as const },
+      { Icon: Wallet, label: t('menu.items.budget'), route: '/(tabs)/budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, color: colors.catFamille, category: 'famille' as const },
+      { Icon: NotebookPen, label: t('menu.items.notes'), route: '/(tabs)/notes', badge: notes.length || undefined, color: colors.catFamille, category: 'famille' as const },
+      { Icon: Mail, label: 'Love Notes', route: '/(tabs)/lovenotes' as any, badge: loveNoteUnreadCount || undefined, color: colors.catFamille, category: 'famille' as const },
+      { Icon: BarChart3, label: t('menu.items.stats'), route: '/(tabs)/stats', color: colors.catFamille, category: 'famille' as const },
       // Système — gris
-      { emoji: '⚙️', label: t('menu.items.settings'), route: '/(tabs)/settings', color: colors.catSysteme, category: 'systeme' as const },
+      { Icon: SettingsIcon, label: t('menu.items.settings'), route: '/(tabs)/settings', color: colors.catSysteme, category: 'systeme' as const },
     ];
   }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries, t, loveNoteUnreadCount, notes]);
 
@@ -226,7 +259,7 @@ export default function MoreScreen() {
             <View key={cat} style={styles.section}>
               {/* ── Section header simple ── */}
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionEmoji}>{CATEGORY_EMOJIS[cat]}</Text>
+                {(() => { const CatIcon = CATEGORY_ICONS[cat]; return <CatIcon size={16} strokeWidth={1.75} color={accentColor} />; })()}
                 <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
                   {t(CATEGORY_LABEL_KEYS[cat])}
                 </Text>
@@ -257,7 +290,7 @@ export default function MoreScreen() {
 
                         {/* Icône avec teinte plus saturée */}
                         <View style={[styles.listIcon, { backgroundColor: withAlpha(accentColor, isDark ? 0.15 : 0.10) }]}>
-                          <Text style={styles.listEmoji}>{item.emoji}</Text>
+                          <item.Icon size={24} strokeWidth={1.75} color={accentColor} />
                         </View>
 
                         {/* Label */}
@@ -299,7 +332,7 @@ export default function MoreScreen() {
                         accessibilityRole="button"
                       >
                         <View style={[styles.gridIcon, { backgroundColor: withAlpha(accentColor, 0.08) }]}>
-                          <Text style={styles.gridEmoji}>{item.emoji}</Text>
+                          <item.Icon size={26} strokeWidth={1.75} color={accentColor} />
                         </View>
                         <Text style={[styles.gridLabel, { color: colors.textSub }]}>{item.label}</Text>
                         {item.badge ? (
@@ -373,14 +406,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     gap: Spacing.sm,
   },
-  sectionEmoji: {
-    fontSize: FontSize.body,
-  },
   sectionLabel: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
   },
 
   // ── Vue liste : rows individuels ──
@@ -405,9 +433,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing['2xl'],
-  },
-  listEmoji: {
-    fontSize: FontSize.display,
   },
   labelContainer: {
     flex: 1,
@@ -452,7 +477,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gridEmoji: { fontSize: FontSize.icon },
   gridLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
