@@ -570,6 +570,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
     color: '#fff',
+    textAlign: 'center',
   },
   pvcRecap: {
     width: '100%',
@@ -602,6 +603,7 @@ const styles = StyleSheet.create({
   modeToggleText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    textAlign: 'center',
   },
   freeReadingBox: {
     padding: Spacing['2xl'],

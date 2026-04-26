@@ -8,7 +8,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
+import { Audio, InterruptionModeIOS } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
 import {
   Waveform,
@@ -330,6 +330,9 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       playsInSilentModeIOS: true,
       allowsRecordingIOS: false,
       staysActiveInBackground: false,
+      // Force le mixage explicite : ambiance + voix (expo-speech / ElevenLabs) cohabitent
+      // sans que AVSpeechSynthesizer interrompe la boucle d'ambiance.
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
     }).then(() => primeAudioSession()).catch((e) => {
       if (__DEV__) console.warn('StoryPlayer: audio prime failed', e);
     });
@@ -354,6 +357,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
           playsInSilentModeIOS: true,
           allowsRecordingIOS: false,
           staysActiveInBackground: false,
+          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
         }).catch(() => {});
 
         if (__DEV__) console.log('[StoryPlayer] ambience: loading…');
@@ -704,6 +708,34 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       }
     }
 
+    // Réaffirme le mode mixage juste avant que AVSpeechSynthesizer ne claime
+    // la session audio iOS — sinon il coupe la boucle d'ambiance qui tourne en parallèle.
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        allowsRecordingIOS: false,
+        staysActiveInBackground: false,
+        interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      });
+    } catch {
+      /* non-critique */
+    }
+
+    // Pré-démarre l'ambiance AVANT Speech.speak : si on attend le useEffect (qui
+    // tourne sur setIsPlaying), AVSpeechSynthesizer a déjà claim la session iOS
+    // et bloque playAsync. En démarrant ici, l'ambiance "occupe" la session en
+    // premier et iOS accepte ensuite de mixer la voix par-dessus.
+    const ambSound = ambienceSoundRef.current;
+    if (ambSound && ambienceActive && ambienceReady) {
+      try {
+        await ambSound.setVolumeAsync(0);
+        await ambSound.playAsync();
+        if (__DEV__) console.log('[StoryPlayer] ambience: pre-started before Speech.speak');
+      } catch (e) {
+        if (__DEV__) console.warn('[StoryPlayer] ambience pre-start failed:', e);
+      }
+    }
+
     Speech.speak(histoire.texte, {
       language: targetLang,
       voice: voiceId,
@@ -717,7 +749,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       },
     });
     setIsPlaying(true);
-  }, [voiceConfig, histoire.texte, expoSpeed]);
+  }, [voiceConfig, histoire.texte, expoSpeed, ambienceActive, ambienceReady]);
 
   const stopExpoSpeech = useCallback(() => {
     Speech.stop();
@@ -769,8 +801,16 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
     if (isPlaying) {
       stopExpoSpeech();
       setExpoSpeed(newSpeed);
-      setTimeout(() => {
+      setTimeout(async () => {
         const targetLang = voiceConfig.language === 'en' ? 'en-US' : 'fr-FR';
+        try {
+          await Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+            allowsRecordingIOS: false,
+            staysActiveInBackground: false,
+            interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+          });
+        } catch { /* non-critique */ }
         Speech.speak(histoire.texte, {
           language: targetLang,
           voice: voiceConfig.voiceIdentifier,

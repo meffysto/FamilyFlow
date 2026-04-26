@@ -11,6 +11,10 @@ export interface ElevenLabsOptions {
   model?: string;
   stability?: number;
   similarityBoost?: number;
+  /** 0..1 — pour PVC, garder à 0 (recommandation officielle ElevenLabs : évite artefacts/hallucinations). */
+  style?: number;
+  /** Améliore la ressemblance avec la voix clonée — recommandé true sur PVC. */
+  useSpeakerBoost?: boolean;
 }
 
 type GenerateResult = { audioUri: string } | { error: string };
@@ -165,6 +169,8 @@ async function performGenerateSpeech(
     model = 'eleven_multilingual_v2',
     stability = 0.5,
     similarityBoost = 0.75,
+    style = 0,
+    useSpeakerBoost = true,
   } = options;
 
   try {
@@ -181,6 +187,8 @@ async function performGenerateSpeech(
         voice_settings: {
           stability,
           similarity_boost: similarityBoost,
+          style,
+          use_speaker_boost: useSpeakerBoost,
         },
       }),
     });
@@ -255,6 +263,8 @@ async function performGenerateWithTimestamps(
     model = 'eleven_multilingual_v2',
     stability = 0.5,
     similarityBoost = 0.75,
+    style = 0,
+    useSpeakerBoost = true,
   } = options;
 
   try {
@@ -273,6 +283,8 @@ async function performGenerateWithTimestamps(
           voice_settings: {
             stability,
             similarity_boost: similarityBoost,
+            style,
+            use_speaker_boost: useSpeakerBoost,
           },
         }),
       },

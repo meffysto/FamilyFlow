@@ -561,6 +561,17 @@ export default function StoriesScreen() {
     return () => { cancelled = true; };
   }, [step.etape, localVoiceEngine, voiceConfig.language]);
 
+  // Mode Spectacle nécessite ElevenLabs ou Fish Audio (timestamps ou ratio script).
+  // Si on bascule vers la voix système alors qu'on est en spectacle, retombe automatiquement
+  // sur "doux" pour ne pas garder une config silencieusement incompatible.
+  useEffect(() => {
+    if (localVoiceEngine !== 'expo-speech') return;
+    const current = voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off');
+    if (current !== 'spectacle') return;
+    setVoiceConfig({ ...voiceConfig, audioMode: 'doux', spectacle: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localVoiceEngine]);
+
   // Réhydrater la voix sélectionnée depuis le voiceIdentifier persisté
   // une fois la liste chargée.
   useEffect(() => {
@@ -1235,12 +1246,17 @@ export default function StoriesScreen() {
           const ambienceVol = typeof voiceConfig.ambienceVolume === 'number'
             ? voiceConfig.ambienceVolume
             : 0.4;
+          // Spectacle (SFX automatiques) marche avec ElevenLabs (synchro mot-à-mot via
+          // timestamps) et Fish Audio (synchro ratio basée sur la position dans le script).
+          // Indisponible avec la voix système (expo-speech) qui n'expose ni l'un ni l'autre.
+          const spectacleAvailable = localVoiceEngine !== 'expo-speech';
           const MODES: { key: import('../../lib/types').StoryAudioMode; emoji: string; label: string; hint: string }[] = [
             { key: 'off',       emoji: '🔇', label: 'Off',       hint: 'Voix seule' },
             { key: 'doux',      emoji: '🌙', label: 'Doux',      hint: 'Ambiance' },
-            { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: 'Ambiance + SFX' },
+            { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: spectacleAvailable ? 'Ambiance + SFX' : 'ElevenLabs ou Fish Audio' },
           ];
           const setMode = (mode: import('../../lib/types').StoryAudioMode) => {
+            if (mode === 'spectacle' && !spectacleAvailable) return;
             Haptics.selectionAsync();
             setVoiceConfig({
               ...voiceConfig,
@@ -1259,17 +1275,22 @@ export default function StoriesScreen() {
               <View style={styles.audioModeRow}>
                 {MODES.map(m => {
                   const selected = currentMode === m.key;
+                  const disabled = m.key === 'spectacle' && !spectacleAvailable;
                   return (
                     <Pressable
                       key={m.key}
+                      disabled={disabled}
                       style={[
                         styles.audioModeChip,
                         {
                           backgroundColor: selected ? primary : colors.card,
                           borderColor: selected ? primary : colors.border,
+                          opacity: disabled ? 0.45 : 1,
                         },
                       ]}
                       onPress={() => setMode(m.key)}
+                      accessibilityState={{ disabled, selected }}
+                      accessibilityHint={disabled ? 'Sélectionnez ElevenLabs ou Fish Audio pour activer le mode Spectacle' : undefined}
                     >
                       <Text style={styles.audioModeEmoji}>{m.emoji}</Text>
                       <Text style={[styles.audioModeLabel, { color: selected ? '#fff' : colors.text }]}>
@@ -2317,6 +2338,7 @@ const styles = StyleSheet.create({
   cloneModeChipText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    textAlign: 'center',
   },
   contextCard: {
     flexDirection: 'row',
