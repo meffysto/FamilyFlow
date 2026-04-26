@@ -446,7 +446,7 @@ export default function HealthScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
         <StatusBar style={isDark ? 'light' : 'dark'} translucent />
-        <ScreenHeader title={t('health.screenTitle')} />
+        <ScreenHeader title={t('health.screenTitle')} tint="rgba(196,162,101,0.10)" />
         <EmptyState
           emoji="🏥"
           title={t('health.empty.noChildTitle')}
@@ -462,6 +462,7 @@ export default function HealthScreen() {
       <ScreenHeader
         title={t('health.screenTitle')}
         subtitle={selectedEnfant ? `${selectedEnfant.avatar} ${selectedEnfant.name}` : undefined}
+        tint="rgba(196,162,101,0.10)"
         bottom={
           <View>
             {enfants.length > 1 && (

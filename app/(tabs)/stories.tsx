@@ -952,7 +952,10 @@ export default function StoriesScreen() {
       const ambienceVolume = voiceConfig.ambienceVolume;
       const length = voiceConfig.length;
       const elevenLabsModel = voiceConfig.elevenLabsModel;
-      const base = { language: lang, spectacle, audioMode, ambienceVolume, length, elevenLabsModel } as const;
+      // Multi-voix : auto-activé en mode doux/spectacle si provider ElevenLabs.
+      // Apple/Fish n'ont pas accès à la voice library publique — toggle inopérant.
+      const multiVoice = audioMode !== 'off' && localVoiceEngine === 'elevenlabs' ? true : undefined;
+      const base = { language: lang, spectacle, audioMode, ambienceVolume, length, elevenLabsModel, multiVoice } as const;
       if (localVoiceEngine === 'elevenlabs') {
         if (voiceSelectedParentId) {
           const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
@@ -1759,6 +1762,7 @@ export default function StoriesScreen() {
         length,
         spectacle: (voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off')) === 'spectacle',
         availableSfxTags: (voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off')) === 'spectacle' ? getAvailableSfxTags() : undefined,
+        multiVoice: voiceConfig.multiVoice === true,
         context: {
           recentMoods: childMoods.map(m => ({ level: m.level, note: m.note ? anonymize(m.note, anonMap) : undefined, date: m.date })),
           recentQuotes: childQuotes.map(q => ({ citation: anonymize(q.citation, anonMap), contexte: q.contexte ? anonymize(q.contexte, anonMap) : undefined, date: q.date })),
@@ -1807,7 +1811,30 @@ export default function StoriesScreen() {
                 return b;
               }),
             };
+            if (__DEV__) {
+              const counts = script.beats.reduce<Record<string, number>>((acc, b) => {
+                acc[b.kind] = (acc[b.kind] ?? 0) + 1;
+                return acc;
+              }, {});
+              const speakers = script.beats
+                .filter(b => b.kind === 'dialogue')
+                .map(b => (b as { speaker: string }).speaker);
+              const uniqueSpeakers = Array.from(new Set(speakers));
+              console.log('[stories] script parsé:', {
+                totalBeats: script.beats.length,
+                breakdown: counts,
+                speakers: uniqueSpeakers,
+                speakerCounts: uniqueSpeakers.reduce<Record<string, number>>((acc, s) => {
+                  acc[s] = speakers.filter(x => x === s).length;
+                  return acc;
+                }, {}),
+              });
+            }
+          } else if (__DEV__) {
+            console.warn('[stories] script présent mais parse échoué — Claude a peut-être renvoyé du JSON cassé');
           }
+        } else if (__DEV__ && (voiceConfig.multiVoice || (voiceConfig.audioMode ?? '') === 'spectacle')) {
+          console.warn('[stories] multi-voix/spectacle activé mais Claude n\'a pas retourné de script');
         }
 
         // Si Claude n'a pas fourni `texte` mais qu'on a un script valide,
@@ -2113,6 +2140,7 @@ export default function StoriesScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={STEP_TITLES[step.etape] ?? 'Histoires du soir'}
+        tint="rgba(126,90,107,0.10)"
         leading={
           showBackBtn ? (
             <Pressable style={styles.backButton} onPress={goBack} accessibilityLabel="Retour">
