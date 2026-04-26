@@ -285,7 +285,7 @@ export default function GratitudeScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('gratitude.title')}
-        subtitle={streak > 0 ? t('gratitude.streak', { count: streak }) : undefined}
+        subtitle={t('gratitude.subtitle')}
         actions={
           streak > 0 ? (
             <View style={[styles.streakBadge, { backgroundColor: colors.info + '20' }]}>

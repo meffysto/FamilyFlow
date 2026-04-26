@@ -3023,6 +3023,7 @@
   },
   "gratitude": {
     "title": "Gratitude",
+    "subtitle": "What warms the heart",
     "streak": "{{count}}d 🔥",
     "today": "Today",
     "toast": {

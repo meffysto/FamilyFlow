@@ -3031,6 +3031,7 @@
   },
   "gratitude": {
     "title": "Gratitude",
+    "subtitle": "Ce qui réchauffe le cœur",
     "streak": "{{count}}j 🔥",
     "today": "Aujourd'hui",
     "toast": {
