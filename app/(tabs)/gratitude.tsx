@@ -37,7 +37,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Shadows } from '../../constants/shadows';
 import type { GratitudeEntry, GratitudeDay } from '../../lib/types';
@@ -109,7 +109,7 @@ function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherPro
   return (
     <GestureDetector gesture={panGesture}>
       <View
-        style={[tabSwitcherStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+        style={[tabSwitcherStyles.container, { backgroundColor: colors.brand.wash, borderColor: colors.brand.bark }]}
         onLayout={e => setTabWidth(e.nativeEvent.layout.width / 2)}
       >
         <Animated.View
@@ -121,8 +121,8 @@ function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherPro
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === 'aujourdhui' }}
         >
-          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'aujourdhui' ? colors.bg : colors.textMuted }]}>
-            🌟 Aujourd'hui
+          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'aujourdhui' ? colors.brand.parchment : colors.textSub }]}>
+            Aujourd'hui
           </Text>
         </Pressable>
         <Pressable
@@ -131,8 +131,8 @@ function TabSwitcher({ activeTab, onTabChange, primary, colors }: TabSwitcherPro
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === 'livre' }}
         >
-          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'livre' ? colors.bg : colors.textMuted }]}>
-            📖 Livre d'or
+          <Text style={[tabSwitcherStyles.tabText, { color: activeTab === 'livre' ? colors.brand.parchment : colors.textSub }]}>
+            Livre d'or
           </Text>
         </Pressable>
       </View>
@@ -146,7 +146,7 @@ const tabSwitcherStyles = StyleSheet.create({
     marginHorizontal: Spacing['4xl'],
     marginVertical: Spacing.lg,
     borderRadius: Radius.full,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
     height: 40,
   },
@@ -162,8 +162,8 @@ const tabSwitcherStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.lg,
   },
 });
 
