@@ -711,7 +711,10 @@ export default function StoriesScreen() {
   const [step, setStep] = useState<StoryFlowStep>({ etape: 'choisir_enfant' });
   const [activeTab, setActiveTab] = useState<'nouvelle' | 'bibliotheque'>('nouvelle');
   const [selectedUniversId, setSelectedUniversId] = useState<StoryUniverseId | null>(null);
-  const [detailText, setDetailText] = useState('');
+  // Note : `detailText` est local à PersonnaliserStep (cf. fix keyboard dismiss).
+  // PersonnaliserStep est une fonction nested → un keystroke dans le parent
+  // recrée sa référence et React remonte le subtree → TextInput perdu, clavier
+  // dismiss. En localisant l'état, le parent ne re-render plus à chaque touche.
 
   // ── Carousel livres (ChoisirUniversStep) ────────────────────────────────────
   // Défini ici pour éviter le remount du FlatList quand selectedUniversId change
@@ -1134,6 +1137,10 @@ export default function StoriesScreen() {
   // ── Étape 3 : Personnaliser ──
 
   function PersonnaliserStep({ enfantId, enfantName, universId, book, trancheAgeLocked }: { enfantId: string; enfantName: string; universId: StoryUniverseId; book?: BookContext; trancheAgeLocked?: StoryAgeRange }) {
+    // Détail libre — local pour éviter les re-renders parent qui démonteraient
+    // le subtree (le composant est une fonction nested → ref recrée à chaque
+    // render parent → React remonte tout, TextInput perdu, clavier dismiss).
+    const [detailText, setDetailText] = useState('');
     // Tranche d'âge : verrouillée par le livre, sinon sélectionnable (default depuis profil)
     const profileForAge = profiles.find(p => p.id === enfantId);
     const defaultTranche = trancheAgeLocked ?? defaultTrancheAgeFromProfile(profileForAge?.birthdate);
@@ -2372,7 +2379,7 @@ export default function StoriesScreen() {
             </Pressable>
             <Pressable style={[styles.secondaryButton, { borderColor: primary }]} onPress={() => {
               setSelectedUniversId(null);
-              setDetailText('');
+              // detailText réinitialisé naturellement au remount de PersonnaliserStep
               goTo({ etape: 'choisir_enfant' });
             }}>
               <Text style={[styles.secondaryButtonText, { color: primary }]}>Nouvelle histoire</Text>
