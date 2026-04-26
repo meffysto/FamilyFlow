@@ -11,7 +11,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { buildLeaderboard } from '../../lib/gamification';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
 
 function DashboardLeaderboardInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -28,7 +28,7 @@ function DashboardLeaderboardInner(_props: DashboardSectionProps) {
     <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/loot')} hideMoreLink style={{ flex: 1 }}>
       <Text style={styles.medal}>🥇</Text>
       <Text style={[styles.firstName, { color: colors.text }]} numberOfLines={1}>{first.name}</Text>
-      <Text style={[styles.firstPts, { color: colors.textMuted }]}>{first.points ?? 0} pts</Text>
+      <Text style={[styles.firstPts, { color: colors.brand.soilMuted }]}>{first.points ?? 0} pts</Text>
     </DashboardCard>
   );
 }
@@ -38,12 +38,14 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   firstName: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.lg,
+    letterSpacing: -0.2,
     marginTop: 2,
   },
   firstPts: {
-    fontSize: FontSize.micro,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.sm,
   },
 });
 
