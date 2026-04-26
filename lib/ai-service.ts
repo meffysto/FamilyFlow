@@ -968,6 +968,23 @@ export interface StoryGenerationConfig {
   spectacle?: boolean;
   /** V2 : tags SFX disponibles dans la bibliothèque bundlée (Claude doit s'y limiter) */
   availableSfxTags?: string[];
+  /** Multi-voix : demander à Claude de baliser les dialogues avec speaker → voix de personnage */
+  multiVoice?: boolean;
+  /** Tranche d'âge cible — règle vocabulaire/thèmes (livres/chapitres) */
+  trancheAge?: '3-5' | '6-8' | '9+';
+  /** Contexte livre — présent uniquement pour les chapitres N>=2 d'un livre */
+  book?: {
+    livreId: string;
+    livreTitre: string;
+    /** Numéro du chapitre EN COURS de génération */
+    chapitre: number;
+    /** Slugs personnages déjà introduits dans les chapitres précédents (verrouillés) */
+    lockedCasting: string[];
+    /** Texte intégral du chapitre N-1 — pour reprendre le fil narratif */
+    previousChapterFullText: string;
+    /** Résumés courts des chapitres antérieurs (< N-1), triés par chapitre asc */
+    olderSummaries: Array<{ chapitre: number; titre: string; summary: string }>;
+  };
 }
 
 export async function generateBedtimeStory(
@@ -1002,6 +1019,85 @@ export async function generateBedtimeStory(
 
   // Template JSON adapté au nombre de paragraphes
   const paragraphesTemplate = Array.from({ length: lengthCfg.paragraphs }, (_, i) => `paragraphe${i + 1}`).join('\\n\\n');
+
+  // Multi-voix : injecte le casting de l'univers dans le prompt si demandé
+  const { buildCharactersPromptSection, getUniversCasting } = await import('./story-characters');
+  const multiVoiceEnabled = story.multiVoice === true && getUniversCasting(story.universId).length > 0;
+
+  // ─── Bloc casting verrouillé (livre/chapitres) ─────────────────────────
+  // Quand on génère un chapitre N>=2, on remplace le bloc characters standard
+  // par un découpage CASTING VERROUILLÉ (déjà introduits) / CASTING DISPONIBLE.
+  let castingLockedSection = '';
+  if (story.book && multiVoiceEnabled) {
+    const fullCasting = getUniversCasting(story.universId);
+    const lockedSet = new Set(story.book.lockedCasting);
+    const lockedChars = fullCasting.filter(c => lockedSet.has(c.slug));
+    const availableChars = fullCasting.filter(c => !lockedSet.has(c.slug));
+    const formatList = (chars: typeof fullCasting) =>
+      chars.map(c => `  - "${c.slug}" : ${c.label} — ${c.hint}`).join('\n');
+    const lockedBlock = lockedChars.length > 0
+      ? `\nCASTING VERROUILLÉ — personnages déjà introduits dans les chapitres précédents :\n${formatList(lockedChars)}\nCes personnages doivent garder leur personnalité et peuvent réapparaître. Tu DOIS en utiliser au moins 1 dans ce chapitre s'il y en a.\n`
+      : '';
+    const availableBlock = availableChars.length > 0
+      ? `\nCASTING DISPONIBLE — personnages que tu peux introduire (max 1 NOUVEAU dans ce chapitre) :\n${formatList(availableChars)}\n`
+      : '';
+    castingLockedSection = `\n${lockedBlock}${availableBlock}`;
+  }
+
+  // charactersRules standard : SUPPRIMÉ quand book présent (castingLockedSection le remplace)
+  const charactersRules = (multiVoiceEnabled && !story.book) ? buildCharactersPromptSection(story.universId) : '';
+
+  if (__DEV__) {
+    const casting = getUniversCasting(story.universId);
+    console.log('[ai-service] multi-voix:', {
+      flag: story.multiVoice === true,
+      univers: story.universId,
+      castingSize: casting.length,
+      slugs: casting.map(c => c.slug),
+      enabled: multiVoiceEnabled,
+      hasBook: !!story.book,
+      chapitre: story.book?.chapitre,
+      lockedCount: story.book?.lockedCasting.length ?? 0,
+      availableCount: story.book ? casting.length - (story.book.lockedCasting.length ?? 0) : casting.length,
+      trancheAge: story.trancheAge,
+    });
+  }
+
+  // ─── Bloc mémoire narrative (livre/chapitres) ──────────────────────────
+  let bookMemorySection = '';
+  if (story.book) {
+    const olderBlock = story.book.olderSummaries.length > 0
+      ? `Résumés des chapitres antérieurs :\n${story.book.olderSummaries.map(s => `  Chapitre ${s.chapitre} — "${s.titre}" : ${s.summary}`).join('\n')}\n`
+      : '';
+    bookMemorySection = `
+
+LIVRE EN COURS — "${story.book.livreTitre}" — Chapitre ${story.book.chapitre}
+
+MÉMOIRE NARRATIVE :
+${olderBlock}Texte intégral du chapitre PRÉCÉDENT (chapitre ${story.book.chapitre - 1}) :
+"""
+${story.book.previousChapterFullText}
+"""
+
+RÈGLES DE CONTINUITÉ :
+- NE FAIS PAS de récap/résumé du chapitre précédent au début — l'enfant l'a écouté, pars directement dans la suite
+- Reprends le fil narratif là où le chapitre précédent s'arrêtait (heure de la journée, lieu, état émotionnel)
+- Garde la cohérence des personnages verrouillés (personnalité, façon de parler, relations)
+- Termine ce chapitre sur une note APAISÉE (pas de cliffhanger angoissant — c'est une histoire du soir)
+`;
+  }
+
+  // ─── Règles tranche d'âge ──────────────────────────────────────────────
+  // Quand définie, REMPLACE la ligne "Vocabulaire adapté à ${enfantAge}" du prompt.
+  let ageRangeRules = '';
+  if (story.trancheAge === '3-5') {
+    ageRangeRules = 'Vocabulaire TRÈS simple. Phrases COURTES (8-12 mots). Vocabulaire concret (objets, animaux, couleurs). Émotions de base (content, peur, amour). Pas d\'abstraction.';
+  } else if (story.trancheAge === '6-8') {
+    ageRangeRules = 'Vocabulaire riche mais accessible. Phrases moyennes (12-18 mots). Concepts narratifs simples (amitié, courage, partage). Petits dilemmes résolus.';
+  } else if (story.trancheAge === '9+') {
+    ageRangeRules = 'Vocabulaire varié. Phrases construites (15-25 mots). Thèmes plus profonds possibles (responsabilité, identité, mystères). Sous-texte autorisé.';
+  }
+  const vocabLine = ageRangeRules ? `- ${ageRangeRules}` : `- Vocabulaire adapté à ${story.enfantAge}`;
 
   // V2 Mode Spectacle : enrichit le format de sortie avec un script de bruitages
   const spectacleEnabled = story.spectacle === true && (story.availableSfxTags?.length ?? 0) > 0;
@@ -1038,9 +1134,21 @@ RÈGLES STRICTES pour le script :
 - La concaténation des beats narration (avec un espace entre eux) doit reformer EXACTEMENT le champ "texte"
 ` : '';
 
-  const outputFormat = spectacleEnabled
-    ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ { "kind": "narration", "text": "..." }, { "kind": "sfx", "tag": "...", "triggerWord": "..." }, ... ] } }`
-    : `{ "titre": "...", "texte": "${paragraphesTemplate}" }`;
+  // Le `script` est demandé dès que multi-voix OU spectacle est actif.
+  // Beats inclus selon les modes :
+  //   multi-voix seul    : narration + dialogue
+  //   spectacle seul     : narration + sfx
+  //   multi-voix + spect : narration + dialogue + sfx
+  const scriptEnabled = spectacleEnabled || multiVoiceEnabled;
+  const exampleBeats = [
+    `{ "kind": "narration", "text": "..." }`,
+    multiVoiceEnabled ? `{ "kind": "dialogue", "speaker": "<slug>", "text": "..." }` : null,
+    spectacleEnabled ? `{ "kind": "sfx", "tag": "...", "triggerWord": "..." }` : null,
+  ].filter(Boolean).join(', ');
+  const memorySummaryField = `, "memorySummary": "résumé neutre 4-5 phrases — lieux, personnages, objets clés, état final du héros — pas d'émotion ni de style narratif"`;
+  const outputFormat = scriptEnabled
+    ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ ${exampleBeats}, ... ] }${memorySummaryField} }`
+    : `{ "titre": "...", "texte": "${paragraphesTemplate}"${memorySummaryField} }`;
 
   // Tags de performance vocale ElevenLabs (interprétés par le moteur TTS).
   // Reste en ANGLAIS même quand l'histoire est en français : c'est la convention API.
@@ -1072,7 +1180,7 @@ RÈGLES de placement :
 
 RÈGLES STRICTES :
 - ${langInstr}
-- Vocabulaire adapté à ${story.enfantAge}
+${vocabLine}
 - Longueur : exactement ${lengthCfg.paragraphs} paragraphes bien distincts (~${lengthCfg.words} mots total, durée de lecture ${lengthCfg.duration})
 - Ton : doux, rassurant, poétique, jamais effrayant
 - Fin : paisible — le héros rentre chez lui ou s'endort après l'aventure
@@ -1081,7 +1189,8 @@ RÈGLES STRICTES :
 ${moodContext ? `- Adapte le ton selon l'humeur : ${moodContext}` : ''}
 ${quotesContext ? `- Intègre subtilement une expression de l'enfant : ${quotesContext}` : ''}
 ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesContext}` : ''}
-${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${performanceTagsRules}${spectacleRules}
+${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${performanceTagsRules}${charactersRules}${bookMemorySection}${castingLockedSection}${spectacleRules}
+- Le champ "memorySummary" doit être un résumé NEUTRE en 4-5 phrases focalisé sur ce qui pourrait revenir dans un chapitre futur (lieux, personnages introduits, objets clés, état final du héros). Pas d'émotion, pas de style narratif — c'est une note de continuité.
 - Répondre UNIQUEMENT en JSON valide : ${outputFormat}
 - Aucun texte en dehors du JSON`;
 
@@ -1100,7 +1209,7 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
         // Spectacle = +script JSON volumineux dans la réponse → +150% de tokens
         // (script avec ~10 beats narration/dialogue + 5 SFX coûte ~600 tokens
         // en plus du `texte`, donc +30% étaient insuffisants → réponse tronquée).
-        max_tokens: spectacleEnabled ? Math.round(lengthCfg.maxTokens * 2.5) : lengthCfg.maxTokens,
+        max_tokens: (scriptEnabled ? Math.round(lengthCfg.maxTokens * 2.5) : lengthCfg.maxTokens) + (story.book ? 400 : 0),
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
