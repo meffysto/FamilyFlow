@@ -90,7 +90,7 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
         color={colors.catJeux}
         tinted
       >
-        <Text style={[styles.parentSubtitle, { color: colors.brand.soilMuted }]}>
+        <Text style={[styles.parentSubtitle, { color: colors.textMuted }]}>
           {t('dashboard.secretMissions.pendingValidation', { count: pendingMissions.length })}
         </Text>
         {pendingMissions.slice(0, 3).map((mission) => (

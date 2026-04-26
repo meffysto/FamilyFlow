@@ -102,7 +102,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
               <Text style={[styles.title, { color: colors.text }]}>
                 {item.emoji} {item.label}
               </Text>
-              <Text style={[styles.meta, { color: colors.brand.soilMuted }]}>
+              <Text style={[styles.meta, { color: colors.textMuted }]}>
                 {yearsLabel} · {item.detail}
               </Text>
             </View>

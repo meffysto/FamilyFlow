@@ -22,7 +22,7 @@ function DashboardWishlistInner(_props: DashboardSectionProps) {
 
   return (
     <DashboardCard key="wishlist" title={t('dashboard.wishlist.title')} color={colors.catFamille} tinted onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
-      <Text style={[styles.sentence, { color: colors.brand.soilMuted }]}>
+      <Text style={[styles.sentence, { color: colors.textMuted }]}>
         {t('dashboard.wishlist.giftIdeas', { count: unbought })}
       </Text>
     </DashboardCard>

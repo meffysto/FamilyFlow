@@ -43,7 +43,7 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
 
   if (pendingMaison.length === 0) return (
     <DashboardCard key="menage" title={t('dashboard.menage.title')} variant="metric">
-      <Text style={[styles.emptyHint, { color: colors.brand.soilMuted }]}>{t('dashboard.menage.allDone')}</Text>
+      <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.menage.allDone')}</Text>
     </DashboardCard>
   );
 

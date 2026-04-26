@@ -34,7 +34,7 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard key="moods" title={t('dashboard.moods.title')} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/moods' as any)} hideMoreLink style={{ flex: 1 }}>
       {todayMoods.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.brand.soilMuted }]}>
+        <Text style={[styles.empty, { color: colors.textMuted }]}>
           {t('dashboard.moods.empty')}
         </Text>
       ) : (
@@ -45,7 +45,7 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
             return (
               <View key={p.id} style={styles.moodItem}>
                 <Text style={styles.emoji}>{MOOD_EMOJIS[entry.level]}</Text>
-                <Text style={[styles.name, { color: colors.brand.soilMuted }]} numberOfLines={1}>{p.name}</Text>
+                <Text style={[styles.name, { color: colors.textMuted }]} numberOfLines={1}>{p.name}</Text>
               </View>
             );
           })}

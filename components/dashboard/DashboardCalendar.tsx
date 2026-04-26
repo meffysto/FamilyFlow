@@ -58,7 +58,7 @@ function DashboardCalendarInner(_props: DashboardSectionProps) {
     >
       {previewDays.map(day => (
         <View key={day.date} style={styles.dayGroup}>
-          <Text style={[styles.dayLabel, { color: colors.brand.soilMuted }]}>{day.label}</Text>
+          <Text style={[styles.dayLabel, { color: colors.textMuted }]}>{day.label}</Text>
           {day.events.slice(0, 3).map(e => (
             <CalendarEventRow key={e.id} event={e} />
           ))}

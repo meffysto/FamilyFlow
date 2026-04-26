@@ -28,7 +28,7 @@ function DashboardLeaderboardInner(_props: DashboardSectionProps) {
     <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/loot')} hideMoreLink style={{ flex: 1 }}>
       <Text style={styles.medal}>🥇</Text>
       <Text style={[styles.firstName, { color: colors.text }]} numberOfLines={1}>{first.name}</Text>
-      <Text style={[styles.firstPts, { color: colors.brand.soilMuted }]}>{first.points ?? 0} pts</Text>
+      <Text style={[styles.firstPts, { color: colors.textMuted }]}>{first.points ?? 0} pts</Text>
     </DashboardCard>
   );
 }
