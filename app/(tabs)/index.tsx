@@ -972,41 +972,41 @@ export default function DashboardScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => setSearchVisible(true)}
-            style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
+            style={[styles.headerBtn, { backgroundColor: colors.brand.cardSurface }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel={t('index.a11y.search')}
             accessibilityRole="search"
           >
-            <Search size={18} strokeWidth={2} color={colors.brand.soil} />
-            <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.search')}</Text>
+            <Search size={18} strokeWidth={2} color={colors.text} />
+            <Text style={[styles.headerBtnLabel, { color: colors.text }]}>{t('index.header.search')}</Text>
           </TouchableOpacity>
           {!isChildMode && (
             <TouchableOpacity
               onPress={handleSendRecap}
-              style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
+              style={[styles.headerBtn, { backgroundColor: colors.brand.cardSurface }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               disabled={isSendingRecap}
               accessibilityLabel={t('index.a11y.sendRecap')}
               accessibilityRole="button"
             >
               {isSendingRecap ? (
-                <Loader size={18} strokeWidth={2} color={colors.brand.soil} />
+                <Loader size={18} strokeWidth={2} color={colors.text} />
               ) : (
-                <Send size={18} strokeWidth={2} color={colors.brand.soil} />
+                <Send size={18} strokeWidth={2} color={colors.text} />
               )}
-              <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.recap')}</Text>
+              <Text style={[styles.headerBtnLabel, { color: colors.text }]}>{t('index.header.recap')}</Text>
             </TouchableOpacity>
           )}
           {!isChildMode && (
             <TouchableOpacity
               onPress={() => setPrefsModalVisible(true)}
-              style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
+              style={[styles.headerBtn, { backgroundColor: colors.brand.cardSurface }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={t('index.a11y.configureSections')}
               accessibilityRole="button"
             >
-              <Settings2 size={18} strokeWidth={2} color={colors.brand.soil} />
-              <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.sections')}</Text>
+              <Settings2 size={18} strokeWidth={2} color={colors.text} />
+              <Text style={[styles.headerBtnLabel, { color: colors.text }]}>{t('index.header.sections')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1075,17 +1075,17 @@ export default function DashboardScreen() {
             >
             <GlassView
               style={styles.pregnancyCard}
-              tint={colors.brand.parchment}
+              tint={colors.brand.cardSurface}
               tintOpacity={0.9}
               intensity={20}
             >
               <View style={styles.pregnancyRow}>
                 <Text style={styles.pregnancyFruit}>{fruitEmoji}</Text>
                 <View style={styles.pregnancyInfo}>
-                  <Text style={[styles.pregnancyTitle, { color: colors.brand.soil }]} numberOfLines={1}>
+                  <Text style={[styles.pregnancyTitle, { color: colors.text }]} numberOfLines={1}>
                     {p.name} — {t('index.pregnancy.sa', { weeks: weeksElapsed })}
                   </Text>
-                  <Text style={[styles.pregnancySub, { color: colors.brand.soilMuted }]}>
+                  <Text style={[styles.pregnancySub, { color: colors.textMuted }]}>
                     {daysLeft > 0
                       ? `${t('index.pregnancy.daysLeft', { days: daysLeft })} · ${fruitLabel}${sizeCm > 0 ? ` · ${sizeCm} cm` : ''}`
                       : daysLeft === 0
