@@ -14,7 +14,7 @@ import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { AppRecipe } from '../../lib/cooklang';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 interface DashboardMealsProps extends DashboardSectionProps {
   onViewRecipe: (recipe: AppRecipe) => void;
@@ -108,9 +108,9 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   mealType: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    textTransform: 'uppercase',
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.normal,
   },
   mealText: {
     fontSize: FontSize.body,
