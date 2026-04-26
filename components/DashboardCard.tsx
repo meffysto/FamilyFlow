@@ -226,7 +226,7 @@ export function DashboardCard({
         style={[
           styles.card,
           {
-            backgroundColor: colors.brand.parchment,
+            backgroundColor: colors.brand.cardSurface,
             borderWidth: 1.5,
             borderColor: colors.error,
           },
@@ -250,7 +250,7 @@ export function DashboardCard({
         style={[
           styles.card,
           {
-            backgroundColor: colors.brand.parchment,
+            backgroundColor: colors.brand.cardSurface,
             borderWidth: 1,
             borderColor: colors.brand.bark,
           },
@@ -274,7 +274,7 @@ export function DashboardCard({
         style={[
           styles.card,
           {
-            backgroundColor: '#FFF4DA', // miel
+            backgroundColor: colors.brand.miel,
             borderWidth: 1,
             borderStyle: 'dashed',
             borderColor: colors.brand.soilMuted,
@@ -303,7 +303,7 @@ export function DashboardCard({
       style={[
         styles.card,
         {
-          backgroundColor: colors.brand.parchment,
+          backgroundColor: colors.brand.cardSurface,
           borderWidth: 1,
           borderColor: colors.brand.bark,
         },

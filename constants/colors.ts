@@ -117,6 +117,7 @@ export const LightColors = {
     soil:       '#6B4226',
     soilMuted:  '#A0784C',
     parchment:  '#FFF8EC',
+    cardSurface: '#FFF8EC',  // parchemin en light — surface dashboard card
     bark:       'rgba(107,66,38,0.18)',
     wash:       'rgba(107,66,38,0.07)',
     miel:       '#FFF4DA',
@@ -235,7 +236,8 @@ export const DarkColors: typeof LightColors = {
   brand: {
     soil:       '#8B6238',
     soilMuted:  '#9B7654',
-    parchment:  '#F5EFE5',
+    parchment:  '#F5EFE5',          // reste cream — pour pills/buttons/FAB qui pop sur dark
+    cardSurface: '#231F1A',         // warm brown-dark surface — pour grosses cards dashboard
     bark:       'rgba(196,162,101,0.15)',
     wash:       'rgba(196,162,101,0.08)',
     miel:       '#3A3326',          // dark mode : miel fonce → gris-or chaud lisible
