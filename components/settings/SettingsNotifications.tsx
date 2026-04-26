@@ -9,6 +9,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Bell, Send } from 'lucide-react-native';
 import { buildAndSendWeeklySummary } from '../../lib/telegram';
 import {
   loadNotifConfig,
@@ -131,7 +132,11 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
       {/* Notifications locales iOS */}
       {config && (
         <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.notifications.localA11y')}>
-          <SectionHeader title={t('settings.notifications.localTitle')} flush />
+          <SectionHeader
+            title={t('settings.notifications.localTitle')}
+            icon={<Bell size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+            flush
+          />
           <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
             <Text style={[styles.hint, { color: colors.textFaint }]}>
               {t('settings.notifications.localHint')}
@@ -246,7 +251,11 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
       {/* Telegram notifications */}
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.notifications.telegramA11y')}>
-        <SectionHeader title={t('settings.notifications.telegramTitle')} flush />
+        <SectionHeader
+          title={t('settings.notifications.telegramTitle')}
+          icon={<Send size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.notifications.telegramLabel')}</Text>

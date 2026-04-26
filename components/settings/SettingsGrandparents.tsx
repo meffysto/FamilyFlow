@@ -24,6 +24,7 @@ import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Users } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -191,7 +192,11 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.grandparents.sectionA11y')}>
-      <SectionHeader title={t('settings.grandparents.sectionTitle')} flush />
+      <SectionHeader
+        title={t('settings.grandparents.sectionTitle')}
+        icon={<Users size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
 
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.hint, { color: colors.textFaint }]}>

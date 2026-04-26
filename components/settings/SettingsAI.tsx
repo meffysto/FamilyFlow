@@ -15,6 +15,7 @@ import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Sparkles } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -64,7 +65,11 @@ export function SettingsAI() {
   return (
     <>
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.ai.sectionA11y')}>
-        <SectionHeader title={t('settings.ai.sectionTitle')} flush />
+        <SectionHeader
+          title={t('settings.ai.sectionTitle')}
+          icon={<Sparkles size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.ai.apiLabel')}</Text>

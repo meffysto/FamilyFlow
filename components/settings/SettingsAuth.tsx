@@ -16,6 +16,7 @@ import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
 import { SectionHeader } from '../ui/SectionHeader';
+import { ShieldCheck } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -165,7 +166,11 @@ export function SettingsAuth() {
   return (
     <>
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.auth.sectionA11y')}>
-        <SectionHeader title={t('settings.auth.sectionTitle')} flush />
+        <SectionHeader
+          title={t('settings.auth.sectionTitle')}
+          icon={<ShieldCheck size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
 
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {/* Toggle verrouillage */}

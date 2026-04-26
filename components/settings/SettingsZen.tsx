@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../ui/Chip';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Flower2 } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -58,7 +59,11 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.zen.sectionA11y')}>
-      <SectionHeader title={t('settings.zen.sectionTitle')} flush />
+      <SectionHeader
+        title={t('settings.zen.sectionTitle')}
+        icon={<Flower2 size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
 
       {/* Card 1 : Description + toggle global */}
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>

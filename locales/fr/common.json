@@ -1726,7 +1726,7 @@
       "firstNameRequired": "Le prénom est obligatoire."
     },
     "grandparents": {
-      "sectionTitle": "👴 Grands-parents",
+      "sectionTitle": "Grands-parents",
       "sectionA11y": "Section Grands-parents",
       "hint": "Partagez des recaps et photos avec les grands-parents via Telegram, WhatsApp ou iMessage.",
       "deleteTitle": "Supprimer ?",
@@ -1884,7 +1884,7 @@
       "step2Line5": "5. Ce nombre est votre"
     },
     "zen": {
-      "sectionTitle": "🧘 Mode zen",
+      "sectionTitle": "Mode zen",
       "sectionA11y": "Section Mode Zen",
       "description": "Quand toutes les conditions sont remplies, le dashboard affiche un espace de calme avec un cercle de respiration et un aperçu de demain.",
       "enableLabel": "Activer le mode zen",

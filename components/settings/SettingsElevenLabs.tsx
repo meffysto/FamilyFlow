@@ -11,6 +11,7 @@ import { useStoryVoice } from '../../contexts/StoryVoiceContext';
 import { Button } from '../ui/Button';
 import { ModalHeader } from '../ui/ModalHeader';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Mic } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -55,7 +56,11 @@ export function SettingsElevenLabs() {
   return (
     <>
       <View style={styles.section}>
-        <SectionHeader title="Voix premium" flush />
+        <SectionHeader
+          title="Voix premium"
+          icon={<Mic size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>ElevenLabs</Text>

@@ -28,6 +28,9 @@ interface SectionHeaderProps {
   diamondColor?: string;
   /** Si false, masque le losange (titre nu) */
   showDiamond?: boolean;
+  /** Slot icône brand (lucide) à la place du losange. Quand fourni, masque le ◆.
+   * Convention d'usage : <Icon size={16} strokeWidth={1.75} color={colors.brand.soilMuted} /> */
+  icon?: React.ReactNode;
   /** Si true, retire le padding horizontal (usage dans contextes déjà paddés
    * comme les panels settings). Garde le padding vertical pour la rythmique. */
   flush?: boolean;
@@ -39,6 +42,7 @@ export const SectionHeader = React.memo(function SectionHeader({
   action,
   diamondColor,
   showDiamond = true,
+  icon,
   flush = false,
 }: SectionHeaderProps) {
   const { colors } = useThemeColors();
@@ -47,14 +51,16 @@ export const SectionHeader = React.memo(function SectionHeader({
     <View style={[styles.row, flush && styles.rowFlush]}>
       <View style={styles.titleCol}>
         <View style={styles.titleRow}>
-          {showDiamond && (
+          {icon ? (
+            <View style={styles.iconWrap}>{icon}</View>
+          ) : showDiamond ? (
             <View
               style={[
                 styles.diamond,
                 { backgroundColor: diamondColor ?? colors.brand.soilMuted },
               ]}
             />
-          )}
+          ) : null}
           <Text
             style={[styles.title, { color: colors.text }]}
             numberOfLines={1}
@@ -102,6 +108,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     transform: [{ rotate: '45deg' }],
+  },
+  iconWrap: {
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     flexShrink: 1,

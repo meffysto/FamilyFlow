@@ -9,6 +9,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { ModalHeader } from '../ui/ModalHeader';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Send } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -56,7 +57,11 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
   return (
     <>
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.telegram.sectionA11y')}>
-        <SectionHeader title={t('settings.telegram.sectionTitle')} flush />
+        <SectionHeader
+          title={t('settings.telegram.sectionTitle')}
+          icon={<Send size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.telegram.botLabel')}</Text>

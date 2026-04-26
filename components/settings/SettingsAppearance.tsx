@@ -7,6 +7,7 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Palette } from 'lucide-react-native';
 
 type LangPref = 'fr' | 'en' | 'auto';
 
@@ -26,7 +27,11 @@ export function SettingsAppearance() {
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.appearance.sectionA11y')}>
-      <SectionHeader title={t('settings.appearance.sectionTitle')} flush />
+      <SectionHeader
+        title={t('settings.appearance.sectionTitle')}
+        icon={<Palette size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.label, { color: colors.textSub }]}>{t('settings.appearance.darkModeLabel')}</Text>
         <View style={styles.row}>

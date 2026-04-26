@@ -6,6 +6,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { DateInput } from '../ui/DateInput';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Palmtree } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -70,7 +71,11 @@ export function SettingsVacation({ vacationConfig, isVacationActive, activateVac
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.vacation.sectionA11y')}>
-      <SectionHeader title={t('settings.vacation.sectionTitle')} flush />
+      <SectionHeader
+        title={t('settings.vacation.sectionTitle')}
+        icon={<Palmtree size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         {isVacationActive && vacationConfig ? (
           <>

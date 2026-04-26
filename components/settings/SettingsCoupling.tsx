@@ -28,6 +28,7 @@ import { isSemanticCouplingEnabled, setSemanticCouplingEnabled } from '../../lib
 import { loadOverrides, saveOverrides, loadWeekStats } from '../../lib/semantic/coupling-overrides';
 import { VARIANT_CONFIG } from '../mascot/HarvestBurst';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Link2 } from 'lucide-react-native';
 
 // ── Ordre d'affichage par tier variant (golden > rare > ambient) — D-03, Research Pitfall 1 ──
 const DISPLAY_ORDER: CategoryId[] = [
@@ -192,7 +193,11 @@ export function SettingsCoupling() {
     <View style={styles.section} accessibilityRole="summary">
 
       {/* ── Master toggle section ── */}
-      <SectionHeader title={t('settings.coupling.masterTitle')} flush />
+      <SectionHeader
+        title={t('settings.coupling.masterTitle')}
+        icon={<Link2 size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
 
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <View style={styles.masterRow}>

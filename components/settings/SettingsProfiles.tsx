@@ -11,6 +11,7 @@ import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
 import { DateInput } from '../ui/DateInput';
 import { SectionHeader } from '../ui/SectionHeader';
+import { User, Users } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -139,7 +140,11 @@ export function SettingsProfiles({
     <>
       {/* Mon profil */}
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.profiles.sectionMyProfile')}>
-        <SectionHeader title={t('settings.profiles.sectionMyProfile')} flush />
+        <SectionHeader
+          title={t('settings.profiles.sectionMyProfile')}
+          icon={<User size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {activeProfile ? (
             <View style={styles.activeRow}>
@@ -182,7 +187,11 @@ export function SettingsProfiles({
 
       {/* Profils famille */}
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.profiles.sectionFamilyProfiles')}>
-        <SectionHeader title={t('settings.profiles.sectionFamilyProfiles')} flush />
+        <SectionHeader
+          title={t('settings.profiles.sectionFamilyProfiles')}
+          icon={<Users size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {profiles.length === 0 ? (
             <Text style={[styles.empty, { color: colors.textFaint }]}>{t('settings.profiles.noProfilesFound')}</Text>

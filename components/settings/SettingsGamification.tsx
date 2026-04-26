@@ -5,6 +5,7 @@ import { serializeGamification } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Trophy } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -88,7 +89,11 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.gamification.sectionA11y')}>
-      <SectionHeader title={t('settings.gamification.sectionTitle')} flush />
+      <SectionHeader
+        title={t('settings.gamification.sectionTitle')}
+        icon={<Trophy size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
 
       {/* Points config */}
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
