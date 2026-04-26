@@ -22,7 +22,7 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
   const topCourses = unchecked.slice(-5).reverse();
 
   return (
-    <DashboardCard key="courses" title={t('dashboard.courses.title')} icon="🛒" color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })} hideMoreLink style={{ flex: 1 }}>
+    <DashboardCard key="courses" title={t('dashboard.courses.title')} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })} hideMoreLink style={{ flex: 1 }}>
       <Text style={[styles.courseCount, { color: colors.catOrganisation }]}>{unchecked.length}</Text>
       {topCourses.slice(0, 3).map((item) => (
         <Text key={item.id} style={[styles.courseMicro, { color: colors.textMuted }]} numberOfLines={1}>

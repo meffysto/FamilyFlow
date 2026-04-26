@@ -314,7 +314,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     : todayData.stage.info.sub({ done: todayData.done, total: todayData.total, meal: todayData.meal });
 
   return (
-    <DashboardCard key="companionDay" title="La journée de la mascotte" icon="🌱" color={tint} tinted hideMoreLink>
+    <DashboardCard key="companionDay" title="La journée de la mascotte" color={tint} tinted hideMoreLink>
       <View style={styles.row}>
         <TouchableOpacity
           onPress={active ? handleRegenerate : handleStart}

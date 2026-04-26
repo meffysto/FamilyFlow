@@ -50,7 +50,7 @@ function DashboardCalendarInner(_props: DashboardSectionProps) {
     <DashboardCard
       key="calendar"
       title={t('dashboard.calendar.title')}
-      icon="📆"
+
       count={totalEvents}
       color={colors.catOrganisation}
       tinted

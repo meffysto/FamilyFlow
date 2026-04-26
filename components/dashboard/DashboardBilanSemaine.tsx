@@ -208,7 +208,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
     return (
       <DashboardCard
         title={t('dashboard.bilanSemaine.title')}
-        icon="📝"
+
         color={colors.catSouvenirs}
         tinted
       >
@@ -247,7 +247,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       title={t('dashboard.bilanSemaine.title')}
-      icon="📝"
+
       color={colors.catSouvenirs}
       tinted
     >

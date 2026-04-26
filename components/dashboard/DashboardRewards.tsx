@@ -45,7 +45,7 @@ function DashboardRewardsInner({ isChildMode }: DashboardSectionProps) {
   if (activeRewards.length === 0) return null;
 
   return (
-    <DashboardCard key="rewards" title={isChildMode ? t('dashboard.rewards.titleChild') : t('dashboard.rewards.titleAdult')} icon="🏆" color={colors.catJeux} tinted>
+    <DashboardCard key="rewards" title={isChildMode ? t('dashboard.rewards.titleChild') : t('dashboard.rewards.titleAdult')} color={colors.catJeux} tinted>
       {activeRewards.map((reward) => {
         const ownerProfile = profiles.find((p) => p.id === reward.profileId);
         const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? colors.error : colors.warning;

@@ -707,7 +707,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   return (
     <DashboardCard
       title={gardenDisplayName}
-      icon="🌳"
+
       color={colors.catJeux}
       tinted
       collapsible

@@ -1030,7 +1030,7 @@ export default function DashboardScreen() {
 
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
-          <DashboardCard title={t('index.welcome.title')} icon="👋" color={primary}>
+          <DashboardCard title={t('index.welcome.title')}>
             <Text style={[styles.welcomeText, { color: colors.textSub }]}>
               {t('index.welcome.text')}
             </Text>

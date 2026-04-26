@@ -30,7 +30,7 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
   const todayDone = activeProfile ? mainDefi.progress.some((p) => p.date === todayStr2 && p.profileId === activeProfile.id && p.completed) : false;
 
   return (
-    <DashboardCard key="defis" title={t('dashboard.defis.title')} icon="🏅" count={activeDefis.length} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/defis')}>
+    <DashboardCard key="defis" title={t('dashboard.defis.title')} count={activeDefis.length} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/defis')}>
       <View style={styles.defiHeader}>
         <Text style={styles.defiEmoji}>{mainDefi.emoji}</Text>
         <Text style={[styles.defiTitle, { color: colors.text }]} numberOfLines={1}>{mainDefi.title}</Text>

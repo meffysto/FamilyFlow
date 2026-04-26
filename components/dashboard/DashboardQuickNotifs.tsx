@@ -47,7 +47,7 @@ function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: Da
   }, []);
 
   return (
-    <DashboardCard key="quicknotifs" title={t('dashboard.quickNotifs.title')} icon="📤" color={colors.catSysteme} tinted>
+    <DashboardCard key="quicknotifs" title={t('dashboard.quickNotifs.title')} color={colors.catSysteme} tinted>
       {!vaultFileExists.notifications ? (
         <DashboardEmptyState
           description={t('dashboard.quickNotifs.emptyDescription')}

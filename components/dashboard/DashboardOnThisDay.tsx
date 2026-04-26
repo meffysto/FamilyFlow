@@ -83,7 +83,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       title={t('dashboard.onThisDay.title')}
-      icon="🕰️"
+
       count={items.length}
       color={colors.catSouvenirs}
       tinted

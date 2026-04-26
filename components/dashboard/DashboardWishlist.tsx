@@ -21,7 +21,7 @@ function DashboardWishlistInner(_props: DashboardSectionProps) {
   const unbought = wishlistItems.filter((w) => !w.bought).length;
 
   return (
-    <DashboardCard key="wishlist" title={t('dashboard.wishlist.title')} icon="🎁" color={colors.catFamille} tinted onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
+    <DashboardCard key="wishlist" title={t('dashboard.wishlist.title')} color={colors.catFamille} tinted onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
       <Text style={[styles.defiMeta, { color: colors.textSub }]}>
         {t('dashboard.wishlist.giftIdeas', { count: unbought })}
       </Text>

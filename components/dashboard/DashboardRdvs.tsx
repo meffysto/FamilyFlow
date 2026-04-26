@@ -29,7 +29,7 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
   const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r));
 
   if (!vaultFileExists.rdvs) return (
-    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" color={colors.catOrganisation} tinted>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} color={colors.catOrganisation} tinted>
       <DashboardEmptyState
         description={t('dashboard.rdvs.emptyDescription')}
         onActivate={() => activateCardTemplate('rdvs')}
@@ -39,7 +39,7 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
   );
 
   if (upcomingRdvs.length === 0) return (
-    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" color={colors.catOrganisation} tinted>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} color={colors.catOrganisation} tinted>
       <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.rdvs.noUpcoming')}</Text>
       <View style={styles.cardActions}>
         <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
@@ -53,7 +53,7 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
   const otherRdvs = upcomingRdvs.slice(1, 3);
 
   return (
-    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" count={upcomingRdvs.length} color={colors.catOrganisation} tinted onPressMore={() => router.push('/(tabs)/rdv')}>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} count={upcomingRdvs.length} color={colors.catOrganisation} tinted onPressMore={() => router.push('/(tabs)/rdv')}>
       {/* RDV principal — hiérarchie forte */}
       <TouchableOpacity onPress={() => onEditRDV(mainRdv)} activeOpacity={0.7}>
         {mainRdv.heure && (
