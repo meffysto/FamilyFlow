@@ -12,6 +12,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, AppState, Platform, Alert, Image } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
+import { Sun, Moon } from 'lucide-react-native';
 import { useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
@@ -365,7 +366,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
             style={[styles.btnCta, { backgroundColor: colors.brand.soil, shadowColor: colors.brand.soil }]}
             accessibilityLabel={`Mettre ${mascotteName} au repos`}
           >
-            <Text style={styles.btnCtaEmoji}>🌙</Text>
+            <Moon size={20} strokeWidth={1.75} color={colors.brand.parchment} />
             <Text style={[styles.btnCtaText, { color: colors.brand.parchment }]}>Dodo</Text>
           </TouchableOpacity>
         ) : (
@@ -375,7 +376,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
             style={[styles.btnCta, { backgroundColor: colors.brand.or, shadowColor: colors.brand.orDeep }]}
             accessibilityLabel={`Réveiller ${mascotteName}`}
           >
-            <Text style={styles.btnCtaEmoji}>☀️</Text>
+            <Sun size={20} strokeWidth={1.75} color={colors.brand.soil} />
             <Text style={[styles.btnCtaText, { color: colors.brand.soil }]}>Réveil</Text>
           </TouchableOpacity>
         )}
@@ -518,10 +519,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 6,
     elevation: 3,
-  },
-  btnCtaEmoji: {
-    fontSize: 20,
-    marginBottom: 1,
   },
   btnCtaText: {
     fontSize: 11,

@@ -485,7 +485,7 @@
       "childCantEdit": "🔒 Only adults can edit tasks"
     },
     "delete": {
-      "title": "🗑️ Delete task",
+      "title": "Delete task",
       "message": "Delete \"{{name}}\"?",
       "cancel": "Cancel",
       "confirm": "Delete",
@@ -1206,9 +1206,9 @@
       "prepareAI": "Prepare with AI",
       "prepareAIA11y": "Prepare appointment with AI",
       "dictateA11y": "Open dictaphone",
-      "deleteConfirmTitle": "🗑️ Delete appointment",
+      "deleteConfirmTitle": "Delete appointment",
       "deleteConfirmMsg": "Are you sure you want to delete this appointment?",
-      "deleteBtn": "🗑️ Delete this appointment",
+      "deleteBtn": "Delete this appointment",
       "typeCategoryMedical": "Medical",
       "typeCategoryLife": "Everyday life",
       "typeCustomPlaceholder": "Or enter a custom type (e.g. hairdresser)",
@@ -1245,7 +1245,7 @@
       "purchaseQtyLabel": "🛒 Purchase qty",
       "deleteConfirmTitle": "Delete product",
       "deleteConfirmMsg": "Remove \"{{name}}\" from stock?",
-      "deleteBtn": "🗑️ Delete this product",
+      "deleteBtn": "Delete this product",
       "toast": {
         "productRequired": "Product name is required",
         "categoryRequired": "Please select a category"

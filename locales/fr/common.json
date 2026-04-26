@@ -485,7 +485,7 @@
       "childCantEdit": "🔒 Seuls les adultes peuvent modifier des tâches"
     },
     "delete": {
-      "title": "🗑️ Supprimer la tâche",
+      "title": "Supprimer la tâche",
       "message": "Supprimer « {{name}} » ?",
       "cancel": "Annuler",
       "confirm": "Supprimer",
@@ -1214,9 +1214,9 @@
       "prepareAI": "Préparer avec l'IA",
       "prepareAIA11y": "Préparer le RDV avec l'IA",
       "dictateA11y": "Ouvrir le dictaphone",
-      "deleteConfirmTitle": "🗑️ Supprimer le RDV",
+      "deleteConfirmTitle": "Supprimer le RDV",
       "deleteConfirmMsg": "Êtes-vous sûr de vouloir supprimer ce rendez-vous ?",
-      "deleteBtn": "🗑️ Supprimer ce RDV",
+      "deleteBtn": "Supprimer ce RDV",
       "typeCategoryMedical": "Médical",
       "typeCategoryLife": "Vie courante",
       "typeCustomPlaceholder": "Ou saisir un type libre (ex: coiffeur)",
@@ -1253,7 +1253,7 @@
       "purchaseQtyLabel": "🛒 Qté/achat",
       "deleteConfirmTitle": "Supprimer le produit",
       "deleteConfirmMsg": "Supprimer \"{{name}}\" du stock ?",
-      "deleteBtn": "🗑️ Supprimer ce produit",
+      "deleteBtn": "Supprimer ce produit",
       "toast": {
         "productRequired": "Le nom du produit est obligatoire",
         "categoryRequired": "Sélectionne une catégorie"
