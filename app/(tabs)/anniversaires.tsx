@@ -30,6 +30,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Cake, PartyPopper } from 'lucide-react-native';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
@@ -203,7 +204,13 @@ export default function AnniversairesScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.cardLeft}>
-              <Text style={styles.cardEmoji}>{isToday ? '🎉' : '🎂'}</Text>
+              <View style={[styles.cardIconBox, { backgroundColor: colors.brand.wash }]}>
+                {isToday ? (
+                  <PartyPopper size={22} strokeWidth={1.75} color={colors.success} />
+                ) : (
+                  <Cake size={22} strokeWidth={1.75} color={colors.brand.soil} />
+                )}
+              </View>
               <View style={styles.cardInfo}>
                 <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={1}>
                   {item.name}
@@ -437,8 +444,12 @@ const styles = StyleSheet.create({
     gap: Spacing.xl,
     flex: 1,
   },
-  cardEmoji: {
-    fontSize: FontSize.icon,
+  cardIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardInfo: {
     flex: 1,
