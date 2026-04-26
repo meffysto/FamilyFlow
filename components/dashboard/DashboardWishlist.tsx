@@ -10,7 +10,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
-import { FontSize } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
 
 function DashboardWishlistInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -22,7 +22,7 @@ function DashboardWishlistInner(_props: DashboardSectionProps) {
 
   return (
     <DashboardCard key="wishlist" title={t('dashboard.wishlist.title')} color={colors.catFamille} tinted onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
-      <Text style={[styles.defiMeta, { color: colors.textSub }]}>
+      <Text style={[styles.sentence, { color: colors.brand.soilMuted }]}>
         {t('dashboard.wishlist.giftIdeas', { count: unbought })}
       </Text>
     </DashboardCard>
@@ -32,7 +32,8 @@ function DashboardWishlistInner(_props: DashboardSectionProps) {
 export const DashboardWishlist = React.memo(DashboardWishlistInner);
 
 const styles = StyleSheet.create({
-  defiMeta: {
-    fontSize: FontSize.caption,
+  sentence: {
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
   },
 });
