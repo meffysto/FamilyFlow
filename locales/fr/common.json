@@ -1481,8 +1481,9 @@
       "title": "Tâches maison du jour",
       "emptyDescription": "Organisez les tâches de la maison avec des récurrences",
       "activateLabel": "Importer le modèle",
-      "allDone": "Tout est fait pour aujourd'hui ✓",
-      "remaining": "{{count}} restante(s)"
+      "allDone": "tout est fait pour aujourd'hui",
+      "remaining": "faites · il en reste {{count}}",
+      "remaining_one": "faites · il en reste {{count}}"
     },
     "moods": {
       "title": "Humeurs",

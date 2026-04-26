@@ -1473,8 +1473,9 @@
       "title": "Household chores",
       "emptyDescription": "Organize household tasks with recurring schedules",
       "activateLabel": "Import template",
-      "allDone": "All done for today ✓",
-      "remaining": "{{count}} remaining"
+      "allDone": "all done for today",
+      "remaining": "done · {{count}} left",
+      "remaining_one": "done · {{count}} left"
     },
     "moods": {
       "title": "Moods",
