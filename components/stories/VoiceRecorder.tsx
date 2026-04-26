@@ -47,8 +47,12 @@ const METERING_CEIL = 0;
 const IVC_AUTO_STOP_MS = 120_000;
 const PVC_AUTO_STOP_MS = 300_000;
 const PVC_MIN_SAMPLE_SECS = 30;
-// Seuil recommandé d'audio total avant proposition de training (5 min — ElevenLabs recommande 30 min idéalement).
-const PVC_RECOMMENDED_TOTAL_SECS = 300;
+// Seuil minimal pour autoriser le training PVC : 15 min cumulées.
+// En dessous, ElevenLabs accepte la requête mais produit une voix de qualité médiocre.
+const PVC_MINIMUM_TOTAL_SECS = 900;
+// Seuil recommandé pour un PVC de qualité : 30 min (recommandation officielle ElevenLabs).
+// Idéal : 1h+. La voix sera nettement plus fidèle au-delà de 30 min.
+const PVC_RECOMMENDED_TOTAL_SECS = 1800;
 
 // ─── LiveBar ──────────────────────────────────────────────────────────────────
 
@@ -143,7 +147,7 @@ function VoiceRecorder({
   const instructionText = isPvc
     ? (language === 'en'
         ? 'Pro cloning: record several takes (≥30s each) varying tone — calm, joyful, whispered, dialogue. Aim for 5+ minutes total. Training takes ~3-4 hours after you finish.'
-        : 'Clonage Pro : faites plusieurs prises (≥30s chacune) en variant le ton — calme, joyeux, chuchoté, dialogue. Visez 5 min minimum au total. L\'entraînement prend ~3-4h après validation.')
+        : 'Clonage Pro : faites plusieurs prises (≥30s chacune) en variant le ton — calme, joyeux, chuchoté, dialogue. Visez 30 min au total pour une voix fidèle (15 min minimum, 1h idéal). L\'entraînement prend ~3-4h après validation.')
     : (language === 'en'
         ? 'Read the text below in a natural voice, as if telling your child a bedtime story. About 1 to 2 minutes, in a quiet place.'
         : 'Lisez le texte ci-dessous à voix naturelle, comme si vous racontiez une histoire à votre enfant. Environ 1 à 2 minutes, dans un endroit calme.');
@@ -351,8 +355,10 @@ function VoiceRecorder({
   const pvcTotalSecs = pvcTakes.reduce((sum, t) => sum + t.durationSecs, 0);
   const pvcTotalMin = Math.floor(pvcTotalSecs / 60);
   const pvcTotalSec = Math.floor(pvcTotalSecs % 60);
-  const pvcReadyToTrain = pvcTakes.length > 0 && pvcTotalSecs >= PVC_MIN_SAMPLE_SECS;
+  // Le training n'est autorisé qu'à partir de 15 min cumulées (sinon voix de mauvaise qualité).
+  const pvcReadyToTrain = pvcTakes.length > 0 && pvcTotalSecs >= PVC_MINIMUM_TOTAL_SECS;
   const pvcRecommendedReached = pvcTotalSecs >= PVC_RECOMMENDED_TOTAL_SECS;
+  const pvcMinutesLeft = Math.max(0, Math.ceil((PVC_MINIMUM_TOTAL_SECS - pvcTotalSecs) / 60));
 
   return (
     <View style={styles.container}>
@@ -418,7 +424,7 @@ function VoiceRecorder({
           <Text style={[styles.freeReadingText, { color: colors.textMuted }]}>
             {language === 'en'
               ? '• Calm reading — like bedtime\n• Joyful, with exclamations\n• Whispered, like a secret\n• Dialogues with different character voices\n• Suspense, with pauses\n\nEach take must be at least 30 seconds. Aim for 5+ minutes total across multiple takes.'
-              : '• Lecture calme — comme au coucher\n• Joyeuse, avec des exclamations\n• Chuchotée, comme un secret\n• Dialogues avec voix de personnages différents\n• Suspense, avec des pauses\n\nChaque prise doit durer au moins 30 secondes. Vise 5 min minimum au total sur plusieurs prises.'}
+              : '• Lecture calme — comme au coucher\n• Joyeuse, avec des exclamations\n• Chuchotée, comme un secret\n• Dialogues avec voix de personnages différents\n• Suspense, avec des pauses\n\nChaque prise doit durer au moins 30 secondes. Vise 30 min au total pour une voix vraiment fidèle (1h idéal). 15 min minimum.'}
           </Text>
         </View>
       )}
@@ -441,8 +447,10 @@ function VoiceRecorder({
           </Text>
           <Text style={[styles.pvcRecapSub, { color: colors.textMuted }]}>
             {pvcRecommendedReached
-              ? '✓ Durée recommandée atteinte. Tu peux ajouter d\'autres prises ou lancer l\'entraînement.'
-              : `Encore ${Math.max(0, PVC_RECOMMENDED_TOTAL_SECS - Math.floor(pvcTotalSecs))}s pour atteindre les 5 min recommandées.`}
+              ? '✓ 30 min recommandées atteintes — voix de très bonne qualité. Tu peux continuer pour 1h+ (idéal) ou lancer l\'entraînement.'
+              : pvcReadyToTrain
+                ? `⚠️ Minimum atteint mais qualité limitée. Continue jusqu'à 30 min pour une voix vraiment fidèle (encore ${Math.max(0, Math.ceil((PVC_RECOMMENDED_TOTAL_SECS - pvcTotalSecs) / 60))} min).`
+                : `Encore ${pvcMinutesLeft} min minimum avant de pouvoir lancer (qualité ElevenLabs requiert 15 min mini, 30 min recommandés).`}
           </Text>
         </View>
       )}
@@ -500,7 +508,7 @@ function VoiceRecorder({
           accessibilityLabel="Lancer l'entraînement"
         >
           <Text style={styles.buttonText}>
-            {pvcRecommendedReached ? '✨ Lancer l\'entraînement' : '⚡ Lancer (durée minimale)'}
+            {pvcRecommendedReached ? '✨ Lancer l\'entraînement' : '⚡ Lancer (qualité limitée)'}
           </Text>
         </Pressable>
       )}
