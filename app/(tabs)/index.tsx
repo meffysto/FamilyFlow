@@ -1067,14 +1067,19 @@ export default function DashboardScreen() {
               accessibilityLabel={t('index.a11y.openPregnancy', { name: p.name })}
               accessibilityRole="button"
             >
-            <GlassView style={styles.pregnancyCard}>
+            <GlassView
+              style={styles.pregnancyCard}
+              tint={colors.brand.parchment}
+              tintOpacity={0.9}
+              intensity={20}
+            >
               <View style={styles.pregnancyRow}>
                 <Text style={styles.pregnancyFruit}>{fruitEmoji}</Text>
                 <View style={styles.pregnancyInfo}>
-                  <Text style={[styles.pregnancyTitle, { color: colors.text }]} numberOfLines={1}>
+                  <Text style={[styles.pregnancyTitle, { color: colors.brand.soil }]} numberOfLines={1}>
                     {p.name} — {t('index.pregnancy.sa', { weeks: weeksElapsed })}
                   </Text>
-                  <Text style={[styles.pregnancySub, { color: colors.textSub }]}>
+                  <Text style={[styles.pregnancySub, { color: colors.brand.soilMuted }]}>
                     {daysLeft > 0
                       ? `${t('index.pregnancy.daysLeft', { days: daysLeft })} · ${fruitLabel}${sizeCm > 0 ? ` · ${sizeCm} cm` : ''}`
                       : daysLeft === 0
@@ -1084,7 +1089,7 @@ export default function DashboardScreen() {
                 </View>
                 {daysLeft <= 28 && (
                   <TouchableOpacity
-                    style={[styles.pregnancyCta, { backgroundColor: primary }]}
+                    style={[styles.pregnancyCta, { backgroundColor: colors.brand.soil }]}
                     onPress={() => {
                       Alert.prompt
                         ? Alert.prompt(t('index.pregnancy.birthDateTitle'), t('index.pregnancy.birthDatePlaceholder'), (date) => {
@@ -1096,12 +1101,12 @@ export default function DashboardScreen() {
                     accessibilityLabel={t('index.a11y.markBabyBorn')}
                     accessibilityRole="button"
                   >
-                    <Text style={[styles.pregnancyCtaText, { color: colors.onPrimary }]}>{t('index.pregnancy.born')}</Text>
+                    <Text style={[styles.pregnancyCtaText, { color: colors.brand.parchment }]}>{t('index.pregnancy.born')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
-              <View style={[styles.pregnancyBar, { backgroundColor: colors.border }]}>
-                <View style={[styles.pregnancyBarFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: primary }]} />
+              <View style={[styles.pregnancyBar, { backgroundColor: colors.brand.wash }]}>
+                <View style={[styles.pregnancyBarFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.brand.soil }]} />
               </View>
             </GlassView>
             </TouchableOpacity>
@@ -1524,47 +1529,51 @@ const styles = StyleSheet.create({
   // Grossesse — Liquid Glass
   pregnancyCard: {
     marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 14,
-    gap: 10,
+    marginBottom: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    gap: 12,
   },
   pregnancyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
   pregnancyFruit: {
-    fontSize: FontSize.hero,
+    fontSize: 36,
   },
   pregnancyInfo: {
     flex: 1,
     gap: 2,
   },
   pregnancyTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.subtitle + 2, // 19px DM Serif sentence case
+    letterSpacing: -0.2,
   },
   pregnancySub: {
-    fontSize: FontSize.label,
-    lineHeight: 18,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    lineHeight: 22,
   },
   pregnancyCta: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
   },
   pregnancyCtaText: {
     fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 0.2,
   },
   pregnancyBar: {
-    height: 4,
-    borderRadius: 2,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   pregnancyBarFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 4,
   },
   // Profile picker
   pickerOverlay: {
