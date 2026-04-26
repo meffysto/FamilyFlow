@@ -1326,6 +1326,11 @@
   },
   "dashboard": {
     "seeAll": "See all",
+    "zones": {
+      "today": "this morning",
+      "home": "at home",
+      "farm": "the farm side"
+    },
     "sectionLabels": {
       "insights": "Suggestions",
       "vacation": "Vacation",
@@ -1397,7 +1402,8 @@
     "budget": {
       "title": "Monthly budget",
       "emptyDescription": "Track family expenses by category with limits",
-      "activateLabel": "Import template"
+      "activateLabel": "Import template",
+      "usedOf": "used of {{total}} ({{spent}})"
     },
     "calendar": {
       "title": "Calendar",

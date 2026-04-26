@@ -19,6 +19,10 @@ interface GlassViewProps {
   intensity?: number;
   /** Border radius. Default: Radius.xl (16) */
   borderRadius?: number;
+  /** Override la couleur de la couche tint au-dessus du blur (ex: parchemin warm) */
+  tint?: string;
+  /** Opacité de la couche tint custom (0-1). Default: 1 (couvre le glassBg) */
+  tintOpacity?: number;
 }
 
 export function GlassView({
@@ -26,6 +30,8 @@ export function GlassView({
   style,
   intensity = 40,
   borderRadius = Radius.xl,
+  tint,
+  tintOpacity = 1,
   ...rest
 }: GlassViewProps) {
   const { isDark, colors } = useThemeColors();
@@ -51,7 +57,11 @@ export function GlassView({
       <View
         style={[
           StyleSheet.absoluteFill,
-          { borderRadius, backgroundColor: colors.glassBg },
+          {
+            borderRadius,
+            backgroundColor: tint ?? colors.glassBg,
+            opacity: tint ? tintOpacity : 1,
+          },
         ]}
       />
       {children}

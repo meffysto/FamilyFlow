@@ -14,7 +14,7 @@ import { isRdvUpcoming } from '../../lib/parser';
 import { formatDateLocalized } from '../../lib/date-locale';
 import type { RDV } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 interface DashboardRdvsProps extends DashboardSectionProps {
   onEditRDV: (rdv?: RDV) => void;
@@ -91,15 +91,16 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   mainTime: {
-    fontSize: 42,
-    fontWeight: FontWeight.bold,
-    lineHeight: 46,
-    letterSpacing: -1,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.display,
+    lineHeight: 30,
+    letterSpacing: -0.4,
   },
   mainTitle: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    marginTop: 2,
+    marginTop: 4,
+    letterSpacing: -0.2,
   },
   mainMeta: {
     fontSize: FontSize.caption,

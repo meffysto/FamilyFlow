@@ -1334,6 +1334,11 @@
   },
   "dashboard": {
     "seeAll": "Voir tout",
+    "zones": {
+      "today": "ce matin",
+      "home": "à la maison",
+      "farm": "côté ferme"
+    },
     "sectionLabels": {
       "insights": "Suggestions",
       "vacation": "Vacances",
@@ -1405,7 +1410,8 @@
     "budget": {
       "title": "Budget du mois",
       "emptyDescription": "Suivez les dépenses familiales par catégorie avec des plafonds",
-      "activateLabel": "Importer le modèle"
+      "activateLabel": "Importer le modèle",
+      "usedOf": "consommés sur {{total}} ({{spent}})"
     },
     "calendar": {
       "title": "Calendrier",

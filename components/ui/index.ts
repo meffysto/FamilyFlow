@@ -13,3 +13,4 @@ export { PillTabSwitcher } from './PillTabSwitcher';
 export type { PillTab } from './PillTabSwitcher';
 export { ScreenHeader } from './ScreenHeader';
 export { SectionHeader } from './SectionHeader';
+export { ZoneLabel } from './ZoneLabel';

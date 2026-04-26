@@ -40,6 +40,7 @@ import { LivingGradient } from '../../components/ui/LivingGradient';
 import { ReactiveAvatar, getAvatarMood } from '../../components/ui/ReactiveAvatar';
 import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { SeasonalParticles } from '../../components/ui/SeasonalParticles';
+import { ZoneLabel } from '../../components/ui/ZoneLabel';
 import { DashboardCard } from '../../components/DashboardCard';
 import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
@@ -152,6 +153,47 @@ function getAllSections(t: (key: string) => string): SectionPref[] {
     // aiAssistant retiré — intégré dans la carte Suggestions
   ];
 }
+
+/**
+ * Zonage thématique pour les ZoneLabel Caveat (« ~ ce matin », etc.).
+ * Chaque section appartient à une zone ; quand la zone change entre deux
+ * sections consécutives rendues, on insère un séparateur tendre.
+ *  - today : urgence + plan du jour
+ *  - home  : vie maison + souvenirs + finances
+ *  - farm  : gamification + ferme + mascotte
+ *  - none  : sections sans label (insights = ouverture, system = bottom)
+ */
+type DashboardZone = 'today' | 'home' | 'farm' | 'none';
+const SECTION_ZONE: Record<string, DashboardZone> = {
+  insights: 'none',
+  vacation: 'today',
+  overdue: 'today',
+  menage: 'today',
+  meals: 'today',
+  calendar: 'today',
+  rdvs: 'today',
+  weeklyStats: 'today',
+  quicknotifs: 'today',
+  courses: 'home',
+  photos: 'home',
+  budget: 'home',
+  recipes: 'home',
+  anniversaires: 'home',
+  onThisDay: 'home',
+  quotes: 'home',
+  moods: 'home',
+  gratitude: 'home',
+  wishlist: 'home',
+  bilanSemaine: 'home',
+  nightMode: 'home',
+  companionDay: 'farm',
+  garden: 'farm',
+  lootProgress: 'farm',
+  rewards: 'farm',
+  defis: 'farm',
+  secretMissions: 'farm',
+  leaderboard: 'farm',
+};
 
 /** Sections masquées pour les enfants (outils parentaux) */
 const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'quicknotifs', 'recipes', 'photos', 'rdvs', 'nightMode']);
@@ -1141,9 +1183,24 @@ export default function DashboardScreen() {
           });
 
           const rendered: React.ReactNode[] = [];
+          let prevZone: DashboardZone | null = null;
+          const maybePushZone = (id: string) => {
+            const zone = SECTION_ZONE[id] ?? 'none';
+            if (zone !== 'none' && zone !== prevZone) {
+              rendered.push(
+                <ZoneLabel key={`zone-${zone}-${id}`}>
+                  {t(`dashboard.zones.${zone}`)}
+                </ZoneLabel>
+              );
+              prevZone = zone;
+            } else if (zone !== 'none') {
+              prevZone = zone;
+            }
+          };
           let i = 0;
           while (i < visibleSections.length) {
             const s = visibleSections[i];
+            maybePushZone(s.id);
             // Chercher une paire half consécutive
             if (s.size === 'half' && i + 1 < visibleSections.length && visibleSections[i + 1].size === 'half') {
               const s2 = visibleSections[i + 1];

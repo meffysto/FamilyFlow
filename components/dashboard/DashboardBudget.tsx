@@ -12,7 +12,7 @@ import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
 
 function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
@@ -56,13 +56,14 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
       hideMoreLink
       style={{ flex: 1 }}
     >
-      <Text style={[styles.budgetPct, { color: isOver ? colors.error : colors.text }]}>{pctUsed}%</Text>
-      <View style={[styles.progressBg, { backgroundColor: colors.cardAlt }]}>
-        <View style={[styles.progressFill, { width: `${Math.min(100, pctUsed)}%`, backgroundColor: isOver ? colors.error : colors.catFamille }]} />
-      </View>
-      <Text style={[styles.budgetMicro, { color: colors.textMuted }]}>
-        {formatAmount(budgetSpent)} / {formatAmount(budgetTotalVal)}
+      <Text style={[styles.budgetSentence, { color: colors.text }]}>
+        <Text style={[styles.budgetPct, { color: isOver ? colors.error : colors.brand.soil }]}>{pctUsed}%</Text>
+        {' '}
+        {t('dashboard.budget.usedOf', { spent: formatAmount(budgetSpent), total: formatAmount(budgetTotalVal) })}
       </Text>
+      <View style={[styles.progressBg, { backgroundColor: colors.brand.wash }]}>
+        <View style={[styles.progressFill, { width: `${Math.min(100, pctUsed)}%`, backgroundColor: isOver ? colors.error : colors.brand.soil }]} />
+      </View>
     </DashboardCard>
   );
 }
@@ -70,24 +71,25 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
 export const DashboardBudget = React.memo(DashboardBudgetInner);
 
 const styles = StyleSheet.create({
+  budgetSentence: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.normal,
+    lineHeight: 24,
+  },
   budgetPct: {
-    fontSize: 36,
-    fontWeight: FontWeight.bold,
-    lineHeight: 40,
-    letterSpacing: -1,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.heading + 4, // 22px DM Serif intégré
+    letterSpacing: -0.3,
   },
   progressBg: {
-    height: 4,
-    borderRadius: 2,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
-    marginTop: Spacing.xs,
+    marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
-  },
-  budgetMicro: {
-    fontSize: FontSize.micro,
+    borderRadius: 4,
   },
 });
