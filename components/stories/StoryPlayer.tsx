@@ -25,6 +25,7 @@ import {
   stripAllPerformanceTags,
 } from '../../lib/elevenlabs';
 import { generateSpeechFish, getCachedStoryAudioFish } from '../../lib/fish-audio';
+import { generateMultiVoiceConcatenated } from '../../lib/multi-voice-tts';
 import {
   STORY_AMBIENCE_ASSETS,
   AMBIENCE_VOLUME,
@@ -330,7 +331,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
     Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       allowsRecordingIOS: false,
-      staysActiveInBackground: false,
+      staysActiveInBackground: true,
       // Force le mixage explicite : ambiance + voix (expo-speech / ElevenLabs) cohabitent
       // sans que AVSpeechSynthesizer interrompe la boucle d'ambiance.
       interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
@@ -357,7 +358,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           allowsRecordingIOS: false,
-          staysActiveInBackground: false,
+          staysActiveInBackground: true,
           interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
         }).catch(() => {});
 
@@ -613,11 +614,38 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       // Fish Audio n'interprète pas les tags de performance — on les strip pour
       // éviter qu'ils soient lus à voix haute. ElevenLabs les garde (sanitize côté lib).
       const textForTts = isFishAudio ? stripAllPerformanceTags(histoire.texte) : histoire.texte;
+
+      // Multi-voix : si script avec dialogues + flag multiVoice + ElevenLabs,
+      // on génère un MP3 par beat et on concatène. Le player charge ensuite le
+      // résultat comme un audio mono classique au path canonique attendu.
+      const useMultiVoice = isElevenLabs
+        && voiceConfig.multiVoice === true
+        && !!histoire.script
+        && histoire.script.beats.some(b => b.kind === 'dialogue');
+      if (__DEV__) {
+        console.log('[StoryPlayer] multi-voix decision:', {
+          isElevenLabs,
+          flagMultiVoice: voiceConfig.multiVoice === true,
+          hasScript: !!histoire.script,
+          hasDialogues: !!histoire.script?.beats.some(b => b.kind === 'dialogue'),
+          useMultiVoice,
+        });
+      }
+
       const result = isFishAudio
         ? await generateSpeechFish(apiKey, textForTts, voiceConfig.fishAudioReferenceId ?? '', histoire.id)
-        : useTimestamps
-          ? await generateSpeechWithTimestamps(apiKey, textForTts, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions)
-          : await generateSpeech(apiKey, textForTts, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions);
+        : useMultiVoice
+          ? await generateMultiVoiceConcatenated({
+              apiKey,
+              storyId: histoire.id,
+              universId: histoire.univers,
+              script: histoire.script!,
+              narratorVoiceId: voiceConfig.elevenLabsVoiceId ?? '',
+              narratorModel: voiceConfig.elevenLabsModel ?? 'eleven_v3',
+            })
+          : useTimestamps
+            ? await generateSpeechWithTimestamps(apiKey, textForTts, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions)
+            : await generateSpeech(apiKey, textForTts, voiceConfig.elevenLabsVoiceId ?? '', histoire.id, elevenLabsOptions);
       if (__DEV__) {
         if ('error' in result) {
           console.warn('[StoryPlayer] generation error:', result.error);
@@ -671,9 +699,16 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       // Vérifier le cache local (et fallback vault si disponible).
       // Pour ElevenLabs, on inclut le modèle dans la clé : changer Cinéma v3 ↔ Premium v2
       // force la régénération (sinon on relit l'ancien MP3 sans tags honorés).
+      // Multi-voix : le path canonique utilise un storyId suffixé `_mv`.
+      const useMultiVoiceCache = isElevenLabs
+        && voiceConfig.multiVoice === true
+        && !!histoire.script
+        && histoire.script.beats.some(b => b.kind === 'dialogue');
       const cached = isFishAudio
         ? await getCachedStoryAudioFish(histoire.id, voiceId, vaultUri)
-        : await getCachedStoryAudio(histoire.id, voiceId, vaultUri, voiceConfig.elevenLabsModel);
+        : useMultiVoiceCache
+          ? await getCachedStoryAudio(`${histoire.id}_mv`, voiceId, undefined, voiceConfig.elevenLabsModel)
+          : await getCachedStoryAudio(histoire.id, voiceId, vaultUri, voiceConfig.elevenLabsModel);
 
       if (signal.cancelled) return;
 
@@ -734,7 +769,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         allowsRecordingIOS: false,
-        staysActiveInBackground: false,
+        staysActiveInBackground: true,
         interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
       });
     } catch {
@@ -828,7 +863,7 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
           await Audio.setAudioModeAsync({
             playsInSilentModeIOS: true,
             allowsRecordingIOS: false,
-            staysActiveInBackground: false,
+            staysActiveInBackground: true,
             interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
           });
         } catch { /* non-critique */ }
