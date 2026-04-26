@@ -10,7 +10,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { processActiveRewards } from '../../lib/gamification';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontFamily, FontWeight } from '../../constants/typography';
 
 /** Adapte le label de la récompense pour les enfants */
 function childFriendlyLabel(label: string, isChild: boolean, t: (key: string, opts?: any) => string): string {
@@ -85,11 +85,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   activeRewardLabel: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.lg,
+    letterSpacing: -0.2,
   },
   activeRewardMeta: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.semibold,
   },
 });
