@@ -4561,7 +4561,7 @@
   },
   "onboarding": {
     "welcome": {
-      "greeting": "Hello 👋",
+      "greeting": "Hello",
       "title": "Your family,\norganized. Finally.",
       "subtitle": "Tasks, meals, budget, memories —\nall in one place for the whole family.",
       "namePlaceholder": "Your first name (optional)",
@@ -4693,7 +4693,7 @@
     },
     "dashboardPreview": {
       "title": "Your dashboard,\nbefore you even start.",
-      "greeting": "Hello 👋",
+      "greeting": "Hello",
       "date": "Wednesday, April 7",
       "note": "This is exactly what you'll have —\nwith your real data.",
       "cta": "Let's go! →"

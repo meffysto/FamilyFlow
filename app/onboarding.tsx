@@ -905,7 +905,7 @@ export default function OnboardingScreen() {
         {/* Header dashboard fictif */}
         <Animated.View entering={FadeInDown.delay(300).duration(400)} style={[s.demoHeader, { backgroundColor: colors.card }]}>
           <Text style={[s.demoHeaderGreeting, { color: colors.text }]}>
-            {userName.trim() ? `${t('onboarding.welcome.greeting')} ${userName.trim()} 👋` : t('onboarding.dashboardPreview.greeting')}
+            {userName.trim() ? `${t('onboarding.welcome.greeting')} ${userName.trim()}` : t('onboarding.dashboardPreview.greeting')}
           </Text>
           <Text style={[s.demoHeaderDate, { color: colors.textMuted }]}>{t('onboarding.dashboardPreview.date')}</Text>
         </Animated.View>

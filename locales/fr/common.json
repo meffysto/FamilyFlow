@@ -4619,7 +4619,7 @@
   },
   "onboarding": {
     "welcome": {
-      "greeting": "Bonjour 👋",
+      "greeting": "Bonjour",
       "title": "Votre famille,\norganisée. Enfin.",
       "subtitle": "Tâches, repas, budget, souvenirs —\ntout réuni au même endroit pour toute la famille.",
       "namePlaceholder": "Votre prénom (optionnel)",
@@ -4751,7 +4751,7 @@
     },
     "dashboardPreview": {
       "title": "Votre tableau de bord,\navant même de commencer.",
-      "greeting": "Bonjour 👋",
+      "greeting": "Bonjour",
       "date": "Mercredi 7 avril",
       "note": "C'est exactement ce que vous aurez —\navec vos vraies données.",
       "cta": "C'est parti ! →"
