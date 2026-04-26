@@ -170,6 +170,14 @@ export const AFFINITY_MULTIPLIER: Record<CropAffinity, number> = {
   hated:     0, // produit un buff null
 };
 
+/** XP direct accordé au feed — base par grade, ×2 si préféré, 0 si détesté */
+export const FEED_BASE_XP: Record<HarvestGrade, number> = {
+  ordinary:   5,
+  good:      10,
+  excellent: 15,
+  perfect:   25,
+};
+
 /** Phase 42 — Préférence alimentaire par espèce — D-13 (OPTION A validée user 2026-04-22)
  *  Mapping officiel : redistribution parmi CROP_CATALOG existant.
  *  Chaque espèce a un préféré ET un détesté UNIQUES (pas de collision).
