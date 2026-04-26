@@ -104,6 +104,7 @@ import {
   DashboardCompanionDay,
 } from '../../components/dashboard';
 import type { ZenConfig } from '../../components/settings/SettingsZen';
+import { Search, Send, Loader, Settings2 } from 'lucide-react-native';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
 const SMART_SORT_KEY = 'dashboard_smart_sort';
@@ -970,37 +971,41 @@ export default function DashboardScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => setSearchVisible(true)}
-            style={[styles.headerBtn, { backgroundColor: colors.brand.wash }]}
+            style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel={t('index.a11y.search')}
             accessibilityRole="search"
           >
-            <Text style={styles.headerBtnIcon}>🔍</Text>
-            <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.search')}</Text>
+            <Search size={18} strokeWidth={2} color={colors.brand.soil} />
+            <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.search')}</Text>
           </TouchableOpacity>
           {!isChildMode && (
             <TouchableOpacity
               onPress={handleSendRecap}
-              style={[styles.headerBtn, { backgroundColor: colors.brand.wash }]}
+              style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               disabled={isSendingRecap}
               accessibilityLabel={t('index.a11y.sendRecap')}
               accessibilityRole="button"
             >
-              <Text style={styles.headerBtnIcon}>{isSendingRecap ? '⏳' : '📤'}</Text>
-              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.recap')}</Text>
+              {isSendingRecap ? (
+                <Loader size={18} strokeWidth={2} color={colors.brand.soil} />
+              ) : (
+                <Send size={18} strokeWidth={2} color={colors.brand.soil} />
+              )}
+              <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.recap')}</Text>
             </TouchableOpacity>
           )}
           {!isChildMode && (
             <TouchableOpacity
               onPress={() => setPrefsModalVisible(true)}
-              style={[styles.headerBtn, { backgroundColor: colors.brand.wash }]}
+              style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={t('index.a11y.configureSections')}
               accessibilityRole="button"
             >
-              <Text style={styles.headerBtnIcon}>⚙️</Text>
-              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.sections')}</Text>
+              <Settings2 size={18} strokeWidth={2} color={colors.brand.soil} />
+              <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.sections')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1435,13 +1440,15 @@ const styles = StyleSheet.create({
   headerBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     gap: 1,
-    borderRadius: 9,
-  },
-  headerBtnIcon: {
-    fontSize: FontSize.lg,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 1,
   },
   headerBtnLabel: {
     fontSize: 10,
