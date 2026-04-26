@@ -3053,7 +3053,13 @@
       "placeholder": "One positive thing about the day..."
     },
     "a11y": {
-      "dictate": "Dictate gratitude"
+      "dictate": "Dictate gratitude",
+      "prevDay": "Previous day",
+      "nextDay": "Next day",
+      "today": "Back to today",
+      "write": "Write a gratitude",
+      "edit": "Edit gratitude",
+      "loadMore": "Load more days"
     },
     "dictateLabel": "Dictate"
   },

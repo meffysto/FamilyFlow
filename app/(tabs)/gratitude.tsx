@@ -37,6 +37,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
+import { withAlpha } from '../../lib/colors';
 import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Shadows } from '../../constants/shadows';
@@ -51,6 +52,12 @@ import { useTranslation } from 'react-i18next';
 const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 
 type TabId = 'aujourdhui' | 'livre';
+
+interface GratitudeSection {
+  title: string;
+  date: string;
+  data: GratitudeEntry[];
+}
 
 // ─── Constantes animation ────────────────────────────────────────────────────
 
@@ -148,7 +155,7 @@ const tabSwitcherStyles = StyleSheet.create({
     borderRadius: Radius.full,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-    height: 40,
+    height: 44,
   },
   indicator: {
     position: 'absolute',
@@ -216,12 +223,12 @@ export default function GratitudeScreen() {
   }, [activeTab, scrollY]);
 
   // Navigation entre jours
-  const goToDay = (offset: number) => {
+  const goToDay = useCallback((offset: number) => {
     const d = offset > 0
       ? addDays(new Date(selectedDate + 'T12:00:00'), offset)
       : subDays(new Date(selectedDate + 'T12:00:00'), Math.abs(offset));
     setSelectedDate(d.toISOString().slice(0, 10));
-  };
+  }, [selectedDate]);
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const isToday = selectedDate === todayStr;
@@ -243,7 +250,7 @@ export default function GratitudeScreen() {
   );
 
   // Livre d'or : sections pour SectionList (gratitudeDays already sorted desc)
-  const bookSections = useMemo(() => {
+  const bookSections = useMemo<GratitudeSection[]>(() => {
     return gratitudeDays.slice(0, visibleCount).map((day) => {
       const [yyyy, mm, dd] = day.date.split('-');
       return {
@@ -258,7 +265,7 @@ export default function GratitudeScreen() {
     await deleteGratitudeEntry(entry.date, entry.profileId);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     showToast(t('gratitude.toast.deleted'));
-  }, [deleteGratitudeEntry, showToast]);
+  }, [deleteGratitudeEntry, showToast, t]);
 
   const handleOpenWrite = useCallback((existing?: GratitudeEntry) => {
     setWriteText(existing?.text ?? '');
@@ -272,13 +279,13 @@ export default function GratitudeScreen() {
     showToast(t('gratitude.toast.saved'));
     setWriteModal({ visible: false });
     setWriteText('');
-  }, [activeProfile, selectedDate, writeText, addGratitudeEntry, showToast]);
+  }, [activeProfile, selectedDate, writeText, addGratitudeEntry, showToast, t]);
 
   const dateDisplay = useMemo(() => {
     const d = new Date(selectedDate + 'T12:00:00');
     if (isToday) return t('gratitude.today');
     return format(d, 'EEEE d MMMM yyyy', { locale: getDateLocale() });
-  }, [selectedDate, isToday]);
+  }, [selectedDate, isToday, t]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
@@ -288,7 +295,7 @@ export default function GratitudeScreen() {
         subtitle={t('gratitude.subtitle')}
         actions={
           streak > 0 ? (
-            <View style={[styles.streakBadge, { backgroundColor: colors.info + '20' }]}>
+            <View style={[styles.streakBadge, { backgroundColor: withAlpha(colors.info, 0.12) }]}>
               <Text style={[styles.streakText, { color: colors.info }]}>🔥 {streak}</Text>
             </View>
           ) : undefined
@@ -309,13 +316,24 @@ export default function GratitudeScreen() {
         >
           {/* Navigation date */}
           <View style={styles.dateNav}>
-            <TouchableOpacity onPress={() => goToDay(-1)} activeOpacity={0.7} style={styles.dateArrow}>
+            <TouchableOpacity
+              onPress={() => goToDay(-1)}
+              activeOpacity={0.7}
+              style={styles.dateArrow}
+              accessibilityRole="button"
+              accessibilityLabel={t('gratitude.a11y.prevDay')}
+            >
               <Text style={[styles.dateArrowText, { color: primary }]}>←</Text>
             </TouchableOpacity>
             <View style={styles.dateCenter}>
               <Text style={[styles.dateLabel, { color: colors.text }]}>{dateDisplay}</Text>
               {!isToday && (
-                <TouchableOpacity onPress={() => setSelectedDate(todayStr)} activeOpacity={0.7}>
+                <TouchableOpacity
+                  onPress={() => setSelectedDate(todayStr)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('gratitude.a11y.today')}
+                >
                   <Text style={[styles.todayLink, { color: primary }]}>{t('gratitude.today')}</Text>
                 </TouchableOpacity>
               )}
@@ -325,6 +343,9 @@ export default function GratitudeScreen() {
               activeOpacity={0.7}
               style={styles.dateArrow}
               disabled={selectedDate >= todayStr}
+              accessibilityRole="button"
+              accessibilityLabel={t('gratitude.a11y.nextDay')}
+              accessibilityState={{ disabled: selectedDate >= todayStr }}
             >
               <Text style={[styles.dateArrowText, { color: selectedDate >= todayStr ? colors.textFaint : primary }]}>→</Text>
             </TouchableOpacity>
@@ -345,6 +366,8 @@ export default function GratitudeScreen() {
                       style={[styles.writeBtn, { backgroundColor: primary }]}
                       onPress={() => handleOpenWrite()}
                       activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('gratitude.a11y.write')}
                     >
                       <Text style={[styles.writeBtnText, { color: colors.onPrimary }]}>{t('gratitude.writeBtn')}</Text>
                     </TouchableOpacity>
@@ -354,6 +377,8 @@ export default function GratitudeScreen() {
                       style={[styles.editBtn, { borderColor: primary }]}
                       onPress={() => handleOpenWrite(entry)}
                       activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('gratitude.a11y.edit')}
                     >
                       <Text style={[styles.editBtnText, { color: primary }]}>{t('gratitude.editBtn')}</Text>
                     </TouchableOpacity>
@@ -394,16 +419,17 @@ export default function GratitudeScreen() {
             />
           ) : (
             <AnimatedSectionList
-              sections={bookSections as any}
-              keyExtractor={((item: any, index: number) => `${item.date}-${item.profileId}-${index}`) as any}
+              // AnimatedSectionList perd les génériques de SectionList → cast sections + handlers typés via section/item
+              sections={bookSections as unknown as readonly GratitudeSection[]}
+              keyExtractor={((item: GratitudeEntry, index: number) => `${item.date}-${item.profileId}-${index}`) as (item: unknown, index: number) => string}
               contentContainerStyle={[styles.content, Layout.contentContainer]}
               onScroll={onScrollHandler}
               scrollEventThrottle={16}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
-              renderSectionHeader={({ section }: any) => (
+              renderSectionHeader={(({ section }: { section: GratitudeSection }) => (
                 <Text style={[styles.sectionDate, { color: colors.textMuted }]}>{section.title}</Text>
-              )}
-              renderItem={({ item }: any) => (
+              )) as unknown as (info: { section: unknown }) => React.ReactElement}
+              renderItem={(({ item }: { item: GratitudeEntry }) => (
                 <SwipeToDelete
                   onDelete={() => handleDeleteEntry(item)}
                   confirmTitle={t('gratitude.deleteTitle')}
@@ -420,7 +446,7 @@ export default function GratitudeScreen() {
                     <MarkdownText style={{ color: colors.textSub }}>{item.text}</MarkdownText>
                   </View>
                 </SwipeToDelete>
-              )}
+              )) as unknown as (info: { item: unknown; index: number }) => React.ReactElement}
               renderSectionFooter={() => <View style={styles.sectionSep} />}
               ListFooterComponent={
                 visibleCount < gratitudeDays.length ? (
@@ -428,6 +454,8 @@ export default function GratitudeScreen() {
                     style={[styles.loadMoreBtn, { borderColor: primary }]}
                     onPress={() => setVisibleCount((c) => c + LOAD_BATCH)}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('gratitude.a11y.loadMore')}
                   >
                     <Text style={[styles.loadMoreText, { color: primary }]}>{t('gratitude.loadMore')}</Text>
                   </TouchableOpacity>
@@ -481,6 +509,7 @@ export default function GratitudeScreen() {
           </View>
 
           {/* Dictaphone Modal */}
+          {/* TODO(a11y/ux) : modal imbriquée dans une autre modal pageSheet — comportement OK iOS 16+, mais à refondre en bottom sheet partagé si l'on étend le pattern à d'autres écrans. */}
           <Modal
             visible={dictaphoneVisible}
             animationType="slide"
@@ -524,7 +553,7 @@ const styles = StyleSheet.create({
   },
   streakText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
+  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: Layout.fabBottomOffset },
   // Date navigation
   dateNav: {
     flexDirection: 'row',
@@ -591,7 +620,6 @@ const styles = StyleSheet.create({
   },
   bookAvatar: { fontSize: 22 },
   bookName: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
-  bookText: { fontSize: FontSize.body, lineHeight: 22 },
   sectionSep: { height: Spacing.md },
   loadMoreBtn: {
     borderWidth: 1.5,
@@ -602,7 +630,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   loadMoreText: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
-  bottomPad: { height: 40 },
+  bottomPad: { height: Spacing['6xl'] },
   // Write modal
   writeContent: {
     flex: 1,
@@ -641,6 +669,7 @@ const styles = StyleSheet.create({
     padding: Spacing['2xl'],
     fontSize: FontSize.body,
     lineHeight: 24,
+    // minHeight 120 : hauteur minimale ergonomique pour zone de saisie multiline (~5 lignes)
     minHeight: 120,
   },
 });

@@ -3061,7 +3061,13 @@
       "placeholder": "Une chose positive de la journée..."
     },
     "a11y": {
-      "dictate": "Dicter la gratitude"
+      "dictate": "Dicter la gratitude",
+      "prevDay": "Jour précédent",
+      "nextDay": "Jour suivant",
+      "today": "Revenir à aujourd'hui",
+      "write": "Écrire une gratitude",
+      "edit": "Modifier la gratitude",
+      "loadMore": "Charger plus de jours"
     },
     "dictateLabel": "Dicter"
   },

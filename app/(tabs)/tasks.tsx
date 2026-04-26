@@ -61,6 +61,12 @@ import type { HarvestBurstVariant } from '../../lib/semantic/effect-toasts';
 
 const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 
+// Chemin du fichier vault des tâches de vacances
+const VACANCES_PATH = '02 - Maison/Vacances.md';
+
+// Étend la zone tactile pour atteindre une cible >= 44x44 sur les boutons d'icône 32x32
+const ICON_BTN_HITSLOP = { top: 8, bottom: 8, left: 8, right: 8 };
+
 interface FilterDef {
   id: string;
   label: string;
@@ -141,12 +147,12 @@ const weatherStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    gap: 12,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 16,
+    paddingHorizontal: Spacing['3xl'],
+    paddingVertical: Spacing.xl,
+    gap: Spacing.xl,
+    marginHorizontal: Spacing['2xl'],
+    marginBottom: Spacing.md,
+    borderRadius: Radius.xl,
   },
   emoji: {
     fontSize: FontSize.hero,
@@ -246,7 +252,7 @@ export default function TasksScreen() {
       ];
     }
     return buildFilters(profiles, activeProfile, t);
-  }, [profiles, activeProfile, isVacationActive]);
+  }, [profiles, activeProfile, isVacationActive, t]);
   const targetFiles = useMemo(() => buildTargetFiles(profiles, t), [profiles, t]);
   const [filter, setFilter] = useState('tous');
 
@@ -399,7 +405,7 @@ export default function TasksScreen() {
         await refresh();
       }
     },
-    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification, showToast, showRewardCard]
+    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification, showToast, showRewardCard, hasSeenScreen, t]
   );
 
   const handleTaskSkip = useCallback(async (task: Task) => {
@@ -591,7 +597,7 @@ export default function TasksScreen() {
     }
 
     const unsorted = Object.entries(groups).map(([file, data]) => ({
-      title: getFileLabel(file),
+      title: getFileLabel(file, t),
       sourceFile: file,
       data: data.sort((a, b) => {
         // Récurrentes en priorité
@@ -619,7 +625,7 @@ export default function TasksScreen() {
     }
 
     return unsorted;
-  }, [activeTasks, sectionOrder]);
+  }, [activeTasks, sectionOrder, t]);
 
   // Sections terminées groupées par fichier
   const completedSections: TaskSection[] = useMemo(() => {
@@ -630,11 +636,11 @@ export default function TasksScreen() {
       groups[key].push(task);
     }
     return Object.entries(groups).map(([file, data]) => ({
-      title: getFileLabel(file),
+      title: getFileLabel(file, t),
       sourceFile: file,
       data,
     }));
-  }, [completedTasks]);
+  }, [completedTasks, t]);
 
   const emptyStateProps = useMemo(() => {
     if (search.trim()) {
@@ -661,7 +667,7 @@ export default function TasksScreen() {
 
   const renderItem = useCallback(
     ({ item, index }: { item: Task; index: number }) => (
-      <Animated.View entering={FadeInDown.delay(Math.min(index * 30, 300))}>
+      <Animated.View entering={index < 10 ? FadeInDown.delay(index * 30) : undefined}>
         <SwipeToDelete
           onDelete={() => handleDeleteTask(item)}
           skipConfirm
@@ -721,7 +727,7 @@ export default function TasksScreen() {
                   style={[styles.headerIconBtn, { backgroundColor: colors.card }]}
                   accessibilityLabel={t('tasks.a11y.reorder')}
                   accessibilityRole="button"
-                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  hitSlop={ICON_BTN_HITSLOP}
                 >
                   <Text style={styles.headerIconText}>↕️</Text>
                 </TouchableOpacity>
@@ -729,12 +735,13 @@ export default function TasksScreen() {
               <TouchableOpacity
                 style={[styles.addBtn, { backgroundColor: primary }]}
                 onPress={() => {
-                  setNewTaskTarget(isVacationActive ? '02 - Maison/Vacances.md' : (targetFiles[0]?.value ?? ''));
+                  setNewTaskTarget(isVacationActive ? VACANCES_PATH : (targetFiles[0]?.value ?? ''));
                   setAddModalVisible(true);
                 }}
                 activeOpacity={0.7}
                 accessibilityLabel={t('tasks.a11y.addTask')}
                 accessibilityRole="button"
+                hitSlop={ICON_BTN_HITSLOP}
               >
                 <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
               </TouchableOpacity>
@@ -795,6 +802,7 @@ export default function TasksScreen() {
 
       {/* Task list */}
       <AnimatedSectionList
+        // TODO type — AnimatedSectionList perd les génériques de SectionList<Task, TaskSection>
         sections={sections as any}
         keyExtractor={keyExtractor as any}
         renderItem={renderItem as any}
@@ -1270,7 +1278,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
   },
   modalSafe: { flex: 1 },
-  dragHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: Spacing.md, marginBottom: Spacing.xs },
+  dragHandle: { width: 36, height: 4, borderRadius: Radius.xxs, alignSelf: 'center', marginTop: Spacing.md, marginBottom: Spacing.xs },
   modalScroll: { flex: 1 },
   modalContent: { padding: Spacing['3xl'], gap: Spacing['2xl'], paddingBottom: 40 },
   modalLabel: {
@@ -1300,7 +1308,8 @@ const styles = StyleSheet.create({
   },
   completedSection: {
     marginTop: Spacing.xl,
-    paddingBottom: 80,
+    // Espace pour ne pas être masqué par la tab bar
+    paddingBottom: Layout.fabBottomOffset,
   },
   toggleCompletedBtn: {
     alignItems: 'center',

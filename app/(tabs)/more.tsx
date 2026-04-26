@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
 
   // ── Toggle vue liste/grille ──
   viewToggle: {
-    height: 32,
+    height: 44,
     borderRadius: Radius.full,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Spacing.md,
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   listIcon: {
     width: 50,
     height: 50,
-    borderRadius: Radius['lg+' as keyof typeof Radius] ?? 14,
+    borderRadius: Radius['lg+'],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing['2xl'],
