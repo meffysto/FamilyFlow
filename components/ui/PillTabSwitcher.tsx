@@ -107,8 +107,8 @@ export function PillTabSwitcher<T extends string>({
         style={[
           styles.container,
           {
-            backgroundColor: colors.card,
-            borderColor: colors.border,
+            backgroundColor: colors.brand.wash,
+            borderColor: colors.brand.bark,
             marginHorizontal: marginHorizontal ?? Spacing['4xl'],
           },
         ]}
@@ -123,7 +123,10 @@ export function PillTabSwitcher<T extends string>({
         />
         {tabs.map((tab, idx) => {
           const active = tab.id === activeTab;
-          const color = active ? colors.bg : colors.textMuted;
+          // Texte actif : parchemin warm constant (lisible sur tout primary saturé,
+          // light comme dark). Inactif : textSub warm-tinted (au lieu de textMuted
+          // qui peut tirer vers le gris froid sur certains thèmes).
+          const color = active ? colors.brand.parchment : colors.textSub;
           return (
             <Pressable
               key={tab.id}
@@ -140,13 +143,13 @@ export function PillTabSwitcher<T extends string>({
                 <View
                   style={[
                     styles.badge,
-                    { backgroundColor: active ? colors.bg : primary },
+                    { backgroundColor: active ? colors.brand.parchment : primary },
                   ]}
                 >
                   <Text
                     style={[
                       styles.badgeText,
-                      { color: active ? primary : colors.onPrimary },
+                      { color: active ? primary : colors.brand.parchment },
                     ]}
                   >
                     {tab.badge > 99 ? '99+' : tab.badge}
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginVertical: Spacing.lg,
     borderRadius: Radius.full,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
     height: 40,
   },
