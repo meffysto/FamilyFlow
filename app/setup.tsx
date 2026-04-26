@@ -33,8 +33,9 @@ import { TEMPLATE_PACKS, DEFAULT_SELECTED_PACKS } from '../lib/vault-templates';
 import { useHelp } from '../contexts/HelpContext';
 import { useTranslation } from 'react-i18next';
 import { Spacing, Radius } from '../constants/spacing';
-import { FontSize, FontWeight, LineHeight } from '../constants/typography';
+import { FontSize, FontWeight, FontFamily, LineHeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import { Users, Baby, FolderOpen, Package, Check } from 'lucide-react-native';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
@@ -266,7 +267,10 @@ export default function SetupScreen() {
       case 1:
         return (
           <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>👨‍👩‍👧‍👦 {t('setup.parents.title')}</Text>
+            <View style={s.stepTitleRow}>
+              <Users size={26} strokeWidth={1.75} color={colors.brand.soil} />
+              <Text style={ds.stepTitle}>{t('setup.parents.title')}</Text>
+            </View>
             <Text style={ds.stepSubtitle}>{t('setup.parents.subtitle')}</Text>
 
             <View style={s.countRow}>
@@ -314,7 +318,10 @@ export default function SetupScreen() {
       case 2:
         return (
           <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>👶 {t('setup.children.title')}</Text>
+            <View style={s.stepTitleRow}>
+              <Baby size={26} strokeWidth={1.75} color={colors.brand.soil} />
+              <Text style={ds.stepTitle}>{t('setup.children.title')}</Text>
+            </View>
             <Text style={ds.stepSubtitle}>{t('setup.children.subtitle')}</Text>
 
             <View style={s.countRow}>
@@ -393,7 +400,10 @@ export default function SetupScreen() {
       case 3:
         return (
           <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>📁 {t('setup.vault.title')}</Text>
+            <View style={s.stepTitleRow}>
+              <FolderOpen size={26} strokeWidth={1.75} color={colors.brand.soil} />
+              <Text style={ds.stepTitle}>{t('setup.vault.title')}</Text>
+            </View>
             <Text style={ds.stepSubtitle}>
               {t('setup.vault.subtitle')}
             </Text>
@@ -421,9 +431,9 @@ export default function SetupScreen() {
           .map((p) => t(`setup.templatePacks.${p.id}.name`, { defaultValue: p.name }))
           .join(', ');
         const checkItems = [
-          { emoji: '👨‍👩‍👧‍👦', label: t('setup.recap.parents'), sub: familySummary },
-          { emoji: '📁', label: t('setup.recap.vault'), sub: undefined },
-          ...(selectedPacks.size > 0 ? [{ emoji: '📦', label: t('setup.recap.models'), sub: templateNames }] : []),
+          { Icon: Users, label: t('setup.recap.parents'), sub: familySummary },
+          { Icon: FolderOpen, label: t('setup.recap.vault'), sub: undefined },
+          ...(selectedPacks.size > 0 ? [{ Icon: Package, label: t('setup.recap.models'), sub: templateNames }] : []),
         ];
         const allDone = recapProgress >= checkItems.length;
         return (
@@ -443,15 +453,18 @@ export default function SetupScreen() {
                   >
                     <View style={[s.recapCheckIcon, { borderWidth: 2 }, isDone ? { backgroundColor: colors.successBg, borderColor: colors.successBg } : isActive ? { borderColor: primary, backgroundColor: 'transparent' } : { borderColor: 'transparent' }]}>
                       {isDone ? (
-                        <Text style={[s.recapCheckDone, { color: colors.success }]}>✓</Text>
+                        <Check size={16} strokeWidth={2.5} color={colors.success} />
                       ) : (
                         <ActivityIndicator size="small" color={primary} />
                       )}
                     </View>
                     <View style={s.recapCheckTextCol}>
-                      <Text style={[s.recapCheckLabel, isDone ? { color: colors.text } : { color: colors.text, fontWeight: FontWeight.bold }]}>
-                        {isDone ? `${item.emoji} ${item.label}` : item.label}
-                      </Text>
+                      <View style={s.recapCheckLabelRow}>
+                        {isDone && <item.Icon size={16} strokeWidth={1.75} color={colors.brand.soil} />}
+                        <Text style={[s.recapCheckLabel, isDone ? { color: colors.text } : { color: colors.text, fontWeight: FontWeight.semibold }]}>
+                          {item.label}
+                        </Text>
+                      </View>
                       {isDone && item.sub ? (
                         <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{item.sub}</Text>
                       ) : isActive ? (
@@ -588,7 +601,7 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
     },
     featureTitle: {
       fontSize: FontSize.body,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.semibold,
       color: colors.text,
     },
     featureDesc: {
@@ -597,10 +610,10 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
       lineHeight: LineHeight.tight,
     },
     stepTitle: {
+      fontFamily: FontFamily.serif,
       fontSize: FontSize.display,
-      fontWeight: FontWeight.heavy,
       color: colors.text,
-      textAlign: 'center' as const,
+      letterSpacing: -0.4,
     },
     stepSubtitle: {
       fontSize: FontSize.body,
@@ -631,11 +644,9 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
       ...Shadows.sm,
     },
     formLabel: {
-      fontSize: FontSize.label,
-      fontWeight: FontWeight.bold,
+      fontFamily: FontFamily.handwrite,
+      fontSize: FontSize.sm,
       color: colors.textMuted,
-      textTransform: 'uppercase' as const,
-      letterSpacing: 0.5,
     },
     input: {
       borderWidth: 1.5,
@@ -714,7 +725,7 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
     },
     templateName: {
       fontSize: FontSize.body,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.semibold,
       color: colors.text,
     },
     templateDesc: {
@@ -729,15 +740,13 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
       ...Shadows.md,
     },
     recapSection: {
-      fontSize: FontSize.label,
-      fontWeight: FontWeight.bold,
+      fontFamily: FontFamily.handwrite,
+      fontSize: FontSize.sm,
       color: colors.textMuted,
-      textTransform: 'uppercase' as const,
-      letterSpacing: 0.5,
     },
     recapName: {
       fontSize: FontSize.body,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.semibold,
       color: colors.text,
     },
     recapDate: {
@@ -748,9 +757,11 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
       fontSize: FontSize.label,
       color: colors.textSub,
       fontFamily: 'Menlo',
-      backgroundColor: colors.cardAlt,
+      backgroundColor: colors.brand.wash,
       padding: Spacing.lg,
       borderRadius: Radius.md,
+      borderLeftWidth: 2,
+      borderLeftColor: colors.brand.bark,
     },
     recapTemplates: {
       fontSize: FontSize.sm,
@@ -759,7 +770,7 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
     },
     createInfoTitle: {
       fontSize: FontSize.sm,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.semibold,
       color: primary,
     },
     createInfoText: {
@@ -784,7 +795,7 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
     },
     navNextText: {
       fontSize: FontSize.lg,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.semibold,
       color: colors.onPrimary,
     },
     navSkipText: {
@@ -794,7 +805,7 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
     },
     navCreateText: {
       fontSize: FontSize.lg,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.semibold,
       color: colors.onPrimary,
     },
     painPointChip: {
@@ -845,6 +856,12 @@ const s = StyleSheet.create({
 
   // Step content
   stepContent: { gap: Spacing['2xl'], alignItems: 'stretch' },
+  stepTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+  },
 
   // Pain point picker (step 2)
   painPointGrid: {
@@ -902,9 +919,10 @@ const s = StyleSheet.create({
     fontSize: 56,
   },
   featureSlideTitle: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.display,
-    fontWeight: FontWeight.heavy,
     textAlign: 'center',
+    letterSpacing: -0.4,
     marginBottom: Spacing.md,
   },
   featureSlideSubtitle: {
@@ -922,10 +940,9 @@ const s = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   problemCaption: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.title,
     textAlign: 'center',
-    fontStyle: 'italic',
     marginBottom: Spacing['3xl'],
   },
   slideDetails: {
@@ -1000,8 +1017,8 @@ const s = StyleSheet.create({
     gap: Spacing.xs,
   },
   welcomeAppName: {
-    fontSize: 28,
-    fontWeight: FontWeight.heavy,
+    fontFamily: FontFamily.serif,
+    fontSize: 32,
     letterSpacing: -0.5,
   },
   welcomeTagline: {
@@ -1013,7 +1030,7 @@ const s = StyleSheet.create({
   },
   welcomePromise: {
     fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
     marginBottom: Spacing.md,
   },
   orbContainer: {
@@ -1076,9 +1093,12 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  recapCheckEmoji: { fontSize: 20 },
-  recapCheckDone: { fontSize: 18, fontWeight: FontWeight.bold },
   recapCheckTextCol: { flex: 1, gap: 2 },
+  recapCheckLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   recapCheckLabel: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
@@ -1091,9 +1111,9 @@ const s = StyleSheet.create({
     gap: Spacing.sm,
   },
   recapTitle: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.display,
-    fontWeight: FontWeight.heavy,
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
   },
   recapSub: {
     fontSize: FontSize.body,
