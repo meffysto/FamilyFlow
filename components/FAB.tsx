@@ -23,10 +23,12 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import type { LucideIcon } from 'lucide-react-native';
 
 export interface FABAction {
   id: string;
-  emoji: string;
+  /** Icône lucide rendue dans le bouton rond (couleur héritée via primary) */
+  Icon: LucideIcon;
   label: string;
   onPress: () => void;
 }
@@ -158,7 +160,7 @@ function FABActionItem({
         accessibilityLabel={t('fab.addItemA11y', { label: action.label })}
         accessibilityRole="button"
       >
-        <Text style={styles.actionEmoji}>{action.emoji}</Text>
+        <action.Icon size={20} strokeWidth={1.75} color={colors.brand.parchment} />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -221,8 +223,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.md,
-  },
-  actionEmoji: {
-    fontSize: FontSize.title,
   },
 });

@@ -36,6 +36,7 @@ import { Button } from '../../components/ui/Button';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { MOOD_EMOJIS, type MoodLevel } from '../../lib/types';
+import { MOOD_ICONS, getMoodIconColor } from '../../lib/mood-ui';
 
 type TabId = 'aujourdhui' | 'historique';
 const MOOD_LEVELS: MoodLevel[] = [1, 2, 3, 4, 5];
@@ -100,9 +101,10 @@ function MoodBtn({ level, selected, primary, colors, onPress, size = 'lg', acces
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
       >
-        <Text style={size === 'lg' ? styles.moodEmoji : styles.familyMoodEmoji}>
-          {MOOD_EMOJIS[level]}
-        </Text>
+        {(() => {
+          const Icon = MOOD_ICONS[level];
+          return <Icon size={size === 'lg' ? 30 : 22} strokeWidth={1.75} color={getMoodIconColor(level, colors)} />;
+        })()}
       </Pressable>
     </Animated.View>
   );
@@ -129,8 +131,8 @@ export default function MoodsScreen() {
   }, [activeTab]);
 
   const moodTabs: ReadonlyArray<PillTab<TabId>> = useMemo(() => ([
-    { id: 'aujourdhui', label: "☀️ Aujourd'hui" },
-    { id: 'historique', label: '📅 Historique' },
+    { id: 'aujourdhui', label: "Aujourd'hui" },
+    { id: 'historique', label: 'Historique' },
   ]), []);
   const [noteModal, setNoteModal] = useState<{ visible: boolean; level: MoodLevel | null; profileId: string | null; profileName: string | null }>({ visible: false, level: null, profileId: null, profileName: null });
   const [noteText, setNoteText] = useState('');
@@ -199,6 +201,7 @@ export default function MoodsScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('moodsScreen.title')}
+        subtitle={t('moodsScreen.subtitle')}
         bottom={
           <View style={styles.tabsWrap}>
             <PillTabSwitcher
@@ -284,9 +287,18 @@ export default function MoodsScreen() {
                       ))}
                     </View>
                   ) : (
-                    <Text style={[styles.familyMoodReadonly, { color: colors.textMuted }]}>
-                      {entry ? MOOD_EMOJIS[entry.level] : '—'}
-                    </Text>
+                    entry ? (
+                      (() => {
+                        const Icon = MOOD_ICONS[entry.level];
+                        return (
+                          <View style={styles.familyMoodReadonlyWrap}>
+                            <Icon size={22} strokeWidth={1.75} color={getMoodIconColor(entry.level, colors)} />
+                          </View>
+                        );
+                      })()
+                    ) : (
+                      <Text style={[styles.familyMoodReadonly, { color: colors.textMuted }]}>—</Text>
+                    )
                   )}
                 </View>
               );
@@ -322,7 +334,10 @@ export default function MoodsScreen() {
                     <View key={p.id} style={styles.gridCellWrapper}>
                       {level ? (
                         <View style={[styles.gridCellBubble, { backgroundColor: MOOD_COLORS[level] }]}>
-                          <Text style={styles.gridCellEmoji}>{MOOD_EMOJIS[level]}</Text>
+                          {(() => {
+                            const Icon = MOOD_ICONS[level];
+                            return <Icon size={16} strokeWidth={2} color={getMoodIconColor(level, colors)} />;
+                          })()}
                         </View>
                       ) : (
                         <Text style={[styles.gridCellEmpty, { color: colors.separator }]}>·</Text>
@@ -436,6 +451,11 @@ const styles = StyleSheet.create({
   familyMoodReadonly: {
     fontSize: FontSize.heading,
     textAlign: 'center',
+    paddingVertical: Spacing.xs,
+  },
+  familyMoodReadonlyWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: Spacing.xs,
   },
   familyNote: {

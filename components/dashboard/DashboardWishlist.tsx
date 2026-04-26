@@ -8,9 +8,10 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Gift } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
-import { FontSize } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
 
 function DashboardWishlistInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -21,8 +22,8 @@ function DashboardWishlistInner(_props: DashboardSectionProps) {
   const unbought = wishlistItems.filter((w) => !w.bought).length;
 
   return (
-    <DashboardCard key="wishlist" title={t('dashboard.wishlist.title')} icon="🎁" color={colors.catFamille} tinted onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
-      <Text style={[styles.defiMeta, { color: colors.textSub }]}>
+    <DashboardCard key="wishlist" title={t('dashboard.wishlist.title')} IconComponent={Gift} color={colors.catFamille} tinted onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
+      <Text style={[styles.sentence, { color: colors.textMuted }]}>
         {t('dashboard.wishlist.giftIdeas', { count: unbought })}
       </Text>
     </DashboardCard>
@@ -32,7 +33,8 @@ function DashboardWishlistInner(_props: DashboardSectionProps) {
 export const DashboardWishlist = React.memo(DashboardWishlistInner);
 
 const styles = StyleSheet.create({
-  defiMeta: {
-    fontSize: FontSize.caption,
+  sentence: {
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
   },
 });

@@ -24,11 +24,22 @@ import { GlassView } from '../../components/ui/GlassView';
 import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Layout, Spacing, Radius } from '../../constants/spacing';
+import {
+  Home,
+  ListChecks,
+  BookOpen,
+  Calendar as CalendarIcon,
+  LayoutGrid,
+  ClipboardList,
+  CalendarPlus,
+  Camera,
+  type LucideIcon,
+} from 'lucide-react-native';
 
 const SPRING_CONFIG = { damping: 10, stiffness: 180 };
 
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  const { tint } = useThemeColors();
+function TabIcon({ Icon, focused }: { Icon: LucideIcon; focused: boolean }) {
+  const { tint, primary, colors } = useThemeColors();
   const scale = useSharedValue(focused ? 1 : 0);
   const iconScale = useSharedValue(focused ? 1.15 : 1);
 
@@ -42,14 +53,20 @@ function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
     opacity: scale.value,
   }));
 
-  const emojiStyle = useAnimatedStyle(() => ({
+  const iconWrapStyle = useAnimatedStyle(() => ({
     transform: [{ scale: iconScale.value }, { translateY: focused ? -1 : 0 }],
   }));
 
   return (
     <View style={tabIconStyles.container} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Animated.View style={[tabIconStyles.pill, { backgroundColor: tint }, pillStyle]} />
-      <Animated.Text style={[tabIconStyles.emoji, emojiStyle]}>{emoji}</Animated.Text>
+      <Animated.View style={iconWrapStyle}>
+        <Icon
+          size={22}
+          strokeWidth={focused ? 2 : 1.75}
+          color={focused ? primary : colors.textMuted}
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -65,9 +82,6 @@ const tabIconStyles = StyleSheet.create({
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
     borderRadius: 16,
-  },
-  emoji: {
-    fontSize: FontSize.title,
   },
 });
 
@@ -191,13 +205,13 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
   const fabActions: FABAction[] = isChildMode
     ? [
-        { id: 'task', emoji: '\u{1F4CB}', label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
+        { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
       ]
     : [
-        { id: 'task', emoji: '\u{1F4CB}', label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
-        { id: 'rdv', emoji: '\u{1F4C5}', label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
-        { id: 'journal', emoji: '\u{1F4D6}', label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
-        { id: 'photo', emoji: '\u{1F4F8}', label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
+        { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
+        { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
+        { id: 'journal', Icon: BookOpen, label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
+        { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
       ];
 
   return (
@@ -240,35 +254,35 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
           name="index"
           options={{
             title: t('tabs.today'),
-            tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={Home} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="tasks"
           options={{
             title: t('tabs.tasks'),
-            tabBarIcon: ({ focused }) => <TabIcon emoji="📋" focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={ListChecks} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="journal"
           options={{
             title: t('tabs.journal'),
-            tabBarIcon: ({ focused }) => <TabIcon emoji="📖" focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={BookOpen} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="calendar"
           options={{
             title: t('tabs.calendar'),
-            tabBarIcon: ({ focused }) => <TabIcon emoji="📆" focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={CalendarIcon} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="more"
           options={{
             title: t('tabs.menu'),
-            tabBarIcon: ({ focused }) => <TabIcon emoji="🗂️" focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={LayoutGrid} focused={focused} />,
           }}
         />
         {/* ── Hidden screens (accessible via router.push) ── */}

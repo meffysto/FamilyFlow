@@ -11,9 +11,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Cake } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { Spacing } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import type { Anniversary } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
 
@@ -108,18 +109,22 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       title={t('dashboard.anniversaires.title')}
-      icon="🎂"
-      count={upcoming.length > 1 ? upcoming.length : undefined}
+      IconComponent={Cake}
       color={colors.catFamille}
-      tinted
+      count={upcoming.length > 1 ? upcoming.length : undefined}
       collapsible
       cardId="anniversaires"
       style={{ flex: 1 }}
     >
-      <Text style={[styles.bigCountdown, { color: isToday ? colors.accentPink : colors.catFamille }]}>{mainLabel}</Text>
-      <Text style={[styles.nameMain, { color: colors.text }]} numberOfLines={1}>
-        {isToday ? '🎂 ' : '🎈 '}{mainItem.anniversary.name}
-        {mainItem.age !== null ? ` (${mainItem.age})` : ''}
+      <Text style={[styles.sentence, { color: colors.text }]} numberOfLines={2}>
+        <Text style={[styles.countdown, { color: isToday ? colors.error : colors.catFamille }]}>
+          {mainLabel}
+        </Text>
+        {' — '}
+        <Text style={[styles.name, { color: colors.text }]}>
+          {mainItem.anniversary.name}
+          {mainItem.age !== null ? ` (${mainItem.age})` : ''}
+        </Text>
       </Text>
       {upcoming.length > 1 && (
         <Text style={[styles.otherMicro, { color: colors.textMuted }]}>
@@ -133,19 +138,24 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
 export const DashboardAnniversaires = React.memo(DashboardAnniversairesInner);
 
 const styles = StyleSheet.create({
-  bigCountdown: {
-    fontSize: 40,
-    fontWeight: FontWeight.bold,
-    lineHeight: 44,
-    letterSpacing: -1,
+  sentence: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.normal,
+    lineHeight: 24,
   },
-  nameMain: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    marginTop: 2,
+  countdown: {
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.heading + 2, // 20px DM Serif intégré dans la phrase
+    letterSpacing: -0.3,
+  },
+  name: {
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.lg,
+    letterSpacing: -0.2,
   },
   otherMicro: {
-    fontSize: FontSize.micro,
-    marginTop: 2,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    marginTop: 4,
   },
 });

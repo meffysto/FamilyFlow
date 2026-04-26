@@ -28,3 +28,20 @@ export function formatDateLocalized(dateStr: string): string {
   }
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
+
+/**
+ * Formate une date YYYY-MM-DD en omettant l'année si c'est l'année courante.
+ * - Année courante : DD/MM (FR) ou MM/DD (EN)
+ * - Autre année : DD/MM/YYYY (FR) ou MM/DD/YYYY (EN)
+ */
+export function formatDateShort(dateStr: string): string {
+  if (!dateStr) return '';
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return dateStr;
+  const currentYear = new Date().getFullYear().toString();
+  const isCurrentYear = m[1] === currentYear;
+  if (i18n.language?.startsWith('en')) {
+    return isCurrentYear ? `${m[2]}/${m[3]}` : `${m[2]}/${m[3]}/${m[1]}`;
+  }
+  return isCurrentYear ? `${m[3]}/${m[2]}` : `${m[3]}/${m[2]}/${m[1]}`;
+}

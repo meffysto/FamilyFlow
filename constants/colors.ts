@@ -9,11 +9,11 @@ export const LightColors = {
   bg:          '#EDEAE4',
   card:        '#FFFFFF',
   cardAlt:     '#F9F8F5',
-  // Text
+  // Text — teintes warm bois pour cohérence brand, contrastes WCAG AA validés sur bg #EDEAE4
   text:        '#1A1A2E',
   textSub:     '#3D3D56',
-  textMuted:   '#6B7280',
-  textFaint:   '#9CA3AF',
+  textMuted:   '#5C544A',  // 6.30:1 (warm dark gray)
+  textFaint:   '#75695C',  // 4.51:1 (warm faint gray)
   // Borders & separators
   border:      '#DDD8D0',
   borderLight: '#EDE9E3',
@@ -25,8 +25,8 @@ export const LightColors = {
   tabBar:      '#FFFFFF',
   tabBarBorder:'#DDD8D0',
   tabBarOff:   '#6B7280',
-  // Status — error
-  error:       '#EF4444',
+  // Status — error (warm brick red, brand-aligned, 4.80:1 sur bg light)
+  error:       '#B0413A',
   errorBg:     '#FEE2E2',
   errorText:   '#991B1B',
   // Status — warning
@@ -60,19 +60,20 @@ export const LightColors = {
   glassBorder: 'rgba(255,255,255,0.45)',
   glassShadow: 'rgba(0,0,0,0.08)',
   // ── Couleurs d'accent par catégorie (partagées menu + dashboard) ──
-  catOrganisation:       '#0D9488',  // teal
-  catSante:              '#9333EA',  // violet
-  catSouvenirs:          '#E87B35',  // orange doré
-  catJeux:               '#16A34A',  // vert
-  catFamille:            '#DB2777',  // rose
-  catSysteme:            '#6B7280',  // gris neutre
-  // Gradients par section (menu)
-  gradientOrganisation:  ['#E0F7F4', '#D4F1EC'] as readonly [string, string],
-  gradientSante:         ['#F3E8F9', '#EDDFFA'] as readonly [string, string],
-  gradientSouvenirs:     ['#FFF0E0', '#FDEBD2'] as readonly [string, string],
-  gradientJeux:          ['#E8F5E9', '#DEF0DF'] as readonly [string, string],
-  gradientFamille:       ['#FDE8F0', '#FAE0EA'] as readonly [string, string],
-  gradientSysteme:       ['#F0EEF6', '#EAE8F2'] as readonly [string, string],
+  // Palette warm brand : mousse / prune / ocre / vert ferme / terracotta / faint warm.
+  catOrganisation:       '#5C6F3F',  // mousse foncée (light mode — contraste AA sur bg crème)
+  catSante:              '#5E4453',  // prune sourde foncée
+  catSouvenirs:          '#9E7A35',  // ocre foncé
+  catJeux:               '#3F6C2D',  // vert ferme foncé
+  catFamille:            '#8E3F26',  // terracotta foncée
+  catSysteme:            '#75695C',  // gris warm
+  // Gradients par section (menu) — washes warm sourds, pas Tailwind candy
+  gradientOrganisation:  ['#EAEFE0', '#E0E8D2'] as readonly [string, string],
+  gradientSante:         ['#EFE6EC', '#E8DCE3'] as readonly [string, string],
+  gradientSouvenirs:     ['#FBF2DE', '#F5E8C9'] as readonly [string, string],
+  gradientJeux:          ['#E8EFDF', '#DDE8D0'] as readonly [string, string],
+  gradientFamille:       ['#F5E2D8', '#EDD3C6'] as readonly [string, string],
+  gradientSysteme:       ['#EEEAE2', '#E4DED4'] as readonly [string, string],
   // Tag colors (badges tâches) — clés sémantiques
   tagColors: {
     bleu:   '#60A5FA',
@@ -110,6 +111,21 @@ export const LightColors = {
     rare:   '#A78BFA',
     common: '#34D399',
   },
+  // Brand — identité FamilyFlow (bois/parchemin/artisanal)
+  // Tokens fixes, indépendants des thèmes de profil enfant
+  brand: {
+    soil:       '#6B4226',
+    soilMuted:  '#A0784C',
+    parchment:  '#FFF8EC',
+    cardSurface: '#FFF8EC',  // parchemin en light — surface dashboard card
+    bark:       'rgba(107,66,38,0.18)',
+    wash:       'rgba(107,66,38,0.07)',
+    miel:       '#FFF4DA',
+    or:         '#E8C858',
+    orDeep:     '#C49A4A',
+    nuit:       '#1A1A2E',
+    nuitSoft:   '#3D3D56',
+  },
 };
 
 export const DarkColors: typeof LightColors = {
@@ -119,8 +135,8 @@ export const DarkColors: typeof LightColors = {
   cardAlt:     '#1C1F28',
   text:        '#F0EDE8',
   textSub:     '#C8C4BC',
-  textMuted:   '#8A8680',
-  textFaint:   '#5C5955',
+  textMuted:   '#8A8680',  // 4.99:1 sur bg dark
+  textFaint:   '#827E78',  // 4.55:1 sur bg dark
   border:      '#2A2D35',
   borderLight: '#1C1F28',
   separator:   '#3A3D45',
@@ -129,8 +145,8 @@ export const DarkColors: typeof LightColors = {
   tabBar:      '#1C1F28',
   tabBarBorder:'#2A2D35',
   tabBarOff:   '#8A8680',
-  // Status — error
-  error:       '#F87171',
+  // Status — error (warm brick red, brand-aligned, 6.08:1 sur bg dark)
+  error:       '#E0786E',
   errorBg:     '#7F1D1D',
   errorText:   '#FCA5A5',
   // Status — warning
@@ -164,19 +180,20 @@ export const DarkColors: typeof LightColors = {
   glassBorder: 'rgba(138,134,128,0.2)',
   glassShadow: 'rgba(0,0,0,0.3)',
   // ── Couleurs d'accent par catégorie (partagées menu + dashboard) ──
-  catOrganisation:       '#2DD4BF',  // teal clair
-  catSante:              '#A78BFA',  // violet clair
-  catSouvenirs:          '#FBBF24',  // doré
-  catJeux:               '#4ADE80',  // vert clair
-  catFamille:            '#F472B6',  // rose clair
-  catSysteme:            '#8A8680',  // gris chaud
-  // Gradients par section (menu) — tons assombris chaleureux
-  gradientOrganisation:  ['#162A28', '#1A2E2C'] as readonly [string, string],
-  gradientSante:         ['#231A2D', '#271E30'] as readonly [string, string],
-  gradientSouvenirs:     ['#2A2218', '#2E251A'] as readonly [string, string],
-  gradientJeux:          ['#1A2A1C', '#1E2E1F'] as readonly [string, string],
-  gradientFamille:       ['#2A1A22', '#2E1E26'] as readonly [string, string],
-  gradientSysteme:       ['#1E1E24', '#222228'] as readonly [string, string],
+  // Palette warm brand — variantes dark plus claires pour rester lisibles sur bg sombre
+  catOrganisation:       '#9DAE7E',  // mousse claire
+  catSante:              '#A88DA0',  // prune claire
+  catSouvenirs:          '#D9B776',  // ocre clair
+  catJeux:               '#8BC470',  // vert ferme clair
+  catFamille:            '#D08A6E',  // terracotta claire
+  catSysteme:            '#A89C8A',  // warm gris clair
+  // Gradients par section (menu) — tons assombris warm (bois/forêt/parchemin)
+  gradientOrganisation:  ['#1F261C', '#232B20'] as readonly [string, string],
+  gradientSante:         ['#241D22', '#282026'] as readonly [string, string],
+  gradientSouvenirs:     ['#2A2218', '#2E261A'] as readonly [string, string],
+  gradientJeux:          ['#1F2A1A', '#232E1E'] as readonly [string, string],
+  gradientFamille:       ['#2B1F1A', '#2F231E'] as readonly [string, string],
+  gradientSysteme:       ['#23211D', '#272521'] as readonly [string, string],
   // Tag colors (badges tâches) — variantes dark plus lumineuses
   tagColors: {
     bleu:   '#93C5FD',
@@ -213,6 +230,21 @@ export const DarkColors: typeof LightColors = {
     golden: '#FFD700',
     rare:   '#C4B5FD',
     common: '#6EE7B7',
+  },
+  // Brand — identité FamilyFlow (bois/parchemin/artisanal)
+  // Tokens fixes, indépendants des thèmes de profil enfant
+  brand: {
+    soil:       '#8B6238',
+    soilMuted:  '#9B7654',
+    parchment:  '#F5EFE5',          // reste cream — pour pills/buttons/FAB qui pop sur dark
+    cardSurface: '#231F1A',         // warm brown-dark surface — pour grosses cards dashboard
+    bark:       'rgba(196,162,101,0.15)',
+    wash:       'rgba(196,162,101,0.08)',
+    miel:       '#3A3326',          // dark mode : miel fonce → gris-or chaud lisible
+    or:         '#E8C858',
+    orDeep:     '#C49A4A',
+    nuit:       '#0F0F1F',
+    nuitSoft:   '#2A2A3D',
   },
 };
 

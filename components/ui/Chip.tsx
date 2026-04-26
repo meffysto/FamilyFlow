@@ -10,8 +10,11 @@ interface ChipProps {
   selected?: boolean;
   onPress?: () => void;
   emoji?: string;
+  /** Override la couleur d'accent (cas legacy — par défaut warm bois) */
   color?: string;
   size?: 'sm' | 'md';
+  /** Variante visuelle. `warning` = teinte error-warm subtile. */
+  variant?: 'default' | 'warning';
 }
 
 export const Chip = React.memo(function Chip({
@@ -21,18 +24,41 @@ export const Chip = React.memo(function Chip({
   emoji,
   color,
   size = 'md',
+  variant = 'default',
 }: ChipProps) {
-  const { primary, tint, colors } = useThemeColors();
+  const { colors } = useThemeColors();
 
   const handlePress = useCallback(() => {
     Haptics.selectionAsync();
     onPress?.();
   }, [onPress]);
-  const accentColor = color || primary;
+
+  // Palette warm : repos = wash + bark, sélectionné = soil + parchemin.
+  // `color` (legacy) override l'accent sélectionné si fourni.
+  const isWarning = variant === 'warning';
+  const accentSelected = color ?? colors.brand.soil;
+
+  let bg: string;
+  let borderColor: string;
+  let textColor: string;
+
+  if (isWarning) {
+    bg = selected ? colors.error : 'rgba(176,65,58,0.08)';
+    borderColor = selected ? colors.error : 'rgba(176,65,58,0.30)';
+    textColor = selected ? colors.onAccent : colors.error;
+  } else if (selected) {
+    bg = accentSelected;
+    borderColor = accentSelected;
+    textColor = color ? colors.onAccent : colors.brand.parchment;
+  } else {
+    bg = colors.brand.wash;
+    borderColor = colors.brand.bark;
+    textColor = colors.textMuted;
+  }
 
   const containerStyle: ViewStyle = {
-    backgroundColor: selected ? tint : colors.cardAlt,
-    borderColor: selected ? accentColor : colors.border,
+    backgroundColor: bg,
+    borderColor,
     borderWidth: 1,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing['2xl'],
@@ -40,12 +66,21 @@ export const Chip = React.memo(function Chip({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
+    ...(selected && !isWarning
+      ? {
+          shadowColor: colors.brand.soil,
+          shadowOpacity: 0.18,
+          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 1 },
+          elevation: 1,
+        }
+      : null),
   };
 
   const textStyle: TextStyle = {
     fontSize: size === 'sm' ? FontSize.label : FontSize.body,
-    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-    color: selected ? accentColor : colors.textSub,
+    fontWeight: selected ? FontWeight.semibold : FontWeight.medium,
+    color: textColor,
   };
 
   return (
@@ -57,6 +92,7 @@ export const Chip = React.memo(function Chip({
       accessibilityRole={onPress ? 'button' : 'text'}
       accessibilityLabel={label}
       accessibilityState={onPress ? { selected } : undefined}
+      hitSlop={6}
     >
       {emoji ? <Text style={styles.emoji}>{emoji} </Text> : null}
       <Text style={textStyle}>{label}</Text>

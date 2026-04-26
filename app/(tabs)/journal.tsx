@@ -848,6 +848,7 @@ export default function JournalScreen() {
       <View ref={childSelectorRef}>
         <ScreenHeader
           title={t('journal.title')}
+          subtitle={t('journal.subtitle')}
           bottom={
             journalTabs.length > 1 ? (
               <View style={styles.tabsWrap}>

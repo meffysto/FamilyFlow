@@ -40,6 +40,7 @@ import { LivingGradient } from '../../components/ui/LivingGradient';
 import { ReactiveAvatar, getAvatarMood } from '../../components/ui/ReactiveAvatar';
 import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { SeasonalParticles } from '../../components/ui/SeasonalParticles';
+import { ZoneLabel } from '../../components/ui/ZoneLabel';
 import { DashboardCard } from '../../components/DashboardCard';
 import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
@@ -60,11 +61,12 @@ import { getCardTemplate } from '../../lib/card-templates';
 import { getFruitForWeek, getSizeForWeek, getFruitLabel } from '../../lib/pregnancy';
 import { GlassView } from '../../components/ui/GlassView';
 import { SectionErrorBoundary } from '../../components/SectionErrorBoundary';
+import { SectionEnter } from '../../components/dashboard/SectionEnter';
 import * as Haptics from 'expo-haptics';
 import { EnvelopeCard } from '../../components/lovenotes';
 import { unreadForProfile } from '../../lib/lovenotes/selectors';
-import { FontSize, FontWeight } from '../../constants/typography';
-import { Layout } from '../../constants/spacing';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
+import { Layout, Spacing } from '../../constants/spacing';
 import type { CardTemplateContext } from '../../lib/card-templates';
 import { useTranslation } from 'react-i18next';
 
@@ -103,6 +105,7 @@ import {
   DashboardCompanionDay,
 } from '../../components/dashboard';
 import type { ZenConfig } from '../../components/settings/SettingsZen';
+import { Search, Send, Loader, Settings2 } from 'lucide-react-native';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
 const SMART_SORT_KEY = 'dashboard_smart_sort';
@@ -152,6 +155,47 @@ function getAllSections(t: (key: string) => string): SectionPref[] {
     // aiAssistant retiré — intégré dans la carte Suggestions
   ];
 }
+
+/**
+ * Zonage thématique pour les ZoneLabel Caveat (« ~ ce matin », etc.).
+ * Chaque section appartient à une zone ; quand la zone change entre deux
+ * sections consécutives rendues, on insère un séparateur tendre.
+ *  - today : urgence + plan du jour
+ *  - home  : vie maison + souvenirs + finances
+ *  - farm  : gamification + ferme + mascotte
+ *  - none  : sections sans label (insights = ouverture, system = bottom)
+ */
+type DashboardZone = 'today' | 'home' | 'farm' | 'none';
+const SECTION_ZONE: Record<string, DashboardZone> = {
+  insights: 'none',
+  vacation: 'today',
+  overdue: 'today',
+  menage: 'today',
+  meals: 'today',
+  calendar: 'today',
+  rdvs: 'today',
+  weeklyStats: 'today',
+  quicknotifs: 'today',
+  courses: 'home',
+  photos: 'home',
+  budget: 'home',
+  recipes: 'home',
+  anniversaires: 'home',
+  onThisDay: 'home',
+  quotes: 'home',
+  moods: 'home',
+  gratitude: 'home',
+  wishlist: 'home',
+  bilanSemaine: 'home',
+  nightMode: 'home',
+  companionDay: 'farm',
+  garden: 'farm',
+  lootProgress: 'farm',
+  rewards: 'farm',
+  defis: 'farm',
+  secretMissions: 'farm',
+  leaderboard: 'farm',
+};
 
 /** Sections masquées pour les enfants (outils parentaux) */
 const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'quicknotifs', 'recipes', 'photos', 'rdvs', 'nightMode']);
@@ -928,37 +972,41 @@ export default function DashboardScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => setSearchVisible(true)}
-            style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
+            style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel={t('index.a11y.search')}
             accessibilityRole="search"
           >
-            <Text style={styles.headerBtnIcon}>🔍</Text>
-            <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.search')}</Text>
+            <Search size={18} strokeWidth={2} color={colors.brand.soil} />
+            <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.search')}</Text>
           </TouchableOpacity>
           {!isChildMode && (
             <TouchableOpacity
               onPress={handleSendRecap}
-              style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
+              style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               disabled={isSendingRecap}
               accessibilityLabel={t('index.a11y.sendRecap')}
               accessibilityRole="button"
             >
-              <Text style={styles.headerBtnIcon}>{isSendingRecap ? '⏳' : '📤'}</Text>
-              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.recap')}</Text>
+              {isSendingRecap ? (
+                <Loader size={18} strokeWidth={2} color={colors.brand.soil} />
+              ) : (
+                <Send size={18} strokeWidth={2} color={colors.brand.soil} />
+              )}
+              <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.recap')}</Text>
             </TouchableOpacity>
           )}
           {!isChildMode && (
             <TouchableOpacity
               onPress={() => setPrefsModalVisible(true)}
-              style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
+              style={[styles.headerBtn, { backgroundColor: colors.brand.parchment }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={t('index.a11y.configureSections')}
               accessibilityRole="button"
             >
-              <Text style={styles.headerBtnIcon}>⚙️</Text>
-              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.sections')}</Text>
+              <Settings2 size={18} strokeWidth={2} color={colors.brand.soil} />
+              <Text style={[styles.headerBtnLabel, { color: colors.brand.soil }]}>{t('index.header.sections')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -988,7 +1036,7 @@ export default function DashboardScreen() {
 
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
-          <DashboardCard title={t('index.welcome.title')} icon="👋" color={primary}>
+          <DashboardCard title={t('index.welcome.title')}>
             <Text style={[styles.welcomeText, { color: colors.textSub }]}>
               {t('index.welcome.text')}
             </Text>
@@ -1025,14 +1073,19 @@ export default function DashboardScreen() {
               accessibilityLabel={t('index.a11y.openPregnancy', { name: p.name })}
               accessibilityRole="button"
             >
-            <GlassView style={styles.pregnancyCard}>
+            <GlassView
+              style={styles.pregnancyCard}
+              tint={colors.brand.parchment}
+              tintOpacity={0.9}
+              intensity={20}
+            >
               <View style={styles.pregnancyRow}>
                 <Text style={styles.pregnancyFruit}>{fruitEmoji}</Text>
                 <View style={styles.pregnancyInfo}>
-                  <Text style={[styles.pregnancyTitle, { color: colors.text }]} numberOfLines={1}>
+                  <Text style={[styles.pregnancyTitle, { color: colors.brand.soil }]} numberOfLines={1}>
                     {p.name} — {t('index.pregnancy.sa', { weeks: weeksElapsed })}
                   </Text>
-                  <Text style={[styles.pregnancySub, { color: colors.textSub }]}>
+                  <Text style={[styles.pregnancySub, { color: colors.brand.soilMuted }]}>
                     {daysLeft > 0
                       ? `${t('index.pregnancy.daysLeft', { days: daysLeft })} · ${fruitLabel}${sizeCm > 0 ? ` · ${sizeCm} cm` : ''}`
                       : daysLeft === 0
@@ -1042,7 +1095,7 @@ export default function DashboardScreen() {
                 </View>
                 {daysLeft <= 28 && (
                   <TouchableOpacity
-                    style={[styles.pregnancyCta, { backgroundColor: primary }]}
+                    style={[styles.pregnancyCta, { backgroundColor: colors.brand.soil }]}
                     onPress={() => {
                       Alert.prompt
                         ? Alert.prompt(t('index.pregnancy.birthDateTitle'), t('index.pregnancy.birthDatePlaceholder'), (date) => {
@@ -1054,12 +1107,12 @@ export default function DashboardScreen() {
                     accessibilityLabel={t('index.a11y.markBabyBorn')}
                     accessibilityRole="button"
                   >
-                    <Text style={[styles.pregnancyCtaText, { color: colors.onPrimary }]}>{t('index.pregnancy.born')}</Text>
+                    <Text style={[styles.pregnancyCtaText, { color: colors.brand.parchment }]}>{t('index.pregnancy.born')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
-              <View style={[styles.pregnancyBar, { backgroundColor: colors.border }]}>
-                <View style={[styles.pregnancyBarFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: primary }]} />
+              <View style={[styles.pregnancyBar, { backgroundColor: colors.brand.wash }]}>
+                <View style={[styles.pregnancyBarFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.brand.soil }]} />
               </View>
             </GlassView>
             </TouchableOpacity>
@@ -1141,40 +1194,61 @@ export default function DashboardScreen() {
           });
 
           const rendered: React.ReactNode[] = [];
+          let prevZone: DashboardZone | null = null;
+          const maybePushZone = (id: string) => {
+            const zone = SECTION_ZONE[id] ?? 'none';
+            if (zone !== 'none' && zone !== prevZone) {
+              rendered.push(
+                <SectionEnter key={`zone-${zone}-${id}`} index={rendered.length}>
+                  <ZoneLabel>{t(`dashboard.zones.${zone}`)}</ZoneLabel>
+                </SectionEnter>
+              );
+              prevZone = zone;
+            } else if (zone !== 'none') {
+              prevZone = zone;
+            }
+          };
           let i = 0;
           while (i < visibleSections.length) {
             const s = visibleSections[i];
+            maybePushZone(s.id);
             // Chercher une paire half consécutive
             if (s.size === 'half' && i + 1 < visibleSections.length && visibleSections[i + 1].size === 'half') {
               const s2 = visibleSections[i + 1];
               rendered.push(
-                <View key={`pair-${s.id}-${s2.id}`} style={styles.halfRow}>
-                  <View style={styles.halfCol}>
-                    <SectionErrorBoundary name={s.label}>
-                      {renderSection(s.id)}
-                    </SectionErrorBoundary>
+                <SectionEnter key={`pair-${s.id}-${s2.id}`} index={rendered.length}>
+                  <View style={styles.halfRow}>
+                    <View style={styles.halfCol}>
+                      <SectionErrorBoundary name={s.label}>
+                        {renderSection(s.id)}
+                      </SectionErrorBoundary>
+                    </View>
+                    <View style={styles.halfCol}>
+                      <SectionErrorBoundary name={s2.label}>
+                        {renderSection(s2.id)}
+                      </SectionErrorBoundary>
+                    </View>
                   </View>
-                  <View style={styles.halfCol}>
-                    <SectionErrorBoundary name={s2.label}>
-                      {renderSection(s2.id)}
-                    </SectionErrorBoundary>
-                  </View>
-                </View>
+                </SectionEnter>
               );
               i += 2;
             } else if (s.size === 'half') {
               // Half seul (impair) → afficher en full
               rendered.push(
-                <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
-                  {renderSection(s.id)}
-                </SectionErrorBoundary>
+                <SectionEnter key={`eb-${s.id}`} index={rendered.length}>
+                  <SectionErrorBoundary name={s.label}>
+                    {renderSection(s.id)}
+                  </SectionErrorBoundary>
+                </SectionEnter>
               );
               i++;
             } else {
               rendered.push(
-                <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
-                  {renderSection(s.id)}
-                </SectionErrorBoundary>
+                <SectionEnter key={`eb-${s.id}`} index={rendered.length}>
+                  <SectionErrorBoundary name={s.label}>
+                    {renderSection(s.id)}
+                  </SectionErrorBoundary>
+                </SectionEnter>
               );
               i++;
             }
@@ -1351,17 +1425,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: FontSize.code,
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
   },
   greetingChild: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.heavy,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.title,
+    letterSpacing: -0.3,
   },
   dateText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.title,
     textTransform: 'capitalize',
+    letterSpacing: -0.3,
   },
   headerActions: {
     flexDirection: 'row',
@@ -1371,13 +1447,15 @@ const styles = StyleSheet.create({
   headerBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     gap: 1,
-    borderRadius: 9,
-  },
-  headerBtnIcon: {
-    fontSize: FontSize.lg,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 1,
   },
   headerBtnLabel: {
     fontSize: 10,
@@ -1417,7 +1495,7 @@ const styles = StyleSheet.create({
   },
   halfRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: Spacing.xl,
     alignItems: 'stretch',
   },
   halfCol: {
@@ -1465,47 +1543,51 @@ const styles = StyleSheet.create({
   // Grossesse — Liquid Glass
   pregnancyCard: {
     marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 14,
-    gap: 10,
+    marginBottom: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    gap: 12,
   },
   pregnancyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
   pregnancyFruit: {
-    fontSize: FontSize.hero,
+    fontSize: 36,
   },
   pregnancyInfo: {
     flex: 1,
     gap: 2,
   },
   pregnancyTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.subtitle + 2, // 19px DM Serif sentence case
+    letterSpacing: -0.2,
   },
   pregnancySub: {
-    fontSize: FontSize.label,
-    lineHeight: 18,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    lineHeight: 22,
   },
   pregnancyCta: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
   },
   pregnancyCtaText: {
     fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 0.2,
   },
   pregnancyBar: {
-    height: 4,
-    borderRadius: 2,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   pregnancyBarFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 4,
   },
   // Profile picker
   pickerOverlay: {

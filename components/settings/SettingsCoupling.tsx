@@ -27,6 +27,8 @@ import { EFFECT_TOASTS, CATEGORY_VARIANT } from '../../lib/semantic/effect-toast
 import { isSemanticCouplingEnabled, setSemanticCouplingEnabled } from '../../lib/semantic/flag';
 import { loadOverrides, saveOverrides, loadWeekStats } from '../../lib/semantic/coupling-overrides';
 import { VARIANT_CONFIG } from '../mascot/HarvestBurst';
+import { SectionHeader } from '../ui/SectionHeader';
+import { Link2 } from 'lucide-react-native';
 
 // ── Ordre d'affichage par tier variant (golden > rare > ambient) — D-03, Research Pitfall 1 ──
 const DISPLAY_ORDER: CategoryId[] = [
@@ -191,9 +193,11 @@ export function SettingsCoupling() {
     <View style={styles.section} accessibilityRole="summary">
 
       {/* ── Master toggle section ── */}
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-        {t('settings.coupling.masterTitle')}
-      </Text>
+      <SectionHeader
+        title={t('settings.coupling.masterTitle')}
+        icon={<Link2 size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
 
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <View style={styles.masterRow}>
@@ -261,13 +265,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing['5xl'],
-  },
-  sectionTitle: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.md,
   },
   card: {
     borderRadius: Radius.xl,

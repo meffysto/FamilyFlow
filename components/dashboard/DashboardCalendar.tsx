@@ -14,8 +14,9 @@ import { DashboardCard } from '../DashboardCard';
 import { CalendarEventRow } from '../calendar/CalendarEventRow';
 import type { CalendarEvent } from '../../lib/calendar-types';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
+import { CalendarDays } from 'lucide-react-native';
 
 const PREVIEW_DAYS = 3;
 
@@ -50,15 +51,16 @@ function DashboardCalendarInner(_props: DashboardSectionProps) {
     <DashboardCard
       key="calendar"
       title={t('dashboard.calendar.title')}
-      icon="📆"
+
       count={totalEvents}
+      IconComponent={CalendarDays}
       color={colors.catOrganisation}
       tinted
       onPressMore={() => router.push('/(tabs)/calendar' as any)}
     >
       {previewDays.map(day => (
         <View key={day.date} style={styles.dayGroup}>
-          <Text style={[styles.dayLabel, { color: colors.textSub }]}>{day.label}</Text>
+          <Text style={[styles.dayLabel, { color: colors.textMuted }]}>{day.label}</Text>
           {day.events.slice(0, 3).map(e => (
             <CalendarEventRow key={e.id} event={e} />
           ))}
@@ -75,8 +77,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   dayLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
     marginBottom: Spacing.xxs,
   },
 });

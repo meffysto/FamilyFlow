@@ -12,13 +12,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, AppState, Platform, Alert, Image } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
+import { Sun, Moon } from 'lucide-react-native';
 import { useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { isFarmEconomyEvent, computeNextRdvText } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
-import { FontSize } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
 import {
   startMascotte,
@@ -314,7 +315,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     : todayData.stage.info.sub({ done: todayData.done, total: todayData.total, meal: todayData.meal });
 
   return (
-    <DashboardCard key="companionDay" title="La journée de la mascotte" icon="🌱" color={tint} tinted hideMoreLink>
+    <DashboardCard key="companionDay" title="La journée de la mascotte" color={tint} tinted hideMoreLink>
       <View style={styles.row}>
         <TouchableOpacity
           onPress={active ? handleRegenerate : handleStart}
@@ -340,15 +341,15 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
           <Text
             style={[
               active ? styles.stageLabel : styles.titleStrong,
-              { color: active ? tint : colors.text },
+              { color: active ? colors.brand.soil : colors.text },
             ]}
             numberOfLines={1}
           >
             {active ? todayData.stage.info.title : `Réveille ${mascotteName}`}
           </Text>
           {active ? (
-            <View style={[styles.bubble, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}>
-              <Text style={[styles.bubbleText, { color: colors.text }]} numberOfLines={2}>
+            <View style={[styles.bubble, { backgroundColor: colors.brand.parchment, borderColor: colors.brand.bark }]}>
+              <Text style={[styles.bubbleText, { color: colors.brand.soil }]} numberOfLines={2}>
                 « {displayBubble} »
               </Text>
             </View>
@@ -362,21 +363,21 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
           <TouchableOpacity
             onPress={handleStop}
             disabled={busy}
-            style={styles.btnDodo}
+            style={[styles.btnCta, { backgroundColor: colors.brand.soil, shadowColor: colors.brand.soil }]}
             accessibilityLabel={`Mettre ${mascotteName} au repos`}
           >
-            <Text style={styles.btnDodoEmoji}>🌙</Text>
-            <Text style={styles.btnDodoText}>Dodo</Text>
+            <Moon size={20} strokeWidth={1.75} color={colors.brand.parchment} />
+            <Text style={[styles.btnCtaText, { color: colors.brand.parchment }]}>Dodo</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             onPress={handleStart}
             disabled={busy}
-            style={styles.btnReveil}
+            style={[styles.btnCta, { backgroundColor: colors.brand.or, shadowColor: colors.brand.orDeep }]}
             accessibilityLabel={`Réveiller ${mascotteName}`}
           >
-            <Text style={styles.btnReveilEmoji}>☀️</Text>
-            <Text style={styles.btnReveilText}>Réveil</Text>
+            <Sun size={20} strokeWidth={1.75} color={colors.brand.soil} />
+            <Text style={[styles.btnCtaText, { color: colors.brand.soil }]}>Réveil</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -478,8 +479,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   titleStrong: {
-    fontSize: FontSize.body,
-    fontWeight: '800',
+    fontSize: FontSize.lg,
+    fontFamily: FontFamily.serif,
   },
   body: {
     flex: 1,
@@ -487,10 +488,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   stageLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    fontSize: 17,
+    fontFamily: FontFamily.handwriteSemibold,
+    lineHeight: 20,
   },
   bubble: {
     borderRadius: 10,
@@ -499,66 +499,30 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   bubbleText: {
-    fontSize: FontSize.body,
-    fontStyle: 'italic',
-    lineHeight: 18,
+    fontSize: 17,
+    fontFamily: FontFamily.handwrite,
+    lineHeight: 19,
   },
   subIntro: {
     fontSize: FontSize.caption,
     lineHeight: 16,
   },
-  btnDodo: {
+  btnCta: {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.sm + 2,
     paddingVertical: 8,
     borderRadius: 14,
-    backgroundColor: '#4C3B8F',
     minWidth: 58,
-    shadowColor: '#4C3B8F',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.35,
     shadowRadius: 6,
     elevation: 3,
   },
-  btnDodoEmoji: {
-    fontSize: 20,
-    marginBottom: 1,
-  },
-  btnDodoText: {
+  btnCtaText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#F5F1FF',
     letterSpacing: 0.3,
-  },
-  btnReveil: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.sm + 2,
-    paddingVertical: 8,
-    borderRadius: 14,
-    backgroundColor: '#F59E0B',
-    minWidth: 58,
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  btnReveilEmoji: {
-    fontSize: 20,
-    marginBottom: 1,
-  },
-  btnReveilText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#fff',
-    letterSpacing: 0.3,
-  },
-  btnText: {
-    fontSize: FontSize.caption,
-    fontWeight: '700',
   },
 });

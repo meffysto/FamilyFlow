@@ -13,7 +13,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { AlertCircle, ShoppingCart, Package } from 'lucide-react-native';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 function DashboardStockInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -25,7 +26,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   const lowCount = stock.length > 0 ? stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil).length : 0;
 
   if (!vaultFileExists.stock) return (
-    <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" color={colors.catOrganisation} tinted>
+    <DashboardCard key="stock" title={t('dashboard.stock.title')} IconComponent={Package} color={colors.catOrganisation} tinted>
       <DashboardEmptyState
         description={t('dashboard.stock.emptyDescription')}
         onActivate={() => activateCardTemplate('stock')}
@@ -35,13 +36,15 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   );
 
   return (
-    <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" count={lowCount > 0 ? lowCount : undefined} color={colors.catOrganisation} tinted collapsible cardId="stock">
+    <DashboardCard key="stock" title={t('dashboard.stock.title')} count={lowCount > 0 ? lowCount : undefined} IconComponent={Package} color={colors.catOrganisation} tinted collapsible cardId="stock">
       {stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil + 1).map((item) => {
         const isLow = item.tracked !== false && item.seuil > 0 && item.quantite <= item.seuil;
         const statusColor = isLow ? colors.error : colors.warning;
         return (
           <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
-            <Text style={styles.stockAlertIcon}>{isLow ? '🔴' : '🟡'}</Text>
+            <View style={styles.stockAlertIcon}>
+              <AlertCircle size={16} strokeWidth={1.75} color={isLow ? colors.error : colors.warning} />
+            </View>
             <View style={styles.stockInfo}>
               <Text style={[styles.stockName, { color: colors.text }]}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
               <Text style={[styles.stockMeta, { color: statusColor }]}>{t('dashboard.stock.remaining', { count: item.quantite, threshold: item.seuil })}</Text>
@@ -49,7 +52,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
             <View style={styles.stockBtnGroup}>
               {isLow && (
                 <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : ''; const qty = item.qteAchat ? ` x${item.qteAchat}` : ''; const n = `${item.produit}${detail}${qty}`; addCourseItem(n, item.section ?? 'Produits bébé'); showToast(t('dashboard.stock.addedToCourses', { name: item.produit }), 'success'); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                    <Text style={styles.stockCartBtnText}>🛒</Text>
+                    <ShoppingCart size={16} strokeWidth={1.75} color={colors.warning} />
                   </TouchableOpacity>
               )}
               <TouchableOpacity style={[styles.stockBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }, item.quantite <= 0 && styles.stockBtnDisabled]} onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))} activeOpacity={0.6} disabled={item.quantite <= 0} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
@@ -80,9 +83,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   stockAlertIcon: {
-    fontSize: FontSize.sm,
     width: 20,
-    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stockInfo: {
     flex: 1,
@@ -93,8 +96,8 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
   },
   stockMeta: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
   },
   stockCartBtn: {
     width: 30,

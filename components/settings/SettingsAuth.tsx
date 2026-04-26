@@ -15,6 +15,8 @@ import { useAuth, LOCK_DELAY_OPTIONS, LockDelay } from '../../contexts/AuthConte
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
+import { SectionHeader } from '../ui/SectionHeader';
+import { ShieldCheck } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -164,7 +166,11 @@ export function SettingsAuth() {
   return (
     <>
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.auth.sectionA11y')}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.auth.sectionTitle')}</Text>
+        <SectionHeader
+          title={t('settings.auth.sectionTitle')}
+          icon={<ShieldCheck size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
 
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {/* Toggle verrouillage */}
@@ -300,13 +306,6 @@ export function SettingsAuth() {
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.md,
-  },
   card: {
     borderRadius: Radius.lg,
     padding: Spacing['2xl'],

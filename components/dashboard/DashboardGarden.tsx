@@ -53,7 +53,7 @@ import type { Profile } from '../../lib/types';
 import type { PlantedCrop, PlacedBuilding } from '../../lib/mascot/types';
 import type { WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing, Radius } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { SecureStoreCompat as SecureStore } from '../../lib/mascot/utils';
 
 // ── Constantes ──────────────────────────────────────────────────────
@@ -376,7 +376,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
             {/* Section Cultures */}
             {crops.length > 0 && (
               <>
-                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>CULTURES</Text>
+                <Text style={[styles.sectionLabel, { color: colors.catJeux }]}>Cultures</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -509,8 +509,8 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
             {/* Section Batiments */}
             {buildings.length > 0 && (
               <>
-                <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: Spacing.xs }]}>
-                  BÂTIMENTS
+                <Text style={[styles.sectionLabel, { color: colors.brand.soilMuted, marginTop: Spacing.xs }]}>
+                  Bâtiments
                 </Text>
                 <ScrollView
                   horizontal
@@ -707,7 +707,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   return (
     <DashboardCard
       title={gardenDisplayName}
-      icon="🌳"
+
       color={colors.catJeux}
       tinted
       collapsible
@@ -1019,9 +1019,9 @@ const styles = StyleSheet.create({
     color: '#0a2e14',
   },
   sectionLabel: {
-    fontSize: FontSize.micro,
-    fontWeight: FontWeight.semibold,
-    letterSpacing: 0.5,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.label,
+    letterSpacing: -0.1,
     paddingHorizontal: Spacing.xs,
     marginBottom: Spacing.xxs,
   },

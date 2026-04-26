@@ -11,12 +11,13 @@ import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
+import { LineChart } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { BilanSemaineCard } from '../BilanSemaineCard';
 import { buildWeeklyRecapData, formatRecapForAI, WeeklyRecapData } from '../../lib/weekly-recap';
 import { generateWeeklyBilan } from '../../lib/ai-service';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/spacing';
 
 // ─── Types internes ──────────────────────────────────────────────────────────
@@ -208,7 +209,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
     return (
       <DashboardCard
         title={t('dashboard.bilanSemaine.title')}
-        icon="📝"
+        IconComponent={LineChart}
         color={colors.catSouvenirs}
         tinted
       >
@@ -247,7 +248,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       title={t('dashboard.bilanSemaine.title')}
-      icon="📝"
+      IconComponent={LineChart}
       color={colors.catSouvenirs}
       tinted
     >
@@ -343,8 +344,9 @@ const styles = StyleSheet.create({
     fontSize: FontSize.title,
   },
   previewStatValue: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.titleLg,
+    letterSpacing: -0.3,
   },
   previewStatLabel: {
     fontSize: FontSize.caption,

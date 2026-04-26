@@ -19,6 +19,8 @@ import { Shadows } from '../../constants/shadows';
 import { TEMPLATE_PACKS } from '../../lib/vault-templates';
 import { VaultManager } from '../../lib/vault';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { SectionHeader } from '../ui/SectionHeader';
+import { HelpCircle } from 'lucide-react-native';
 
 export function SettingsHelp() {
   const { t } = useTranslation();
@@ -101,7 +103,11 @@ export function SettingsHelp() {
   return (
     <>
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.help.sectionA11y')}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.help.sectionTitle')}</Text>
+        <SectionHeader
+          title={t('settings.help.sectionTitle')}
+          icon={<HelpCircle size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {ITEMS.map((item, index) => (
             <TouchableOpacity
@@ -187,13 +193,6 @@ export function SettingsHelp() {
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.md,
-  },
   card: { borderRadius: Radius.xl, overflow: 'hidden' },
   item: {
     flexDirection: 'row',

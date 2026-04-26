@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Plane } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
@@ -40,11 +41,11 @@ function DashboardVacationInner({ handleTaskToggle, handleTaskSkip }: DashboardS
   const progress = vacTotal > 0 ? vacCompleted / vacTotal : 0;
 
   return (
-    <DashboardCard key="vacation" title={t('dashboard.vacation.title')} icon="☀️" color={colors.catSysteme} tinted onPressMore={() => router.push('/(tabs)/tasks')}>
-      <Text style={[styles.vacCountdown, { color: colors.warning }]}>{vacCountdown}</Text>
+    <DashboardCard key="vacation" title={t('dashboard.vacation.title')} IconComponent={Plane} color={colors.catSysteme} tinted onPressMore={() => router.push('/(tabs)/tasks')}>
+      <Text style={[styles.vacCountdown, { color: colors.catSysteme }]}>{vacCountdown}</Text>
       <View style={styles.vacProgressRow}>
-        <View style={[styles.vacProgressBg, { backgroundColor: colors.borderLight }]}>
-          <View style={[styles.vacProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
+        <View style={[styles.vacProgressBg, { backgroundColor: colors.brand.wash }]}>
+          <View style={[styles.vacProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.catSysteme }]} />
         </View>
         <Text style={[styles.vacProgressText, { color: colors.textMuted }]}>{vacCompleted}/{vacTotal}</Text>
       </View>

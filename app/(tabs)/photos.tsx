@@ -312,6 +312,7 @@ export default function PhotosScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={activeTab === 'photos' ? t('photosScreen.title.photos') : t('photosScreen.title.souvenirs')}
+        tint="rgba(184,92,61,0.09)"
         subtitle={
           activeTab === 'photos'
             ? t('photosScreen.stats.photos', { count: photoCount })

@@ -13,6 +13,7 @@ import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { AppRecipe } from '../../lib/cooklang';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { BookOpen } from 'lucide-react-native';
 
 interface DashboardRecipesProps extends DashboardSectionProps {
   onViewRecipe: (recipe: AppRecipe) => void;
@@ -28,7 +29,7 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
   useEffect(() => { if (!isLoading) loadRecipes(); }, [loadRecipes, isLoading]);
 
   if (recipes.length === 0) return (
-    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} icon="📖" color={colors.catOrganisation} tinted>
+    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} IconComponent={BookOpen} color={colors.catOrganisation} tinted>
       <DashboardEmptyState
         description={t('dashboard.recipes.emptyDescription')}
         onActivate={() => activateCardTemplate('recipes')}
@@ -42,9 +43,9 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
   const suggestedRecipe = recipes[dayOfYear % recipes.length];
 
   return (
-    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} icon="📖" count={recipes.length} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'recettes' } })}>
+    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} count={recipes.length} IconComponent={BookOpen} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'recettes' } })}>
       <TouchableOpacity
-        style={[styles.recipeSuggestion, { backgroundColor: colors.cardAlt }]}
+        style={[styles.recipeSuggestion, { backgroundColor: colors.brand.wash, borderWidth: 1, borderColor: colors.brand.bark }]}
         onPress={() => onViewRecipe(suggestedRecipe)}
         activeOpacity={0.7}
       >

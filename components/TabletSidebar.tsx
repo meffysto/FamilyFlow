@@ -17,17 +17,68 @@ import { totalSpent, totalBudget } from '../lib/budget';
 import { isBabyProfile } from '../lib/types';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import {
+  Home,
+  ListChecks,
+  BookOpen,
+  Calendar,
+  Repeat,
+  CalendarDays,
+  UtensilsCrossed,
+  Package,
+  HeartPulse,
+  CloudSun,
+  Moon,
+  Baby,
+  Camera,
+  MessageCircle,
+  HandHeart,
+  Trees,
+  Sparkles,
+  Award,
+  Cake,
+  Gift,
+  Wallet,
+  NotebookPen,
+  BarChart3,
+  Settings as SettingsIcon,
+  ClipboardList,
+  Heart as HeartIcon,
+  Gamepad2,
+  Users as UsersIcon,
+  type LucideIcon,
+} from 'lucide-react-native';
 
 const SIDEBAR_WIDTH = 260;
 
+type CategoryKey = 'organisation' | 'sante' | 'souvenirs' | 'jeux' | 'famille' | 'systeme';
+
 interface SidebarItem {
-  emoji: string;
+  Icon: LucideIcon;
   labelKey: string;
   route: string;
   params?: Record<string, string>;
   badge?: number;
-  category?: string;
+  category?: CategoryKey;
 }
+
+const CATEGORY_ICONS: Record<CategoryKey, LucideIcon> = {
+  organisation: ClipboardList,
+  sante: HeartIcon,
+  souvenirs: Sparkles,
+  jeux: Gamepad2,
+  famille: UsersIcon,
+  systeme: SettingsIcon,
+};
+
+const CATEGORY_ACCENT_KEYS: Record<CategoryKey, 'catOrganisation' | 'catSante' | 'catSouvenirs' | 'catJeux' | 'catFamille' | 'catSysteme'> = {
+  organisation: 'catOrganisation',
+  sante: 'catSante',
+  souvenirs: 'catSouvenirs',
+  jeux: 'catJeux',
+  famille: 'catFamille',
+  systeme: 'catSysteme',
+};
 
 export function TabletSidebar() {
   const router = useRouter();
@@ -69,37 +120,37 @@ export function TabletSidebar() {
 
     const items: (SidebarItem & { hidden?: boolean })[] = [
       // Organisation
-      { emoji: '🔄', labelKey: 'menu.items.routines', route: 'routines', category: 'organisation' },
-      { emoji: '📅', labelKey: 'menu.items.appointments', route: 'rdv', badge: upcomingRdvs || undefined, category: 'organisation' },
-      { emoji: '🍽️', labelKey: 'menu.items.meals', route: 'meals', category: 'organisation' },
-      { emoji: '📦', labelKey: 'menu.items.stock', route: 'stock', badge: lowStock || undefined, category: 'organisation' },
+      { Icon: Repeat, labelKey: 'menu.items.routines', route: 'routines', category: 'organisation' },
+      { Icon: CalendarDays, labelKey: 'menu.items.appointments', route: 'rdv', badge: upcomingRdvs || undefined, category: 'organisation' },
+      { Icon: UtensilsCrossed, labelKey: 'menu.items.meals', route: 'meals', category: 'organisation' },
+      { Icon: Package, labelKey: 'menu.items.stock', route: 'stock', badge: lowStock || undefined, category: 'organisation' },
       // Santé
-      { emoji: '🏥', labelKey: 'menu.items.health', route: 'health', category: 'sante' },
-      { emoji: '🌤️', labelKey: 'menu.items.moods', route: 'moods', category: 'sante' },
-      ...(hasBaby ? [{ emoji: '🌙', labelKey: 'menu.items.nightMode', route: 'night-mode', category: 'sante' }] : []),
-      ...(profiles.some(p => p.statut === 'grossesse') ? [{ emoji: '🤰', labelKey: 'menu.items.pregnancy', route: 'pregnancy', category: 'sante' }] : []),
+      { Icon: HeartPulse, labelKey: 'menu.items.health', route: 'health', category: 'sante' },
+      { Icon: CloudSun, labelKey: 'menu.items.moods', route: 'moods', category: 'sante' },
+      ...(hasBaby ? [{ Icon: Moon, labelKey: 'menu.items.nightMode', route: 'night-mode', category: 'sante' as const }] : []),
+      ...(profiles.some(p => p.statut === 'grossesse') ? [{ Icon: Baby, labelKey: 'menu.items.pregnancy', route: 'pregnancy', category: 'sante' as const }] : []),
       // Souvenirs
-      { emoji: '📸', labelKey: 'menu.items.photos', route: 'photos', category: 'souvenirs' },
-      { emoji: '💬', labelKey: 'menu.items.quotes', route: 'quotes', category: 'souvenirs' },
-      { emoji: '🙏', labelKey: 'menu.items.gratitude', route: 'gratitude', category: 'souvenirs' },
+      { Icon: Camera, labelKey: 'menu.items.photos', route: 'photos', category: 'souvenirs' },
+      { Icon: MessageCircle, labelKey: 'menu.items.quotes', route: 'quotes', category: 'souvenirs' },
+      { Icon: HandHeart, labelKey: 'menu.items.gratitude', route: 'gratitude', category: 'souvenirs' },
       // Jeux
-      { emoji: '🌳', labelKey: 'menu.items.skills', route: 'skills', category: 'jeux' },
-      { emoji: '🎰', labelKey: 'menu.items.rewards', route: 'loot', badge: lootBoxes || undefined, category: 'jeux' },
-      { emoji: '🏅', labelKey: 'menu.items.challenges', route: 'defis', badge: activeDefis || undefined, category: 'jeux' },
+      { Icon: Trees, labelKey: 'menu.items.skills', route: 'skills', category: 'jeux' },
+      { Icon: Sparkles, labelKey: 'menu.items.rewards', route: 'loot', badge: lootBoxes || undefined, category: 'jeux' },
+      { Icon: Award, labelKey: 'menu.items.challenges', route: 'defis', badge: activeDefis || undefined, category: 'jeux' },
       // Famille
-      { emoji: '🎂', labelKey: 'menu.items.birthdays', route: 'anniversaires', badge: upcomingBirthdays || undefined, category: 'famille' },
-      { emoji: '🎁', labelKey: 'menu.items.wishlist', route: 'wishlist', badge: wishlistUnbought || undefined, category: 'famille' },
-      { emoji: '💰', labelKey: 'menu.items.budget', route: 'budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, category: 'famille', hidden: isChildMode },
-      { emoji: '📝', labelKey: 'menu.items.notes', route: 'notes', badge: notes.length || undefined, category: 'famille', hidden: isChildMode },
-      { emoji: '📊', labelKey: 'menu.items.stats', route: 'stats', category: 'famille' },
+      { Icon: Cake, labelKey: 'menu.items.birthdays', route: 'anniversaires', badge: upcomingBirthdays || undefined, category: 'famille' },
+      { Icon: Gift, labelKey: 'menu.items.wishlist', route: 'wishlist', badge: wishlistUnbought || undefined, category: 'famille' },
+      { Icon: Wallet, labelKey: 'menu.items.budget', route: 'budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, category: 'famille', hidden: isChildMode },
+      { Icon: NotebookPen, labelKey: 'menu.items.notes', route: 'notes', badge: notes.length || undefined, category: 'famille', hidden: isChildMode },
+      { Icon: BarChart3, labelKey: 'menu.items.stats', route: 'stats', category: 'famille' },
       // Système
-      { emoji: '⚙️', labelKey: 'menu.items.settings', route: 'settings', category: 'systeme' },
+      { Icon: SettingsIcon, labelKey: 'menu.items.settings', route: 'settings', category: 'systeme' },
     ];
 
     return items.filter(i => !i.hidden);
   }, [rdvs, stock, courses, gamiData, budgetEntries, budgetConfig, profiles, defis, wishlistItems, anniversaries, notes, isChildMode]);
 
-  const CATEGORY_LABELS: Record<string, string> = {
+  const CATEGORY_LABELS: Record<CategoryKey, string> = {
     organisation: 'menu.categories.organisation',
     sante: 'menu.categories.health',
     souvenirs: 'menu.categories.memories',
@@ -108,7 +159,7 @@ export function TabletSidebar() {
     systeme: 'menu.categories.system',
   };
 
-  const categories = ['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'];
+  const categories: CategoryKey[] = ['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'];
 
   const navigate = (route: string, params?: Record<string, string>) => {
     const path = route === 'index' ? '/(tabs)' : `/(tabs)/${route}`;
@@ -119,8 +170,13 @@ export function TabletSidebar() {
     }
   };
 
-  const renderItem = (item: { emoji: string; label: string; route: string; badge?: number; params?: Record<string, string> }, compact?: boolean) => {
+  const renderItem = (
+    item: { Icon: LucideIcon; label: string; route: string; badge?: number; params?: Record<string, string> },
+    compact?: boolean,
+    accentColor?: string,
+  ) => {
     const isActive = activeRoute === item.route;
+    const iconColor = accentColor ?? (isActive ? primary : colors.textMuted);
     return (
       <TouchableOpacity
         key={item.route + (item.params ? JSON.stringify(item.params) : '')}
@@ -135,7 +191,9 @@ export function TabletSidebar() {
         accessibilityState={{ selected: isActive }}
         accessibilityLabel={item.label}
       >
-        <Text style={[styles.itemEmoji, compact && styles.itemEmojiCompact]}>{item.emoji}</Text>
+        <View style={[styles.iconWrap, compact && styles.iconWrapCompact]}>
+          <item.Icon size={compact ? 20 : 22} strokeWidth={1.75} color={iconColor} />
+        </View>
         <Text
           style={[
             styles.itemLabel,
@@ -157,11 +215,11 @@ export function TabletSidebar() {
   };
 
   // Onglets principaux
-  const mainTabs = [
-    { emoji: '🏠', label: t('tabs.today'), route: 'index' },
-    { emoji: '📋', label: t('tabs.tasks'), route: 'tasks' },
-    { emoji: '📖', label: t('tabs.journal'), route: 'journal' },
-    { emoji: '📆', label: t('tabs.calendar'), route: 'calendar' },
+  const mainTabs: { Icon: LucideIcon; label: string; route: string }[] = [
+    { Icon: Home, label: t('tabs.today'), route: 'index' },
+    { Icon: ListChecks, label: t('tabs.tasks'), route: 'tasks' },
+    { Icon: BookOpen, label: t('tabs.journal'), route: 'journal' },
+    { Icon: Calendar, label: t('tabs.calendar'), route: 'calendar' },
   ];
 
   return (
@@ -186,13 +244,18 @@ export function TabletSidebar() {
         {categories.map((cat) => {
           const catItems = menuItems.filter((i) => i.category === cat);
           if (catItems.length === 0) return null;
+          const accentColor = colors[CATEGORY_ACCENT_KEYS[cat]];
+          const CatIcon = CATEGORY_ICONS[cat];
           return (
             <View key={cat} style={styles.category}>
-              <Text style={[styles.categoryLabel, { color: colors.textMuted }]}>
-                {t(CATEGORY_LABELS[cat])}
-              </Text>
+              <View style={styles.categoryHeader}>
+                <CatIcon size={14} strokeWidth={1.75} color={accentColor} />
+                <Text style={[styles.categoryLabel, { color: colors.textMuted }]}>
+                  {t(CATEGORY_LABELS[cat])}
+                </Text>
+              </View>
               {catItems.map((item) =>
-                renderItem({ ...item, label: t(item.labelKey) }, true)
+                renderItem({ ...item, label: t(item.labelKey) }, true, accentColor)
               )}
             </View>
           );
@@ -226,13 +289,18 @@ const styles = StyleSheet.create({
   category: {
     marginTop: Spacing.lg,
   },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.xxs,
+  },
   categoryLabel: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.xxs,
   },
   item: {
     flexDirection: 'row',
@@ -245,13 +313,12 @@ const styles = StyleSheet.create({
   itemCompact: {
     paddingVertical: Spacing.md,
   },
-  itemEmoji: {
-    fontSize: FontSize.title,
+  iconWrap: {
     width: 30,
-    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  itemEmojiCompact: {
-    fontSize: FontSize.body,
+  iconWrapCompact: {
     width: 26,
   },
   itemLabel: {

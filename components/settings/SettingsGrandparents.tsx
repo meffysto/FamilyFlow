@@ -23,6 +23,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
+import { SectionHeader } from '../ui/SectionHeader';
+import { Users } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -190,7 +192,11 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.grandparents.sectionA11y')}>
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.grandparents.sectionTitle')}</Text>
+      <SectionHeader
+        title={t('settings.grandparents.sectionTitle')}
+        icon={<Users size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
 
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.hint, { color: colors.textFaint }]}>
@@ -335,7 +341,6 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Spacing.md },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
   hint: { fontSize: FontSize.caption, lineHeight: 17 },
 

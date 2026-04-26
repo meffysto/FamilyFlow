@@ -8,10 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { BarChart3 } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -33,15 +34,16 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
     <DashboardCard
       key="weeklyStats"
       title={t('dashboard.weeklyStats.title')}
-      icon="📊"
+      IconComponent={BarChart3}
       color={colors.catJeux}
-      tinted
+      variant="metric"
       onPressMore={() => router.push('/(tabs)/stats')}
       hideMoreLink
       style={{ flex: 1 }}
     >
-      <Text style={[styles.weekStatsTotal, { color: colors.catJeux }]}>{weekTotal}</Text>
-      <Text style={[styles.weekStatsSummary, { color: colors.textMuted }]}>
+      <Text style={[styles.statSentence, { color: colors.text }]}>
+        <Text style={[styles.statNumber, { color: colors.catJeux }]}>{weekTotal}</Text>
+        {' '}
         {t('dashboard.weeklyStats.summary', { count: weekTotal })}
       </Text>
     </DashboardCard>
@@ -51,14 +53,14 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
 export const DashboardWeeklyStats = React.memo(DashboardWeeklyStatsInner);
 
 const styles = StyleSheet.create({
-  weekStatsTotal: {
-    fontSize: 36,
-    fontWeight: FontWeight.bold,
-    lineHeight: 40,
-    letterSpacing: -1,
+  statSentence: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.normal,
+    lineHeight: 22,
   },
-  weekStatsSummary: {
-    fontSize: FontSize.micro,
-    marginTop: 2,
+  statNumber: {
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.heading + 4, // 22px DM Serif intégré dans la phrase
+    letterSpacing: -0.3,
   },
 });

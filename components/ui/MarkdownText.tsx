@@ -11,6 +11,19 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { Text, View, StyleSheet, TextStyle, Linking } from 'react-native';
+import {
+  StickyNote,
+  Info,
+  HelpCircle,
+  Lightbulb,
+  CheckCircle2,
+  ClipboardList,
+  AlertTriangle,
+  AlertOctagon,
+  Bug,
+  Quote,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -284,21 +297,21 @@ function parseBlocks(md: string, maxBlocks?: number): BlockNode[] {
 // — Configuration visuelle des callouts —
 
 interface CalloutConfig {
-  icon: string;
+  Icon: LucideIcon;
   colorKey: 'info' | 'success' | 'warning' | 'error' | 'primary' | 'muted';
 }
 
 const CALLOUT_CONFIG: Record<CalloutType, CalloutConfig> = {
-  note:     { icon: '📝', colorKey: 'info' },
-  info:     { icon: 'ℹ️', colorKey: 'info' },
-  question: { icon: '❓', colorKey: 'info' },
-  tip:      { icon: '💡', colorKey: 'success' },
-  success:  { icon: '✅', colorKey: 'success' },
-  example:  { icon: '📋', colorKey: 'primary' },
-  warning:  { icon: '⚠️', colorKey: 'warning' },
-  danger:   { icon: '🔴', colorKey: 'error' },
-  bug:      { icon: '🐛', colorKey: 'error' },
-  quote:    { icon: '💬', colorKey: 'muted' },
+  note:     { Icon: StickyNote,     colorKey: 'info' },
+  info:     { Icon: Info,           colorKey: 'info' },
+  question: { Icon: HelpCircle,     colorKey: 'info' },
+  tip:      { Icon: Lightbulb,      colorKey: 'success' },
+  success:  { Icon: CheckCircle2,   colorKey: 'success' },
+  example:  { Icon: ClipboardList,  colorKey: 'primary' },
+  warning:  { Icon: AlertTriangle,  colorKey: 'warning' },
+  danger:   { Icon: AlertOctagon,   colorKey: 'error' },
+  bug:      { Icon: Bug,            colorKey: 'error' },
+  quote:    { Icon: Quote,          colorKey: 'muted' },
 };
 
 // — Composant principal —
@@ -563,7 +576,7 @@ export const MarkdownText = React.memo(function MarkdownText({
                 accessibilityLabel={`${block.calloutType} : ${block.title}`}
               >
                 <View style={mdStyles.calloutHeader}>
-                  <Text style={mdStyles.calloutIcon}>{config.icon}</Text>
+                  <config.Icon size={16} strokeWidth={1.75} color={calloutColors.border} />
                   <Text
                     style={[
                       mdStyles.calloutTitle,
@@ -663,9 +676,6 @@ const mdStyles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
     marginBottom: Spacing.xs,
-  },
-  calloutIcon: {
-    fontSize: FontSize.lg,
   },
   calloutTitle: {
     fontSize: FontSize.sm,

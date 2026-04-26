@@ -41,7 +41,27 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useVault } from '../contexts/VaultContext';
 import { Spacing, Radius } from '../constants/spacing';
-import { FontSize, FontWeight, LineHeight } from '../constants/typography';
+import { FontSize, FontWeight, FontFamily, LineHeight } from '../constants/typography';
+import {
+  UtensilsCrossed,
+  ClipboardList,
+  Wallet,
+  CalendarDays,
+  Camera,
+  Baby,
+  Repeat,
+  HeartPulse,
+  Layers,
+  Frown,
+  ShoppingCart,
+  ChefHat,
+  Smartphone,
+  Cake,
+  Croissant,
+  Moon,
+  Check,
+  type LucideIcon,
+} from 'lucide-react-native';
 
 // ─── Design constants ─────────────────────────────────────────────────────────
 
@@ -53,26 +73,26 @@ const LAST_STEP = 11;
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const GOAL_OPTIONS = [
-  { id: 'meals',  emoji: '🍽️' },
-  { id: 'tasks',  emoji: '✅' },
-  { id: 'budget', emoji: '💰' },
-  { id: 'agenda', emoji: '📅' },
-  { id: 'photos', emoji: '📸' },
-  { id: 'baby',   emoji: '👶' },
-] as const;
+const GOAL_OPTIONS: { id: 'meals' | 'tasks' | 'budget' | 'agenda' | 'photos' | 'baby'; Icon: LucideIcon }[] = [
+  { id: 'meals',  Icon: UtensilsCrossed },
+  { id: 'tasks',  Icon: ClipboardList },
+  { id: 'budget', Icon: Wallet },
+  { id: 'agenda', Icon: CalendarDays },
+  { id: 'photos', Icon: Camera },
+  { id: 'baby',   Icon: Baby },
+];
 
 type GoalId = typeof GOAL_OPTIONS[number]['id'];
 
-const PAIN_OPTIONS = [
-  { id: 'scattered', emoji: '🗂️' },
-  { id: 'partner',   emoji: '🤯' },
-  { id: 'groceries', emoji: '🛒' },
-  { id: 'dinner',    emoji: '🍕' },
-  { id: 'budget',    emoji: '💸' },
-  { id: 'photolost', emoji: '📱' },
-  { id: 'birthdays', emoji: '🎂' },
-] as const;
+const PAIN_OPTIONS: { id: 'scattered' | 'partner' | 'groceries' | 'dinner' | 'budget' | 'photolost' | 'birthdays'; Icon: LucideIcon }[] = [
+  { id: 'scattered', Icon: Layers },
+  { id: 'partner',   Icon: Frown },
+  { id: 'groceries', Icon: ShoppingCart },
+  { id: 'dinner',    Icon: ChefHat },
+  { id: 'budget',    Icon: Wallet },
+  { id: 'photolost', Icon: Smartphone },
+  { id: 'birthdays', Icon: Cake },
+];
 
 type PainId = typeof PAIN_OPTIONS[number]['id'];
 
@@ -106,16 +126,16 @@ const GRADIENT_CONFIG: Record<number, { start: { x: number; y: number }; end: { 
 };
 
 
-const DASHBOARD_SECTIONS = [
-  { id: 'meals',    emoji: '🍽️' },
-  { id: 'tasks',    emoji: '✅' },
-  { id: 'budget',   emoji: '💰' },
-  { id: 'agenda',   emoji: '📅' },
-  { id: 'photos',   emoji: '📸' },
-  { id: 'baby',     emoji: '👶' },
-  { id: 'routines', emoji: '🏃' },
-  { id: 'health',   emoji: '💊' },
-] as const;
+const DASHBOARD_SECTIONS: { id: 'meals' | 'tasks' | 'budget' | 'agenda' | 'photos' | 'baby' | 'routines' | 'health'; Icon: LucideIcon }[] = [
+  { id: 'meals',    Icon: UtensilsCrossed },
+  { id: 'tasks',    Icon: ClipboardList },
+  { id: 'budget',   Icon: Wallet },
+  { id: 'agenda',   Icon: CalendarDays },
+  { id: 'photos',   Icon: Camera },
+  { id: 'baby',     Icon: Baby },
+  { id: 'routines', Icon: Repeat },
+  { id: 'health',   Icon: HeartPulse },
+];
 
 type SectionId = typeof DASHBOARD_SECTIONS[number]['id'];
 
@@ -267,18 +287,18 @@ function DemoSectionCard({ sectionId, colors, primary, isDark }: {
 }) {
   const { t } = useTranslation();
 
-  const sectionConfig: Record<SectionId, { icon: string; accentColor: string }> = {
-    tasks:    { icon: '✅', accentColor: primary },
-    meals:    { icon: '🍽️', accentColor: colors.catOrganisation },
-    budget:   { icon: '💰', accentColor: colors.catFamille },
-    agenda:   { icon: '📅', accentColor: colors.catOrganisation },
-    photos:   { icon: '📸', accentColor: colors.catSouvenirs },
-    baby:     { icon: '👶', accentColor: colors.catFamille },
-    routines: { icon: '🏃', accentColor: colors.catJeux },
-    health:   { icon: '💊', accentColor: colors.catSante },
+  const sectionConfig: Record<SectionId, { Icon: LucideIcon; accentColor: string }> = {
+    tasks:    { Icon: ClipboardList, accentColor: primary },
+    meals:    { Icon: UtensilsCrossed, accentColor: colors.catOrganisation },
+    budget:   { Icon: Wallet, accentColor: colors.catFamille },
+    agenda:   { Icon: CalendarDays, accentColor: colors.catOrganisation },
+    photos:   { Icon: Camera, accentColor: colors.catSouvenirs },
+    baby:     { Icon: Baby, accentColor: colors.catFamille },
+    routines: { Icon: Repeat, accentColor: colors.catJeux },
+    health:   { Icon: HeartPulse, accentColor: colors.catSante },
   };
 
-  const { icon, accentColor } = sectionConfig[sectionId];
+  const { Icon, accentColor } = sectionConfig[sectionId];
   const tintBg = hexToRgba(accentColor, isDark ? 0.12 : 0.07);
   const badgeCount = sectionId === 'tasks' ? 2 : sectionId === 'agenda' ? 2 : undefined;
 
@@ -297,7 +317,7 @@ function DemoSectionCard({ sectionId, colors, primary, isDark }: {
                   borderColor: item.done ? accentColor : colors.border,
                   backgroundColor: item.done ? accentColor : 'transparent',
                 }]}>
-                  {item.done && <Text style={demoS.checkboxTick}>✓</Text>}
+                  {item.done && <Check size={10} strokeWidth={3} color={colors.onPrimary} />}
                 </View>
                 <Text
                   style={[demoS.taskText, { color: item.done ? colors.textMuted : colors.text }, item.done && demoS.taskDone]}
@@ -313,12 +333,12 @@ function DemoSectionCard({ sectionId, colors, primary, isDark }: {
       case 'meals':
         return (
           <>
-            {[
-              { emoji: '🥐', type: 'Petit-déj', text: 'Pancakes myrtilles' },
-              { emoji: '🌙', type: 'Dîner',     text: 'Spaghetti bolognaise' },
-            ].map((meal, i) => (
+            {([
+              { Icon: Croissant, type: 'Petit-déj', text: 'Pancakes myrtilles' },
+              { Icon: Moon,      type: 'Dîner',     text: 'Spaghetti bolognaise' },
+            ] as { Icon: LucideIcon; type: string; text: string }[]).map((meal, i) => (
               <View key={i} style={demoS.mealRow}>
-                <Text style={demoS.mealEmoji}>{meal.emoji}</Text>
+                <meal.Icon size={14} strokeWidth={1.75} color={colors.brand.soilMuted} />
                 <View>
                   <Text style={[demoS.mealType, { color: colors.textMuted }]}>{meal.type}</Text>
                   <Text style={[demoS.mealText, { color: colors.text }]} numberOfLines={1}>{meal.text}</Text>
@@ -332,7 +352,7 @@ function DemoSectionCard({ sectionId, colors, primary, isDark }: {
         return (
           <>
             <Text style={[demoS.budgetPct, { color: accentColor }]}>62%</Text>
-            <View style={[demoS.budgetTrack, { backgroundColor: colors.cardAlt }]}>
+            <View style={[demoS.budgetTrack, { backgroundColor: colors.brand.wash }]}>
               <View style={[demoS.budgetFill, { width: '62%', backgroundColor: accentColor }]} />
             </View>
             <Text style={[demoS.budgetMicro, { color: colors.textMuted }]}>1 240 € / 2 000 €</Text>
@@ -364,13 +384,13 @@ function DemoSectionCard({ sectionId, colors, primary, isDark }: {
   return (
     <View style={[demoS.card, { backgroundColor: tintBg, borderColor: hexToRgba(accentColor, 0.18) }]}>
       <View style={demoS.cardHeader}>
-        <Text style={demoS.cardIcon}>{icon}</Text>
+        <Icon size={14} strokeWidth={1.75} color={accentColor} />
         <Text style={[demoS.cardTitle, { color: colors.text }]}>
           {t(`onboarding.preferences.sections.${sectionId}`)}
         </Text>
         {badgeCount !== undefined && (
           <View style={[demoS.badge, { backgroundColor: accentColor }]}>
-            <Text style={demoS.badgeText}>{badgeCount}</Text>
+            <Text style={[demoS.badgeText, { color: colors.onPrimary }]}>{badgeCount}</Text>
           </View>
         )}
       </View>
@@ -394,13 +414,10 @@ const demoS = StyleSheet.create({
     gap: Spacing.xs,
     marginBottom: Spacing.sm,
   },
-  cardIcon: { fontSize: 15 },
   cardTitle: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.sm,
     flex: 1,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
   badge: {
     minWidth: 18,
@@ -411,9 +428,8 @@ const demoS = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
   },
   cardContent: { gap: Spacing.xs },
   // Tasks
@@ -426,21 +442,19 @@ const demoS = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxTick: { color: '#FFFFFF', fontSize: 9, fontWeight: FontWeight.bold },
   taskText: { fontSize: FontSize.caption, flex: 1 },
   taskDone: { opacity: 0.5 },
   // Meals
   mealRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 1 },
-  mealEmoji: { fontSize: 15, width: 20, textAlign: 'center' },
   mealType: { fontSize: FontSize.micro },
   mealText: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
   // Budget
-  budgetPct: { fontSize: 26, fontWeight: FontWeight.bold, lineHeight: 30, letterSpacing: -0.5 },
+  budgetPct: { fontFamily: FontFamily.serif, fontSize: 28, lineHeight: 32, letterSpacing: -0.5 },
   budgetTrack: { height: 4, borderRadius: 2, overflow: 'hidden', marginVertical: Spacing.xs },
   budgetFill: { height: '100%', borderRadius: 2 },
   budgetMicro: { fontSize: FontSize.micro },
   // Agenda
-  agendaDay: { fontSize: FontSize.micro, fontWeight: FontWeight.semibold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  agendaDay: { fontFamily: FontFamily.handwrite, fontSize: FontSize.sm, marginBottom: 2 },
   agendaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 2 },
   agendaDot: { width: 7, height: 7, borderRadius: 4 },
   agendaText: { fontSize: FontSize.caption, flex: 1 },
@@ -571,7 +585,9 @@ export default function OnboardingScreen() {
             const sec = DASHBOARD_SECTIONS.find((s) => s.id === id)!;
             return (
               <View key={id} style={[s.welcomePreviewCell, { backgroundColor: colors.bg }]}>
-                <Text style={s.welcomePreviewEmoji}>{sec.emoji}</Text>
+                <View style={[s.welcomePreviewIconBox, { backgroundColor: colors.brand.wash }]}>
+                  <sec.Icon size={20} strokeWidth={1.75} color={colors.brand.soil} />
+                </View>
                 <Text style={[s.welcomePreviewCellLabel, { color: colors.text }]}>{t(`onboarding.preferences.sections.${id}`)}</Text>
               </View>
             );
@@ -613,7 +629,7 @@ export default function OnboardingScreen() {
           onPress={goNext}
           activeOpacity={0.85}
         >
-          <Text style={s.ctaPrimaryText}>{t('onboarding.welcome.cta')}</Text>
+          <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.welcome.cta')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>
@@ -642,9 +658,11 @@ export default function OnboardingScreen() {
                 }}
                 activeOpacity={0.75}
               >
-                <Text style={s.optionEmoji}>{opt.emoji}</Text>
+                <View style={[s.optionIconBox, { backgroundColor: selected ? colors.brand.parchment : colors.brand.wash }]}>
+                  <opt.Icon size={22} strokeWidth={1.75} color={selected ? primary : colors.brand.soil} />
+                </View>
                 <Text style={[s.optionLabel, { color: selected ? primary : colors.text }]}>{t(`onboarding.goal.options.${opt.id}`)}</Text>
-                {selected && <Text style={[s.optionCheck, { color: primary }]}>✓</Text>}
+                {selected && <Check size={18} strokeWidth={2.25} color={primary} />}
               </TouchableOpacity>
             </Animated.View>
           );
@@ -658,7 +676,7 @@ export default function OnboardingScreen() {
             onPress={goNext}
             activeOpacity={0.85}
           >
-            <Text style={s.ctaPrimaryText}>{t('onboarding.goal.cta')}</Text>
+            <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.goal.cta')}</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -688,10 +706,12 @@ export default function OnboardingScreen() {
                 onPress={() => togglePain(opt.id)}
                 activeOpacity={0.75}
               >
-                <Text style={s.optionEmoji}>{opt.emoji}</Text>
+                <View style={[s.optionIconBox, { backgroundColor: selected ? colors.brand.parchment : colors.brand.wash }]}>
+                  <opt.Icon size={22} strokeWidth={1.75} color={selected ? primary : colors.brand.soil} />
+                </View>
                 <Text style={[s.optionLabel, { color: selected ? primary : colors.text }]}>{t(`onboarding.painPoints.options.${opt.id}`)}</Text>
                 <View style={[s.checkbox, { borderColor: selected ? primary : colors.textMuted, backgroundColor: selected ? primary : 'transparent' }]}>
-                  {selected && <Text style={s.checkboxCheck}>✓</Text>}
+                  {selected && <Check size={11} strokeWidth={3} color={colors.onPrimary} />}
                 </View>
               </TouchableOpacity>
             </Animated.View>
@@ -705,7 +725,7 @@ export default function OnboardingScreen() {
           onPress={goNext}
           activeOpacity={0.85}
         >
-          <Text style={s.ctaPrimaryText}>{t('onboarding.painPoints.cta')}</Text>
+          <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.painPoints.cta')}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -723,7 +743,7 @@ export default function OnboardingScreen() {
           <View style={[s.testimonialCard, { backgroundColor: colors.card, borderWidth: testimonial.badge ? 1.5 : 0, borderColor: primary }]}>
             {testimonial.badge && (
               <View style={[s.testimonialBadge, { backgroundColor: primary }]}>
-                <Text style={s.testimonialBadgeText}>{testimonial.badge}</Text>
+                <Text style={[s.testimonialBadgeText, { color: colors.onPrimary }]}>{testimonial.badge}</Text>
               </View>
             )}
             <Text style={s.testimonialStars}>{'⭐'.repeat(5)}</Text>
@@ -744,7 +764,7 @@ export default function OnboardingScreen() {
           onPress={goNext}
           activeOpacity={0.85}
         >
-          <Text style={s.ctaPrimaryText}>{t('onboarding.socialProof.cta')}</Text>
+          <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.socialProof.cta')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </ScrollView>
@@ -839,7 +859,7 @@ export default function OnboardingScreen() {
             onPress={goNext}
             activeOpacity={0.85}
           >
-            <Text style={s.ctaPrimaryText}>{t('onboarding.solution.cta')}</Text>
+            <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.solution.cta')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -912,7 +932,7 @@ export default function OnboardingScreen() {
             onPress={goNext}
             activeOpacity={0.85}
           >
-            <Text style={s.ctaPrimaryText}>{t('onboarding.dashboardPreview.cta')}</Text>
+            <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.dashboardPreview.cta')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -955,7 +975,7 @@ export default function OnboardingScreen() {
             onPress={handleCameraPermission}
             activeOpacity={0.85}
           >
-            <Text style={s.ctaPrimaryText}>{t('onboarding.permCamera.cta')}</Text>
+            <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.permCamera.cta')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.ctaSecondary} onPress={goNext} activeOpacity={0.6}>
             <Text style={[s.ctaSecondaryText, { color: colors.textMuted }]}>{t('onboarding.permCamera.skip')}</Text>
@@ -997,7 +1017,7 @@ export default function OnboardingScreen() {
             onPress={handleCalendarPermission}
             activeOpacity={0.85}
           >
-            <Text style={s.ctaPrimaryText}>{t('onboarding.permCalendar.cta')}</Text>
+            <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.permCalendar.cta')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.ctaSecondary} onPress={finish} activeOpacity={0.6}>
             <Text style={[s.ctaSecondaryText, { color: colors.textMuted }]}>{t('onboarding.permCalendar.skip')}</Text>
@@ -1089,7 +1109,7 @@ export default function OnboardingScreen() {
           onPress={goNext}
           activeOpacity={0.85}
         >
-          <Text style={s.ctaPrimaryText}>{t('onboarding.mascot.cta')}</Text>
+          <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.mascot.cta')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </ScrollView>
@@ -1238,8 +1258,12 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
   },
-  welcomePreviewEmoji: {
-    fontSize: FontSize.title,
+  welcomePreviewIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   welcomePreviewCellLabel: {
     fontSize: FontSize.caption,
@@ -1247,9 +1271,10 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
   welcomeTitle: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.hero,
-    fontWeight: FontWeight.heavy,
-    lineHeight: 40, // hero=32 — LineHeight.title (28) est inférieur à la fontSize, ce qui crop les ascendants
+    lineHeight: 40,
+    letterSpacing: -0.5,
     marginBottom: Spacing.xl,
   },
   welcomeSubtitle: {
@@ -1271,9 +1296,10 @@ const s = StyleSheet.create({
 
   // ── Shared ──
   stepTitle: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.bold,
     lineHeight: LineHeight.title,
+    letterSpacing: -0.4,
     marginTop: Spacing['3xl'],
     marginBottom: Spacing.xl,
   },
@@ -1293,9 +1319,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   ctaPrimaryText: {
-    color: '#FFFFFF',
     fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
   },
   ctaSecondary: {
     alignItems: 'center',
@@ -1318,20 +1343,18 @@ const s = StyleSheet.create({
     borderWidth: 1.5,
     gap: Spacing.xl,
   },
-  optionEmoji: {
-    fontSize: FontSize.subtitle,
-    width: 28,
-    textAlign: 'center',
+  optionIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionLabel: {
     flex: 1,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     lineHeight: LineHeight.body,
-  },
-  optionCheck: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
   },
   checkbox: {
     width: 20,
@@ -1340,11 +1363,6 @@ const s = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  checkboxCheck: {
-    color: '#FFFFFF',
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
   },
 
   // ── Testimonials ──
@@ -1369,9 +1387,7 @@ const s = StyleSheet.create({
   },
   testimonialBadgeText: {
     fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-    color: '#fff',
-    letterSpacing: 0.4,
+    fontWeight: FontWeight.semibold,
   },
   testimonialStars: {
     fontSize: FontSize.sm,
@@ -1448,7 +1464,7 @@ const s = StyleSheet.create({
     backgroundColor: '#EF444422',
   },
   tinderBadgeText: {
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
     fontSize: FontSize.sm,
   },
   tinderQuote: {
@@ -1493,8 +1509,9 @@ const s = StyleSheet.create({
     fontSize: 48,
   },
   tinderDoneText: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
+    letterSpacing: -0.3,
   },
 
   // ── Solution ──
@@ -1508,10 +1525,8 @@ const s = StyleSheet.create({
     gap: Spacing.md,
   },
   solutionProblem: {
-    fontSize: FontSize.caption,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.sm,
   },
   solutionAnswer: {
     fontSize: FontSize.body,
@@ -1557,9 +1572,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionCheckText: {
-    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
   },
 
   // ── Processing ──
@@ -1595,8 +1609,9 @@ const s = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   demoHeaderGreeting: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.subtitle,
-    fontWeight: FontWeight.bold,
+    letterSpacing: -0.3,
     marginBottom: Spacing.xs,
   },
   demoHeaderDate: {
@@ -1630,9 +1645,10 @@ const s = StyleSheet.create({
     marginBottom: Spacing['3xl'],
   },
   permissionTitle: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.bold,
     lineHeight: LineHeight.title,
+    letterSpacing: -0.4,
     textAlign: 'center',
     marginBottom: Spacing['3xl'],
   },
@@ -1648,7 +1664,7 @@ const s = StyleSheet.create({
   },
   permissionBulletDot: {
     fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
     marginTop: 1,
   },
   permissionBulletText: {
@@ -1710,10 +1726,11 @@ const s = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   featureSlideTitle: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.bold,
     textAlign: 'center',
     lineHeight: LineHeight.title,
+    letterSpacing: -0.4,
     marginBottom: Spacing.xl,
   },
   featureSlideSubtitle: {

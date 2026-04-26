@@ -10,6 +10,8 @@ import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
 import { DateInput } from '../ui/DateInput';
+import { SectionHeader } from '../ui/SectionHeader';
+import { User, Users } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -138,7 +140,11 @@ export function SettingsProfiles({
     <>
       {/* Mon profil */}
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.profiles.sectionMyProfile')}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.profiles.sectionMyProfile')}</Text>
+        <SectionHeader
+          title={t('settings.profiles.sectionMyProfile')}
+          icon={<User size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {activeProfile ? (
             <View style={styles.activeRow}>
@@ -181,7 +187,11 @@ export function SettingsProfiles({
 
       {/* Profils famille */}
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.profiles.sectionFamilyProfiles')}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.profiles.sectionFamilyProfiles')}</Text>
+        <SectionHeader
+          title={t('settings.profiles.sectionFamilyProfiles')}
+          icon={<Users size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {profiles.length === 0 ? (
             <Text style={[styles.empty, { color: colors.textFaint }]}>{t('settings.profiles.noProfilesFound')}</Text>
@@ -496,7 +506,6 @@ export function SettingsProfiles({
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Spacing.md },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
   activeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xl, paddingVertical: Spacing.xs },
   activeAvatar: { fontSize: 36 },

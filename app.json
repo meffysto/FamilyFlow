@@ -32,6 +32,9 @@
           "whatsapp",
           "sms",
           "tel"
+        ],
+        "UIBackgroundModes": [
+          "audio"
         ]
       },
       "buildNumber": "24"
@@ -145,7 +148,8 @@
           "organization": "no-72d",
           "project": "react-native"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

@@ -5,6 +5,8 @@
     "retry": "Retry"
   },
   "nightMode": {
+    "title": "Night mode",
+    "subtitle": "the night is calm with baby",
     "breastfeeding": "Breastfeeding",
     "bottle": "Bottle",
     "left": "Left",
@@ -442,7 +444,7 @@
   },
   "tasks": {
     "weather": {
-      "storm": "Storm…",
+      "storm": "Storm",
       "stormMsg": "Let's get started!",
       "rain": "Rain",
       "rainMsg": "Keep it up!",
@@ -461,27 +463,33 @@
     },
     "empty": {
       "title": "Well done, all finished!",
-      "subtitle": "Enjoy your free time 🎉"
+      "subtitle": "enjoy your free time",
+      "filterTitle": "Nothing here",
+      "filterSubtitle": "Try a different filter",
+      "searchTitle": "No results",
+      "searchSubtitle": "Check the spelling or broaden your search",
+      "onboardTitle": "No tasks yet",
+      "onboardSubtitle": "Tap + to add your first task"
     },
     "completed": {
       "hide": "🔼 Hide completed",
-      "show": "🔽 Completed ({{count}})"
+      "show": "🔽 Show completed ({{count}})"
     },
     "taskCount_one": "{{count}} task",
     "taskCount_other": "{{count}} tasks",
     "toast": {
       "textRequired": "Task text is required",
-      "invalidDate": "Invalid date (format: 2026-03-15)",
+      "invalidDate": "Invalid date — use DD/MM/YYYY format",
       "edited": "Task updated",
       "childCantDelete": "🔒 Only adults can delete tasks",
-      "childCantEdit": "Only adults can edit tasks"
+      "childCantEdit": "🔒 Only adults can edit tasks"
     },
     "delete": {
-      "title": "🗑️ Delete task",
+      "title": "Delete task",
       "message": "Delete \"{{name}}\"?",
       "cancel": "Cancel",
       "confirm": "Delete",
-      "error": "Error"
+      "error": "Could not delete task"
     },
     "addModal": {
       "title": "New task",
@@ -497,19 +505,19 @@
       "monthly": "Every month",
       "assignLabel": "👤 Assign to (optional)",
       "saveToLabel": "Save to",
-      "targetLabel": "📁 Save for",
+      "targetLabel": "📁 Category",
       "secretMission": "🕵️ Create a secret mission",
-      "reminderLabel": "⏰ Reminder (optional)",
+      "reminderLabel": "Reminder (optional)",
       "reminderPlaceholder": "Pick a time"
     },
     "editModal": {
       "title": "Edit task",
       "save": "Save",
-      "taskLabel": "Task *",
-      "dueLabel": "Due date (optional)",
-      "recurrenceLabel": "Repeats (optional)",
+      "taskLabel": "📝 Task *",
+      "dueLabel": "📅 Due date (optional)",
+      "recurrenceLabel": "🔁 Repeats (optional)",
       "assignLabel": "👤 Assign to",
-      "saveToLabel": "Save to",
+      "saveToLabel": "📁 Category",
       "deleteBtn": "Delete this task",
       "xpLabel": "XP Points",
       "xpDefault": "Default"
@@ -527,16 +535,16 @@
       "hideCompleted": "Hide completed",
       "showCompleted": "Show completed ({{count}})"
     },
-    "search": "Search...",
+    "search": "Search",
     "fileLabels": {
       "vacation": "☀️ Vacation Checklist",
-      "home": "🏠 Home — Tasks"
+      "home": "🏠 Home"
     },
     "screenTitle": "Tasks",
     "vacationTitle": "Vacation",
-    "remaining": "{{count}} remaining",
+    "remaining": "{{count}} left for today",
     "remaining_other": "{{count}} remaining",
-    "hint": "💡 Swipe to delete · Long press to edit",
+    "hint": "Swipe to delete · hold to edit",
     "secretMissions": "🕵️ Secret missions",
     "targetFiles": {
       "home": "🏠 Home"
@@ -737,7 +745,7 @@
       "dose_one": "{{count}} dose",
       "dose_other": "{{count}} doses",
       "nextDue": "💉 Next vaccine due: {{name}}",
-      "allDone": "✅ All vaccines up to date"
+      "allDone": "All vaccines up to date"
     },
     "info": {
       "medicalRecord": "Medical record",
@@ -755,14 +763,14 @@
   },
   "meals": {
     "tabs": {
-      "meals": "🍽️ Meals",
-      "shopping": "🛒 Shopping",
-      "recipes": "📖 Recipes"
+      "meals": "Meals",
+      "shopping": "Shopping",
+      "recipes": "Recipes"
     },
     "header": {
-      "mealsTitle": "🍽️ Meals",
-      "shoppingTitle": "🛒 Shopping",
-      "recipesTitle": "📖 Recipes",
+      "mealsTitle": "Meals",
+      "shoppingTitle": "Shopping",
+      "recipesTitle": "Recipes",
       "mealsStats": "{{filled}}/{{total}} planned",
       "shoppingStats": "{{done}}/{{total}} bought",
       "recipesStats_one": "{{count}} recipe",
@@ -848,16 +856,16 @@
       "cookReadyPlain": ".cook file ready",
       "servingsLabel": "👤 {{count}} servings",
       "prepLabel": "⏱ Prep {{time}}",
-      "cookLabel": "🔥 Cook {{time}}",
-      "ingredientsCount_one": "🥕 {{count}} ingredient",
-      "ingredientsCount_other": "🥕 {{count}} ingredients",
+      "cookLabel": "Cook {{time}}",
+      "ingredientsCount_one": "{{count}} ingredient",
+      "ingredientsCount_other": "{{count}} ingredients",
       "stepsCount_one": "{{count}} step",
       "stepsCount_other": "{{count}} steps",
       "categoryLabel": "Category",
       "categoryPlaceholder": "E.g.: Mains, Desserts, Starters…",
-      "saveToVault": "✅ Save to vault",
+      "saveToVault": "Save to vault",
       "saveToVaultNoIcon": "Save to vault",
-      "importToVault": "✅ Import to vault"
+      "importToVault": "Import to vault"
     },
     "scanner": {
       "modalTitle": "Scan vault",
@@ -1016,7 +1024,7 @@
     "history": {
       "loot": "🎁 Loot",
       "skill": "🧠 Skill",
-      "challenge": "🎯 Challenge",
+      "challenge": "Challenge",
       "bonus": "✨ Bonus",
       "task": "📋 Task"
     },
@@ -1036,7 +1044,7 @@
       "close": "Close"
     },
     "pity": {
-      "title": "🎯 Guarantee",
+      "title": "Guarantee",
       "description": "After {{threshold}} rewards without getting Epic or better, the next one is <bold>guaranteed Epic minimum</bold>."
     },
     "a11y": {
@@ -1055,7 +1063,7 @@
       "parentApproval": "Requires parent approval!",
       "multiplier": "⚡ Multiplier ×{{multiplier}} activated for {{tasks}} tasks!",
       "doubleLoot": "🎁🎁 +2 loot boxes added!",
-      "vacation": "🏖️ 2 task-free days activated!",
+      "vacation": "2 task-free days activated",
       "crown": "👑 You choose the menu all week!",
       "skipAll": "🧹✨ All of tomorrow's tasks are cancelled!",
       "familyBonus": "🌈✨ The whole family gets +{{points}} pts!",
@@ -1198,9 +1206,9 @@
       "prepareAI": "Prepare with AI",
       "prepareAIA11y": "Prepare appointment with AI",
       "dictateA11y": "Open dictaphone",
-      "deleteConfirmTitle": "🗑️ Delete appointment",
+      "deleteConfirmTitle": "Delete appointment",
       "deleteConfirmMsg": "Are you sure you want to delete this appointment?",
-      "deleteBtn": "🗑️ Delete this appointment",
+      "deleteBtn": "Delete this appointment",
       "typeCategoryMedical": "Medical",
       "typeCategoryLife": "Everyday life",
       "typeCustomPlaceholder": "Or enter a custom type (e.g. hairdresser)",
@@ -1237,7 +1245,7 @@
       "purchaseQtyLabel": "🛒 Purchase qty",
       "deleteConfirmTitle": "Delete product",
       "deleteConfirmMsg": "Remove \"{{name}}\" from stock?",
-      "deleteBtn": "🗑️ Delete this product",
+      "deleteBtn": "Delete this product",
       "toast": {
         "productRequired": "Product name is required",
         "categoryRequired": "Please select a category"
@@ -1290,7 +1298,7 @@
       "dateLabel": "Date",
       "datePlaceholder": "Pick a date",
       "typeOptions": {
-        "firstTime": "🌟 First time",
+        "firstTime": "First time",
         "highlight": "💛 Special moment"
       },
       "toast": {
@@ -1305,6 +1313,9 @@
   "calendarScreen": {
     "title": "Calendar",
     "today": "Today",
+    "subtitle": "nothing on today",
+    "subtitle_one": "one event today",
+    "subtitle_other": "{{count}} events today",
     "tabs": {
       "month": "Month",
       "week": "Week"
@@ -1320,6 +1331,11 @@
   },
   "dashboard": {
     "seeAll": "See all",
+    "zones": {
+      "today": "this morning",
+      "home": "at home",
+      "farm": "the farm side"
+    },
     "sectionLabels": {
       "insights": "Suggestions",
       "vacation": "Vacation",
@@ -1391,7 +1407,8 @@
     "budget": {
       "title": "Monthly budget",
       "emptyDescription": "Track family expenses by category with limits",
-      "activateLabel": "Import template"
+      "activateLabel": "Import template",
+      "usedOf": "used of {{total}} ({{spent}})"
     },
     "calendar": {
       "title": "Calendar",
@@ -1452,14 +1469,15 @@
       "title": "Today's meals",
       "emptyDescription": "Plan the week's meals for the whole family",
       "activateLabel": "Import template",
-      "noMealsToday": "No meals planned today"
+      "noMealsToday": "Nothing planned — open to inspiration"
     },
     "menage": {
       "title": "Household chores",
       "emptyDescription": "Organize household tasks with recurring schedules",
       "activateLabel": "Import template",
-      "allDone": "All done for today ✓",
-      "remaining": "{{count}} remaining"
+      "allDone": "all done for today",
+      "remaining": "done",
+      "remaining_one": "done"
     },
     "moods": {
       "title": "Moods",
@@ -1467,7 +1485,7 @@
     },
     "nightMode": {
       "title": "Baby night mode",
-      "openBtn": "🌙 Open night mode",
+      "openBtn": "Open night mode",
       "subtitle": "Dark screen for night feedings"
     },
     "onThisDay": {
@@ -1479,7 +1497,9 @@
     "overdue": {
       "title": "Overdue",
       "metricWord": "tasks",
-      "metricSub": "overdue"
+      "metricSentence_one": "task postponed",
+      "metricSentence_other": "tasks postponed",
+      "metricSub": "finish when you can"
     },
     "photos": {
       "title": "Photo of the day",
@@ -1518,8 +1538,8 @@
       "emptyDescription": "Add your favorite recipes in Cooklang format",
       "activateLabel": "Import template",
       "servings": "{{count}} servings",
-      "ingredients_one": "🥕 {{count}} ingredient",
-      "ingredients_other": "🥕 {{count}} ingredients"
+      "ingredients_one": "{{count}} ingredient",
+      "ingredients_other": "{{count}} ingredients"
     },
     "rewards": {
       "titleChild": "Your active powers!",
@@ -1679,7 +1699,7 @@
       "firstNameA11y": "Child's first name",
       "avatarSectionLabel": "😀 Avatar",
       "avatarSelectA11y": "Avatar {{emoji}}",
-      "pregnancyToggleLabel": "🤰 Pregnancy in progress",
+      "pregnancyToggleLabel": "Pregnancy in progress",
       "pregnancyToggleHint": "Enables pregnancy tracking instead of baby tasks",
       "pregnancyToggleA11y": "Pregnancy in progress",
       "dueDateLabel": "📅 Expected due date",
@@ -1698,7 +1718,7 @@
       "firstNameRequired": "First name is required."
     },
     "grandparents": {
-      "sectionTitle": "👴 Grandparents",
+      "sectionTitle": "Grandparents",
       "sectionA11y": "Grandparents section",
       "hint": "Share recaps and photos with grandparents via Telegram, WhatsApp, or iMessage.",
       "deleteTitle": "Delete?",
@@ -1718,7 +1738,7 @@
       "weekBtn": "📤 Week",
       "monthBtn": "📊 Month",
       "testBtn": "Test",
-      "grossesseBtn": "🤰 Pregnancy",
+      "grossesseBtn": "Pregnancy",
       "shareSheetHint": "Choose the group or contact in the share sheet",
       "addContact": "+ Add a contact",
       "sendToAll": "Send to all",
@@ -1819,7 +1839,7 @@
     "telegram": {
       "sectionTitle": "Telegram",
       "sectionA11y": "Telegram section",
-      "botLabel": "📱 Telegram Bot",
+      "botLabel": "Telegram Bot",
       "configured": "🟢 Configured",
       "notConfigured": "🔴 Not configured",
       "tokenHint": "Token: {{token}}...",
@@ -1827,11 +1847,11 @@
       "testBtn": "Test",
       "missingParams": "Missing parameters",
       "missingParamsMsg": "Enter the token and chat ID first.",
-      "testSuccess": "✅ Success!",
+      "testSuccess": "Success!",
       "testSuccessMsg": "Telegram message sent successfully.",
       "testFail": "❌ Failed",
       "testFailMsg": "Unable to send message. Check the token and chat ID.",
-      "savedTitle": "✅ Saved",
+      "savedTitle": "Saved",
       "savedMsg": "Telegram settings have been saved.",
       "modalTitle": "Telegram Configuration",
       "step1Title": "🤖 Step 1 — Create the bot",
@@ -1856,7 +1876,7 @@
       "step2Line5": "5. This number is your"
     },
     "zen": {
-      "sectionTitle": "🧘 Zen mode",
+      "sectionTitle": "Zen mode",
       "sectionA11y": "Zen Mode section",
       "description": "When all conditions are met, the dashboard shows a calm space with a breathing circle and a preview of tomorrow.",
       "enableLabel": "Enable zen mode",
@@ -2046,7 +2066,7 @@
     "appearance": {
       "sectionTitle": "Appearance",
       "sectionA11y": "Appearance section",
-      "darkModeLabel": "🌙 Dark mode",
+      "darkModeLabel": "Dark mode",
       "auto": "Auto",
       "light": "Light",
       "dark": "Dark",
@@ -2330,7 +2350,7 @@
     "chooseChild": "👦 Choose a child",
     "missionText": "📝 Mission text",
     "missionPlaceholder": "E.g.: Tidy your room in secret...",
-    "suggestions": "💡 Suggestions",
+    "suggestions": "Suggestions",
     "sendMission": "🕵️ Send mission",
     "sendMissionA11y": "Send mission",
     "rewardInfo": "🎁 The child will receive an Agent Secret chest (epic minimum) upon validation",
@@ -2498,7 +2518,7 @@
     "validateA11y": "Validate mission",
     "notYet": "Not yet",
     "notYetA11y": "Put mission back in progress",
-    "validated": "✅ Mission validated! 🎉"
+    "validated": "Mission validated!"
   },
   "contactImporter": {
     "title": "Import contacts",
@@ -2619,7 +2639,7 @@
     "smartSortNote": "The manual order below serves as a base — smart sort adjusts it based on context.",
     "reorderHint": "Long press to reorder",
     "priorities": {
-      "high": "⭐ Essential",
+      "high": "Essential",
       "medium": "📌 Secondary",
       "low": "💤 Optional"
     }
@@ -2682,11 +2702,11 @@
       "taskComplete": "{{emoji}} Well done {{name}}! {{task}} → +{{points}} pts"
     },
     "greeting": {
-      "child": "Hey {{name}}! 🌟",
-      "night": "Good night {{name}} 🌙",
-      "morning": "Good morning {{name}} ☀️",
-      "afternoon": "Good afternoon {{name}} 🌤️",
-      "evening": "Good evening {{name}} 🌙"
+      "child": "Hey{{name}}",
+      "night": "Good night{{name}}",
+      "morning": "Good morning{{name}}",
+      "afternoon": "Good afternoon{{name}}",
+      "evening": "Good evening{{name}}"
     },
     "a11y": {
       "activeProfile": "Active profile: {{name}}. Tap to switch.",
@@ -2743,15 +2763,16 @@
     "recap": {
       "weekTo": "📤 Weekly recap → {{name}}",
       "monthTo": "📊 Monthly report → {{name}}",
-      "pregnancyTo": "🤰 Pregnancy update → {{name}}",
+      "pregnancyTo": "Pregnancy update → {{name}}",
       "weekAll": "📤 Weekly recap → All",
       "monthAll": "📊 Monthly report → All",
-      "pregnancyAll": "🤰 Pregnancy update → All",
+      "pregnancyAll": "Pregnancy update → All",
       "weekChannel": "📤 Week → {{emoji}} {{name}}",
       "cancel": "Cancel"
     }
   },
   "journal": {
+    "subtitle": "the little moments of every day",
     "alert": {
       "error": "Error",
       "createError": "Unable to create journal: {{error}}",
@@ -2931,7 +2952,7 @@
       "allStepsComplete": "Great job, all steps are done!",
       "stepsProgress": "{{done}}/{{total}} steps",
       "stepNumber": "Step {{step}}",
-      "stepDone": "✅ Done!",
+      "stepDone": "Done!",
       "stepFinish": "✓ Finish"
     },
     "empty": {
@@ -2942,8 +2963,8 @@
     "card": {
       "steps": "{{count}} steps",
       "visual": "· 👶 Visual",
-      "done": "✅ Done",
-      "hint": "💡 Long press a routine to reset it. Tap ✏️ to edit or + to add a new one."
+      "done": "Done",
+      "hint": "Long press a routine to reset it. Tap the pencil to edit or + to add a new one."
     }
   },
   "wishlist": {
@@ -3002,6 +3023,7 @@
   },
   "gratitude": {
     "title": "Gratitude",
+    "subtitle": "What warms the heart",
     "streak": "{{count}}d 🔥",
     "today": "Today",
     "toast": {
@@ -3031,7 +3053,13 @@
       "placeholder": "One positive thing about the day..."
     },
     "a11y": {
-      "dictate": "Dictate gratitude"
+      "dictate": "Dictate gratitude",
+      "prevDay": "Previous day",
+      "nextDay": "Next day",
+      "today": "Back to today",
+      "write": "Write a gratitude",
+      "edit": "Edit gratitude",
+      "loadMore": "Load more days"
     },
     "dictateLabel": "Dictate"
   },
@@ -3158,6 +3186,7 @@
   },
   "moodsScreen": {
     "title": "Mood Weather",
+    "subtitle": "how are you feeling today",
     "toast": {
       "saved": "Mood saved {{emoji}}",
       "error": "Unable to save mood"
@@ -3181,6 +3210,7 @@
   },
   "compare": {
     "title": "Compare",
+    "subtitle": "watching them grow, week by week",
     "noChild": "No child configured",
     "alert": {
       "soonTitle": "Coming soon",
@@ -3236,6 +3266,7 @@
     },
     "backBtn": "← Back",
     "title": "Statistics",
+    "subtitle": "what the family has accomplished",
     "tasksCompleted": "📋 Completed tasks",
     "tasksSummary_one": "{{count}} task this week",
     "tasksSummary_other": "{{count}} tasks this week",

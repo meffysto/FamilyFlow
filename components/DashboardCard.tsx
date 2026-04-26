@@ -5,7 +5,7 @@
  * Props collapsible + cardId pour activer et persister l'état.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -20,22 +20,15 @@ import Animated, {
 import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
-import { FontSize, FontWeight } from '../constants/typography';
-import { Shadows } from '../constants/shadows';
-import { GlassView } from './ui/GlassView';
+import { FontSize, FontWeight, FontFamily } from '../constants/typography';
+import { withAlpha } from '../lib/colors';
 import { PressableScale } from './ui/PressableScale';
-
-function hexToRgba(hex: string, alpha: number): string {
-  if (hex.startsWith('rgb')) return hex.replace(/[\d.]+\)$/, `${alpha})`);
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
 
 interface DashboardCardProps {
   title: string;
   icon?: string;
+  /** Icône Lucide affichée dans une pastille tintée à la couleur de la card. */
+  IconComponent?: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
   count?: number;
   color?: string;
   onPressMore?: () => void;
@@ -47,14 +40,21 @@ interface DashboardCardProps {
   cardId?: string;
   /** État initial si pas de préférence persistée. Default: false (ouvert). */
   defaultCollapsed?: boolean;
-  /** Effet Liquid Glass (fond translucide + blur). Default: false */
-  glass?: boolean;
   /** Fond subtil coloré basé sur color. Default: false */
   tinted?: boolean;
   /** Masque le lien "Voir tout →" dans le header (garde le tap sur la carte). */
   hideMoreLink?: boolean;
   /** Appui long sur le titre — ex: renommer. */
   onTitleLongPress?: () => void;
+  /**
+   * Variante visuelle warm — modifie le chrome de la carte.
+   *  - `default`    : verre + ombre standard
+   *  - `critical`   : cadre warm-red 1.5px (Overdue), bg parchemin léger
+   *  - `narrative`  : transparent sans chrome (Insights — paragraphe pur)
+   *  - `metric`     : carte sobre + accent line warm en haut (Budget, Stats)
+   *  - `ambient`    : gradient miel + bordure pointillée bois (Loot, ferme)
+   */
+  variant?: 'default' | 'critical' | 'narrative' | 'metric' | 'ambient';
 }
 
 const STORAGE_PREFIX = 'dashboard_collapsed_';
@@ -64,6 +64,7 @@ const ANIM_EASING = Easing.bezier(0.4, 0, 0.2, 1);
 export function DashboardCard({
   title,
   icon,
+  IconComponent,
   count,
   color,
   onPressMore,
@@ -72,16 +73,23 @@ export function DashboardCard({
   collapsible = false,
   cardId,
   defaultCollapsed = false,
-  glass = true,
   tinted = false,
   hideMoreLink = false,
   onTitleLongPress,
+  variant = 'default',
 }: DashboardCardProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
   const reduceMotion = useReducedMotion();
   const accentColor = color ?? primary;
-  const tintBg = tinted && accentColor ? hexToRgba(accentColor, isDark ? 0.10 : 0.06) : undefined;
+  const tintBg = useMemo(
+    () => (tinted && accentColor ? withAlpha(accentColor, isDark ? 0.10 : 0.06) : undefined),
+    [tinted, accentColor, isDark],
+  );
+  const pastilleBg = useMemo(
+    () => withAlpha(accentColor, isDark ? 0.22 : 0.20),
+    [accentColor, isDark],
+  );
   const badgeScale = useSharedValue(reduceMotion ? 1 : 0);
 
   // -- Collapse state --
@@ -152,7 +160,17 @@ export function DashboardCard({
         {...headerProps}
       >
         <View style={styles.titleRow}>
-          {icon && <Text style={styles.icon}>{icon}</Text>}
+          {IconComponent ? (
+            <View
+              style={[styles.iconPastille, { backgroundColor: pastilleBg }]}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              <IconComponent size={20} strokeWidth={1.75} color={accentColor} />
+            </View>
+          ) : icon ? (
+            <Text style={styles.icon}>{icon}</Text>
+          ) : null}
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           {count !== undefined && (
             <Animated.View style={[styles.badge, { backgroundColor: accentColor }, badgeAnimStyle]}>
@@ -199,31 +217,111 @@ export function DashboardCard({
     accessibilityLabel: `Section ${title}${count !== undefined ? `, ${count} éléments` : ''}`,
   };
 
-  if (glass) {
-    const glassCard = (
-      <GlassView
-        style={[styles.card, style]}
-        intensity={35}
-        borderRadius={Radius.xl}
-        {...a11yProps}
-      >
-        {tintBg && <View style={[StyleSheet.absoluteFill, { backgroundColor: tintBg, borderRadius: Radius.xl }]} />}
+  // ── Variants warm ───────────────────────────────────────────────────────
+  // Chaque variant override le chrome de la card. Le contenu reste identique.
+  if (variant === 'narrative') {
+    // Aucun chrome : paragraphe libre dans le flow (Insights, dictons, etc.).
+    const plain = (
+      <View style={[styles.narrativeWrap, style]} {...a11yProps}>
         {cardContent}
-      </GlassView>
+      </View>
     );
-    if (onPressMore) {
-      return (
-        <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
-          {glassCard}
-        </PressableScale>
-      );
-    }
-    return glassCard;
+    return onPressMore ? (
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
+        {plain}
+      </PressableScale>
+    ) : plain;
   }
 
-  const plainCard = (
+  if (variant === 'critical') {
+    const card = (
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.brand.cardSurface,
+            borderWidth: 1.5,
+            borderColor: colors.error,
+          },
+          style,
+        ]}
+        {...a11yProps}
+      >
+        {cardContent}
+      </View>
+    );
+    return onPressMore ? (
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
+        {card}
+      </PressableScale>
+    ) : card;
+  }
+
+  if (variant === 'metric') {
+    const card = (
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.brand.cardSurface,
+            borderWidth: 1,
+            borderColor: colors.brand.bark,
+          },
+          style,
+        ]}
+        {...a11yProps}
+      >
+        {cardContent}
+      </View>
+    );
+    return onPressMore ? (
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
+        {card}
+      </PressableScale>
+    ) : card;
+  }
+
+  if (variant === 'ambient') {
+    const card = (
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.brand.miel,
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: colors.brand.soilMuted,
+          },
+          style,
+        ]}
+        {...a11yProps}
+      >
+        {cardContent}
+      </View>
+    );
+    return onPressMore ? (
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
+        {card}
+      </PressableScale>
+    ) : card;
+  }
+
+  // ── Default warm — parchemin + bordure bark ─────────────────────────────
+  // Aligné sur le mockup `.card-new` : background parchemin, bordure
+  // rgba(196,162,101,0.30), pas d'ombre, juste la bordure pour structurer.
+  // L'ancien glass est conservé en opt-in pour les cas spéciaux (companion
+  // bubble, pregnancy card) qui le câblent eux-mêmes via GlassView direct.
+  const warmCard = (
     <View
-      style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.brand.cardSurface,
+          borderWidth: 1,
+          borderColor: colors.brand.bark,
+        },
+        style,
+      ]}
       {...a11yProps}
     >
       {tintBg && <View style={[StyleSheet.absoluteFill, { backgroundColor: tintBg, borderRadius: Radius.xl }]} />}
@@ -234,18 +332,18 @@ export function DashboardCard({
   if (onPressMore) {
     return (
       <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
-        {plainCard}
+        {warmCard}
       </PressableScale>
     );
   }
-  return plainCard;
+  return warmCard;
 }
 
 const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.xl,
     padding: Spacing['2xl'] + 2, // 18px
-    marginBottom: Spacing['lg+' as keyof typeof Spacing] ?? 14,
+    marginBottom: Spacing.xl,
     overflow: 'hidden',
   },
   header: {
@@ -270,9 +368,17 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: FontSize.subtitle + 3, // 20px
   },
+  iconPastille: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
-    fontSize: FontSize.subtitle,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.subtitle + 2, // 19px DM Serif, sentence case
+    letterSpacing: -0.2,
   },
   badge: {
     borderRadius: Radius.base,
@@ -293,6 +399,12 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
   },
   body: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
+  },
+  // Variants warm
+  narrativeWrap: {
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
 });

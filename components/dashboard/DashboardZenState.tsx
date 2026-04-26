@@ -25,7 +25,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 interface TomorrowPreview {
   tasks: number;
@@ -189,7 +189,7 @@ function DashboardZenStateInner({ isChildMode, tomorrow }: DashboardZenStateProp
       {hasTomorrow && (
         <Animated.View
           entering={FadeIn.duration(600).delay(1200)}
-          style={[styles.tomorrowCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+          style={[styles.tomorrowCard, { backgroundColor: colors.brand.wash, borderColor: colors.brand.bark }]}
         >
           <Text style={[styles.tomorrowLabel, { color: colors.textMuted }]}>{t('dashboard.zenState.tomorrow')}</Text>
           <Text style={[styles.tomorrowSummary, { color: colors.textFaint }]}>
@@ -235,12 +235,14 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   title: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.display,
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.normal,
   },
   tomorrowCard: {
     paddingVertical: Spacing.xl,

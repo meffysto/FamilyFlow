@@ -6,6 +6,8 @@ import { setAppLanguage, getSavedLanguage } from '../../lib/i18n';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { SectionHeader } from '../ui/SectionHeader';
+import { Palette, Settings as SettingsIcon, Sun, Moon, type LucideIcon } from 'lucide-react-native';
 
 type LangPref = 'fr' | 'en' | 'auto';
 
@@ -25,35 +27,43 @@ export function SettingsAppearance() {
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.appearance.sectionA11y')}>
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.appearance.sectionTitle')}</Text>
+      <SectionHeader
+        title={t('settings.appearance.sectionTitle')}
+        icon={<Palette size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+        flush
+      />
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.label, { color: colors.textSub }]}>{t('settings.appearance.darkModeLabel')}</Text>
         <View style={styles.row}>
           {([
-            { value: 'auto', label: t('settings.appearance.auto'), emoji: '⚙️' },
-            { value: 'light', label: t('settings.appearance.light'), emoji: '☀️' },
-            { value: 'dark', label: t('settings.appearance.dark'), emoji: '🌙' },
-          ] as const).map((opt) => (
-            <TouchableOpacity
-              key={opt.value}
-              style={[
-                styles.chip,
-                { backgroundColor: colors.bg },
-                darkModePreference === opt.value && { backgroundColor: tint, borderColor: primary },
-              ]}
-              onPress={() => setDarkModePreference(opt.value)}
-              activeOpacity={0.7}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: darkModePreference === opt.value }}
-              accessibilityLabel={t('settings.appearance.modeA11y', { mode: opt.label })}
-            >
-              <Text style={styles.chipEmoji}>{opt.emoji}</Text>
-              <Text style={[
-                styles.chipText, { color: colors.textMuted },
-                darkModePreference === opt.value && { color: primary, fontWeight: FontWeight.bold },
-              ]}>{opt.label}</Text>
-            </TouchableOpacity>
-          ))}
+            { value: 'auto', label: t('settings.appearance.auto'), Icon: SettingsIcon as LucideIcon },
+            { value: 'light', label: t('settings.appearance.light'), Icon: Sun as LucideIcon },
+            { value: 'dark', label: t('settings.appearance.dark'), Icon: Moon as LucideIcon },
+          ] as const).map((opt) => {
+            const selected = darkModePreference === opt.value;
+            const iconColor = selected ? primary : colors.textMuted;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  styles.chip,
+                  { backgroundColor: colors.bg },
+                  selected && { backgroundColor: tint, borderColor: primary },
+                ]}
+                onPress={() => setDarkModePreference(opt.value)}
+                activeOpacity={0.7}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={t('settings.appearance.modeA11y', { mode: opt.label })}
+              >
+                <opt.Icon size={18} strokeWidth={1.75} color={iconColor} />
+                <Text style={[
+                  styles.chipText, { color: colors.textMuted },
+                  selected && { color: primary, fontWeight: FontWeight.bold },
+                ]}>{opt.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Sélecteur de langue */}
@@ -92,7 +102,6 @@ export function SettingsAppearance() {
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Spacing.md },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
   label: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: Spacing.lg },
   row: { flexDirection: 'row', gap: Spacing.md },

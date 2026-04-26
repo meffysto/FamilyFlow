@@ -35,11 +35,14 @@ import { generateBedtimeStory } from '../../lib/ai-service';
 import { getAvailableSfxTags } from '../../lib/sfx';
 import { parseStoryScript } from '../../lib/story-script';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
-import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryVoiceEngine, StoryLength, Profile, Memory, ChildQuote } from '../../lib/types';
+import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryVoiceEngine, StoryLength, StoryAgeRange, Profile, Memory, ChildQuote } from '../../lib/types';
+import { groupStoriesByBook, buildBookContextForPrompt, getNextChapterNumber, slugifyBookTitle, type StoryBook } from '../../lib/story-books';
+import { getUniversCasting } from '../../lib/story-characters';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
+import { Sparkles, Library } from 'lucide-react-native';
 
 // ─── Constantes animation ───────────────────────────────────────────────────
 
@@ -47,11 +50,21 @@ const TAB_SPRING = { damping: 32, stiffness: 200 };
 
 // ─── Types machine à états ──────────────────────────────────────────────────
 
+/** Contexte livre transmis à PersonnaliserStep + GenerationStep pour générer un chapitre N>=2 */
+type BookContext = {
+  livreId: string;
+  livreTitre: string;
+  chapitre: number;
+  lockedCasting: string[];
+  previousChapterFullText: string;
+  olderSummaries: Array<{ chapitre: number; titre: string; summary: string }>;
+};
+
 type StoryFlowStep =
   | { etape: 'choisir_enfant' }
   | { etape: 'choisir_univers'; enfantId: string; enfantName: string }
-  | { etape: 'personnaliser'; enfantId: string; enfantName: string; universId: StoryUniverseId }
-  | { etape: 'generation'; enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string; length: StoryLength }
+  | { etape: 'personnaliser'; enfantId: string; enfantName: string; universId: StoryUniverseId; book?: BookContext; trancheAge?: StoryAgeRange }
+  | { etape: 'generation'; enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string; length: StoryLength; book?: BookContext; trancheAge?: StoryAgeRange }
   | { etape: 'fin'; histoire: BedtimeStory }
   | { etape: 'replay'; histoire: BedtimeStory };
 
@@ -68,6 +81,33 @@ function computeAge(birthdate?: string): string {
     return '6 ans';
   }
 }
+
+/**
+ * Tranche d'âge par défaut calculée depuis la date de naissance du profil.
+ * - âge < 6 → '3-5'
+ * - 6 ≤ âge < 9 → '6-8'
+ * - âge ≥ 9 → '9+'
+ * - Sans birthdate → '6-8' (médiane safe)
+ */
+function defaultTrancheAgeFromProfile(birthdate?: string): StoryAgeRange {
+  if (!birthdate) return '6-8';
+  try {
+    const birth = new Date(birthdate + (birthdate.length === 4 ? '-01-01' : ''));
+    const now = new Date();
+    const ageYears = (now.getTime() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    if (ageYears < 6) return '3-5';
+    if (ageYears < 9) return '6-8';
+    return '9+';
+  } catch {
+    return '6-8';
+  }
+}
+
+const TRANCHE_AGE_OPTIONS: { key: StoryAgeRange; label: string }[] = [
+  { key: '3-5', label: '3-5 ans' },
+  { key: '6-8', label: '6-8 ans' },
+  { key: '9+',  label: '9+ ans' },
+];
 
 // ─── StoryCard ───────────────────────────────────────────────────────────────
 
@@ -213,15 +253,20 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
     }
   }, [sortOrder]);
 
-  // Groupes par univers (ordre canonique)
+  // Regroupage par livre (chaque histoire devient un livre — implicite si pas de livreId)
+  const booksAll = React.useMemo(() => groupStoriesByBook(filteredStories), [filteredStories]);
+
+  // Groupes par univers (ordre canonique) — on conserve `histoires` (pour compat tri/audio)
+  // et on ajoute `books` filtrés par univers pour le rendu.
   const groupes = React.useMemo(() =>
     STORY_UNIVERSES
       .map(u => ({
         universe: u,
         histoires: sortHistoires(filteredStories.filter(s => s.univers === u.id)),
+        books: booksAll.filter(b => b.universId === u.id),
       }))
       .filter(g => g.histoires.length > 0),
-    [filteredStories, sortHistoires],
+    [filteredStories, sortHistoires, booksAll],
   );
 
   // Chargement audio async (non-bloquant)
@@ -361,11 +406,12 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
       </ScrollView>
 
       {/* Groupes par univers */}
-      {groupes.map(({ universe, histoires }) => (
+      {groupes.map(({ universe, histoires, books }) => (
         <UniversGroupe
           key={universe.id}
           universe={universe}
           histoires={histoires}
+          books={books}
           collapsed={collapsedUnivers[universe.id] ?? true}
           showEnfantName={showEnfantName}
           audioAvailableMap={audioAvailableMap}
@@ -380,11 +426,152 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
   );
 }
 
+// ─── BookCard ─────────────────────────────────────────────────────────────────
+// Livre multi-chapitres : header + casting + liste numérotée des chapitres
+
+interface BookCardProps {
+  book: StoryBook;
+  showEnfantName: boolean;
+  audioAvailableMap: Record<string, boolean>;
+  onChapterPress: (s: BedtimeStory) => void;
+  onChapterLongPress: (s: BedtimeStory) => void;
+  colors: ReturnType<typeof useThemeColors>['colors'];
+  primary: string;
+}
+
+const BookCard = React.memo(function BookCard({ book, showEnfantName, audioAvailableMap, onChapterPress, onChapterLongPress, colors, primary }: BookCardProps) {
+  // Résolution des labels casting depuis l'univers (premier mot du label pour rester compact)
+  const castingLabels = React.useMemo(() => {
+    const universCasting = getUniversCasting(book.universId);
+    return book.casting
+      .map(slug => universCasting.find(c => c.slug === slug)?.label.split(' ').slice(0, 2).join(' ') ?? slug)
+      .slice(0, 4); // limite affichage
+  }, [book.casting, book.universId]);
+
+  // Heuristique « dernier écouté » : dernier chapitre dont l'audio est disponible (sinon dernier de la liste)
+  const lastListenedId = React.useMemo(() => {
+    for (let i = book.chapters.length - 1; i >= 0; i--) {
+      const ch = book.chapters[i]!;
+      if (audioAvailableMap[ch.id]) return ch.id;
+    }
+    return book.chapters[book.chapters.length - 1]?.id;
+  }, [book.chapters, audioAvailableMap]);
+
+  return (
+    <View style={[bookCardStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[bookCardStyles.title, { color: colors.text }]} numberOfLines={2}>
+        📖 {book.livreTitre}
+      </Text>
+      <Text style={[bookCardStyles.meta, { color: colors.textMuted }]}>
+        {book.chapters.length} chapitres
+        {showEnfantName ? ` · ${book.chapters[0]?.enfant ?? ''}` : ''}
+      </Text>
+      {castingLabels.length > 0 && (
+        <View style={bookCardStyles.castingRow}>
+          {castingLabels.map(label => (
+            <View key={label} style={[bookCardStyles.castingChip, { backgroundColor: colors.border }]}>
+              <Text style={[bookCardStyles.castingChipText, { color: colors.textMuted }]} numberOfLines={1}>
+                {label}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+      <View style={bookCardStyles.chaptersList}>
+        {book.chapters.map((ch, idx) => {
+          const isLastListened = ch.id === lastListenedId;
+          const num = ch.chapitre ?? idx + 1;
+          const titre = ch.chapitreTitre ?? ch.titre;
+          return (
+            <Pressable
+              key={ch.id}
+              style={({ pressed }) => [
+                bookCardStyles.chapterRow,
+                { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 },
+              ]}
+              onPress={() => onChapterPress(ch)}
+              onLongPress={() => onChapterLongPress(ch)}
+              delayLongPress={500}
+            >
+              <Text style={[bookCardStyles.chapterMarker, { color: isLastListened ? primary : colors.textMuted }]}>
+                {isLastListened ? '▶' : `${num}.`}
+              </Text>
+              <Text style={[bookCardStyles.chapterTitle, { color: colors.text }]} numberOfLines={1}>
+                {titre}
+              </Text>
+              {audioAvailableMap[ch.id] && (
+                <Text style={[bookCardStyles.chapterAudio, { color: primary }]}>🔊</Text>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+});
+
+const bookCardStyles = StyleSheet.create({
+  card: {
+    padding: Spacing['2xl'],
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+  },
+  title: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.xs,
+  },
+  meta: {
+    fontSize: FontSize.caption,
+    marginBottom: Spacing.md,
+  },
+  castingRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  castingChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  castingChipText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.medium,
+  },
+  chaptersList: {
+    marginTop: Spacing.xs,
+  },
+  chapterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.md,
+  },
+  chapterMarker: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  chapterTitle: {
+    flex: 1,
+    fontSize: FontSize.sm,
+  },
+  chapterAudio: {
+    fontSize: FontSize.caption,
+  },
+});
+
 // ─── UniversGroupe ────────────────────────────────────────────────────────────
 
 interface UniversGroupeProps {
   universe: typeof STORY_UNIVERSES[0];
   histoires: BedtimeStory[];
+  books: StoryBook[];
   collapsed: boolean;
   showEnfantName: boolean;
   audioAvailableMap: Record<string, boolean>;
@@ -395,7 +582,7 @@ interface UniversGroupeProps {
   primary: string;
 }
 
-function UniversGroupe({ universe, histoires, collapsed, showEnfantName, audioAvailableMap, onToggle, onStoryPress, onStoryLongPress, colors }: UniversGroupeProps) {
+function UniversGroupe({ universe, histoires, books, collapsed, showEnfantName, audioAvailableMap, onToggle, onStoryPress, onStoryLongPress, colors, primary }: UniversGroupeProps) {
   const chevronRotation = useSharedValue(collapsed ? 0 : 1);
 
   const chevronStyle = useAnimatedStyle(() => ({
@@ -424,17 +611,35 @@ function UniversGroupe({ universe, histoires, collapsed, showEnfantName, audioAv
           ›
         </Animated.Text>
       </Pressable>
-      {/* Cartes (masquées si collapsed) */}
-      {!collapsed && histoires.map(story => (
-        <StoryCard
-          key={story.id}
-          story={story}
-          showEnfantName={showEnfantName}
-          audioAvailable={audioAvailableMap[story.id] ?? false}
-          onPress={onStoryPress}
-          onLongPress={onStoryLongPress}
-        />
-      ))}
+      {/* Cartes (masquées si collapsed) — un livre = une carte (mono ou multi-chapitres) */}
+      {!collapsed && books.map(book => {
+        if (book.chapters.length >= 2) {
+          return (
+            <BookCard
+              key={book.livreId}
+              book={book}
+              showEnfantName={showEnfantName}
+              audioAvailableMap={audioAvailableMap}
+              onChapterPress={onStoryPress}
+              onChapterLongPress={onStoryLongPress}
+              colors={colors}
+              primary={primary}
+            />
+          );
+        }
+        // 1 chapitre → carte simple (legacy ou tome 1 isolé)
+        const story = book.chapters[0]!;
+        return (
+          <StoryCard
+            key={book.livreId}
+            story={story}
+            showEnfantName={showEnfantName}
+            audioAvailable={audioAvailableMap[story.id] ?? false}
+            onPress={onStoryPress}
+            onLongPress={onStoryLongPress}
+          />
+        );
+      })}
       {!collapsed && histoires.length > 0 && (
         <Text style={[biblioStyles.deleteHint, { color: colors.textMuted }]}>
           Maintenir pour supprimer
@@ -928,7 +1133,12 @@ export default function StoriesScreen() {
 
   // ── Étape 3 : Personnaliser ──
 
-  function PersonnaliserStep({ enfantId, enfantName, universId }: { enfantId: string; enfantName: string; universId: StoryUniverseId }) {
+  function PersonnaliserStep({ enfantId, enfantName, universId, book, trancheAgeLocked }: { enfantId: string; enfantName: string; universId: StoryUniverseId; book?: BookContext; trancheAgeLocked?: StoryAgeRange }) {
+    // Tranche d'âge : verrouillée par le livre, sinon sélectionnable (default depuis profil)
+    const profileForAge = profiles.find(p => p.id === enfantId);
+    const defaultTranche = trancheAgeLocked ?? defaultTrancheAgeFromProfile(profileForAge?.birthdate);
+    const [selectedTrancheAge, setSelectedTrancheAge] = useState<StoryAgeRange>(defaultTranche);
+    const effectiveTrancheAge: StoryAgeRange = book ? (trancheAgeLocked ?? defaultTranche) : selectedTrancheAge;
     // Doit matcher strictement GenerationStep : 1 humeur récente, 3 perles, 5 souvenirs sur 60j
     const latestMood = moods
       .filter(m => m.profileId === enfantId)
@@ -952,7 +1162,10 @@ export default function StoriesScreen() {
       const ambienceVolume = voiceConfig.ambienceVolume;
       const length = voiceConfig.length;
       const elevenLabsModel = voiceConfig.elevenLabsModel;
-      const base = { language: lang, spectacle, audioMode, ambienceVolume, length, elevenLabsModel } as const;
+      // Multi-voix : auto-activé en mode doux/spectacle si provider ElevenLabs.
+      // Apple/Fish n'ont pas accès à la voice library publique — toggle inopérant.
+      const multiVoice = audioMode !== 'off' && localVoiceEngine === 'elevenlabs' ? true : undefined;
+      const base = { language: lang, spectacle, audioMode, ambienceVolume, length, elevenLabsModel, multiVoice } as const;
       if (localVoiceEngine === 'elevenlabs') {
         if (voiceSelectedParentId) {
           const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
@@ -990,12 +1203,68 @@ export default function StoriesScreen() {
         return;
       }
       setVoiceConfig(buildFinalVoiceConfig());
-      goTo({ etape: 'generation', enfantId, enfantName, universId, detail, length: currentLength });
+      goTo({
+        etape: 'generation',
+        enfantId,
+        enfantName,
+        universId,
+        detail,
+        length: currentLength,
+        book,
+        trancheAge: effectiveTrancheAge,
+      });
     };
 
     return (
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={[styles.stepTitle, { color: colors.text }]}>Personnalise l'histoire</Text>
+
+        {/* Bandeau livre (chapitre N>=2) — univers/voix/multi-voix/tranche d'âge verrouillés */}
+        {book && (
+          <View style={[styles.bookBanner, { backgroundColor: colors.card, borderColor: primary }]}>
+            <Text style={[styles.bookBannerTitle, { color: colors.text }]} numberOfLines={2}>
+              📖 {book.livreTitre}
+            </Text>
+            <Text style={[styles.bookBannerSubtitle, { color: colors.textMuted }]}>
+              Chapitre {book.chapitre}
+            </Text>
+            <Text style={[styles.bookBannerLockHint, { color: colors.textMuted }]}>
+              🔒 Univers, voix, multi-voix et tranche d'âge sont verrouillés par le livre
+            </Text>
+          </View>
+        )}
+
+        {/* Sélecteur tranche d'âge — uniquement à la création (pas de book) */}
+        {!book && (
+          <>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Tranche d'âge</Text>
+            <View style={styles.trancheAgeRow}>
+              {TRANCHE_AGE_OPTIONS.map(opt => {
+                const isSelected = selectedTrancheAge === opt.key;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    style={[
+                      styles.trancheAgeChip,
+                      {
+                        backgroundColor: isSelected ? primary : colors.card,
+                        borderColor: isSelected ? primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setSelectedTrancheAge(opt.key);
+                    }}
+                  >
+                    <Text style={[styles.trancheAgeLabel, { color: isSelected ? '#fff' : colors.text }]}>
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
 
         {/* Contexte vault — catégories (plus récent coché par défaut, ouvrir pour plus) */}
         {(latestMood || childQuotes.length > 0 || childMemories.length > 0) && (
@@ -1705,7 +1974,7 @@ export default function StoriesScreen() {
 
   // ── Étape 4 : Génération + Player ──
 
-  function GenerationStep({ enfantId, enfantName, universId, detail, length }: { enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string; length: StoryLength }) {
+  function GenerationStep({ enfantId, enfantName, universId, detail, length, book, trancheAge }: { enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string; length: StoryLength; book?: BookContext; trancheAge?: StoryAgeRange }) {
     const [fullText, setFullText] = useState('');
     const [displayedText, setDisplayedText] = useState('');
     const [storyTitle, setStoryTitle] = useState('');
@@ -1759,6 +2028,14 @@ export default function StoriesScreen() {
         length,
         spectacle: (voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off')) === 'spectacle',
         availableSfxTags: (voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off')) === 'spectacle' ? getAvailableSfxTags() : undefined,
+        multiVoice: voiceConfig.multiVoice === true,
+        // Livre/chapitres — book présent uniquement pour chapitre N>=2
+        book: book ? {
+          ...book,
+          // Anonymise le texte précédent transmis à Claude (les noms y sont déjà déanonymisés à la lecture vault)
+          previousChapterFullText: anonymize(book.previousChapterFullText, anonMap),
+        } : undefined,
+        trancheAge,
         context: {
           recentMoods: childMoods.map(m => ({ level: m.level, note: m.note ? anonymize(m.note, anonMap) : undefined, date: m.date })),
           recentQuotes: childQuotes.map(q => ({ citation: anonymize(q.citation, anonMap), contexte: q.contexte ? anonymize(q.contexte, anonMap) : undefined, date: q.date })),
@@ -1775,6 +2052,7 @@ export default function StoriesScreen() {
 
       let titre = 'Histoire du soir';
       let texte = '';
+      let memorySummary = '';
       let script: import('../../lib/types').StoryScript | undefined;
       // Parsing robuste : Claude renvoie parfois du JSON avec quotes non échappées
       // (surtout en Mode Spectacle où le script ajoute beaucoup de strings).
@@ -1794,6 +2072,7 @@ export default function StoriesScreen() {
       if (parsed) {
         if (typeof parsed.titre === 'string') titre = deanonymize(parsed.titre, anonMap);
         if (typeof parsed.texte === 'string') texte = deanonymize(parsed.texte, anonMap);
+        if (typeof parsed.memorySummary === 'string') memorySummary = deanonymize(parsed.memorySummary, anonMap);
 
         // V2 — extrait le script si Claude l'a fourni (Mode Spectacle)
         if (parsed.script) {
@@ -1807,7 +2086,30 @@ export default function StoriesScreen() {
                 return b;
               }),
             };
+            if (__DEV__) {
+              const counts = script.beats.reduce<Record<string, number>>((acc, b) => {
+                acc[b.kind] = (acc[b.kind] ?? 0) + 1;
+                return acc;
+              }, {});
+              const speakers = script.beats
+                .filter(b => b.kind === 'dialogue')
+                .map(b => (b as { speaker: string }).speaker);
+              const uniqueSpeakers = Array.from(new Set(speakers));
+              console.log('[stories] script parsé:', {
+                totalBeats: script.beats.length,
+                breakdown: counts,
+                speakers: uniqueSpeakers,
+                speakerCounts: uniqueSpeakers.reduce<Record<string, number>>((acc, s) => {
+                  acc[s] = speakers.filter(x => x === s).length;
+                  return acc;
+                }, {}),
+              });
+            }
+          } else if (__DEV__) {
+            console.warn('[stories] script présent mais parse échoué — Claude a peut-être renvoyé du JSON cassé');
           }
+        } else if (__DEV__ && (voiceConfig.multiVoice || (voiceConfig.audioMode ?? '') === 'spectacle')) {
+          console.warn('[stories] multi-voix/spectacle activé mais Claude n\'a pas retourné de script');
         }
 
         // Si Claude n'a pas fourni `texte` mais qu'on a un script valide,
@@ -1854,6 +2156,23 @@ export default function StoriesScreen() {
             stories.filter(s => s.enfantId === enfantId).map(s => s.id),
           );
           const { sourceFile, id } = nextStoryFileName(enfantName, today, universId, existingIds);
+          // ─── Livre/chapitres ─────────────────────────────────────────
+          // Si book présent → chapitre N>=2 du livre existant.
+          // Sinon → 1er chapitre d'un nouveau livre potentiel (livreId généré depuis le titre).
+          const livreId = book ? book.livreId : slugifyBookTitle(titre);
+          const livreTitre = book ? book.livreTitre : titre;
+          const chapitre = book ? book.chapitre : 1;
+          const chapitreTitre = titre;
+          // Personnages : extraits des speakers de dialogue uniques (si script présent)
+          let personnages: string[] | undefined;
+          if (script) {
+            const dialogueSpeakers = script.beats
+              .filter(b => b.kind === 'dialogue')
+              .map(b => (b as { speaker: string }).speaker);
+            const unique = Array.from(new Set(dialogueSpeakers));
+            if (unique.length > 0) personnages = unique;
+          }
+
           const story: BedtimeStory = {
             id,
             titre,
@@ -1872,6 +2191,14 @@ export default function StoriesScreen() {
             script: script,
             version: 1,
             sourceFile,
+            // Livre/chapitres
+            livreId,
+            livreTitre,
+            chapitre,
+            chapitreTitre,
+            personnages,
+            memorySummary: memorySummary.trim() || undefined,
+            trancheAge,
           };
           generationCacheRef.current = { titre, texte, story };
           setCurrentStory(story);
@@ -1884,7 +2211,7 @@ export default function StoriesScreen() {
           });
         }
       }, 18);
-    }, [enfantId, enfantName, universId, detail]);
+    }, [enfantId, enfantName, universId, detail, book, trancheAge]);
 
     useEffect(() => {
       star1.value = withRepeat(withTiming(1, { duration: 1200 }), -1, true);
@@ -1991,6 +2318,29 @@ export default function StoriesScreen() {
       return () => clearTimeout(timer);
     }, []);
 
+    /** Lance le wizard chapitre suivant : reconstruit le BookContext depuis les chapitres existants */
+    const handleWriteNextChapter = useCallback(() => {
+      Haptics.selectionAsync();
+      // Filtre tous les chapitres du même livre — fallback si l'histoire n'a pas de livreId (legacy)
+      // Dans ce cas, l'histoire elle-même devient le seul chapitre du livre implicite.
+      const sameBookStories = histoire.livreId
+        ? stories.filter(s => s.livreId === histoire.livreId)
+        : [histoire];
+      // groupStoriesByBook regroupe et trie par chapitre — on prend l'unique livre résultant
+      const books = groupStoriesByBook(sameBookStories);
+      const book = books[0];
+      if (!book) return;
+      const ctx = buildBookContextForPrompt(book);
+      goTo({
+        etape: 'personnaliser',
+        enfantId: histoire.enfantId,
+        enfantName: histoire.enfant,
+        universId: histoire.univers,
+        book: ctx,
+        trancheAge: histoire.trancheAge,
+      });
+    }, [histoire]);
+
     return (
       <View style={styles.finContainer}>
         <Text style={styles.finEmoji}>🌙</Text>
@@ -2013,8 +2363,12 @@ export default function StoriesScreen() {
           />
         ) : (
           <>
-            <Pressable style={[styles.primaryButton, { backgroundColor: primary }]} onPress={() => setShowPlayer(true)}>
-              <Text style={styles.primaryButtonText}>▶ Relire</Text>
+            {/* Bouton chapitre suivant — réutilise univers/voix/multi-voix/tranche d'âge verrouillés */}
+            <Pressable style={[styles.primaryButton, { backgroundColor: primary }]} onPress={handleWriteNextChapter}>
+              <Text style={styles.primaryButtonText}>📖 Écrire le chapitre suivant</Text>
+            </Pressable>
+            <Pressable style={[styles.secondaryButton, { borderColor: primary }]} onPress={() => setShowPlayer(true)}>
+              <Text style={[styles.secondaryButtonText, { color: primary }]}>▶ Relire</Text>
             </Pressable>
             <Pressable style={[styles.secondaryButton, { borderColor: primary }]} onPress={() => {
               setSelectedUniversId(null);
@@ -2079,9 +2433,9 @@ export default function StoriesScreen() {
       case 'choisir_univers':
         return renderChoisirUniversStep({ enfantId: step.enfantId, enfantName: step.enfantName });
       case 'personnaliser':
-        return <PersonnaliserStep enfantId={step.enfantId} enfantName={step.enfantName} universId={step.universId} />;
+        return <PersonnaliserStep enfantId={step.enfantId} enfantName={step.enfantName} universId={step.universId} book={step.book} trancheAgeLocked={step.trancheAge} />;
       case 'generation':
-        return <GenerationStep enfantId={step.enfantId} enfantName={step.enfantName} universId={step.universId} detail={step.detail} length={step.length} />;
+        return <GenerationStep enfantId={step.enfantId} enfantName={step.enfantName} universId={step.universId} detail={step.detail} length={step.length} book={step.book} trancheAge={step.trancheAge} />;
       case 'fin':
         return <FinStep histoire={step.histoire} />;
       case 'replay':
@@ -2101,8 +2455,8 @@ export default function StoriesScreen() {
   };
 
   const storyTabs: ReadonlyArray<PillTab<'nouvelle' | 'bibliotheque'>> = [
-    { id: 'nouvelle', label: '✨ Nouvelle' },
-    { id: 'bibliotheque', label: '📚 Bibliothèque' },
+    { id: 'nouvelle', label: 'Nouvelle', Icon: Sparkles },
+    { id: 'bibliotheque', label: 'Bibliothèque', Icon: Library },
   ];
 
   const showBackBtn = step.etape !== 'choisir_enfant' && step.etape !== 'fin';
@@ -2113,6 +2467,8 @@ export default function StoriesScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={STEP_TITLES[step.etape] ?? 'Histoires du soir'}
+        subtitle="il était une fois, ce soir…"
+        tint="rgba(126,90,107,0.10)"
         leading={
           showBackBtn ? (
             <Pressable style={styles.backButton} onPress={goBack} accessibilityLabel="Retour">
@@ -2380,6 +2736,44 @@ const styles = StyleSheet.create({
   contextCategoryChevron: { fontSize: FontSize.sm, width: 16, textAlign: 'center' },
   contextMoreLink: { paddingVertical: Spacing.sm, alignItems: 'center' },
   contextMoreLinkText: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
+  // Bandeau livre (chapitre N>=2)
+  bookBanner: {
+    padding: Spacing['2xl'],
+    borderRadius: Radius.lg,
+    borderWidth: 2,
+    marginBottom: Spacing['2xl'],
+  },
+  bookBannerTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.xs,
+  },
+  bookBannerSubtitle: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+    marginBottom: Spacing.md,
+  },
+  bookBannerLockHint: {
+    fontSize: FontSize.caption,
+    fontStyle: 'italic',
+  },
+  // Sélecteur tranche d'âge
+  trancheAgeRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  trancheAgeChip: {
+    flex: 1,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  trancheAgeLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
   loadingContainer: { alignItems: 'center', paddingTop: Spacing['6xl'] },
   starsRow: { flexDirection: 'row', gap: Spacing['2xl'], marginBottom: Spacing['4xl'] },
   starEmoji: { fontSize: 40 },

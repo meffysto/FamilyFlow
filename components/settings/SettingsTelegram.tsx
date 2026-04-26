@@ -8,6 +8,8 @@ import { testTelegram } from '../../lib/telegram';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { ModalHeader } from '../ui/ModalHeader';
+import { SectionHeader } from '../ui/SectionHeader';
+import { Send, Lightbulb } from 'lucide-react-native';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -55,7 +57,11 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
   return (
     <>
       <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.telegram.sectionA11y')}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.telegram.sectionTitle')}</Text>
+        <SectionHeader
+          title={t('settings.telegram.sectionTitle')}
+          icon={<Send size={16} strokeWidth={1.75} color={colors.brand.soilMuted} />}
+          flush
+        />
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.telegram.botLabel')}</Text>
@@ -127,9 +133,10 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
               </Text>
             </View>
 
-            <View style={[styles.tip, { backgroundColor: colors.warningBg, borderColor: colors.warning }]}>
-              <Text style={[styles.tipText, { color: colors.warningText }]}>
-                💡 <Text style={[styles.bold, { color: colors.text }]}>{t('settings.telegram.groupTip')}</Text>
+            <View style={[styles.tip, { backgroundColor: colors.warningBg, borderColor: colors.warning, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }]}>
+              <Lightbulb size={16} strokeWidth={1.75} color={colors.warningText} style={{ marginTop: 2 }} />
+              <Text style={[styles.tipText, { color: colors.warningText, flex: 1 }]}>
+                <Text style={[styles.bold, { color: colors.text }]}>{t('settings.telegram.groupTip')}</Text>
               </Text>
             </View>
 
@@ -157,13 +164,6 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
 
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.md,
-  },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   rowLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },

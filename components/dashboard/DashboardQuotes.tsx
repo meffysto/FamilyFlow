@@ -3,14 +3,15 @@
  */
 
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Quote } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
 
 function DashboardQuotesInner(_props: DashboardSectionProps) {
@@ -23,7 +24,7 @@ function DashboardQuotesInner(_props: DashboardSectionProps) {
 
   if (!latest) {
     return (
-      <DashboardCard key="quotes" title={t('dashboard.quotes.title')} icon="💬" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)} hideMoreLink style={{ flex: 1 }}>
+      <DashboardCard key="quotes" title={t('dashboard.quotes.title')} IconComponent={Quote} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)} hideMoreLink style={{ flex: 1 }}>
         <Text style={[styles.empty, { color: colors.textMuted }]}>
           {t('dashboard.quotes.empty')}
         </Text>
@@ -32,13 +33,15 @@ function DashboardQuotesInner(_props: DashboardSectionProps) {
   }
 
   return (
-    <DashboardCard key="quotes" title={t('dashboard.quotes.title')} icon="💬" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)} hideMoreLink style={{ flex: 1 }}>
-      <Text style={[styles.citation, { color: colors.text }]} numberOfLines={3}>
-        « {latest.citation} »
-      </Text>
-      <Text style={[styles.meta, { color: colors.textMuted }]}>
-        — {latest.enfant}
-      </Text>
+    <DashboardCard key="quotes" title={t('dashboard.quotes.title')} IconComponent={Quote} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)} hideMoreLink style={{ flex: 1 }}>
+      <View style={[styles.citationBox, { backgroundColor: colors.brand.wash, borderLeftColor: colors.brand.bark }]}>
+        <Text style={[styles.citation, { color: colors.text }]} numberOfLines={3}>
+          « {latest.citation} »
+        </Text>
+        <Text style={[styles.meta, { color: colors.textMuted }]}>
+          — {latest.enfant}
+        </Text>
+      </View>
     </DashboardCard>
   );
 }
@@ -47,16 +50,23 @@ export const DashboardQuotes = React.memo(DashboardQuotesInner);
 
 const styles = StyleSheet.create({
   empty: {
-    fontSize: FontSize.caption,
-    fontStyle: 'italic',
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+  },
+  citationBox: {
+    borderLeftWidth: 2,
+    paddingLeft: Spacing.sm,
+    paddingVertical: Spacing.xxs,
+    borderRadius: 4,
   },
   citation: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
-    fontStyle: 'italic',
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.title,
+    lineHeight: 26,
     marginBottom: Spacing.xxs,
   },
   meta: {
-    fontSize: FontSize.caption,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.sm,
   },
 });

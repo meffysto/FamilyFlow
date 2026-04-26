@@ -1,9 +1,15 @@
 /**
- * LivingGradient.tsx — Dégradé animé qui change selon l'heure du jour
+ * LivingGradient.tsx — Hero gradient saisonnier 4-stops, time-shifted.
  *
- * Aurore rosée (5-8h), matin doré (8-12h), après-midi bleu (12-17h),
- * coucher de soleil (17-20h), nuit profonde (20-5h).
- * Le dégradé inclut toujours la couleur primary du thème actif.
+ * Le gradient est dicté par la saison (printemps tendre / été doré /
+ * automne ocre / hiver bleu nuit) et glisse subtilement selon l'heure :
+ *  - matin/après-midi : palette saison telle quelle
+ *  - soir : descendue d'un cran (plus chaude/sombre)
+ *  - nuit : le 4e stop assombri vers night
+ *
+ * La couleur primary du thème enfant n'est plus injectée dans le gradient
+ * (sinon ça muddait la palette). Pour personnaliser un écran, utiliser la
+ * prop `tint` du ScreenHeader plutôt que ce hero.
  */
 
 import React, { forwardRef, useMemo } from 'react';
@@ -12,26 +18,10 @@ import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useSeason } from '../../hooks/useSeason';
+import type { SeasonGradient } from '../../constants/season';
 
-// Palettes par moment de la journée — [couleur haute, couleur basse]
-const TIME_PALETTES = {
-  light: {
-    dawn:      ['#E879A8', '#F59E0B'], // rose vif → or
-    morning:   ['#3B82F6', '#F59E0B'], // bleu franc → ambre
-    afternoon: ['#0EA5E9', '#8B5CF6'], // cyan → violet
-    sunset:    ['#F97316', '#EC4899'], // orange → rose
-    night:     ['#6366F1', '#1E293B'], // indigo → ardoise
-  },
-  dark: {
-    dawn:      ['#9D174D', '#B45309'],
-    morning:   ['#1D4ED8', '#15803D'],
-    afternoon: ['#1E40AF', '#7C3AED'],
-    sunset:    ['#C2410C', '#BE185D'],
-    night:     ['#3730A3', '#0F172A'],
-  },
-};
-
-type TimeSlot = keyof typeof TIME_PALETTES.light;
+type TimeSlot = 'dawn' | 'morning' | 'afternoon' | 'sunset' | 'night';
 
 function getTimeSlot(hour: number): TimeSlot {
   if (hour >= 5 && hour < 8) return 'dawn';
@@ -52,39 +42,67 @@ function mixColors(c1: string, c2: string, t: number): string {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+/**
+ * Applique un shift time-of-day léger sur le gradient saisonnier.
+ *  - dawn / morning  : palette telle quelle
+ *  - afternoon       : -5% de luminosité
+ *  - sunset          : décalée vers terracotta (+ teinte chaude)
+ *  - night           : le dernier stop tire vers night-plum
+ */
+function shiftBySlot(g: SeasonGradient, slot: TimeSlot): readonly string[] {
+  if (slot === 'morning' || slot === 'dawn') return g;
+  if (slot === 'sunset') {
+    return [g[0], g[1], mixColors(g[2], '#7E5A6B', 0.15), mixColors(g[3], '#7E5A6B', 0.25)] as const;
+  }
+  if (slot === 'night') {
+    return [
+      mixColors(g[0], '#1D2438', 0.4),
+      mixColors(g[1], '#1D2438', 0.5),
+      mixColors(g[2], '#1D2438', 0.65),
+      mixColors(g[3], '#0E121A', 0.75),
+    ] as const;
+  }
+  // afternoon : conserve mais TRÈS légèrement assombrie au bas (0.02/0.04
+  // au lieu de 0.05/0.08 qui tapait trop fort sur les palettes claires
+  // comme printemps — rendait le hero muddy en pleine journée).
+  return [g[0], g[1], mixColors(g[2], '#000000', 0.02), mixColors(g[3], '#000000', 0.04)] as const;
+}
+
 interface LivingGradientProps {
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
-  /** Intensité du mélange avec la couleur primary du thème (0-1, défaut: 0.3) */
+  /**
+   * Conservé pour rétro-compat. N'injecte plus le primary dans le gradient
+   * (était la cause du rendu sombre/muddy au printemps). À retirer plus tard.
+   */
   primaryBlend?: number;
 }
 
 export const LivingGradient = forwardRef<View, LivingGradientProps>(
-  ({ style, children, primaryBlend = 0.5 }, ref) => {
-    const { primary, isDark } = useThemeColors();
+  ({ style, children }, ref) => {
+    const { isDark } = useThemeColors();
+    const { theme: seasonTheme } = useSeason();
 
     const gradientColors = useMemo(() => {
       const hour = new Date().getHours();
-      const currentSlot = getTimeSlot(hour);
-      const palette = isDark ? TIME_PALETTES.dark : TIME_PALETTES.light;
-      const [top, bottom] = palette[currentSlot];
-
-      // Mélanger avec la couleur primary du thème pour personnaliser
-      const blendedTop = mixColors(top, primary, primaryBlend);
-
-      return [blendedTop, bottom] as const;
-    }, [isDark, primary, primaryBlend]);
+      const slot = getTimeSlot(hour);
+      const base = isDark ? seasonTheme.gradientDark : seasonTheme.gradient;
+      return shiftBySlot(base, slot);
+    }, [isDark, seasonTheme]);
 
     return (
       <Animated.View ref={ref} style={[style, { overflow: 'hidden' }]}>
         <LinearGradient
-          colors={[...gradientColors]}
+          colors={gradientColors as unknown as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFill, { opacity: 0.75 }]}
+          style={StyleSheet.absoluteFill}
         />
+        {/* Léger blur pour adoucir les transitions de stops.
+         * Light mode : intensity 4 (au lieu de 8) — évitait le voile milky qui
+         * cassait la luminosité au printemps/été. */}
         <BlurView
-          intensity={15}
+          intensity={isDark ? 8 : 4}
           tint={isDark ? 'dark' : 'light'}
           style={StyleSheet.absoluteFill}
         />

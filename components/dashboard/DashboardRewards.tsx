@@ -7,10 +7,11 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Award } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { processActiveRewards } from '../../lib/gamification';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontFamily, FontWeight } from '../../constants/typography';
 
 /** Adapte le label de la récompense pour les enfants */
 function childFriendlyLabel(label: string, isChild: boolean, t: (key: string, opts?: any) => string): string {
@@ -45,7 +46,7 @@ function DashboardRewardsInner({ isChildMode }: DashboardSectionProps) {
   if (activeRewards.length === 0) return null;
 
   return (
-    <DashboardCard key="rewards" title={isChildMode ? t('dashboard.rewards.titleChild') : t('dashboard.rewards.titleAdult')} icon="🏆" color={colors.catJeux} tinted>
+    <DashboardCard key="rewards" title={isChildMode ? t('dashboard.rewards.titleChild') : t('dashboard.rewards.titleAdult')} IconComponent={Award} color={colors.catJeux} tinted>
       {activeRewards.map((reward) => {
         const ownerProfile = profiles.find((p) => p.id === reward.profileId);
         const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? colors.error : colors.warning;
@@ -85,11 +86,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   activeRewardLabel: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.lg,
+    letterSpacing: -0.2,
   },
   activeRewardMeta: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.semibold,
   },
 });

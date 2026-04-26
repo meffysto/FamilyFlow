@@ -6,6 +6,7 @@
  */
 import * as FileSystem from 'expo-file-system/legacy';
 import type { StoryAudioAlignment } from './types';
+import { canConsume, recordConsumption, quotaExceededError } from './elevenlabs-quota';
 
 export interface ElevenLabsOptions {
   model?: string;
@@ -224,6 +225,14 @@ async function performGenerateSpeech(
   } = options;
 
   const sanitized = sanitizePerformanceTags(text);
+
+  // Garde-fou quota quotidien : refuse l'appel si la limite est dépassée.
+  // Mesure les chars effectivement envoyés (post-sanitize), pas le brut.
+  const quota = await canConsume(sanitized.length);
+  if (!quota.ok) {
+    return { error: quotaExceededError(quota.used, quota.limit) };
+  }
+
   const bodyObj = {
     text: sanitized,
     model_id: model,
@@ -236,19 +245,10 @@ async function performGenerateSpeech(
   };
   const bodyString = JSON.stringify(bodyObj);
   if (__DEV__) {
-    const tagsBefore: string[] = text.match(/\[[^\]\n]{1,30}\]/g) ?? [];
     const tagsAfter: string[] = sanitized.match(/\[[^\]\n]{1,30}\]/g) ?? [];
     console.log('[elevenlabs] → POST tts', {
-      storyId,
-      voiceId: voiceId.slice(0, 8) + '…',
-      model,
-      stability, similarityBoost, style, useSpeakerBoost,
-      textLen: sanitized.length,
-      tagsKept: tagsAfter,
-      tagsStripped: tagsBefore.filter(t => !tagsAfter.includes(t)),
-      bodyBytes: bodyString.length,
-      bodyHead: bodyString.slice(0, 200),
-      bodyTail: bodyString.slice(-200),
+      storyId, voiceId: voiceId.slice(0, 8) + '…',
+      model, textLen: sanitized.length, tagsKept: tagsAfter,
     });
   }
   try {
@@ -276,6 +276,9 @@ async function performGenerateSpeech(
     await FileSystem.writeAsStringAsync(uri, base64, {
       encoding: FileSystem.EncodingType.Base64,
     });
+
+    // Comptabilise après succès uniquement (pas de double-count sur erreur)
+    await recordConsumption(sanitized.length);
     if (__DEV__) console.log('[elevenlabs] MP3 généré:', uri, '· model:', model);
 
     return { audioUri: uri };
@@ -339,19 +342,18 @@ async function performGenerateWithTimestamps(
   } = options;
 
   const sanitized = sanitizePerformanceTags(text);
+
+  // Garde-fou quota — même check que generateSpeech
+  const quota = await canConsume(sanitized.length);
+  if (!quota.ok) {
+    return { error: quotaExceededError(quota.used, quota.limit) };
+  }
+
   if (__DEV__) {
-    const tagsBefore: string[] = text.match(/\[[^\]\n]{1,30}\]/g) ?? [];
     const tagsAfter: string[] = sanitized.match(/\[[^\]\n]{1,30}\]/g) ?? [];
     console.log('[elevenlabs] → POST tts/with-timestamps', {
-      storyId,
-      voiceId: voiceId.slice(0, 8) + '…',
-      model,
-      stability, similarityBoost, style, useSpeakerBoost,
-      textLen: sanitized.length,
-      tagsKept: tagsAfter,
-      tagsStripped: tagsBefore.filter(t => !tagsAfter.includes(t)),
-      sample: sanitized.slice(0, 120),
-      fullText: sanitized,
+      storyId, voiceId: voiceId.slice(0, 8) + '…',
+      model, textLen: sanitized.length, tagsKept: tagsAfter,
     });
   }
   try {
@@ -409,6 +411,7 @@ async function performGenerateWithTimestamps(
     await FileSystem.writeAsStringAsync(uri, audioB64, {
       encoding: FileSystem.EncodingType.Base64,
     });
+    await recordConsumption(sanitized.length);
     if (__DEV__) console.log('[elevenlabs] MP3+timestamps généré:', uri, '· model:', model);
 
     return { audioUri: uri, alignment: { chars, starts, ends } };

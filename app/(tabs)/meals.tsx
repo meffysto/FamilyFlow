@@ -1055,6 +1055,7 @@ export default function MealsScreen() {
         <ScreenHeader
           title={headerTitle}
           subtitle={headerStats}
+          tint="rgba(255,244,218,0.55)"
           bottom={
             <View ref={tabBarRef}>
               <Animated.View style={[styles.tabsPillWrap, coursesTabsAnimStyle]}>

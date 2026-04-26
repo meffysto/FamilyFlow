@@ -21,7 +21,8 @@ import { useTranslation } from 'react-i18next';
 import * as FileSystem from 'expo-file-system/legacy';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
-import { FontSize, FontWeight } from '../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../constants/typography';
+import { X } from 'lucide-react-native';
 
 interface SetupWizardProps {
   onComplete: (vaultPath: string) => void;
@@ -141,7 +142,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
     onRemove: (i: number) => void,
     canRemove: boolean
   ) => (
-    <View key={index} style={[styles.personRow, { backgroundColor: colors.cardAlt }]}>
+    <View key={index} style={[styles.personRow, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.avatarRow}>
         {avatars.map((emoji) => (
           <TouchableOpacity
@@ -166,7 +167,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
         />
         {canRemove && (
           <TouchableOpacity style={[styles.removeBtn, { backgroundColor: colors.errorBg }]} onPress={() => onRemove(index)}>
-            <Text style={[styles.removeBtnText, { color: colors.error }]}>✕</Text>
+            <X size={14} strokeWidth={2.25} color={colors.error} />
           </TouchableOpacity>
         )}
       </View>
@@ -174,7 +175,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
   );
 
   const renderChildRow = (child: ChildInput, index: number) => (
-    <View key={index} style={[styles.personRow, { backgroundColor: colors.cardAlt }]}>
+    <View key={index} style={[styles.personRow, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.avatarRow}>
         {CHILD_AVATARS.map((emoji) => (
           <TouchableOpacity
@@ -206,7 +207,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
           keyboardType="numbers-and-punctuation"
         />
         <TouchableOpacity style={[styles.removeBtn, { backgroundColor: colors.errorBg }]} onPress={() => removeChild(index)}>
-          <Text style={[styles.removeBtnText, { color: colors.error }]}>✕</Text>
+          <X size={14} strokeWidth={2.25} color={colors.error} />
         </TouchableOpacity>
       </View>
     </View>
@@ -264,7 +265,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             <Text style={[styles.stepTitle, { color: colors.text }]}>{t('setup.wizard.summaryTitle')}</Text>
             <Text style={[styles.stepDesc, { color: colors.textMuted }]}>{t('setup.wizard.summaryDesc')}</Text>
 
-            <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
+            <View style={[styles.summaryCard, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
               <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('setup.wizard.parentsLabel')}</Text>
               {parents.map((p, i) => (
                 <Text key={i} style={[styles.summaryItem, { color: colors.text }]}>
@@ -274,7 +275,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             </View>
 
             {children.filter((c) => c.name.trim()).length > 0 && (
-              <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
+              <View style={[styles.summaryCard, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
                 <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('setup.wizard.childrenLabel')}</Text>
                 {children
                   .filter((c) => c.name.trim())
@@ -287,7 +288,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
               </View>
             )}
 
-            <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
+            <View style={[styles.summaryCard, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
               <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('setup.wizard.willCreateLabel')}</Text>
               <Text style={[styles.summaryDetail, { color: colors.textSub }]}>
                 {t('setup.wizard.willCreateDetail')}
@@ -364,8 +365,9 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   stepTitle: {
+    fontFamily: FontFamily.serif,
     fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.heavy,
+    letterSpacing: -0.3,
   },
   stepDesc: {
     fontSize: FontSize.sm,
@@ -411,10 +413,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  removeBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-  },
   addBtn: {
     borderWidth: 1.5,
     borderStyle: 'dashed',
@@ -437,10 +435,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   summaryLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.normal,
   },
   summaryItem: {
     fontSize: FontSize.lg,
@@ -475,7 +472,7 @@ const styles = StyleSheet.create({
   },
   navBtnPrimaryText: {
     fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.semibold,
   },
   navBtnDisabled: {
     opacity: 0.5,

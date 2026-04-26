@@ -20,11 +20,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Lock } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { SecretMissionCard } from '../SecretMissionCard';
 import type { DashboardSectionProps } from './types';
 import { Spacing } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 
 function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -66,7 +67,7 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
         onPress={() => router.push('/(tabs)/tasks')}
         activeOpacity={0.8}
       >
-        <DashboardCard title={t('dashboard.secretMissions.title')} icon="🕵️" color={colors.catJeux} tinted>
+        <DashboardCard title={t('dashboard.secretMissions.title')} IconComponent={Lock} color={colors.catJeux} tinted>
           <Animated.View style={pulseStyle}>
             <Text style={[styles.childText, { color: colors.text }]}>
               {t('dashboard.secretMissions.childText', { count: myMissions.length })}
@@ -85,7 +86,7 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
     return (
       <DashboardCard
         title={t('dashboard.secretMissions.title')}
-        icon="🕵️"
+        IconComponent={Lock}
         count={pendingMissions.length}
         color={colors.catJeux}
         tinted
@@ -123,14 +124,15 @@ export const DashboardSecretMissions = React.memo(DashboardSecretMissionsInner);
 
 const styles = StyleSheet.create({
   childText: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.titleLg,
+    letterSpacing: -0.3,
     textAlign: 'center',
     paddingVertical: Spacing.md,
   },
   parentSubtitle: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
     marginBottom: Spacing.md,
   },
   seeAllText: {

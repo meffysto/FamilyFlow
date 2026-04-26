@@ -33,7 +33,8 @@ import { SectionErrorBoundary } from '../SectionErrorBoundary';
 import type { DashboardSectionProps } from './types';
 import type { CompanionEvent } from '../../lib/mascot/companion-types';
 import { Spacing, Radius } from '../../constants/spacing';
-import { FontSize } from '../../constants/typography';
+import { FontSize, FontFamily } from '../../constants/typography';
+import { GlassView } from '../ui/GlassView';
 
 // ─── Clé SecureStore (partagée avec tree.tsx) ──────────────────────────────
 
@@ -42,7 +43,7 @@ const LAST_VISIT_KEY = 'companion_last_visit';
 // ─── Composant interne ────────────────────────────────────────────────────────
 
 function DashboardCompanionInner(_props: DashboardSectionProps) {
-  const { primary, colors } = useThemeColors();
+  const { colors } = useThemeColors();
   const { activeProfile, tasks } = useVault();
   const { config: aiConfig } = useAI();
 
@@ -191,19 +192,18 @@ function DashboardCompanionInner(_props: DashboardSectionProps) {
         fallbackEmoji=""
         size={40}
       />
-      <Animated.View
-        entering={FadeIn.duration(400)}
-        style={[
-          styles.bubble,
-          {
-            backgroundColor: colors.card,
-            borderColor: `${primary}20`,
-          },
-        ]}
-      >
-        <Text style={[styles.messageText, { color: colors.text }]}>
-          {message}
-        </Text>
+      <Animated.View entering={FadeIn.duration(400)} style={styles.bubbleWrap}>
+        <GlassView
+          style={styles.bubble}
+          intensity={25}
+          borderRadius={Radius.lg}
+          tint={colors.brand.parchment}
+          tintOpacity={0.85}
+        >
+          <Text style={[styles.messageText, { color: colors.brand.soil }]}>
+            {message}
+          </Text>
+        </GlassView>
       </Animated.View>
     </View>
   );
@@ -228,16 +228,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing['2xl'],
     paddingHorizontal: Spacing['2xl'],
   },
-  bubble: {
+  bubbleWrap: {
     flex: 1,
     marginLeft: Spacing.xl,
-    borderRadius: Radius.lg,
+  },
+  bubble: {
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.xl,
-    borderWidth: 1,
   },
   messageText: {
-    fontSize: FontSize.sm,
-    lineHeight: FontSize.sm * 1.5,
+    fontFamily: FontFamily.handwrite,
+    fontSize: FontSize.subtitle,
+    lineHeight: FontSize.subtitle * 1.4,
   },
 });
