@@ -40,7 +40,6 @@ import { LivingGradient } from '../../components/ui/LivingGradient';
 import { AvatarIcon } from '../../components/ui/AvatarIcon';
 import { getTheme } from '../../constants/themes';
 import { ReactiveAvatar, getAvatarMood } from '../../components/ui/ReactiveAvatar';
-import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { SeasonalParticles } from '../../components/ui/SeasonalParticles';
 import { ZoneLabel } from '../../components/ui/ZoneLabel';
 import { DashboardCard } from '../../components/DashboardCard';
@@ -935,7 +934,9 @@ export default function DashboardScreen() {
               accessibilityRole="button"
             >
               <ReactiveAvatar
-                emoji={activeProfile?.avatar ?? '👤'}
+                emoji={activeProfile?.avatar ?? 'user'}
+                color={primary}
+                size={36}
                 mood={getAvatarMood({
                   hour: new Date().getHours(),
                   hasLoot: (activeProfile?.lootBoxesAvailable ?? 0) > 0,
@@ -944,14 +945,6 @@ export default function DashboardScreen() {
                 })}
               />
             </TouchableOpacity>
-            {activeProfile?.companion && (
-              <CompanionAvatarMini
-                companion={activeProfile.companion}
-                level={activeProfile.level}
-                fallbackEmoji=""
-                size={30}
-              />
-            )}
           </Animated.View>
           <View style={styles.headerGreeting}>
             <Animated.Text

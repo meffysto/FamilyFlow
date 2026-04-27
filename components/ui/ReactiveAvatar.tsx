@@ -22,12 +22,18 @@ import Animated, {
   Easing,
   type SharedValue,
 } from 'react-native-reanimated';
+import { AvatarIcon } from './AvatarIcon';
 
 export type AvatarMood = 'idle' | 'loot' | 'allDone' | 'night' | 'overdue' | 'morning';
 
 interface ReactiveAvatarProps {
+  /** Valeur avatar (clé Lucide ou emoji legacy) — rendu via AvatarIcon */
   emoji: string;
   mood: AvatarMood;
+  /** Couleur de l'icône (défaut : couleur de texte sombre) */
+  color?: string;
+  /** Diamètre du cercle (défaut 38) */
+  size?: number;
   style?: ViewStyle;
 }
 
@@ -82,7 +88,7 @@ function resetAll(
   scaleY.value = withTiming(1, { duration: 300 });
 }
 
-export function ReactiveAvatar({ emoji, mood, style }: ReactiveAvatarProps) {
+export function ReactiveAvatar({ emoji, mood, color = '#1F2937', size = 38, style }: ReactiveAvatarProps) {
   const isFocused = useIsFocused();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
@@ -231,9 +237,9 @@ export function ReactiveAvatar({ emoji, mood, style }: ReactiveAvatarProps) {
   }));
 
   return (
-    <Animated.Text style={[styles.emoji, style as any, animStyle]}>
-      {emoji}
-    </Animated.Text>
+    <Animated.View style={[style, animStyle]}>
+      <AvatarIcon name={emoji} color={color} size={size} style={{ backgroundColor: 'transparent' }} />
+    </Animated.View>
   );
 }
 

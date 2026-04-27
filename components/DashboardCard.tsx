@@ -382,7 +382,9 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: FontFamily.serif,
     fontSize: FontSize.subtitle + 2, // 19px DM Serif, sentence case
+    lineHeight: 24,
     letterSpacing: -0.2,
+    includeFontPadding: false,
   },
   badge: {
     borderRadius: Radius.base,
