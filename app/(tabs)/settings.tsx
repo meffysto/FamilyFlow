@@ -45,6 +45,12 @@ import { SettingsElevenLabs } from '../../components/settings/SettingsElevenLabs
 import { SettingsFishAudio } from '../../components/settings/SettingsFishAudio';
 import { useStoryVoice } from '../../contexts/StoryVoiceContext';
 import { useTranslation } from 'react-i18next';
+import {
+  User, Palette, Bell, Leaf, Sun, Trophy, Link2, Zap,
+  Bot, Mic, Fish, Send, Users as UsersIcon,
+  ShieldCheck, Lock, FolderOpen, Lightbulb,
+  Wrench, RefreshCw, Settings as SettingsIcon, Gift, Sprout,
+} from 'lucide-react-native';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
@@ -160,14 +166,14 @@ export default function SettingsScreen() {
         {/* ── MON COMPTE ── */}
         <SettingsSectionHeader label={t('settingsScreen.sections.myAccount')} />
         <SettingsRow
-          emoji="👤"
+          icon={User}
           title={t('settingsScreen.rows.profiles')}
           subtitle={activeProfile ? `${activeProfile.avatar} ${activeProfile.name} · ${t('settingsScreen.subtitles.profileCount', { count: profiles.length })}` : t('settingsScreen.subtitles.profileCount', { count: profiles.length })}
           onPress={() => setActiveSection('profiles')}
           isFirst
         />
         <SettingsRow
-          emoji="🎨"
+          icon={Palette}
           title={t('settingsScreen.rows.appearance')}
           subtitle={darkModeLabel}
           onPress={() => setActiveSection('appearance')}
@@ -177,7 +183,7 @@ export default function SettingsScreen() {
         {/* ── EXPÉRIENCE ── */}
         <SettingsSectionHeader label={t('settingsScreen.sections.experience')} />
         <SettingsRow
-          emoji="🔔"
+          icon={Bell}
           title={t('settingsScreen.rows.notifications')}
           subtitle={t('settingsScreen.subtitles.notifActive', { count: activeNotifCount })}
           onPress={() => setActiveSection('notifications')}
@@ -185,7 +191,7 @@ export default function SettingsScreen() {
         />
         {!isChildMode && (
           <SettingsRow
-            emoji="🧘"
+            icon={Leaf}
             title={t('settingsScreen.rows.zen')}
             subtitle={zenConfig.enabled ? t('settingsScreen.labels.enabled') : t('settingsScreen.labels.disabled')}
             onPress={() => setActiveSection('zen')}
@@ -193,14 +199,14 @@ export default function SettingsScreen() {
         )}
         {!isChildMode && (
           <SettingsRow
-            emoji="☀️"
+            icon={Sun}
             title={t('settingsScreen.rows.vacation')}
             subtitle={isVacationActive ? t('settingsScreen.subtitles.vacationActive', { date: vacationConfig?.endDate ?? '' }) : t('settingsScreen.labels.inactive')}
             onPress={() => setActiveSection('vacation')}
           />
         )}
         <SettingsRow
-          emoji="🏆"
+          icon={Trophy}
           title={t('settingsScreen.rows.gamification')}
           subtitle={activeProfile ? t('settingsScreen.subtitles.gamificationLevel', { level, xp: activeProfile.points ?? 0 }) : undefined}
           onPress={() => setActiveSection('gamification')}
@@ -208,7 +214,7 @@ export default function SettingsScreen() {
         />
         {!isChildMode && (
           <SettingsRow
-            emoji="🔗"
+            icon={Link2}
             title={t('settingsScreen.rows.coupling')}
             subtitle={t('settingsScreen.rows.couplingSubtitle')}
             onPress={() => setActiveSection('coupling')}
@@ -216,7 +222,7 @@ export default function SettingsScreen() {
         )}
         {!isChildMode && (
           <SettingsRow
-            emoji="⚙️"
+            icon={Zap}
             title={t('settingsScreen.rows.automations')}
             subtitle={t('settingsScreen.rows.automationsSubtitle')}
             onPress={() => setActiveSection('automations')}
@@ -229,32 +235,32 @@ export default function SettingsScreen() {
           <>
             <SettingsSectionHeader label={t('settingsScreen.sections.connections')} />
             <SettingsRow
-              emoji="🤖"
+              icon={Bot}
               title={t('settingsScreen.rows.ai')}
               subtitle={aiConfigured ? t('settingsScreen.rows.aiConfigured', { model: aiModel }) : t('settingsScreen.rows.aiNotConfigured')}
               onPress={() => setActiveSection('ai')}
               isFirst
             />
             <SettingsRow
-              emoji="🎙️"
+              icon={Mic}
               title="ElevenLabs"
               subtitle={isElevenLabsConfigured ? 'Voix premium configurée ✓' : 'Voix premium pour les histoires'}
               onPress={() => setActiveSection('elevenlabs')}
             />
             <SettingsRow
-              emoji="🐟"
+              icon={Fish}
               title="Fish Audio"
               subtitle={isFishAudioConfigured ? 'Fish Audio configuré ✓' : 'TTS + clonage vocal'}
               onPress={() => setActiveSection('fish-audio')}
             />
             <SettingsRow
-              emoji="📲"
+              icon={Send}
               title={t('settingsScreen.rows.telegram')}
               subtitle={telegramStatus}
               onPress={() => setActiveSection('telegram')}
             />
             <SettingsRow
-              emoji="👴"
+              icon={UsersIcon}
               title={t('settingsScreen.rows.grandparents')}
               subtitle={t('settingsScreen.rows.grandparentsSubtitle')}
               onPress={() => setActiveSection('grandparents')}
@@ -268,26 +274,26 @@ export default function SettingsScreen() {
           <>
             <SettingsSectionHeader label={t('settingsScreen.sections.advanced')} />
             <SettingsRow
-              emoji="🛡️"
+              icon={ShieldCheck}
               title={t('settingsScreen.rows.auth')}
               subtitle={authSubtitle}
               onPress={() => setActiveSection('auth')}
               isFirst
             />
             <SettingsRow
-              emoji="🔒"
+              icon={Lock}
               title={t('settingsScreen.rows.parental')}
               subtitle={t('settingsScreen.rows.parentalSubtitle')}
               onPress={() => setActiveSection('parental')}
             />
             <SettingsRow
-              emoji="📂"
+              icon={FolderOpen}
               title={t('settingsScreen.rows.vault')}
               subtitle={vaultShort}
               onPress={() => setActiveSection('vault')}
             />
             <SettingsRow
-              emoji="💡"
+              icon={Lightbulb}
               title={t('settingsScreen.rows.help')}
               subtitle={t('settingsScreen.rows.helpSubtitle')}
               onPress={() => setActiveSection('help')}
@@ -301,14 +307,14 @@ export default function SettingsScreen() {
           <>
             <SettingsSectionHeader label="Debug" />
             <SettingsRow
-              emoji="🛠️"
+              icon={Wrench}
               title="Admin Gamification"
               subtitle="Modifier les données brutes"
               onPress={() => setActiveSection('gami-admin')}
               isFirst
             />
             <SettingsRow
-              emoji="🔄"
+              icon={RefreshCw}
               title="Revoir l'onboarding complet"
               subtitle="Efface les réponses et relance depuis le début"
               onPress={async () => {
@@ -319,13 +325,13 @@ export default function SettingsScreen() {
               }}
             />
             <SettingsRow
-              emoji="⚙️"
+              icon={SettingsIcon}
               title="Revoir la config vault"
               subtitle="Wizard parents / enfants / templates"
               onPress={() => router.replace('/setup' as any)}
             />
             <SettingsRow
-              emoji="🎁"
+              icon={Gift}
               title="Tester Reward Card"
               subtitle="Déclenche le toast de validation de tâche"
               onPress={() => {
@@ -347,7 +353,7 @@ export default function SettingsScreen() {
               }}
             />
             <SettingsRow
-              emoji="🌾"
+              icon={Sprout}
               title="Tester Harvest Card"
               subtitle="Accumulation, grades, wager, combo"
               onPress={() => setActiveSection('harvest-test')}

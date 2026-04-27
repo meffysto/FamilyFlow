@@ -1,17 +1,19 @@
 /**
  * SettingsRow.tsx — Ligne navigable pour l'index des réglages
  *
- * Affiche emoji, titre, sous-titre, indicateur de statut et chevron.
+ * Affiche icône Lucide dans un badge coloré, titre, sous-titre et chevron.
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import type { LucideIcon } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 interface SettingsRowProps {
-  emoji: string;
+  icon: LucideIcon;
   title: string;
   subtitle?: string;
   onPress: () => void;
@@ -19,8 +21,8 @@ interface SettingsRowProps {
   isLast?: boolean;
 }
 
-export function SettingsRow({ emoji, title, subtitle, onPress, isFirst, isLast }: SettingsRowProps) {
-  const { colors } = useThemeColors();
+export function SettingsRow({ icon: Icon, title, subtitle, onPress, isFirst, isLast }: SettingsRowProps) {
+  const { colors, primary } = useThemeColors();
 
   return (
     <TouchableOpacity
@@ -36,7 +38,9 @@ export function SettingsRow({ emoji, title, subtitle, onPress, isFirst, isLast }
       accessibilityRole="button"
       accessibilityLabel={`${title}${subtitle ? `, ${subtitle}` : ''}`}
     >
-      <Text style={styles.emoji}>{emoji}</Text>
+      <View style={[styles.iconBox, { backgroundColor: colors.brand?.wash ?? colors.cardAlt }]}>
+        <Icon size={18} color={primary} strokeWidth={2} />
+      </View>
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
         {subtitle ? (
@@ -45,7 +49,7 @@ export function SettingsRow({ emoji, title, subtitle, onPress, isFirst, isLast }
           </Text>
         ) : null}
       </View>
-      <Text style={[styles.chevron, { color: colors.textFaint }]}>&rsaquo;</Text>
+      <ChevronRight size={18} color={colors.textFaint} strokeWidth={2} />
     </TouchableOpacity>
   );
 }
@@ -82,10 +86,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: Radius.xl,
     borderBottomRightRadius: Radius.xl,
   },
-  emoji: {
-    fontSize: FontSize.titleLg,
-    width: 30,
-    textAlign: 'center',
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
@@ -97,10 +103,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: FontSize.label,
-  },
-  chevron: {
-    fontSize: FontSize.heading,
-    fontWeight: FontWeight.medium,
   },
   sectionHeader: {
     fontSize: FontSize.label,
