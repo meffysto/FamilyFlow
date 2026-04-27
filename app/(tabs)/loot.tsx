@@ -57,6 +57,7 @@ import { Shadows } from '../../constants/shadows';
 import { Layout, Spacing, Radius } from '../../constants/spacing';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
+import { Gift } from 'lucide-react-native';
 
 export default function LootScreen() {
   const { profiles, gamiData, activeProfile, markLootUsed, notifPrefs, vault, refresh, isLoading } = useVault();
@@ -225,10 +226,11 @@ export default function LootScreen() {
 
               {profile.lootBoxesAvailable > 0 ? (
                 activeProfile?.role === 'adulte' && profile.role === 'adulte' && profile.id !== activeProfile?.id ? (
-                  <View style={[styles.noLootBadge, { backgroundColor: colors.bg }]}>
+                  <View style={[styles.noLootBadge, { backgroundColor: colors.bg, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
                     <Text style={[styles.noLootText, { color: colors.textFaint }]}>
-                      {profile.lootBoxesAvailable} 🎁
+                      {profile.lootBoxesAvailable}
                     </Text>
+                    <Gift size={14} color={colors.textFaint} strokeWidth={2.2} />
                   </View>
                 ) : (
                 <TouchableOpacity
@@ -238,7 +240,7 @@ export default function LootScreen() {
                   accessibilityLabel={t(profile.lootBoxesAvailable > 1 ? 'loot.openA11yPlural' : 'loot.openA11y', { count: profile.lootBoxesAvailable, name: profile.name })}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.openBtnEmoji}>🎁</Text>
+                  <Gift size={18} color={colors.onPrimary} strokeWidth={2.4} />
                   <Text style={[styles.openBtnText, { color: colors.onPrimary }]}>
                     {profile.lootBoxesAvailable > 1 ? t('loot.openBtnMultiple', { count: profile.lootBoxesAvailable }) : t('loot.openBtn')}
                   </Text>

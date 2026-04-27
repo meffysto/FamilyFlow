@@ -20,6 +20,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import type { LucideIcon } from 'lucide-react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { FontWeight } from '../../constants/typography';
 
@@ -29,6 +30,7 @@ interface LiquidXPBarProps {
   current: number;
   total: number;
   label?: string;
+  icon?: LucideIcon;
   color?: string;
   height?: number;
 }
@@ -50,7 +52,7 @@ function WaveSVG({ color, opacity }: { color: string; opacity: number }) {
   );
 }
 
-export function LiquidXPBar({ current, total, label, color, height = 22 }: LiquidXPBarProps) {
+export function LiquidXPBar({ current, total, label, icon: Icon, color, height = 22 }: LiquidXPBarProps) {
   const { primary, colors } = useThemeColors();
   const reducedMotion = useReducedMotion();
   const barColor = color ?? primary;
@@ -99,7 +101,10 @@ export function LiquidXPBar({ current, total, label, color, height = 22 }: Liqui
     <View>
       {label && (
         <View style={styles.labelRow}>
-          <Text style={[styles.label, { color: colors.textFaint }]}>{label}</Text>
+          <View style={styles.labelLeft}>
+            {Icon ? <Icon size={11} color={colors.textFaint} strokeWidth={2.4} /> : null}
+            <Text style={[styles.label, { color: colors.textFaint }]}>{label}</Text>
+          </View>
           <Text style={[styles.value, { color: colors.textMuted }]}>{current} / {total}</Text>
         </View>
       )}
@@ -110,11 +115,11 @@ export function LiquidXPBar({ current, total, label, color, height = 22 }: Liqui
 
           {/* Vagues */}
           <Animated.View style={[styles.waveContainer, waveStyle]}>
-            <WaveSVG color={barColor} opacity={0.5} />
+            <WaveSVG color={barColor} opacity={0.3} />
           </Animated.View>
 
-          {/* Reflet brillant */}
-          <View style={[styles.shine, { borderRadius: height / 4 }]} />
+          {/* Reflet brillant — atténué */}
+          <View style={[styles.shine, { borderRadius: height / 4, backgroundColor: colors.onPrimary + '2E' }]} />
         </AnimatedView>
 
         {/* Texte centré */}
@@ -132,7 +137,13 @@ const styles = StyleSheet.create({
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 4,
+  },
+  labelLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   label: {
     fontSize: 11,
@@ -165,7 +176,6 @@ const styles = StyleSheet.create({
     left: 6,
     right: 6,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   textContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -174,8 +184,8 @@ const styles = StyleSheet.create({
   },
   barText: {
     fontWeight: FontWeight.heavy,
-    textShadowColor: 'rgba(0,0,0,0.25)',
+    textShadowColor: 'rgba(0,0,0,0.15)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 1.5,
   },
 });

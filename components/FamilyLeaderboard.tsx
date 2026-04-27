@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Medal, Flame, Gift, Star } from 'lucide-react-native';
 import { Profile } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { levelProgress, getLevelTier, LOOT_THRESHOLD, xpForLevel, calculateLevel } from '../lib/gamification';
@@ -11,16 +12,17 @@ import { LiquidXPBar } from './ui/LiquidXPBar';
 import { AvatarIcon } from './ui/AvatarIcon';
 import { getTheme } from '../constants/themes';
 import { FontSize, FontWeight } from '../constants/typography';
+import { Spacing, Radius } from '../constants/spacing';
 
 interface FamilyLeaderboardProps {
   profiles: Profile[];
   compact?: boolean;   // minimal version for dashboard
 }
 
-const MEDALS = ['🥇', '🥈', '🥉'];
+const MEDAL_COLORS = ['#E8C858', '#9CA3AF', '#A0784C']; // or, argent, bronze
 
 export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboardProps) {
-  const { primary, tint, colors } = useThemeColors();
+  const { primary, colors } = useThemeColors();
 
   if (profiles.length === 0) {
     return (
@@ -31,13 +33,18 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
   return (
     <View style={styles.container}>
       {profiles.map((profile, index) => {
-        const progress = levelProgress(profile.points);
         const threshold = LOOT_THRESHOLD[profile.role];
-        const lootProgress = (profile.points % threshold) / threshold;
+        const medalColor = MEDAL_COLORS[index];
 
         return (
           <View key={profile.id} style={[styles.row, { backgroundColor: colors.cardAlt }, compact && styles.rowCompact]}>
-            <Text style={styles.medal}>{MEDALS[index] ?? '  '}</Text>
+            <View style={styles.medalSlot}>
+              {medalColor ? (
+                <Medal size={20} color={medalColor} strokeWidth={2.2} />
+              ) : (
+                <Text style={[styles.medalRank, { color: colors.textFaint }]}>{index + 1}</Text>
+              )}
+            </View>
 
             <AvatarIcon name={profile.avatar} color={getTheme(profile.theme).primary} size={36} />
 
@@ -48,10 +55,16 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
                   {getLevelTier(profile.level).emoji} {profile.level}
                 </Text>
                 {profile.streak > 1 && (
-                  <Text style={[styles.streak, { color: colors.warning }]}>🔥 {profile.streak}j</Text>
+                  <View style={styles.inlineBadge}>
+                    <Flame size={12} color={colors.warning} strokeWidth={2.4} />
+                    <Text style={[styles.inlineBadgeText, { color: colors.warning }]}>{profile.streak}j</Text>
+                  </View>
                 )}
                 {profile.lootBoxesAvailable > 0 && (
-                  <Text style={[styles.lootBadge, { color: colors.success }]}>🎁 ×{profile.lootBoxesAvailable}</Text>
+                  <View style={styles.inlineBadge}>
+                    <Gift size={12} color={colors.success} strokeWidth={2.4} />
+                    <Text style={[styles.inlineBadgeText, { color: colors.success }]}>×{profile.lootBoxesAvailable}</Text>
+                  </View>
                 )}
               </View>
 
@@ -61,7 +74,8 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
                   <LiquidXPBar
                     current={profile.points - xpForLevel(calculateLevel(profile.points) - 1)}
                     total={xpForLevel(calculateLevel(profile.points)) - xpForLevel(calculateLevel(profile.points) - 1)}
-                    label="⭐ XP"
+                    label="XP"
+                    icon={Star}
                     color={primary}
                     height={18}
                   />
@@ -70,7 +84,8 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
                   <LiquidXPBar
                     current={profile.points % threshold}
                     total={threshold}
-                    label="🎁 Prochain loot"
+                    label="Prochain loot"
+                    icon={Gift}
                     color={colors.warning}
                     height={14}
                   />
@@ -90,34 +105,35 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: Spacing.md,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    padding: 12,
-    gap: 10,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   rowCompact: {
-    padding: 8,
+    padding: Spacing.md,
   },
-  medal: {
-    fontSize: FontSize.title,
+  medalSlot: {
     width: 28,
-    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatar: {
-    fontSize: FontSize.icon,
+  medalRank: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   info: {
     flex: 1,
-    gap: 4,
+    gap: Spacing.xs,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.xs,
     flexWrap: 'wrap',
   },
   name: {
@@ -127,46 +143,21 @@ const styles = StyleSheet.create({
   level: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    paddingHorizontal: 6,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 1,
-    borderRadius: 4,
+    borderRadius: Radius.xs,
   },
-  streak: {
+  inlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  inlineBadgeText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
   },
-  lootBadge: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-  },
   bars: {
-    gap: 4,
-  },
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  barLabel: {
-    fontSize: 11,
-    width: 20,
-    textAlign: 'center',
-  },
-  barTrack: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  // lootFill color moved to inline style (dynamic theme)
-  barValue: {
-    fontSize: 11,
-    width: 60,
-    textAlign: 'right',
+    gap: Spacing.xs,
   },
   compactPoints: {
     fontSize: FontSize.caption,
@@ -174,6 +165,6 @@ const styles = StyleSheet.create({
   empty: {
     textAlign: 'center',
     fontSize: FontSize.sm,
-    padding: 16,
+    padding: Spacing['2xl'],
   },
 });
