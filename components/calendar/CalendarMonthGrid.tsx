@@ -84,7 +84,7 @@ function CalendarMonthGridInner({
             >
               <Text style={[
                 styles.dayNum,
-                { color: today ? primary : colors.textSub },
+                { color: today ? primary : colors.text },
                 today && { fontWeight: FontWeight.heavy },
                 selected && { color: primary, fontWeight: FontWeight.bold },
               ]}>
