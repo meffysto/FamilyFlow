@@ -173,7 +173,7 @@ export default function MoreScreen() {
       { Icon: ShoppingCart, label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.catOrganisation, category: 'organisation' as const },
       { Icon: Package, label: t('menu.items.stock'), route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.catOrganisation, category: 'organisation' as const },
       // Santé & Bien-être — violet
-      { Icon: Salad, label: 'Préférences alimentaires', route: '/dietary', color: colors.catSante, category: 'sante' as const },
+      { Icon: Salad, label: t('menu.items.dietary'), route: '/dietary', color: colors.catSante, category: 'sante' as const },
       { Icon: HeartPulse, label: t('menu.items.health'), route: '/(tabs)/health', color: colors.catSante, category: 'sante' as const },
       { Icon: CloudSun, label: t('menu.items.moods'), route: '/(tabs)/moods', color: colors.catSante, category: 'sante' as const },
       ...(hasBaby ? [{ Icon: Moon, label: t('menu.items.nightMode'), route: '/(tabs)/night-mode', color: colors.catSante, category: 'sante' as const }] : []),
@@ -182,7 +182,7 @@ export default function MoreScreen() {
       { Icon: Camera, label: t('menu.items.photos'), route: '/(tabs)/photos', color: colors.catSouvenirs, category: 'souvenirs' as const },
       { Icon: MessageCircle, label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: colors.catSouvenirs, category: 'souvenirs' as const },
       { Icon: HandHeart, label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: colors.catSouvenirs, category: 'souvenirs' as const },
-      { Icon: BookOpen, label: 'Histoires du soir', route: '/(tabs)/stories', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { Icon: BookOpen, label: t('menu.items.bedtimeStories'), route: '/(tabs)/stories', color: colors.catSouvenirs, category: 'souvenirs' as const },
       // Jeux & Progrès — vert
       { Icon: Sprout, label: t('menu.items.skills'), route: '/(tabs)/skills', color: colors.catJeux, category: 'jeux' as const },
       { Icon: Trees, label: activeProfile?.gardenName || t('menu.items.tree'), route: '/(tabs)/tree' as any, color: colors.catJeux, category: 'jeux' as const },

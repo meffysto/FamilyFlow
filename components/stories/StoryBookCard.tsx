@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import type { StoryUniverse } from '../../lib/types';
 import { STORY_UNIVERSE_SPRITES } from '../../lib/stories';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -30,6 +31,8 @@ interface Props {
 }
 
 function StoryBookCard({ universe, selected, onPress }: Props) {
+  const { t } = useTranslation();
+  const universeTitle = t(`stories.universes.${universe.id}.titre`, { defaultValue: universe.titre });
   // 0 = non sélectionné, 1 = sélectionné
   const progress = useSharedValue(0);
 
@@ -58,7 +61,7 @@ function StoryBookCard({ universe, selected, onPress }: Props) {
     <Pressable
       onPress={() => { Haptics.selectionAsync(); onPress(); }}
       accessibilityRole="button"
-      accessibilityLabel={universe.titre}
+      accessibilityLabel={universeTitle}
     >
       <Animated.View style={[styles.book, { shadowColor: accent }, animStyle]}>
 
@@ -100,7 +103,7 @@ function StoryBookCard({ universe, selected, onPress }: Props) {
           {/* Bandeau titre style ruban */}
           <View style={[styles.ribbon, { backgroundColor: accent }]}>
             <View style={[styles.ribbonInnerBorder, { borderColor: '#FFFFFF30' }]} />
-            <Text style={styles.ribbonText} numberOfLines={2}>{universe.titre}</Text>
+            <Text style={styles.ribbonText} numberOfLines={2}>{universeTitle}</Text>
           </View>
 
           {/* Tranche de pages droite */}

@@ -4,6 +4,19 @@
     "unknown": "Unknown error",
     "retry": "Retry"
   },
+  "stories": {
+    "universes": {
+      "espace": { "titre": "Starry space", "description": "Journey among the stars" },
+      "ocean": { "titre": "Deep ocean", "description": "Dive into the depths" },
+      "foret": { "titre": "Enchanted forest", "description": "Magic among the trees" },
+      "dinosaures": { "titre": "Dinosaur world", "description": "Prehistoric adventure" },
+      "princesse": { "titre": "Princess castle", "description": "Magic and royalty" },
+      "super-heros": { "titre": "Super Heroes", "description": "Powers and courage" },
+      "pirates": { "titre": "Pirate adventure", "description": "Treasures and the high seas" },
+      "robots": { "titre": "Planet of Robots", "description": "Technology and discovery" },
+      "surprise": { "titre": "Surprise!", "description": "Let me choose for you" }
+    }
+  },
   "nightMode": {
     "title": "Night mode",
     "subtitle": "the night is calm with baby",
@@ -63,6 +76,8 @@
       "stock": "Pantry & Supplies",
       "health": "Health",
       "moods": "Moods",
+      "dietary": "Dietary preferences",
+      "bedtimeStories": "Bedtime stories",
       "nightMode": "Night Mode",
       "pregnancy": "Pregnancy",
       "photos": "Pictures",

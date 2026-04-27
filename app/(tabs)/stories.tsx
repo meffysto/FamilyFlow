@@ -15,6 +15,7 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
@@ -123,6 +124,7 @@ interface StoryCardProps {
 
 const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAvailable, onPress, onLongPress }: StoryCardProps) {
   const { primary, colors } = useThemeColors();
+  // (pas de chaîne traduisible dans cette carte — date + titre/durée viennent du vault)
 
   const dateFR = React.useMemo(() => {
     try {
@@ -219,6 +221,8 @@ interface BibliothequeViewProps {
 
 function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStoryPress, onStoryLongPress, onCreatePress }: BibliothequeViewProps) {
   const { primary, colors } = useThemeColors();
+  const { i18n } = useTranslation();
+  const lang = (i18n.language?.startsWith('en') ? 'en' : 'fr') as 'fr' | 'en';
 
   // Filtre enfant (null = tous)
   const defaultEnfantId = childProfiles.length === 1 ? (childProfiles[0]?.id ?? null) : null;
@@ -234,9 +238,9 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
   type SortOrder = 'date_desc' | 'date_asc' | 'duree_asc' | 'alpha';
   const [sortOrder, setSortOrder] = useState<SortOrder>('date_desc');
   const SORT_OPTIONS: { key: SortOrder; label: string }[] = [
-    { key: 'date_desc', label: 'Récent' },
-    { key: 'date_asc', label: 'Ancien' },
-    { key: 'duree_asc', label: 'Courte' },
+    { key: 'date_desc', label: lang === 'fr' ? 'Récent' : 'Recent' },
+    { key: 'date_asc', label: lang === 'fr' ? 'Ancien' : 'Oldest' },
+    { key: 'duree_asc', label: lang === 'fr' ? 'Courte' : 'Short' },
     { key: 'alpha', label: 'A→Z' },
   ];
 
@@ -322,16 +326,16 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
       <View style={biblioStyles.emptyContainer}>
         <Text style={biblioStyles.emptyEmoji}>📚</Text>
         <Text style={[biblioStyles.emptyTitle, { color: colors.text }]}>
-          Aucune histoire pour l'instant
+          {lang === 'fr' ? "Aucune histoire pour l'instant" : 'No stories yet'}
         </Text>
         <Text style={[biblioStyles.emptySubtitle, { color: colors.textMuted }]}>
-          Créez votre première histoire ✨
+          {lang === 'fr' ? 'Créez votre première histoire ✨' : 'Create your first story ✨'}
         </Text>
         <Pressable
           style={[biblioStyles.createBtn, { backgroundColor: primary }]}
           onPress={onCreatePress}
         >
-          <Text style={biblioStyles.createBtnText}>Créer une histoire</Text>
+          <Text style={biblioStyles.createBtnText}>{lang === 'fr' ? 'Créer une histoire' : 'Create a story'}</Text>
         </Pressable>
       </View>
     );
@@ -359,7 +363,7 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
               biblioStyles.childChipText,
               { color: !selectedEnfantId ? colors.bg : colors.textMuted },
             ]}>
-              Tous
+              {lang === 'fr' ? 'Tous' : 'All'}
             </Text>
           </Pressable>
           {/* Chips enfants */}
@@ -442,6 +446,8 @@ interface BookCardProps {
 }
 
 const BookCard = React.memo(function BookCard({ book, showEnfantName, audioAvailableMap, onChapterPress, onChapterLongPress, colors, primary }: BookCardProps) {
+  const { i18n } = useTranslation();
+  const lang = (i18n.language?.startsWith('en') ? 'en' : 'fr') as 'fr' | 'en';
   // Résolution des labels casting depuis l'univers (premier mot du label pour rester compact)
   const castingLabels = React.useMemo(() => {
     const universCasting = getUniversCasting(book.universId);
@@ -465,7 +471,7 @@ const BookCard = React.memo(function BookCard({ book, showEnfantName, audioAvail
         📖 {book.livreTitre}
       </Text>
       <Text style={[bookCardStyles.meta, { color: colors.textMuted }]}>
-        {book.chapters.length} chapitres
+        {book.chapters.length} {lang === 'fr' ? 'chapitres' : 'chapters'}
         {showEnfantName ? ` · ${book.chapters[0]?.enfant ?? ''}` : ''}
       </Text>
       {castingLabels.length > 0 && (
@@ -585,6 +591,9 @@ interface UniversGroupeProps {
 }
 
 function UniversGroupe({ universe, histoires, books, collapsed, showEnfantName, audioAvailableMap, onToggle, onStoryPress, onStoryLongPress, colors, primary }: UniversGroupeProps) {
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.language?.startsWith('en') ? 'en' : 'fr') as 'fr' | 'en';
+  const universeTitle = t(`stories.universes.${universe.id}.titre`, { defaultValue: universe.titre });
   const chevronRotation = useSharedValue(collapsed ? 0 : 1);
 
   const chevronStyle = useAnimatedStyle(() => ({
@@ -604,7 +613,7 @@ function UniversGroupe({ universe, histoires, books, collapsed, showEnfantName, 
       >
         <Text style={biblioStyles.universeEmoji}>{universe.emoji}</Text>
         <Text style={[biblioStyles.universeTitle, { color: colors.text }]}>
-          {universe.titre}
+          {universeTitle}
         </Text>
         <Text style={[biblioStyles.universeCount, { color: colors.textMuted }]}>
           · {histoires.length}
@@ -644,7 +653,7 @@ function UniversGroupe({ universe, histoires, books, collapsed, showEnfantName, 
       })}
       {!collapsed && histoires.length > 0 && (
         <Text style={[biblioStyles.deleteHint, { color: colors.textMuted }]}>
-          Maintenir pour supprimer
+          {lang === 'fr' ? 'Maintenir pour supprimer' : 'Hold to delete'}
         </Text>
       )}
     </View>
@@ -696,6 +705,8 @@ const biblioStyles = StyleSheet.create({
 export default function StoriesScreen() {
   const router = useRouter();
   const { primary, colors, isDark } = useThemeColors();
+  const { i18n } = useTranslation();
+  const lang = (i18n.language?.startsWith('en') ? 'en' : 'fr') as 'fr' | 'en';
   const { config: aiConfig, storyConfig } = useAI();
   const { voiceConfig, elevenLabsKey, isElevenLabsConfigured, fishAudioKey, isFishAudioConfigured, setVoiceConfig } = useStoryVoice();
   const { reduceMotion } = useAnimConfig();
@@ -941,17 +952,22 @@ export default function StoriesScreen() {
   const handleDeleteStory = useCallback((story: BedtimeStory) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
-      'Supprimer cette histoire ?',
-      `« ${story.titre} » sera supprimée définitivement (fichier markdown + audio en cache).`,
+      lang === 'fr' ? 'Supprimer cette histoire ?' : 'Delete this story?',
+      lang === 'fr'
+        ? `« ${story.titre} » sera supprimée définitivement (fichier markdown + audio en cache).`
+        : `"${story.titre}" will be permanently deleted (markdown file + cached audio).`,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: lang === 'fr' ? 'Annuler' : 'Cancel', style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: lang === 'fr' ? 'Supprimer' : 'Delete',
           style: 'destructive',
           onPress: () => {
             deleteStory(story.sourceFile).catch((e) => {
               if (__DEV__) console.warn('deleteStory failed:', e);
-              Alert.alert('Erreur', 'Impossible de supprimer l\'histoire.');
+              Alert.alert(
+                lang === 'fr' ? 'Erreur' : 'Error',
+                lang === 'fr' ? "Impossible de supprimer l'histoire." : 'Could not delete the story.',
+              );
             });
           },
         },
@@ -980,9 +996,14 @@ export default function StoriesScreen() {
     const moodHintFor = (profileId: string): string | null => {
       const mood = moods.find(m => m.profileId === profileId && m.date === todayISO);
       if (!mood) return null;
-      if (mood.level >= 4) return ['🌟 Super journée — parfait pour une grande aventure !', '✨ Belle journée — ce soir on part à l\'aventure !'][mood.level - 4] ?? '✨ Belle journée — ce soir on part à l\'aventure !';
-      if (mood.level <= 2) return mood.level === 1 ? '🌙 Petite journée difficile — une histoire douce ce soir ?' : '💛 Petite tristesse — une histoire réconfortante ?';
-      return '🌙 Journée tranquille — quelle histoire ce soir ?';
+      if (lang === 'fr') {
+        if (mood.level >= 4) return ['🌟 Super journée — parfait pour une grande aventure !', "✨ Belle journée — ce soir on part à l'aventure !"][mood.level - 4] ?? "✨ Belle journée — ce soir on part à l'aventure !";
+        if (mood.level <= 2) return mood.level === 1 ? '🌙 Petite journée difficile — une histoire douce ce soir ?' : '💛 Petite tristesse — une histoire réconfortante ?';
+        return '🌙 Journée tranquille — quelle histoire ce soir ?';
+      }
+      if (mood.level >= 4) return ['🌟 Great day — perfect for a big adventure!', "✨ Lovely day — tonight we're off on an adventure!"][mood.level - 4] ?? "✨ Lovely day — tonight we're off on an adventure!";
+      if (mood.level <= 2) return mood.level === 1 ? '🌙 Tough little day — a gentle story tonight?' : '💛 A bit blue — a comforting story?';
+      return '🌙 Quiet day — what story tonight?';
     };
 
     if (childProfiles.length === 0) {
@@ -990,7 +1011,7 @@ export default function StoriesScreen() {
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>👶</Text>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Ajoutez d'abord un profil enfant
+            {lang === 'fr' ? "Ajoutez d'abord un profil enfant" : 'Add a child profile first'}
           </Text>
         </View>
       );
@@ -1002,8 +1023,8 @@ export default function StoriesScreen() {
 
     return (
       <View>
-        <Text style={[styles.stepTitle, { color: colors.text }]}>Des histoires uniques</Text>
-        <Text style={[styles.stepSubtitle, { color: colors.textMuted }]}>Personnalisées par la vie de votre enfant · À écouter avec votre propre voix</Text>
+        <Text style={[styles.stepTitle, { color: colors.text }]}>{lang === 'fr' ? 'Des histoires uniques' : 'Unique stories'}</Text>
+        <Text style={[styles.stepSubtitle, { color: colors.textMuted }]}>{lang === 'fr' ? "Personnalisées par la vie de votre enfant · À écouter avec votre propre voix" : "Personalized by your child's life · Listen with your own voice"}</Text>
         {childProfiles.length === 1 ? (
           // Enfant unique — carte centrée horizontalement et verticalement
           (() => {
@@ -1026,7 +1047,7 @@ export default function StoriesScreen() {
                     {['😢', '😐', '😊', '😄', '🤩'][mood.level - 1]}
                   </Text>
                 )}
-                <Text style={[styles.profileReady, { color: colors.textMuted }]}>Prêt pour dormir ?</Text>
+                <Text style={[styles.profileReady, { color: colors.textMuted }]}>{lang === 'fr' ? 'Prêt pour dormir ?' : 'Ready for bed?'}</Text>
               </Pressable>
               {(() => { const hint = moodHintFor(p.id); return hint ? <Text style={[styles.moodHint, { color: colors.textMuted }]}>{hint}</Text> : null; })()}
               </View>
@@ -1058,7 +1079,7 @@ export default function StoriesScreen() {
                         {['😢', '😐', '😊', '😄', '🤩'][mood.level - 1]}
                       </Text>
                     )}
-                    <Text style={[styles.profileReady, { color: colors.textMuted }]}>🌙 Prêt pour dormir ?</Text>
+                    <Text style={[styles.profileReady, { color: colors.textMuted }]}>{lang === 'fr' ? '🌙 Prêt pour dormir ?' : '🌙 Ready for bed?'}</Text>
                   </Pressable>
                   {hint && <Text style={[styles.moodHint, { color: colors.textMuted }]}>{hint}</Text>}
                 </View>
@@ -1130,7 +1151,7 @@ export default function StoriesScreen() {
             goTo({ etape: 'personnaliser', enfantId, enfantName, universId });
           }}
         >
-          <Text style={styles.primaryButtonText}>Continuer →</Text>
+          <Text style={styles.primaryButtonText}>{lang === 'fr' ? 'Continuer →' : 'Continue →'}</Text>
         </Pressable>
       </View>
     );
@@ -1208,7 +1229,10 @@ export default function StoriesScreen() {
 
     const generate = (detail: string) => {
       if (!aiConfig) {
-        Alert.alert('Claude non configuré', 'Configurez votre clé API Claude dans les paramètres.');
+        Alert.alert(
+          lang === 'fr' ? 'Claude non configuré' : 'Claude not configured',
+          lang === 'fr' ? 'Configurez votre clé API Claude dans les paramètres.' : 'Set up your Claude API key in settings.',
+        );
         return;
       }
       setVoiceConfig(buildFinalVoiceConfig());
@@ -1226,7 +1250,7 @@ export default function StoriesScreen() {
 
     return (
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={[styles.stepTitle, { color: colors.text }]}>Personnalise l'histoire</Text>
+        <Text style={[styles.stepTitle, { color: colors.text }]}>{lang === 'fr' ? "Personnalise l'histoire" : 'Personalize the story'}</Text>
 
         {/* Bandeau livre (chapitre N>=2) — univers/voix/multi-voix/tranche d'âge verrouillés */}
         {book && (
@@ -1235,10 +1259,12 @@ export default function StoriesScreen() {
               📖 {book.livreTitre}
             </Text>
             <Text style={[styles.bookBannerSubtitle, { color: colors.textMuted }]}>
-              Chapitre {book.chapitre}
+              {lang === 'fr' ? 'Chapitre' : 'Chapter'} {book.chapitre}
             </Text>
             <Text style={[styles.bookBannerLockHint, { color: colors.textMuted }]}>
-              🔒 Univers, voix, multi-voix et tranche d'âge sont verrouillés par le livre
+              {lang === 'fr'
+                ? "🔒 Univers, voix, multi-voix et tranche d'âge sont verrouillés par le livre"
+                : '🔒 Universe, voice, multi-voice and age range are locked by the book'}
             </Text>
           </View>
         )}
@@ -1246,10 +1272,11 @@ export default function StoriesScreen() {
         {/* Sélecteur tranche d'âge — uniquement à la création (pas de book) */}
         {!book && (
           <>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Tranche d'âge</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? "Tranche d'âge" : 'Age range'}</Text>
             <View style={styles.trancheAgeRow}>
               {TRANCHE_AGE_OPTIONS.map(opt => {
                 const isSelected = selectedTrancheAge === opt.key;
+                const localizedLabel = lang === 'fr' ? opt.label : opt.label.replace(' ans', ' yrs');
                 return (
                   <Pressable
                     key={opt.key}
@@ -1266,7 +1293,7 @@ export default function StoriesScreen() {
                     }}
                   >
                     <Text style={[styles.trancheAgeLabel, { color: isSelected ? '#fff' : colors.text }]}>
-                      {opt.label}
+                      {localizedLabel}
                     </Text>
                   </Pressable>
                 );
@@ -1278,7 +1305,7 @@ export default function StoriesScreen() {
         {/* Contexte vault — catégories (plus récent coché par défaut, ouvrir pour plus) */}
         {(latestMood || childQuotes.length > 0 || childMemories.length > 0) && (
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-            Contexte pris en compte
+            {lang === 'fr' ? 'Contexte pris en compte' : 'Context included'}
           </Text>
         )}
 
@@ -1302,7 +1329,7 @@ export default function StoriesScreen() {
             </Text>
             <View style={styles.contextBody}>
               <Text style={[styles.contextTitle, { color: colors.text }]}>
-                Humeur — niveau {latestMood.level}/5
+                {lang === 'fr' ? 'Humeur' : 'Mood'} — {lang === 'fr' ? 'niveau' : 'level'} {latestMood.level}/5
               </Text>
               {latestMood.note && (
                 <Text style={[styles.contextSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
@@ -1324,7 +1351,7 @@ export default function StoriesScreen() {
               >
                 <Text style={styles.contextCategoryEmoji}>💬</Text>
                 <Text style={[styles.contextCategoryTitle, { color: colors.text }]}>
-                  Perles récentes
+                  {lang === 'fr' ? 'Perles récentes' : 'Recent quotes'}
                 </Text>
                 <Text style={[styles.contextCategoryCount, { color: primary }]}>
                   {selectedQuoteKeys.size}/{childQuotes.length}
@@ -1377,7 +1404,9 @@ export default function StoriesScreen() {
                   style={styles.contextMoreLink}
                 >
                   <Text style={[styles.contextMoreLinkText, { color: primary }]}>
-                    + Voir {childQuotes.length - 1} autre{childQuotes.length - 1 > 1 ? 's' : ''}
+                    {lang === 'fr'
+                      ? `+ Voir ${childQuotes.length - 1} autre${childQuotes.length - 1 > 1 ? 's' : ''}`
+                      : `+ Show ${childQuotes.length - 1} more`}
                   </Text>
                 </Pressable>
               )}
@@ -1396,7 +1425,7 @@ export default function StoriesScreen() {
               >
                 <Text style={styles.contextCategoryEmoji}>✨</Text>
                 <Text style={[styles.contextCategoryTitle, { color: colors.text }]}>
-                  Souvenirs récents
+                  {lang === 'fr' ? 'Souvenirs récents' : 'Recent memories'}
                 </Text>
                 <Text style={[styles.contextCategoryCount, { color: primary }]}>
                   {selectedMemoryKeys.size}/{childMemories.length}
@@ -1434,7 +1463,7 @@ export default function StoriesScreen() {
                     <Text style={styles.contextEmoji}>{isPremiereFois ? '✨' : '💫'}</Text>
                     <View style={styles.contextBody}>
                       <Text style={[styles.contextTitle, { color: colors.text }]} numberOfLines={1}>
-                        {isPremiereFois ? '1ʳᵉ fois : ' : ''}{m.title}
+                        {isPremiereFois ? (lang === 'fr' ? '1ʳᵉ fois : ' : '1st time: ') : ''}{m.title}
                       </Text>
                       {m.description && (
                         <Text style={[styles.contextSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
@@ -1451,7 +1480,9 @@ export default function StoriesScreen() {
                   style={styles.contextMoreLink}
                 >
                   <Text style={[styles.contextMoreLinkText, { color: primary }]}>
-                    + Voir {childMemories.length - 1} autre{childMemories.length - 1 > 1 ? 's' : ''}
+                    {lang === 'fr'
+                      ? `+ Voir ${childMemories.length - 1} autre${childMemories.length - 1 > 1 ? 's' : ''}`
+                      : `+ Show ${childMemories.length - 1} more`}
                   </Text>
                 </Pressable>
               )}
@@ -1460,23 +1491,35 @@ export default function StoriesScreen() {
         })()}
 
         {/* Chips suggestions */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Un détail pour ce soir ?</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Un détail pour ce soir ?' : 'A detail for tonight?'}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-          {STORY_SUGGESTIONS.map(s => (
-            <Pressable
-              key={s}
-              style={[styles.chip, { backgroundColor: detailText === s ? primary : colors.card, borderColor: colors.border }]}
-              onPress={() => setDetailText(detailText === s ? '' : s)}
-            >
-              <Text style={[styles.chipText, { color: detailText === s ? '#fff' : colors.text }]}>{s}</Text>
-            </Pressable>
-          ))}
+          {STORY_SUGGESTIONS.map(s => {
+            const localized = lang === 'fr' ? s : ({
+              "peur des monstres sous le lit": 'afraid of monsters under the bed',
+              "a eu une super journée à l'école": 'had a great day at school',
+              "a eu une dispute avec un ami": 'had a fight with a friend',
+              "a perdu une dent": 'lost a tooth',
+              "a été très courageux aujourd'hui": 'was very brave today',
+              "rêve de devenir astronaute": 'dreams of becoming an astronaut',
+              "a peur du noir": 'is afraid of the dark',
+              "a fait un beau dessin": 'made a lovely drawing',
+            } as Record<string, string>)[s] ?? s;
+            return (
+              <Pressable
+                key={s}
+                style={[styles.chip, { backgroundColor: detailText === s ? primary : colors.card, borderColor: colors.border }]}
+                onPress={() => setDetailText(detailText === s ? '' : s)}
+              >
+                <Text style={[styles.chipText, { color: detailText === s ? '#fff' : colors.text }]}>{localized}</Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
         {/* Input libre */}
         <TextInput
           style={[styles.textInput, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-          placeholder="Ou écris un détail libre..."
+          placeholder={lang === 'fr' ? 'Ou écris un détail libre...' : 'Or write your own detail...'}
           placeholderTextColor={colors.textMuted}
           value={detailText}
           onChangeText={setDetailText}
@@ -1485,11 +1528,15 @@ export default function StoriesScreen() {
         />
 
         {/* Sélecteur taille histoire */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Durée de l'histoire</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? "Durée de l'histoire" : 'Story length'}</Text>
         <View style={styles.lengthRow}>
           {STORY_LENGTH_ORDER.map(key => {
             const cfg = STORY_LENGTHS[key];
             const isSelected = currentLength === key;
+            const lengthLabel = lang === 'fr'
+              ? cfg.label
+              : ({ courte: 'Short', moyenne: 'Medium', longue: 'Long', 'tres-longue': 'Very long' } as Record<string, string>)[key] ?? cfg.label;
+            const lengthDuration = lang === 'fr' ? cfg.duration : cfg.duration.replace('sec', 'sec').replace('min', 'min');
             return (
               <Pressable
                 key={key}
@@ -1507,10 +1554,10 @@ export default function StoriesScreen() {
               >
                 <Text style={styles.lengthEmoji}>{cfg.emoji}</Text>
                 <Text style={[styles.lengthLabel, { color: isSelected ? '#fff' : colors.text }]}>
-                  {cfg.label}
+                  {lengthLabel}
                 </Text>
                 <Text style={[styles.lengthDuration, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
-                  {cfg.duration}
+                  {lengthDuration}
                 </Text>
               </Pressable>
             );
@@ -1528,11 +1575,17 @@ export default function StoriesScreen() {
           // timestamps) et Fish Audio (synchro ratio basée sur la position dans le script).
           // Indisponible avec la voix système (expo-speech) qui n'expose ni l'un ni l'autre.
           const spectacleAvailable = localVoiceEngine !== 'expo-speech';
-          const MODES: { key: import('../../lib/types').StoryAudioMode; emoji: string; label: string; hint: string }[] = [
-            { key: 'off',       emoji: '🔇', label: 'Off',       hint: 'Voix seule' },
-            { key: 'doux',      emoji: '🌙', label: 'Doux',      hint: 'Ambiance' },
-            { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: spectacleAvailable ? 'Ambiance + SFX' : 'ElevenLabs ou Fish Audio' },
-          ];
+          const MODES: { key: import('../../lib/types').StoryAudioMode; emoji: string; label: string; hint: string }[] = lang === 'fr'
+            ? [
+                { key: 'off',       emoji: '🔇', label: 'Off',       hint: 'Voix seule' },
+                { key: 'doux',      emoji: '🌙', label: 'Doux',      hint: 'Ambiance' },
+                { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: spectacleAvailable ? 'Ambiance + SFX' : 'ElevenLabs ou Fish Audio' },
+              ]
+            : [
+                { key: 'off',       emoji: '🔇', label: 'Off',     hint: 'Voice only' },
+                { key: 'doux',      emoji: '🌙', label: 'Soft',    hint: 'Ambience' },
+                { key: 'spectacle', emoji: '🎭', label: 'Theater', hint: spectacleAvailable ? 'Ambience + SFX' : 'ElevenLabs or Fish Audio' },
+              ];
           const setMode = (mode: import('../../lib/types').StoryAudioMode) => {
             if (mode === 'spectacle' && !spectacleAvailable) return;
             Haptics.selectionAsync();
@@ -1549,7 +1602,7 @@ export default function StoriesScreen() {
           };
           return (
             <>
-              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Mode audio</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Mode audio' : 'Audio mode'}</Text>
               <View style={styles.audioModeRow}>
                 {MODES.map(m => {
                   const selected = currentMode === m.key;
@@ -1568,7 +1621,7 @@ export default function StoriesScreen() {
                       ]}
                       onPress={() => setMode(m.key)}
                       accessibilityState={{ disabled, selected }}
-                      accessibilityHint={disabled ? 'Sélectionnez ElevenLabs ou Fish Audio pour activer le mode Spectacle' : undefined}
+                      accessibilityHint={disabled ? (lang === 'fr' ? 'Sélectionnez ElevenLabs ou Fish Audio pour activer le mode Spectacle' : 'Select ElevenLabs or Fish Audio to enable Theater mode') : undefined}
                     >
                       <Text style={styles.audioModeEmoji}>{m.emoji}</Text>
                       <Text style={[styles.audioModeLabel, { color: selected ? '#fff' : colors.text }]}>
@@ -1583,12 +1636,12 @@ export default function StoriesScreen() {
               </View>
               {currentMode !== 'off' && (
                 <View style={[styles.volumeRow, { borderColor: colors.border, backgroundColor: colors.card }]}>
-                  <Text style={[styles.volumeLabel, { color: colors.textMuted }]}>Volume ambiance</Text>
+                  <Text style={[styles.volumeLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Volume ambiance' : 'Ambience volume'}</Text>
                   <Pressable
                     style={[styles.volumeButton, { borderColor: colors.border }]}
                     onPress={() => adjustVolume(-0.1)}
                     disabled={ambienceVol <= 0}
-                    accessibilityLabel="Baisser le volume"
+                    accessibilityLabel={lang === 'fr' ? 'Baisser le volume' : 'Lower volume'}
                   >
                     <Text style={[styles.volumeButtonText, { color: colors.text }]}>−</Text>
                   </Pressable>
@@ -1597,7 +1650,7 @@ export default function StoriesScreen() {
                     style={[styles.volumeButton, { borderColor: colors.border }]}
                     onPress={() => adjustVolume(0.1)}
                     disabled={ambienceVol >= 1}
-                    accessibilityLabel="Augmenter le volume"
+                    accessibilityLabel={lang === 'fr' ? 'Augmenter le volume' : 'Raise volume'}
                   >
                     <Text style={[styles.volumeButtonText, { color: colors.text }]}>+</Text>
                   </Pressable>
@@ -1608,20 +1661,21 @@ export default function StoriesScreen() {
         })()}
 
         {/* Sélecteur voix unifié */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Voix de narration</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Voix de narration' : 'Narration voice'}</Text>
 
         {/* Sélecteur moteur (tap → ActionSheet) */}
         <Pressable
           style={[styles.voiceEnginePicker, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => {
+            const notConfigured = lang === 'fr' ? ' (clé non configurée)' : ' (key not set)';
             const engines: { key: StoryVoiceEngine; label: string }[] = [
-              { key: 'expo-speech', label: '🆓 Système (gratuit, hors-ligne)' },
-              { key: 'elevenlabs', label: `✨ ElevenLabs${isElevenLabsConfigured ? '' : ' (clé non configurée)'}` },
-              { key: 'fish-audio', label: `🐟 Fish Audio${isFishAudioConfigured ? '' : ' (clé non configurée)'}` },
+              { key: 'expo-speech', label: lang === 'fr' ? '🆓 Système (gratuit, hors-ligne)' : '🆓 System (free, offline)' },
+              { key: 'elevenlabs', label: `✨ ElevenLabs${isElevenLabsConfigured ? '' : notConfigured}` },
+              { key: 'fish-audio', label: `🐟 Fish Audio${isFishAudioConfigured ? '' : notConfigured}` },
             ];
             if (Platform.OS === 'ios') {
               ActionSheetIOS.showActionSheetWithOptions(
-                { options: [...engines.map(e => e.label), 'Annuler'], cancelButtonIndex: engines.length, title: 'Moteur de voix' },
+                { options: [...engines.map(e => e.label), lang === 'fr' ? 'Annuler' : 'Cancel'], cancelButtonIndex: engines.length, title: lang === 'fr' ? 'Moteur de voix' : 'Voice engine' },
                 (idx) => { if (idx < engines.length) { Haptics.selectionAsync(); setLocalVoiceEngine(engines[idx].key); } },
               );
             } else {
@@ -1633,23 +1687,23 @@ export default function StoriesScreen() {
             }
           }}
         >
-          <Text style={[styles.voiceEnginePickerLabel, { color: colors.textMuted }]}>Moteur</Text>
+          <Text style={[styles.voiceEnginePickerLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Moteur' : 'Engine'}</Text>
           <Text style={[styles.voiceEnginePickerValue, { color: colors.text }]}>
-            {localVoiceEngine === 'expo-speech' ? '🆓 Système' : localVoiceEngine === 'elevenlabs' ? '✨ ElevenLabs' : '🐟 Fish Audio'}
+            {localVoiceEngine === 'expo-speech' ? (lang === 'fr' ? '🆓 Système' : '🆓 System') : localVoiceEngine === 'elevenlabs' ? '✨ ElevenLabs' : '🐟 Fish Audio'}
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 16 }}>›</Text>
         </Pressable>
 
         {/* Langue */}
         <View style={[styles.voiceEngineRow, { marginTop: Spacing.md }]}>
-          {(['fr', 'en'] as const).map(lang => (
+          {(['fr', 'en'] as const).map(voiceLang => (
             <Pressable
-              key={lang}
-              style={[styles.voiceChip, { backgroundColor: voiceConfig.language === lang ? primary : colors.card, borderColor: colors.border }]}
-              onPress={() => setVoiceConfig({ ...voiceConfig, language: lang })}
+              key={voiceLang}
+              style={[styles.voiceChip, { backgroundColor: voiceConfig.language === voiceLang ? primary : colors.card, borderColor: colors.border }]}
+              onPress={() => setVoiceConfig({ ...voiceConfig, language: voiceLang })}
             >
-              <Text style={[styles.chipText, { color: voiceConfig.language === lang ? '#fff' : colors.text }]}>
-                {lang === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
+              <Text style={[styles.chipText, { color: voiceConfig.language === voiceLang ? '#fff' : colors.text }]}>
+                {voiceLang === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
               </Text>
             </Pressable>
           ))}
@@ -1658,13 +1712,15 @@ export default function StoriesScreen() {
         {/* ElevenLabs — profils adultes */}
         {localVoiceEngine === 'elevenlabs' && adultProfiles.length > 0 && (
           <View style={{ marginTop: Spacing.lg }}>
-            <Text style={[styles.voiceSubLabel, { color: colors.textMuted }]}>Narrateur</Text>
+            <Text style={[styles.voiceSubLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Narrateur' : 'Narrator'}</Text>
             <View style={styles.voiceParentRow}>
               {adultProfiles.map((p: Profile) => {
                 const BELLA_ID = 'EXAVITQu4vr4xnSDxMaL';
                 const ADAM_ID = 'pNInz6obpgDQGcFmaJgB';
                 const hasClone = !!p.voiceElevenLabsId;
-                const fallbackLabel = p.gender === 'fille' ? 'Bella (auto)' : 'Adam (auto)';
+                const fallbackLabel = lang === 'fr'
+                  ? (p.gender === 'fille' ? 'Bella (auto)' : 'Adam (auto)')
+                  : (p.gender === 'fille' ? 'Bella (auto)' : 'Adam (auto)');
                 const isSelected = voiceSelectedParentId === p.id;
                 return (
                   <View key={p.id} style={styles.voiceParentWrap}>
@@ -1675,14 +1731,14 @@ export default function StoriesScreen() {
                       <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={32} />
                       <Text style={[styles.voiceParentName, { color: isSelected ? '#fff' : colors.text }]}>{p.name}</Text>
                       <Text style={[styles.voiceParentBadge, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
-                        {hasClone ? '🎙 Clonée' : fallbackLabel}
+                        {hasClone ? (lang === 'fr' ? '🎙 Clonée' : '🎙 Cloned') : fallbackLabel}
                       </Text>
                     </Pressable>
                     {!hasClone && (
                       <Pressable
                         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setVoiceRecorderProfileId(p.id); }}
                         style={[styles.voiceAddBtn, { borderColor: colors.border }]}
-                        accessibilityLabel={`Créer la voix clonée de ${p.name}`}
+                        accessibilityLabel={lang === 'fr' ? `Créer la voix clonée de ${p.name}` : `Clone ${p.name}'s voice`}
                       >
                         <Text style={[styles.voiceAddBtnText, { color: primary }]}>+</Text>
                       </Pressable>
@@ -1712,15 +1768,22 @@ export default function StoriesScreen() {
         {/* Sélecteur de modèle ElevenLabs (compromis qualité/coût) */}
         {localVoiceEngine === 'elevenlabs' && (() => {
           const currentModel = voiceConfig.elevenLabsModel ?? 'eleven_v3';
-          const MODELS: { key: import('../../lib/types').ElevenLabsModel; label: string; hint: string }[] = [
-            { key: 'eleven_v3',              label: 'Cinéma v3',  hint: 'Émotions + tags (chuchotement, rire…)' },
-            { key: 'eleven_multilingual_v2', label: 'Premium',    hint: 'Qualité stable — coût standard' },
-            { key: 'eleven_turbo_v2_5',      label: 'Économique', hint: '−50% crédits — qualité quasi identique' },
-            { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−50% crédits — voix plus mécanique' },
-          ];
+          const MODELS: { key: import('../../lib/types').ElevenLabsModel; label: string; hint: string }[] = lang === 'fr'
+            ? [
+                { key: 'eleven_v3',              label: 'Cinéma v3',  hint: 'Émotions + tags (chuchotement, rire…)' },
+                { key: 'eleven_multilingual_v2', label: 'Premium',    hint: 'Qualité stable — coût standard' },
+                { key: 'eleven_turbo_v2_5',      label: 'Économique', hint: '−50% crédits — qualité quasi identique' },
+                { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−50% crédits — voix plus mécanique' },
+              ]
+            : [
+                { key: 'eleven_v3',              label: 'Cinema v3', hint: 'Emotions + tags (whisper, laugh…)' },
+                { key: 'eleven_multilingual_v2', label: 'Premium',   hint: 'Stable quality — standard cost' },
+                { key: 'eleven_turbo_v2_5',      label: 'Economy',   hint: '−50% credits — near identical quality' },
+                { key: 'eleven_flash_v2_5',      label: 'Ultra-eco', hint: '−50% credits — slightly more robotic' },
+              ];
           return (
             <View style={{ marginTop: Spacing.lg }}>
-              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Modèle ElevenLabs</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Modèle ElevenLabs' : 'ElevenLabs model'}</Text>
               <View style={styles.audioModeRow}>
                 {MODELS.map(m => {
                   const selected = currentModel === m.key;
@@ -1752,7 +1815,7 @@ export default function StoriesScreen() {
         {/* Fish Audio — profils adultes avec clonage */}
         {localVoiceEngine === 'fish-audio' && adultProfiles.length > 0 && (
           <View style={{ marginTop: Spacing.lg }}>
-            <Text style={[styles.voiceSubLabel, { color: colors.textMuted }]}>Narrateur</Text>
+            <Text style={[styles.voiceSubLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Narrateur' : 'Narrator'}</Text>
             <View style={styles.voiceParentRow}>
               {adultProfiles.map((p: Profile) => {
                 const hasClone = !!p.voiceFishAudioId;
@@ -1766,14 +1829,14 @@ export default function StoriesScreen() {
                       <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={32} />
                       <Text style={[styles.voiceParentName, { color: isSelected ? '#fff' : colors.text }]}>{p.name}</Text>
                       <Text style={[styles.voiceParentBadge, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
-                        {hasClone ? '🎙 Clonee' : 'Voix par defaut'}
+                        {hasClone ? (lang === 'fr' ? '🎙 Clonée' : '🎙 Cloned') : (lang === 'fr' ? 'Voix par défaut' : 'Default voice')}
                       </Text>
                     </Pressable>
                     {!hasClone && (
                       <Pressable
                         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setVoiceRecorderProfileId(p.id); }}
                         style={[styles.voiceAddBtn, { borderColor: colors.border }]}
-                        accessibilityLabel={`Creer la voix clonee de ${p.name}`}
+                        accessibilityLabel={lang === 'fr' ? `Créer la voix clonée de ${p.name}` : `Clone ${p.name}'s voice`}
                       >
                         <Text style={[styles.voiceAddBtnText, { color: primary }]}>+</Text>
                       </Pressable>
@@ -1789,7 +1852,9 @@ export default function StoriesScreen() {
         {localVoiceEngine === 'fish-audio' && adultProfiles.length === 0 && (
           <View style={{ marginTop: Spacing.lg, paddingHorizontal: Spacing.md }}>
             <Text style={[{ color: colors.textMuted, fontSize: FontSize.sm, textAlign: 'center' }]}>
-              Fish Audio utilisera sa voix par defaut. Ajoutez un profil adulte pour cloner votre voix.
+              {lang === 'fr'
+                ? 'Fish Audio utilisera sa voix par défaut. Ajoutez un profil adulte pour cloner votre voix.'
+                : 'Fish Audio will use its default voice. Add an adult profile to clone your voice.'}
             </Text>
           </View>
         )}
@@ -1799,14 +1864,16 @@ export default function StoriesScreen() {
           <View style={{ marginTop: Spacing.lg }}>
             <View style={styles.voicePremiumHeader}>
               <Text style={[styles.voiceSubLabel, { color: colors.textMuted, marginBottom: 0 }]}>
-                Voix premium {voiceConfig.language === 'fr' ? 'françaises' : 'anglaises'}
+                {lang === 'fr'
+                  ? `Voix premium ${voiceConfig.language === 'fr' ? 'françaises' : 'anglaises'}`
+                  : `${voiceConfig.language === 'fr' ? 'French' : 'English'} premium voices`}
               </Text>
               <Pressable
                 onPress={refreshPersonalVoices}
                 hitSlop={8}
-                accessibilityLabel="Rafraîchir la liste des voix"
+                accessibilityLabel={lang === 'fr' ? 'Rafraîchir la liste des voix' : 'Refresh voice list'}
               >
-                <Text style={[styles.voiceRefreshText, { color: primary }]}>↻ Rafraîchir</Text>
+                <Text style={[styles.voiceRefreshText, { color: primary }]}>{lang === 'fr' ? '↻ Rafraîchir' : '↻ Refresh'}</Text>
               </Pressable>
             </View>
 
@@ -1822,10 +1889,10 @@ export default function StoriesScreen() {
               ]}
             >
               <Text style={{ color: colors.text, fontSize: FontSize.sm, fontWeight: FontWeight.medium }}>
-                Voix par défaut du système
+                {lang === 'fr' ? 'Voix par défaut du système' : 'System default voice'}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: FontSize.micro }}>
-                Qualité standard · gratuit · hors-ligne
+                {lang === 'fr' ? 'Qualité standard · gratuit · hors-ligne' : 'Standard quality · free · offline'}
               </Text>
             </Pressable>
 
@@ -1834,13 +1901,13 @@ export default function StoriesScreen() {
             ) : voicePersonalVoices.length === 0 ? (
               <View style={[styles.voiceEmptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[styles.voiceEmptyTitle, { color: colors.text }]}>
-                  Aucune voix premium installée
+                  {lang === 'fr' ? 'Aucune voix premium installée' : 'No premium voice installed'}
                 </Text>
                 <Text style={[styles.voiceEmptyText, { color: colors.textMuted }]}>
-                  Téléchargez des voix haute qualité dans{'\n'}
-                  <Text style={{ fontWeight: FontWeight.bold }}>Réglages › Accessibilité ›{'\n'}Contenu énoncé › Voix</Text>
+                  {lang === 'fr' ? 'Téléchargez des voix haute qualité dans' : 'Download high-quality voices in'}{'\n'}
+                  <Text style={{ fontWeight: FontWeight.bold }}>{lang === 'fr' ? 'Réglages › Accessibilité ›\nContenu énoncé › Voix' : 'Settings › Accessibility ›\nSpoken Content › Voices'}</Text>
                   {'\n\n'}
-                  Cherchez <Text style={{ fontWeight: FontWeight.bold }}>Audrey</Text>, <Text style={{ fontWeight: FontWeight.bold }}>Thomas</Text> ou <Text style={{ fontWeight: FontWeight.bold }}>Aurélie</Text> (Premium), puis revenez ici et appuyez sur Rafraîchir.
+                  {lang === 'fr' ? <>Cherchez <Text style={{ fontWeight: FontWeight.bold }}>Audrey</Text>, <Text style={{ fontWeight: FontWeight.bold }}>Thomas</Text> ou <Text style={{ fontWeight: FontWeight.bold }}>Aurélie</Text> (Premium), puis revenez ici et appuyez sur Rafraîchir.</> : <>Search for <Text style={{ fontWeight: FontWeight.bold }}>Audrey</Text>, <Text style={{ fontWeight: FontWeight.bold }}>Thomas</Text> or <Text style={{ fontWeight: FontWeight.bold }}>Aurélie</Text> (Premium), then come back and tap Refresh.</>}
                 </Text>
               </View>
             ) : (
@@ -1872,9 +1939,9 @@ export default function StoriesScreen() {
         >
           <View style={{ flex: 1, backgroundColor: colors.bg }}>
             <View style={[styles.voiceModalHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.voiceModalTitle, { color: colors.text }]}>Créer votre voix</Text>
+              <Text style={[styles.voiceModalTitle, { color: colors.text }]}>{lang === 'fr' ? 'Créer votre voix' : 'Create your voice'}</Text>
               <Pressable onPress={() => setVoiceRecorderProfileId(null)}>
-                <Text style={[styles.voiceModalClose, { color: primary }]}>Fermer</Text>
+                <Text style={[styles.voiceModalClose, { color: primary }]}>{lang === 'fr' ? 'Fermer' : 'Close'}</Text>
               </Pressable>
             </View>
             {/* Sélecteur Standard/Pro — uniquement pour ElevenLabs (Fish Audio n'a pas de PVC) */}
@@ -1894,7 +1961,7 @@ export default function StoriesScreen() {
                     styles.cloneModeChipText,
                     { color: voiceCloneMode === 'instant' ? '#fff' : colors.text },
                   ]}>
-                    Standard · 1 prise
+                    {lang === 'fr' ? 'Standard · 1 prise' : 'Standard · 1 take'}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -1911,7 +1978,7 @@ export default function StoriesScreen() {
                     styles.cloneModeChipText,
                     { color: voiceCloneMode === 'professional' ? '#fff' : colors.text },
                   ]}>
-                    Pro · multi-prises (~3-4h)
+                    {lang === 'fr' ? 'Pro · multi-prises (~3-4h)' : 'Pro · multi-take (~3-4h)'}
                   </Text>
                 </Pressable>
               </View>
@@ -1958,7 +2025,10 @@ export default function StoriesScreen() {
                       setVoiceRecorderProfileId(null);
                     } catch (e) {
                       if (__DEV__) console.warn('updateProfile voix echoue :', e);
-                      Alert.alert('Erreur', "Impossible d'enregistrer la voix sur le profil.");
+                      Alert.alert(
+                        lang === 'fr' ? 'Erreur' : 'Error',
+                        lang === 'fr' ? "Impossible d'enregistrer la voix sur le profil." : 'Could not save the voice to the profile.',
+                      );
                     }
                   }}
                 />
@@ -1972,10 +2042,10 @@ export default function StoriesScreen() {
           style={[styles.primaryButton, { backgroundColor: primary, marginTop: Spacing['4xl'] }]}
           onPress={() => generate(detailText.trim())}
         >
-          <Text style={styles.primaryButtonText}>✨ Générer l'histoire</Text>
+          <Text style={styles.primaryButtonText}>{lang === 'fr' ? "✨ Générer l'histoire" : '✨ Generate the story'}</Text>
         </Pressable>
         <Pressable style={styles.ghostButton} onPress={() => generate('')}>
-          <Text style={[styles.ghostButtonText, { color: colors.textMuted }]}>Passer cette étape</Text>
+          <Text style={[styles.ghostButtonText, { color: colors.textMuted }]}>{lang === 'fr' ? 'Passer cette étape' : 'Skip this step'}</Text>
         </Pressable>
       </ScrollView>
     );
@@ -1999,7 +2069,7 @@ export default function StoriesScreen() {
     const generate = useCallback(async () => {
       setGenError(null);
       if (!aiConfig) {
-        setGenError('Claude non configuré. Configurez votre clé API dans les paramètres.');
+        setGenError(lang === 'fr' ? 'Claude non configuré. Configurez votre clé API dans les paramètres.' : 'Claude not configured. Set your API key in settings.');
         return;
       }
 
@@ -2059,7 +2129,7 @@ export default function StoriesScreen() {
         return;
       }
 
-      let titre = 'Histoire du soir';
+      let titre = lang === 'fr' ? 'Histoire du soir' : 'Bedtime story';
       let texte = '';
       let memorySummary = '';
       let script: import('../../lib/types').StoryScript | undefined;
@@ -2136,7 +2206,9 @@ export default function StoriesScreen() {
       // Dernier recours : on n'a pas pu parser proprement → on signale et on
       // n'écrit RIEN dans le vault (évite "texte = JSON brut" affiché à l'écran).
       if (!texte) {
-        setGenError("L'IA a renvoyé une réponse mal formée. Réessaie — ton crédit Claude est consommé mais aucune histoire n'a été enregistrée.");
+        setGenError(lang === 'fr'
+          ? "L'IA a renvoyé une réponse mal formée. Réessaie — ton crédit Claude est consommé mais aucune histoire n'a été enregistrée."
+          : 'The AI returned a malformed response. Please try again — your Claude credit was used but no story was saved.');
         if (__DEV__) {
           console.warn('[generate] parse failed, longueur réponse:', resp.text.length);
           console.warn('[generate] début:', resp.text.slice(0, 500));
@@ -2269,7 +2341,7 @@ export default function StoriesScreen() {
           <Text style={styles.errorEmoji}>😔</Text>
           <Text style={[styles.errorText, { color: colors.text }]}>{genError}</Text>
           <Pressable style={[styles.primaryButton, { backgroundColor: primary }]} onPress={generate}>
-            <Text style={styles.primaryButtonText}>Réessayer</Text>
+            <Text style={styles.primaryButtonText}>{lang === 'fr' ? 'Réessayer' : 'Try again'}</Text>
           </Pressable>
         </View>
       );
@@ -2284,7 +2356,7 @@ export default function StoriesScreen() {
             <Animated.Text style={[styles.starEmoji, star3Style]}>🌟</Animated.Text>
           </View>
           <Text style={[styles.loadingText, { color: colors.text }]}>
-            Écriture de l'histoire de {enfantName}...
+            {lang === 'fr' ? `Écriture de l'histoire de ${enfantName}...` : `Writing ${enfantName}'s story...`}
           </Text>
         </View>
       );
@@ -2354,9 +2426,9 @@ export default function StoriesScreen() {
       <View style={styles.finContainer}>
         <Text style={styles.finEmoji}>🌙</Text>
         <Text style={[styles.finTitle, { color: colors.text }]}>{histoire.titre}</Text>
-        <Text style={[styles.finSub, { color: colors.textMuted }]}>Histoire sauvegardée ✨</Text>
+        <Text style={[styles.finSub, { color: colors.textMuted }]}>{lang === 'fr' ? 'Histoire sauvegardée ✨' : 'Story saved ✨'}</Text>
         <Text style={[styles.finDuree, { color: colors.textMuted }]}>
-          ~{Math.ceil(histoire.duree_lecture / 60)} min de lecture
+          ~{Math.ceil(histoire.duree_lecture / 60)} {lang === 'fr' ? 'min de lecture' : 'min read'}
         </Text>
 
         {showPlayer ? (
@@ -2374,20 +2446,20 @@ export default function StoriesScreen() {
           <>
             {/* Bouton chapitre suivant — réutilise univers/voix/multi-voix/tranche d'âge verrouillés */}
             <Pressable style={[styles.primaryButton, { backgroundColor: primary }]} onPress={handleWriteNextChapter}>
-              <Text style={styles.primaryButtonText}>📖 Écrire le chapitre suivant</Text>
+              <Text style={styles.primaryButtonText}>{lang === 'fr' ? '📖 Écrire le chapitre suivant' : '📖 Write the next chapter'}</Text>
             </Pressable>
             <Pressable style={[styles.secondaryButton, { borderColor: primary }]} onPress={() => setShowPlayer(true)}>
-              <Text style={[styles.secondaryButtonText, { color: primary }]}>▶ Relire</Text>
+              <Text style={[styles.secondaryButtonText, { color: primary }]}>{lang === 'fr' ? '▶ Relire' : '▶ Replay'}</Text>
             </Pressable>
             <Pressable style={[styles.secondaryButton, { borderColor: primary }]} onPress={() => {
               setSelectedUniversId(null);
               // detailText réinitialisé naturellement au remount de PersonnaliserStep
               goTo({ etape: 'choisir_enfant' });
             }}>
-              <Text style={[styles.secondaryButtonText, { color: primary }]}>Nouvelle histoire</Text>
+              <Text style={[styles.secondaryButtonText, { color: primary }]}>{lang === 'fr' ? 'Nouvelle histoire' : 'New story'}</Text>
             </Pressable>
             <Pressable style={styles.ghostButton} onPress={() => router.back()}>
-              <Text style={[styles.ghostButtonText, { color: colors.textMuted }]}>Fermer</Text>
+              <Text style={[styles.ghostButtonText, { color: colors.textMuted }]}>{lang === 'fr' ? 'Fermer' : 'Close'}</Text>
             </Pressable>
           </>
         )}
@@ -2454,18 +2526,27 @@ export default function StoriesScreen() {
 
   // ── Rendu global ──
 
-  const STEP_TITLES: Record<string, string> = {
-    choisir_enfant: 'Histoires du soir',
-    choisir_univers: "Choisir l'univers",
-    personnaliser: 'Personnaliser',
-    generation: 'Votre histoire',
-    fin: 'Bonne nuit ! 🌙',
-    replay: 'Relire',
-  };
+  const STEP_TITLES: Record<string, string> = lang === 'fr'
+    ? {
+        choisir_enfant: 'Histoires du soir',
+        choisir_univers: "Choisir l'univers",
+        personnaliser: 'Personnaliser',
+        generation: 'Votre histoire',
+        fin: 'Bonne nuit ! 🌙',
+        replay: 'Relire',
+      }
+    : {
+        choisir_enfant: 'Bedtime stories',
+        choisir_univers: 'Choose the world',
+        personnaliser: 'Personalize',
+        generation: 'Your story',
+        fin: 'Good night! 🌙',
+        replay: 'Replay',
+      };
 
   const storyTabs: ReadonlyArray<PillTab<'nouvelle' | 'bibliotheque'>> = [
-    { id: 'nouvelle', label: 'Nouvelle', Icon: Sparkles },
-    { id: 'bibliotheque', label: 'Bibliothèque', Icon: Library },
+    { id: 'nouvelle', label: lang === 'fr' ? 'Nouvelle' : 'New', Icon: Sparkles },
+    { id: 'bibliotheque', label: lang === 'fr' ? 'Bibliothèque' : 'Library', Icon: Library },
   ];
 
   const showBackBtn = step.etape !== 'choisir_enfant' && step.etape !== 'fin';
@@ -2475,12 +2556,12 @@ export default function StoriesScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
-        title={STEP_TITLES[step.etape] ?? 'Histoires du soir'}
-        subtitle="il était une fois, ce soir…"
+        title={STEP_TITLES[step.etape] ?? (lang === 'fr' ? 'Histoires du soir' : 'Bedtime stories')}
+        subtitle={lang === 'fr' ? 'il était une fois, ce soir…' : 'once upon a time, tonight…'}
         tint="rgba(126,90,107,0.10)"
         leading={
           showBackBtn ? (
-            <Pressable style={styles.backButton} onPress={goBack} accessibilityLabel="Retour">
+            <Pressable style={styles.backButton} onPress={goBack} accessibilityLabel={lang === 'fr' ? 'Retour' : 'Back'}>
               <Text style={[styles.backText, { color: primary }]}>‹</Text>
             </Pressable>
           ) : undefined
