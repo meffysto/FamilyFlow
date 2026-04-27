@@ -55,7 +55,7 @@ function parseISOtoDate(iso: string): Date {
 }
 
 export function DateInput({ value, onChange, placeholder = 'Choisir une date', mode = 'date', style }: DateInputProps) {
-  const { colors, primary } = useThemeColors();
+  const { colors, primary, isDark } = useThemeColors();
   const [showPicker, setShowPicker] = useState(false);
 
   const displayValue = mode === 'date'
@@ -110,10 +110,13 @@ export function DateInput({ value, onChange, placeholder = 'Choisir une date', m
               <DateTimePicker
                 value={parseISOtoDate(value)}
                 mode={mode}
-                display="spinner"
+                display={mode === 'date' ? 'inline' : 'spinner'}
                 onChange={handleChange}
                 locale="fr-FR"
-                style={styles.iosPicker}
+                themeVariant={isDark ? 'dark' : 'light'}
+                accentColor={primary}
+                textColor={colors.text}
+                style={mode === 'date' ? styles.iosCalendar : styles.iosPicker}
               />
             </View>
           </View>
@@ -171,5 +174,8 @@ const styles = StyleSheet.create({
   },
   iosPicker: {
     height: 200,
+  },
+  iosCalendar: {
+    marginHorizontal: 8,
   },
 });
