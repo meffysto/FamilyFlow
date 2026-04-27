@@ -28,7 +28,7 @@ Phase: 42
 Plan: 9/9 complétés
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-27 - Completed quick task 260427-izj: Recettes — CRUD catégories vault
+Last activity: 2026-04-27 - Completed quick task 260427-jp0: Onboarding — cohérence couleurs/UI
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
@@ -75,6 +75,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260425-0qf | 5 poses sprite compagnon Live Activity (idle/happy/sleeping/eating/celebrating) — migration base64→pose | 2026-04-24 | 3e771b6 | [260425-0qf-int-grer-5-poses-sprite-compagnon-idle-h](./quick/260425-0qf-int-grer-5-poses-sprite-compagnon-idle-h/) |
 | 260427-114 | Système Livre/Chapitres pour les histoires (continuité narrative, casting évolutif, tranche d'âge) | 2026-04-26 | d11985c | [260427-114-syst-me-livre-chapitres-pour-les-histoir](./quick/260427-114-syst-me-livre-chapitres-pour-les-histoir/) |
 | 260427-izj | Recettes — CRUD catégories vault (createCategory/renameCategory/deleteCategory + chips vault + modal CRUD) | 2026-04-27 | 91c7bd7 | [260427-izj-recettes-gestion-cat-gories-perso-cr-er-](./quick/260427-izj-recettes-gestion-cat-gories-perso-cr-er-/) |
+| 260427-jp0 | Onboarding — cohérence couleurs/UI (hardcoded → tokens colors.* + Shadows + FontSize) | 2026-04-27 | 2d59dfb | [260427-jp0-onboarding-coh-rence-couleurs-ui-remplac](./quick/260427-jp0-onboarding-coh-rence-couleurs-ui-remplac/) |
 
 ## Performance Metrics
 
