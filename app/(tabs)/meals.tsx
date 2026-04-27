@@ -26,6 +26,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as Haptics from 'expo-haptics';
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -50,6 +51,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { ModalHeader } from '../../components/ui/ModalHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -91,29 +93,6 @@ const MEAL_DISPLAY_KEYS: Record<string, string> = {
 const COURSES_FILE = '02 - Maison/Liste de courses.md';
 
 type Tab = 'repas' | 'courses' | 'recettes';
-type MealType = 'entrée' | 'plat' | 'dessert';
-
-const MEAL_TYPE_FILTERS: { id: MealType; label: string; emoji: string }[] = [
-  { id: 'entrée', label: 'Entrées', emoji: '🥗' },
-  { id: 'plat', label: 'Plats', emoji: '🍽️' },
-  { id: 'dessert', label: 'Desserts', emoji: '🍰' },
-];
-
-/** Mappe une catégorie de dossier ou des tags vers un type de plat */
-function detectMealType(category: string, tags: string[]): MealType | null {
-  const all = [category, ...tags].map((s) => s.toLowerCase());
-  for (const s of all) {
-    if (/entr[ée]e|salade|soupe|velouté|tarte salée|quiche/.test(s)) return 'entrée';
-    if (/dessert|gâteau|gateau|cake|tarte sucrée|mousse|crème|creme|biscuit|cookie|fondant|brownie|glace|sorbet|compote|pâtisserie|patisserie|sucré/.test(s)) return 'dessert';
-    if (/plat|viande|poisson|poulet|boeuf|bœuf|pâtes|pates|riz|gratin|curry|wok|mijoté|rôti|roti|pizza|burger|accompagnement/.test(s)) return 'plat';
-  }
-  // Heuristique par catégorie de dossier commune
-  const catLower = category.toLowerCase();
-  if (/petit.d[ée]j|breakfast|brunch|goûter|gouter|snack/.test(catLower)) return null;
-  // Par défaut les recettes non classées → plat
-  if (category) return 'plat';
-  return null;
-}
 
 /**
  * MealItemConflictWrapper — sous-composant qui encapsule le hook useMemo pour les conflits.
@@ -152,6 +131,7 @@ export default function MealsScreen() {
     recipes, loadRecipes, deleteRecipe, renameRecipe,
     saveRecipeImage, getRecipeImageUri,
     scanAllCookFiles, moveCookToRecipes, moveRecipeCategory,
+    createCategory, renameCategory, deleteCategory,
     profiles,
     dietary,
     activeProfile,
@@ -214,9 +194,15 @@ export default function MealsScreen() {
 
   // Recettes state
   const [recipeSearch, setRecipeSearch] = useState('');
-  const [mealTypeFilter, setMealTypeFilter] = useState<MealType | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  // Gestion catégories modal state
+  const [showCategoriesModal, setShowCategoriesModal] = useState(false);
+  const [newCategoryNameRecipes, setNewCategoryNameRecipes] = useState('');
+  const [renamingCategory, setRenamingCategory] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
 
   // Refs pour les coach marks
   const mealsHeaderRef = useRef<View>(null);
@@ -694,15 +680,6 @@ export default function MealsScreen() {
 
   // ─── Recettes logic ─────────────────────────────────────────────
 
-  // Index meal type pour chaque recette
-  const recipeMealTypes = useMemo(() => {
-    const map = new Map<string, MealType | null>();
-    for (const r of recipes) {
-      map.set(r.id, detectMealType(r.category, r.tags));
-    }
-    return map;
-  }, [recipes]);
-
   const profileFavorites = useMemo(() => {
     if (!activeProfile) return [] as string[];
     return getFavorites(activeProfile.id);
@@ -718,8 +695,8 @@ export default function MealsScreen() {
       const favSet = new Set(profileFavorites);
       result = result.filter((r) => favSet.has(r.sourceFile));
     }
-    if (mealTypeFilter) {
-      result = result.filter((r) => recipeMealTypes.get(r.id) === mealTypeFilter);
+    if (categoryFilter) {
+      result = result.filter((r) => r.category === categoryFilter);
     }
     if (recipeSearch.trim()) {
       const q = recipeSearch.toLowerCase().trim();
@@ -729,8 +706,10 @@ export default function MealsScreen() {
         r.ingredients.some((ing) => ing.name.toLowerCase().includes(q))
       );
     }
+    // Tri alphabétique défensif (garantit l'ordre même si loadRecipes est altéré)
+    result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'fr'));
     return result;
-  }, [recipes, mealTypeFilter, recipeMealTypes, recipeSearch, showFavoritesOnly, activeProfile, profileFavorites]);
+  }, [recipes, categoryFilter, recipeSearch, showFavoritesOnly, activeProfile, profileFavorites]);
 
   // Recipe picker filtered list (for meal editing)
   const pickerRecipes = useMemo(() => {
@@ -1428,18 +1407,18 @@ export default function MealsScreen() {
               style={[
                 styles.categoryChip,
                 { backgroundColor: colors.cardAlt },
-                mealTypeFilter === null && !showFavoritesOnly && { backgroundColor: tint },
+                categoryFilter === null && !showFavoritesOnly && { backgroundColor: tint },
               ]}
-              onPress={() => { setMealTypeFilter(null); setShowFavoritesOnly(false); }}
+              onPress={() => { setCategoryFilter(null); setShowFavoritesOnly(false); }}
               activeOpacity={0.7}
               accessibilityLabel={t('meals.recipes.allA11y')}
               accessibilityRole="tab"
-              accessibilityState={{ selected: mealTypeFilter === null && !showFavoritesOnly }}
+              accessibilityState={{ selected: categoryFilter === null && !showFavoritesOnly }}
             >
               <Text style={[
                 styles.categoryChipText,
                 { color: colors.textSub },
-                mealTypeFilter === null && !showFavoritesOnly && { color: primary, fontWeight: FontWeight.bold },
+                categoryFilter === null && !showFavoritesOnly && { color: primary, fontWeight: FontWeight.bold },
               ]}>
                 {t('meals.recipes.allFilter')}
               </Text>
@@ -1466,28 +1445,37 @@ export default function MealsScreen() {
                 </Text>
               </TouchableOpacity>
             )}
-            {MEAL_TYPE_FILTERS.map((mt) => (
+            {recipeCategories.map((cat) => (
               <TouchableOpacity
-                key={mt.id}
+                key={cat}
                 style={[
                   styles.categoryChip,
                   { backgroundColor: colors.cardAlt },
-                  mealTypeFilter === mt.id && { backgroundColor: tint },
+                  categoryFilter === cat && { backgroundColor: tint },
                 ]}
-                onPress={() => setMealTypeFilter(mealTypeFilter === mt.id ? null : mt.id)}
+                onPress={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
                 activeOpacity={0.7}
                 accessibilityRole="tab"
-                accessibilityState={{ selected: mealTypeFilter === mt.id }}
+                accessibilityState={{ selected: categoryFilter === cat }}
               >
                 <Text style={[
                   styles.categoryChipText,
                   { color: colors.textSub },
-                  mealTypeFilter === mt.id && { color: primary, fontWeight: FontWeight.bold },
+                  categoryFilter === cat && { color: primary, fontWeight: FontWeight.bold },
                 ]}>
-                  {mt.emoji} {mt.label}
+                  {cat}
                 </Text>
               </TouchableOpacity>
             ))}
+            <TouchableOpacity
+              style={[styles.categoryChip, { backgroundColor: colors.cardAlt }]}
+              onPress={() => { Haptics.selectionAsync(); setShowCategoriesModal(true); }}
+              activeOpacity={0.7}
+              accessibilityLabel="Gérer les catégories"
+              accessibilityRole="button"
+            >
+              <Text style={[styles.categoryChipText, { color: colors.textSub }]}>📁 Gérer</Text>
+            </TouchableOpacity>
           </ScrollView>
 
           <Animated.ScrollView
@@ -2495,6 +2483,170 @@ export default function MealsScreen() {
               />
             )}
           </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Modal CRUD catégories recettes */}
+      <Modal
+        visible={showCategoriesModal}
+        presentationStyle="pageSheet"
+        animationType="slide"
+        onRequestClose={() => setShowCategoriesModal(false)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+          <ModalHeader
+            title="Gérer les catégories"
+            onClose={() => setShowCategoriesModal(false)}
+          />
+          <ScrollView style={{ flex: 1, padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
+            {/* Création nouvelle catégorie */}
+            <View style={{ flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.xl }}>
+              <TextInput
+                value={newCategoryNameRecipes}
+                onChangeText={setNewCategoryNameRecipes}
+                placeholder="Nouvelle catégorie…"
+                placeholderTextColor={colors.textMuted}
+                style={{
+                  flex: 1, backgroundColor: colors.cardAlt, color: colors.text,
+                  paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+                  borderRadius: 8, fontSize: FontSize.body,
+                }}
+                returnKeyType="done"
+              />
+              <TouchableOpacity
+                onPress={async () => {
+                  const name = newCategoryNameRecipes.trim();
+                  if (!name) return;
+                  try {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    await createCategory(name);
+                    setNewCategoryNameRecipes('');
+                  } catch (e) {
+                    Alert.alert('Erreur', String(e));
+                  }
+                }}
+                style={{
+                  backgroundColor: tint, paddingHorizontal: Spacing.lg,
+                  paddingVertical: Spacing.sm, borderRadius: 8, justifyContent: 'center',
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: primary, fontWeight: FontWeight.bold }}>+ Ajouter</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Liste des catégories existantes */}
+            {recipeCategories.map((cat) => {
+              const count = recipes.filter(r => r.category === cat).length;
+              const isRenaming = renamingCategory === cat;
+              return (
+                <View
+                  key={cat}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+                    paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border,
+                  }}
+                >
+                  {isRenaming ? (
+                    <TextInput
+                      value={renameDraft}
+                      onChangeText={setRenameDraft}
+                      autoFocus
+                      style={{
+                        flex: 1, backgroundColor: colors.cardAlt, color: colors.text,
+                        paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
+                        borderRadius: 6, fontSize: FontSize.body,
+                      }}
+                      returnKeyType="done"
+                      onSubmitEditing={async () => {
+                        const target = renameDraft.trim();
+                        if (!target || target === cat) { setRenamingCategory(null); return; }
+                        try {
+                          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          await renameCategory(cat, target);
+                          setRenamingCategory(null);
+                          setRenameDraft('');
+                        } catch (e) {
+                          Alert.alert('Erreur', String(e));
+                        }
+                      }}
+                    />
+                  ) : (
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.text, fontSize: FontSize.body, fontWeight: FontWeight.medium }}>{cat}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: FontSize.sm }}>
+                        {count} recette{count > 1 ? 's' : ''}
+                      </Text>
+                    </View>
+                  )}
+                  {!isRenaming && (
+                    <>
+                      <TouchableOpacity
+                        onPress={() => { setRenamingCategory(cat); setRenameDraft(cat); }}
+                        accessibilityLabel={`Renommer ${cat}`}
+                        hitSlop={8}
+                      >
+                        <Text style={{ color: colors.textSub, fontSize: FontSize.lg }}>✏️</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                          if (count === 0) {
+                            Alert.alert(
+                              'Supprimer la catégorie',
+                              `Supprimer "${cat}" ?`,
+                              [
+                                { text: 'Annuler', style: 'cancel' },
+                                {
+                                  text: 'Supprimer', style: 'destructive',
+                                  onPress: async () => {
+                                    try { await deleteCategory(cat); } catch (e) { Alert.alert('Erreur', String(e)); }
+                                  },
+                                },
+                              ],
+                            );
+                            return;
+                          }
+                          // Non-vide → demander la catégorie cible parmi les autres
+                          const others = recipeCategories.filter(c => c !== cat);
+                          if (others.length === 0) {
+                            Alert.alert(
+                              'Impossible',
+                              `"${cat}" contient ${count} recette(s) et aucune autre catégorie n'existe. Crée d'abord une autre catégorie.`,
+                            );
+                            return;
+                          }
+                          Alert.alert(
+                            'Réassigner les recettes',
+                            `"${cat}" contient ${count} recette(s). Vers quelle catégorie les déplacer ?`,
+                            [
+                              { text: 'Annuler', style: 'cancel' },
+                              ...others.slice(0, 3).map((target) => ({
+                                text: target,
+                                onPress: async () => {
+                                  try { await deleteCategory(cat, target); } catch (e) { Alert.alert('Erreur', String(e)); }
+                                },
+                              })),
+                            ],
+                          );
+                        }}
+                        accessibilityLabel={`Supprimer ${cat}`}
+                        hitSlop={8}
+                      >
+                        <Text style={{ color: colors.error, fontSize: FontSize.lg }}>🗑️</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              );
+            })}
+
+            {recipeCategories.length === 0 && (
+              <Text style={{ color: colors.textMuted, textAlign: 'center', marginTop: Spacing.xl }}>
+                Aucune catégorie pour l'instant. Ajoute une recette ou crée-en une ci-dessus.
+              </Text>
+            )}
+          </ScrollView>
         </SafeAreaView>
       </Modal>
 
