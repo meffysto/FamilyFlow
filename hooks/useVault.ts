@@ -231,6 +231,12 @@ export interface VaultState {
   moveCookToRecipes: (sourcePath: string, category: string) => Promise<void>;
   /** Déplacer une recette vers une autre catégorie */
   moveRecipeCategory: (sourceFile: string, newCategory: string) => Promise<void>;
+  /** Créer une nouvelle catégorie (dossier) dans le vault recettes */
+  createCategory: (name: string) => Promise<void>;
+  /** Renommer une catégorie et déplacer toutes ses recettes */
+  renameCategory: (oldName: string, newName: string) => Promise<void>;
+  /** Supprimer une catégorie ; si non-vide, réassigner ses recettes à reassignTo */
+  deleteCategory: (name: string, reassignTo?: string) => Promise<void>;
   // Recipe favorites per profile
   toggleFavorite: (profileId: string, recipePath: string) => Promise<void>;
   isFavorite: (profileId: string, recipePath: string) => boolean;
@@ -2257,6 +2263,9 @@ export function useVaultInternal(): VaultState {
     scanAllCookFiles: recipesHook.scanAllCookFiles,
     moveCookToRecipes: recipesHook.moveCookToRecipes,
     moveRecipeCategory: recipesHook.moveRecipeCategory,
+    createCategory: recipesHook.createCategory,
+    renameCategory: recipesHook.renameCategory,
+    deleteCategory: recipesHook.deleteCategory,
     toggleFavorite: recipesHook.toggleFavorite,
     isFavorite: recipesHook.isFavorite,
     getFavorites: recipesHook.getFavorites,

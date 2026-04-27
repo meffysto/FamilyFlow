@@ -37,6 +37,10 @@ export interface UseVaultRecipesResult {
   scanAllCookFiles: () => Promise<{ path: string; title: string }[]>;
   moveCookToRecipes: (sourcePath: string, category: string) => Promise<void>;
   moveRecipeCategory: (sourceFile: string, newCategory: string) => Promise<void>;
+  // ─── Gestion catégories ────────────────────────────────────────────────────
+  createCategory: (name: string) => Promise<void>;
+  renameCategory: (oldName: string, newName: string) => Promise<void>;
+  deleteCategory: (name: string, reassignTo?: string) => Promise<void>;
   toggleFavorite: (profileId: string, recipePath: string) => Promise<void>;
   isFavorite: (profileId: string, recipePath: string) => boolean;
   getFavorites: (profileId: string) => string[];
@@ -224,6 +228,63 @@ export function useVaultRecipes(
     }
   }, [loadRecipes]);
 
+  // ─── Gestion catégories ─────────────────────────────────────────────────────
+
+  const sanitizeCategoryName = (name: string): string => {
+    return name.replace(/[/\\:*?"<>|]/g, '').trim();
+  };
+
+  const createCategory = useCallback(async (name: string) => {
+    if (!vaultRef.current) return;
+    const clean = sanitizeCategoryName(name);
+    if (!clean) throw new Error('Nom de catégorie invalide');
+    await vaultRef.current.ensureDir(`${RECIPES_DIR}/${clean}`);
+    // Une catégorie vide n'a pas de recettes, donc recipeCategories ne changera
+    // pas tant qu'aucune recette n'est ajoutée dedans. On force quand même un
+    // reload pour que l'état soit cohérent si l'UI en a besoin.
+    recipesLoadedRef.current = false;
+    await loadRecipes(true);
+  }, [loadRecipes]);
+
+  const renameCategory = useCallback(async (oldName: string, newName: string) => {
+    if (!vaultRef.current) return;
+    const cleanOld = sanitizeCategoryName(oldName);
+    const cleanNew = sanitizeCategoryName(newName);
+    if (!cleanNew) throw new Error('Nouveau nom de catégorie invalide');
+    if (cleanOld === cleanNew) return;
+    // Déplacer toutes les recettes de l'ancienne catégorie vers la nouvelle
+    const toMove = recipes.filter(r => r.category === cleanOld);
+    for (const recipe of toMove) {
+      await moveRecipeCategory(recipe.sourceFile, cleanNew);
+    }
+    // L'ancien dossier reste vide sur disque (pas de deleteDir natif) — sans
+    // impact UX car recipeCategories est dérivé de `recipes`.
+    recipesLoadedRef.current = false;
+    await loadRecipes(true);
+  }, [recipes, moveRecipeCategory, loadRecipes]);
+
+  const deleteCategory = useCallback(async (name: string, reassignTo?: string) => {
+    if (!vaultRef.current) return;
+    const clean = sanitizeCategoryName(name);
+    const inCategory = recipes.filter(r => r.category === clean);
+    if (inCategory.length > 0) {
+      if (!reassignTo) {
+        throw new Error(`La catégorie "${clean}" contient ${inCategory.length} recette(s). Choisis une catégorie de destination avant de supprimer.`);
+      }
+      const cleanTarget = sanitizeCategoryName(reassignTo);
+      if (!cleanTarget || cleanTarget === clean) {
+        throw new Error('Catégorie de destination invalide');
+      }
+      for (const recipe of inCategory) {
+        await moveRecipeCategory(recipe.sourceFile, cleanTarget);
+      }
+    }
+    // Le dossier vide reste sur disque (pas de deleteDir natif) — invisible
+    // côté UI car recipeCategories est dérivé de `recipes`.
+    recipesLoadedRef.current = false;
+    await loadRecipes(true);
+  }, [recipes, moveRecipeCategory, loadRecipes]);
+
   // ─── Favoris ───────────────────────────────────────────────────────────────
 
   const loadFavorites = useCallback(async (profileId: string): Promise<string[]> => {
@@ -281,6 +342,9 @@ export function useVaultRecipes(
     scanAllCookFiles,
     moveCookToRecipes,
     moveRecipeCategory,
+    createCategory,
+    renameCategory,
+    deleteCategory,
     toggleFavorite,
     isFavorite,
     getFavorites,
