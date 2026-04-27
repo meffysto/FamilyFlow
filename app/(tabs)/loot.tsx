@@ -22,6 +22,8 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
@@ -212,7 +214,7 @@ export default function LootScreen() {
           {profiles.map((profile) => (
             <View key={profile.id} style={[styles.lootCard, { backgroundColor: colors.card }]}>
               <View style={styles.lootCardLeft}>
-                <Text style={styles.lootCardAvatar}>{profile.avatar}</Text>
+                <AvatarIcon name={profile.avatar} color={getTheme(profile.theme).primary} size={44} />
                 <View>
                   <Text style={[styles.lootCardName, { color: colors.text }]}>{profile.name}</Text>
                   <Text style={[styles.lootCardLevel, { color: getLevelTier(profile.level).color }]}>
@@ -353,7 +355,7 @@ export default function LootScreen() {
             return (
               <View key={profile.id} style={[styles.card, { backgroundColor: colors.card, marginBottom: 10 }]}>
                 <View style={styles.badgeProfileHeader}>
-                  <Text style={styles.badgeProfileAvatar}>{profile.avatar}</Text>
+                  <AvatarIcon name={profile.avatar} color={getTheme(profile.theme).primary} size={32} />
                   <Text style={[styles.badgeProfileName, { color: colors.text }]}>{profile.name}</Text>
                   <Text style={[styles.badgeProfileCount, { color: earnedCount === allBadges.length ? colors.success : colors.textFaint }]}>
                     {earnedCount}/{allBadges.length}

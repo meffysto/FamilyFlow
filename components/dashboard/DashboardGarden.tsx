@@ -25,6 +25,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { AvatarIcon } from '../ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { DashboardCard } from '../DashboardCard';
 import { parseCrops, getMainPlotIndex } from '../../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
@@ -357,7 +359,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
             accessibilityLabel={t('mascot.garden.treeA11y', { name: profile.name })}
             accessibilityRole="button"
           >
-            <Text style={styles.profileAvatar}>{profile.avatar}</Text>
+            <AvatarIcon name={profile.avatar} color={getTheme(profile.theme).primary} size={36} />
             <Text style={[styles.profileName, { color: colors.text }]} numberOfLines={1}>
               {profile.name}
             </Text>
@@ -722,7 +724,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
             onPress={() => handleTreePress(activeProfile)}
             activeOpacity={0.7}
           >
-            <Text style={styles.profileAvatar}>{activeProfile.avatar}</Text>
+            <AvatarIcon name={activeProfile.avatar} color={getTheme(activeProfile.theme).primary} size={36} />
             <Text style={[styles.profileName, { color: colors.text }]} numberOfLines={1}>
               {activeProfile.name}
             </Text>

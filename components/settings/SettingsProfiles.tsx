@@ -18,12 +18,10 @@ import { Shadows } from '../../constants/shadows';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Gender } from '../../lib/types';
 
-const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
-const AVATAR_EMOJIS = [
-  '👨', '👩', '👴', '👵', '🧑', '👦', '👧', '👶',
-  '🧒', '👼', '🦸', '🧙', '🐱', '🐶', '🦊', '🐻',
-  '🦁', '🐰', '🐼', '🐸', '🌸', '⭐', '🎒', '🏠',
-];
+import { AvatarIcon, AVATAR_GROUPS } from '../ui/AvatarIcon';
+
+const CHILD_AVATARS = ['baby', 'smile', 'rabbit', 'cat', 'dog', 'bird', 'fish', 'sparkles', 'star', 'rocket', 'ghost', 'bot'];
+const AVATAR_EMOJIS = AVATAR_GROUPS.flatMap((g) => g.keys);
 
 interface SettingsProfilesProps {
   profiles: any[];
@@ -148,7 +146,7 @@ export function SettingsProfiles({
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {activeProfile ? (
             <View style={styles.activeRow}>
-              <Text style={styles.activeAvatar}>{activeProfile.avatar}</Text>
+              <AvatarIcon name={activeProfile.avatar} color={primary} size={56} />
               <View style={styles.profileInfo}>
                 <Text style={[styles.profileName, { color: colors.text }]}>{activeProfile.name}</Text>
                 <Text style={[styles.profileMeta, { color: colors.textMuted }]}>
@@ -177,7 +175,7 @@ export function SettingsProfiles({
                 accessibilityState={{ selected: activeProfile?.id === p.id }}
                 accessibilityLabel={t('settings.profiles.profileA11y', { name: p.name })}
               >
-                <Text style={styles.switchAvatar}>{p.avatar}</Text>
+                <AvatarIcon name={p.avatar} color={activeProfile?.id === p.id ? primary : colors.textMuted} size={36} style={{ marginBottom: 2 }} />
                 <Text style={[styles.switchName, { color: colors.textMuted }, activeProfile?.id === p.id && { color: primary }]}>{p.name}</Text>
               </TouchableOpacity>
             ))}
@@ -207,7 +205,7 @@ export function SettingsProfiles({
                     accessibilityRole="button"
                     accessibilityLabel={t('settings.profiles.editProfile', { name: profile.name })}
                   >
-                    <Text style={styles.profileAvatar}>{profile.avatar}</Text>
+                    <AvatarIcon name={profile.avatar} color={currentTheme.primary} size={44} />
                     <View style={styles.profileInfo}>
                       <Text style={[styles.profileName, { color: colors.text }]}>{profile.name}</Text>
                       <Text style={[styles.profileMeta, { color: colors.textMuted }]}>
@@ -247,7 +245,7 @@ export function SettingsProfiles({
                       >
                         <View style={styles.themeBtnLeft}>
                           <View style={[styles.themeDot, { backgroundColor: currentTheme.primary }]} />
-                          <Text style={[styles.themeBtnLabel, { color: colors.textSub }]}>{currentTheme.emoji} {currentTheme.label}</Text>
+                          <Text style={[styles.themeBtnLabel, { color: colors.textSub }]}>{currentTheme.label}</Text>
                         </View>
                         <Text style={[styles.themeArrow, { color: primary }]}>{themeDropdownOpen ? '▲' : '▼'}</Text>
                       </TouchableOpacity>
@@ -266,7 +264,6 @@ export function SettingsProfiles({
                                 accessibilityLabel={t('settings.profiles.themeSelectA11y', { theme: th.label })}
                               >
                                 <View style={[styles.themeDot, { backgroundColor: th.primary }]} />
-                                <Text style={styles.themeItemEmoji}>{th.emoji}</Text>
                                 <Text style={[styles.themeItemLabel, { color: colors.textSub }, isActive && { color: primary, fontWeight: FontWeight.bold }]}>{th.label}</Text>
                                 {isActive && <Text style={[styles.themeCheck, { color: primary }]}>✓</Text>}
                               </TouchableOpacity>
@@ -316,17 +313,17 @@ export function SettingsProfiles({
             />
             <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.avatarLabel')}</Text>
             <View style={styles.emojiGrid}>
-              {AVATAR_EMOJIS.map((emoji) => (
+              {AVATAR_EMOJIS.map((key) => (
                 <TouchableOpacity
-                  key={emoji}
+                  key={key}
                   style={[
                     styles.emojiBtn,
-                    { backgroundColor: editAvatar === emoji ? primary + '20' : colors.cardAlt, borderColor: editAvatar === emoji ? primary : 'transparent' },
+                    { backgroundColor: editAvatar === key ? primary + '20' : colors.cardAlt, borderColor: editAvatar === key ? primary : 'transparent' },
                   ]}
-                  onPress={() => setEditAvatar(emoji)}
+                  onPress={() => setEditAvatar(key)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.emojiBtnText}>{emoji}</Text>
+                  <AvatarIcon name={key} color={editAvatar === key ? primary : colors.textSub} size={36} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -425,16 +422,16 @@ export function SettingsProfiles({
             />
             <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.avatarSectionLabel')}</Text>
             <View style={styles.avatarGrid}>
-              {CHILD_AVATARS.map((emoji) => (
+              {CHILD_AVATARS.map((key) => (
                 <TouchableOpacity
-                  key={emoji}
-                  style={[styles.avatarBtn, { backgroundColor: colors.bg }, newChildAvatar === emoji && { backgroundColor: tint, borderColor: primary }]}
-                  onPress={() => setNewChildAvatar(emoji)}
+                  key={key}
+                  style={[styles.avatarBtn, { backgroundColor: colors.bg }, newChildAvatar === key && { backgroundColor: tint, borderColor: primary }]}
+                  onPress={() => setNewChildAvatar(key)}
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: newChildAvatar === emoji }}
-                  accessibilityLabel={t('settings.profiles.avatarSelectA11y', { emoji })}
+                  accessibilityState={{ selected: newChildAvatar === key }}
+                  accessibilityLabel={t('settings.profiles.avatarSelectA11y', { emoji: key })}
                 >
-                  <Text style={styles.avatarEmoji}>{emoji}</Text>
+                  <AvatarIcon name={key} color={newChildAvatar === key ? primary : colors.textSub} size={36} />
                 </TouchableOpacity>
               ))}
             </View>

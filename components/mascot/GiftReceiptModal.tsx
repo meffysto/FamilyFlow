@@ -27,6 +27,7 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { AvatarIcon } from '../ui/AvatarIcon';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -156,7 +157,7 @@ export function GiftReceiptModal({ visible, gifts, onDone }: GiftReceiptModalPro
 
           {/* Expediteur */}
           <View style={[styles.senderRow, { backgroundColor: tint }]}>
-            <Text style={styles.senderAvatar}>{firstGift.sender_avatar}</Text>
+            <AvatarIcon name={firstGift.sender_avatar} color={primary} size={32} />
             <Text style={[styles.senderName, { color: primary }]} numberOfLines={1}>
               {firstGift.sender_name}
             </Text>

@@ -3,9 +3,10 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
+import { Sparkles, RefreshCw } from 'lucide-react-native';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -132,23 +133,34 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
             <View style={{ gap: Spacing.md }}>
               <MarkdownText style={{ color: colors.text }}>{aiSuggestions}</MarkdownText>
               <TouchableOpacity
-                style={[styles.aiRefreshBtn, { borderColor: primary + '40' }]}
+                style={[styles.aiBtn, { backgroundColor: primary + '14', borderColor: primary + '33' }]}
                 onPress={handleAIRequest}
+                disabled={aiLoading}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.aiRefreshBtnText, { color: primary }]}>
-                  {aiLoading ? '...' : t('dashboard.insights.newSuggestions')}
+                {aiLoading ? (
+                  <ActivityIndicator size="small" color={primary} />
+                ) : (
+                  <RefreshCw size={16} strokeWidth={2} color={primary} />
+                )}
+                <Text style={[styles.aiBtnText, { color: primary }]}>
+                  {t('dashboard.insights.newSuggestions')}
                 </Text>
               </TouchableOpacity>
             </View>
           ) : (
             <TouchableOpacity
-              style={[styles.aiRefreshBtn, { borderColor: primary + '40' }]}
+              style={[styles.aiBtn, { backgroundColor: primary + '14', borderColor: primary + '33' }]}
               onPress={handleAIRequest}
               disabled={aiLoading}
               activeOpacity={0.7}
             >
-              <Text style={[styles.aiRefreshBtnText, { color: primary }]}>
+              {aiLoading ? (
+                <ActivityIndicator size="small" color={primary} />
+              ) : (
+                <Sparkles size={16} strokeWidth={2} color={primary} />
+              )}
+              <Text style={[styles.aiBtnText, { color: primary }]}>
                 {aiLoading ? t('dashboard.insights.aiLoading') : t('dashboard.insights.enrichAI')}
               </Text>
             </TouchableOpacity>
@@ -229,15 +241,18 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     marginVertical: Spacing.xl,
   },
-  aiRefreshBtn: {
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing['2xl'],
-    borderRadius: Radius.base,
-    borderWidth: 1,
+  aiBtn: {
+    flexDirection: 'row' as const,
     alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
+    borderRadius: Radius.full,
+    borderWidth: 1,
     marginTop: Spacing.xs,
   },
-  aiRefreshBtnText: {
+  aiBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },

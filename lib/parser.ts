@@ -55,7 +55,7 @@ import {
   ExpeditionDifficulty,
   ExpeditionOutcome,
 } from './types';
-import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
+import { VALID_THEMES, migrateThemeId } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
 import { parseBuildings, parseInventory, serializeBuildings, serializeInventory } from './mascot/building-engine';
 import { parseHarvestInventory, parseCraftedItems, parseRareSeeds, serializeHarvestInventory, serializeCraftedItems, serializeRareSeeds } from './mascot/craft-engine';
@@ -906,7 +906,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
   const flush = () => {
     if (currentId && currentProps.name && currentProps.role) {
       const theme = currentProps.theme && VALID_THEMES.has(currentProps.theme)
-        ? (currentProps.theme as ProfileTheme)
+        ? migrateThemeId(currentProps.theme)
         : undefined;
       const validAgeCategories = new Set(['bebe', 'petit', 'enfant', 'ado']);
       const ageCategory = currentProps.ageCategory && validAgeCategories.has(currentProps.ageCategory)

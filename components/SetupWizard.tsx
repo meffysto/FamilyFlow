@@ -23,6 +23,7 @@ import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight, FontFamily } from '../constants/typography';
 import { X } from 'lucide-react-native';
+import { AvatarIcon } from './ui/AvatarIcon';
 
 interface SetupWizardProps {
   onComplete: (vaultPath: string) => void;
@@ -45,22 +46,22 @@ export interface ChildInput {
   birthdate: string;
 }
 
-const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💼', '🧑', '👴', '👵'];
-const CHILD_AVATARS = ['👶', '🍼', '👧', '👦', '🧒', '🐣', '🌟'];
+const PARENT_AVATARS = ['user', 'user-circle', 'user-round', 'briefcase', 'crown', 'leaf', 'sun'];
+const CHILD_AVATARS = ['baby', 'smile', 'rabbit', 'cat', 'dog', 'bird', 'star', 'rocket'];
 
 export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, initialChildren }: SetupWizardProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const hasInitialData = !!(initialParents?.length && initialParents.some(p => p.name.trim()));
   const [step, setStep] = useState(hasInitialData ? 2 : 0);
-  const [parents, setParents] = useState<PersonInput[]>(initialParents?.length ? initialParents : [{ name: '', avatar: '👨' }]);
-  const [children, setChildren] = useState<ChildInput[]>(initialChildren?.length ? initialChildren : [{ name: '', avatar: '👶', birthdate: '' }]);
+  const [parents, setParents] = useState<PersonInput[]>(initialParents?.length ? initialParents : [{ name: '', avatar: 'user' }]);
+  const [children, setChildren] = useState<ChildInput[]>(initialChildren?.length ? initialChildren : [{ name: '', avatar: 'baby', birthdate: '' }]);
   const [isCreating, setIsCreating] = useState(false);
 
   // --- Step 0: Parents ---
   const addParent = () => {
     if (parents.length < 4) {
-      setParents([...parents, { name: '', avatar: '👩' }]);
+      setParents([...parents, { name: '', avatar: 'user-round' }]);
     }
   };
 
@@ -79,7 +80,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
   // --- Step 1: Children ---
   const addChild = () => {
     if (children.length < 6) {
-      setChildren([...children, { name: '', avatar: '👶', birthdate: '' }]);
+      setChildren([...children, { name: '', avatar: 'baby', birthdate: '' }]);
     }
   };
 
@@ -144,16 +145,16 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
   ) => (
     <View key={index} style={[styles.personRow, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.avatarRow}>
-        {avatars.map((emoji) => (
+        {avatars.map((key) => (
           <TouchableOpacity
-            key={emoji}
+            key={key}
             style={[
               styles.avatarBtn,
-              person.avatar === emoji && { backgroundColor: tint, borderColor: primary },
+              person.avatar === key && { backgroundColor: tint, borderColor: primary },
             ]}
-            onPress={() => onUpdate(index, 'avatar', emoji)}
+            onPress={() => onUpdate(index, 'avatar', key)}
           >
-            <Text style={styles.avatarEmoji}>{emoji}</Text>
+            <AvatarIcon name={key} color={person.avatar === key ? primary : colors.textSub} size={36} />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -177,16 +178,16 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
   const renderChildRow = (child: ChildInput, index: number) => (
     <View key={index} style={[styles.personRow, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.avatarRow}>
-        {CHILD_AVATARS.map((emoji) => (
+        {CHILD_AVATARS.map((key) => (
           <TouchableOpacity
-            key={emoji}
+            key={key}
             style={[
               styles.avatarBtn,
-              child.avatar === emoji && { backgroundColor: tint, borderColor: primary },
+              child.avatar === key && { backgroundColor: tint, borderColor: primary },
             ]}
-            onPress={() => updateChild(index, 'avatar', emoji)}
+            onPress={() => updateChild(index, 'avatar', key)}
           >
-            <Text style={styles.avatarEmoji}>{emoji}</Text>
+            <AvatarIcon name={key} color={child.avatar === key ? primary : colors.textSub} size={36} />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -268,9 +269,10 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             <View style={[styles.summaryCard, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
               <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('setup.wizard.parentsLabel')}</Text>
               {parents.map((p, i) => (
-                <Text key={i} style={[styles.summaryItem, { color: colors.text }]}>
-                  {p.avatar} {p.name}
-                </Text>
+                <View key={i} style={styles.summaryRow}>
+                  <AvatarIcon name={p.avatar} color={primary} size={24} />
+                  <Text style={[styles.summaryItem, { color: colors.text, marginLeft: 8 }]}>{p.name}</Text>
+                </View>
               ))}
             </View>
 
@@ -280,10 +282,12 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
                 {children
                   .filter((c) => c.name.trim())
                   .map((c, i) => (
-                    <Text key={i} style={[styles.summaryItem, { color: colors.text }]}>
-                      {c.avatar} {c.name}
-                      {c.birthdate ? ` — ${c.birthdate}` : ''}
-                    </Text>
+                    <View key={i} style={styles.summaryRow}>
+                      <AvatarIcon name={c.avatar} color={primary} size={24} />
+                      <Text style={[styles.summaryItem, { color: colors.text, marginLeft: 8 }]}>
+                        {c.name}{c.birthdate ? ` — ${c.birthdate}` : ''}
+                      </Text>
+                    </View>
                   ))}
               </View>
             )}
@@ -441,6 +445,11 @@ const styles = StyleSheet.create({
   },
   summaryItem: {
     fontSize: FontSize.lg,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
   },
   summaryDetail: {
     fontSize: FontSize.label,

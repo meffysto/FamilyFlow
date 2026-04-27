@@ -46,6 +46,7 @@ import { TileMapRenderer, VILLAGE_GRASS_TILE_IMAGE } from '../../components/masc
 import { LiquidXPBar } from '../../components/ui/LiquidXPBar';
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
 import { ReactiveAvatar } from '../../components/ui/ReactiveAvatar';
+import { getTheme } from '../../constants/themes';
 import { getCurrentSeason } from '../../lib/mascot/seasons';
 import { pickSeasonalActivity } from '../../lib/village/activities';
 import { addPoints } from '../../lib/gamification/engine';
@@ -938,7 +939,9 @@ export default function VillageScreen() {
                 {activeProfiles.map(profile => (
                   <View key={profile.id} style={styles.memberItem}>
                     <ReactiveAvatar
-                      emoji={profile.avatar ?? '👤'}
+                      emoji={profile.avatar ?? 'user'}
+                      color={getTheme(profile.theme).primary}
+                      size={36}
                       mood="idle"
                       style={styles.memberAvatar}
                     />

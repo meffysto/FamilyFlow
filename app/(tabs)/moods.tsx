@@ -25,6 +25,8 @@ import { format, subDays } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { useToast } from '../../contexts/ToastContext';
 import { useRefresh } from '../../hooks/useRefresh';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -262,8 +264,9 @@ export default function MoodsScreen() {
               return (
                 <View key={p.id} style={[styles.familyCard, { backgroundColor: colors.card, borderColor: colors.border }, !canEdit && { opacity: 0.6 }]}>
                   <View style={styles.familyCardHeader}>
-                    <Text style={[styles.familyName, { color: colors.text }]}>
-                      {p.avatar} {p.name}
+                    <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={28} />
+                    <Text style={[styles.familyName, { color: colors.text, marginLeft: 8 }]}>
+                      {p.name}
                     </Text>
                     {entry && (
                       <Text style={[styles.familyNote, { color: colors.textMuted }]} numberOfLines={1}>
@@ -310,9 +313,9 @@ export default function MoodsScreen() {
             <View style={styles.gridHeader}>
               <View style={styles.gridDateCol} />
               {moodableProfiles.map(p => (
-                <Text key={p.id} style={[styles.gridProfileName, { color: colors.textSub }]} numberOfLines={1}>
-                  {p.avatar}
-                </Text>
+                <View key={p.id} style={styles.gridProfileName}>
+                  <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={22} />
+                </View>
               ))}
             </View>
 

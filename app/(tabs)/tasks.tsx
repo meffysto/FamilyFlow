@@ -41,6 +41,7 @@ import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { ArrowUpDown } from 'lucide-react-native';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { EmptyState } from '../../components/EmptyState';
@@ -729,7 +730,7 @@ export default function TasksScreen() {
                   accessibilityRole="button"
                   hitSlop={ICON_BTN_HITSLOP}
                 >
-                  <Text style={styles.headerIconText}>↕️</Text>
+                  <ArrowUpDown size={18} strokeWidth={2} color={colors.text} />
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -1204,9 +1205,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  headerIconText: {
-    fontSize: FontSize.sm,
   },
   addBtn: {
     width: 32,

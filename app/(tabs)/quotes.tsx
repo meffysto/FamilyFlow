@@ -24,6 +24,7 @@ import Animated, {
   useAnimatedScrollHandler,
 } from 'react-native-reanimated';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
 
 const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 import { useTranslation } from 'react-i18next';
@@ -180,12 +181,12 @@ export default function QuotesScreen() {
   );
 
   const renderItem = useCallback(({ item }: { item: ChildQuote }) => {
-    const avatar = enfants.find(e => e.name === item.enfant)?.avatar ?? '💬';
+    const avatar = enfants.find(e => e.name === item.enfant)?.avatar ?? 'smile';
     return (
       <TouchableOpacity activeOpacity={0.7} onPress={() => openEdit(item)} onLongPress={() => handleDelete(item)}>
         <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardAvatar}>{avatar}</Text>
+            <AvatarIcon name={avatar} color={primary} size={32} />
             <Text style={[styles.enfant, { color: primary }]} numberOfLines={1}>{item.enfant}</Text>
             <Text style={[styles.date, { color: colors.textMuted }]}>{formatDateLocalized(item.date)}</Text>
           </View>

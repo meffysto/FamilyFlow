@@ -376,7 +376,6 @@ export function LoveNoteEditor({
                   <Chip
                     key={p.id}
                     label={p.name}
-                    emoji={p.avatar}
                     selected={to === p.id}
                     onPress={() => setTo(p.id)}
                   />

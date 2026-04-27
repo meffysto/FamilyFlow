@@ -8,6 +8,8 @@ import { Profile } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { levelProgress, getLevelTier, LOOT_THRESHOLD, xpForLevel, calculateLevel } from '../lib/gamification';
 import { LiquidXPBar } from './ui/LiquidXPBar';
+import { AvatarIcon } from './ui/AvatarIcon';
+import { getTheme } from '../constants/themes';
 import { FontSize, FontWeight } from '../constants/typography';
 
 interface FamilyLeaderboardProps {
@@ -37,7 +39,7 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
           <View key={profile.id} style={[styles.row, { backgroundColor: colors.cardAlt }, compact && styles.rowCompact]}>
             <Text style={styles.medal}>{MEDALS[index] ?? '  '}</Text>
 
-            <Text style={styles.avatar}>{profile.avatar}</Text>
+            <AvatarIcon name={profile.avatar} color={getTheme(profile.theme).primary} size={36} />
 
             <View style={styles.info}>
               <View style={styles.nameRow}>

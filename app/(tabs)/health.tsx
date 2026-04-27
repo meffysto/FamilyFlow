@@ -25,6 +25,7 @@ import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from '
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -477,7 +478,7 @@ export default function HealthScreen() {
                     ]}
                     onPress={() => setSelectedEnfantId(e.id)}
                   >
-                    <Text style={styles.enfantAvatar}>{e.avatar}</Text>
+                    <AvatarIcon name={e.avatar} color={e.id === selectedEnfantId ? primary : colors.textSub} size={28} />
                     <Text style={[styles.enfantName, { color: e.id === selectedEnfantId ? primary : colors.textSub }]}>
                       {e.name}
                     </Text>

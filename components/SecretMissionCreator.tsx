@@ -145,7 +145,6 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
               <Chip
                 key={p.id}
                 label={p.name}
-                emoji={p.avatar}
                 selected={selectedChild === p.id}
                 onPress={() => setSelectedChild(p.id)}
               />

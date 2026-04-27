@@ -30,6 +30,8 @@ import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import * as Haptics from 'expo-haptics';
 import { format, addDays, subDays } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -359,7 +361,7 @@ export default function GratitudeScreen() {
             return (
               <View key={profile.id} style={[styles.profileCard, { backgroundColor: colors.card }]}>
                 <View style={styles.profileHeader}>
-                  <Text style={styles.profileAvatar}>{profile.avatar}</Text>
+                  <AvatarIcon name={profile.avatar} color={getTheme(profile.theme).primary} size={32} />
                   <Text style={[styles.profileName, { color: colors.text }]}>{profile.name}</Text>
                   {isActiveUser && !entry && (
                     <TouchableOpacity

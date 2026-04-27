@@ -37,7 +37,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { LootBox, ProfileTheme } from '../lib/types';
 import { RARITY_COLORS, RARITY_EMOJIS, getRarityLabel, SEASONAL_EVENTS } from '../lib/gamification';
-import { getTheme } from '../constants/themes';
+import { getTheme, migrateThemeId } from '../constants/themes';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -265,24 +265,10 @@ interface PackDesign {
 }
 
 function getPackDesign(themeId: string): PackDesign {
-  switch (themeId) {
-    case 'pokemon':
-      return {
-        bodyColor: '#E3350D',
-        sealColor: '#C4A000',
-        tearColor: '#FFD700',
-        emblem: (
-          <View style={emblemStyles.pokeball}>
-            <View style={emblemStyles.pokeballTop} />
-            <View style={emblemStyles.pokeballMid}>
-              <View style={emblemStyles.pokeballDot} />
-            </View>
-            <View style={{ flex: 1, backgroundColor: '#E3350D' }} />
-          </View>
-        ),
-      };
-
-    case 'voitures':
+  // Migration silencieuse : ancien ID → nouvel ID
+  const resolved = migrateThemeId(themeId);
+  switch (resolved) {
+    case 'coquelicot':
       return {
         bodyColor: '#DC2626',
         sealColor: '#1F2937',
@@ -304,11 +290,11 @@ function getPackDesign(themeId: string): PackDesign {
         ),
       };
 
-    case 'nature':
+    case 'foret':
       return {
-        bodyColor: '#059669',
-        sealColor: '#065F46',
-        tearColor: '#34D399',
+        bodyColor: '#4A8B6B',
+        sealColor: '#2F5C45',
+        tearColor: '#7AB394',
         emblem: (
           <View style={emblemStyles.leaf}>
             <View style={emblemStyles.leafBody} />
@@ -325,11 +311,11 @@ function getPackDesign(themeId: string): PackDesign {
         ),
       };
 
-    case 'pompier':
+    case 'sunset':
       return {
-        bodyColor: '#EA580C',
-        sealColor: '#B91C1C',
-        tearColor: '#FDE68A',
+        bodyColor: '#C76A3A',
+        sealColor: '#8E4A28',
+        tearColor: '#F5C26B',
         emblem: (
           <View style={emblemStyles.shield}>
             <View style={emblemStyles.shieldInner}>
@@ -349,11 +335,11 @@ function getPackDesign(themeId: string): PackDesign {
         ),
       };
 
-    case 'licorne':
+    case 'pivoine':
       return {
-        bodyColor: '#EC4899',
-        sealColor: '#A855F7',
-        tearColor: '#F0ABFC',
+        bodyColor: '#C77199',
+        sealColor: '#9A4F77',
+        tearColor: '#E5A4C0',
         emblem: (
           <View style={emblemStyles.gem}>
             <View style={emblemStyles.gemTop} />
@@ -371,11 +357,11 @@ function getPackDesign(themeId: string): PackDesign {
         ),
       };
 
-    case 'espace':
+    case 'ocean':
       return {
-        bodyColor: '#1E3A5F',
-        sealColor: '#2563EB',
-        tearColor: '#60A5FA',
+        bodyColor: '#2A4172',
+        sealColor: '#5577B8',
+        tearColor: '#85A4D6',
         emblem: (
           <View style={emblemStyles.planet}>
             <View style={emblemStyles.planetBody} />
@@ -393,11 +379,11 @@ function getPackDesign(themeId: string): PackDesign {
         ),
       };
 
-    case 'pirates':
+    case 'sable':
       return {
-        bodyColor: '#78350F',
-        sealColor: '#92400E',
-        tearColor: '#F59E0B',
+        bodyColor: '#A07952',
+        sealColor: '#6E5236',
+        tearColor: '#F5C26B',
         emblem: (
           <View style={emblemStyles.skull}>
             <View style={emblemStyles.skullHead}>
@@ -418,36 +404,11 @@ function getPackDesign(themeId: string): PackDesign {
         ),
       };
 
-    case 'dinosaures':
+    case 'lavande':
+    default:
       return {
-        bodyColor: '#16A34A',
-        sealColor: '#78350F',
-        tearColor: '#4ADE80',
-        emblem: (
-          <View style={emblemStyles.egg}>
-            <View style={emblemStyles.eggShell}>
-              <View style={emblemStyles.eggCrack} />
-              <View style={emblemStyles.eggSpot1} />
-              <View style={emblemStyles.eggSpot2} />
-            </View>
-          </View>
-        ),
-        decorations: (
-          <>
-            {/* Claw marks */}
-            <View style={[decoStyles.claw, { top: 10, right: 12 }]}>
-              <View style={decoStyles.clawMark} />
-              <View style={decoStyles.clawMark} />
-              <View style={decoStyles.clawMark} />
-            </View>
-          </>
-        ),
-      };
-
-    default: // 'default' classique
-      return {
-        bodyColor: '#7C3AED',
-        sealColor: '#6D28D9',
+        bodyColor: '#8773C2',
+        sealColor: '#5E4D8E',
         tearColor: '#C4B5FD',
         emblem: (
           <View style={emblemStyles.giftStar}>
@@ -949,7 +910,7 @@ export function LootBoxOpener({
 
   const flashColor = isMythique ? '#FFD700' : isLegendaire ? '#F59E0B' : '#FFFFFF';
 
-  const defaultBg = theme.id === 'default' ? '#1F1035' : theme.secondary;
+  const defaultBg = theme.id === 'lavande' ? '#1F1035' : theme.secondary;
   const bgColor = isMythique
     ? '#2D0A0A'
     : isLegendaire

@@ -14,7 +14,7 @@ import { DashboardCard } from '../DashboardCard';
 import { computeGratitudeStreak } from '../../app/(tabs)/gratitude';
 import { isBabyProfile } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/spacing';
 
 function DashboardGratitudeInner(_props: DashboardSectionProps) {
@@ -37,23 +37,19 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
 
   return (
     <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} IconComponent={Heart} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/gratitude' as any)} hideMoreLink style={{ flex: 1 }}>
-      {firstEntry ? (
-        <>
-          <View style={[styles.quoteBorder, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
-            <Text style={[styles.quoteText, { color: colors.text }]} numberOfLines={3}>
-              "{firstEntry.text}"
-            </Text>
-          </View>
-          <Text style={[styles.meta, { color: colors.textMuted }]}>
-            {t('dashboard.gratitude.todayCount', { done: todayCount, total: gratitudeProfiles.length })}
-            {gratitudeStreak > 0 ? ` · ${gratitudeStreak}j 🔥` : ''}
+      <Text style={[styles.metric, { color: colors.text }]}>
+        <Text style={[styles.metricCount, { color: colors.catSouvenirs }]}>{todayCount}</Text>
+        {`/${gratitudeProfiles.length} aujourd'hui`}
+      </Text>
+      {firstEntry && (
+        <View style={[styles.quoteBorder, { backgroundColor: colors.brand.wash, borderLeftWidth: 2, borderLeftColor: colors.brand.bark }]}>
+          <Text style={[styles.quoteText, { color: colors.text }]} numberOfLines={2}>
+            "{firstEntry.text}"
           </Text>
-        </>
-      ) : (
-        <Text style={[styles.meta, { color: colors.textMuted }]}>
-          {t('dashboard.gratitude.todayCount', { done: todayCount, total: gratitudeProfiles.length })}
-          {gratitudeStreak > 0 ? ` · ${gratitudeStreak}j 🔥` : ''}
-        </Text>
+        </View>
+      )}
+      {gratitudeStreak > 0 && (
+        <Text style={[styles.streak, { color: colors.textMuted }]}>{gratitudeStreak}j 🔥</Text>
       )}
     </DashboardCard>
   );
@@ -62,10 +58,21 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
 export const DashboardGratitude = React.memo(DashboardGratitudeInner);
 
 const styles = StyleSheet.create({
+  metric: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.normal,
+    lineHeight: 26,
+    marginBottom: Spacing.sm,
+  },
+  metricCount: {
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.titleLg,
+    letterSpacing: -0.3,
+  },
   quoteBorder: {
     padding: Spacing.md,
     borderRadius: Radius.sm,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   quoteText: {
     fontSize: FontSize.sm,
@@ -73,7 +80,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: FontWeight.medium,
   },
-  meta: {
-    fontSize: FontSize.micro,
+  streak: {
+    fontSize: FontSize.caption,
+    marginTop: Spacing.sm,
   },
 });

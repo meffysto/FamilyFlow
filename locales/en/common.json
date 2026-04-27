@@ -1442,9 +1442,9 @@
     },
     "insights": {
       "title": "Suggestions",
-      "newSuggestions": "🔄 New suggestions",
-      "enrichAI": "🤖 Enhance with AI",
-      "aiLoading": "⏳ Analyzing...",
+      "newSuggestions": "New suggestions",
+      "enrichAI": "Enhance with AI",
+      "aiLoading": "Analyzing...",
       "addedToCourses_one": "{{count}} item added to shopping list",
       "addedToCourses_other": "{{count}} items added to shopping list"
     },
