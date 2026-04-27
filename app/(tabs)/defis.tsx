@@ -33,6 +33,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -129,7 +130,7 @@ function DefiCard({
         </Text>
         <View style={cardStyles.avatars}>
           {participantAvatars.slice(0, 4).map((p) => (
-            <Text key={p.id} style={cardStyles.avatar}>{p.avatar}</Text>
+            <AvatarIcon key={p.id} name={p.avatar} color={primary} size={24} />
           ))}
         </View>
       </View>
@@ -367,7 +368,7 @@ function DefiConfigModal({
               accessibilityRole="checkbox"
               accessibilityState={{ checked: selectedProfiles.has(p.id) }}
             >
-              <Text style={configStyles.profileAvatar}>{p.avatar}</Text>
+              <AvatarIcon name={p.avatar} color={selectedProfiles.has(p.id) ? primary : colors.textSub} size={36} />
               <Text style={[configStyles.profileName, { color: selectedProfiles.has(p.id) ? primary : colors.textSub }]}>{p.name}</Text>
             </TouchableOpacity>
           ))}
@@ -517,7 +518,7 @@ function DefiDetailModal({
           const todayDone = entries.some((e) => e.date === today && e.completed);
           return (
             <View key={p.id} style={[detailStyles.participantRow, { backgroundColor: colors.card }]}>
-              <Text style={detailStyles.participantAvatar}>{p.avatar}</Text>
+              <AvatarIcon name={p.avatar} color={primary} size={36} />
               <View style={detailStyles.participantInfo}>
                 <Text style={[detailStyles.participantName, { color: colors.text }]}>{p.name}</Text>
                 <Text style={[detailStyles.participantMeta, { color: colors.textMuted }]}>
@@ -576,7 +577,7 @@ function DefiDetailModal({
                     accessibilityRole="button"
                     accessibilityState={{ disabled: todayDone }}
                   >
-                    <Text style={detailStyles.checkInBtnAvatar}>{p.avatar}</Text>
+                    <AvatarIcon name={p.avatar} color={todayDone ? colors.success : colors.onPrimary} size={28} />
                     <Text style={[detailStyles.checkInBtnText, { color: todayDone ? colors.success : colors.onPrimary }]}>
                       {todayDone ? t('defis.detail.done') : t('defis.detail.checkIn')}
                     </Text>

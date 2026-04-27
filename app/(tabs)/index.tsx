@@ -37,6 +37,8 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { LivingGradient } from '../../components/ui/LivingGradient';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { ReactiveAvatar, getAvatarMood } from '../../components/ui/ReactiveAvatar';
 import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { SeasonalParticles } from '../../components/ui/SeasonalParticles';
@@ -1362,7 +1364,7 @@ export default function DashboardScreen() {
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.pickerAvatar}>{p.avatar}</Text>
+                  <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={48} />
                   <Text style={[styles.pickerName, { color: colors.text }]} numberOfLines={1}>{p.name}</Text>
                 </TouchableOpacity>
               ))}

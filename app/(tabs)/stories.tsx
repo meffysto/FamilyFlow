@@ -23,6 +23,8 @@ import { useAnimConfig } from '../../hooks/useAnimConfig';
 import StoryBookCard, { BOOK_WIDTH, BOOK_GAP } from '../../components/stories/StoryBookCard';
 import StoryPlayer from '../../components/stories/StoryPlayer';
 import VoiceRecorder from '../../components/stories/VoiceRecorder';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { getPersonalVoices } from '../../lib/personal-voice';
 import { getCachedStoryAudio, stripAllPerformanceTags } from '../../lib/elevenlabs';
 import { getCachedStoryAudioFish } from '../../lib/fish-audio';
@@ -370,7 +372,7 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
               ]}
               onPress={() => { Haptics.selectionAsync(); setSelectedEnfantId(p.id); }}
             >
-              <Text style={biblioStyles.childChipAvatar}>{p.avatar}</Text>
+              <AvatarIcon name={p.avatar} color={selectedEnfantId === p.id ? colors.onPrimary : getTheme(p.theme).primary} size={24} />
               <Text style={[
                 biblioStyles.childChipText,
                 { color: selectedEnfantId === p.id ? colors.bg : colors.textMuted },
@@ -1017,7 +1019,7 @@ export default function StoriesScreen() {
                   goTo({ etape: 'choisir_univers', enfantId: p.id, enfantName: p.name });
                 }}
               >
-                <Text style={styles.profileAvatarSolo}>{p.avatar}</Text>
+                <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={64} />
                 <Text style={[styles.profileNameSolo, { color: colors.text }]}>{p.name}</Text>
                 {mood && (
                   <Text style={[styles.profileBadge, { color: colors.textMuted }]}>
@@ -1049,7 +1051,7 @@ export default function StoriesScreen() {
                       goTo({ etape: 'choisir_univers', enfantId: p.id, enfantName: p.name });
                     }}
                   >
-                    <Text style={styles.profileAvatar}>{p.avatar}</Text>
+                    <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={48} />
                     <Text style={[styles.profileName, { color: colors.text }]}>{p.name}</Text>
                     {mood && (
                       <Text style={[styles.profileBadge, { color: colors.textMuted }]}>
@@ -1670,7 +1672,7 @@ export default function StoriesScreen() {
                       onPress={() => { Haptics.selectionAsync(); setVoiceSelectedParentId(isSelected ? null : p.id); }}
                       style={[styles.voiceParentChip, { backgroundColor: isSelected ? primary : colors.card, borderColor: isSelected ? primary : colors.border }]}
                     >
-                      <Text style={styles.voiceParentAvatar}>{p.avatar}</Text>
+                      <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={32} />
                       <Text style={[styles.voiceParentName, { color: isSelected ? '#fff' : colors.text }]}>{p.name}</Text>
                       <Text style={[styles.voiceParentBadge, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
                         {hasClone ? '🎙 Clonée' : fallbackLabel}
@@ -1761,7 +1763,7 @@ export default function StoriesScreen() {
                       onPress={() => { Haptics.selectionAsync(); setVoiceSelectedParentId(isSelected ? null : p.id); }}
                       style={[styles.voiceParentChip, { backgroundColor: isSelected ? primary : colors.card, borderColor: isSelected ? primary : colors.border }]}
                     >
-                      <Text style={styles.voiceParentAvatar}>{p.avatar}</Text>
+                      <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={32} />
                       <Text style={[styles.voiceParentName, { color: isSelected ? '#fff' : colors.text }]}>{p.name}</Text>
                       <Text style={[styles.voiceParentBadge, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
                         {hasClone ? '🎙 Clonee' : 'Voix par defaut'}

@@ -29,6 +29,8 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import type { FamilyQuest } from '../../lib/quest-engine';
 import type { Profile } from '../../lib/types';
+import { AvatarIcon, resolveAvatarKey } from '../ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -106,13 +108,17 @@ function FamilyQuestDetailSheetInner({
   }));
 
   const renderContrib = ({ item }: { item: ContribItem }) => {
-    const avatar = item.profile?.avatar ?? item.profileId.slice(0, 1).toUpperCase();
+    const avatar = item.profile?.avatar;
     const name = item.profile?.name ?? item.profileId;
     const indivProgress = Math.min(1, quest.target > 0 ? item.count / quest.target : 0);
 
     return (
       <View style={styles.contribRow}>
-        <Text style={styles.contribAvatar}>{avatar}</Text>
+        {resolveAvatarKey(avatar) || avatar ? (
+          <AvatarIcon name={avatar ?? 'user'} color={getTheme(item.profile?.theme).primary} size={32} />
+        ) : (
+          <Text style={styles.contribAvatar}>{item.profileId.slice(0, 1).toUpperCase()}</Text>
+        )}
         <View style={styles.contribInfo}>
           <View style={styles.contribHeader}>
             <Text style={[styles.contribName, { color: colors.text }]} numberOfLines={1}>

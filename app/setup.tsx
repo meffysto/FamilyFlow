@@ -36,9 +36,10 @@ import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, FontFamily, LineHeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
 import { Users, Baby, FolderOpen, Package, Check } from 'lucide-react-native';
+import { AvatarIcon } from '../components/ui/AvatarIcon';
 
-const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
-const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
+const PARENT_AVATARS = ['user', 'user-circle', 'user-round', 'briefcase', 'crown', 'leaf', 'sun', 'star'];
+const CHILD_AVATARS = ['baby', 'smile', 'rabbit', 'cat', 'dog', 'bird', 'star', 'rocket'];
 const TOTAL_STEPS = 4;
 
 /** Mapping onboarding pain IDs → template pack IDs */
@@ -104,8 +105,8 @@ export default function SetupScreen() {
   // Step 1 — Parents
   const [parentCount, setParentCount] = useState(2);
   const [parents, setParents] = useState<ParentData[]>([
-    { name: '', avatar: '👨' },
-    { name: '', avatar: '👩' },
+    { name: '', avatar: 'user' },
+    { name: '', avatar: 'user-round' },
   ]);
 
   // Step 2 — Children
@@ -164,7 +165,7 @@ export default function SetupScreen() {
     if (count === 1 && parents.length > 1) {
       setParents([parents[0]]);
     } else if (count === 2 && parents.length < 2) {
-      setParents([...parents, { name: '', avatar: '👩' }]);
+      setParents([...parents, { name: '', avatar: 'user-round' }]);
     }
   };
 
@@ -179,7 +180,7 @@ export default function SetupScreen() {
     setChildCount(count);
     const current = [...children];
     while (current.length < count) {
-      current.push({ name: '', avatar: '👶', birthdate: '' });
+      current.push({ name: '', avatar: 'baby', birthdate: '' });
     }
     setChildren(current.slice(0, count));
   };
@@ -300,13 +301,13 @@ export default function SetupScreen() {
                 />
                 <Text style={ds.formLabel}>{t('setup.parents.avatarLabel')}</Text>
                 <View style={s.avatarGrid}>
-                  {PARENT_AVATARS.map((emoji) => (
+                  {PARENT_AVATARS.map((key) => (
                     <TouchableOpacity
-                      key={emoji}
-                      style={[ds.avatarBtn, parent.avatar === emoji && { backgroundColor: tint, borderColor: primary }]}
-                      onPress={() => updateParent(i, 'avatar', emoji)}
+                      key={key}
+                      style={[ds.avatarBtn, parent.avatar === key && { backgroundColor: tint, borderColor: primary }]}
+                      onPress={() => updateParent(i, 'avatar', key)}
                     >
-                      <Text style={s.avatarEmoji}>{emoji}</Text>
+                      <AvatarIcon name={key} color={parent.avatar === key ? primary : colors.textSub} size={36} />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -366,13 +367,13 @@ export default function SetupScreen() {
                 </Text>
                 <Text style={ds.formLabel}>{t('setup.parents.avatarLabel')}</Text>
                 <View style={s.avatarGrid}>
-                  {CHILD_AVATARS.map((emoji) => (
+                  {CHILD_AVATARS.map((key) => (
                     <TouchableOpacity
-                      key={emoji}
-                      style={[ds.avatarBtn, child.avatar === emoji && { backgroundColor: tint, borderColor: primary }]}
-                      onPress={() => updateChild(i, 'avatar', emoji)}
+                      key={key}
+                      style={[ds.avatarBtn, child.avatar === key && { backgroundColor: tint, borderColor: primary }]}
+                      onPress={() => updateChild(i, 'avatar', key)}
                     >
-                      <Text style={s.avatarEmoji}>{emoji}</Text>
+                      <AvatarIcon name={key} color={child.avatar === key ? primary : colors.textSub} size={36} />
                     </TouchableOpacity>
                   ))}
                 </View>

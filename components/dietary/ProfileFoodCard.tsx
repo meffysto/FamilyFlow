@@ -22,6 +22,8 @@ import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { AvatarIcon } from '../ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { Chip } from '../ui/Chip';
 import { Button } from '../ui/Button';
 import { DietaryAutocomplete } from './DietaryAutocomplete';
@@ -267,7 +269,7 @@ export const ProfileFoodCard = React.memo(function ProfileFoodCard({
       {/* En-tête profil */}
       <View style={styles.profileHeader}>
         {avatar ? (
-          <Text style={styles.avatar}>{avatar}</Text>
+          <AvatarIcon name={avatar} color={getTheme((profile as Profile).theme).primary} size={36} />
         ) : (
           <View style={[styles.avatarPlaceholder, { backgroundColor: colors.cardAlt }]}>
             <Text style={[styles.avatarPlaceholderText, { color: colors.textMuted }]}>

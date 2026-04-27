@@ -18,6 +18,7 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import * as SecureStore from 'expo-secure-store';
+import { ChevronRight } from 'lucide-react-native';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, FontFamily } from '../constants/typography';
@@ -189,7 +190,10 @@ export function DashboardCard({
               accessibilityLabel={`${t('dashboard.seeAll')} ${title}`}
               accessibilityRole="button"
             >
-              <Text style={[styles.moreLink, { color: accentColor }]}>{t('dashboard.seeAll')} →</Text>
+              <View style={styles.moreLinkRow}>
+                <Text style={[styles.moreLink, { color: accentColor }]}>{t('dashboard.seeAll')}</Text>
+                <ChevronRight size={14} strokeWidth={2.25} color={accentColor} />
+              </View>
             </TouchableOpacity>
           )}
           {collapsible && (
@@ -390,6 +394,11 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.bold,
+  },
+  moreLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   moreLink: {
     fontSize: FontSize.sm,

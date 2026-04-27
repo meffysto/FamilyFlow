@@ -20,6 +20,8 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { AvatarIcon } from '../ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -194,7 +196,7 @@ export function GiftSenderSheet({
                       { backgroundColor: selected ? primary + '20' : colors.cardAlt },
                       selected && { borderColor: primary, borderWidth: 2 },
                     ]}>
-                      <Text style={styles.avatarEmoji}>{p.avatar}</Text>
+                      <AvatarIcon name={p.avatar} color={selected ? primary : getTheme(p.theme).primary} size={36} />
                     </View>
                     <Text
                       style={[styles.profileName, { color: selected ? primary : colors.text }]}

@@ -18,6 +18,8 @@ import { Shadows } from '../../constants/shadows';
 import { FontSize, FontWeight } from '../../constants/typography';
 import type { FamilyQuest, FamilyFarmReward } from '../../lib/quest-engine';
 import type { Profile } from '../../lib/types';
+import { AvatarIcon, resolveAvatarKey } from '../ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 
 // ─── Reward label ─────────────────────────────────────────────────────────────
 
@@ -113,10 +115,14 @@ function FamilyQuestBannerInner({ quest, profiles, colors, primary, t, onPress }
           <View style={styles.contributions}>
             {displayedContribs.map(([profileId, count]) => {
               const profile = profiles.find(p => p.id === profileId);
-              const avatar = profile?.avatar ?? profileId.slice(0, 1).toUpperCase();
+              const avatar = profile?.avatar;
               return (
                 <View key={profileId} style={styles.contrib}>
-                  <Text style={styles.contribAvatar}>{avatar}</Text>
+                  {resolveAvatarKey(avatar) || avatar ? (
+                    <AvatarIcon name={avatar ?? 'user'} color={getTheme(profile?.theme).primary} size={24} />
+                  ) : (
+                    <Text style={styles.contribAvatar}>{profileId.slice(0, 1).toUpperCase()}</Text>
+                  )}
                   <Text style={[styles.contribCount, { color: colors.textSub }]}>+{count}</Text>
                 </View>
               );

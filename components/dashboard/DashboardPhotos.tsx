@@ -11,6 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Check, Camera } from 'lucide-react-native';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { AvatarIcon } from '../ui/AvatarIcon';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
 import { FontSize } from '../../constants/typography';
@@ -18,7 +19,7 @@ import { FontSize } from '../../constants/typography';
 function DashboardPhotosInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { colors } = useThemeColors();
+  const { colors, primary } = useThemeColors();
   const { profiles, photoDates, addPhoto } = useVault();
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -106,7 +107,7 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
             onPress={() => { if (!e.hasPhoto) { pickPhotoForEnfant(e.name); } else { router.push('/(tabs)/photos'); } }}
             activeOpacity={0.7}
           >
-            <Text style={styles.avatarEmoji}>{e.avatar}</Text>
+            <AvatarIcon name={e.avatar} color={primary} size={36} />
             {e.hasPhoto ? (
               <Check size={14} strokeWidth={2.25} color={colors.success} />
             ) : (

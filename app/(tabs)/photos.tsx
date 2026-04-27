@@ -39,6 +39,7 @@ import { getDateLocale, formatDateLocalized } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MemoryEditor } from '../../components/MemoryEditor';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
 import { EmptyState } from '../../components/EmptyState';
 import Animated, {
   useSharedValue,
@@ -370,7 +371,7 @@ export default function PhotosScreen() {
                     onPress={() => setSelectedEnfantIdx(idx)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.enfantEmoji}>{e.avatar}</Text>
+                    <AvatarIcon name={e.avatar} color={idx === selectedEnfantIdx ? primary : colors.textSub} size={28} />
                     <Text style={[styles.enfantLabel, { color: colors.textMuted }, idx === selectedEnfantIdx && { color: primary, fontWeight: FontWeight.bold }]}>
                       {e.name}
                     </Text>

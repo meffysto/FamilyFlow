@@ -54,7 +54,7 @@ function getSourceLabel(sourceFile: string, profiles: Profile[] | undefined, t: 
     const match = profiles.find((p) =>
       (p.role === 'enfant' || p.role === 'ado') && sourceFile.includes(p.name),
     );
-    if (match) return `${match.avatar} ${match.name}`;
+    if (match) return match.name;
   }
   if (sourceFile.includes('Maison')) return t('taskCard.sourceHome');
   if (sourceFile.includes('courses')) return t('taskCard.sourceShopping');

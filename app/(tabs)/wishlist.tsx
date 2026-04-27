@@ -31,6 +31,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
 
 const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 import { useLocalSearchParams } from 'expo-router';
@@ -352,9 +353,7 @@ export default function WishlistScreen() {
 
             return (
               <View style={styles.sectionHeader}>
-                <View style={[styles.sectionAvatarCircle, { backgroundColor: primary + '15' }]}>
-                  <Text style={styles.sectionAvatarEmoji}>{section.avatar}</Text>
-                </View>
+                <AvatarIcon name={section.avatar} color={primary} size={36} />
                 <View style={styles.sectionInfo}>
                   <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
                   {isAdult && (

@@ -1450,9 +1450,9 @@
     },
     "insights": {
       "title": "Suggestions",
-      "newSuggestions": "🔄 Nouvelles suggestions",
-      "enrichAI": "🤖 Enrichir avec l'IA",
-      "aiLoading": "⏳ Analyse en cours...",
+      "newSuggestions": "Nouvelles suggestions",
+      "enrichAI": "Enrichir avec l'IA",
+      "aiLoading": "Analyse en cours...",
       "addedToCourses_one": "{{count}} article ajouté aux courses",
       "addedToCourses_other": "{{count}} articles ajoutés aux courses"
     },

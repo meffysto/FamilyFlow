@@ -13,7 +13,8 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native
 import Svg, { Circle } from 'react-native-svg';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { Chip } from '../../components/ui';
+import { Chip, AvatarIcon } from '../../components/ui';
+import { getTheme } from '../../constants/themes';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { SkillTreeGraph } from '../../components/SkillTreeGraph';
 import { SkillDetailModal } from '../../components/SkillDetailModal';
@@ -240,7 +241,7 @@ export default function SkillsScreen() {
                       accessibilityRole="button"
                       accessibilityState={{ selected: isActive }}
                     >
-                      <Text style={styles.avatarEmoji}>{child.avatar}</Text>
+                      <AvatarIcon name={child.avatar} color={isActive ? primary : getTheme(child.theme).primary} size={36} />
                     </TouchableOpacity>
                   );
                 })}

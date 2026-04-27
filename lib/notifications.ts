@@ -210,7 +210,7 @@ export function buildTaskCompletedContext(
 ): Record<string, string> {
   return {
     'profile.name': profile.name,
-    'profile.avatar': profile.avatar,
+    'profile.avatar': '',
     'profile.points': String(profile.points),
     'profile.level': String(profile.level),
     'task.text': taskText,
@@ -230,7 +230,7 @@ export function buildLootBoxContext(
   }
   return {
     'profile.name': profile.name,
-    'profile.avatar': profile.avatar,
+    'profile.avatar': '',
     'box.rarity': box.rarity.toUpperCase(),
     'box.emoji': box.emoji,
     'box.reward': box.reward,
@@ -275,7 +275,7 @@ export function buildManualContext(
   const now = new Date();
   return {
     'profile.name': profile?.name ?? '',
-    'profile.avatar': profile?.avatar ?? '',
+    'profile.avatar': '',
     'date': format(now, 'dd/MM/yyyy'),
     'time': format(now, 'HH:mm'),
   };
