@@ -28,7 +28,7 @@ Phase: 42
 Plan: 9/9 complétés
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-26 - Completed quick task 260427-114: Système Livre/Chapitres pour les histoires
+Last activity: 2026-04-27 - Completed quick task 260427-izj: Recettes — CRUD catégories vault
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
@@ -74,6 +74,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260424-jhs | Long press sur une semaine dans le suivi de grossesse pour modifier le texte de la semaine | 2026-04-24 | b964d59 | [260424-jhs-long-press-sur-une-semaine-dans-le-suivi](./quick/260424-jhs-long-press-sur-une-semaine-dans-le-suivi/) |
 | 260425-0qf | 5 poses sprite compagnon Live Activity (idle/happy/sleeping/eating/celebrating) — migration base64→pose | 2026-04-24 | 3e771b6 | [260425-0qf-int-grer-5-poses-sprite-compagnon-idle-h](./quick/260425-0qf-int-grer-5-poses-sprite-compagnon-idle-h/) |
 | 260427-114 | Système Livre/Chapitres pour les histoires (continuité narrative, casting évolutif, tranche d'âge) | 2026-04-26 | d11985c | [260427-114-syst-me-livre-chapitres-pour-les-histoir](./quick/260427-114-syst-me-livre-chapitres-pour-les-histoir/) |
+| 260427-izj | Recettes — CRUD catégories vault (createCategory/renameCategory/deleteCategory + chips vault + modal CRUD) | 2026-04-27 | 91c7bd7 | [260427-izj-recettes-gestion-cat-gories-perso-cr-er-](./quick/260427-izj-recettes-gestion-cat-gories-perso-cr-er-/) |
 
 ## Performance Metrics
 
