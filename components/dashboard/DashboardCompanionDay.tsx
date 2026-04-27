@@ -1,26 +1,29 @@
 /**
- * DashboardCompanionDay.tsx — Carte "La journée de la mascotte"
+ * DashboardCompanionDay.tsx — Carte "voix du compagnon" + pont Live Activity
  *
- * 2 états :
- * 1. Inactif : CTA pour réveiller la mascotte
- * 2. Actif : aperçu du stage en cours + stats du jour
+ * 3 états (une seule carte, pas de doublon) :
+ * 1. Inactif standard           → phrase 1ʳᵉ personne du stage horaire + CTA "Réveil"
+ * 2. Inactif + événement proactif (morning_greeting / weekly_recap) →
+ *                                 message proactif (template puis IA si dispo) + CTA "On y va"
+ * 3. Actif (LA en cours)        → bulle live + anneau XP + CTA "Dodo"
  *
- * La Live Activity vit sur le Lock Screen + Dynamic Island.
- * Cette carte est le pont dans l'app : découverte + état + contrôle.
+ * Absorbe le rôle de l'ancien DashboardCompanion : la voix du compagnon n'a
+ * plus qu'un seul slot dans le dashboard.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, AppState, Platform, Alert, Image } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
-import { Sun, Moon } from 'lucide-react-native';
+import { Sun, Moon, ArrowRight } from 'lucide-react-native';
 import { useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { isFarmEconomyEvent, computeNextRdvText } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { DashboardCard } from '../DashboardCard';
+import { GlassView } from '../ui/GlassView';
 import { FontSize, FontFamily } from '../../constants/typography';
-import { Spacing } from '../../constants/spacing';
+import { Spacing, Radius } from '../../constants/spacing';
 import {
   startMascotte,
   stopMascotte,
@@ -30,33 +33,122 @@ import {
   patchMascotte,
   type MascotteStageOverride,
 } from '../../lib/mascotte-live-activity';
-import { getCompanionStage } from '../../lib/mascot/companion-engine';
+import {
+  getCompanionStage,
+  detectProactiveEvent,
+  pickCompanionMessage,
+  generateCompanionAIMessage,
+} from '../../lib/mascot/companion-engine';
+import {
+  loadCompanionMessages,
+  saveCompanionMessages,
+  type PersistedCompanionMessage,
+} from '../../lib/mascot/companion-storage';
+import { loadWeekStats } from '../../lib/semantic/coupling-overrides';
 import { generateLABubble, pickLABubbleShort, type LAStage } from '../../lib/mascot/la-bubbles';
 import { useAI } from '../../contexts/AIContext';
 import { callCompanionMessage } from '../../lib/ai-service';
 import { calculateLevel } from '../../lib/gamification';
 import type { DashboardSectionProps } from './types';
+import type { CompanionEvent } from '../../lib/mascot/companion-types';
 
 const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+const LAST_VISIT_KEY = 'companion_last_visit';
 
 interface StageInfo {
+  /** Micro-label en haut de la bulle (caps, tracking) */
+  label: (name: string) => string;
+  /** Phrase 1ʳᵉ personne du compagnon, mode inactif sans événement proactif */
+  idle: (args: { name: string; done: number; total: number; meal: string | null }) => string;
+  /** Sub stage actif si pas de bulle IA dispo (fallback compact) */
+  fallback: (args: { done: number; total: number; meal: string | null }) => string;
+  /** Emoji fallback si pas de sprite */
   emoji: string;
-  title: string;
-  sub: (args: { done: number; total: number; meal: string | null }) => string;
 }
 
-function stageForHour(h: number, name: string): { key: MascotteStageOverride; info: StageInfo } {
-  if (h < 9) return { key: 'reveil', info: { emoji: '🌅', title: `${name} s'étire au soleil`, sub: () => 'Prête pour la journée' } };
-  if (h < 12) return { key: 'travail', info: { emoji: '⛏️', title: 'Au boulot !', sub: ({ done, total }) => `Tâches : ${done}/${total}` } };
-  if (h < 14) return { key: 'midi', info: { emoji: '🍽️', title: `${name} déjeune`, sub: ({ meal }) => meal ? `Au menu : ${meal}` : 'Repas à planifier' } };
-  if (h < 18) return { key: 'jeu', info: { emoji: '🌿', title: `${name} joue dans la clairière`, sub: ({ done, total }) => `Tâches : ${done}/${total}` } };
-  if (h < 20) return { key: 'routine', info: { emoji: '🛁', title: 'Routine du soir', sub: ({ meal }) => meal ? `Dîner : ${meal}` : 'Douche, dents, histoire' } };
-  if (h < 22) return { key: 'dodo', info: { emoji: '🌙', title: `${name} se prépare à dormir`, sub: () => 'Une petite histoire ?' } };
-  return { key: 'recap', info: { emoji: '🌙', title: 'Journée accomplie', sub: ({ done }) => `${done} tâches faites aujourd'hui` } };
+function stageForHour(h: number): { key: MascotteStageOverride; info: StageInfo } {
+  if (h < 9) return {
+    key: 'reveil',
+    info: {
+      emoji: '🌅',
+      label: () => 'Au lever du jour',
+      idle: ({ name }) => `Le soleil pointe — ${name} s'étire et t'attend.`,
+      fallback: () => 'Prête pour la journée',
+    },
+  };
+  if (h < 12) return {
+    key: 'travail',
+    info: {
+      emoji: '⛏️',
+      label: () => 'Au boulot',
+      idle: ({ done, total }) =>
+        total > 0
+          ? `Réveille-moi et je t'accompagne — ${done}/${total} déjà cochées ce matin.`
+          : `Réveille-moi, on attaque la matinée ensemble.`,
+      fallback: ({ done, total }) => `Tâches : ${done}/${total}`,
+    },
+  };
+  if (h < 14) return {
+    key: 'midi',
+    info: {
+      emoji: '🍽️',
+      label: () => 'Pause de midi',
+      idle: ({ meal }) =>
+        meal
+          ? `${meal} au menu — je t'attends pour passer à table.`
+          : `Pause méridienne, j'aimerais bien partager ton repas…`,
+      fallback: ({ meal }) => meal ? `Au menu : ${meal}` : 'Repas à planifier',
+    },
+  };
+  if (h < 18) return {
+    key: 'jeu',
+    info: {
+      emoji: '🌿',
+      label: () => 'Après-midi',
+      idle: ({ done, total }) =>
+        total > 0
+          ? `Je joue dans la clairière — il reste ${Math.max(0, total - done)} tâches à cocher.`
+          : `Je joue dans la clairière — réveille-moi pour qu'on avance.`,
+      fallback: ({ done, total }) => `Tâches : ${done}/${total}`,
+    },
+  };
+  if (h < 20) return {
+    key: 'routine',
+    info: {
+      emoji: '🛁',
+      label: () => 'Routine du soir',
+      idle: ({ meal }) =>
+        meal
+          ? `${meal} ce soir — je commence ma routine, retrouve-moi.`
+          : `Le soir tombe, douche-dents-histoire, je suis prête.`,
+      fallback: ({ meal }) => meal ? `Dîner : ${meal}` : 'Douche, dents, histoire',
+    },
+  };
+  if (h < 22) return {
+    key: 'dodo',
+    info: {
+      emoji: '🌙',
+      label: () => 'Avant le dodo',
+      idle: () => `Je pose mes pattes — une petite histoire avant la nuit ?`,
+      fallback: () => 'Une petite histoire ?',
+    },
+  };
+  return {
+    key: 'recap',
+    info: {
+      emoji: '🌙',
+      label: () => 'Récap de la journée',
+      idle: ({ done }) =>
+        done > 0
+          ? `Belle journée — ${done} tâches cochées. Tu peux dormir tranquille.`
+          : `La nuit est calme. Repose-toi, demain est un autre jour.`,
+      fallback: ({ done }) => `${done} tâches faites aujourd'hui`,
+    },
+  };
 }
 
 function DashboardCompanionDayInner(_props: DashboardSectionProps) {
-  const { colors, tint } = useThemeColors();
+  const { colors, tint, isDark } = useThemeColors();
   const { tasks, meals, tasksCompletedToday, activeProfile, gamiData, rdvs, subscribeTaskComplete } = useVault();
   const { config: aiConfig } = useAI();
   const [active, setActive] = useState(false);
@@ -64,6 +156,8 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
   const [currentBubble, setCurrentBubble] = useState<string | null>(null);
   const [companionSprite, setCompanionSprite] = useState<string | null>(null);
   const [regenBusy, setRegenBusy] = useState(false);
+  const [proactiveMessage, setProactiveMessage] = useState<string | null>(null);
+  const [proactiveEvent, setProactiveEvent] = useState<CompanionEvent | null>(null);
 
   const aiCall = useMemo(() => {
     if (!aiConfig?.apiKey) return null;
@@ -90,11 +184,8 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       ? (todayMeals.find(m => m.mealType === 'Déjeuner')?.text ?? null)
       : (todayMeals.find(m => m.mealType === 'Dîner')?.text ?? null);
 
-    // Récap soir (stage .recap : 22h+) — géré nativement côté widget via l'enum
     const nextRdvText = computeNextRdvText(rdvs);
 
-    // XP "effort quotidien" du profil actif (tâches, saga, défis, quêtes…)
-    // Exclut les gains d'économie ferme (ventes, bonus craft) — cf. isFarmEconomyEvent.
     const xpGainedToday = (gamiData?.history ?? [])
       .filter(e =>
         e.profileId === activeProfile?.id &&
@@ -103,7 +194,6 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       )
       .reduce((sum, e) => sum + (e.points || 0), 0);
 
-    // Level-up du jour : comparaison niveau actuel vs niveau au début de la journée
     const currentPoints = activeProfile?.points ?? 0;
     const currentLevel = calculateLevel(currentPoints);
     const levelBeforeToday = calculateLevel(currentPoints - xpGainedToday);
@@ -111,16 +201,14 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       ? `⬆️ Niveau ${currentLevel} atteint !`
       : null;
 
-    const stage = stageForHour(hour, mascotteName);
-    // Prochaine tâche : récurrente non-cochée d'abord, sinon première non-cochée
+    const stage = stageForHour(hour);
     const uncompletedToday = todayTasks.filter(t => !t.completed);
     const nextTask = uncompletedToday.find(t => t.recurrence) ?? uncompletedToday[0] ?? null;
     const nextTaskText = nextTask?.text ?? null;
     const nextTaskId = nextTask?.id ?? null;
-    return { done, total, meal, stage, hour, recapBonusText, xpGainedToday, nextTaskText, nextTaskId, nextRdvText };
-  }, [tasks, meals, tasksCompletedToday, mascotteName, gamiData, activeProfile?.id, activeProfile?.points, rdvs]);
+    return { done, total, meal, stage, hour, recapBonusText, xpGainedToday, nextTaskText, nextTaskId, nextRdvText, currentLevel };
+  }, [tasks, meals, tasksCompletedToday, gamiData, activeProfile?.id, activeProfile?.points, rdvs]);
 
-  // Re-check actif state on mount, focus, et AppState change
   const refreshActive = useCallback(async () => {
     const a = await isMascotteActive();
     setActive(a);
@@ -132,18 +220,12 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     const sub = AppState.addEventListener('change', (s) => {
       if (s !== 'active') return;
       refreshActive();
-      // Re-post un update() pour rafraîchir staleDate + stage horaire.
-      // Sans ça, iOS consomme le staleDate initial (ex: reveil→travail à 9h) mais
-      // n'en reçoit pas de nouveau → bloqué sur travail jusqu'au prochain event
-      // métier. patchMascotte({}) merge avec lastSnapshot, ré-écrit ContentState,
-      // le natif recalcule staleDate pour la prochaine transition.
       patchMascotte({}).catch(() => {});
     });
     return () => sub.remove();
   }, [refreshActive]);
 
-  // Flash happy sur tâche cochée : patchMascotte pose:'happy', retour idle après 2s.
-  // Phase 260425-0qf : plus de double-load base64 — on passe la pose en String.
+  // Flash happy sur tâche cochée
   const happyFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!active) return;
@@ -162,8 +244,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     };
   }, [active, subscribeTaskComplete, activeProfile?.companion, activeProfile?.points]);
 
-  // Précharge le sprite compagnon dès que le profil actif est connu, indépendamment
-  // de l'état de la LA — permet d'afficher le sprite dans la carte même LA éteinte.
+  // Précharge du sprite
   useEffect(() => {
     let cancelled = false;
     const companion = activeProfile?.companion;
@@ -175,6 +256,106 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
     return () => { cancelled = true; };
   }, [activeProfile?.id, activeProfile?.points, activeProfile?.companion]);
 
+  // ── Détection événement proactif (absorbé depuis l'ancien DashboardCompanion)
+  useEffect(() => {
+    const companion = activeProfile?.companion;
+    if (!companion || !activeProfile?.id) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const stored = await SecureStore.getItemAsync(LAST_VISIT_KEY);
+        const isFirstVisitToday = stored !== today;
+
+        let hoursSinceLastVisit = 0;
+        if (companion.lastEventAt) {
+          const lastMs = new Date(companion.lastEventAt).getTime();
+          hoursSinceLastVisit = (Date.now() - lastMs) / (1000 * 60 * 60);
+        }
+        const currentHour = new Date().getHours();
+        const isWeeklyRecapWindow = new Date().getDay() === 0 && currentHour >= 18 && currentHour < 21;
+
+        const tasksToday = tasks.filter(t => t.dueDate === today && t.completed).length;
+        const totalTasksToday = tasks.filter(t => t.dueDate === today).length;
+
+        const evt = detectProactiveEvent({
+          hoursSinceLastVisit,
+          currentHour,
+          tasksToday,
+          totalTasksToday,
+          streak: activeProfile.streak ?? 0,
+          hasGratitudeToday: false,
+          hasMealsPlanned: false,
+          isFirstVisitToday,
+          isWeeklyRecapWindow,
+        });
+
+        // Seuls morning_greeting et weekly_recap sont pertinents pour la carte
+        if (evt !== 'morning_greeting' && evt !== 'weekly_recap') return;
+        if (cancelled) return;
+
+        const level = calculateLevel(activeProfile.points ?? 0);
+        const recentMessages: PersistedCompanionMessage[] = await loadCompanionMessages(activeProfile.id);
+
+        const msgContext: import('../../lib/mascot/companion-types').CompanionMessageContext = {
+          profileName: activeProfile.name,
+          companionName: companion.name,
+          companionSpecies: companion.activeSpecies,
+          tasksToday,
+          streak: activeProfile.streak ?? 0,
+          level,
+          recentMessages: recentMessages.map(m => m.text),
+        };
+
+        if (evt === 'weekly_recap') {
+          const weekStats = await loadWeekStats();
+          const totalEffects = Object.values(weekStats.counts).reduce((s, n) => s + n, 0);
+          const topCategories = Object.entries(weekStats.counts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 3)
+            .map(([cat]) => cat);
+          msgContext.recentTasks = [
+            `Effets sémantiques semaine: ${totalEffects}`,
+            ...topCategories.map(c => `Top catégorie: ${c}`),
+          ];
+        }
+
+        const templateMsg = pickCompanionMessage(evt, msgContext);
+        if (cancelled) return;
+        setProactiveEvent(evt);
+        setProactiveMessage(templateMsg);
+
+        if (aiCall) {
+          generateCompanionAIMessage(evt, msgContext, aiCall).then(aiMsg => {
+            if (!cancelled && aiMsg) {
+              setProactiveMessage(aiMsg);
+              const newMsg: PersistedCompanionMessage = {
+                text: aiMsg,
+                event: evt,
+                timestamp: new Date().toISOString(),
+              };
+              saveCompanionMessages(activeProfile.id, [...recentMessages, newMsg]);
+            }
+          });
+        } else {
+          const newMsg: PersistedCompanionMessage = {
+            text: templateMsg,
+            event: evt,
+            timestamp: new Date().toISOString(),
+          };
+          saveCompanionMessages(activeProfile.id, [...recentMessages, newMsg]);
+        }
+      } catch {
+        // Non-critique — pas d'événement proactif si erreur
+      }
+    })();
+
+    return () => { cancelled = true; };
+    // Une seule détection au mount par profil (D-06)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProfile?.id]);
+
   const handleStart = useCallback(async () => {
     if (busy) return;
     setBusy(true);
@@ -183,22 +364,16 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       const companion = activeProfile?.companion;
       const companionLevel = calculateLevel(activeProfile?.points ?? 0);
       const companionStage = getCompanionStage(companionLevel);
-      // Phase 260425-0qf : précharge le sprite pour la carte UI locale (inchangé)
       if (companion && !companionSprite) {
         loadCompanionSpriteBase64(companion.activeSpecies, companionStage)
           .then(b64 => { if (b64) setCompanionSprite(b64); })
           .catch(() => {});
       }
-      // Phase 260425-0qf : write des 5 PNG délégué à startMascotte() via
-      // companionSpecies/companionStage dans le snap (garantit que TOUS les
-      // callers — y compris dev menus — écrivent correctement).
-      // Dériver la pose narrative depuis le stage horaire actuel
       const initialPose = derivePoseFromStage(
         todayData.stage.key as MascotteStageOverride,
         todayData.done,
         todayData.total,
       );
-      // Bulle compagnon : tente IA si aiCall dispo, sinon template court sync.
       const laStage = todayData.stage.key as LAStage;
       const speechBubble = aiCall
         ? await generateLABubble(
@@ -245,11 +420,11 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
       }
       setActive(ok);
     } catch {
-      /* silencieux — feature non critique */
+      /* silencieux — non critique */
     } finally {
       setBusy(false);
     }
-  }, [busy, todayData, mascotteName, activeProfile]);
+  }, [busy, todayData, mascotteName, activeProfile, aiCall, companionSprite, tasks]);
 
   const handleRegenerate = useCallback(async () => {
     if (regenBusy) return;
@@ -283,7 +458,6 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
           ).catch(() => pickLABubbleShort(laStage))
         : pickLABubbleShort(laStage);
       setCurrentBubble(bubble);
-      // Propage à la Live Activity si elle tourne
       if (active) {
         await patchMascotte({ speechBubble: bubble });
       }
@@ -306,89 +480,126 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
 
   if (Platform.OS !== 'ios') return null;
 
+  // ── Calcul des slots d'affichage selon l'état ─────────────────────────────
   const progress = todayData.total > 0
     ? Math.min(1, todayData.done / todayData.total)
     : 0;
 
-  const displayBubble = active && currentBubble
+  // Speech : priorité LA active > proactif > idle
+  const speech = active && currentBubble
     ? currentBubble
-    : todayData.stage.info.sub({ done: todayData.done, total: todayData.total, meal: todayData.meal });
+    : !active && proactiveMessage
+      ? proactiveMessage
+      : todayData.stage.info.idle({
+          name: mascotteName,
+          done: todayData.done,
+          total: todayData.total,
+          meal: todayData.meal,
+        });
+
+  // Label micro-meta au-dessus de la bulle
+  const stageLabel = active
+    ? `${todayData.stage.info.label(mascotteName)} · ${String(todayData.hour).padStart(2, '0')}h${String(new Date().getMinutes()).padStart(2, '0')}${todayData.total > 0 ? ` · ${todayData.done}/${todayData.total}` : ''}`
+    : proactiveEvent === 'morning_greeting'
+      ? 'Bonjour'
+      : proactiveEvent === 'weekly_recap'
+        ? 'Bilan de la semaine'
+        : todayData.stage.info.label(mascotteName);
+
+  // Footer meta : info contextuelle utile
+  const footerMeta = active
+    ? (todayData.xpGainedToday > 0
+        ? `+${todayData.xpGainedToday} XP aujourd'hui${todayData.nextTaskText ? ` · ${todayData.nextTaskText}` : ''}`
+        : todayData.nextTaskText
+          ? `Prochain : ${todayData.nextTaskText}`
+          : `Niveau ${todayData.currentLevel}`)
+    : proactiveEvent
+      ? `Streak ${activeProfile?.streak ?? 0} jour${(activeProfile?.streak ?? 0) > 1 ? 's' : ''} · Niveau ${todayData.currentLevel}`
+      : todayData.total > 0
+        ? `${todayData.done}/${todayData.total} tâche${todayData.total > 1 ? 's' : ''}${todayData.meal ? ` · ${todayData.meal}` : ''}`
+        : todayData.meal
+          ? todayData.meal
+          : `Niveau ${todayData.currentLevel}`;
+
+  // CTA label : adapté à l'état
+  const ctaLabel = active
+    ? 'Dodo'
+    : proactiveEvent
+      ? 'On y va'
+      : 'Réveil';
+  const CtaIcon = active ? Moon : proactiveEvent ? ArrowRight : Sun;
+
+  const ctaBg = active ? colors.brand.soil : colors.brand.or;
+  const ctaShadow = active ? colors.brand.soil : colors.brand.orDeep;
+  const ctaFg = active ? colors.brand.parchment : colors.brand.soil;
 
   return (
-    <DashboardCard key="companionDay" title="La journée de la mascotte" color={tint} tinted hideMoreLink>
-      <View style={styles.row}>
-        <TouchableOpacity
-          onPress={active ? handleRegenerate : handleStart}
-          disabled={busy || regenBusy}
-          style={styles.avatarWrap}
-          accessibilityLabel={active ? 'Régénérer la phrase' : `Réveiller ${mascotteName}`}
-        >
-          <SpriteWithRing
-            sprite={companionSprite}
-            fallbackEmoji={todayData.stage.info.emoji}
-            progress={progress}
-            active={active}
-            ringColor={tint}
-            cardBg={colors.cardAlt}
-          />
-          {active && (
-            <View style={[styles.regenBadge, { backgroundColor: colors.card, borderColor: tint }]}>
-              <Text style={[styles.regenIcon, { color: tint }]}>{regenBusy ? '⋯' : '↻'}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-        <View style={styles.body}>
-          <Text
-            style={[
-              active ? styles.stageLabel : styles.titleStrong,
-              { color: active ? colors.brand.soil : colors.text },
-            ]}
-            numberOfLines={1}
+    <View style={styles.outer}>
+      <GlassView
+        style={styles.card}
+        intensity={28}
+        borderRadius={Radius.xl}
+        tint={colors.brand.parchment}
+        tintOpacity={isDark ? 0.18 : 0.92}
+      >
+        {/* Coin replié décoratif (dog-ear) */}
+        <View pointerEvents="none" style={[styles.dogEar, { backgroundColor: colors.brand.bark }]} />
+
+        <View style={styles.row}>
+          <TouchableOpacity
+            onPress={active ? handleRegenerate : handleStart}
+            disabled={busy || regenBusy}
+            style={styles.avatarWrap}
+            accessibilityLabel={active ? 'Régénérer la phrase' : `Réveiller ${mascotteName}`}
           >
-            {active ? todayData.stage.info.title : `Réveille ${mascotteName}`}
-          </Text>
-          {active ? (
-            <View style={[styles.bubble, { backgroundColor: colors.brand.parchment, borderColor: colors.brand.bark }]}>
-              <Text style={[styles.bubbleText, { color: colors.brand.soil }]} numberOfLines={2}>
-                « {displayBubble} »
-              </Text>
-            </View>
-          ) : (
-            <Text style={[styles.subIntro, { color: colors.textSub }]} numberOfLines={2}>
-              Accompagne-la toute la journée, depuis ton écran verrouillé
+            <SpriteWithRing
+              sprite={companionSprite}
+              fallbackEmoji={todayData.stage.info.emoji}
+              progress={progress}
+              active={active}
+              ringColor={tint}
+              cardBg={colors.cardAlt}
+            />
+            {active && (
+              <View style={[styles.regenBadge, { backgroundColor: colors.card, borderColor: tint }]}>
+                <Text style={[styles.regenIcon, { color: tint }]}>{regenBusy ? '⋯' : '↻'}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.body}>
+            <Text style={[styles.stageLabel, { color: colors.brand.soilMuted }]} numberOfLines={1}>
+              {stageLabel.toUpperCase()}
             </Text>
-          )}
+            <Text
+              style={[styles.speech, { color: colors.brand.soil }]}
+              numberOfLines={3}
+            >
+              <Text style={[styles.quote, { color: colors.brand.soilMuted }]}>{'"'}</Text>
+              {speech}
+            </Text>
+          </View>
         </View>
-        {active ? (
+
+        <View style={[styles.footer, { borderTopColor: colors.brand.bark }]}>
+          <Text style={[styles.meta, { color: colors.textMuted }]} numberOfLines={1}>
+            {footerMeta}
+          </Text>
           <TouchableOpacity
-            onPress={handleStop}
+            onPress={active ? handleStop : handleStart}
             disabled={busy}
-            style={[styles.btnCta, { backgroundColor: colors.brand.soil, shadowColor: colors.brand.soil }]}
-            accessibilityLabel={`Mettre ${mascotteName} au repos`}
+            style={[styles.cta, { backgroundColor: ctaBg, shadowColor: ctaShadow }]}
+            accessibilityLabel={active ? `Mettre ${mascotteName} au repos` : `Réveiller ${mascotteName}`}
           >
-            <Moon size={20} strokeWidth={1.75} color={colors.brand.parchment} />
-            <Text style={[styles.btnCtaText, { color: colors.brand.parchment }]}>Dodo</Text>
+            <CtaIcon size={14} strokeWidth={2.2} color={ctaFg} />
+            <Text style={[styles.ctaText, { color: ctaFg }]}>{ctaLabel}</Text>
           </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={handleStart}
-            disabled={busy}
-            style={[styles.btnCta, { backgroundColor: colors.brand.or, shadowColor: colors.brand.orDeep }]}
-            accessibilityLabel={`Réveiller ${mascotteName}`}
-          >
-            <Sun size={20} strokeWidth={1.75} color={colors.brand.soil} />
-            <Text style={[styles.btnCtaText, { color: colors.brand.soil }]}>Réveil</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </DashboardCard>
+        </View>
+      </GlassView>
+    </View>
   );
 }
 
-/**
- * Sprite compagnon (ou emoji fallback) entouré d'un anneau de progression.
- * Anneau caché si aucune tâche du jour (éviter le 0/0 dégueu).
- */
 interface SpriteWithRingProps {
   sprite: string | null;
   fallbackEmoji: string;
@@ -398,8 +609,8 @@ interface SpriteWithRingProps {
   cardBg: string;
 }
 function SpriteWithRing({ sprite, fallbackEmoji, progress, active, ringColor, cardBg }: SpriteWithRingProps) {
-  const size = 76;
-  const stroke = 3.5;
+  const size = 84;
+  const stroke = 4;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - progress);
@@ -434,11 +645,11 @@ function SpriteWithRing({ sprite, fallbackEmoji, progress, active, ringColor, ca
         {sprite ? (
           <Image
             source={{ uri: `data:image/png;base64,${sprite}` }}
-            style={{ width: 60, height: 60 }}
+            style={{ width: 66, height: 66 }}
             resizeMode="contain"
           />
         ) : (
-          <Text style={{ fontSize: 40 }}>{fallbackEmoji}</Text>
+          <Text style={{ fontSize: 42 }}>{fallbackEmoji}</Text>
         )}
       </View>
     </View>
@@ -448,18 +659,37 @@ function SpriteWithRing({ sprite, fallbackEmoji, progress, active, ringColor, ca
 export const DashboardCompanionDay = React.memo(DashboardCompanionDayInner);
 
 const styles = StyleSheet.create({
+  outer: {
+    marginHorizontal: Spacing['2xl'],
+    marginBottom: Spacing['2xl'],
+  },
+  card: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing['2xl'],
+    paddingBottom: Spacing.xl,
+    overflow: 'hidden',
+  },
+  dogEar: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    opacity: 0.22,
+    borderBottomLeftRadius: 12,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.xl,
   },
   avatarWrap: {
     position: 'relative',
   },
   spriteInner: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 74,
+    height: 74,
+    borderRadius: 37,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -478,50 +708,52 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  titleStrong: {
-    fontSize: FontSize.lg,
-    fontFamily: FontFamily.serif,
-  },
   body: {
     flex: 1,
     minWidth: 0,
     gap: 4,
   },
   stageLabel: {
-    fontSize: 17,
-    fontFamily: FontFamily.handwriteSemibold,
-    lineHeight: 20,
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 1.4,
   },
-  bubble: {
-    borderRadius: 10,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  bubbleText: {
-    fontSize: 17,
+  speech: {
     fontFamily: FontFamily.handwrite,
-    lineHeight: 19,
+    fontSize: 22,
+    lineHeight: 28,
   },
-  subIntro: {
-    fontSize: FontSize.caption,
-    lineHeight: 16,
+  quote: {
+    fontSize: 26,
   },
-  btnCta: {
-    flexDirection: 'column',
+  footer: {
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderStyle: 'dashed',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.sm + 2,
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  meta: {
+    flex: 1,
+    fontSize: FontSize.caption,
+  },
+  cta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 14,
-    minWidth: 58,
-    shadowOffset: { width: 0, height: 2 },
+    borderRadius: 999,
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
     shadowRadius: 6,
     elevation: 3,
   },
-  btnCtaText: {
-    fontSize: 11,
+  ctaText: {
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.3,
   },

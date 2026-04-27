@@ -102,7 +102,6 @@ import {
   DashboardBilanSemaine,
   DashboardSecretMissions,
   DashboardGarden,
-  DashboardCompanion,
   DashboardCompanionDay,
 } from '../../components/dashboard';
 import type { ZenConfig } from '../../components/settings/SettingsZen';
@@ -1024,11 +1023,6 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
       >
-        {/* Bulle compagnon proactive — morning_greeting et weekly_recap (D-06, COMPANION-01/02) */}
-        {!isLoading && vaultPath && (
-          <DashboardCompanion {...sectionProps} />
-        )}
-
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
           <DashboardCard title={t('index.welcome.title')}>
