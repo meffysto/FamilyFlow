@@ -42,6 +42,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { useVault } from '../contexts/VaultContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, FontFamily, LineHeight } from '../constants/typography';
+import { Shadows } from '../constants/shadows';
 import {
   UtensilsCrossed,
   ClipboardList,
@@ -153,7 +154,7 @@ function hexToRgba(hex: string, alpha: number): string {
 // ─── Composant : Barre de progression ────────────────────────────────────────
 
 function ProgressBar({ step }: { step: number }) {
-  const { primary } = useThemeColors();
+  const { primary, colors } = useThemeColors();
   const displayStep = Math.min(step, PROGRESS_TOTAL);
   const progress = displayStep / PROGRESS_TOTAL;
 
@@ -169,10 +170,10 @@ function ProgressBar({ step }: { step: number }) {
 
   return (
     <View style={s.progressContainer}>
-      <View style={s.progressTrack}>
+      <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
         <Animated.View style={[s.progressFill, { backgroundColor: primary }, barStyle]} />
       </View>
-      <Text style={s.progressLabel}>{displayStep} / {PROGRESS_TOTAL}</Text>
+      <Text style={[s.progressLabel, { color: colors.textMuted }]}>{displayStep} / {PROGRESS_TOTAL}</Text>
     </View>
   );
 }
@@ -256,16 +257,16 @@ function TinderCard({ text, onSwipe, index, total }: TinderCardProps) {
         style={[s.tinderCard, { width: SCREEN_WIDTH - Spacing['2xl'] * 2, backgroundColor: colors.card, shadowColor: colors.text }, cardStyle]}
       >
         {/* Indicateur OUI */}
-        <Animated.View style={[s.tinderBadge, s.tinderBadgeYes, yesStyle]}>
-          <Text style={s.tinderBadgeText}>{t('onboarding.tinder.btnYes')}</Text>
+        <Animated.View style={[s.tinderBadge, s.tinderBadgeYes, { borderColor: colors.success, backgroundColor: colors.success + '22' }, yesStyle]}>
+          <Text style={[s.tinderBadgeText, { color: colors.success }]}>{t('onboarding.tinder.btnYes')}</Text>
         </Animated.View>
 
         {/* Indicateur NON */}
-        <Animated.View style={[s.tinderBadge, s.tinderBadgeNo, noStyle]}>
-          <Text style={s.tinderBadgeText}>{t('onboarding.tinder.btnNo')}</Text>
+        <Animated.View style={[s.tinderBadge, s.tinderBadgeNo, { borderColor: colors.error, backgroundColor: colors.error + '22' }, noStyle]}>
+          <Text style={[s.tinderBadgeText, { color: colors.error }]}>{t('onboarding.tinder.btnNo')}</Text>
         </Animated.View>
 
-        <Text style={s.tinderQuote}>"</Text>
+        <Text style={[s.tinderQuote, { color: colors.borderLight }]}>"</Text>
         <Text style={[s.tinderText, { color: colors.text }]}>{text}</Text>
 
         {/* Compteur */}
@@ -812,16 +813,16 @@ export default function OnboardingScreen() {
         {!done && (
           <Animated.View entering={FadeIn.delay(400)} style={s.tinderButtons}>
             <TouchableOpacity
-              style={[s.tinderBtn, { borderColor: '#EF4444' }]}
+              style={[s.tinderBtn, { borderColor: colors.error }]}
               onPress={() => handleTinderSwipe('left')}
             >
-              <Text style={[s.tinderBtnText, { color: '#EF4444' }]}>{t('onboarding.tinder.btnNo')}</Text>
+              <Text style={[s.tinderBtnText, { color: colors.error }]}>{t('onboarding.tinder.btnNo')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[s.tinderBtn, { borderColor: '#22C55E' }]}
+              style={[s.tinderBtn, { borderColor: colors.success }]}
               onPress={() => handleTinderSwipe('right')}
             >
-              <Text style={[s.tinderBtnText, { color: '#22C55E' }]}>{t('onboarding.tinder.btnYes')}</Text>
+              <Text style={[s.tinderBtnText, { color: colors.success }]}>{t('onboarding.tinder.btnYes')}</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -1199,7 +1200,6 @@ const s = StyleSheet.create({
     flex: 1,
     height: 4,
     borderRadius: Radius.full,
-    backgroundColor: '#E5E7EB',
     overflow: 'hidden',
   },
   progressFill: {
@@ -1208,7 +1208,6 @@ const s = StyleSheet.create({
   },
   progressLabel: {
     fontSize: FontSize.caption,
-    color: '#9CA3AF',
     fontWeight: FontWeight.medium,
     minWidth: 32,
     textAlign: 'right',
@@ -1234,11 +1233,7 @@ const s = StyleSheet.create({
     marginTop: Spacing['3xl'],
     borderRadius: Radius.xl,
     padding: Spacing['2xl'],
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    ...Shadows.md,
     marginBottom: Spacing['4xl'],
   },
   welcomePreviewHeader: {
@@ -1370,11 +1365,7 @@ const s = StyleSheet.create({
     borderRadius: Radius.xl,
     padding: Spacing['2xl'],
     marginBottom: Spacing.xl,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...Shadows.sm,
     overflow: 'visible',
   },
   testimonialBadge: {
@@ -1435,11 +1426,7 @@ const s = StyleSheet.create({
     borderRadius: Radius['2xl'],
     padding: Spacing['3xl'],
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    ...Shadows.lg,
   },
   tinderCardBg: {
     transform: [{ scale: 0.95 }],
@@ -1455,22 +1442,17 @@ const s = StyleSheet.create({
   },
   tinderBadgeYes: {
     right: Spacing['2xl'],
-    borderColor: '#22C55E',
-    backgroundColor: '#22C55E22',
   },
   tinderBadgeNo: {
     left: Spacing['2xl'],
-    borderColor: '#EF4444',
-    backgroundColor: '#EF444422',
   },
   tinderBadgeText: {
     fontWeight: FontWeight.semibold,
     fontSize: FontSize.sm,
   },
   tinderQuote: {
-    fontSize: 48,
-    lineHeight: 48,
-    color: '#D1D5DB',
+    fontSize: FontSize.hero,
+    lineHeight: FontSize.hero,
     marginBottom: -Spacing.xl,
   },
   tinderText: {
