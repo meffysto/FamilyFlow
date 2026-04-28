@@ -35,7 +35,10 @@ import Animated, {
   Extrapolation,
   FadeInDown,
   FadeOutDown,
+  FadeOutLeft,
+  LinearTransition,
 } from 'react-native-reanimated';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useLocalSearchParams } from 'expo-router';
 import { format, startOfWeek, addWeeks, isSameWeek } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -645,6 +648,9 @@ export default function MealsScreen() {
         return;
       }
 
+      // Feedback tactile au moment du check (avant la disparition de l'item)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+
       // Cocher → supprimer + restocker (existant ou nouveau si catégorie stockable)
       const autoStock = await getAutomationFlag('autoStockFromCourses');
       const { incremented, newItem } = autoStock
@@ -703,6 +709,25 @@ export default function MealsScreen() {
       ],
     );
   }, [removeCourseItem, t]);
+
+  // Suppression directe via swipe : pas de confirmation Alert (le swipe EST la
+  // confirmation). Sécurité = toast undo qui réinjecte l'item à la même section.
+  const handleCourseSwipeDelete = useCallback(async (item: CourseItem) => {
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      await removeCourseItem(item.lineIndex);
+      showToast(t('meals.toast.removedFromList', { name: item.text }), 'success', {
+        label: t('meals.toast.undo'),
+        onPress: async () => {
+          try {
+            await addCourseItem(item.text, item.section);
+          } catch { /* best effort */ }
+        },
+      });
+    } catch (e) {
+      Alert.alert(t('meals.alert.error'), String(e));
+    }
+  }, [removeCourseItem, addCourseItem, showToast, t]);
 
   const handleAddCourse = useCallback(async () => {
     const text = newItemText.trim();
@@ -1640,74 +1665,85 @@ export default function MealsScreen() {
                   <View key={section} style={[styles.courseSection, { backgroundColor: colors.card }]}>
                     <Text style={[styles.courseSectionTitle, { color: colors.text }]}>{section}</Text>
                     {items.map((item) => (
-                      <View
+                      <Animated.View
                         key={item.id}
-                        style={[
-                          styles.courseRow,
-                          { borderTopColor: colors.cardAlt },
-                          item.pending && { opacity: 0.6 },
-                        ]}
+                        layout={LinearTransition.springify().damping(18).stiffness(160)}
+                        exiting={FadeOutLeft.duration(220)}
                       >
-                        <TouchableOpacity
-                          style={styles.courseCheckbox}
-                          onPress={() => handleCourseToggle(item)}
-                          activeOpacity={0.6}
-                          accessibilityLabel={item.completed ? t('meals.shopping.itemBought', { text: item.text }) : t('meals.shopping.itemToBuy', { text: item.text })}
-                          accessibilityRole="checkbox"
-                          accessibilityState={{ checked: item.completed }}
+                        <ReanimatedSwipeable
+                          renderRightActions={() => (
+                            <View style={[styles.courseSwipeAction, { backgroundColor: colors.errorBg }]}>
+                              <X size={22} color={colors.error} strokeWidth={2.5} />
+                            </View>
+                          )}
+                          rightThreshold={48}
+                          friction={2}
+                          overshootRight={false}
+                          onSwipeableOpen={(direction) => {
+                            if (direction === 'right') {
+                              handleCourseSwipeDelete(item);
+                            }
+                          }}
                         >
-                          <View style={[
-                            styles.checkboxBox,
-                            { borderColor: colors.border },
-                            item.completed && { backgroundColor: primary, borderColor: primary },
-                          ]}>
-                            {item.completed && <Check size={14} color={colors.onPrimary} strokeWidth={3} />}
-                          </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.courseTextWrap}
-                          onPress={() => handleEditCourse(item)}
-                          onLongPress={() => handleCourseLongPress(item)}
-                          delayLongPress={400}
-                          activeOpacity={0.6}
-                        >
-                          <Text
+                          <View
                             style={[
-                              styles.courseText,
-                              { color: colors.text },
-                              item.completed && { color: colors.textMuted, textDecorationLine: 'line-through' },
+                              styles.courseRow,
+                              { backgroundColor: colors.card, borderTopColor: colors.cardAlt },
+                              item.pending && { opacity: 0.6 },
                             ]}
-                            numberOfLines={2}
                           >
-                            {item.text}
-                          </Text>
-                        </TouchableOpacity>
-                        {(() => {
-                          const priceInfo = coursePriceByItemId.get(item.id);
-                          if (!priceInfo) return null;
-                          return (
-                            <Text
-                              style={[
-                                styles.coursePrice,
-                                { color: priceInfo.stale ? colors.textFaint : colors.textMuted },
-                                item.completed && { textDecorationLine: 'line-through' },
-                              ]}
+                            <TouchableOpacity
+                              style={styles.courseCheckbox}
+                              onPress={() => handleCourseToggle(item)}
+                              activeOpacity={0.6}
+                              accessibilityLabel={item.completed ? t('meals.shopping.itemBought', { text: item.text }) : t('meals.shopping.itemToBuy', { text: item.text })}
+                              accessibilityRole="checkbox"
+                              accessibilityState={{ checked: item.completed }}
                             >
-                              {`≈ ${formatPrice(priceInfo.price)}`}
-                            </Text>
-                          );
-                        })()}
-                        <TouchableOpacity
-                          style={styles.courseRemoveBtn}
-                          onPress={() => handleCourseRemove(item)}
-                          activeOpacity={0.6}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          accessibilityLabel={t('meals.shopping.deleteA11y', { text: item.text })}
-                          accessibilityRole="button"
-                        >
-                          <X size={16} color={colors.textMuted} />
-                        </TouchableOpacity>
-                      </View>
+                              <View style={[
+                                styles.checkboxBox,
+                                { borderColor: colors.border },
+                                item.completed && { backgroundColor: primary, borderColor: primary },
+                              ]}>
+                                {item.completed && <Check size={14} color={colors.onPrimary} strokeWidth={3} />}
+                              </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.courseTextWrap}
+                              onPress={() => handleEditCourse(item)}
+                              onLongPress={() => handleCourseLongPress(item)}
+                              delayLongPress={400}
+                              activeOpacity={0.6}
+                            >
+                              <Text
+                                style={[
+                                  styles.courseText,
+                                  { color: colors.text },
+                                  item.completed && { color: colors.textMuted, textDecorationLine: 'line-through' },
+                                ]}
+                                numberOfLines={2}
+                              >
+                                {item.text}
+                              </Text>
+                            </TouchableOpacity>
+                            {(() => {
+                              const priceInfo = coursePriceByItemId.get(item.id);
+                              if (!priceInfo) return null;
+                              return (
+                                <Text
+                                  style={[
+                                    styles.coursePrice,
+                                    { color: priceInfo.stale ? colors.textFaint : colors.textMuted },
+                                    item.completed && { textDecorationLine: 'line-through' },
+                                  ]}
+                                >
+                                  {`≈ ${formatPrice(priceInfo.price)}`}
+                                </Text>
+                              );
+                            })()}
+                          </View>
+                        </ReanimatedSwipeable>
+                      </Animated.View>
                     ))}
                   </View>
                 );
@@ -3334,12 +3370,12 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
   },
-  courseRemoveBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
+  // Action révélée au swipe-left sur un item (suppression directe)
+  courseSwipeAction: {
+    width: 76,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing['2xl'],
   },
   coursePrice: {
     fontSize: FontSize.sm,
