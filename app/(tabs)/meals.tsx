@@ -41,6 +41,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngredients, convertCookToMetric, COURSE_CATEGORIES, type AppIngredient } from '../../lib/cooklang';
+import { CourseItemEditor } from '../../components/CourseItemEditor';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, cleanCookContent, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -128,7 +129,7 @@ export default function MealsScreen() {
   const {
     meals, updateMeal, loadMealsForWeek,
     courses, vault,
-    addCourseItem, removeCourseItem, moveCourseItem, mergeCourseIngredients, toggleCourseItem,
+    addCourseItem, removeCourseItem, moveCourseItem, updateCourseItem, mergeCourseIngredients, toggleCourseItem,
     stock, updateStockQuantity, addStockItem,
     recipes, loadRecipes, deleteRecipe, renameRecipe,
     saveRecipeImage, getRecipeImageUri,
@@ -237,11 +238,8 @@ export default function MealsScreen() {
   const [textImportCategory, setTextImportCategory] = useState('Importées');
   const [showDictaphone, setShowDictaphone] = useState(false);
 
-  // Category picker modal state
-  const [categoryPickerItem, setCategoryPickerItem] = useState<CourseItem | null>(null);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryEmoji, setNewCategoryEmoji] = useState('🏷️');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  // Course item editor (bottom sheet) state
+  const [editingCourseItem, setEditingCourseItem] = useState<CourseItem | null>(null);
 
   // Community explore state
   const [showExplore, setShowExplore] = useState(false);
@@ -681,40 +679,35 @@ export default function MealsScreen() {
     setShowVoiceModal(false);
   }, [mergeCourseIngredients, showToast, t]);
 
-  const handleChangeCourseCategory = useCallback((item: CourseItem) => {
-    setCategoryPickerItem(item);
-    setNewCategoryName('');
+  const handleEditCourse = useCallback((item: CourseItem) => {
+    Haptics.selectionAsync();
+    setEditingCourseItem(item);
   }, []);
 
-  const handleSelectCategory = useCallback(async (newSection: string) => {
-    if (!categoryPickerItem) return;
-    if (newSection === categoryPickerItem.section) {
-      setCategoryPickerItem(null);
-      return;
-    }
+  const handleEditSave = useCallback(async (patch: { text: string; section: string }) => {
+    if (!editingCourseItem) return;
     try {
-      await moveCourseItem(categoryPickerItem.lineIndex, categoryPickerItem.text, newSection);
-      setCategoryPickerItem(null);
+      await updateCourseItem(editingCourseItem.lineIndex, patch);
+      setEditingCourseItem(null);
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [categoryPickerItem, moveCourseItem, t]);
+  }, [editingCourseItem, updateCourseItem, t]);
 
-  const handleAddNewCategory = useCallback(async () => {
-    const name = newCategoryName.trim();
-    if (!name || !categoryPickerItem) return;
-    // Utiliser l'emoji choisi ou celui déjà dans le nom
-    const section = /^\p{Emoji}/u.test(name) ? name : `${newCategoryEmoji} ${name}`;
-    try {
-      await moveCourseItem(categoryPickerItem.lineIndex, categoryPickerItem.text, section);
-      setCategoryPickerItem(null);
-      setNewCategoryName('');
-      setNewCategoryEmoji('🏷️');
-      setShowEmojiPicker(false);
-    } catch (e) {
+  const handleDuplicateCourse = useCallback((item: CourseItem) => {
+    addCourseItem(item.text, item.section).catch((e) => {
       Alert.alert(t('meals.alert.error'), String(e));
-    }
-  }, [newCategoryName, newCategoryEmoji, categoryPickerItem, moveCourseItem, t]);
+    });
+  }, [addCourseItem, t]);
+
+  const handleCourseLongPress = useCallback((item: CourseItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(item.text, undefined, [
+      { text: t('meals.shopping.actionDuplicate'), onPress: () => handleDuplicateCourse(item) },
+      { text: t('meals.shopping.actionDelete'), style: 'destructive', onPress: () => handleCourseRemove(item) },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  }, [handleDuplicateCourse, handleCourseRemove, t]);
 
   // ─── Recettes logic ─────────────────────────────────────────────
 
@@ -1348,17 +1341,24 @@ export default function MealsScreen() {
                             {item.completed && <Text style={[styles.checkboxCheck, { color: colors.onPrimary }]}>✓</Text>}
                           </View>
                         </TouchableOpacity>
-                        <Text
-                          style={[
-                            styles.courseText,
-                            { color: colors.text },
-                            item.completed && { color: colors.textMuted, textDecorationLine: 'line-through' },
-                          ]}
-                          numberOfLines={2}
-                          onLongPress={() => handleChangeCourseCategory(item)}
+                        <TouchableOpacity
+                          style={styles.courseTextWrap}
+                          onPress={() => handleEditCourse(item)}
+                          onLongPress={() => handleCourseLongPress(item)}
+                          delayLongPress={400}
+                          activeOpacity={0.6}
                         >
-                          {item.text}
-                        </Text>
+                          <Text
+                            style={[
+                              styles.courseText,
+                              { color: colors.text },
+                              item.completed && { color: colors.textMuted, textDecorationLine: 'line-through' },
+                            ]}
+                            numberOfLines={2}
+                          >
+                            {item.text}
+                          </Text>
+                        </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.courseRemoveBtn}
                           onPress={() => handleCourseRemove(item)}
@@ -1884,124 +1884,14 @@ export default function MealsScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Category picker modal (grille) */}
-      <Modal
-        visible={categoryPickerItem !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => { setCategoryPickerItem(null); setNewCategoryEmoji('🏷️'); setShowEmojiPicker(false); }}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => { setCategoryPickerItem(null); setNewCategoryEmoji('🏷️'); setShowEmojiPicker(false); }}
-        >
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <View
-              style={[styles.catPickerContent, { backgroundColor: colors.card }]}
-              onStartShouldSetResponder={() => true}
-            >
-              <Text style={[styles.catPickerTitle, { color: colors.text }]}>
-                {t('meals.categoryPicker.title', { item: categoryPickerItem?.text })}
-              </Text>
-
-              {/* Grille de catégories (statiques + custom existantes) */}
-              <View style={styles.catGrid}>
-                {[...new Set([...COURSE_CATEGORIES, ...courseSections])].map((cat) => {
-                  const isActive = categoryPickerItem?.section === cat;
-                  return (
-                    <TouchableOpacity
-                      key={cat}
-                      style={[
-                        styles.catChip,
-                        { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
-                        isActive && { backgroundColor: tint, borderColor: primary },
-                      ]}
-                      onPress={() => handleSelectCategory(cat)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[
-                        styles.catChipText,
-                        { color: colors.text },
-                        isActive && { color: primary, fontWeight: FontWeight.bold },
-                      ]}>
-                        {cat}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Nouvelle catégorie */}
-              <View style={styles.catNewRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.catEmojiBtn,
-                    { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
-                  ]}
-                  onPress={() => setShowEmojiPicker(!showEmojiPicker)}
-                  activeOpacity={0.7}
-                  accessibilityLabel={t('meals.categoryPicker.emojiA11y')}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.catEmojiBtnText}>{newCategoryEmoji}</Text>
-                </TouchableOpacity>
-                <TextInput
-                  style={[
-                    styles.catNewInput,
-                    { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                  ]}
-                  placeholder={t('meals.categoryPicker.newPlaceholder')}
-                  placeholderTextColor={colors.textMuted}
-                  value={newCategoryName}
-                  onChangeText={setNewCategoryName}
-                  onSubmitEditing={handleAddNewCategory}
-                  returnKeyType="done"
-                />
-                <TouchableOpacity
-                  style={[
-                    styles.catNewBtn,
-                    { backgroundColor: newCategoryName.trim() ? primary : colors.cardAlt },
-                  ]}
-                  onPress={handleAddNewCategory}
-                  disabled={!newCategoryName.trim()}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.catNewBtnText,
-                    { color: newCategoryName.trim() ? colors.onPrimary : colors.textMuted },
-                  ]}>
-                    {t('meals.categoryPicker.addBtn')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Grille d'emojis pour nouvelle catégorie */}
-              {showEmojiPicker && (
-                <View style={[styles.emojiGrid, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
-                  {['🏷️','🥩','🐟','🧀','🥚','🥬','🍎','🍝','🧁','🫙','🌿','🥖','🥤','🧊','🧴','👶','🧹','🛒',
-                    '🍫','🍪','🍯','🫒','🍕','🥜','🌾','🧃','🍷','☕','🧂','🫧','🐾','🎁','💊','🏠','🪴','✨'].map((emoji) => (
-                    <TouchableOpacity
-                      key={emoji}
-                      style={[
-                        styles.emojiOption,
-                        newCategoryEmoji === emoji && { backgroundColor: tint, borderColor: primary },
-                      ]}
-                      onPress={() => {
-                        setNewCategoryEmoji(emoji);
-                        setShowEmojiPicker(false);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.emojiOptionText}>{emoji}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-          </KeyboardAvoidingView>
-        </TouchableOpacity>
-      </Modal>
+      {/* Course item editor (bottom sheet pageSheet) */}
+      <CourseItemEditor
+        visible={!!editingCourseItem}
+        item={editingCourseItem}
+        sections={courseSections}
+        onClose={() => setEditingCourseItem(null)}
+        onSave={handleEditSave}
+      />
 
       {/* Import picker bottom sheet */}
       <Modal
@@ -2982,8 +2872,10 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
     fontWeight: FontWeight.bold,
   },
-  courseText: {
+  courseTextWrap: {
     flex: 1,
+  },
+  courseText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
   },
