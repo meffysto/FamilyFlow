@@ -60,6 +60,7 @@ import { computeMissingIngredients, computeStockDecrements, resolveStockAction, 
 import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag } from '../../lib/automation-config';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
+import { Mic } from 'lucide-react-native';
 import { trackCourseAdd, getFrequentCourses } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
 import { MealConflictRecap, CookSuggestModal, extractRecipeTitlesFromMarkdown } from '../../components/dietary';
@@ -1448,7 +1449,7 @@ export default function MealsScreen() {
                 accessibilityLabel={t('meals.shopping.voiceAddBtnA11y')}
                 accessibilityRole="button"
               >
-                <Text style={styles.micBtnIcon}>🎙️</Text>
+                <Mic size={18} color={colors.textSub} />
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -2285,7 +2286,7 @@ export default function MealsScreen() {
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={{ fontSize: 20 }}>🎙️</Text>
+                    <Mic size={20} color={colors.textSub} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -3392,8 +3393,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: Spacing.md,
-  },
-  micBtnIcon: {
-    fontSize: FontSize.lg,
   },
 });
