@@ -162,7 +162,7 @@ export interface StockUpdateResult {
 const WEIGHT_UNITS = /^(g|kg|ml|cl|dl|l|cs|cc|CS|CC|càs|càc|c\.?\s*à\s*s\.?|c\.?\s*à\s*c\.?|tasse|pincée|tbsp|tsp)$/i;
 
 /** Regex pour parser "3 oeufs", "120 g de pecorino", "sachet de levure" */
-const COURSE_TEXT_RE = /^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|cl|dl|l|cs|cc|CS|CC|càs|càc|c\.?\s*à\s*s\.?|c\.?\s*à\s*c\.?|tasse|pincée|sachet|tranche|feuille|brin|gousse|botte|paquet|boîte|pot|verre|tbsp|tsp)?\s*(?:de\s+|d')?(.+)/i;
+export const COURSE_TEXT_RE = /^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|cl|dl|l|cs|cc|CS|CC|càs|càc|c\.?\s*à\s*s\.?|c\.?\s*à\s*c\.?|tasse|pincée|sachet|tranche|feuille|brin|gousse|botte|paquet|boîte|pot|verre|tbsp|tsp)?\s*(?:de\s+|d')?(.+)/i;
 
 interface ParsedCourseText {
   produit: string;
