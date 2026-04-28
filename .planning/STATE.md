@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: Phase 42 complète — shippable sur TestFlight
-last_updated: "2026-04-28T09:44:16Z"
-last_activity: "2026-04-28 - Completed quick task 260428-g5n: Phase B courses Optimistic UI — 6 writes optimistes + rollback + indicateur pending"
+last_updated: "2026-04-28T09:55:46Z"
+last_activity: "2026-04-28 - Completed quick task 260428-gh1: Phase C courses — bottom sheet édition nom/qté/catégorie + long-press menu"
 progress:
   total_phases: 14
   completed_phases: 9
@@ -28,7 +28,7 @@ Phase: 42
 Plan: 9/9 complétés
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-28 - Completed quick task 260428-g5n: Phase B courses Optimistic UI — 6 writes optimistes + rollback + indicateur pending
+Last activity: 2026-04-28 - Completed quick task 260428-gh1: Phase C courses — bottom sheet édition nom/qté/catégorie + long-press menu
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
@@ -79,6 +79,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260428-e5h | Articles fréquents tap-to-add + entrée vocale DictaphoneRecorder dans onglet courses | 2026-04-28 | 1b94ddd | [260428-e5h-articles-fr-quents-et-entr-e-vocale-pour](./quick/260428-e5h-articles-fr-quents-et-entr-e-vocale-pour/) |
 | 260428-fnw | Phase A courses refactor — constantes centralisées + fix #37 décochage + queue d'écritures séquentielle | 2026-04-28 | 6dd223d | [260428-fnw-phase-a-courses-refactor-pr-paratoire-co](./quick/260428-fnw-phase-a-courses-refactor-pr-paratoire-co/) |
 | 260428-g5n | Phase B courses Optimistic UI — 6 writes optimistes + rollback + indicateur pending opacity 0.6 | 2026-04-28 | 0f864c0 | [260428-g5n-phase-b-courses-optimistic-ui-sur-les-wr](./quick/260428-g5n-phase-b-courses-optimistic-ui-sur-les-wr/) |
+| 260428-gh1 | Phase C courses — bottom sheet édition nom/qté/catégorie + long-press menu (Dupliquer/Supprimer) | 2026-04-28 | 0b4afa9 | [260428-gh1-phase-c-courses-edition-nom-qte-categori](./quick/260428-gh1-phase-c-courses-edition-nom-qte-categori/) |
 
 ## Performance Metrics
 
