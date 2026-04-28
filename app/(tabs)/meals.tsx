@@ -128,7 +128,7 @@ export default function MealsScreen() {
   const {
     meals, updateMeal, loadMealsForWeek,
     courses, vault,
-    addCourseItem, removeCourseItem, moveCourseItem, mergeCourseIngredients,
+    addCourseItem, removeCourseItem, moveCourseItem, mergeCourseIngredients, toggleCourseItem,
     stock, updateStockQuantity, addStockItem,
     recipes, loadRecipes, deleteRecipe, renameRecipe,
     saveRecipeImage, getRecipeImageUri,
@@ -580,9 +580,8 @@ export default function MealsScreen() {
     if (!vault) return;
     try {
       if (item.completed) {
-        // Décocher simplement
-        await vault.toggleTask(COURSES_FILE_LEGACY, item.lineIndex, false);
-        await refresh();
+        // Décocher simplement — toggleCourseItem fait l'update local optimisé (pas de refresh global)
+        await toggleCourseItem(item, false);
         return;
       }
 
@@ -622,7 +621,7 @@ export default function MealsScreen() {
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [vault, refresh, stock, updateStockQuantity, addStockItem, removeCourseItem, addCourseItem, showToast, t]);
+  }, [vault, stock, updateStockQuantity, addStockItem, removeCourseItem, addCourseItem, toggleCourseItem, showToast, t]);
 
   const handleCourseRemove = useCallback((item: CourseItem) => {
     Alert.alert(
