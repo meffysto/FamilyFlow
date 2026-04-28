@@ -1324,7 +1324,14 @@ export default function MealsScreen() {
                   <View key={section} style={[styles.courseSection, { backgroundColor: colors.card }]}>
                     <Text style={[styles.courseSectionTitle, { color: colors.text }]}>{section}</Text>
                     {items.map((item) => (
-                      <View key={item.id} style={[styles.courseRow, { borderTopColor: colors.cardAlt }]}>
+                      <View
+                        key={item.id}
+                        style={[
+                          styles.courseRow,
+                          { borderTopColor: colors.cardAlt },
+                          item.pending && { opacity: 0.6 },
+                        ]}
+                      >
                         <TouchableOpacity
                           style={styles.courseCheckbox}
                           onPress={() => handleCourseToggle(item)}
