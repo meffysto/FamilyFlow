@@ -253,6 +253,13 @@ export default function MealsScreen() {
     getDefaultRecipeList().then(setDefaultRecipeListId).catch(() => {});
   }, []);
 
+  // Helper : résout la liste cible pour auto-courses recettes (defaultRecipeList ?? activeListId)
+  const resolveTargetListId = useCallback(async (): Promise<string | null> => {
+    const def = await getDefaultRecipeList();
+    if (def && listes.find(l => l.id === def && !l.archive)) return def;
+    return activeListId;
+  }, [listes, activeListId]);
+
   // Community explore state
   const [showExplore, setShowExplore] = useState(false);
   const [exploreQuery, setExploreQuery] = useState('');
@@ -389,9 +396,19 @@ export default function MealsScreen() {
           const familyServings = computeFamilyServings(profiles);
           const missing = computeMissingIngredients(recipe.ingredients, stock, familyServings, recipe.servings);
           if (missing.length > 0) {
-            const { added } = await mergeCourseIngredients(missing);
-            if (added > 0) {
-              showToast(t('meals.toast.ingredientsAdded', { count: added }));
+            // Phase D — cibler defaultRecipeList ?? activeListId
+            const targetListId = await resolveTargetListId();
+            if (targetListId && targetListId !== activeListId) {
+              const { added } = await mergeCourseIngredientsToList(targetListId, missing);
+              if (added > 0) {
+                const liste = listes.find(l => l.id === targetListId);
+                showToast(t('meals.shopping.lists.addedToList', { nom: liste?.nom ?? targetListId }));
+              }
+            } else {
+              const { added } = await mergeCourseIngredients(missing);
+              if (added > 0) {
+                showToast(t('meals.toast.ingredientsAdded', { count: added }));
+              }
             }
           }
         }
@@ -546,15 +563,24 @@ export default function MealsScreen() {
     }));
 
     try {
-      const { added, merged } = await mergeCourseIngredients(items);
+      // Phase D — cibler defaultRecipeList ?? activeListId
+      const targetListId = await resolveTargetListId();
+      const useTargeted = targetListId && targetListId !== activeListId;
+      const { added, merged } = useTargeted && targetListId
+        ? await mergeCourseIngredientsToList(targetListId, items)
+        : await mergeCourseIngredients(items);
       const parts: string[] = [];
       if (added > 0) parts.push(t('meals.merge.added', { count: added }));
       if (merged > 0) parts.push(t('meals.merge.merged', { count: merged }));
+      const listeNom = useTargeted ? listes.find(l => l.id === targetListId)?.nom : undefined;
       Alert.alert(t('meals.alert.listGenerated'), t('meals.alert.listGeneratedMsg', { details: parts.join(', '), count: linkedRecipeCount, plural: linkedRecipeCount > 1 ? 's' : '' }));
+      if (useTargeted && listeNom) {
+        showToast(t('meals.shopping.lists.addedToList', { nom: listeNom }));
+      }
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [meals, resolveRecipe, mergeCourseIngredients, linkedRecipeCount]);
+  }, [meals, resolveRecipe, mergeCourseIngredients, mergeCourseIngredientsToList, resolveTargetListId, activeListId, listes, linkedRecipeCount, showToast, t]);
 
   // ─── Courses logic ──────────────────────────────────────────────
 
@@ -842,13 +868,6 @@ export default function MealsScreen() {
     t,
   ]);
 
-  // Helper : résout la liste cible pour auto-courses recettes
-  const resolveTargetListId = useCallback(async (): Promise<string | null> => {
-    const def = await getDefaultRecipeList();
-    if (def && listes.find(l => l.id === def && !l.archive)) return def;
-    return activeListId;
-  }, [listes, activeListId]);
-
   // ─── Recettes logic ─────────────────────────────────────────────
 
   const profileFavorites = useMemo(() => {
@@ -901,16 +920,25 @@ export default function MealsScreen() {
         quantity: ing.quantity,
         section: categorizeIngredient(ing.name),
       }));
-      const { added, merged } = await mergeCourseIngredients(items);
+      // Phase D — cibler defaultRecipeList ?? activeListId
+      const targetListId = await resolveTargetListId();
+      const useTargeted = targetListId && targetListId !== activeListId;
+      const { added, merged } = useTargeted && targetListId
+        ? await mergeCourseIngredientsToList(targetListId, items)
+        : await mergeCourseIngredients(items);
       const parts: string[] = [];
       if (added > 0) parts.push(t('meals.merge.added', { count: added }));
       if (merged > 0) parts.push(t('meals.merge.merged', { count: merged }));
       Alert.alert(t('meals.alert.addedToCourses'), t('meals.alert.addedToCoursesMsg', { details: parts.join(', ') }));
+      if (useTargeted) {
+        const liste = listes.find(l => l.id === targetListId);
+        if (liste) showToast(t('meals.shopping.lists.addedToList', { nom: liste.nom }));
+      }
       setSelectedRecipe(null);
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [mergeCourseIngredients, t]);
+  }, [mergeCourseIngredients, mergeCourseIngredientsToList, resolveTargetListId, activeListId, listes, showToast, t]);
 
   const handleDeleteRecipe = useCallback((recipe: Recipe) => {
     Alert.alert(

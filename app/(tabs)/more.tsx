@@ -112,7 +112,7 @@ const CATEGORY_ACCENT_KEYS: Record<CategoryKey, 'catOrganisation' | 'catSante' |
 export default function MoreScreen() {
   const router = useRouter();
   const headerRef = useRef<View>(null);
-  const { rdvs, stock, courses, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes, loveNotes } = useVault();
+  const { rdvs, stock, courses, totalRemainingAllLists, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes, loveNotes } = useVault();
   const { primary, colors, isDark } = useThemeColors();
   const { t } = useTranslation();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -170,7 +170,7 @@ export default function MoreScreen() {
       { Icon: CalendarDays, label: t('menu.items.appointments'), route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.catOrganisation, category: 'organisation' as const },
       { Icon: UtensilsCrossed, label: t('menu.items.meals'), route: '/(tabs)/meals', color: colors.catOrganisation, category: 'organisation' as const },
       { Icon: ChefHat, label: t('menu.items.recipes'), route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.catOrganisation, category: 'organisation' as const },
-      { Icon: ShoppingCart, label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.catOrganisation, category: 'organisation' as const },
+      { Icon: ShoppingCart, label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: totalRemainingAllLists || undefined, color: colors.catOrganisation, category: 'organisation' as const },
       { Icon: Package, label: t('menu.items.stock'), route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.catOrganisation, category: 'organisation' as const },
       // Santé & Bien-être — violet
       { Icon: Salad, label: t('menu.items.dietary'), route: '/dietary', color: colors.catSante, category: 'sante' as const },
@@ -198,7 +198,7 @@ export default function MoreScreen() {
       // Système — gris
       { Icon: SettingsIcon, label: t('menu.items.settings'), route: '/(tabs)/settings', color: colors.catSysteme, category: 'systeme' as const },
     ];
-  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries, t, loveNoteUnreadCount, notes]);
+  }, [rdvs, stock, totalRemainingAllLists, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries, t, loveNoteUnreadCount, notes]);
 
   const visibleItems = isChildMode ? items.filter((i) => i.route !== '/(tabs)/budget' && i.route !== '/(tabs)/notes') : items;
 

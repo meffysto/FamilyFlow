@@ -296,6 +296,7 @@ export default function DashboardScreen() {
     setActiveProfile,
     contributeFamilyQuest,
     loveNotes,
+    totalRemainingAllLists,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -614,7 +615,7 @@ export default function DashboardScreen() {
     if (insights.length > 0) activeSections.add('insights');
     if (pendingMenage.length > 0) activeSections.add('menage');
     if (todayMeals.length > 0) activeSections.add('meals');
-    if (topCourses.length > 0) activeSections.add('courses');
+    if (totalRemainingAllLists > 0) activeSections.add('courses');
     if (upcomingRdvs.length > 0) activeSections.add('rdvs');
     if (enfants.length > 0) activeSections.add('photos');
     if (activeRewards.length > 0) activeSections.add('rewards');
@@ -668,7 +669,7 @@ export default function DashboardScreen() {
       counts: {
         overdue: overdueTasks.length,
         menagePending: pendingMenage.length,
-        coursesRemaining: topCourses.length,
+        coursesRemaining: totalRemainingAllLists,
         rdvToday: todayRdvs.length,
         rdvMinutesUntilNext,
         mealsPlanned: todayMeals.length,
@@ -678,7 +679,7 @@ export default function DashboardScreen() {
       },
     });
   }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
-    pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
+    pendingMenage.length, todayMeals.length, totalRemainingAllLists, upcomingRdvs.length,
     enfants.length, activeRewards.length, leaderboard.length,
     weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length,
     defis, gratitudeDays, todayStr, wishlistItems, anniversaries, rdvs, insights.length]);
@@ -706,8 +707,8 @@ export default function DashboardScreen() {
     // Recettes — masquer si les repas sont déjà configurés
     if (todayMeals.length > 0) hidden.add('recipes');
 
-    // Courses — masquer si la liste est vide
-    if (topCourses.length === 0) hidden.add('courses');
+    // Courses — masquer si toutes les listes sont vides
+    if (totalRemainingAllLists === 0) hidden.add('courses');
 
     // RDV — masquer s'il n'y a rien aujourd'hui (demain est rappelé dans l'aperçu zen)
     const hasRdvToday = rdvs.some(
@@ -775,7 +776,7 @@ export default function DashboardScreen() {
 
     return hidden;
   }, [isLoading, overdueTasks.length, pendingMenage.length, insights.length,
-    enfants, photoDates, todayStr, todayMeals.length, topCourses.length,
+    enfants, photoDates, todayStr, todayMeals.length, totalRemainingAllLists, topCourses.length,
     rdvs, profiles, gratitudeDays, anniversaries, wishlistItems, hasBaby,
     activeProfile, activeRewards.length, weeklyStatsData.total,
     leaderboard.length, defis, vaultFileExists, isVacationActive,
