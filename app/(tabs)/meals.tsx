@@ -64,6 +64,8 @@ import { computeMissingIngredients, computeStockDecrements, resolveStockAction, 
 import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag, getDefaultRecipeList, setDefaultRecipeList } from '../../lib/automation-config';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
+import { VoiceCoursesReview } from '../../components/VoiceCoursesReview';
+import type { VoiceCourseItem } from '../../lib/parse-voice-courses';
 import { Check, FolderOpen, Mic, Plus, ShoppingBag, ShoppingCart, Star, X } from 'lucide-react-native';
 import type { CourseList } from '../../hooks/useVaultCourses';
 import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
@@ -204,6 +206,8 @@ export default function MealsScreen() {
   // Articles fréquents + saisie vocale
   const [frequentItems, setFrequentItems] = useState<{ name: string; count: number }[]>([]);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [voiceReviewItems, setVoiceReviewItems] = useState<VoiceCourseItem[]>([]);
+  const [showVoiceReview, setShowVoiceReview] = useState(false);
 
   // Recettes state
   const [recipeSearch, setRecipeSearch] = useState('');
@@ -715,22 +719,33 @@ export default function MealsScreen() {
     trackCourseAdd(name).then(() => getFrequentCourses(8).then(setFrequentItems)).catch(() => {});
   }, [addCourseItem]);
 
-  const handleVoiceResult = useCallback(async (transcript: string) => {
+  const handleVoiceResult = useCallback((transcript: string) => {
     const items = parseVoiceCourses(transcript);
     if (items.length === 0) {
       showToast(t('meals.shopping.voiceNothingDetected'), 'info');
       setShowVoiceModal(false);
       return;
     }
+    // Ferme le dictaphone et ouvre la review pour correction utilisateur
+    setVoiceReviewItems(items);
+    setShowVoiceModal(false);
+    setShowVoiceReview(true);
+  }, [showToast, t]);
+
+  const handleVoiceReviewSave = useCallback(async (finalItems: VoiceCourseItem[]) => {
+    setShowVoiceReview(false);
+    if (finalItems.length === 0) return;
     try {
-      const result = await mergeCourseIngredients(items);
-      items.forEach(i => trackCourseAdd(i.name).catch(() => {}));
+      const result = await mergeCourseIngredients(finalItems);
+      finalItems.forEach(i => trackCourseAdd(i.name).catch(() => {}));
       getFrequentCourses(8).then(setFrequentItems).catch(() => {});
-      showToast(t('meals.shopping.voiceAddedToast', { count: result.added + result.merged }), 'success');
+      showToast(
+        t('meals.shopping.voiceAddedToast', { count: result.added + result.merged }),
+        'success',
+      );
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
-    setShowVoiceModal(false);
   }, [mergeCourseIngredients, showToast, t]);
 
   const handleEditCourse = useCallback((item: CourseItem) => {
@@ -2686,6 +2701,15 @@ export default function MealsScreen() {
           onClose={() => setShowVoiceModal(false)}
         />
       </Modal>
+
+      {/* Modal review — prévisualisation/correction avant ajout aux courses */}
+      <VoiceCoursesReview
+        visible={showVoiceReview}
+        items={voiceReviewItems}
+        sections={courseSections}
+        onClose={() => setShowVoiceReview(false)}
+        onSave={handleVoiceReviewSave}
+      />
 
       {/* Community explore modal */}
       <Modal
