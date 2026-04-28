@@ -247,6 +247,7 @@ export interface CourseItem {
   completed: boolean;
   lineIndex: number;
   section?: string;     // section header (e.g. "🥩 Frais")
+  pending?: boolean;    // transient UI flag — JAMAIS sérialisé dans le vault (Phase B optimistic UI)
 }
 
 export interface MealItem {
