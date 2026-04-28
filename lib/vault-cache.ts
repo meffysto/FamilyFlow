@@ -9,6 +9,7 @@
  * - gamiData, defis, skillTrees, familyQuests (gamification)
  * - gardenRaw (jardin du village)
  * - Profil : champs farm/mascot/companion/saga + compteurs points/coins/level
+ * - courses (Phase D 260428-huh : multi-listes — useVaultCourses gère son mount)
  *
  * Garde-fous :
  * - CACHE_VERSION : incrémenter à chaque changement de shape → cache invalidé

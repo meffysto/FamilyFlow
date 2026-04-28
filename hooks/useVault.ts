@@ -209,6 +209,17 @@ export interface VaultState {
   moveCourseItem: (lineIndex: number, text: string, newSection: string) => Promise<void>;
   updateCourseItem: (lineIndex: number, patch: { text: string; section: string }) => Promise<void>;
   clearCompletedCourses: () => Promise<void>;
+  // Phase D multi-listes courses
+  listes: import('./useVaultCourses').CourseList[];
+  activeListId: string | null;
+  totalRemainingAllLists: number;
+  setActiveList: (id: string) => Promise<void>;
+  createList: (nom: string, emoji: string) => Promise<string>;
+  renameList: (id: string, nom: string) => Promise<void>;
+  deleteList: (id: string) => Promise<void>;
+  duplicateList: (id: string, newNom: string) => Promise<void>;
+  archiveList: (id: string, archive: boolean) => Promise<void>;
+  mergeCourseIngredientsToList: (listId: string, items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
   memories: Memory[];
   addMemory: (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
   updateMemory: (oldMemory: Memory, newMemory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
@@ -893,7 +904,7 @@ export function useVaultInternal(): VaultState {
               setProfiles(cached.profiles.map(hydrateProfileFromCache));
               tasksHook.setTasks(cached.tasks);
               setRoutines(cached.routines);
-              coursesHook.setCourses(cached.courses);
+              // Phase D : courses exclu du cache (multi-listes — useVaultCourses gère son mount)
               stockHook.setStock(cached.stock);
               stockHook.setStockSections(cached.stockSections);
               setMeals(cached.meals);
@@ -1524,7 +1535,8 @@ export function useVaultInternal(): VaultState {
       const tasksResult = val(results[0], [] as Task[]);
       tasksHook.setTasks(tasksResult);
       setRoutines(val(results[1], []));
-      coursesHook.setCourses(val(results[2], []));
+      // Phase D : courses gérées par useVaultCourses (multi-listes) — ne pas écraser ici
+      // coursesHook.setCourses(val(results[2], []));
       const stockResult = val(results[3], { items: [] as StockItem[], sections: [] as string[] });
       stockHook.setStock(stockResult.items);
       stockHook.setStockSections(stockResult.sections);
@@ -1607,7 +1619,7 @@ export function useVaultInternal(): VaultState {
         profiles: profilesSnapshot.map(stripProfileForCache),
         tasks: tasksResult,
         routines: val(results[1], []) as Routine[],
-        courses: val(results[2], []) as CourseItem[],
+        courses: [] as CourseItem[], // Phase D : exclu du cache (multi-listes toujours frais)
         stock: stockResult.items,
         stockSections: stockResult.sections,
         meals: val(results[4], []) as MealItem[],
@@ -2245,6 +2257,17 @@ export function useVaultInternal(): VaultState {
     moveCourseItem: coursesHook.moveCourseItem,
     updateCourseItem: coursesHook.updateCourseItem,
     clearCompletedCourses: coursesHook.clearCompletedCourses,
+    // Phase D multi-listes
+    listes: coursesHook.listes,
+    activeListId: coursesHook.activeListId,
+    totalRemainingAllLists: coursesHook.totalRemainingAllLists,
+    setActiveList: coursesHook.setActiveList,
+    createList: coursesHook.createList,
+    renameList: coursesHook.renameList,
+    deleteList: coursesHook.deleteList,
+    duplicateList: coursesHook.duplicateList,
+    archiveList: coursesHook.archiveList,
+    mergeCourseIngredientsToList: coursesHook.mergeCourseIngredientsToList,
     memories,
     addMemory,
     updateMemory,

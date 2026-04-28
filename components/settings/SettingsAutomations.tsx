@@ -16,7 +16,8 @@ export function SettingsAutomations() {
   const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
 
-  const TOGGLES: { key: keyof AutomationConfig; emoji: string; label: string; detail: string }[] = [
+  type BooleanFlagKey = 'autoCoursesFromRecipes' | 'autoStockFromCourses' | 'autoStockDecrementCook';
+  const TOGGLES: { key: BooleanFlagKey; emoji: string; label: string; detail: string }[] = [
     {
       key: 'autoCoursesFromRecipes',
       emoji: '🛒',
@@ -42,7 +43,7 @@ export function SettingsAutomations() {
     loadAutomationConfig().then(setConfig);
   }, []);
 
-  const handleToggle = useCallback(async (key: keyof AutomationConfig) => {
+  const handleToggle = useCallback(async (key: BooleanFlagKey) => {
     const newValue = !config[key];
     setConfig(prev => ({ ...prev, [key]: newValue }));
     await setAutomationFlag(key, newValue);
