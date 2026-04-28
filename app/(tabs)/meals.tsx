@@ -2697,6 +2697,7 @@ export default function MealsScreen() {
             title: t('meals.shopping.voiceAddTitle'),
             subtitle: t('meals.shopping.voiceAddSubtitle'),
           }}
+          autoSubmit
           onResult={handleVoiceResult}
           onClose={() => setShowVoiceModal(false)}
         />

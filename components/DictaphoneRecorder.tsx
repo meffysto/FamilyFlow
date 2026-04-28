@@ -55,13 +55,19 @@ interface DictaphoneRecorderProps {
   rdv?: RDV;
   /** Contexte générique (résumé libre) — ignoré si rdv est fourni */
   context?: DictaphoneContext;
+  /**
+   * Mode auto-soumission : à la fin de l'enregistrement, transmet directement le
+   * transcript brut sans afficher l'écran d'édition ni proposer le résumé IA.
+   * Utilisé pour les flows où un parser/review prend le relais en aval (ex: courses).
+   */
+  autoSubmit?: boolean;
   onResult: (text: string) => void;
   onClose: () => void;
 }
 
 type RecordingState = 'idle' | 'recording' | 'done' | 'summarizing';
 
-export function DictaphoneRecorder({ rdv, context, onResult, onClose }: DictaphoneRecorderProps) {
+export function DictaphoneRecorder({ rdv, context, autoSubmit, onResult, onClose }: DictaphoneRecorderProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { config, isConfigured } = useAI();
@@ -242,9 +248,13 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
     setTranscript((current) => {
       const finalText = current || transcriptRef.current;
       setEditedTranscript(finalText);
+      if (autoSubmit && finalText.trim()) {
+        onResult(finalText);
+        onClose();
+      }
       return finalText;
     });
-  }, [stopPulse]);
+  }, [stopPulse, autoSubmit, onResult, onClose]);
 
   const stopRecording = useCallback(() => {
     finishRecording();
