@@ -6,15 +6,42 @@
   },
   "stories": {
     "universes": {
-      "espace": { "titre": "Starry space", "description": "Journey among the stars" },
-      "ocean": { "titre": "Deep ocean", "description": "Dive into the depths" },
-      "foret": { "titre": "Enchanted forest", "description": "Magic among the trees" },
-      "dinosaures": { "titre": "Dinosaur world", "description": "Prehistoric adventure" },
-      "princesse": { "titre": "Princess castle", "description": "Magic and royalty" },
-      "super-heros": { "titre": "Super Heroes", "description": "Powers and courage" },
-      "pirates": { "titre": "Pirate adventure", "description": "Treasures and the high seas" },
-      "robots": { "titre": "Planet of Robots", "description": "Technology and discovery" },
-      "surprise": { "titre": "Surprise!", "description": "Let me choose for you" }
+      "espace": {
+        "titre": "Starry space",
+        "description": "Journey among the stars"
+      },
+      "ocean": {
+        "titre": "Deep ocean",
+        "description": "Dive into the depths"
+      },
+      "foret": {
+        "titre": "Enchanted forest",
+        "description": "Magic among the trees"
+      },
+      "dinosaures": {
+        "titre": "Dinosaur world",
+        "description": "Prehistoric adventure"
+      },
+      "princesse": {
+        "titre": "Princess castle",
+        "description": "Magic and royalty"
+      },
+      "super-heros": {
+        "titre": "Super Heroes",
+        "description": "Powers and courage"
+      },
+      "pirates": {
+        "titre": "Pirate adventure",
+        "description": "Treasures and the high seas"
+      },
+      "robots": {
+        "titre": "Planet of Robots",
+        "description": "Technology and discovery"
+      },
+      "surprise": {
+        "titre": "Surprise!",
+        "description": "Let me choose for you"
+      }
     }
   },
   "nightMode": {
@@ -841,7 +868,13 @@
       "voiceAddTitle": "Dictate items",
       "voiceAddSubtitle": "Ex: 3 tomatoes, milk and 2 packs of pasta",
       "voiceAddedToast": "{{count}} item(s) added",
-      "voiceNothingDetected": "No item detected in dictation"
+      "voiceNothingDetected": "No item detected in dictation",
+      "frequentTitle": "Frequent",
+      "frequentLabelA11y": "Frequent items — long press to clear",
+      "frequentClearHintA11y": "Long press to clear history",
+      "frequentClearTitle": "Clear history",
+      "frequentClearMsg": "Remove all frequent items?",
+      "frequentClearConfirm": "Clear"
     },
     "recipes": {
       "searchPlaceholder": "Search a recipe…",

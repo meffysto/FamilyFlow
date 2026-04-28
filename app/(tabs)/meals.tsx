@@ -61,7 +61,7 @@ import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag } from '../../lib/automation-config';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import { Mic } from 'lucide-react-native';
-import { trackCourseAdd, getFrequentCourses } from '../../lib/course-history';
+import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
 import { MealConflictRecap, CookSuggestModal, extractRecipeTitlesFromMarkdown } from '../../components/dietary';
 import { checkAllergens } from '../../lib/dietary';
@@ -1379,6 +1379,31 @@ export default function MealsScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.frequentScrollContent}
               >
+                <TouchableOpacity
+                  onLongPress={() => {
+                    Alert.alert(
+                      t('meals.shopping.frequentClearTitle'),
+                      t('meals.shopping.frequentClearMsg'),
+                      [
+                        { text: t('meals.alert.cancel'), style: 'cancel' },
+                        {
+                          text: t('meals.shopping.frequentClearConfirm'),
+                          style: 'destructive',
+                          onPress: () => {
+                            clearCourseHistory().then(() => setFrequentItems([])).catch(() => {});
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                  activeOpacity={1}
+                  accessibilityLabel={t('meals.shopping.frequentLabelA11y')}
+                  accessibilityHint={t('meals.shopping.frequentClearHintA11y')}
+                >
+                  <Text style={[styles.frequentLabel, { color: colors.textMuted }]}>
+                    {t('meals.shopping.frequentTitle')}
+                  </Text>
+                </TouchableOpacity>
                 {frequentItems.map(item => (
                   <TouchableOpacity
                     key={item.name}
@@ -3373,6 +3398,14 @@ const styles = StyleSheet.create({
   frequentScrollContent: {
     paddingHorizontal: Spacing['2xl'],
     gap: Spacing.md,
+    alignItems: 'center',
+  },
+  frequentLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    paddingRight: Spacing.md,
   },
   frequentChip: {
     paddingVertical: Spacing.md,
