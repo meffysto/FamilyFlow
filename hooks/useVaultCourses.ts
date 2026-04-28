@@ -65,7 +65,7 @@ const pathOf = (id: string) => `${COURSES_LISTS_DIR}/${id}.md`;
 export interface CourseList {
   id: string; // = slug = nom de fichier sans .md
   nom: string;
-  emoji: string;
+  icon: string; // nom lucide kebab-case
   archive: boolean;
   createdAt: string;
   itemCount: number;
@@ -88,7 +88,7 @@ export interface UseVaultCoursesResult {
   activeListId: string | null;
   totalRemainingAllLists: number;
   setActiveList: (id: string) => Promise<void>;
-  createList: (nom: string, emoji: string) => Promise<string>;
+  createList: (nom: string, icon: string) => Promise<string>;
   renameList: (id: string, nom: string) => Promise<void>;
   deleteList: (id: string) => Promise<void>;
   duplicateList: (id: string, newNom: string) => Promise<void>;
@@ -152,7 +152,7 @@ export function useVaultCourses(
         parsed.push({
           id,
           nom: meta.nom,
-          emoji: meta.emoji,
+          icon: meta.icon,
           archive: meta.archive,
           createdAt: meta.createdAt,
           itemCount: items.length,
@@ -190,7 +190,7 @@ export function useVaultCourses(
 
         const meta: CourseListMeta = {
           nom: slug === 'principale' ? 'Principale' : `Principale ${slug.split('-')[1]}`,
-          emoji: '🛒',
+          icon: 'shopping-cart',
           archive: false,
           createdAt: todayLocal(),
         };
@@ -220,7 +220,7 @@ export function useVaultCourses(
       await vm.ensureDir(COURSES_LISTS_DIR);
       const meta: CourseListMeta = {
         nom: 'Principale',
-        emoji: '🛒',
+        icon: 'shopping-cart',
         archive: false,
         createdAt: todayLocal(),
       };
@@ -590,7 +590,7 @@ export function useVaultCourses(
     return `${baseSlug}-${i}`;
   };
 
-  const createList = useCallback(async (nom: string, emoji: string): Promise<string> => {
+  const createList = useCallback(async (nom: string, icon: string): Promise<string> => {
     const vm = vaultRef.current;
     if (!vm) throw new Error('Vault non initialisé');
 
@@ -600,7 +600,7 @@ export function useVaultCourses(
 
     const meta: CourseListMeta = {
       nom: nom.trim() || 'Sans nom',
-      emoji: emoji || '🛒',
+      icon: icon || 'shopping-cart',
       archive: false,
       createdAt: todayLocal(),
     };
@@ -664,7 +664,7 @@ export function useVaultCourses(
         const newId = uniqueSlug(baseSlug, existingIds);
         const newMeta: CourseListMeta = {
           nom: newNom.trim() || meta.nom,
-          emoji: meta.emoji,
+          icon: meta.icon,
           archive: false,
           createdAt: todayLocal(),
         };

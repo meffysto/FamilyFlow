@@ -1,8 +1,8 @@
 /**
  * CourseListEditor.tsx — Modal pageSheet pour créer/renommer une liste de courses (Phase D)
  *
- * Mode 'create' : nom + emoji → onSave(nom, emoji)
- * Mode 'edit'   : nom modifiable, emoji affiché en lecture (rename ne change que le nom — voir Plan 260428-huh task 4 décision)
+ * Mode 'create' : nom + icône lucide → onSave(nom, icon)
+ * Mode 'edit'   : nom modifiable, icône affichée en lecture (rename ne change que le nom — voir Plan 260428-huh task 4 décision)
  *
  * useThemeColors strict — aucune couleur hardcoded. Drag-to-dismiss natif iOS via pageSheet.
  */
@@ -10,7 +10,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Modal,
-  View,
   Text,
   TextInput,
   TouchableOpacity,
@@ -26,27 +25,28 @@ import { ModalHeader } from './ui/ModalHeader';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { slugifyListName } from '../lib/parser';
-
-const LIST_EMOJIS = ['🛒', '🥬', '🍎', '🥩', '🐟', '🧀', '💊', '🎁', '🍷', '🌿'];
+import { LIST_ICONS, renderListIcon } from '../lib/list-icons';
 
 interface CourseListEditorProps {
   visible: boolean;
   mode: 'create' | 'edit';
   initialNom?: string;
-  initialEmoji?: string;
+  initialIcon?: string;
   /** IDs (slugs) existants pour valider la collision. En mode edit, exclure self via excludeId. */
   existingIds: string[];
   /** Mode edit : id de la liste éditée (à exclure du check de collision) */
   excludeId?: string;
   onClose: () => void;
-  onSave: (nom: string, emoji: string) => Promise<void>;
+  onSave: (nom: string, icon: string) => Promise<void>;
 }
+
+const DEFAULT_ICON = 'shopping-cart';
 
 export function CourseListEditor({
   visible,
   mode,
   initialNom,
-  initialEmoji,
+  initialIcon,
   existingIds,
   excludeId,
   onClose,
@@ -57,16 +57,16 @@ export function CourseListEditor({
   const nameRef = useRef<TextInput>(null);
 
   const [nom, setNom] = useState(initialNom ?? '');
-  const [emoji, setEmoji] = useState(initialEmoji ?? LIST_EMOJIS[0]);
+  const [icon, setIcon] = useState(initialIcon ?? DEFAULT_ICON);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setNom(initialNom ?? '');
-      setEmoji(initialEmoji ?? LIST_EMOJIS[0]);
+      setIcon(initialIcon ?? DEFAULT_ICON);
       setSaving(false);
     }
-  }, [visible, initialNom, initialEmoji]);
+  }, [visible, initialNom, initialIcon]);
 
   const trimmedNom = nom.trim();
   const computedSlug = slugifyListName(trimmedNom);
@@ -79,10 +79,10 @@ export function CourseListEditor({
     ? t('meals.shopping.lists.collisionError', { defaultValue: 'Une liste porte déjà ce nom.' })
     : null;
 
-  const handleSelectEmoji = (e: string) => {
-    if (mode === 'edit') return; // emoji read-only en edit (Plan 260428-huh)
+  const handleSelectIcon = (name: string) => {
+    if (mode === 'edit') return; // icon read-only en edit (Plan 260428-huh)
     Haptics.selectionAsync();
-    setEmoji(e);
+    setIcon(name);
   };
 
   const handleSave = async () => {
@@ -90,7 +90,7 @@ export function CourseListEditor({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSaving(true);
     try {
-      await onSave(trimmedNom, emoji);
+      await onSave(trimmedNom, icon);
       onClose();
     } catch {
       setSaving(false);
@@ -151,25 +151,26 @@ export function CourseListEditor({
             <Text style={[styles.error, { color: colors.error }]}>{errorMessage}</Text>
           )}
 
-          {/* Emoji */}
+          {/* Icône */}
           <Text style={[styles.label, { color: colors.textMuted, marginTop: Spacing['3xl'] }]}>
-            {t('meals.shopping.lists.emoji', { defaultValue: 'Emoji' })}
+            {t('meals.shopping.lists.icon', { defaultValue: 'Icône' })}
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.emojiRow}
+            contentContainerStyle={styles.iconRow}
           >
-            {LIST_EMOJIS.map((e) => {
-              const selected = e === emoji;
+            {LIST_ICONS.map(({ name }) => {
+              const selected = name === icon;
               const disabled = mode === 'edit';
+              const tint = selected ? colors.onPrimary : colors.textSub;
               return (
                 <TouchableOpacity
-                  key={e}
-                  onPress={() => handleSelectEmoji(e)}
+                  key={name}
+                  onPress={() => handleSelectIcon(name)}
                   disabled={disabled && !selected}
                   style={[
-                    styles.emojiButton,
+                    styles.iconButton,
                     {
                       backgroundColor: selected ? primary : colors.card,
                       borderColor: selected ? primary : colors.border,
@@ -177,15 +178,15 @@ export function CourseListEditor({
                     },
                   ]}
                 >
-                  <Text style={styles.emojiLabel}>{e}</Text>
+                  {renderListIcon(name, 22, tint)}
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
           {mode === 'edit' && (
             <Text style={[styles.hint, { color: colors.textFaint }]}>
-              {t('meals.shopping.lists.emojiEditHint', {
-                defaultValue: 'L\'emoji ne peut pas être modifié pour le moment.',
+              {t('meals.shopping.lists.iconEditHint', {
+                defaultValue: 'L\'icône ne peut pas être modifiée pour le moment.',
               })}
             </Text>
           )}
@@ -221,20 +222,17 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontStyle: 'italic',
   },
-  emojiRow: {
+  iconRow: {
     flexDirection: 'row',
     gap: Spacing.md,
     paddingVertical: Spacing.xs,
   },
-  emojiButton: {
+  iconButton: {
     width: 48,
     height: 48,
     borderRadius: Radius.base,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emojiLabel: {
-    fontSize: FontSize.title,
   },
 });

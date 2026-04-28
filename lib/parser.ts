@@ -450,9 +450,30 @@ export function parseCourses(content: string, relativePath: string): CourseItem[
 
 export interface CourseListMeta {
   nom: string;
-  emoji: string;
+  icon: string; // nom lucide kebab-case (ex "shopping-cart")
   archive: boolean;
   createdAt: string;
+}
+
+/** Mapping ascendant emoji legacy → icône lucide pour la migration douce. */
+const EMOJI_TO_LUCIDE: Record<string, string> = {
+  '🛒': 'shopping-cart',
+  '🛍️': 'shopping-bag',
+  '🧺': 'shopping-basket',
+  '🥬': 'salad',
+  '🍎': 'apple',
+  '🥩': 'beef',
+  '🐟': 'fish',
+  '🧀': 'milk',
+  '💊': 'pill',
+  '🎁': 'gift',
+  '🍷': 'wine',
+  '🌿': 'leaf',
+  '🥐': 'croissant',
+};
+
+function emojiToLucide(emoji: string): string {
+  return EMOJI_TO_LUCIDE[emoji] ?? 'shopping-cart';
 }
 
 /**
@@ -509,9 +530,19 @@ export function parseCourseList(
     createdAt = new Date().toISOString().slice(0, 10);
   }
 
+  // Compat ascendante : preferer `icon` si présent, sinon mapper l'ancien `emoji`.
+  let icon: string;
+  if (typeof data.icon === 'string' && data.icon.trim().length > 0) {
+    icon = data.icon.trim();
+  } else if (typeof data.emoji === 'string' && data.emoji.trim().length > 0) {
+    icon = emojiToLucide(data.emoji.trim());
+  } else {
+    icon = 'shopping-cart';
+  }
+
   const meta: CourseListMeta = {
     nom: typeof data.nom === 'string' ? data.nom : 'Sans nom',
-    emoji: typeof data.emoji === 'string' ? data.emoji : '🛒',
+    icon,
     archive: data.archive === true,
     createdAt,
   };
@@ -532,7 +563,7 @@ export function serializeCourseListMeta(meta: CourseListMeta): string {
   return [
     '---',
     `nom: ${nomSerialized}`,
-    `emoji: "${meta.emoji}"`,
+    `icon: ${meta.icon}`,
     `archive: ${meta.archive}`,
     `createdAt: ${meta.createdAt}`,
     '---',

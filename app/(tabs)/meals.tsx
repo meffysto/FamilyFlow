@@ -43,6 +43,7 @@ import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngredients, convertCookToMetric, COURSE_CATEGORIES, type AppIngredient } from '../../lib/cooklang';
 import { CourseItemEditor } from '../../components/CourseItemEditor';
 import { CourseListEditor } from '../../components/CourseListEditor';
+import { renderListIcon } from '../../lib/list-icons';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, cleanCookContent, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -763,9 +764,9 @@ export default function MealsScreen() {
     setListEditorVisible(true);
   }, []);
 
-  const handleListEditorSave = useCallback(async (nom: string, emoji: string) => {
+  const handleListEditorSave = useCallback(async (nom: string, icon: string) => {
     if (listEditorMode === 'create') {
-      const newId = await createList(nom, emoji);
+      const newId = await createList(nom, icon);
       await setActiveList(newId).catch(() => {});
     } else if (listEditorTarget) {
       await renameList(listEditorTarget.id, nom);
@@ -787,7 +788,7 @@ export default function MealsScreen() {
   const handleListLongPress = useCallback((liste: CourseList) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const isDefault = liste.id === defaultRecipeListId;
-    Alert.alert(`${liste.emoji} ${liste.nom}`, undefined, [
+    Alert.alert(liste.nom, undefined, [
       {
         text: t('meals.shopping.lists.actionRename'),
         onPress: () => {
@@ -1513,7 +1514,7 @@ export default function MealsScreen() {
                           },
                         ]}
                       >
-                        <Text style={styles.listPillEmoji}>{liste.emoji}</Text>
+                        {renderListIcon(liste.icon, 14, selected ? colors.onPrimary : colors.textSub)}
                         <Text
                           style={[
                             styles.listPillLabel,
@@ -2171,7 +2172,7 @@ export default function MealsScreen() {
         visible={listEditorVisible}
         mode={listEditorMode}
         initialNom={listEditorMode === 'edit' ? listEditorTarget?.nom : undefined}
-        initialEmoji={listEditorMode === 'edit' ? listEditorTarget?.emoji : undefined}
+        initialIcon={listEditorMode === 'edit' ? listEditorTarget?.icon : undefined}
         existingIds={listes.map(l => l.id)}
         excludeId={listEditorMode === 'edit' ? listEditorTarget?.id : undefined}
         onClose={() => setListEditorVisible(false)}
@@ -3141,9 +3142,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     borderWidth: 1,
     maxWidth: 220,
-  },
-  listPillEmoji: {
-    fontSize: FontSize.body,
   },
   listPillLabel: {
     fontSize: FontSize.sm,
