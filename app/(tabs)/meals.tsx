@@ -64,7 +64,7 @@ import { computeMissingIngredients, computeStockDecrements, resolveStockAction, 
 import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag, getDefaultRecipeList, setDefaultRecipeList } from '../../lib/automation-config';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
-import { Mic, Plus, ShoppingBag, Star } from 'lucide-react-native';
+import { Check, FolderOpen, Mic, Plus, ShoppingBag, ShoppingCart, Star, X } from 'lucide-react-native';
 import type { CourseList } from '../../hooks/useVaultCourses';
 import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
@@ -1594,7 +1594,7 @@ export default function MealsScreen() {
           >
             {courses.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>🛒</Text>
+                <ShoppingCart size={48} color={colors.textMuted} style={{ marginBottom: 8 }} />
                 <Text style={[styles.emptyText, { color: colors.textSub }]}>{t('meals.shopping.emptyTitle')}</Text>
                 <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('meals.shopping.emptyHint')}</Text>
               </View>
@@ -1627,7 +1627,7 @@ export default function MealsScreen() {
                             { borderColor: colors.border },
                             item.completed && { backgroundColor: primary, borderColor: primary },
                           ]}>
-                            {item.completed && <Text style={[styles.checkboxCheck, { color: colors.onPrimary }]}>✓</Text>}
+                            {item.completed && <Check size={14} color={colors.onPrimary} strokeWidth={3} />}
                           </View>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -1671,7 +1671,7 @@ export default function MealsScreen() {
                           accessibilityLabel={t('meals.shopping.deleteA11y', { text: item.text })}
                           accessibilityRole="button"
                         >
-                          <Text style={[styles.courseRemoveText, { color: colors.textMuted }]}>✕</Text>
+                          <X size={16} color={colors.textMuted} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -1755,11 +1755,13 @@ export default function MealsScreen() {
                 accessibilityRole="button"
                 accessibilityHint={t('meals.shopping.categoryHintA11y')}
               >
-                <Text style={[styles.sectionPickerText, { color: colors.textSub }]} numberOfLines={1}>
-                  {selectedSection
-                    ? selectedSection.length > 12 ? selectedSection.slice(0, 12) + '…' : selectedSection
-                    : '📂'}
-                </Text>
+                {selectedSection ? (
+                  <Text style={[styles.sectionPickerText, { color: colors.textSub }]} numberOfLines={1}>
+                    {selectedSection.length > 12 ? selectedSection.slice(0, 12) + '…' : selectedSection}
+                  </Text>
+                ) : (
+                  <FolderOpen size={16} color={colors.textSub} />
+                )}
               </TouchableOpacity>
               <TextInput
                 ref={inputRef}
@@ -3266,10 +3268,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxCheck: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.bold,
-  },
   courseTextWrap: {
     flex: 1,
   },
@@ -3283,10 +3281,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  courseRemoveText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
   },
   coursePrice: {
     fontSize: FontSize.sm,

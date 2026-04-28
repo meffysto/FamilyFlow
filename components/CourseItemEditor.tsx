@@ -36,6 +36,9 @@ interface CourseItemEditorProps {
   onSave: (patch: { text: string; section: string }) => Promise<void>;
 }
 
+// Emojis stockés dans le label de section (vault Obsidian) — pas de migration lucide.
+// Les sections existantes sont parsées avec préfixe emoji (ex: '🥬 Légumes'),
+// remplacer ici casserait la compatibilité bidirectionnelle markdown.
 const NEW_CATEGORY_EMOJIS = ['🏷️', '🛒', '🥬', '🍎', '🥩', '🍞', '🥛', '🧊'];
 
 export function CourseItemEditor({ visible, item, sections, onClose, onSave }: CourseItemEditorProps) {
