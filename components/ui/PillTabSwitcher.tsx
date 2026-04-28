@@ -26,6 +26,8 @@ export interface PillTab<T extends string> {
   badge?: number;
   /** Icône Lucide optionnelle, affichée avant le label. */
   Icon?: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  /** Rendu personnalisé d'un leading (avatar, etc.) — prioritaire sur Icon. */
+  renderLeading?: (props: { color: string; active: boolean }) => React.ReactNode;
 }
 
 interface PillTabSwitcherProps<T extends string> {
@@ -138,9 +140,9 @@ export function PillTabSwitcher<T extends string>({
               accessibilityState={{ selected: active }}
               accessibilityLabel={tab.label}
             >
-              {tab.Icon && (
-                <tab.Icon size={14} strokeWidth={2} color={color} />
-              )}
+              {tab.renderLeading
+                ? tab.renderLeading({ color, active })
+                : tab.Icon && <tab.Icon size={14} strokeWidth={2} color={color} />}
               <Text style={[styles.tabText, { color }]} numberOfLines={1}>
                 {tab.label}
               </Text>

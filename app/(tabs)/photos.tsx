@@ -35,6 +35,7 @@ import {
   isToday,
   isFuture,
 } from 'date-fns';
+import { Camera, Image as ImageIcon, Flame, Trophy, Sparkles } from 'lucide-react-native';
 import { getDateLocale, formatDateLocalized } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -349,8 +350,8 @@ export default function PhotosScreen() {
           <View ref={photoGridRef}>
             <PillTabSwitcher<TabMode>
               tabs={[
-                { id: 'photos', label: t('photosScreen.tabs.photos') },
-                { id: 'souvenirs', label: t('photosScreen.tabs.souvenirs') },
+                { id: 'photos', label: t('photosScreen.tabs.photos'), Icon: ImageIcon },
+                { id: 'souvenirs', label: t('photosScreen.tabs.souvenirs'), Icon: Sparkles },
               ] as ReadonlyArray<PillTab<TabMode>>}
               activeTab={activeTab}
               onTabChange={setActiveTab}
@@ -391,24 +392,28 @@ export default function PhotosScreen() {
             <View style={[styles.statsRow, { backgroundColor: colors.bg }]}>
               <View style={[
                 styles.statPill,
+                styles.statPillRow,
                 { backgroundColor: photoStats.currentStreak >= 7 ? colors.successBg : photoStats.currentStreak === 0 ? colors.warningBg : colors.cardAlt },
               ]}>
+                <Flame size={12} strokeWidth={2} color={photoStats.currentStreak >= 7 ? colors.successText : photoStats.currentStreak === 0 ? colors.warningText : colors.textSub} />
                 <Text style={[
                   styles.statPillText,
                   { color: photoStats.currentStreak >= 7 ? colors.successText : photoStats.currentStreak === 0 ? colors.warningText : colors.textSub },
                 ]}>
-                  🔥 {t('photosScreen.streak', { count: photoStats.currentStreak })}
+                  {t('photosScreen.streak', { count: photoStats.currentStreak })}
                 </Text>
               </View>
-              <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
+              <View style={[styles.statPill, styles.statPillRow, { backgroundColor: colors.cardAlt }]}>
+                <ImageIcon size={12} strokeWidth={2} color={colors.textSub} />
                 <Text style={[styles.statPillText, { color: colors.textSub }]}>
-                  📸 {photoStats.thisMonthCount}/{photoStats.thisMonthTotal}
+                  {photoStats.thisMonthCount}/{photoStats.thisMonthTotal}
                 </Text>
               </View>
               {photoStats.longestStreak > 0 && (
-                <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
+                <View style={[styles.statPill, styles.statPillRow, { backgroundColor: colors.cardAlt }]}>
+                  <Trophy size={12} strokeWidth={2} color={colors.textSub} />
                   <Text style={[styles.statPillText, { color: colors.textSub }]}>
-                    🏆 {t('photosScreen.streak', { count: photoStats.longestStreak })}
+                    {t('photosScreen.streak', { count: photoStats.longestStreak })}
                   </Text>
                 </View>
               )}
@@ -527,7 +532,7 @@ export default function PhotosScreen() {
               onPress={() => pickPhoto(new Date())}
               activeOpacity={0.8}
             >
-              <Text style={[styles.fabText, { color: colors.onPrimary }]}>📷</Text>
+              <Camera size={26} strokeWidth={2} color={colors.onPrimary} />
             </TouchableOpacity>
           )}
         </>
@@ -707,6 +712,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+  },
+  statPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   statPillText: {
     fontSize: FontSize.caption,

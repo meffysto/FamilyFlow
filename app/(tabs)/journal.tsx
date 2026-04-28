@@ -35,6 +35,8 @@ import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 import { MarkdownText } from '../../components/ui/MarkdownText';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
+import { NotebookPen } from 'lucide-react-native';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { Layout } from '../../constants/spacing';
@@ -364,8 +366,22 @@ export default function JournalScreen() {
   useEffect(() => { scrollY.value = 0; }, [selectedTab, selectedDate]);
 
   const journalTabs: ReadonlyArray<PillTab<string>> = useMemo(() => [
-    ...(isAdultMode ? [{ id: 'adulte', label: `${activeProfile?.avatar ?? '📖'} ${t('journal.myJournal')}` }] : []),
-    ...enfants.map((e) => ({ id: e.id, label: `${e.avatar} ${e.name}` })),
+    ...(isAdultMode && activeProfile
+      ? [{
+          id: 'adulte',
+          label: t('journal.myJournal'),
+          renderLeading: ({ color }: { color: string }) => (
+            <AvatarIcon name={activeProfile.avatar ?? '📖'} color={color} size={20} />
+          ),
+        }]
+      : []),
+    ...enfants.map((e) => ({
+      id: e.id,
+      label: e.name,
+      renderLeading: ({ color }: { color: string }) => (
+        <AvatarIcon name={e.avatar} color={color} size={20} />
+      ),
+    })),
   ], [isAdultMode, activeProfile, enfants, t]);
 
   const isToday = isTodayFn(selectedDate);
@@ -910,7 +926,13 @@ export default function JournalScreen() {
       >
         {!journalExists ? (
           <View style={styles.createContainer}>
-            <Text style={styles.createEmoji}>{isViewingAdultTab ? (activeProfile?.avatar ?? '📖') : (selectedEnfant?.avatar ?? '👶')}</Text>
+            <AvatarIcon
+              name={isViewingAdultTab ? (activeProfile?.avatar ?? '📖') : (selectedEnfant?.avatar ?? '👶')}
+              color={primary}
+              size={88}
+              style={styles.createAvatar}
+            />
+
             <Text style={[styles.createTitle, { color: colors.textSub }]}>
               {isViewingAdultTab
                 ? t('journal.create.noJournalAdult', { name: activeProfile?.name })
@@ -933,6 +955,7 @@ export default function JournalScreen() {
                   accessibilityRole="button"
                   accessibilityState={{ disabled: isCreating }}
                 >
+                  <NotebookPen size={18} strokeWidth={2} color={colors.onPrimary} />
                   <Text style={[styles.createBtnText, { color: colors.onPrimary }]}>
                     {isCreating ? t('journal.create.creating') : t('journal.create.createBtn')}
                   </Text>
@@ -1090,9 +1113,10 @@ const styles = StyleSheet.create({
 
   createContainer: { alignItems: 'center', paddingVertical: 48, gap: 16 },
   createEmoji: { fontSize: 64 },
+  createAvatar: { marginBottom: 8 },
   createTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.bold, textAlign: 'center' },
   createSubtitle: { fontSize: FontSize.sm, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
-  createBtn: { paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, marginTop: 8 },
+  createBtn: { paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
   createBtnDisabled: { opacity: 0.6 },
   createBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
 

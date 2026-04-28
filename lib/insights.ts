@@ -226,12 +226,10 @@ function stockInsights(input: InsightInput): Insight[] {
         priority: 'medium',
         category: 'alert',
         action: {
-          label: t('insights:actions.addToShopping'),
-          type: 'addCourse',
-          payload: notInCourses.map((s) => ({
-            text: `${s.produit}${s.qteAchat ? ` x${s.qteAchat}` : ''}`,
-            section: s.section ?? 'Produits bébé',
-          })),
+          label: t('insights:actions.viewStock'),
+          type: 'navigate',
+          route: '/(tabs)/stock',
+          params: { lowOnly: '1' },
         },
       });
     }

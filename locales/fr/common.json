@@ -2835,7 +2835,7 @@
       "adultSubtitle": "Créez votre journal personnel pour noter vos pensées, humeur et objectifs.",
       "childSubtitle": "Créez le journal du {{date}} pour commencer à suivre l'alimentation, les couches et le sommeil.",
       "creating": "Création...",
-      "createBtn": "📝 Créer le journal du jour"
+      "createBtn": "Créer le journal du jour"
     },
     "stats": {
       "title": "📊 Résumé du jour",
@@ -2909,8 +2909,8 @@
       "souvenirs": "Souvenirs"
     },
     "tabs": {
-      "photos": "📸 Photos",
-      "souvenirs": "🌟 Souvenirs"
+      "photos": "Photos",
+      "souvenirs": "Souvenirs"
     },
     "typeLabel": {
       "firstTime": "Première fois",

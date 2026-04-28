@@ -2827,7 +2827,7 @@
       "adultSubtitle": "Create your personal journal to note your thoughts, mood and goals.",
       "childSubtitle": "Create the journal for {{date}} to start tracking feeding, diapers and sleep.",
       "creating": "Creating...",
-      "createBtn": "📝 Create today's journal"
+      "createBtn": "Create today's journal"
     },
     "stats": {
       "title": "📊 Day summary",
@@ -2901,8 +2901,8 @@
       "souvenirs": "Memories"
     },
     "tabs": {
-      "photos": "📸 Pictures",
-      "souvenirs": "🌟 Memories"
+      "photos": "Pictures",
+      "souvenirs": "Memories"
     },
     "typeLabel": {
       "firstTime": "First time",

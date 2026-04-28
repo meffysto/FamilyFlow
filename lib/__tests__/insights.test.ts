@@ -164,7 +164,9 @@ describe('insight — stock bas', () => {
     const stockLow = insights.find(i => i.id === 'stock-low');
     expect(stockLow).toBeDefined();
     expect(stockLow!.category).toBe('alert');
-    expect(stockLow!.action?.type).toBe('addCourse');
+    expect(stockLow!.action?.type).toBe('navigate');
+    expect(stockLow!.action?.route).toBe('/(tabs)/stock');
+    expect(stockLow!.action?.params?.lowOnly).toBe('1');
   });
 
   it('ne génère pas si le produit est déjà dans les courses', () => {

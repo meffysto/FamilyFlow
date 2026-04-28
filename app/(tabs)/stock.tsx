@@ -17,6 +17,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useLocalSearchParams } from 'expo-router';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -167,9 +168,14 @@ export default function StockScreen() {
   });
 
   const stockListRef = useRef<View>(null);
+  const params = useLocalSearchParams<{ lowOnly?: string }>();
   const [selectedEmplacement, setSelectedEmplacement] = useState<EmplacementId>('tous');
   const [search, setSearch] = useState('');
-  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+  const [showLowStockOnly, setShowLowStockOnly] = useState(params.lowOnly === '1');
+
+  useEffect(() => {
+    if (params.lowOnly === '1') setShowLowStockOnly(true);
+  }, [params.lowOnly]);
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
 

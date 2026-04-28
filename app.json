@@ -77,6 +77,14 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#E8C858",
+          "defaultChannel": "default"
+        }
+      ],
+      [
         "expo-local-authentication",
         {
           "faceIDPermission": "Family Vault utilise Face ID pour protéger l'accès à l'application."
