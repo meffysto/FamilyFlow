@@ -14,95 +14,149 @@ export interface VoiceCourseItem {
   section: string;
 }
 
-/** Séparateurs entre items dictés (FR) */
-const SEPARATOR_REGEX = /\s+et\s+|,|;|\.\s+|\n+/i;
+// ─── Constantes ───────────────────────────────────────────────────────────────
 
-/** Déterminants à retirer du nom */
-const DETERMINANT_REGEX = /^(du|de la|de l'|de l'|des|un|une|le|la|les)\s+/i;
+/** Nombres en lettres FR → valeur numérique */
+const FR_NUMBER_WORDS: Record<string, number> = {
+  'deux': 2, 'trois': 3, 'quatre': 4, 'cinq': 5,
+  'six': 6, 'sept': 7, 'huit': 8, 'neuf': 9, 'dix': 10,
+  'onze': 11, 'douze': 12, 'treize': 13, 'quatorze': 14, 'quinze': 15,
+  'seize': 16, 'vingt': 20, 'trente': 30, 'quarante': 40, 'cinquante': 50,
+};
+
+const NUMBER_WORD_KEYS = Object.keys(FR_NUMBER_WORDS).join('|');
+
+/** Détecte un nombre en lettres en début de segment : "cinq oeufs" → remplace par "5 oeufs" */
+const NUMBER_WORD_START_RE = new RegExp(`^(${NUMBER_WORD_KEYS})\\s+(.+)`, 'i');
+
+/** Segment qui ne contient QUE un nombre (chiffre ou lettres) — fragment orphelin */
+const LONE_NUMBER_RE = new RegExp(`^(\\d+|${NUMBER_WORD_KEYS})$`, 'i');
+
+/** Séparateurs principaux entre items dictés */
+const PRIMARY_SPLIT_RE = /\s+et\s+|,\s*|;\s*|\.\s+|\n+/i;
+
+/** Unités de mesure — leur présence en milieu de segment signale un nouvel article */
+const UNITS = 'g|kg|ml|cl|dl|l|paquets?|sachets?|boîtes?|boites?|bouteilles?|tranches?|gousses?|brins?|bottes?';
 
 /**
- * Extraction de quantité avec unité optionnelle et nom
- * Ex : "2 paquets de pâtes", "3 tomates", "1 bouteille de lait"
+ * Split secondaire : détecte "une quiche 500g de farine" → ["une quiche", "500g de farine"]
+ * Ne s'applique que si la quantité n'est PAS en début de segment (sinon c'est l'article en entier).
  */
-const QTY_WITH_UNIT_REGEX =
-  /^(\d+(?:[.,]\d+)?)\s*(?:paquets?|boîtes?|boites?|sachets?|bouteilles?|kg|g|l|ml|cl)?\s*(?:de\s+|d'|d')?(.+)/i;
+const INLINE_QTY_SPLIT_RE = new RegExp(
+  `(?<=\\S)\\s+(?=\\d+(?:[.,]\\d+)?\\s*(?:${UNITS})\\b)`,
+  'i',
+);
 
-/** Extraction de quantité simple */
-const QTY_SIMPLE_REGEX = /^(\d+(?:[.,]\d+)?)\s+(.+)/i;
+/** Déterminants à retirer du nom quand pas de quantité */
+const DETERMINANT_RE = /^(du|de la|de l['']|des|un|une|le|la|les)\s+/i;
 
 /**
- * Normalise un nom pour la déduplication : NFD lowercase
+ * Extraction quantité + unité + nom
+ * Ex : "500g de farine", "2 sachets de levure", "3 oeufs"
+ * Groupe 1 : chiffre, Groupe 2 : unité (optionnel), Groupe 3 : nom
  */
+const QTY_RE = new RegExp(
+  `^(\\d+(?:[.,]\\d+)?)\\s*(${UNITS})?\\s*(?:de\\s+|d[''])?(.+)`,
+  'i',
+);
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function normalizeForDedup(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
+  return name.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
-/**
- * Capitalise la première lettre d'une chaîne
- */
 function capitalize(str: string): string {
   if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/** Remplace un nombre en lettres en début de segment par sa valeur chiffre */
+function resolveNumberWord(seg: string): string {
+  const m = seg.match(NUMBER_WORD_START_RE);
+  if (!m) return seg;
+  const num = FR_NUMBER_WORDS[m[1].toLowerCase()];
+  return `${num} ${m[2]}`;
+}
+
+// ─── Parser principal ─────────────────────────────────────────────────────────
+
 /**
  * Parse un transcript vocal en liste d'items de courses.
- * Retourne un tableau vide si le transcript est vide ou ne contient rien d'exploitable.
+ * Gère les nombres en lettres ("cinq oeufs"), les fragments orphelins ("cinq" seul),
+ * et les items collés sans séparateur ("une quiche 500g de farine").
  */
 export function parseVoiceCourses(transcript: string): VoiceCourseItem[] {
-  if (!transcript || !transcript.trim()) return [];
+  if (!transcript?.trim()) return [];
 
-  const segments = transcript.split(SEPARATOR_REGEX);
+  // Étape 1 : split primaire sur séparateurs FR explicites
+  const primary = transcript
+    .split(PRIMARY_SPLIT_RE)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
+  // Étape 2 : fusionner les nombres orphelins avec le segment suivant
+  // "cinq" + "oeufs" → "cinq oeufs", "5" + "tomates" → "5 tomates"
+  const merged: string[] = [];
+  for (let i = 0; i < primary.length; i++) {
+    if (LONE_NUMBER_RE.test(primary[i]) && i + 1 < primary.length) {
+      primary[i + 1] = `${primary[i]} ${primary[i + 1]}`;
+      continue;
+    }
+    merged.push(primary[i]);
+  }
+
+  // Étape 3 : split secondaire sur quantité+unité embarquée en milieu de segment
+  // "une quiche 500g de farine" → ["une quiche", "500g de farine"]
+  const segments: string[] = [];
+  for (const seg of merged) {
+    try {
+      const parts = seg.split(INLINE_QTY_SPLIT_RE).map(s => s.trim()).filter(s => s.length > 0);
+      segments.push(...parts);
+    } catch {
+      // lookbehind non supporté sur certains moteurs JS — fallback sans split secondaire
+      segments.push(seg);
+    }
+  }
+
+  // Étape 4 : parser chaque segment en item
   const seen = new Set<string>();
   const result: VoiceCourseItem[] = [];
 
   for (const segment of segments) {
-    const trimmed = segment.trim();
-    if (trimmed.length < 2) continue;
+    // Convertir nombre en lettres → chiffre
+    const normalized = resolveNumberWord(segment);
 
     let quantity: number | null = null;
-    let name: string = trimmed;
+    let unit = '';
+    let name = normalized;
 
-    // Tentative extraction quantité avec unité
-    const qtyUnitMatch = trimmed.match(QTY_WITH_UNIT_REGEX);
-    if (qtyUnitMatch) {
-      const rawQty = qtyUnitMatch[1].replace(',', '.');
-      quantity = parseFloat(rawQty);
-      name = qtyUnitMatch[2].trim();
+    const m = normalized.match(QTY_RE);
+    if (m) {
+      quantity = parseFloat(m[1].replace(',', '.'));
+      unit = (m[2] ?? '').trim();
+      name = m[3].trim();
     } else {
-      // Tentative extraction quantité simple
-      const qtySimpleMatch = trimmed.match(QTY_SIMPLE_REGEX);
-      if (qtySimpleMatch) {
-        const rawQty = qtySimpleMatch[1].replace(',', '.');
-        quantity = parseFloat(rawQty);
-        name = qtySimpleMatch[2].trim();
-      }
-    }
-
-    // Si pas de quantité numérique, retirer le déterminant éventuel
-    if (quantity === null) {
-      name = name.replace(DETERMINANT_REGEX, '').trim();
+      // Pas de quantité → retirer le déterminant
+      name = name.replace(DETERMINANT_RE, '').trim();
     }
 
     if (name.length < 2) continue;
 
-    // Déduplication par nom normalisé
     const dedupKey = normalizeForDedup(name);
     if (seen.has(dedupKey)) continue;
     seen.add(dedupKey);
 
-    // Reconstruction du texte propre
-    const text = quantity !== null
-      ? `${quantity % 1 === 0 ? Math.round(quantity) : quantity} ${name}`
-      : capitalize(name);
+    // Reconstruction du texte propre avec unité si présente
+    let text: string;
+    if (quantity !== null) {
+      const qty = quantity % 1 === 0 ? Math.round(quantity) : quantity;
+      text = unit ? `${qty}${unit} de ${name}` : `${qty} ${name}`;
+    } else {
+      text = capitalize(name);
+    }
 
-    const section = categorizeIngredient(name);
-
-    result.push({ text, name, quantity, section });
+    result.push({ text, name, quantity, section: categorizeIngredient(name) });
   }
 
   return result;
