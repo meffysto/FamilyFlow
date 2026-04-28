@@ -4,7 +4,7 @@ milestone: v1.7
 milestone_name: Modifiers de plants
 status: Phase 42 complète — shippable sur TestFlight
 last_updated: "2026-04-28T11:30:00Z"
-last_activity: "2026-04-28 - Completed quick task 260428-k5e: Polish Courses — emojis résiduels → lucide + i18n DashboardCourses"
+last_activity: "2026-04-28 - Completed quick task 260428-kda: Preview/confirm modal vocal courses — VoiceCoursesReview + refactor handleVoiceResult"
 progress:
   total_phases: 14
   completed_phases: 9
@@ -82,6 +82,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260428-gh1 | Phase C courses — bottom sheet édition nom/qté/catégorie + long-press menu (Dupliquer/Supprimer) | 2026-04-28 | 0b4afa9 | [260428-gh1-phase-c-courses-edition-nom-qte-categori](./quick/260428-gh1-phase-c-courses-edition-nom-qte-categori/) |
 | 260428-huh | Phase D courses — multi-listes (migration auto Listes/principale.md + switcher UI + ActionSheet long-press + auto-courses recettes ciblées) | 2026-04-28 | 3e19f2f | [260428-huh-phase-d-courses-listes-multiples-multi-m](./quick/260428-huh-phase-d-courses-listes-multiples-multi-m/) |
 | 260428-k5e | Polish Courses — emojis résiduels → lucide (ShoppingCart/FolderOpen/Check/X) + i18n DashboardCourses | 2026-04-28 | 9d90e2b | [260428-k5e-polish-courses-remplacer-emojis-r-siduel](./quick/260428-k5e-polish-courses-remplacer-emojis-r-siduel/) |
+| 260428-kda | Preview/confirm modal vocal courses — VoiceCoursesReview + refactor handleVoiceResult | 2026-04-28 | 35072e8 | [260428-kda-preview-confirm-modal-pour-ajout-vocal-c](./quick/260428-kda-preview-confirm-modal-pour-ajout-vocal-c/) |
 
 ## Performance Metrics
 
