@@ -42,13 +42,13 @@ describe('useVaultCourses', () => {
 
   it('initialise avec un tableau vide', () => {
     const vaultRef = createVaultRef();
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
     expect(result.current.courses).toEqual([]);
   });
 
   it('resetCourses remet à []', async () => {
     const vaultRef = createVaultRef();
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
 
     await act(() => result.current.setCourses([
       { id: '1', text: '2 courgettes', completed: false, lineIndex: 3, sourceFile: 'test.md' } as any,
@@ -63,7 +63,7 @@ describe('useVaultCourses', () => {
     const mock = createMockVault();
     mock.readFile.mockResolvedValue(sampleCoursesContent);
     const vaultRef = createVaultRef(mock);
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
 
     await act(() => result.current.addCourseItem('3 pommes', '🍎 Fruits'));
 
@@ -76,7 +76,7 @@ describe('useVaultCourses', () => {
   it('toggleCourseItem bascule l\'état completed', async () => {
     const mock = createMockVault();
     const vaultRef = createVaultRef(mock);
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
 
     const item = { id: 'test:3', text: '2 courgettes', completed: false, lineIndex: 3, sourceFile: 'test.md' };
     await act(() => result.current.setCourses([item as any]));
@@ -91,7 +91,7 @@ describe('useVaultCourses', () => {
     const mock = createMockVault();
     mock.readFile.mockResolvedValue(sampleCoursesContent);
     const vaultRef = createVaultRef(mock);
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
 
     await act(() => result.current.removeCourseItem(3));
 
@@ -104,7 +104,7 @@ describe('useVaultCourses', () => {
     const mock = createMockVault();
     mock.readFile.mockResolvedValue(sampleCoursesContent);
     const vaultRef = createVaultRef(mock);
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
 
     await act(() => result.current.moveCourseItem(3, '2 courgettes', '🧀 Crèmerie'));
 
@@ -120,7 +120,7 @@ describe('useVaultCourses', () => {
     const mock = createMockVault();
     mock.readFile.mockResolvedValue(sampleCoursesContent);
     const vaultRef = createVaultRef(mock);
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
 
     await act(() => result.current.clearCompletedCourses());
 
@@ -134,7 +134,7 @@ describe('useVaultCourses', () => {
     const mock = createMockVault();
     mock.readFile.mockResolvedValue(sampleCoursesContent);
     const vaultRef = createVaultRef(mock);
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
 
     let res = { added: 0, merged: 0 };
     await act(async () => {
@@ -156,7 +156,7 @@ describe('useVaultCourses', () => {
 
   it('no-op si vaultRef.current est null', async () => {
     const vaultRef = { current: null as any };
-    const { result } = renderHook(() => useVaultCourses(vaultRef));
+    const { result } = renderHook(() => useVaultCourses(vaultRef, "test://mock"));
 
     await act(() => result.current.addCourseItem('X'));
     await act(() => result.current.toggleCourseItem({ id: '1', lineIndex: 0 } as any, true));

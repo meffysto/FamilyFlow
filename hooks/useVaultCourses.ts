@@ -103,6 +103,7 @@ export interface UseVaultCoursesResult {
 
 export function useVaultCourses(
   vaultRef: React.MutableRefObject<VaultManager | null>,
+  vaultPath: string | null,
 ): UseVaultCoursesResult {
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [listes, setListes] = useState<CourseList[]>([]);
@@ -257,7 +258,7 @@ export function useVaultCourses(
 
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [vaultPath]);
 
   // ─── Helper "current path" pour writes ────────────────────────────────────
 

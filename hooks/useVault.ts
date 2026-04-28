@@ -552,7 +552,8 @@ export function useVaultInternal(): VaultState {
   const { stock, stockSections, resetStock } = stockHook;
 
   // Domaine Courses délégué à useVaultCourses
-  const coursesHook = useVaultCourses(vaultRef);
+  // vaultPath en 2e arg : déclenche migration + load quand vaultRef.current devient prêt
+  const coursesHook = useVaultCourses(vaultRef, vaultPath);
   const { courses, resetCourses } = coursesHook;
 
   // Domaine Budget délégué à useVaultBudget
