@@ -1663,7 +1663,12 @@ export default function MealsScreen() {
                 if (!items || items.length === 0) return null;
                 return (
                   <View key={section} style={[styles.courseSection, { backgroundColor: colors.card }]}>
-                    <Text style={[styles.courseSectionTitle, { color: colors.text }]}>{section}</Text>
+                    <Text
+                      style={[styles.courseSectionTitle, { color: colors.text }]}
+                      accessibilityRole="header"
+                    >
+                      {section}
+                    </Text>
                     {items.map((item) => (
                       <Animated.View
                         key={item.id}
@@ -3298,8 +3303,8 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   listPillAdd: {
-    width: 40,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: Radius.full,
     borderWidth: 1,
     alignItems: 'center',
@@ -3426,11 +3431,12 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   sectionPickerBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 10,
-    minWidth: 40,
+    minWidth: 44,
+    minHeight: 44,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.base,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionPickerText: {
     fontSize: FontSize.label,
@@ -3438,20 +3444,20 @@ const styles = StyleSheet.create({
   },
   addInput: {
     flex: 1,
+    minHeight: 44,
     borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: Radius.base,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
     fontSize: FontSize.body,
   },
   addBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.base,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addBtnDisabled: {},
   addBtnText: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
