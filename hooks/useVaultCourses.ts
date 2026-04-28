@@ -170,51 +170,70 @@ export function useVaultCourses(
 
   const migrateIfNeeded = useCallback(async (): Promise<void> => {
     const vm = vaultRef.current;
-    if (!vm) return;
+    if (!vm) {
+      if (__DEV__) console.log('[migration] skip — vaultRef null');
+      return;
+    }
     try {
-      // Si Listes/ existe ET contient au moins un .md (hors .bak) → no-op.
       let existingFiles: string[] = [];
       try {
-        existingFiles = (await vm.listDir(COURSES_LISTS_DIR)).filter(
-          (f) => f.endsWith('.md') && !f.endsWith('.bak'),
-        );
-      } catch {
+        const all = await vm.listDir(COURSES_LISTS_DIR);
+        existingFiles = all.filter((f) => f.endsWith('.md') && !f.endsWith('.bak'));
+        if (__DEV__) console.log('[migration] listDir Listes/', { all, kept: existingFiles });
+      } catch (e) {
+        if (__DEV__) console.log('[migration] listDir error (probably no dir)', e);
         existingFiles = [];
       }
-      if (existingFiles.length > 0) return;
+      if (existingFiles.length > 0) {
+        if (__DEV__) console.log('[migration] no-op — Listes/ already populated');
+        return;
+      }
 
+      if (__DEV__) console.log('[migration] ensureDir', COURSES_LISTS_DIR);
       await vm.ensureDir(COURSES_LISTS_DIR);
 
       const legacyExists = await vm.exists(COURSES_FILE_LEGACY);
+      if (__DEV__) console.log('[migration] legacy exists?', legacyExists);
+
       if (legacyExists) {
         const legacyContent = await vm.readFile(COURSES_FILE_LEGACY);
+        if (__DEV__) console.log('[migration] legacy read OK, length=', legacyContent.length);
         const items = parseCourses(legacyContent, COURSES_FILE_LEGACY);
+        if (__DEV__) console.log('[migration] parsed items=', items.length);
         const meta: CourseListMeta = {
           nom: 'Principale',
           emoji: '🛒',
           archive: false,
           createdAt: todayLocal(),
         };
-        await vm.writeFile(pathOf('principale'), serializeCourseList(meta, items));
+        const target = pathOf('principale');
+        if (__DEV__) console.log('[migration] writeFile', target);
+        await vm.writeFile(target, serializeCourseList(meta, items));
+        if (__DEV__) console.log('[migration] principale.md written');
 
-        // Backup .bak puis suppression du legacy — sécurisé : si .bak fail, ne pas delete.
         try {
           await vm.writeFile(`${COURSES_FILE_LEGACY}.bak`, legacyContent);
+          if (__DEV__) console.log('[migration] .bak written');
           await vm.deleteFile(COURSES_FILE_LEGACY);
+          if (__DEV__) console.log('[migration] legacy deleted');
         } catch (e) {
+          if (__DEV__) console.log('[migration] backup/delete error', e);
           warnUnexpected('migration backup', e);
         }
       } else {
-        // Vault vierge → liste minimale
         const meta: CourseListMeta = {
           nom: 'Principale',
           emoji: '🛒',
           archive: false,
           createdAt: todayLocal(),
         };
-        await vm.writeFile(pathOf('principale'), serializeCourseList(meta, []));
+        const target = pathOf('principale');
+        if (__DEV__) console.log('[migration] no legacy — write empty', target);
+        await vm.writeFile(target, serializeCourseList(meta, []));
+        if (__DEV__) console.log('[migration] empty principale.md written');
       }
     } catch (e) {
+      if (__DEV__) console.log('[migration] OUTER ERROR', e);
       warnUnexpected('migrateIfNeeded', e);
     }
   }, []);
@@ -223,10 +242,12 @@ export function useVaultCourses(
 
   useEffect(() => {
     const vm = vaultRef.current;
+    if (__DEV__) console.log('[useVaultCourses] mount effect — vaultPath=', vaultPath, 'vm?=', !!vm);
     if (!vm) return;
     let cancelled = false;
 
     (async () => {
+      if (__DEV__) console.log('[useVaultCourses] running migrateIfNeeded...');
       await migrateIfNeeded();
       const all = await loadListes();
       if (cancelled) return;
