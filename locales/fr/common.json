@@ -874,7 +874,19 @@
       "frequentClearHintA11y": "Appui long pour effacer l'historique",
       "frequentClearTitle": "Effacer l'historique",
       "frequentClearMsg": "Supprimer tous les articles fréquents ?",
-      "frequentClearConfirm": "Effacer"
+      "frequentClearConfirm": "Effacer",
+      "editTitle": "Modifier l'article",
+      "editName": "Nom",
+      "editQty": "Quantité",
+      "editSection": "Catégorie",
+      "editNewCategory": "+ Nouvelle",
+      "editNewCategoryLabel": "Nom de la catégorie",
+      "editNewCategoryAdd": "Ajouter",
+      "editSave": "Enregistrer",
+      "editCancel": "Annuler",
+      "editEmpty": "Le nom ne peut pas être vide",
+      "actionDuplicate": "Dupliquer",
+      "actionDelete": "Supprimer"
     },
     "recipes": {
       "searchPlaceholder": "Rechercher une recette…",

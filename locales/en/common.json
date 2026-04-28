@@ -874,7 +874,19 @@
       "frequentClearHintA11y": "Long press to clear history",
       "frequentClearTitle": "Clear history",
       "frequentClearMsg": "Remove all frequent items?",
-      "frequentClearConfirm": "Clear"
+      "frequentClearConfirm": "Clear",
+      "editTitle": "Edit item",
+      "editName": "Name",
+      "editQty": "Quantity",
+      "editSection": "Category",
+      "editNewCategory": "+ New",
+      "editNewCategoryLabel": "Category name",
+      "editNewCategoryAdd": "Add",
+      "editSave": "Save",
+      "editCancel": "Cancel",
+      "editEmpty": "Name cannot be empty",
+      "actionDuplicate": "Duplicate",
+      "actionDelete": "Delete"
     },
     "recipes": {
       "searchPlaceholder": "Search a recipe…",
