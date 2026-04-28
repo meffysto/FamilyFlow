@@ -49,7 +49,7 @@ import {
   User, Palette, Bell, Leaf, Sun, Trophy, Link2, Zap,
   Bot, Mic, Fish, Send, Users as UsersIcon,
   ShieldCheck, Lock, FolderOpen, Lightbulb,
-  Wrench, RefreshCw, Settings as SettingsIcon, Gift, Sprout,
+  Wrench, RefreshCw, Settings as SettingsIcon, Gift, Sprout, MessageCircle,
 } from 'lucide-react-native';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
@@ -80,7 +80,7 @@ export default function SettingsScreen() {
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
-  const { showRewardCard, showHarvestCard } = useToast();
+  const { showToast, showRewardCard, showHarvestCard } = useToast();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
@@ -329,6 +329,25 @@ export default function SettingsScreen() {
               title="Revoir la config vault"
               subtitle="Wizard parents / enfants / templates"
               onPress={() => router.replace('/setup' as any)}
+            />
+            <SettingsRow
+              icon={MessageCircle}
+              title="Tester Toasts"
+              subtitle="V1 utilitaire + V2 sceau de cire (séquence 8 toasts)"
+              onPress={() => {
+                // Joue 8 toasts en séquence pour voir les deux variantes
+                const seq: Array<() => void> = [
+                  () => showToast('Tâche ajoutée'),
+                  () => showToast('Texte requis', 'error'),
+                  () => showToast('Article retiré', 'success', { label: 'Annuler', onPress: () => {} }),
+                  () => showToast('Tâche reportée à demain', 'info'),
+                  () => showToast('Récolte terminée !', 'success', undefined, { icon: '🌾', subtitle: '+40 🍂' }),
+                  () => showToast('Croissance rapide activée', 'info', undefined, { icon: '⚡', subtitle: 'Toutes les cultures' }),
+                  () => showToast('Nouvelle graine rare trouvée !', 'success', undefined, { icon: '🌟', subtitle: 'Carotte dorée débloquée' }),
+                  () => showToast('Sauvegarde impossible', 'error', undefined, { icon: '⚠️', subtitle: 'Vérifie iCloud' }),
+                ];
+                seq.forEach((fn, i) => setTimeout(fn, i * 2800));
+              }}
             />
             <SettingsRow
               icon={Gift}
