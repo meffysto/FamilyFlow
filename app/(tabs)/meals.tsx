@@ -42,6 +42,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngredients, convertCookToMetric, COURSE_CATEGORIES, type AppIngredient } from '../../lib/cooklang';
 import { CourseItemEditor } from '../../components/CourseItemEditor';
+import { CourseListEditor } from '../../components/CourseListEditor';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, cleanCookContent, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -59,9 +60,10 @@ import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { Shadows } from '../../constants/shadows';
 import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
 import { suggestRecipesFromStock } from '../../lib/ai-service';
-import { getAutomationFlag } from '../../lib/automation-config';
+import { getAutomationFlag, getDefaultRecipeList, setDefaultRecipeList } from '../../lib/automation-config';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
-import { Mic } from 'lucide-react-native';
+import { Mic, Plus, ShoppingBag, Star } from 'lucide-react-native';
+import type { CourseList } from '../../hooks/useVaultCourses';
 import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
 import { COURSES_FILE_LEGACY, COURSES_DEFAULT_SECTION } from '../../lib/courses-constants';
@@ -130,6 +132,7 @@ export default function MealsScreen() {
     meals, updateMeal, loadMealsForWeek,
     courses, vault,
     addCourseItem, removeCourseItem, moveCourseItem, updateCourseItem, mergeCourseIngredients, toggleCourseItem,
+    listes, activeListId, setActiveList, createList, renameList, deleteList, duplicateList, archiveList, mergeCourseIngredientsToList,
     stock, updateStockQuantity, addStockItem,
     recipes, loadRecipes, deleteRecipe, renameRecipe,
     saveRecipeImage, getRecipeImageUri,
@@ -240,6 +243,15 @@ export default function MealsScreen() {
 
   // Course item editor (bottom sheet) state
   const [editingCourseItem, setEditingCourseItem] = useState<CourseItem | null>(null);
+
+  // Phase D — multi-listes state
+  const [listEditorVisible, setListEditorVisible] = useState(false);
+  const [listEditorMode, setListEditorMode] = useState<'create' | 'edit'>('create');
+  const [listEditorTarget, setListEditorTarget] = useState<CourseList | null>(null);
+  const [defaultRecipeListId, setDefaultRecipeListId] = useState<string | null>(null);
+  useEffect(() => {
+    getDefaultRecipeList().then(setDefaultRecipeListId).catch(() => {});
+  }, []);
 
   // Community explore state
   const [showExplore, setShowExplore] = useState(false);
@@ -708,6 +720,134 @@ export default function MealsScreen() {
       { text: t('common.cancel'), style: 'cancel' },
     ]);
   }, [handleDuplicateCourse, handleCourseRemove, t]);
+
+  // ─── Phase D — multi-listes handlers ──────────────────────────────
+
+  const handleSetActiveList = useCallback((id: string) => {
+    Haptics.selectionAsync();
+    setActiveList(id).catch((e) => {
+      if (__DEV__) console.warn('setActiveList failed:', e);
+    });
+  }, [setActiveList]);
+
+  const handleOpenCreateList = useCallback(() => {
+    Haptics.selectionAsync();
+    setListEditorMode('create');
+    setListEditorTarget(null);
+    setListEditorVisible(true);
+  }, []);
+
+  const handleListEditorSave = useCallback(async (nom: string, emoji: string) => {
+    if (listEditorMode === 'create') {
+      const newId = await createList(nom, emoji);
+      await setActiveList(newId).catch(() => {});
+    } else if (listEditorTarget) {
+      await renameList(listEditorTarget.id, nom);
+    }
+  }, [listEditorMode, listEditorTarget, createList, renameList, setActiveList]);
+
+  const handleSetDefaultRecipeList = useCallback(async (listId: string) => {
+    try {
+      await setDefaultRecipeList(listId);
+      setDefaultRecipeListId(listId);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const liste = listes.find(l => l.id === listId);
+      showToast(t('meals.shopping.lists.addedToList', { nom: liste?.nom ?? listId }));
+    } catch (e) {
+      if (__DEV__) console.warn('setDefaultRecipeList failed:', e);
+    }
+  }, [listes, showToast, t]);
+
+  const handleListLongPress = useCallback((liste: CourseList) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const isDefault = liste.id === defaultRecipeListId;
+    Alert.alert(`${liste.emoji} ${liste.nom}`, undefined, [
+      {
+        text: t('meals.shopping.lists.actionRename'),
+        onPress: () => {
+          setListEditorMode('edit');
+          setListEditorTarget(liste);
+          setListEditorVisible(true);
+        },
+      },
+      {
+        text: t('meals.shopping.lists.actionDuplicate'),
+        onPress: () => {
+          Alert.prompt(
+            t('meals.shopping.lists.actionDuplicate'),
+            t('meals.shopping.lists.actionDuplicatePrompt'),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('meals.shopping.lists.save'),
+                onPress: (newNom?: string) => {
+                  const finalNom = (newNom ?? '').trim() || `${liste.nom} (copie)`;
+                  duplicateList(liste.id, finalNom).catch((e) => {
+                    if (__DEV__) console.warn('duplicateList failed:', e);
+                  });
+                },
+              },
+            ],
+            'plain-text',
+            `${liste.nom} (copie)`,
+          );
+        },
+      },
+      {
+        text: isDefault
+          ? `★ ${t('meals.shopping.lists.actionSetDefault')}`
+          : t('meals.shopping.lists.actionSetDefault'),
+        onPress: () => handleSetDefaultRecipeList(liste.id),
+      },
+      {
+        text: liste.archive
+          ? t('meals.shopping.lists.actionUnarchive')
+          : t('meals.shopping.lists.actionArchive'),
+        onPress: () => {
+          archiveList(liste.id, !liste.archive).catch((e) => {
+            if (__DEV__) console.warn('archiveList failed:', e);
+          });
+        },
+      },
+      {
+        text: t('meals.shopping.lists.actionDelete'),
+        style: 'destructive',
+        onPress: () => {
+          Alert.alert(
+            t('meals.shopping.lists.confirmDelete', { nom: liste.nom }),
+            t('meals.shopping.lists.confirmDeleteWarn'),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('meals.shopping.lists.actionDelete'),
+                style: 'destructive',
+                onPress: () => {
+                  deleteList(liste.id).catch((e) => {
+                    if (__DEV__) console.warn('deleteList failed:', e);
+                  });
+                },
+              },
+            ],
+          );
+        },
+      },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  }, [
+    defaultRecipeListId,
+    duplicateList,
+    archiveList,
+    deleteList,
+    handleSetDefaultRecipeList,
+    t,
+  ]);
+
+  // Helper : résout la liste cible pour auto-courses recettes
+  const resolveTargetListId = useCallback(async (): Promise<string | null> => {
+    const def = await getDefaultRecipeList();
+    if (def && listes.find(l => l.id === def && !l.archive)) return def;
+    return activeListId;
+  }, [listes, activeListId]);
 
   // ─── Recettes logic ─────────────────────────────────────────────
 
@@ -1293,6 +1433,111 @@ export default function MealsScreen() {
       ) : tab === 'courses' ? (
         /* ─── Courses tab ─────────────────────────────── */
         <View style={styles.coursesContainer}>
+          {/* Phase D — Header listes (switcher + bouton +) */}
+          {(() => {
+            const visibleListes = listes.filter(l => !l.archive);
+            if (visibleListes.length === 0) {
+              return (
+                <View style={[styles.listsHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+                  <View style={styles.listsEmptyState}>
+                    <ShoppingBag size={32} color={colors.textMuted} />
+                    <Text style={[styles.listsEmptyTitle, { color: colors.text }]}>
+                      {t('meals.shopping.lists.emptyTitle')}
+                    </Text>
+                    <Text style={[styles.listsEmptyHint, { color: colors.textMuted }]}>
+                      {t('meals.shopping.lists.emptyHint')}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={handleOpenCreateList}
+                      style={[styles.listsEmptyCta, { backgroundColor: primary }]}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.listsEmptyCtaText, { color: colors.onPrimary }]}>
+                        {t('meals.shopping.lists.emptyCta')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            }
+            return (
+              <View style={[styles.listsHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.listsScrollContent}
+                >
+                  {visibleListes.map((liste) => {
+                    const selected = liste.id === activeListId;
+                    const isDefault = liste.id === defaultRecipeListId;
+                    return (
+                      <TouchableOpacity
+                        key={liste.id}
+                        onPress={() => handleSetActiveList(liste.id)}
+                        onLongPress={() => handleListLongPress(liste)}
+                        delayLongPress={400}
+                        activeOpacity={0.7}
+                        style={[
+                          styles.listPill,
+                          {
+                            backgroundColor: selected ? primary : colors.cardAlt,
+                            borderColor: selected ? primary : colors.borderLight,
+                          },
+                        ]}
+                      >
+                        <Text style={styles.listPillEmoji}>{liste.emoji}</Text>
+                        <Text
+                          style={[
+                            styles.listPillLabel,
+                            { color: selected ? colors.onPrimary : colors.text },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {liste.nom}
+                        </Text>
+                        {isDefault && (
+                          <Star
+                            size={12}
+                            color={selected ? colors.onPrimary : colors.textMuted}
+                            fill={selected ? colors.onPrimary : colors.textMuted}
+                          />
+                        )}
+                        {liste.remainingCount > 0 && (
+                          <View
+                            style={[
+                              styles.listPillBadge,
+                              { backgroundColor: selected ? colors.onPrimary : primary },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.listPillBadgeText,
+                                { color: selected ? primary : colors.onPrimary },
+                              ]}
+                            >
+                              {liste.remainingCount}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                  <TouchableOpacity
+                    onPress={handleOpenCreateList}
+                    style={[
+                      styles.listPillAdd,
+                      { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
+                    ]}
+                    activeOpacity={0.7}
+                    accessibilityLabel={t('meals.shopping.lists.create')}
+                  >
+                    <Plus size={18} color={colors.textSub} />
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            );
+          })()}
+
           <Animated.ScrollView
             style={styles.scroll}
             contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
@@ -1891,6 +2136,18 @@ export default function MealsScreen() {
         sections={courseSections}
         onClose={() => setEditingCourseItem(null)}
         onSave={handleEditSave}
+      />
+
+      {/* Phase D — List editor (create / rename) */}
+      <CourseListEditor
+        visible={listEditorVisible}
+        mode={listEditorMode}
+        initialNom={listEditorMode === 'edit' ? listEditorTarget?.nom : undefined}
+        initialEmoji={listEditorMode === 'edit' ? listEditorTarget?.emoji : undefined}
+        existingIds={listes.map(l => l.id)}
+        excludeId={listEditorMode === 'edit' ? listEditorTarget?.id : undefined}
+        onClose={() => setListEditorVisible(false)}
+        onSave={handleListEditorSave}
       />
 
       {/* Import picker bottom sheet */}
@@ -2835,6 +3092,80 @@ const styles = StyleSheet.create({
   // Courses
   coursesContainer: {
     flex: 1,
+  },
+  // Phase D — Header listes
+  listsHeader: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingVertical: Spacing.md,
+  },
+  listsScrollContent: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing['2xl'],
+    alignItems: 'center',
+  },
+  listPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    maxWidth: 220,
+  },
+  listPillEmoji: {
+    fontSize: FontSize.body,
+  },
+  listPillLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+    flexShrink: 1,
+  },
+  listPillBadge: {
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.xs,
+  },
+  listPillBadgeText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
+  },
+  listPillAdd: {
+    width: 40,
+    height: 36,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listsEmptyState: {
+    alignItems: 'center',
+    paddingVertical: Spacing['3xl'],
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.md,
+  },
+  listsEmptyTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  listsEmptyHint: {
+    fontSize: FontSize.sm,
+    textAlign: 'center',
+  },
+  listsEmptyCta: {
+    paddingHorizontal: Spacing['3xl'],
+    paddingVertical: Spacing.xl,
+    borderRadius: Radius.full,
+    marginTop: Spacing.md,
+  },
+  listsEmptyCtaText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   courseSection: {
     borderRadius: 14,
