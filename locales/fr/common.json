@@ -870,6 +870,7 @@
       "voiceAddedToast": "{{count}} article(s) ajouté(s)",
       "voiceNothingDetected": "Aucun article détecté dans la dictée",
       "frequentTitle": "Fréquents",
+      "estimateRemaining": "Estimé restant",
       "frequentLabelA11y": "Articles fréquents — appui long pour effacer",
       "frequentClearHintA11y": "Appui long pour effacer l'historique",
       "frequentClearTitle": "Effacer l'historique",

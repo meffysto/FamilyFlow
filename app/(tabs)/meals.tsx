@@ -44,6 +44,7 @@ import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngr
 import { CourseItemEditor } from '../../components/CourseItemEditor';
 import { CourseListEditor } from '../../components/CourseListEditor';
 import { renderListIcon } from '../../lib/list-icons';
+import { getLastPriceFor, computeRemainingEstimate, formatPrice } from '../../lib/courses-prices';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, cleanCookContent, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -143,6 +144,7 @@ export default function MealsScreen() {
     dietary,
     activeProfile,
     healthRecords,
+    budgetEntries,
     toggleFavorite, isFavorite, getFavorites,
     refresh, isLoading,
   } = useVault();
@@ -612,6 +614,19 @@ export default function MealsScreen() {
   }, [courses]);
 
   const courseDoneCount = courses.filter((c) => c.completed).length;
+
+  // Phase E — prix lecture-only depuis budget
+  const courseRemainingEstimate = useMemo(
+    () => computeRemainingEstimate(courses, budgetEntries),
+    [courses, budgetEntries],
+  );
+  const coursePriceByItemId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getLastPriceFor>>();
+    for (const c of courses) {
+      map.set(c.id, getLastPriceFor(c.text, budgetEntries));
+    }
+    return map;
+  }, [courses, budgetEntries]);
 
   const handleCourseToggle = useCallback(async (item: CourseItem) => {
     if (!vault) return;
@@ -1633,6 +1648,21 @@ export default function MealsScreen() {
                             {item.text}
                           </Text>
                         </TouchableOpacity>
+                        {(() => {
+                          const priceInfo = coursePriceByItemId.get(item.id);
+                          if (!priceInfo) return null;
+                          return (
+                            <Text
+                              style={[
+                                styles.coursePrice,
+                                { color: priceInfo.stale ? colors.textFaint : colors.textMuted },
+                                item.completed && { textDecorationLine: 'line-through' },
+                              ]}
+                            >
+                              {`≈ ${formatPrice(priceInfo.price)}`}
+                            </Text>
+                          );
+                        })()}
                         <TouchableOpacity
                           style={styles.courseRemoveBtn}
                           onPress={() => handleCourseRemove(item)}
@@ -1698,6 +1728,17 @@ export default function MealsScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+          )}
+
+          {courseRemainingEstimate > 0 && (
+            <View style={[styles.estimateBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}>
+              <Text style={[styles.estimateLabel, { color: colors.textMuted }]}>
+                {t('meals.shopping.estimateRemaining', { defaultValue: 'Estimé restant' })}
+              </Text>
+              <Text style={[styles.estimateValue, { color: colors.text }]}>
+                {`≈ ${formatPrice(courseRemainingEstimate)}`}
+              </Text>
             </View>
           )}
 
@@ -3246,6 +3287,29 @@ const styles = StyleSheet.create({
   courseRemoveText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+  coursePrice: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+    marginRight: Spacing.sm,
+    fontVariant: ['tabular-nums'],
+  },
+  estimateBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  estimateLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  estimateValue: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    fontVariant: ['tabular-nums'],
   },
   emptyState: {
     alignItems: 'center',

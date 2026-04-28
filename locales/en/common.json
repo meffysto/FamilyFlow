@@ -870,6 +870,7 @@
       "voiceAddedToast": "{{count}} item(s) added",
       "voiceNothingDetected": "No item detected in dictation",
       "frequentTitle": "Frequent",
+      "estimateRemaining": "Estimated remaining",
       "frequentLabelA11y": "Frequent items — long press to clear",
       "frequentClearHintA11y": "Long press to clear history",
       "frequentClearTitle": "Clear history",
