@@ -869,6 +869,18 @@
       "voiceAddSubtitle": "Ex: 3 tomatoes, milk and 2 packs of pasta",
       "voiceAddedToast": "{{count}} item(s) added",
       "voiceNothingDetected": "No item detected in dictation",
+      "voiceReview": {
+        "title": "{{count}} items detected",
+        "title_one": "{{count}} item detected",
+        "nameLabel": "Item",
+        "qtyLabel": "Quantity",
+        "sectionLabel": "Aisle",
+        "delete": "Delete this row",
+        "save": "Add to shopping list",
+        "empty": "No items — close and try again",
+        "addRow": "Add a row",
+        "qtyPlaceholder": "e.g. 3 or 120g"
+      },
       "frequentTitle": "Frequent",
       "estimateRemaining": "Estimated remaining",
       "frequentLabelA11y": "Frequent items — long press to clear",

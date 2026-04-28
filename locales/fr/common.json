@@ -869,6 +869,18 @@
       "voiceAddSubtitle": "Ex : 3 tomates, du lait et 2 paquets de pâtes",
       "voiceAddedToast": "{{count}} article(s) ajouté(s)",
       "voiceNothingDetected": "Aucun article détecté dans la dictée",
+      "voiceReview": {
+        "title": "{{count}} articles détectés",
+        "title_one": "{{count}} article détecté",
+        "nameLabel": "Article",
+        "qtyLabel": "Quantité",
+        "sectionLabel": "Rayon",
+        "delete": "Supprimer cette ligne",
+        "save": "Ajouter aux courses",
+        "empty": "Aucun article — ferme et réessaye",
+        "addRow": "Ajouter une ligne",
+        "qtyPlaceholder": "ex. 3 ou 120g"
+      },
       "frequentTitle": "Fréquents",
       "estimateRemaining": "Estimé restant",
       "frequentLabelA11y": "Articles fréquents — appui long pour effacer",
