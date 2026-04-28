@@ -73,7 +73,7 @@ import { VoiceCoursesReview } from '../../components/VoiceCoursesReview';
 import type { VoiceCourseItem } from '../../lib/parse-voice-courses';
 import { Check, FolderOpen, Maximize2, Mic, Plus, ShoppingBag, ShoppingCart, Star, X } from 'lucide-react-native';
 import { CourseAutocomplete } from '../../components/CourseAutocomplete';
-import { ShoppingModeModal } from '../../components/ShoppingModeModal';
+import { ShoppingModeView } from '../../components/ShoppingModeView';
 import type { CourseList } from '../../hooks/useVaultCourses';
 import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
@@ -1349,6 +1349,25 @@ export default function MealsScreen() {
     : headerStatsText;
 
   // ─── Render ─────────────────────────────────────────────────────
+
+  // Mode shopping in-place : remplace header + body de l'onglet courses.
+  // Aucun modal — l'utilisateur reste sur le même écran, juste un autre rendu.
+  if (tab === 'courses' && showShoppingMode) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
+        <ShoppingModeView
+          listName={listes.find(l => l.id === activeListId)?.nom ?? t('meals.header.shoppingTitle')}
+          sections={courseSections}
+          itemsBySection={coursesBySection}
+          onToggle={handleCourseToggle}
+          onClose={() => setShowShoppingMode(false)}
+          priceByItemId={coursePriceByItemId}
+          remainingEstimate={courseRemainingEstimate}
+          formatPrice={formatPrice}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
@@ -3167,19 +3186,6 @@ export default function MealsScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-
-      {/* Mode shopping plein écran */}
-      <ShoppingModeModal
-        visible={showShoppingMode}
-        onClose={() => setShowShoppingMode(false)}
-        listName={listes.find(l => l.id === activeListId)?.nom ?? t('meals.header.shoppingTitle')}
-        sections={courseSections}
-        itemsBySection={coursesBySection}
-        onToggle={handleCourseToggle}
-        priceByItemId={coursePriceByItemId}
-        remainingEstimate={courseRemainingEstimate}
-        formatPrice={formatPrice}
-      />
 
       {/* Coach marks */}
       <ScreenGuide
