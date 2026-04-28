@@ -1667,8 +1667,8 @@ export default function MealsScreen() {
                     {items.map((item) => (
                       <Animated.View
                         key={item.id}
-                        layout={LinearTransition.springify().damping(18).stiffness(160)}
-                        exiting={FadeOutLeft.duration(220)}
+                        layout={LinearTransition.springify().damping(18).stiffness(220)}
+                        exiting={FadeOutLeft.duration(120)}
                       >
                         <ReanimatedSwipeable
                           renderRightActions={() => (
