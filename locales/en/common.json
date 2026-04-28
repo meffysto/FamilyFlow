@@ -833,7 +833,15 @@
       "categoryAutoA11y": "Category: automatic",
       "categoryHintA11y": "Choose item category",
       "endOfList": "📋 End of list",
-      "categoryTitle": "Category"
+      "categoryTitle": "Category",
+      "frequentLabel": "Frequent items",
+      "frequentHintA11y": "Tap to add quickly",
+      "frequentChipA11y": "Add {{name}} to list",
+      "voiceAddBtnA11y": "Add by voice",
+      "voiceAddTitle": "Dictate items",
+      "voiceAddSubtitle": "Ex: 3 tomatoes, milk and 2 packs of pasta",
+      "voiceAddedToast": "{{count}} item(s) added",
+      "voiceNothingDetected": "No item detected in dictation"
     },
     "recipes": {
       "searchPlaceholder": "Search a recipe…",

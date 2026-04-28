@@ -60,6 +60,8 @@ import { computeMissingIngredients, computeStockDecrements, resolveStockAction, 
 import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag } from '../../lib/automation-config';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
+import { trackCourseAdd, getFrequentCourses } from '../../lib/course-history';
+import { parseVoiceCourses } from '../../lib/parse-voice-courses';
 import { MealConflictRecap, CookSuggestModal, extractRecipeTitlesFromMarkdown } from '../../components/dietary';
 import { checkAllergens } from '../../lib/dietary';
 import type { Profile } from '../../lib/types';
@@ -192,6 +194,10 @@ export default function MealsScreen() {
   const [showSectionPicker, setShowSectionPicker] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
+  // Articles fréquents + saisie vocale
+  const [frequentItems, setFrequentItems] = useState<{ name: string; count: number }[]>([]);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+
   // Recettes state
   const [recipeSearch, setRecipeSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
@@ -258,6 +264,13 @@ export default function MealsScreen() {
       setEditableCookContent(importResult.data.cookContent);
     }
   }, [importResult]);
+
+  // Chargement articles fréquents au basculement vers l'onglet courses
+  useEffect(() => {
+    if (tab === 'courses') {
+      getFrequentCourses(8).then(setFrequentItems).catch(() => {});
+    }
+  }, [tab]);
 
   // ─── Helper: resolve recipeRef → Recipe ────────────────────────
 
@@ -638,10 +651,36 @@ export default function MealsScreen() {
     try {
       await addCourseItem(text, selectedSection ?? categorizeIngredient(text));
       setNewItemText('');
+      trackCourseAdd(text).then(() => getFrequentCourses(8).then(setFrequentItems)).catch(() => {});
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
   }, [newItemText, selectedSection, addCourseItem, t]);
+
+  const handleAddFrequent = useCallback(async (name: string) => {
+    const section = categorizeIngredient(name);
+    await addCourseItem(name, section);
+    Haptics.selectionAsync().catch(() => {});
+    trackCourseAdd(name).then(() => getFrequentCourses(8).then(setFrequentItems)).catch(() => {});
+  }, [addCourseItem]);
+
+  const handleVoiceResult = useCallback(async (transcript: string) => {
+    const items = parseVoiceCourses(transcript);
+    if (items.length === 0) {
+      showToast(t('meals.shopping.voiceNothingDetected'), 'info');
+      setShowVoiceModal(false);
+      return;
+    }
+    try {
+      const result = await mergeCourseIngredients(items);
+      items.forEach(i => trackCourseAdd(i.name).catch(() => {}));
+      getFrequentCourses(8).then(setFrequentItems).catch(() => {});
+      showToast(t('meals.shopping.voiceAddedToast', { count: result.added + result.merged }), 'success');
+    } catch (e) {
+      Alert.alert(t('meals.alert.error'), String(e));
+    }
+    setShowVoiceModal(false);
+  }, [mergeCourseIngredients, showToast, t]);
 
   const handleChangeCourseCategory = useCallback((item: CourseItem) => {
     setCategoryPickerItem(item);
@@ -1332,6 +1371,31 @@ export default function MealsScreen() {
             )}
           </Animated.ScrollView>
 
+          {frequentItems.length > 0 && (
+            <View style={[styles.frequentBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.frequentScrollContent}
+              >
+                {frequentItems.map(item => (
+                  <TouchableOpacity
+                    key={item.name}
+                    style={[styles.frequentChip, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+                    onPress={() => handleAddFrequent(item.name)}
+                    activeOpacity={0.7}
+                    accessibilityLabel={t('meals.shopping.frequentChipA11y', { name: item.name })}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.frequentChipText, { color: colors.text }]} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={160}
@@ -1376,6 +1440,15 @@ export default function MealsScreen() {
                 accessibilityState={{ disabled: !newItemText.trim() }}
               >
                 <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.micBtn, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+                onPress={() => setShowVoiceModal(true)}
+                activeOpacity={0.7}
+                accessibilityLabel={t('meals.shopping.voiceAddBtnA11y')}
+                accessibilityRole="button"
+              >
+                <Text style={styles.micBtnIcon}>🎙️</Text>
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -2347,6 +2420,23 @@ export default function MealsScreen() {
         />
       </Modal>
 
+      {/* Dictaphone modal — ajout vocal courses */}
+      <Modal
+        visible={showVoiceModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowVoiceModal(false)}
+      >
+        <DictaphoneRecorder
+          context={{
+            title: t('meals.shopping.voiceAddTitle'),
+            subtitle: t('meals.shopping.voiceAddSubtitle'),
+          }}
+          onResult={handleVoiceResult}
+          onClose={() => setShowVoiceModal(false)}
+        />
+      </Modal>
+
       {/* Community explore modal */}
       <Modal
         visible={showExplore}
@@ -3272,6 +3362,38 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   emojiOptionText: {
+    fontSize: FontSize.lg,
+  },
+  // Articles fréquents + bouton micro
+  frequentBar: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: Spacing.md,
+  },
+  frequentScrollContent: {
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.md,
+  },
+  frequentChip: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    maxWidth: 180,
+  },
+  frequentChipText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+  },
+  micBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.md,
+  },
+  micBtnIcon: {
     fontSize: FontSize.lg,
   },
 });

@@ -833,7 +833,15 @@
       "categoryAutoA11y": "Catégorie : automatique",
       "categoryHintA11y": "Choisir la catégorie de l'article",
       "endOfList": "📋 Fin de liste",
-      "categoryTitle": "Catégorie"
+      "categoryTitle": "Catégorie",
+      "frequentLabel": "Articles fréquents",
+      "frequentHintA11y": "Tap pour ajouter rapidement",
+      "frequentChipA11y": "Ajouter {{name}} à la liste",
+      "voiceAddBtnA11y": "Ajouter par la voix",
+      "voiceAddTitle": "Dicter des articles",
+      "voiceAddSubtitle": "Ex : 3 tomates, du lait et 2 paquets de pâtes",
+      "voiceAddedToast": "{{count}} article(s) ajouté(s)",
+      "voiceNothingDetected": "Aucun article détecté dans la dictée"
     },
     "recipes": {
       "searchPlaceholder": "Rechercher une recette…",
