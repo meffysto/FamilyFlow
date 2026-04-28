@@ -1776,7 +1776,19 @@ export default function MealsScreen() {
               </Animated.View>
             )}
 
-            <View style={[styles.addBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}>
+            <View
+              style={[
+                styles.addBar,
+                {
+                  backgroundColor: colors.card,
+                  borderTopColor: colors.borderLight,
+                  // Quand le clavier est ouvert, on tombe à un padding minimal :
+                  // la tab bar étant masquée par le clavier, les 90px réservés
+                  // créent un espace mort entre l'input et le clavier.
+                  paddingBottom: addInputFocused ? Spacing.lg : 90,
+                },
+              ]}
+            >
               {/* Estimé restant affiché dans le header (caveat). Pas de duplication ici. */}
               <View style={styles.addBarRow}>
                 <TouchableOpacity
