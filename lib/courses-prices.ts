@@ -84,15 +84,26 @@ function tokensMatch(a: string, b: string): boolean {
   return false;
 }
 
-/** Score : nombre de tokens forts du premier set qui matchent un token du second. */
-function scoreMatch(itemTokens: string[], entryTokens: string[]): number {
-  if (itemTokens.length === 0 || entryTokens.length === 0) return 0;
-  let score = 0;
-  for (const it of itemTokens) {
-    if (it.length < 3) continue; // tokens trop courts ignorés du scoring
-    if (entryTokens.some(et => tokensMatch(it, et))) score++;
+/**
+ * Score : ratio des tokens significatifs de l'article (côté liste) qui retrouvent
+ * un token de l'entrée budget. La liste est la "query" — toutes ses précisions
+ * doivent être présentes dans l'entrée pour valider un match.
+ *
+ * Exemple :
+ *   "lait" (1 token) vs "Lait demi-écrémé" → 1/1 = 1.0 → match ✓
+ *   "lait hipp enfant" (3 tokens) vs "Lait demi-écrémé" → 1/3 = 0.33 → no match ✗
+ *   "lait hipp enfant" vs "HIPP LAIT 2EME AGE BB" → 2/3 = 0.66 (sans "enfant") → marginal
+ *
+ * Renvoie un score entre 0 et le nombre de tokens significatifs (proportion calculée plus tard).
+ */
+function scoreMatch(itemTokens: string[], entryTokens: string[]): { matched: number; total: number } {
+  const significant = itemTokens.filter(t => t.length >= 3);
+  if (significant.length === 0 || entryTokens.length === 0) return { matched: 0, total: significant.length };
+  let matched = 0;
+  for (const it of significant) {
+    if (entryTokens.some(et => tokensMatch(it, et))) matched++;
   }
-  return score;
+  return { matched, total: significant.length };
 }
 
 export interface CoursePriceInfo {
@@ -112,22 +123,30 @@ export function getLastPriceFor(
   const itemTokens = tokenize(articleName);
   if (itemTokens.length === 0) return null;
 
+  // Seuil de match :
+  //   - 1 token significatif → 1/1 obligatoire (exact ou racine)
+  //   - 2 tokens → 2/2 obligatoire
+  //   - 3+ tokens → au moins (total - 1) sur total (tolère 1 token manquant)
+  const significantCount = itemTokens.filter(t => t.length >= 3).length;
+  const requiredMatch = significantCount <= 2 ? significantCount : significantCount - 1;
+
   let best: BudgetEntry | null = null;
-  let bestScore = 0;
+  let bestRatio = 0;
 
   for (const entry of entries) {
     if (!normalize(entry.category).includes(COURSES_CATEGORY_TOKEN)) continue;
     const entryTokens = tokenize(entry.label);
-    const score = scoreMatch(itemTokens, entryTokens);
-    if (score < 1) continue;
-    // Préfère le score le plus élevé, à score égal préfère la date la plus récente
+    const { matched, total } = scoreMatch(itemTokens, entryTokens);
+    if (matched < requiredMatch || total === 0) continue;
+    const ratio = matched / total;
+    // Préfère le ratio le plus élevé, à ratio égal préfère la date la plus récente
     if (
-      score > bestScore ||
-      (score === bestScore && best && entry.date.localeCompare(best.date) > 0) ||
+      ratio > bestRatio ||
+      (ratio === bestRatio && best && entry.date.localeCompare(best.date) > 0) ||
       !best
     ) {
       best = entry;
-      bestScore = score;
+      bestRatio = ratio;
     }
   }
 
