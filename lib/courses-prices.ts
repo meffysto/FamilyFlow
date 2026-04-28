@@ -1,8 +1,16 @@
 /**
  * courses-prices.ts — Lecture-only des prix d'articles depuis budgetEntries (Phase E)
  *
- * Tire la dernière dépense connue dans la catégorie "🛒 Courses" pour un nom
- * d'article donné, en matchant le label normalisé (lowercase + NFD + diacritiques).
+ * Match flou (token-based) pour gérer les labels de tickets scannés :
+ * "TOMAT.GRAP.BIO" matche "tomates" parce que les 2 partagent la racine "tomat".
+ * "LT 1/2 ECREM 1L" matche "lait" via le token "lait" en commun (après expansion
+ * d'abréviations courantes), ou "ecrem" partageant la racine avec "ecreme".
+ *
+ * Algorithme :
+ *   1. Tokenize chaque côté (lowercase + NFD + retire ponctuation/chiffres/unités/stopwords)
+ *   2. Score = nombre de tokens "forts" partagés (préfixe commun ≥ 4 chars)
+ *   3. Match si au moins 1 token fort partagé
+ *   4. Parmi les matches, prendre la date la plus récente
  *
  * Aucune écriture ici : l'utilisateur saisit ses achats dans l'onglet Budget,
  * la liste de courses se contente de relire pour afficher un estimatif.
@@ -11,50 +19,116 @@
 import type { BudgetEntry, CourseItem } from './types';
 
 const STALE_DAYS = 30;
-const COURSES_CATEGORY_TOKEN = 'courses'; // matche "🛒 Courses" via includes
+const COURSES_CATEGORY_TOKEN = 'courses';
 
-function normalize(label: string): string {
-  return label
-    .trim()
+/** Mots vides FR + abréviations supermarché courantes (filtrage à la tokenization). */
+const STOP_WORDS = new Set([
+  'de', 'du', 'des', 'la', 'le', 'les', 'un', 'une', 'au', 'aux', 'et', 'ou',
+  'bio', 'pack', 'lot', 'kg', 'kgs', 'g', 'gr', 'grs', 'ml', 'cl', 'l', 'mg',
+  'pcs', 'pc', 'pce', 'unite', 'unites', 'sac', 'sachet', 'sachets', 'paquet',
+  'paquets', 'boite', 'boites', 'pot', 'pots', 'pack', 'tube', 'tubes',
+  'tranche', 'tranches', 'verre', 'verres', 'bouteille', 'bouteilles',
+  'frais', 'fraiche', 'fraiches', 'surgele', 'surgelee', 'surgeles', 'surgelees',
+  'bte', 'btl', 'std', 'pdt', 'prdt', 'prod', 'art',
+  // Abréviations magasin
+  'ent', 'entrcot', 'lt', 'lle', 'pte', 'gd', 'gde', 'pet', 'gr',
+]);
+
+/** Expansions d'abréviations FR très courantes en ticket de caisse → token canonique. */
+const ABBREVIATION_MAP: Record<string, string> = {
+  'lt': 'lait',
+  'pdt': 'pomme', // pomme de terre — partial, mais utile
+  'pdtt': 'pomme',
+  'tomat': 'tomate',
+  'fromag': 'fromage',
+  'jamb': 'jambon',
+  'sauc': 'saucisson',
+  'choco': 'chocolat',
+  'ecrem': 'ecreme',
+  'demi': 'demi',
+  'grap': 'grappe',
+};
+
+function normalize(s: string): string {
+  return s
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '');
 }
 
-/** Extrait le nom "pur" d'un texte d'item courses (retire qty/unité de tête). */
-function extractName(text: string): string {
-  // "3 tomates" → "tomates" ; "120g de pecorino" → "pecorino" ; "Lait" → "Lait"
-  return text
-    .replace(/^\s*\d+(?:[.,]\d+)?\s*(?:g|kg|ml|cl|dl|l|cs|cc|càs|càc|tasse|pincée|sachet|tranche|feuille|brin|gousse|botte|paquet|boîte|pot|verre|tbsp|tsp)?\s*(?:de\s+|d')?/i, '')
-    .trim();
+/** Tokenize : split sur ponctuation/chiffres, filtre stop-words, expand abréviations. */
+function tokenize(label: string): string[] {
+  const norm = normalize(label);
+  const raw = norm
+    .replace(/\d+([.,]\d+)?/g, ' ') // chiffres
+    .replace(/[^a-z\s]/g, ' ') // ponctuation et caractères restants
+    .split(/\s+/)
+    .map(t => t.trim())
+    .filter(t => t.length >= 2);
+
+  const expanded: string[] = [];
+  for (const t of raw) {
+    if (STOP_WORDS.has(t)) continue;
+    expanded.push(ABBREVIATION_MAP[t] ?? t);
+  }
+  return expanded;
+}
+
+/** Match fort entre deux tokens : exact OU préfixe commun ≥ 4 chars. */
+function tokensMatch(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (a.length >= 4 && b.startsWith(a)) return true;
+  if (b.length >= 4 && a.startsWith(b)) return true;
+  // Racine commune (premier 5 chars) pour gérer "tomate"/"tomates"/"tomat"
+  if (a.length >= 5 && b.length >= 5 && a.slice(0, 5) === b.slice(0, 5)) return true;
+  return false;
+}
+
+/** Score : nombre de tokens forts du premier set qui matchent un token du second. */
+function scoreMatch(itemTokens: string[], entryTokens: string[]): number {
+  if (itemTokens.length === 0 || entryTokens.length === 0) return 0;
+  let score = 0;
+  for (const it of itemTokens) {
+    if (it.length < 3) continue; // tokens trop courts ignorés du scoring
+    if (entryTokens.some(et => tokensMatch(it, et))) score++;
+  }
+  return score;
 }
 
 export interface CoursePriceInfo {
-  /** Dernier prix unitaire vu dans budget (montant brut de l'entrée). */
   price: number;
-  /** Jours écoulés depuis la dépense. */
   daysAgo: number;
-  /** True si > STALE_DAYS jours — UI peut griser. */
   stale: boolean;
 }
 
 /**
- * Cherche le dernier prix connu pour un article dans la catégorie Courses du budget.
- * Match par label normalisé exact (après extraction du nom pur).
+ * Cherche le dernier prix connu pour un article via match flou token-based.
+ * Renvoie l'entrée la plus récente parmi les matches (score ≥ 1).
  */
 export function getLastPriceFor(
   articleName: string,
   entries: BudgetEntry[],
 ): CoursePriceInfo | null {
-  const target = normalize(extractName(articleName));
-  if (target.length < 2) return null;
+  const itemTokens = tokenize(articleName);
+  if (itemTokens.length === 0) return null;
 
   let best: BudgetEntry | null = null;
+  let bestScore = 0;
+
   for (const entry of entries) {
     if (!normalize(entry.category).includes(COURSES_CATEGORY_TOKEN)) continue;
-    const label = normalize(entry.label);
-    if (label !== target) continue;
-    if (!best || entry.date.localeCompare(best.date) > 0) best = entry;
+    const entryTokens = tokenize(entry.label);
+    const score = scoreMatch(itemTokens, entryTokens);
+    if (score < 1) continue;
+    // Préfère le score le plus élevé, à score égal préfère la date la plus récente
+    if (
+      score > bestScore ||
+      (score === bestScore && best && entry.date.localeCompare(best.date) > 0) ||
+      !best
+    ) {
+      best = entry;
+      bestScore = score;
+    }
   }
 
   if (!best) return null;
@@ -66,8 +140,7 @@ export function getLastPriceFor(
 }
 
 /**
- * Total estimé pour les items non-cochés de la liste, basé sur les prix budget.
- * Items sans prix connu : ignorés (n'augmentent pas le total).
+ * Total estimé pour les items non-cochés. Items sans prix connu : ignorés.
  */
 export function computeRemainingEstimate(
   items: CourseItem[],
