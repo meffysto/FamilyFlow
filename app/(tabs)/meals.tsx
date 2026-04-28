@@ -33,6 +33,8 @@ import Animated, {
   useSharedValue,
   interpolate,
   Extrapolation,
+  FadeInDown,
+  FadeOutDown,
 } from 'react-native-reanimated';
 import { useLocalSearchParams } from 'expo-router';
 import { format, startOfWeek, addWeeks, isSameWeek } from 'date-fns';
@@ -208,6 +210,8 @@ export default function MealsScreen() {
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [voiceReviewItems, setVoiceReviewItems] = useState<VoiceCourseItem[]>([]);
   const [showVoiceReview, setShowVoiceReview] = useState(false);
+  // Suggestions visibles uniquement quand l'input d'ajout a le focus → libère la liste
+  const [addInputFocused, setAddInputFocused] = useState(false);
 
   // Recettes state
   const [recipeSearch, setRecipeSearch] = useState('');
@@ -1696,123 +1700,129 @@ export default function MealsScreen() {
             )}
           </Animated.ScrollView>
 
-          {frequentItems.length > 0 && (
-            <View style={[styles.frequentBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.frequentScrollContent}
-              >
-                <TouchableOpacity
-                  onLongPress={() => {
-                    Alert.alert(
-                      t('meals.shopping.frequentClearTitle'),
-                      t('meals.shopping.frequentClearMsg'),
-                      [
-                        { text: t('meals.alert.cancel'), style: 'cancel' },
-                        {
-                          text: t('meals.shopping.frequentClearConfirm'),
-                          style: 'destructive',
-                          onPress: () => {
-                            clearCourseHistory().then(() => setFrequentItems([])).catch(() => {});
-                          },
-                        },
-                      ],
-                    );
-                  }}
-                  activeOpacity={1}
-                  accessibilityLabel={t('meals.shopping.frequentLabelA11y')}
-                  accessibilityHint={t('meals.shopping.frequentClearHintA11y')}
-                >
-                  <Text style={[styles.frequentLabel, { color: colors.textMuted }]}>
-                    {t('meals.shopping.frequentTitle')}
-                  </Text>
-                </TouchableOpacity>
-                {frequentItems.map(item => (
-                  <TouchableOpacity
-                    key={item.name}
-                    style={[styles.frequentChip, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
-                    onPress={() => handleAddFrequent(item.name)}
-                    activeOpacity={0.7}
-                    accessibilityLabel={t('meals.shopping.frequentChipA11y', { name: item.name })}
-                    accessibilityRole="button"
-                  >
-                    <Text style={[styles.frequentChipText, { color: colors.text }]} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          {courseRemainingEstimate > 0 && (
-            <View style={[styles.estimateBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}>
-              <Text style={[styles.estimateLabel, { color: colors.textMuted }]}>
-                {t('meals.shopping.estimateRemaining', { defaultValue: 'Estimé restant' })}
-              </Text>
-              <Text style={[styles.estimateValue, { color: colors.text }]}>
-                {`≈ ${formatPrice(courseRemainingEstimate)}`}
-              </Text>
-            </View>
-          )}
-
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={160}
           >
+            {/* Suggestions fréquents — visibles uniquement quand l'input a le focus.
+                Hors focus, la liste de courses récupère ~52px verticaux. */}
+            {addInputFocused && frequentItems.length > 0 && (
+              <Animated.View
+                entering={FadeInDown.duration(180)}
+                exiting={FadeOutDown.duration(120)}
+                style={[styles.frequentBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}
+              >
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.frequentScrollContent}
+                  keyboardShouldPersistTaps="always"
+                >
+                  <TouchableOpacity
+                    onLongPress={() => {
+                      Alert.alert(
+                        t('meals.shopping.frequentClearTitle'),
+                        t('meals.shopping.frequentClearMsg'),
+                        [
+                          { text: t('meals.alert.cancel'), style: 'cancel' },
+                          {
+                            text: t('meals.shopping.frequentClearConfirm'),
+                            style: 'destructive',
+                            onPress: () => {
+                              clearCourseHistory().then(() => setFrequentItems([])).catch(() => {});
+                            },
+                          },
+                        ],
+                      );
+                    }}
+                    activeOpacity={1}
+                    accessibilityLabel={t('meals.shopping.frequentLabelA11y')}
+                    accessibilityHint={t('meals.shopping.frequentClearHintA11y')}
+                  >
+                    <Text style={[styles.frequentLabel, { color: colors.textMuted }]}>
+                      {t('meals.shopping.frequentTitle')}
+                    </Text>
+                  </TouchableOpacity>
+                  {frequentItems.map(item => (
+                    <TouchableOpacity
+                      key={item.name}
+                      style={[styles.frequentChip, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+                      onPress={() => handleAddFrequent(item.name)}
+                      activeOpacity={0.7}
+                      accessibilityLabel={t('meals.shopping.frequentChipA11y', { name: item.name })}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles.frequentChipText, { color: colors.text }]} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </Animated.View>
+            )}
+
             <View style={[styles.addBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}>
-              <TouchableOpacity
-                style={[styles.sectionPickerBtn, { backgroundColor: colors.cardAlt }]}
-                onPress={() => setShowSectionPicker(true)}
-                activeOpacity={0.7}
-                accessibilityLabel={selectedSection ? t('meals.shopping.categoryA11y', { name: selectedSection }) : t('meals.shopping.categoryAutoA11y')}
-                accessibilityRole="button"
-                accessibilityHint={t('meals.shopping.categoryHintA11y')}
-              >
-                {selectedSection ? (
-                  <Text style={[styles.sectionPickerText, { color: colors.textSub }]} numberOfLines={1}>
-                    {selectedSection.length > 12 ? selectedSection.slice(0, 12) + '…' : selectedSection}
-                  </Text>
-                ) : (
-                  <FolderOpen size={16} color={colors.textSub} />
-                )}
-              </TouchableOpacity>
-              <TextInput
-                ref={inputRef}
-                style={[styles.addInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.bg }]}
-                value={newItemText}
-                onChangeText={setNewItemText}
-                placeholder={t('meals.shopping.addPlaceholder')}
-                placeholderTextColor={colors.textMuted}
-                returnKeyType="send"
-                onSubmitEditing={handleAddCourse}
-                accessibilityLabel={t('meals.shopping.addA11y')}
-              />
-              <TouchableOpacity
-                style={[
-                  styles.addBtn,
-                  { backgroundColor: primary },
-                  !newItemText.trim() && { backgroundColor: colors.border },
-                ]}
-                onPress={handleAddCourse}
-                disabled={!newItemText.trim()}
-                activeOpacity={0.7}
-                accessibilityLabel={t('meals.shopping.addBtnA11y')}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: !newItemText.trim() }}
-              >
-                <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.micBtn, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
-                onPress={() => setShowVoiceModal(true)}
-                activeOpacity={0.7}
-                accessibilityLabel={t('meals.shopping.voiceAddBtnA11y')}
-                accessibilityRole="button"
-              >
-                <Mic size={18} color={colors.textSub} />
-              </TouchableOpacity>
+              {/* Estimé restant intégré au-dessus du champ — supprime un bandeau dédié */}
+              {courseRemainingEstimate > 0 && (
+                <Text style={[styles.addBarEstimate, { color: colors.textMuted }]}>
+                  {`≈ ${formatPrice(courseRemainingEstimate)} ${t('meals.shopping.estimateRemainingShort', { defaultValue: 'restant' })}`}
+                </Text>
+              )}
+              <View style={styles.addBarRow}>
+                <TouchableOpacity
+                  style={[styles.sectionPickerBtn, { backgroundColor: colors.cardAlt }]}
+                  onPress={() => setShowSectionPicker(true)}
+                  activeOpacity={0.7}
+                  accessibilityLabel={selectedSection ? t('meals.shopping.categoryA11y', { name: selectedSection }) : t('meals.shopping.categoryAutoA11y')}
+                  accessibilityRole="button"
+                  accessibilityHint={t('meals.shopping.categoryHintA11y')}
+                >
+                  {selectedSection ? (
+                    <Text style={[styles.sectionPickerText, { color: colors.textSub }]} numberOfLines={1}>
+                      {selectedSection.length > 12 ? selectedSection.slice(0, 12) + '…' : selectedSection}
+                    </Text>
+                  ) : (
+                    <FolderOpen size={16} color={colors.textSub} />
+                  )}
+                </TouchableOpacity>
+                <TextInput
+                  ref={inputRef}
+                  style={[styles.addInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.bg }]}
+                  value={newItemText}
+                  onChangeText={setNewItemText}
+                  onFocus={() => setAddInputFocused(true)}
+                  onBlur={() => setAddInputFocused(false)}
+                  placeholder={t('meals.shopping.addPlaceholder')}
+                  placeholderTextColor={colors.textMuted}
+                  returnKeyType="send"
+                  onSubmitEditing={handleAddCourse}
+                  accessibilityLabel={t('meals.shopping.addA11y')}
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.addBtn,
+                    { backgroundColor: primary },
+                    !newItemText.trim() && { backgroundColor: colors.border },
+                  ]}
+                  onPress={handleAddCourse}
+                  disabled={!newItemText.trim()}
+                  activeOpacity={0.7}
+                  accessibilityLabel={t('meals.shopping.addBtnA11y')}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !newItemText.trim() }}
+                >
+                  <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.micBtn, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+                  onPress={() => setShowVoiceModal(true)}
+                  activeOpacity={0.7}
+                  accessibilityLabel={t('meals.shopping.voiceAddBtnA11y')}
+                  accessibilityRole="button"
+                >
+                  <Mic size={18} color={colors.textSub} />
+                </TouchableOpacity>
+              </View>
             </View>
           </KeyboardAvoidingView>
         </View>
@@ -3313,23 +3323,6 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
     fontVariant: ['tabular-nums'],
   },
-  estimateBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  estimateLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
-  },
-  estimateValue: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-    fontVariant: ['tabular-nums'],
-  },
   emptyState: {
     alignItems: 'center',
     paddingVertical: 60,
@@ -3346,15 +3339,24 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
     textAlign: 'center',
   },
-  // Add bar
+  // Add bar — column wrapper qui empile l'estimé (optionnel) au-dessus de la rangée d'ajout
   addBar: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing.lg,
+    paddingBottom: 90,
+    borderTopWidth: 1,
+  },
+  addBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 90,
-    gap: 8,
-    borderTopWidth: 1,
+    gap: Spacing.md,
+  },
+  addBarEstimate: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'right',
+    marginBottom: Spacing.sm,
+    fontVariant: ['tabular-nums'],
   },
   sectionPickerBtn: {
     paddingHorizontal: 10,
@@ -3740,8 +3742,6 @@ const styles = StyleSheet.create({
   frequentLabel: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
     paddingRight: Spacing.md,
   },
   frequentChip: {

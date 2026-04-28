@@ -883,6 +883,7 @@
       },
       "frequentTitle": "Frequent",
       "estimateRemaining": "Estimated remaining",
+      "estimateRemainingShort": "remaining",
       "frequentLabelA11y": "Frequent items — long press to clear",
       "frequentClearHintA11y": "Long press to clear history",
       "frequentClearTitle": "Clear history",
