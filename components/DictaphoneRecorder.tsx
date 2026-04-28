@@ -248,17 +248,28 @@ export function DictaphoneRecorder({ rdv, context, autoSubmit, onResult, onClose
     setTranscript((current) => {
       const finalText = current || transcriptRef.current;
       setEditedTranscript(finalText);
-      if (autoSubmit && finalText.trim()) {
-        onResult(finalText);
-        onClose();
-      }
       return finalText;
     });
-  }, [stopPulse, autoSubmit, onResult, onClose]);
+  }, [stopPulse]);
 
   const stopRecording = useCallback(() => {
     finishRecording();
   }, [finishRecording]);
+
+  // Auto-soumission : quand l'enregistrement se termine et qu'autoSubmit est actif,
+  // on transmet le transcript sans afficher l'écran d'édition. Effet (pas updater)
+  // pour éviter de déclencher un setState parent pendant le render.
+  const autoSubmittedRef = useRef(false);
+  useEffect(() => {
+    if (!autoSubmit) return;
+    if (state !== 'done') return;
+    if (autoSubmittedRef.current) return;
+    const text = editedTranscript.trim();
+    if (!text) return;
+    autoSubmittedRef.current = true;
+    onResult(text);
+    onClose();
+  }, [autoSubmit, state, editedTranscript, onResult, onClose]);
 
   const handleSummarize = useCallback(async () => {
     if (!config) {
