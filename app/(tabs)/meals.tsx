@@ -59,7 +59,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { Shadows } from '../../constants/shadows';
 import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
@@ -1253,11 +1253,26 @@ export default function MealsScreen() {
   // ─── Header ──────────────────────────────────────────────────────
 
   const headerTitle = tab === 'repas' ? t('meals.header.mealsTitle') : tab === 'courses' ? t('meals.header.shoppingTitle') : t('meals.header.recipesTitle');
-  const headerStats = tab === 'repas'
+  const headerStatsText = tab === 'repas'
     ? t('meals.header.mealsStats', { filled: filledCount, total: displayedMeals.length })
     : tab === 'courses'
       ? t('meals.header.shoppingStats', { done: courseDoneCount, total: courses.length })
       : t('meals.header.recipesStats', { count: recipes.length });
+
+  // Pour courses : stats + estimé restant en caveat (serif accent) inline.
+  const headerStats: string | React.ReactNode = tab === 'courses' && courseRemainingEstimate > 0
+    ? (
+        <Text style={styles.headerStatsRow} numberOfLines={1}>
+          <Text style={[styles.headerStatsText, { color: colors.brand.soilMuted }]}>
+            {headerStatsText}
+            {'  ·  '}
+          </Text>
+          <Text style={[styles.headerEstimateAccent, { color: colors.text }]}>
+            {`≈ ${formatPrice(courseRemainingEstimate)}`}
+          </Text>
+        </Text>
+      )
+    : headerStatsText;
 
   // ─── Render ─────────────────────────────────────────────────────
 
@@ -1762,12 +1777,7 @@ export default function MealsScreen() {
             )}
 
             <View style={[styles.addBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}>
-              {/* Estimé restant intégré au-dessus du champ — supprime un bandeau dédié */}
-              {courseRemainingEstimate > 0 && (
-                <Text style={[styles.addBarEstimate, { color: colors.textMuted }]}>
-                  {`≈ ${formatPrice(courseRemainingEstimate)} ${t('meals.shopping.estimateRemainingShort', { defaultValue: 'restant' })}`}
-                </Text>
-              )}
+              {/* Estimé restant affiché dans le header (caveat). Pas de duplication ici. */}
               <View style={styles.addBarRow}>
                 <TouchableOpacity
                   style={[styles.sectionPickerBtn, { backgroundColor: colors.cardAlt }]}
@@ -3351,11 +3361,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
   },
-  addBarEstimate: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    textAlign: 'right',
-    marginBottom: Spacing.sm,
+  // Header courses — stats + estimé en caveat (serif accent)
+  headerStatsRow: {
+    fontSize: FontSize.label,
+  },
+  headerStatsText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
+  },
+  headerEstimateAccent: {
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.lg,
+    letterSpacing: -0.3,
     fontVariant: ['tabular-nums'],
   },
   sectionPickerBtn: {

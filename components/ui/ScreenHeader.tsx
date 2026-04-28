@@ -26,7 +26,11 @@ import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 interface ScreenHeaderProps {
   title: string;
   icon?: string;
-  subtitle?: string;
+  /**
+   * Sous-titre. Accepte string (rendu en `Text` standard) ou ReactNode pour
+   * composer un libellé enrichi (ex: stats + valeur en caveat).
+   */
+  subtitle?: string | React.ReactNode;
   /** Élément(s) à afficher à gauche du titre (bouton retour, par ex) */
   leading?: React.ReactNode;
   /** Élément(s) à afficher à droite (boutons icône, badges…) */
@@ -94,9 +98,13 @@ export function ScreenHeader({ title, icon, subtitle, leading, actions, bottom, 
                 {title}
               </Text>
               {subtitle && (
-                <Text style={[styles.subtitle, { color: colors.brand.soilMuted }]} numberOfLines={1}>
-                  {subtitle}
-                </Text>
+                typeof subtitle === 'string' ? (
+                  <Text style={[styles.subtitle, { color: colors.brand.soilMuted }]} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                ) : (
+                  subtitle
+                )
               )}
             </View>
           </View>
