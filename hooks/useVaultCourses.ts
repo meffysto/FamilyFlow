@@ -14,10 +14,7 @@ import type React from 'react';
 import type { CourseItem } from '../lib/types';
 import { parseCourses } from '../lib/parser';
 import type { VaultManager } from '../lib/vault';
-
-// ─── Constantes ──────────────────────────────────────────────────────────────
-
-const COURSES_FILE = '02 - Maison/Liste de courses.md';
+import { COURSES_FILE_LEGACY } from '../lib/courses-constants';
 
 function warnUnexpected(context: string, e: unknown) {
   const msg = String(e);
@@ -52,26 +49,26 @@ export function useVaultCourses(
 
   const addCourseItem = useCallback(async (text: string, section?: string) => {
     if (!vaultRef.current) return;
-    await vaultRef.current.appendTask(COURSES_FILE, section ?? null, text);
-    const newContent = await vaultRef.current.readFile(COURSES_FILE);
-    setCourses(parseCourses(newContent, COURSES_FILE));
+    await vaultRef.current.appendTask(COURSES_FILE_LEGACY, section ?? null, text);
+    const newContent = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
+    setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
   }, []);
 
   const toggleCourseItem = useCallback(async (item: CourseItem, completed: boolean) => {
     if (!vaultRef.current) return;
-    await vaultRef.current.toggleTask(COURSES_FILE, item.lineIndex, completed);
+    await vaultRef.current.toggleTask(COURSES_FILE_LEGACY, item.lineIndex, completed);
     setCourses((prev) => prev.map((c) => (c.id === item.id ? { ...c, completed } : c)));
   }, []);
 
   const removeCourseItem = useCallback(async (lineIndex: number) => {
     if (!vaultRef.current) return;
     try {
-      const content = await vaultRef.current.readFile(COURSES_FILE);
+      const content = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
       const lines = content.split('\n');
       if (lineIndex >= 0 && lineIndex < lines.length) {
         lines.splice(lineIndex, 1);
-        await vaultRef.current.writeFile(COURSES_FILE, lines.join('\n'));
-        const updated = parseCourses(lines.join('\n'), COURSES_FILE);
+        await vaultRef.current.writeFile(COURSES_FILE_LEGACY, lines.join('\n'));
+        const updated = parseCourses(lines.join('\n'), COURSES_FILE_LEGACY);
         setCourses(updated);
       }
     } catch (e) {
@@ -81,7 +78,7 @@ export function useVaultCourses(
 
   const moveCourseItem = useCallback(async (lineIndex: number, text: string, newSection: string) => {
     if (!vaultRef.current) return;
-    const content = await vaultRef.current.readFile(COURSES_FILE);
+    const content = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
     const lines = content.split('\n');
     if (lineIndex < 0 || lineIndex >= lines.length) return;
 
@@ -103,8 +100,8 @@ export function useVaultCourses(
 
     // 3. Écriture unique + mise à jour state locale
     const newContent = lines.join('\n');
-    await vaultRef.current.writeFile(COURSES_FILE, newContent);
-    setCourses(parseCourses(newContent, COURSES_FILE));
+    await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
+    setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
   }, []);
 
   const mergeCourseIngredients = useCallback(async (items: { text: string; name: string; quantity: number | null; section: string }[]): Promise<{ added: number; merged: number }> => {
@@ -114,7 +111,7 @@ export function useVaultCourses(
 
     try {
       let content = '';
-      try { content = await vaultRef.current.readFile(COURSES_FILE); } catch (e) { warnUnexpected('mergeCourses-read', e); }
+      try { content = await vaultRef.current.readFile(COURSES_FILE_LEGACY); } catch (e) { warnUnexpected('mergeCourses-read', e); }
       const lines = content.split('\n');
 
       for (const item of items) {
@@ -165,8 +162,8 @@ export function useVaultCourses(
       }
 
       const newContent = lines.join('\n');
-      await vaultRef.current.writeFile(COURSES_FILE, newContent);
-      setCourses(parseCourses(newContent, COURSES_FILE));
+      await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
+      setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
     } catch (e) {
       throw new Error(`mergeCourseIngredients: ${e}`);
     }
@@ -177,12 +174,12 @@ export function useVaultCourses(
   const clearCompletedCourses = useCallback(async () => {
     if (!vaultRef.current) return;
     try {
-      const content = await vaultRef.current.readFile(COURSES_FILE);
+      const content = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
       const lines = content.split('\n');
       const cleaned = lines.filter((l) => !l.match(/^-\s+\[x\]/i));
       const newContent = cleaned.join('\n');
-      await vaultRef.current.writeFile(COURSES_FILE, newContent);
-      setCourses(parseCourses(newContent, COURSES_FILE));
+      await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
+      setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
     } catch (e) {
       throw new Error(`clearCompletedCourses: ${e}`);
     }

@@ -63,6 +63,7 @@ import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import { Mic } from 'lucide-react-native';
 import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
+import { COURSES_FILE_LEGACY, COURSES_DEFAULT_SECTION } from '../../lib/courses-constants';
 import { MealConflictRecap, CookSuggestModal, extractRecipeTitlesFromMarkdown } from '../../components/dietary';
 import { checkAllergens } from '../../lib/dietary';
 import type { Profile } from '../../lib/types';
@@ -92,8 +93,6 @@ const MEAL_DISPLAY_KEYS: Record<string, string> = {
   'Déjeuner': 'meals.mealTypes.lunch',
   'Dîner': 'meals.mealTypes.dinner',
 };
-
-const COURSES_FILE = '02 - Maison/Liste de courses.md';
 
 type Tab = 'repas' | 'courses' | 'recettes';
 
@@ -553,7 +552,7 @@ export default function MealsScreen() {
     const seen = new Set<string>();
     const sections: string[] = [];
     for (const c of courses) {
-      const s = c.section ?? 'Divers';
+      const s = c.section ?? COURSES_DEFAULT_SECTION;
       if (!seen.has(s)) {
         seen.add(s);
         sections.push(s);
@@ -565,7 +564,7 @@ export default function MealsScreen() {
   const coursesBySection = useMemo(() => {
     const map: Record<string, CourseItem[]> = {};
     for (const c of courses) {
-      const s = c.section ?? 'Divers';
+      const s = c.section ?? COURSES_DEFAULT_SECTION;
       if (!map[s]) map[s] = [];
       map[s].push(c);
     }
@@ -582,7 +581,7 @@ export default function MealsScreen() {
     try {
       if (item.completed) {
         // Décocher simplement
-        await vault.toggleTask(COURSES_FILE, item.lineIndex, false);
+        await vault.toggleTask(COURSES_FILE_LEGACY, item.lineIndex, false);
         await refresh();
         return;
       }
