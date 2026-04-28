@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: Phase 42 complète — shippable sur TestFlight
-last_updated: "2026-04-28T09:55:46Z"
-last_activity: "2026-04-28 - Completed quick task 260428-gh1: Phase C courses — bottom sheet édition nom/qté/catégorie + long-press menu"
+last_updated: "2026-04-28T11:30:00Z"
+last_activity: "2026-04-28 - Completed quick task 260428-huh: Phase D courses — multi-listes (migration auto + switcher UI + auto-courses ciblées)"
 progress:
   total_phases: 14
   completed_phases: 9
@@ -28,7 +28,7 @@ Phase: 42
 Plan: 9/9 complétés
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-28 - Completed quick task 260428-gh1: Phase C courses — bottom sheet édition nom/qté/catégorie + long-press menu
+Last activity: 2026-04-28 - Completed quick task 260428-huh: Phase D courses — multi-listes (migration auto + switcher UI + auto-courses ciblées)
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
@@ -80,6 +80,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260428-fnw | Phase A courses refactor — constantes centralisées + fix #37 décochage + queue d'écritures séquentielle | 2026-04-28 | 6dd223d | [260428-fnw-phase-a-courses-refactor-pr-paratoire-co](./quick/260428-fnw-phase-a-courses-refactor-pr-paratoire-co/) |
 | 260428-g5n | Phase B courses Optimistic UI — 6 writes optimistes + rollback + indicateur pending opacity 0.6 | 2026-04-28 | 0f864c0 | [260428-g5n-phase-b-courses-optimistic-ui-sur-les-wr](./quick/260428-g5n-phase-b-courses-optimistic-ui-sur-les-wr/) |
 | 260428-gh1 | Phase C courses — bottom sheet édition nom/qté/catégorie + long-press menu (Dupliquer/Supprimer) | 2026-04-28 | 0b4afa9 | [260428-gh1-phase-c-courses-edition-nom-qte-categori](./quick/260428-gh1-phase-c-courses-edition-nom-qte-categori/) |
+| 260428-huh | Phase D courses — multi-listes (migration auto Listes/principale.md + switcher UI + ActionSheet long-press + auto-courses recettes ciblées) | 2026-04-28 | 3e19f2f | [260428-huh-phase-d-courses-listes-multiples-multi-m](./quick/260428-huh-phase-d-courses-listes-multiples-multi-m/) |
 
 ## Performance Metrics
 

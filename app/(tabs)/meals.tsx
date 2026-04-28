@@ -66,7 +66,7 @@ import { Mic, Plus, ShoppingBag, Star } from 'lucide-react-native';
 import type { CourseList } from '../../hooks/useVaultCourses';
 import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
-import { COURSES_FILE_LEGACY, COURSES_DEFAULT_SECTION } from '../../lib/courses-constants';
+import { COURSES_DEFAULT_SECTION } from '../../lib/courses-constants';
 import { MealConflictRecap, CookSuggestModal, extractRecipeTitlesFromMarkdown } from '../../components/dietary';
 import { checkAllergens } from '../../lib/dietary';
 import type { Profile } from '../../lib/types';
