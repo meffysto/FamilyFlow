@@ -47,6 +47,14 @@ const INLINE_QTY_SPLIT_RE = new RegExp(
   'i',
 );
 
+/**
+ * Split tertiaire : déterminants en milieu de segment, quand le STT n'a pas mis de virgule.
+ * "3 pommes du lait" → ["3 pommes", "du lait"]. Conservateur : uniquement
+ * "du / de la / de l' / des" précédés d'un mot (pas en début de segment).
+ * "de" seul est exclu pour préserver "500g de farine", "paquet de pâtes".
+ */
+const INLINE_DETERMINANT_SPLIT_RE = /(?<=\S)\s+(?=(?:du|de la|de l['']|des)\s+\S)/i;
+
 /** Déterminants à retirer du nom quand pas de quantité */
 const DETERMINANT_RE = /^(du|de la|de l['']|des|un|une|le|la|les)\s+/i;
 
@@ -106,17 +114,23 @@ export function parseVoiceCourses(transcript: string): VoiceCourseItem[] {
     merged.push(primary[i]);
   }
 
-  // Étape 3 : split secondaire sur quantité+unité embarquée en milieu de segment
+  // Étape 3 : splits secondaires successifs (qty inline puis déterminants inline)
   // "une quiche 500g de farine" → ["une quiche", "500g de farine"]
+  // "3 pommes du lait" → ["3 pommes", "du lait"] (compense l'absence de virgule STT)
   const segments: string[] = [];
   for (const seg of merged) {
+    let parts: string[] = [seg];
     try {
-      const parts = seg.split(INLINE_QTY_SPLIT_RE).map(s => s.trim()).filter(s => s.length > 0);
-      segments.push(...parts);
+      parts = parts.flatMap(p => p.split(INLINE_QTY_SPLIT_RE)).map(s => s.trim()).filter(s => s.length > 0);
     } catch {
-      // lookbehind non supporté sur certains moteurs JS — fallback sans split secondaire
-      segments.push(seg);
+      // lookbehind non supporté sur certains moteurs JS — fallback sans ce split
     }
+    try {
+      parts = parts.flatMap(p => p.split(INLINE_DETERMINANT_SPLIT_RE)).map(s => s.trim()).filter(s => s.length > 0);
+    } catch {
+      // idem — on garde les parts en l'état
+    }
+    segments.push(...parts);
   }
 
   // Étape 4 : parser chaque segment en item
