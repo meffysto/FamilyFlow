@@ -3294,15 +3294,17 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   courseSection: {
-    borderRadius: 14,
-    padding: 16,
-    gap: 2,
+    borderRadius: Radius.lg,
+    padding: Spacing['2xl'],
+    gap: Spacing.xxs,
+    marginBottom: Spacing.xl,
     ...Shadows.xs,
   },
   courseSectionTitle: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    marginBottom: 8,
+    letterSpacing: -0.2,
+    marginBottom: Spacing.lg,
   },
   courseRow: {
     flexDirection: 'row',
