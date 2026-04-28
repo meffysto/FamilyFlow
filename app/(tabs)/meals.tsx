@@ -71,14 +71,16 @@ import { getAutomationFlag, getDefaultRecipeList, setDefaultRecipeList } from '.
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import { VoiceCoursesReview } from '../../components/VoiceCoursesReview';
 import type { VoiceCourseItem } from '../../lib/parse-voice-courses';
-import { Check, FolderOpen, Mic, Plus, ShoppingBag, ShoppingCart, Star, X } from 'lucide-react-native';
+import { Check, FolderOpen, Maximize2, Mic, Plus, ShoppingBag, ShoppingCart, Star, X } from 'lucide-react-native';
+import { CourseAutocomplete } from '../../components/CourseAutocomplete';
+import { ShoppingModeModal } from '../../components/ShoppingModeModal';
 import type { CourseList } from '../../hooks/useVaultCourses';
 import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
 import { COURSES_DEFAULT_SECTION } from '../../lib/courses-constants';
 import { MealConflictRecap, CookSuggestModal, extractRecipeTitlesFromMarkdown } from '../../components/dietary';
 import { checkAllergens } from '../../lib/dietary';
-import type { Profile } from '../../lib/types';
+import type { BudgetEntry, Profile } from '../../lib/types';
 import type { GuestProfile } from '../../lib/dietary/types';
 import type { AppRecipe } from '../../lib/cooklang';
 
@@ -152,6 +154,7 @@ export default function MealsScreen() {
     activeProfile,
     healthRecords,
     budgetEntries,
+    loadBudgetMonths,
     toggleFavorite, isFavorite, getFavorites,
     refresh, isLoading,
   } = useVault();
@@ -215,6 +218,14 @@ export default function MealsScreen() {
   const [showVoiceReview, setShowVoiceReview] = useState(false);
   // Suggestions visibles uniquement quand l'input d'ajout a le focus → libère la liste
   const [addInputFocused, setAddInputFocused] = useState(false);
+
+  // Mode shopping plein écran (chrome minimal, gros checkboxes, KeepAwake)
+  const [showShoppingMode, setShowShoppingMode] = useState(false);
+
+  // Historique budget multi-mois pour le lookup prix (le state budgetEntries de
+  // useVault ne contient que le mois courant — insuffisant pour retrouver le
+  // prix d'un article acheté le mois précédent).
+  const [priceLookupEntries, setPriceLookupEntries] = useState<BudgetEntry[]>([]);
 
   // Recettes state
   const [recipeSearch, setRecipeSearch] = useState('');
@@ -299,9 +310,19 @@ export default function MealsScreen() {
   // Chargement articles fréquents au basculement vers l'onglet courses
   useEffect(() => {
     if (tab === 'courses') {
-      getFrequentCourses(8).then(setFrequentItems).catch(() => {});
+      getFrequentCourses(50).then(setFrequentItems).catch(() => {});
     }
   }, [tab]);
+
+  // Historique budget 6 mois pour alimenter le lookup prix de la liste de courses.
+  // Sans ça, getLastPriceFor ne voit que le mois courant et rate les achats
+  // antérieurs (cf. STALE_DAYS=30 dans courses-prices).
+  useEffect(() => {
+    if (tab !== 'courses') return;
+    loadBudgetMonths(6)
+      .then(setPriceLookupEntries)
+      .catch(() => setPriceLookupEntries([]));
+  }, [tab, loadBudgetMonths, budgetEntries]);
 
   // ─── Helper: resolve recipeRef → Recipe ────────────────────────
 
@@ -626,18 +647,19 @@ export default function MealsScreen() {
 
   const courseDoneCount = courses.filter((c) => c.completed).length;
 
-  // Phase E — prix lecture-only depuis budget
+  // Phase E — prix lecture-only depuis budget (multi-mois pour couvrir
+  // la fenêtre STALE_DAYS=30j même en début de mois civil).
   const courseRemainingEstimate = useMemo(
-    () => computeRemainingEstimate(courses, budgetEntries),
-    [courses, budgetEntries],
+    () => computeRemainingEstimate(courses, priceLookupEntries),
+    [courses, priceLookupEntries],
   );
   const coursePriceByItemId = useMemo(() => {
     const map = new Map<string, ReturnType<typeof getLastPriceFor>>();
     for (const c of courses) {
-      map.set(c.id, getLastPriceFor(c.text, budgetEntries));
+      map.set(c.id, getLastPriceFor(c.text, priceLookupEntries));
     }
     return map;
-  }, [courses, budgetEntries]);
+  }, [courses, priceLookupEntries]);
 
   const handleCourseToggle = useCallback(async (item: CourseItem) => {
     if (!vault) return;
@@ -735,7 +757,7 @@ export default function MealsScreen() {
     try {
       await addCourseItem(text, selectedSection ?? categorizeIngredient(text));
       setNewItemText('');
-      trackCourseAdd(text).then(() => getFrequentCourses(8).then(setFrequentItems)).catch(() => {});
+      trackCourseAdd(text).then(() => getFrequentCourses(50).then(setFrequentItems)).catch(() => {});
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
@@ -745,8 +767,35 @@ export default function MealsScreen() {
     const section = categorizeIngredient(name);
     await addCourseItem(name, section);
     Haptics.selectionAsync().catch(() => {});
-    trackCourseAdd(name).then(() => getFrequentCourses(8).then(setFrequentItems)).catch(() => {});
+    trackCourseAdd(name).then(() => getFrequentCourses(50).then(setFrequentItems)).catch(() => {});
   }, [addCourseItem]);
+
+  // Suggestions autocomplete (préfixe-match, normalisé, max 5, triées par fréquence)
+  const autocompleteSuggestions = useMemo(() => {
+    const q = newItemText.trim();
+    if (q.length < 2) return [];
+    const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const nq = norm(q);
+    const out: string[] = [];
+    for (const item of frequentItems) {
+      if (norm(item.name).startsWith(nq) && norm(item.name) !== nq) {
+        out.push(item.name);
+        if (out.length >= 5) break;
+      }
+    }
+    return out;
+  }, [newItemText, frequentItems]);
+
+  const handleAutocompletePick = useCallback(async (name: string) => {
+    setNewItemText('');
+    Haptics.selectionAsync().catch(() => {});
+    try {
+      await addCourseItem(name, selectedSection ?? categorizeIngredient(name));
+      trackCourseAdd(name).then(() => getFrequentCourses(50).then(setFrequentItems)).catch(() => {});
+    } catch (e) {
+      Alert.alert(t('meals.alert.error'), String(e));
+    }
+  }, [addCourseItem, selectedSection, t]);
 
   const handleVoiceResult = useCallback((transcript: string) => {
     const items = parseVoiceCourses(transcript);
@@ -767,7 +816,7 @@ export default function MealsScreen() {
     try {
       const result = await mergeCourseIngredients(finalItems);
       finalItems.forEach(i => trackCourseAdd(i.name).catch(() => {}));
-      getFrequentCourses(8).then(setFrequentItems).catch(() => {});
+      getFrequentCourses(50).then(setFrequentItems).catch(() => {});
       showToast(
         t('meals.shopping.voiceAddedToast', { count: result.added + result.merged }),
         'success',
@@ -1309,6 +1358,23 @@ export default function MealsScreen() {
           title={headerTitle}
           subtitle={headerStats}
           tint="rgba(255,244,218,0.55)"
+          actions={
+            tab === 'courses' && courses.length > 0 ? (
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.selectionAsync().catch(() => {});
+                  setShowShoppingMode(true);
+                }}
+                activeOpacity={0.6}
+                accessibilityLabel="Ouvrir le mode shopping"
+                accessibilityRole="button"
+                hitSlop={10}
+                style={styles.shoppingModeBtn}
+              >
+                <Maximize2 size={20} color={primary} strokeWidth={2.2} />
+              </TouchableOpacity>
+            ) : undefined
+          }
           bottom={
             <View ref={tabBarRef}>
               <Animated.View style={[styles.tabsPillWrap, coursesTabsAnimStyle]}>
@@ -1677,9 +1743,15 @@ export default function MealsScreen() {
                       >
                         <ReanimatedSwipeable
                           renderRightActions={() => (
-                            <View style={[styles.courseSwipeAction, { backgroundColor: colors.errorBg }]}>
+                            <TouchableOpacity
+                              style={[styles.courseSwipeAction, { backgroundColor: colors.errorBg }]}
+                              onPress={() => handleCourseSwipeDelete(item)}
+                              activeOpacity={0.6}
+                              accessibilityLabel={t('meals.shopping.deleteA11y', { text: item.text })}
+                              accessibilityRole="button"
+                            >
                               <X size={22} color={colors.error} strokeWidth={2.5} />
-                            </View>
+                            </TouchableOpacity>
                           )}
                           rightThreshold={48}
                           friction={2}
@@ -1760,9 +1832,17 @@ export default function MealsScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={160}
           >
-            {/* Suggestions fréquents — visibles uniquement quand l'input a le focus.
-                Hors focus, la liste de courses récupère ~52px verticaux. */}
-            {addInputFocused && frequentItems.length > 0 && (
+            {/* Autocomplete prédictif — prend le relais de la frequentBar dès 2 caractères saisis */}
+            {addInputFocused && autocompleteSuggestions.length > 0 && (
+              <CourseAutocomplete
+                query={newItemText.trim()}
+                suggestions={autocompleteSuggestions}
+                onPick={handleAutocompletePick}
+              />
+            )}
+            {/* Suggestions fréquents — visibles uniquement quand l'input a le focus
+                ET que l'autocomplete n'est pas actif (option A : remplace, ne coexiste pas). */}
+            {addInputFocused && autocompleteSuggestions.length === 0 && frequentItems.length > 0 && (
               <Animated.View
                 entering={FadeInDown.duration(180)}
                 exiting={FadeOutDown.duration(120)}
@@ -1799,7 +1879,7 @@ export default function MealsScreen() {
                       {t('meals.shopping.frequentTitle')}
                     </Text>
                   </TouchableOpacity>
-                  {frequentItems.map(item => (
+                  {frequentItems.slice(0, 8).map(item => (
                     <TouchableOpacity
                       key={item.name}
                       style={[styles.frequentChip, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
@@ -3088,6 +3168,19 @@ export default function MealsScreen() {
         </SafeAreaView>
       </Modal>
 
+      {/* Mode shopping plein écran */}
+      <ShoppingModeModal
+        visible={showShoppingMode}
+        onClose={() => setShowShoppingMode(false)}
+        listName={listes.find(l => l.id === activeListId)?.nom ?? t('meals.header.shoppingTitle')}
+        sections={courseSections}
+        itemsBySection={coursesBySection}
+        onToggle={handleCourseToggle}
+        priceByItemId={coursePriceByItemId}
+        remainingEstimate={courseRemainingEstimate}
+        formatPrice={formatPrice}
+      />
+
       {/* Coach marks */}
       <ScreenGuide
         screenId="meals"
@@ -3836,5 +3929,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: Spacing.md,
+  },
+  shoppingModeBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
