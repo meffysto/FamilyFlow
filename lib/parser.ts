@@ -547,7 +547,24 @@ export function parseCourseList(
     createdAt,
   };
 
-  const items = parseCourses(body, sourceFile);
+  // Calcule l'offset (en lignes) du body dans le fichier complet pour
+  // que CourseItem.lineIndex soit absolu — sinon les writes par splice
+  // (removeCourseItem, toggleCourseItem, etc.) ciblent la mauvaise ligne.
+  let bodyOffset = 0;
+  if (body !== content) {
+    const idx = content.indexOf(body);
+    bodyOffset = idx >= 0 ? content.slice(0, idx).split('\n').length - 1 : 0;
+  }
+
+  const itemsRaw = parseCourses(body, sourceFile);
+  const items = bodyOffset === 0
+    ? itemsRaw
+    : itemsRaw.map(it => ({
+        ...it,
+        lineIndex: it.lineIndex + bodyOffset,
+        id: `${sourceFile}:${it.lineIndex + bodyOffset}`,
+      }));
+
   return { meta, items };
 }
 
