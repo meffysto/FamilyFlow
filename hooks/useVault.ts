@@ -207,6 +207,7 @@ export interface VaultState {
   toggleCourseItem: (item: CourseItem, completed: boolean) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
   moveCourseItem: (lineIndex: number, text: string, newSection: string) => Promise<void>;
+  updateCourseItem: (lineIndex: number, patch: { text: string; section: string }) => Promise<void>;
   clearCompletedCourses: () => Promise<void>;
   memories: Memory[];
   addMemory: (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
@@ -2242,6 +2243,7 @@ export function useVaultInternal(): VaultState {
     toggleCourseItem: coursesHook.toggleCourseItem,
     removeCourseItem: coursesHook.removeCourseItem,
     moveCourseItem: coursesHook.moveCourseItem,
+    updateCourseItem: coursesHook.updateCourseItem,
     clearCompletedCourses: coursesHook.clearCompletedCourses,
     memories,
     addMemory,

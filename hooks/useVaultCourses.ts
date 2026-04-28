@@ -37,6 +37,7 @@ export interface UseVaultCoursesResult {
   toggleCourseItem: (item: CourseItem, completed: boolean) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
   moveCourseItem: (lineIndex: number, text: string, newSection: string) => Promise<void>;
+  updateCourseItem: (lineIndex: number, patch: { text: string; section: string }) => Promise<void>;
   mergeCourseIngredients: (items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
   clearCompletedCourses: () => Promise<void>;
   resetCourses: () => void;
@@ -170,6 +171,59 @@ export function useVaultCourses(
     });
   }, [enqueueWrite]);
 
+  const updateCourseItem = useCallback(async (lineIndex: number, patch: { text: string; section: string }) => {
+    const snapshot = coursesRef.current;
+    const current = snapshot.find((c) => c.lineIndex === lineIndex);
+    if (!current) return;
+    // No-op si rien ne change
+    if (current.text === patch.text && current.section === patch.section) return;
+
+    // Optimistic
+    setCourses((prev) => prev.map((c) =>
+      c.lineIndex === lineIndex ? { ...c, text: patch.text, section: patch.section, pending: true } : c
+    ));
+
+    return enqueueWrite(async () => {
+      if (!vaultRef.current) return;
+      try {
+        const content = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
+        const lines = content.split('\n');
+        if (lineIndex < 0 || lineIndex >= lines.length) return;
+
+        const originalLine = lines[lineIndex];
+        // Préserver l'état coché [x] vs [ ]
+        const checkedMatch = originalLine.match(/^-\s+\[(x| )\]/i);
+        const mark = checkedMatch && checkedMatch[1].toLowerCase() === 'x' ? 'x' : ' ';
+
+        if (current.section === patch.section) {
+          // Section inchangée → réécrire la ligne en place
+          lines[lineIndex] = `- [${mark}] ${patch.text}`;
+        } else {
+          // Section changée → splice + réinsérer (comme moveCourseItem)
+          lines.splice(lineIndex, 1);
+          const sectionHeader = `## ${patch.section}`;
+          let sectionIdx = lines.findIndex((l) => l.trim() === sectionHeader);
+          if (sectionIdx === -1) {
+            lines.push('', sectionHeader, `- [${mark}] ${patch.text}`);
+          } else {
+            let insertIdx = sectionIdx + 1;
+            while (insertIdx < lines.length && lines[insertIdx].startsWith('- [')) {
+              insertIdx++;
+            }
+            lines.splice(insertIdx, 0, `- [${mark}] ${patch.text}`);
+          }
+        }
+
+        const newContent = lines.join('\n');
+        await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
+        setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
+      } catch (e) {
+        setCourses(snapshot);
+        throw e;
+      }
+    });
+  }, [enqueueWrite]);
+
   const mergeCourseIngredients = useCallback(async (items: { text: string; name: string; quantity: number | null; section: string }[]): Promise<{ added: number; merged: number }> => {
     const snapshot = coursesRef.current;
     const optimistics: CourseItem[] = items.map((item) => ({
@@ -278,6 +332,7 @@ export function useVaultCourses(
     toggleCourseItem,
     removeCourseItem,
     moveCourseItem,
+    updateCourseItem,
     mergeCourseIngredients,
     clearCompletedCourses,
     resetCourses,
