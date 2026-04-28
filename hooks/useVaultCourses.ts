@@ -7,20 +7,26 @@
  * IMPORTANT: L'automatisation courses↔stock (auto-courses.ts) est appelée
  * par le code UI externe, pas par ce hook. Ce hook gère uniquement le CRUD
  * du fichier Liste de courses.md.
+ *
+ * Phase B (260428-g5n) — Optimistic UI : tous les writes (add/toggle/remove/
+ * move/merge/clear) appliquent une mutation optimiste AVANT enqueueWrite, avec
+ * rollback automatique en cas d'erreur via snapshot capturé sur coursesRef.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type React from 'react';
 import type { CourseItem } from '../lib/types';
 import { parseCourses } from '../lib/parser';
 import type { VaultManager } from '../lib/vault';
-import { COURSES_FILE_LEGACY } from '../lib/courses-constants';
+import { COURSES_FILE_LEGACY, COURSES_DEFAULT_SECTION } from '../lib/courses-constants';
 
 function warnUnexpected(context: string, e: unknown) {
   const msg = String(e);
   const isNotFound = msg.includes('cannot read') || msg.includes('not exist') || msg.includes('no such') || msg.includes('ENOENT');
   if (!isNotFound && __DEV__) console.warn(`[useVaultCourses] ${context}:`, e);
 }
+
+const makeTempId = () => `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 // ─── Interface de retour ─────────────────────────────────────────────────────
 
@@ -43,6 +49,10 @@ export function useVaultCourses(
 ): UseVaultCoursesResult {
   const [courses, setCourses] = useState<CourseItem[]>([]);
 
+  // Snapshot synchrone pour rollback hors du closure setState
+  const coursesRef = useRef<CourseItem[]>([]);
+  useEffect(() => { coursesRef.current = courses; }, [courses]);
+
   // Queue d'écritures séquentielle — évite les races sur le même fichier vault
   // quand plusieurs handlers UI déclenchent des writes concurrents (ex : tap rapide).
   const writeQueueRef = useRef<Promise<unknown>>(Promise.resolve());
@@ -60,23 +70,50 @@ export function useVaultCourses(
   }, []);
 
   const addCourseItem = useCallback(async (text: string, section?: string) => {
+    const tempId = makeTempId();
+    const optimistic: CourseItem = {
+      id: tempId,
+      text,
+      section: section ?? COURSES_DEFAULT_SECTION,
+      completed: false,
+      lineIndex: -1,
+      pending: true,
+    };
+    setCourses((prev) => [...prev, optimistic]);
+
     return enqueueWrite(async () => {
       if (!vaultRef.current) return;
-      await vaultRef.current.appendTask(COURSES_FILE_LEGACY, section ?? null, text);
-      const newContent = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
-      setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
+      try {
+        await vaultRef.current.appendTask(COURSES_FILE_LEGACY, section ?? null, text);
+        const newContent = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
+        setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
+      } catch (e) {
+        setCourses((prev) => prev.filter((c) => c.id !== tempId));
+        throw e;
+      }
     });
   }, [enqueueWrite]);
 
   const toggleCourseItem = useCallback(async (item: CourseItem, completed: boolean) => {
+    const snapshot = coursesRef.current;
+    setCourses((prev) => prev.map((c) => (c.id === item.id ? { ...c, completed, pending: true } : c)));
+
     return enqueueWrite(async () => {
       if (!vaultRef.current) return;
-      await vaultRef.current.toggleTask(COURSES_FILE_LEGACY, item.lineIndex, completed);
-      setCourses((prev) => prev.map((c) => (c.id === item.id ? { ...c, completed } : c)));
+      try {
+        await vaultRef.current.toggleTask(COURSES_FILE_LEGACY, item.lineIndex, completed);
+        setCourses((prev) => prev.map((c) => (c.id === item.id ? { ...c, completed, pending: false } : c)));
+      } catch (e) {
+        setCourses(snapshot);
+        throw e;
+      }
     });
   }, [enqueueWrite]);
 
   const removeCourseItem = useCallback(async (lineIndex: number) => {
+    const snapshot = coursesRef.current;
+    setCourses((prev) => prev.filter((c) => c.lineIndex !== lineIndex));
+
     return enqueueWrite(async () => {
       if (!vaultRef.current) return;
       try {
@@ -84,47 +121,67 @@ export function useVaultCourses(
         const lines = content.split('\n');
         if (lineIndex >= 0 && lineIndex < lines.length) {
           lines.splice(lineIndex, 1);
-          await vaultRef.current.writeFile(COURSES_FILE_LEGACY, lines.join('\n'));
-          const updated = parseCourses(lines.join('\n'), COURSES_FILE_LEGACY);
-          setCourses(updated);
+          const newContent = lines.join('\n');
+          await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
+          setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
         }
       } catch (e) {
+        setCourses(snapshot);
         throw new Error(`removeCourseItem: ${e}`);
       }
     });
   }, [enqueueWrite]);
 
   const moveCourseItem = useCallback(async (lineIndex: number, text: string, newSection: string) => {
+    const snapshot = coursesRef.current;
+    setCourses((prev) => prev.map((c) => (c.lineIndex === lineIndex ? { ...c, section: newSection, pending: true } : c)));
+
     return enqueueWrite(async () => {
       if (!vaultRef.current) return;
-      const content = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
-      const lines = content.split('\n');
-      if (lineIndex < 0 || lineIndex >= lines.length) return;
+      try {
+        const content = await vaultRef.current.readFile(COURSES_FILE_LEGACY);
+        const lines = content.split('\n');
+        if (lineIndex < 0 || lineIndex >= lines.length) return;
 
-      // 1. Supprimer l'ancienne ligne
-      lines.splice(lineIndex, 1);
+        // 1. Supprimer l'ancienne ligne
+        lines.splice(lineIndex, 1);
 
-      // 2. Trouver ou créer la section cible, insérer l'article
-      const sectionHeader = `## ${newSection}`;
-      let sectionIdx = lines.findIndex(l => l.trim() === sectionHeader);
-      if (sectionIdx === -1) {
-        lines.push('', sectionHeader, `- [ ] ${text}`);
-      } else {
-        let insertIdx = sectionIdx + 1;
-        while (insertIdx < lines.length && lines[insertIdx].startsWith('- [')) {
-          insertIdx++;
+        // 2. Trouver ou créer la section cible, insérer l'article
+        const sectionHeader = `## ${newSection}`;
+        let sectionIdx = lines.findIndex(l => l.trim() === sectionHeader);
+        if (sectionIdx === -1) {
+          lines.push('', sectionHeader, `- [ ] ${text}`);
+        } else {
+          let insertIdx = sectionIdx + 1;
+          while (insertIdx < lines.length && lines[insertIdx].startsWith('- [')) {
+            insertIdx++;
+          }
+          lines.splice(insertIdx, 0, `- [ ] ${text}`);
         }
-        lines.splice(insertIdx, 0, `- [ ] ${text}`);
-      }
 
-      // 3. Écriture unique + mise à jour state locale
-      const newContent = lines.join('\n');
-      await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
-      setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
+        // 3. Écriture unique + mise à jour state locale
+        const newContent = lines.join('\n');
+        await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
+        setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
+      } catch (e) {
+        setCourses(snapshot);
+        throw e;
+      }
     });
   }, [enqueueWrite]);
 
   const mergeCourseIngredients = useCallback(async (items: { text: string; name: string; quantity: number | null; section: string }[]): Promise<{ added: number; merged: number }> => {
+    const snapshot = coursesRef.current;
+    const optimistics: CourseItem[] = items.map((item) => ({
+      id: makeTempId(),
+      text: item.text,
+      section: item.section,
+      completed: false,
+      lineIndex: -1,
+      pending: true,
+    }));
+    setCourses((prev) => [...prev, ...optimistics]);
+
     return enqueueWrite(async () => {
       if (!vaultRef.current) return { added: 0, merged: 0 };
       let added = 0;
@@ -186,6 +243,7 @@ export function useVaultCourses(
         await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
         setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
       } catch (e) {
+        setCourses(snapshot);
         throw new Error(`mergeCourseIngredients: ${e}`);
       }
 
@@ -194,6 +252,9 @@ export function useVaultCourses(
   }, [enqueueWrite]);
 
   const clearCompletedCourses = useCallback(async () => {
+    const snapshot = coursesRef.current;
+    setCourses((prev) => prev.filter((c) => !c.completed));
+
     return enqueueWrite(async () => {
       if (!vaultRef.current) return;
       try {
@@ -204,6 +265,7 @@ export function useVaultCourses(
         await vaultRef.current.writeFile(COURSES_FILE_LEGACY, newContent);
         setCourses(parseCourses(newContent, COURSES_FILE_LEGACY));
       } catch (e) {
+        setCourses(snapshot);
         throw new Error(`clearCompletedCourses: ${e}`);
       }
     });
