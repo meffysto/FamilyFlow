@@ -1513,6 +1513,7 @@
     },
     "courses": {
       "title": "Shopping",
+      "toTake": "to buy",
       "emptyList": "List empty — add an item below",
       "addPlaceholder": "Add an item…",
       "clearChecked": "🗑 Clear checked",

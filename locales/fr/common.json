@@ -1521,6 +1521,7 @@
     },
     "courses": {
       "title": "Courses",
+      "toTake": "à prendre",
       "emptyList": "Liste vide — ajoutez un article ci-dessous",
       "addPlaceholder": "Ajouter un article…",
       "clearChecked": "🗑 Vider les cochés",

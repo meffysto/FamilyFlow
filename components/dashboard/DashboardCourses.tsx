@@ -26,7 +26,7 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
     <DashboardCard key="courses" title={t('dashboard.courses.title')} IconComponent={ShoppingCart} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })} hideMoreLink style={{ flex: 1 }}>
       <Text style={[styles.courseSentence, { color: colors.text }]}>
         <Text style={[styles.courseCount, { color: colors.catOrganisation }]}>{unchecked.length}</Text>
-        {' à prendre'}
+        {` ${t('dashboard.courses.toTake')}`}
       </Text>
       {topCourses.slice(0, 3).map((item) => (
         <Text key={item.id} style={[styles.courseMicro, { color: colors.textMuted }]} numberOfLines={1}>
