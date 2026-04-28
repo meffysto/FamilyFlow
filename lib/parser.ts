@@ -446,6 +446,142 @@ export function parseCourses(content: string, relativePath: string): CourseItem[
   return items;
 }
 
+// ─── Multi-listes de courses (Phase D) ──────────────────────────────────────
+
+export interface CourseListMeta {
+  nom: string;
+  emoji: string;
+  archive: boolean;
+  createdAt: string;
+}
+
+/**
+ * slugifyListName : slug FR-friendly pour nom de fichier liste de courses.
+ * - lowercase
+ * - strip accents (NFD)
+ * - non-alphanumériques → '-'
+ * - trim hyphens
+ * - max 40 chars
+ * Empty → 'liste'
+ */
+export function slugifyListName(nom: string): string {
+  if (!nom) return 'liste';
+  let slug = nom
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  if (!slug) return 'liste';
+  if (slug.length > 40) slug = slug.slice(0, 40).replace(/-+$/, '');
+  return slug || 'liste';
+}
+
+/**
+ * parseCourseList : parse un fichier liste de courses Phase D
+ * (frontmatter {nom, emoji, archive, createdAt} + body sections + items).
+ * Réutilise parseCourses pour le body.
+ */
+export function parseCourseList(
+  content: string,
+  sourceFile: string,
+): { meta: CourseListMeta; items: CourseItem[] } {
+  let data: Record<string, unknown> = {};
+  let body = content;
+  try {
+    const parsed = matter(content);
+    data = parsed.data as Record<string, unknown>;
+    body = parsed.content;
+  } catch {
+    // matter échec → manual fallback
+    const fm = parseFrontmatter(content);
+    data = fm.data;
+    body = fm.content;
+  }
+
+  let createdAt: string;
+  const rawCreated = data.createdAt;
+  if (typeof rawCreated === 'string') {
+    createdAt = rawCreated;
+  } else if (rawCreated instanceof Date) {
+    createdAt = rawCreated.toISOString().slice(0, 10);
+  } else {
+    createdAt = new Date().toISOString().slice(0, 10);
+  }
+
+  const meta: CourseListMeta = {
+    nom: typeof data.nom === 'string' ? data.nom : 'Sans nom',
+    emoji: typeof data.emoji === 'string' ? data.emoji : '🛒',
+    archive: data.archive === true,
+    createdAt,
+  };
+
+  const items = parseCourses(body, sourceFile);
+  return { meta, items };
+}
+
+/**
+ * serializeCourseListMeta : frontmatter YAML manuel (pas matter.stringify — convention codebase).
+ */
+export function serializeCourseListMeta(meta: CourseListMeta): string {
+  // Échapper le nom si caractères problématiques
+  const needsQuote = /[:"'#&*?|<>=!%@`]/.test(meta.nom) || meta.nom.includes('\n');
+  const nomSerialized = needsQuote
+    ? `'${meta.nom.replace(/'/g, "''")}'`
+    : meta.nom;
+  return [
+    '---',
+    `nom: ${nomSerialized}`,
+    `emoji: "${meta.emoji}"`,
+    `archive: ${meta.archive}`,
+    `createdAt: ${meta.createdAt}`,
+    '---',
+    '',
+  ].join('\n');
+}
+
+/**
+ * serializeCourseList : frontmatter + body reconstruit (sections + items).
+ * Préserve l'ordre des sections, défaut COURSES_DEFAULT_SECTION pour items sans section.
+ */
+export function serializeCourseList(
+  meta: CourseListMeta,
+  items: CourseItem[],
+): string {
+  const DEFAULT_SECTION = '📦 Divers';
+  const sectionOrder: string[] = [];
+  const bySection = new Map<string, CourseItem[]>();
+
+  for (const item of items) {
+    const section = item.section || DEFAULT_SECTION;
+    if (!bySection.has(section)) {
+      bySection.set(section, []);
+      sectionOrder.push(section);
+    }
+    bySection.get(section)!.push(item);
+  }
+
+  // Toujours garder une section par défaut visible si aucun item
+  if (sectionOrder.length === 0) {
+    sectionOrder.push(DEFAULT_SECTION);
+    bySection.set(DEFAULT_SECTION, []);
+  }
+
+  const lines: string[] = [];
+  for (const section of sectionOrder) {
+    lines.push(`## ${section}`);
+    lines.push('');
+    const sectionItems = bySection.get(section)!;
+    for (const item of sectionItems) {
+      const checkbox = item.completed ? 'x' : ' ';
+      lines.push(`- [${checkbox}] ${item.text}`);
+    }
+    lines.push('');
+  }
+
+  return serializeCourseListMeta(meta) + lines.join('\n');
+}
+
 // ─── Repas de la semaine ────────────────────────────────────────────────────
 
 const MEAL_LINE_REGEX = /^-\s+(.+?):\s*(.*)$/;
