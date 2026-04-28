@@ -4,7 +4,7 @@ milestone: v1.7
 milestone_name: Modifiers de plants
 status: Phase 42 complète — shippable sur TestFlight
 last_updated: "2026-04-28T11:30:00Z"
-last_activity: "2026-04-28 - Completed quick task 260428-kda: Preview/confirm modal vocal courses — VoiceCoursesReview + refactor handleVoiceResult"
+last_activity: "2026-04-28 - Completed quick task 260428-kqx: DictaphoneRecorder autoSubmit pour courses (skip écran édition + résumé IA)"
 progress:
   total_phases: 14
   completed_phases: 9
@@ -28,7 +28,7 @@ Phase: 42
 Plan: 9/9 complétés
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-28 - Completed quick task 260428-k5e: Polish Courses — emojis résiduels → lucide + i18n DashboardCourses
+Last activity: 2026-04-28 - Completed quick task 260428-kqx: DictaphoneRecorder autoSubmit pour courses
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
@@ -83,6 +83,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | 260428-huh | Phase D courses — multi-listes (migration auto Listes/principale.md + switcher UI + ActionSheet long-press + auto-courses recettes ciblées) | 2026-04-28 | 3e19f2f | [260428-huh-phase-d-courses-listes-multiples-multi-m](./quick/260428-huh-phase-d-courses-listes-multiples-multi-m/) |
 | 260428-k5e | Polish Courses — emojis résiduels → lucide (ShoppingCart/FolderOpen/Check/X) + i18n DashboardCourses | 2026-04-28 | 9d90e2b | [260428-k5e-polish-courses-remplacer-emojis-r-siduel](./quick/260428-k5e-polish-courses-remplacer-emojis-r-siduel/) |
 | 260428-kda | Preview/confirm modal vocal courses — VoiceCoursesReview + refactor handleVoiceResult | 2026-04-28 | 35072e8 | [260428-kda-preview-confirm-modal-pour-ajout-vocal-c](./quick/260428-kda-preview-confirm-modal-pour-ajout-vocal-c/) |
+| 260428-kqx | DictaphoneRecorder autoSubmit pour courses (skip écran édition + résumé IA) | 2026-04-28 | 6ee3919 | [260428-kqx-dictaphonerecorder-autosubmit-pour-cours](./quick/260428-kqx-dictaphonerecorder-autosubmit-pour-cours/) |
 
 ## Performance Metrics
 
