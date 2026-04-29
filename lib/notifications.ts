@@ -101,6 +101,9 @@ const DEFAULT_DAILY_SUMMARY_TEMPLATE =
 const DEFAULT_DEFI_LAUNCHED_TEMPLATE =
   '{{defi.emoji}} <b>Nouveau défi !</b>\n\n🏅 <i>{{defi.title}}</i>\n📅 Du {{defi.startDate}} au {{defi.endDate}} ({{defi.targetDays}} jours)\n👥 {{defi.participants}}\n\nOuvrez l\'app pour participer ! 💪';
 
+const DEFAULT_AUBERGE_VISITOR_REMINDER_TEMPLATE =
+  '🛖 {{visitorName}} arrive à l\'auberge — {{hours}}h pour livrer';
+
 export const BUILTIN_NOTIFICATIONS: NotificationConfig[] = [
   {
     id: 'task_completed',
@@ -176,6 +179,17 @@ export const BUILTIN_NOTIFICATIONS: NotificationConfig[] = [
     template: '{{sender}} t\'a envoye {{item}} !',
     defaultTemplate: '{{sender}} t\'a envoye {{item}} !',
     event: 'gift_received',
+    availableVariables: [],
+    isCustom: false,
+  },
+  {
+    id: 'auberge_visitor_reminder',
+    label: 'Visiteurs auberge',
+    emoji: '🛖',
+    enabled: true,
+    template: DEFAULT_AUBERGE_VISITOR_REMINDER_TEMPLATE,
+    defaultTemplate: DEFAULT_AUBERGE_VISITOR_REMINDER_TEMPLATE,
+    event: 'auberge_visitor_reminder',
     availableVariables: [],
     isCustom: false,
   },

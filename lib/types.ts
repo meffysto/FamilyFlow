@@ -528,6 +528,7 @@ export type NotifEvent =
   | 'daily_summary'
   | 'defi_launched'
   | 'gift_received'
+  | 'auberge_visitor_reminder'
   | 'manual';
 
 export interface TemplateVariable {

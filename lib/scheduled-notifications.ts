@@ -117,6 +117,8 @@ const CAT_GROSSESSE = 'grossesse-weekly';
 const CAT_GRATITUDE = 'gratitude-daily';
 const CAT_WEEKLY_AI = 'weekly-ai-summary';
 const CAT_LOVENOTE = 'lovenote-reveal';
+const CAT_AUBERGE_ARRIVAL = 'auberge-visitor-arrival';
+const CAT_AUBERGE_REMINDER = 'auberge-visitor-reminder';
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
@@ -696,5 +698,83 @@ export async function cancelLoveNoteReveal(sourceFile: string): Promise<void> {
     await Notifications.cancelScheduledNotificationAsync(loveNoteIdentifier(sourceFile));
   } catch {
     // Idempotent
+  }
+}
+
+// ─── 10. Auberge — Visiteurs (Phase 46) ──────────────────────────────────────
+
+/**
+ * Schedule la notif "arrivée immédiate" du visiteur (trigger null).
+ * Idempotent : cancel précédente avant schedule. Silencieux si permission refusée.
+ */
+export async function scheduleAubergeVisitorArrival(
+  instanceId: string,
+  visitorName: string,
+  emoji: string,
+  deadlineHours: number,
+): Promise<void> {
+  const permitted = await requestNotificationPermissions();
+  if (!permitted) return;
+  await cancelAubergeVisitorNotifs(instanceId);
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: `${CAT_AUBERGE_ARRIVAL}-${instanceId}`,
+      content: {
+        title: `${emoji} ${visitorName} à l'auberge`,
+        body: `Une nouvelle commande t'attend : ${deadlineHours}h pour livrer.`,
+        sound: true,
+        data: { type: 'auberge_visitor_arrival', instanceId },
+      },
+      trigger: null,
+    });
+  } catch (e) {
+    if (__DEV__) console.warn('[scheduleAubergeVisitorArrival]', e);
+  }
+}
+
+/**
+ * Schedule la notif "rappel H-4" — trigger DATE = deadlineAt - 4h.
+ * Skip silencieux si reminderDate est déjà passé. Idempotent.
+ */
+export async function scheduleAubergeVisitorReminder(
+  instanceId: string,
+  visitorName: string,
+  emoji: string,
+  deadlineAt: Date,
+): Promise<void> {
+  const permitted = await requestNotificationPermissions();
+  if (!permitted) return;
+  const reminderDate = new Date(deadlineAt.getTime() - 4 * 60 * 60 * 1000);
+  if (reminderDate.getTime() <= Date.now()) return;
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: `${CAT_AUBERGE_REMINDER}-${instanceId}`,
+      content: {
+        title: `⏰ ${emoji} ${visitorName}`,
+        body: `Plus que 4h pour livrer la commande de ${visitorName}.`,
+        sound: true,
+        data: { type: 'auberge_visitor_reminder', instanceId },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderDate },
+    });
+  } catch (e) {
+    if (__DEV__) console.warn('[scheduleAubergeVisitorReminder]', e);
+  }
+}
+
+/** Cancel toutes les notifs (arrival + reminder) d'un visiteur. Idempotent. */
+export async function cancelAubergeVisitorNotifs(instanceId: string): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    for (const notif of all) {
+      if (
+        notif.identifier === `${CAT_AUBERGE_ARRIVAL}-${instanceId}` ||
+        notif.identifier === `${CAT_AUBERGE_REMINDER}-${instanceId}`
+      ) {
+        await Notifications.cancelScheduledNotificationAsync(notif.identifier).catch(() => {});
+      }
+    }
+  } catch (e) {
+    if (__DEV__) console.warn('[cancelAubergeVisitorNotifs]', e);
   }
 }
