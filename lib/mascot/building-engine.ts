@@ -147,6 +147,7 @@ export function getPendingResources(
 ): number {
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return 0;
+  if (def.producesResource === false) return 0; // Phase 44 — bâtiment non-productif (auberge)
   const tier = def.tiers[building.level - 1];
   if (!tier) return 0;
 
@@ -173,6 +174,7 @@ export function getMinutesUntilNext(
 ): number {
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return 0;
+  if (def.producesResource === false) return 0; // Phase 44 — bâtiment non-productif (auberge)
   const tier = def.tiers[building.level - 1];
   if (!tier) return 0;
 
@@ -207,6 +209,7 @@ export function collectBuilding(
 
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return { buildings, inventory, collected: 0 };
+  if (def.producesResource === false) return { buildings, inventory, collected: 0 }; // Phase 44 — bâtiment non-productif (auberge)
 
   const pending = getPendingResources(building, now, techBonuses, wearEffects, questSpeedMultiplier);
   if (pending === 0) return { buildings, inventory, collected: 0 };

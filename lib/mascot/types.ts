@@ -429,6 +429,9 @@ export interface BuildingDefinition {
   resourceType: ResourceType;
   tiers: BuildingTier[];
   techRequired?: string;   // id du noeud tech requis pour debloquer (optionnel)
+  /** Phase 44 — false = bâtiment décoratif/social (Auberge), aucune ressource passive.
+   *  undefined ou true = comportement historique (production active). */
+  producesResource?: boolean;
 }
 
 // ─── Constantes formule progression bâtiments (Ogame-like) ──────
