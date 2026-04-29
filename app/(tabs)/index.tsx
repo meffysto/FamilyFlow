@@ -394,7 +394,7 @@ export default function DashboardScreen() {
     await SecureStore.setItemAsync(SMART_SORT_KEY, newSmartSort ? '1' : '0');
   }, []);
 
-  const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: getDateLocale() });
+  const today = format(new Date(), 'EEEE d MMMM', { locale: getDateLocale() });
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const onRefresh = useCallback(async () => {
@@ -961,7 +961,7 @@ export default function DashboardScreen() {
                     name: activeProfile?.name ? ` ${activeProfile.name}` : '',
                   })}
             </Animated.Text>
-            <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
+            <Text style={[styles.dateText, { color: colors.text }]} numberOfLines={1}>{today}</Text>
           </View>
         </View>
         <View style={styles.headerActions}>
