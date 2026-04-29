@@ -32,5 +32,6 @@ export { DashboardBilanSemaine } from './DashboardBilanSemaine';
 export { DashboardSecretMissions } from './DashboardSecretMissions';
 export { DashboardGarden } from './DashboardGarden';
 export { DashboardCompanionDay } from './DashboardCompanionDay';
+export { DashboardAuberge } from './DashboardAuberge';
 
 export type { DashboardSectionProps, DashboardSectionWithTaskToggleProps } from './types';

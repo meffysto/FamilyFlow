@@ -103,6 +103,7 @@ import {
   DashboardSecretMissions,
   DashboardGarden,
   DashboardCompanionDay,
+  DashboardAuberge,
 } from '../../components/dashboard';
 import type { ZenConfig } from '../../components/settings/SettingsZen';
 import { Search, Send, Loader, Settings2 } from 'lucide-react-native';
@@ -147,6 +148,7 @@ function getAllSections(t: (key: string) => string): SectionPref[] {
     { id: 'secretMissions', label: t('dashboard.sectionLabels.secretMissions'), emoji: '🕵️', visible: true,  priority: 'high', size: 'full' },
     { id: 'garden',       label: t('dashboard.sectionLabels.garden'),          emoji: '🌳', visible: true,  priority: 'high', size: 'full' },
     { id: 'companionDay', label: 'Journée de la mascotte',                      emoji: '🌱', visible: true,  priority: 'high', size: 'full' },
+    { id: 'auberge',      label: '🛖 Auberge',                                  emoji: '🛖', visible: true,  priority: 'high', size: 'full' },
 
     { id: 'quicknotifs',label: t('dashboard.sectionLabels.quicknotifs'),     emoji: '📤', visible: false, priority: 'low', size: 'full' },
     { id: 'recipes',    label: t('dashboard.sectionLabels.recipes'),         emoji: '📖', visible: false, priority: 'low', size: 'full' },
@@ -190,6 +192,7 @@ const SECTION_ZONE: Record<string, DashboardZone> = {
   nightMode: 'home',
   companionDay: 'farm',
   garden: 'farm',
+  auberge: 'farm',
   lootProgress: 'farm',
   rewards: 'farm',
   defis: 'farm',
@@ -207,6 +210,7 @@ const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'med
   defis:          { visible: true, priority: 'high' },
   secretMissions: { visible: true, priority: 'high' },
   garden:         { visible: true, priority: 'high' },
+  auberge:        { visible: true, priority: 'high' },
 };
 
 function getDefaultSections(t: (key: string) => string, role?: string): SectionPref[] {
@@ -906,6 +910,7 @@ export default function DashboardScreen() {
       case 'secretMissions': return <DashboardSecretMissions key={id} {...sectionProps} />;
       case 'garden':         return <DashboardGarden key={id} {...sectionProps} />;
       case 'companionDay':   return <DashboardCompanionDay key={id} {...sectionProps} />;
+      case 'auberge':        return <DashboardAuberge key={id} {...sectionProps} />;
       default:             return null;
     }
   };
