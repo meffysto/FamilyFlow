@@ -20,6 +20,7 @@ import {
   TouchableOpacity,
   Alert,
   Pressable,
+  Image,
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -33,6 +34,7 @@ import {
   getReputation,
 } from '../../lib/mascot/auberge-engine';
 import { VISITOR_CATALOG, type VisitorDefinition } from '../../lib/mascot/visitor-catalog';
+import { VISITOR_SPRITES } from '../../lib/mascot/visitor-sprites';
 import type {
   ActiveVisitor,
   VisitorRequestItem,
@@ -46,10 +48,6 @@ import { SectionErrorBoundary } from '../SectionErrorBoundary';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-
-// ─── Couleurs sémantiques timer (alignées DashboardGarden wear) ─────────
-const TIMER_AMBER = '#F59E0B'; // < 6h
-const TIMER_RED = '#EF4444';   // < 1h
 
 // ─── Lookup map FR pour les 6 PNJ ───────────────────────────────────────
 const VISITOR_LABELS_FR: Record<string, { name: string; bio: string }> = {
@@ -88,10 +86,10 @@ function formatRemaining(minutes: number): string {
   return `${h}h ${String(m).padStart(2, '0')}min`;
 }
 
-function timerColor(minutes: number, fallback: string): string {
-  if (minutes <= 0) return TIMER_RED;
-  if (minutes < 60) return TIMER_RED;
-  if (minutes < 360) return TIMER_AMBER;
+function timerColor(minutes: number, fallback: string, amber: string, red: string): string {
+  if (minutes <= 0) return red;
+  if (minutes < 60) return red;
+  if (minutes < 360) return amber;
   return fallback;
 }
 
@@ -159,10 +157,10 @@ const VisitorCard = React.memo(function VisitorCard({
   const bio = labels?.bio ?? '';
 
   const minutes = getRemainingMinutes(visitor, new Date());
-  const tColor = timerColor(minutes, colors.textMuted);
+  const tColor = timerColor(minutes, colors.textMuted, colors.warning, colors.error);
 
   const lootPct = def?.preferredLoot && def.preferredLoot.length > 0
-    ? Math.round(0.18 * 100) // approximation visuelle — la chance réelle est gérée moteur
+    ? Math.round((visitor.lootChance ?? 0.18) * 100)
     : 0;
 
   return (
@@ -176,7 +174,15 @@ const VisitorCard = React.memo(function VisitorCard({
       {/* Ligne 1 : portrait + identité */}
       <View style={styles.cardRow}>
         <View style={[styles.portrait, { backgroundColor: colors.cardAlt }]}>
-          <Text style={styles.portraitEmoji}>{emoji}</Text>
+          {VISITOR_SPRITES[visitor.visitorId] ? (
+            <Image
+              source={VISITOR_SPRITES[visitor.visitorId]}
+              style={styles.portraitSprite}
+              resizeMode="contain"
+            />
+          ) : (
+            <Text style={styles.portraitEmoji}>{emoji}</Text>
+          )}
         </View>
         <View style={styles.identity}>
           <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
@@ -671,6 +677,10 @@ const styles = StyleSheet.create({
   },
   portraitEmoji: {
     fontSize: 56,
+  },
+  portraitSprite: {
+    width: 64,
+    height: 64,
   },
   identity: {
     flex: 1,
