@@ -68,6 +68,7 @@ const BRANCHES: { id: TechBranchId; labelKey: string; emoji: string; color: stri
   { id: 'culture',   labelKey: 'tech.branch_culture',   emoji: '🌱', color: '#10B981' },
   { id: 'elevage',   labelKey: 'tech.branch_elevage',   emoji: '🐄', color: '#F59E0B' },
   { id: 'expansion', labelKey: 'tech.branch_expansion', emoji: '🏗️', color: '#6366F1' },
+  { id: 'social',    labelKey: 'tech.branch_social',    emoji: '🛖', color: '#EC4899' },
 ];
 
 // ── AwningStripes ─────────────────────────────────────────────────────────
@@ -331,6 +332,7 @@ export function TechTreeSheet({
       culture: [],
       elevage: [],
       expansion: [],
+      social: [],
     };
     for (const node of TECH_TREE) {
       map[node.branch].push(node);
