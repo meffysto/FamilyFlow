@@ -280,6 +280,7 @@ export function spawnVisitor(
     request,
     status: 'active',
     rewardCoins,
+    lootChance: LOOT_CHANCE[def.rarity],
   };
 
   // Met à jour reputation.lastSeenAt (créer si absent)
