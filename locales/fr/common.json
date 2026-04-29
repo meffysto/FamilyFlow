@@ -1637,7 +1637,11 @@
       "emptyDescription": "Envoyez des notifications rapides à la famille en un tap",
       "activateLabel": "Importer le modèle",
       "sent": "Notification envoyée sur Telegram !",
-      "sendError": "Envoi impossible — vérifiez la configuration"
+      "sendError": "Envoi impossible — vérifiez la configuration",
+      "confirmTitle": "Envoyer cette notification ?",
+      "confirmMessage": "Le message suivant sera envoyé sur Telegram :\n\n{{message}}",
+      "confirmSend": "Envoyer",
+      "confirmCancel": "Annuler"
     },
     "quotes": {
       "title": "Mots d'enfants",

@@ -1629,7 +1629,11 @@
       "emptyDescription": "Send quick notifications to the family with one tap",
       "activateLabel": "Import template",
       "sent": "Notification sent via Telegram!",
-      "sendError": "Unable to send — check your configuration"
+      "sendError": "Unable to send — check your configuration",
+      "confirmTitle": "Send this notification?",
+      "confirmMessage": "The following message will be sent on Telegram:\n\n{{message}}",
+      "confirmSend": "Send",
+      "confirmCancel": "Cancel"
     },
     "quotes": {
       "title": "Kids' quotes",

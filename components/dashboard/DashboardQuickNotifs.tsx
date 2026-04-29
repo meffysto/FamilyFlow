@@ -3,7 +3,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import {
@@ -94,7 +94,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
-import { dispatchNotification, buildManualContext } from '../../lib/notifications';
+import { dispatchNotification, buildManualContext, renderTemplate } from '../../lib/notifications';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -212,17 +212,37 @@ function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: Da
   );
 
   const handleSendCustomNotif = useCallback(
-    async (notifId: string) => {
+    (notifId: string) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const config = notifPrefs.notifications.find((n) => n.id === notifId);
+      if (!config) return;
       const context = buildManualContext(activeProfile);
-      const ok = await dispatchNotification(notifId, context, notifPrefs);
-      if (ok) {
-        showToast(t('dashboard.quickNotifs.sent'));
-      } else {
-        showToast(t('dashboard.quickNotifs.sendError'), 'error');
-      }
+      const preview = renderTemplate(config.template, context)
+        .replace(/<\/?[^>]+>/g, '')
+        .trim();
+
+      Alert.alert(
+        t('dashboard.quickNotifs.confirmTitle'),
+        t('dashboard.quickNotifs.confirmMessage', { message: preview }),
+        [
+          { text: t('dashboard.quickNotifs.confirmCancel'), style: 'cancel' },
+          {
+            text: t('dashboard.quickNotifs.confirmSend'),
+            style: 'default',
+            onPress: async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              const ok = await dispatchNotification(notifId, context, notifPrefs);
+              if (ok) {
+                showToast(t('dashboard.quickNotifs.sent'));
+              } else {
+                showToast(t('dashboard.quickNotifs.sendError'), 'error');
+              }
+            },
+          },
+        ]
+      );
     },
-    [activeProfile, notifPrefs]
+    [activeProfile, notifPrefs, showToast, t]
   );
 
   const handleLongPress = useCallback((label: string) => {
