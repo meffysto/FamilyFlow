@@ -362,11 +362,11 @@ Plans:
 **Goal:** Brancher l'Auberge dans le système de bâtiments via un flag `producesResource` (rétrocompat), ajouter le bâtiment `auberge` au BUILDING_CATALOG (gated par `social-1`), créer la branche tech `social-1/2/3`, et faire en sorte que `BuildingDetailSheet` gère gracieusement un bâtiment non-productif. Tests de non-régression sur les 4 bâtiments existants.
 **Requirements**: TBD
 **Depends on:** Phase 43
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 - [x] 44-01-PLAN.md — Refacto producesResource (flag BuildingDefinition + court-circuit building-engine + tests)
-- [ ] 44-02-PLAN.md — Bâtiment auberge dans BUILDING_CATALOG + i18n FR
+- [x] 44-02-PLAN.md — Bâtiment auberge dans BUILDING_CATALOG + i18n FR
 - [x] 44-03-PLAN.md — Branche tech social (3 nœuds + bonus TechBonuses + i18n + tests)
 - [ ] 44-04-PLAN.md — BuildingDetailSheet — affichage gracieux non-productif
 
