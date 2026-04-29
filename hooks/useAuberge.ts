@@ -310,6 +310,56 @@ export function useAuberge() {
     return { spawned, expired };
   }, [vault, profiles, applyAubergeToFarmData, refreshFarm]);
 
+  // ─── forceSpawn — debug helper (bypass shouldSpawn / cooldown) ──────────
+  // Utilisé par le bouton __DEV__ "Forcer un visiteur" de l'AubergeSheet.
+  // Ne consulte PAS shouldSpawnVisitor : appelle engineSpawn directement
+  // pour permettre le test E2E sans attendre les conditions naturelles.
+  // Note : engineSpawn vérifie lui-même shouldSpawnVisitor en interne (cap stade,
+  // cooldown 6h). Pour un vrai bypass debug, on contourne via construction manuelle
+  // du nouvel état si engineSpawn refuse à cause du cooldown — mais on respecte
+  // le cap stade (graine = 0 visiteur, on retourne null).
+  const forceSpawn = useCallback(async (profileId: string): Promise<ActiveVisitor | null> => {
+    if (!vault) return null;
+
+    const file = farmFile(profileId);
+    const content = await vault.readFile(file).catch(() => '');
+    const farmData = parseFarmProfile(content);
+
+    const currentState = parseAuberge({
+      visitors: farmData.auberge_visitors,
+      reputations: farmData.auberge_reputations,
+      lastSpawn: farmData.auberge_last_spawn,
+      totalDeliveries: farmData.auberge_total_deliveries,
+    });
+
+    const profile = profiles.find(p => p.id === profileId);
+    const level = profile?.level ?? 1;
+    const treeStage = getTreeStageInfo(level).stage;
+
+    const now = new Date();
+    const totalRep = engineGetTotalReputation(currentState);
+
+    // Bypass cooldown global : on temporairement vide lastSpawnAt pour forcer
+    // shouldSpawnVisitor à passer (le cap stade reste vérifié — graine = 0 = null)
+    const stateForBypass: AubergeState = {
+      ...currentState,
+      lastSpawnAt: undefined,
+    };
+
+    const result = engineSpawn(stateForBypass, treeStage, now, totalRep);
+    if (!result) return null;
+
+    // Reconstruire le nouvel état en réinjectant les reputations actualisées
+    // et le visiteur, mais en se basant sur l'état d'origine pour ne pas perdre
+    // les autres données (tout est déjà géré par engineSpawn qui spread state).
+    applyAubergeToFarmData(farmData, result.state, now);
+    const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+    await vault.writeFile(file, serializeFarmProfile(profileName, farmData));
+    await refreshFarm(profileId);
+
+    return result.visitor;
+  }, [vault, profiles, applyAubergeToFarmData, refreshFarm]);
+
   return {
     visitors,
     activeVisitors,
@@ -319,5 +369,6 @@ export function useAuberge() {
     deliverVisitor,
     dismissVisitor,
     tickAuberge,
+    forceSpawn,
   };
 }
