@@ -16,6 +16,7 @@ import Animated, {
   withSequence,
   withTiming,
   Easing,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -690,6 +691,10 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   // Référence à la dernière zone visitée (pour éviter 2 fois de suite la même)
   const lastZoneIdRef = React.useRef<string | null>(null);
 
+  // Ref qui reflète l'état "en train de parler" — utilisée par la boucle de marche
+  // pour figer le compagnon pendant que la bulle est lisible
+  const speakingRef = React.useRef(false);
+
   // Mouvement organique — choisit des destinations aléatoires dans les zones marchables
   // Stoppé quand paused (app en background) — reprend au retour
   useEffect(() => {
@@ -753,6 +758,13 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     const walkNext = () => {
       if (!mounted) return;
 
+      // Pause la balade tant que le compagnon parle — recheck dans 500ms
+      if (speakingRef.current) {
+        const t = setTimeout(walkNext, 500);
+        timeouts.push(t);
+        return;
+      }
+
       const zone = pickZone();
       lastZoneIdRef.current = zone.id;
 
@@ -801,9 +813,15 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     };
   }, [containerWidth, containerHeight, activeZones, paused]);
 
-  // Animer la bulle de message ou harvest hint
+  // Animer la bulle de message ou harvest hint + figer le compagnon pendant qu'il parle
   useEffect(() => {
-    if (message || harvestHint) {
+    const speaking = !!(message || harvestHint);
+    speakingRef.current = speaking;
+    if (speaking) {
+      // Fige immédiatement la position courante pour que la bulle reste lisible
+      cancelAnimation(posX);
+      cancelAnimation(posY);
+      setIsWalking(false);
       bubbleAnim.value = withTiming(1, { duration: 200 });
     } else {
       bubbleAnim.value = withTiming(0, { duration: 500 });
@@ -868,12 +886,29 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     ],
   }));
 
-  const bubbleAnimStyle = useAnimatedStyle(() => ({
-    opacity: bubbleAnim.value,
-    transform: [
-      { translateY: (1 - bubbleAnim.value) * 4 },
-    ],
-  }));
+  // Style de la bulle : opacité + translateY d'entrée + clamp horizontal aux bords du viewport.
+  // Le clamp lit posX.value en direct pour que la bulle reste lisible peu importe où
+  // se trouve le compagnon dans le diorama (et compense le translateX du slot parent).
+  const BUBBLE_W = 200;
+  const BUBBLE_MARGIN = 8;
+  const bubbleAnimStyle = useAnimatedStyle(() => {
+    'worklet';
+    const screenLeftAt0 = px - BUBBLE_W / 2 + posX.value;
+    const screenRightAt0 = screenLeftAt0 + BUBBLE_W;
+    let clampTx = 0;
+    if (screenLeftAt0 < BUBBLE_MARGIN) {
+      clampTx = BUBBLE_MARGIN - screenLeftAt0;
+    } else if (screenRightAt0 > containerWidth - BUBBLE_MARGIN) {
+      clampTx = (containerWidth - BUBBLE_MARGIN) - screenRightAt0;
+    }
+    return {
+      opacity: bubbleAnim.value,
+      transform: [
+        { translateX: -BUBBLE_W / 2 + clampTx },
+        { translateY: (1 - bubbleAnim.value) * 4 },
+      ],
+    };
+  });
 
   // Position pixel dans le container (point de repos)
   const px = HOME_FX * containerWidth;
@@ -924,37 +959,25 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       ]}
       pointerEvents="box-none"
     >
-      {/* Bulle de message (IA, harvest hint, ou contextuel) */}
-      {showBubble && (() => {
-        const BUBBLE_W = 200;
-        const bubbleLeft = px - BUBBLE_W / 2;
-        const bubbleRight = bubbleLeft + BUBBLE_W;
-        const margin = 8;
-        // Recaler si la bulle déborde à droite ou à gauche
-        let offsetX = -BUBBLE_W / 2;
-        if (bubbleRight > containerWidth - margin) {
-          offsetX = -(BUBBLE_W - (containerWidth - px - margin));
-        } else if (bubbleLeft < margin) {
-          offsetX = -(px - margin);
-        }
-        return (
-          <Animated.View
-            style={[
-              styles.messageBubble,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                transform: [{ translateX: offsetX }],
-              },
-              bubbleAnimStyle,
-            ]}
-          >
-            <Text style={[styles.messageText, { color: colors.text }]} numberOfLines={5}>
-              {displayText}
-            </Text>
-          </Animated.View>
-        );
-      })()}
+      {/* Bulle de message (IA, harvest hint, ou contextuel)
+          Le clamp horizontal et la translation sont gérés dans bubbleAnimStyle (worklet),
+          qui lit posX.value pour rester dans le viewport quoi qu'il arrive. */}
+      {showBubble && (
+        <Animated.View
+          style={[
+            styles.messageBubble,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
+            bubbleAnimStyle,
+          ]}
+        >
+          <Text style={[styles.messageText, { color: colors.text }]} numberOfLines={5}>
+            {displayText}
+          </Text>
+        </Animated.View>
+      )}
 
       {/* Emoji d'humeur — seulement à l'arrêt, pas en marchant */}
       {!showBubble && !isWalking && (

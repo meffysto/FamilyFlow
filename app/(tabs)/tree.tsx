@@ -2449,7 +2449,7 @@ export default function TreeScreen() {
 
             {/* Couche 3.5 : Compagnon mascotte — se balade sur toute la scène */}
             {companion && (
-              <View style={{ ...StyleSheet.absoluteFillObject, zIndex: companionMessage ? 20 : 3 }} pointerEvents="box-none">
+              <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 20 }} pointerEvents="box-none">
                 <CompanionSlot
                   species={companion.activeSpecies}
                   stage={companionStage ?? 'bebe'}
