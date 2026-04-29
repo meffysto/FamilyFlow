@@ -28,7 +28,7 @@ import {
   serializeInventory,
   parseInventory,
   getPendingResources,
-  MAX_PENDING,
+  getMaxPending,
 } from '../lib/mascot/building-engine';
 import {
   CRAFT_RECIPES,
@@ -813,7 +813,7 @@ export function useFarm(
       if (profile.capacityBoostUntil && new Date(profile.capacityBoostUntil) > new Date()) {
         effectiveCapacityMultiplier *= 2;
       }
-      const effectiveMaxPending = Math.floor(MAX_PENDING * effectiveCapacityMultiplier);
+      const effectiveMaxPending = Math.floor(getMaxPending(b.level) * effectiveCapacityMultiplier);
       const pending = getPendingResources(b, now, profileTech);
       if (pending >= effectiveMaxPending) {
         const def = BUILDING_CATALOG.find(d => d.id === b.buildingId);

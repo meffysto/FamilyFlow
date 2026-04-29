@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Mockup v4 — Building Modal · descriptive</title>
+<style>
+  :root {
+    --bg: #FFF8EC;
+    --surface: #FFFFFF;
+    --surface-2: #FAF3E2;
+    --surface-3: #F1E6CA;
+
+    --accent: #8B5A2B;
+    --accent-soft: #EFE0CC;
+    --accent-line: #E5D2B5;
+
+    --primary: #4F8A3A;
+    --primary-strong: #3A6B2C;
+    --primary-soft: #E5F0DD;
+    --warning: #C57A1F;
+    --warning-soft: #FCEBD3;
+
+    --ink: #2C1F10;
+    --ink-2: #5C4A33;
+    --ink-3: #8A7656;
+    --ink-inverse: #FFFFFF;
+
+    --gold: #E4B23A;
+    --gold-strong: #8C6B1A;
+    --gold-soft: #FCF1CF;
+
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-xl: 28px;
+
+    --sh-1: 0 1px 2px rgba(44, 31, 16, 0.06), 0 2px 6px rgba(44, 31, 16, 0.04);
+    --sh-2: 0 2px 4px rgba(44, 31, 16, 0.08), 0 6px 16px rgba(44, 31, 16, 0.06);
+    --sh-3: 0 6px 12px rgba(44, 31, 16, 0.12), 0 12px 32px rgba(44, 31, 16, 0.10);
+
+    --f-display: -apple-system, "SF Pro Display", "Inter", system-ui, sans-serif;
+    --f-text: -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #1c1611;
+    font-family: var(--f-text);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 56px;
+    padding: 48px 24px;
+  }
+
+  /* Device frame */
+  .device {
+    width: 390px;
+    background: #000;
+    border-radius: 52px;
+    padding: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  }
+  .device-screen {
+    height: 800px;
+    border-radius: 40px;
+    overflow: hidden;
+    background:
+      radial-gradient(140% 90% at 50% -10%, rgba(255,255,255,.18), transparent 60%),
+      linear-gradient(180deg, #6B9E4C 0%, #5a8c40 65%, #4a7a35 100%);
+    position: relative;
+  }
+  .device-label {
+    color: #fff;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    opacity: .7;
+    font-weight: 600;
+  }
+
+  /* Sheet */
+  .sheet {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 90%;
+    background: var(--bg);
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    box-shadow: 0 -20px 50px rgba(0,0,0,.35);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .sheet::before {
+    content: "";
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-soft), var(--accent), var(--accent-soft));
+  }
+  .grabber {
+    width: 36px; height: 5px;
+    background: var(--accent-line);
+    border-radius: 999px;
+    margin: 10px auto 0;
+    flex-shrink: 0;
+  }
+
+  /* Header */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 14px 20px 0;
+  }
+  .breadcrumb {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .close-x {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--surface-2);
+    color: var(--ink-2);
+    font-size: 14px;
+    cursor: pointer;
+    display: grid; place-items: center;
+  }
+
+  /* Title block */
+  .title-block {
+    padding: 8px 20px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .sprite-wrap {
+    position: relative;
+    width: 88px; height: 88px;
+    border-radius: var(--r-lg);
+    background: linear-gradient(180deg, var(--surface-2), var(--surface-3));
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    box-shadow: var(--sh-1), inset 0 -2px 0 rgba(0,0,0,.06);
+  }
+  .sprite-wrap .sprite {
+    font-size: 50px;
+    filter: drop-shadow(0 2px 1px rgba(0,0,0,.15));
+  }
+  .sprite-wrap .level-chip {
+    position: absolute;
+    bottom: -6px; right: -6px;
+    background: var(--gold);
+    color: var(--gold-strong);
+    border: 2px solid var(--bg);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: var(--sh-1);
+  }
+  .title-text h1 {
+    font-family: var(--f-display);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .title-text .sub {
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-top: 4px;
+  }
+
+  /* Body */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Hero card production */
+  .hero-card {
+    background: var(--surface);
+    border-radius: var(--r-lg);
+    padding: 18px;
+    box-shadow: var(--sh-1);
+    border: 1px solid var(--accent-line);
+  }
+  .hero-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .hero-resource {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hero-resource .icon-wrap {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--gold-soft);
+    display: grid; place-items: center;
+    font-size: 17px;
+  }
+  .hero-resource .name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .hero-stock {
+    display: flex; align-items: baseline; gap: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-stock .now {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .hero-stock .now.full { color: var(--warning); }
+  .hero-stock .max {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-3);
+  }
+
+  .progress-track {
+    height: 8px;
+    background: var(--surface-3);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), #F2C857);
+    border-radius: 999px;
+    position: relative;
+  }
+  .progress-fill::after {
+    content: "";
+    position: absolute; inset: 1px 1px auto 1px;
+    height: 2px;
+    background: rgba(255,255,255,.5);
+    border-radius: 999px;
+  }
+  .progress-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px;
+  }
+  .progress-meta .left {
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  .progress-meta .right {
+    color: var(--ink-2);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .progress-meta .right b { color: var(--ink); font-weight: 800; }
+
+  /* CTA */
+  .cta {
+    width: 100%;
+    border: 0;
+    border-radius: var(--r-md);
+    padding: 16px 20px;
+    font-family: var(--f-text);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform .1s;
+  }
+  .cta:active { transform: translateY(1px); }
+  .cta-primary {
+    background: var(--primary);
+    color: var(--ink-inverse);
+    box-shadow: 0 4px 0 var(--primary-strong), var(--sh-1);
+  }
+  .cta-secondary {
+    background: var(--surface);
+    color: var(--ink);
+    border: 1.5px solid var(--accent-line);
+    box-shadow: var(--sh-1);
+  }
+  .cta-warning {
+    background: var(--warning);
+    color: var(--ink-inverse);
+    box-shadow: 0 4px 0 #8B5614, var(--sh-1);
+  }
+  .cta-disabled {
+    background: var(--surface-3);
+    color: var(--ink-3);
+    cursor: not-allowed;
+    box-shadow: var(--sh-1);
+  }
+
+  /* ════════ NOUVEAU — upgrade lignes descriptives ════════ */
+  .upgrade-section {
+    background: var(--surface);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-1);
+    border: 1px solid var(--accent-line);
+    overflow: hidden;
+  }
+  .upgrade-header {
+    padding: 14px 18px;
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    border-bottom: 1px solid var(--accent-line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .upgrade-header .label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .upgrade-header .target {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .upgrade-lines {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .upgrade-line {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .upgrade-line .icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    display: grid; place-items: center;
+    font-size: 18px;
+  }
+  .upgrade-line .body-text {
+    display: flex; flex-direction: column; gap: 3px;
+    min-width: 0;
+  }
+  .upgrade-line .description {
+    font-size: 13px;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  .upgrade-line .transition {
+    display: flex; align-items: baseline; gap: 8px;
+    font-variant-numeric: tabular-nums;
+    flex-wrap: wrap;
+  }
+  .upgrade-line .from {
+    font-size: 15px;
+    color: var(--ink-3);
+    font-weight: 600;
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: var(--ink-3);
+  }
+  .upgrade-line .arrow {
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 14px;
+  }
+  .upgrade-line .to {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .upgrade-line .delta {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .upgrade-footer {
+    padding: 14px 18px 18px;
+    border-top: 1px solid var(--accent-line);
+    background: var(--surface-2);
+  }
+  .upgrade-cost {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .upgrade-cost .lbl {
+    font-size: 13px; color: var(--ink-3); font-weight: 600;
+  }
+  .upgrade-cost .val {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 18px; font-weight: 800; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .balance-line {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .balance-line .amount {
+    font-weight: 700;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Banner */
+  .banner {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: var(--warning-soft);
+    border: 1px solid #E8C28A;
+    border-radius: var(--r-md);
+    color: #7A4A14;
+  }
+  .banner .icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--warning);
+    color: white;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+  .banner .text { flex: 1; }
+  .banner .text .t1 { font-size: 13px; font-weight: 800; color: #7A4A14; }
+  .banner .text .t2 { font-size: 11px; color: #8A5A24; margin-top: 2px; }
+
+  /* Max card */
+  .max-card {
+    background: var(--gold-soft);
+    border: 1.5px solid var(--gold);
+    border-radius: var(--r-lg);
+    padding: 18px;
+    text-align: center;
+    box-shadow: var(--sh-1);
+  }
+  .max-card .icon { font-size: 24px; margin-bottom: 6px; }
+  .max-card .t1 {
+    font-size: 14px; font-weight: 800; color: var(--gold-strong);
+  }
+  .max-card .t2 {
+    font-size: 11px; color: #A88420; margin-top: 2px; font-weight: 600;
+  }
+
+  /* Légende */
+  .legend {
+    max-width: 380px;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .legend h2 {
+    font-family: var(--f-display);
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: #fff;
+    font-weight: 700;
+  }
+  .legend .key {
+    background: rgba(255,255,255,.08);
+    padding: 14px;
+    border-radius: 12px;
+    border-left: 3px solid #ffd23f;
+    margin-bottom: 16px;
+  }
+  .legend .key .t1 {
+    font-size: 12px; font-weight: 700; color: #ffd23f;
+    text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: 6px;
+  }
+  .legend ul { list-style: none; padding: 0; }
+  .legend li {
+    margin: 6px 0;
+    padding-left: 14px;
+    position: relative;
+    color: rgba(255,255,255,.85);
+  }
+  .legend li::before {
+    content: "·";
+    position: absolute; left: 4px;
+    color: #ffd23f;
+    font-weight: 800;
+  }
+  .legend code {
+    background: rgba(255,255,255,.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ╔══ V4a — État nominal Niv. 3 ══╗ -->
+<div>
+  <div class="device">
+    <div class="device-screen">
+      <div class="sheet">
+        <div class="grabber"></div>
+
+        <div class="header">
+          <div class="breadcrumb">Bâtiment de la ferme</div>
+          <button class="close-x">✕</button>
+        </div>
+
+        <div class="title-block">
+          <div class="sprite-wrap">
+            <div class="sprite">🐝</div>
+            <div class="level-chip">NIV. 3</div>
+          </div>
+          <div class="title-text">
+            <h1>Ruche</h1>
+            <div class="sub">Production de miel</div>
+          </div>
+        </div>
+
+        <div class="body">
+
+          <div class="hero-card">
+            <div class="hero-row">
+              <div class="hero-resource">
+                <div class="icon-wrap">🍯</div>
+                <div class="name">Miel en attente</div>
+              </div>
+              <div class="hero-stock">
+                <span class="now">2</span><span class="max">/ 5</span>
+              </div>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width: 64%;"></div>
+            </div>
+            <div class="progress-meta">
+              <span class="left">Prochain miel dans</span>
+              <span class="right"><b>3h12</b></span>
+            </div>
+          </div>
+
+          <button class="cta cta-primary">
+            <span>🍯</span>
+            <span>Collecter 2 miels</span>
+          </button>
+
+          <!-- Upgrade — sans label de stat, descriptif -->
+          <div class="upgrade-section">
+            <div class="upgrade-header">
+              <div class="label">Niveau suivant</div>
+              <div class="target">Niv. 4</div>
+            </div>
+
+            <div class="upgrade-lines">
+              <div class="upgrade-line">
+                <div class="icon">⏱</div>
+                <div class="body-text">
+                  <div class="description">1 miel toutes les</div>
+                  <div class="transition">
+                    <span class="from">7h37</span>
+                    <span class="arrow">→</span>
+                    <span class="to">7h00</span>
+                    <span class="delta">−8 %</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="upgrade-line">
+                <div class="icon">📦</div>
+                <div class="body-text">
+                  <div class="description">Stockage maximum</div>
+                  <div class="transition">
+                    <span class="from">5</span>
+                    <span class="arrow">→</span>
+                    <span class="to">6 miels</span>
+                    <span class="delta">+1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="upgrade-footer">
+              <div class="upgrade-cost">
+                <div class="lbl">Coût d'amélioration</div>
+                <div class="val">5 120 <span>🍃</span></div>
+              </div>
+              <button class="cta cta-secondary" style="padding: 12px;">
+                Améliorer la ruche
+              </button>
+              <div class="balance-line">
+                <span>Solde disponible</span>
+                <span class="amount">12 480 🍃</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="device-label">v4 · niv. 3 · descriptif</div>
+</div>
+
+<!-- ╔══ V4b — Cap atteint + endommagé ══╗ -->
+<div>
+  <div class="device">
+    <div class="device-screen">
+      <div class="sheet">
+        <div class="grabber"></div>
+
+        <div class="header">
+          <div class="breadcrumb">Bâtiment de la ferme</div>
+          <button class="close-x">✕</button>
+        </div>
+
+        <div class="title-block">
+          <div class="sprite-wrap">
+            <div class="sprite">🐝</div>
+            <div class="level-chip">NIV. 7</div>
+          </div>
+          <div class="title-text">
+            <h1>Ruche</h1>
+            <div class="sub">Production de miel</div>
+          </div>
+        </div>
+
+        <div class="body">
+
+          <div class="banner">
+            <div class="icon">🔨</div>
+            <div class="text">
+              <div class="t1">Toit endommagé</div>
+              <div class="t2">La production est divisée par 2 jusqu'à réparation</div>
+            </div>
+          </div>
+
+          <button class="cta cta-warning">
+            <span>🔨</span>
+            <span>Réparer le toit · 25 🍃</span>
+          </button>
+
+          <div class="hero-card">
+            <div class="hero-row">
+              <div class="hero-resource">
+                <div class="icon-wrap">🍯</div>
+                <div class="name">Miel en attente</div>
+              </div>
+              <div class="hero-stock">
+                <span class="now full">9</span><span class="max">/ 9</span>
+              </div>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width: 100%;"></div>
+            </div>
+            <div class="progress-meta">
+              <span class="left">⚠ Stockage plein</span>
+              <span class="right"><b>Production en pause</b></span>
+            </div>
+          </div>
+
+          <button class="cta cta-primary">
+            <span>🍯</span>
+            <span>Collecter 9 miels</span>
+          </button>
+
+          <div class="upgrade-section">
+            <div class="upgrade-header">
+              <div class="label">Niveau suivant</div>
+              <div class="target">Niv. 8</div>
+            </div>
+            <div class="upgrade-lines">
+              <div class="upgrade-line">
+                <div class="icon">⏱</div>
+                <div class="body-text">
+                  <div class="description">1 miel toutes les</div>
+                  <div class="transition">
+                    <span class="from">5h28</span>
+                    <span class="arrow">→</span>
+                    <span class="to">5h01</span>
+                    <span class="delta">−8 %</span>
+                  </div>
+                </div>
+              </div>
+              <div class="upgrade-line">
+                <div class="icon">📦</div>
+                <div class="body-text">
+                  <div class="description">Stockage maximum</div>
+                  <div class="transition">
+                    <span class="from">9</span>
+                    <span class="arrow">→</span>
+                    <span class="to">10 miels</span>
+                    <span class="delta">+1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="upgrade-footer">
+              <div class="upgrade-cost">
+                <div class="lbl">Coût d'amélioration</div>
+                <div class="val">33 554 <span>🍃</span></div>
+              </div>
+              <button class="cta cta-disabled" style="padding: 12px;">
+                Il manque 21 074 🍃
+              </button>
+              <div class="balance-line">
+                <span>Solde disponible</span>
+                <span class="amount">12 480 🍃</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="device-label">v4 · cap plein · endommagé</div>
+</div>
+
+<!-- ╔══ V4c — Niveau max ══╗ -->
+<div>
+  <div class="device">
+    <div class="device-screen">
+      <div class="sheet">
+        <div class="grabber"></div>
+
+        <div class="header">
+          <div class="breadcrumb">Bâtiment de la ferme</div>
+          <button class="close-x">✕</button>
+        </div>
+
+        <div class="title-block">
+          <div class="sprite-wrap">
+            <div class="sprite">🐝</div>
+            <div class="level-chip" style="background: linear-gradient(135deg, #FFD700, #C99A2B); color: #5C3D00;">NIV. 10</div>
+          </div>
+          <div class="title-text">
+            <h1>Ruche</h1>
+            <div class="sub">Production de miel · ✨ niveau max</div>
+          </div>
+        </div>
+
+        <div class="body">
+
+          <div class="hero-card">
+            <div class="hero-row">
+              <div class="hero-resource">
+                <div class="icon-wrap">🍯</div>
+                <div class="name">Miel en attente</div>
+              </div>
+              <div class="hero-stock">
+                <span class="now">7</span><span class="max">/ 12</span>
+              </div>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width: 58%;"></div>
+            </div>
+            <div class="progress-meta">
+              <span class="left">Prochain miel dans</span>
+              <span class="right"><b>1h47</b></span>
+            </div>
+          </div>
+
+          <button class="cta cta-primary">
+            <span>🍯</span>
+            <span>Collecter 7 miels</span>
+          </button>
+
+          <div class="max-card">
+            <div class="icon">✨</div>
+            <div class="t1">Niveau maximum atteint</div>
+            <div class="t2">Cette ruche est à son apogée. Continue à investir dans tes autres bâtiments.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="device-label">v4 · niveau max</div>
+</div>
+
+<!-- Légende -->
+<div class="legend">
+  <h2>Refonte v4 — descriptive</h2>
+
+  <div class="key">
+    <div class="t1">Le changement</div>
+    Plus de label abstrait ("Cycle", "Cadence"…). À la place, chaque ligne raconte ce qui change : <i>"1 miel toutes les 7h37 → 7h00"</i>. Le label devient une phrase descriptive, le delta reste un badge isolé.
+  </div>
+
+  <h2 style="font-size: 14px; margin-top: 24px;">Pourquoi ça marche mieux</h2>
+  <ul>
+    <li>L'icône (⏱ / 📦) suffit comme repère visuel — pas besoin de mot pour la nommer</li>
+    <li>La phrase descriptive (<code>"1 miel toutes les"</code>) <b>contextualise</b> la valeur — l'utilisateur sait ce qu'il regarde sans se demander</li>
+    <li>Les unités sont explicites (<code>7h37</code>, <code>5 miels</code>) — pas de chiffre nu</li>
+    <li>Le badge delta isole l'amplitude du gain (<code>−8 %</code>, <code>+1</code>) sans encombrer la phrase</li>
+    <li>Layout en lignes (icône · description · transition) → relisible verticalement</li>
+  </ul>
+
+  <h2 style="font-size: 14px; margin-top: 24px;">Cohérence avec la barre de progression</h2>
+  <ul>
+    <li>La hero card dit <code>"Prochain miel dans 3h12"</code></li>
+    <li>La carte upgrade dit <code>"1 miel toutes les 7h37 → 7h00"</code></li>
+    <li>Même vocabulaire ("miel", durée formatée), pas de divergence</li>
+    <li>Quand toit endommagé : <code>"Production en pause"</code> au lieu d'un timer faux</li>
+  </ul>
+</div>
+
+</body>
+</html>

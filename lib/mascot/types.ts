@@ -407,33 +407,54 @@ export interface FarmInventory {
 export interface PlacedBuilding {
   buildingId: string;     // ref dans BUILDING_CATALOG
   cellId: string;         // id de la cellule (b0, b1, b2)
-  level: number;          // niveau actuel (1-3)
+  level: number;          // niveau actuel (1..MAX_BUILDING_LEVEL)
   lastCollectAt: string;  // ISO string de la derniere collecte
 }
 
-/** Palier d'amelioration d'un batiment */
+/** Palier d'amelioration d'un batiment (genere par formule) */
 export interface BuildingTier {
   level: number;
   productionRateHours: number;  // une ressource produite toutes les N heures
-  upgradeCoins: number;         // cout en feuilles pour ameliorer vers ce niveau
-  spriteSuffix: string;         // suffixe sprite (ex: "_lv1", "_lv2")
+  upgradeCoins: number;         // cout en feuilles pour ameliorer VERS ce niveau (0 pour L1)
+  spriteSuffix: string;         // suffixe sprite (reutilise _lv3 a partir de L4)
 }
 
 export interface BuildingDefinition {
   id: string;
   labelKey: string;
   emoji: string;
-  cost: number;            // cout en feuilles (niveau 1)
-  dailyIncome: number;     // feuilles/jour (pour compatibilite collectPassiveIncome)
+  cost: number;            // cout en feuilles (construction L1)
+  dailyIncome: number;     // feuilles/jour (compat collectPassiveIncome)
   minTreeStage: TreeStage;
   resourceType: ResourceType;
   tiers: BuildingTier[];
   techRequired?: string;   // id du noeud tech requis pour debloquer (optionnel)
 }
 
-/** Batiments : revenu passif en ressources (oeuf, lait, farine).
- * 3 niveaux d'amelioration par batiment.
+// ─── Constantes formule progression bâtiments (Ogame-like) ──────
+/** Plafond de niveau d'un bâtiment */
+export const MAX_BUILDING_LEVEL = 10;
+/** Multiplicateur du coût d'upgrade par niveau (1.6 = type Ogame mines) */
+const COST_RATIO = 1.6;
+/** Multiplicateur du cycle par niveau (0.92 = -8% par niveau) */
+const CYCLE_RATIO = 0.92;
+
+/**
+ * Génère les paliers d'un bâtiment à partir des bases.
+ * - Niv 1 : cycle = baseHours, coût = 0 (déjà construit)
+ * - Niv N : cycle = baseHours × 0.92^(N-1), coût = baseUpgradeCost × 1.6^(N-2)
  */
+function generateTiers(baseHours: number, baseUpgradeCost: number): BuildingTier[] {
+  return Array.from({ length: MAX_BUILDING_LEVEL }, (_, i) => {
+    const level = i + 1;
+    return {
+      level,
+      productionRateHours: baseHours * Math.pow(CYCLE_RATIO, level - 1),
+      upgradeCoins: level === 1 ? 0 : Math.round(baseUpgradeCost * Math.pow(COST_RATIO, level - 2)),
+      spriteSuffix: level === 1 ? '' : `_lv${Math.min(level, 3)}`,
+    };
+  });
+}
 // ─────────────────────────────────────────────
 // Craft — Types & catalogue recettes
 // ─────────────────────────────────────────────
@@ -499,11 +520,7 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     dailyIncome: 5,
     minTreeStage: 'pousse',
     resourceType: 'oeuf',
-    tiers: [
-      { level: 1, productionRateHours: 8,  upgradeCoins: 0,   spriteSuffix: '' },
-      { level: 2, productionRateHours: 6,  upgradeCoins: 500, spriteSuffix: '_lv2' },
-      { level: 3, productionRateHours: 4,  upgradeCoins: 1200, spriteSuffix: '_lv3' },
-    ],
+    tiers: generateTiers(8, 500),
   },
   {
     id: 'grange',
@@ -513,11 +530,7 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     dailyIncome: 8,
     minTreeStage: 'arbuste',
     resourceType: 'lait',
-    tiers: [
-      { level: 1, productionRateHours: 10, upgradeCoins: 0,    spriteSuffix: '' },
-      { level: 2, productionRateHours: 7,  upgradeCoins: 800,  spriteSuffix: '_lv2' },
-      { level: 3, productionRateHours: 5,  upgradeCoins: 2000, spriteSuffix: '_lv3' },
-    ],
+    tiers: generateTiers(10, 800),
   },
   {
     id: 'moulin',
@@ -527,11 +540,7 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     dailyIncome: 12,
     minTreeStage: 'arbre',
     resourceType: 'farine',
-    tiers: [
-      { level: 1, productionRateHours: 12, upgradeCoins: 0,    spriteSuffix: '' },
-      { level: 2, productionRateHours: 8,  upgradeCoins: 1500, spriteSuffix: '_lv2' },
-      { level: 3, productionRateHours: 5,  upgradeCoins: 3000, spriteSuffix: '_lv3' },
-    ],
+    tiers: generateTiers(12, 1500),
   },
   {
     id: 'ruche',
@@ -542,10 +551,6 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     minTreeStage: 'pousse',
     resourceType: 'miel',
     techRequired: 'elevage-3',
-    tiers: [
-      { level: 1, productionRateHours: 12, upgradeCoins: 0,    spriteSuffix: '' },
-      { level: 2, productionRateHours: 8,  upgradeCoins: 2000, spriteSuffix: '_lv2' },
-      { level: 3, productionRateHours: 5,  upgradeCoins: 4000, spriteSuffix: '_lv3' },
-    ],
+    tiers: generateTiers(12, 2000),
   },
 ];

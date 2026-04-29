@@ -1646,19 +1646,17 @@ export default function TreeScreen() {
   const handleUpgradeBuilding = useCallback(async (cellId: string) => {
     if (!profile?.id) return;
     try {
+      const previousLevel = selectedBuilding?.level ?? 1;
       await upgradeBuildingAction(profile.id, cellId);
-      const updatedProfile = profiles?.find((p: Profile) => p.id === profile.id);
-      const updatedBuilding = (updatedProfile?.farmBuildings ?? []).find(
-        (b: PlacedBuilding) => b.cellId === cellId,
-      ) ?? null;
-      if (updatedBuilding) {
-        setSelectedBuilding(updatedBuilding);
-        showToast(`⬆️ Ameliore au Niv ${updatedBuilding.level} !`);
+      const newLevel = previousLevel + 1;
+      if (selectedBuilding) {
+        setSelectedBuilding({ ...selectedBuilding, level: newLevel });
       }
+      showToast(`⬆️ Amélioré au Niv ${newLevel} !`);
     } catch (e: any) {
       showToast(`❌ ${e.message}`);
     }
-  }, [profile?.id, upgradeBuildingAction, profiles, showToast]);
+  }, [profile?.id, upgradeBuildingAction, selectedBuilding, showToast]);
 
   /** Complétion d'un chapitre saga depuis le diorama */
   const handleSagaChapterComplete = useCallback(async (

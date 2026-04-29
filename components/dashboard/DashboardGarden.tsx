@@ -31,7 +31,7 @@ import { DashboardCard } from '../DashboardCard';
 import { parseCrops, getMainPlotIndex } from '../../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
-import { getPendingResources, getMinutesUntilNext, MAX_PENDING } from '../../lib/mascot/building-engine';
+import { getPendingResources, getMinutesUntilNext, getMaxPending } from '../../lib/mascot/building-engine';
 import { getActiveWearEffects } from '../../lib/mascot/wear-engine';
 import { getDailyAdventure } from '../../lib/mascot/adventures';
 import { formatDateStr } from '../../lib/mascot/utils';
@@ -524,7 +524,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
                     if (!def) return null;
                     const now = new Date();
                     const pending = getPendingResources(b, now);
-                    const minutesLeft = pending < MAX_PENDING ? getMinutesUntilNext(b, now) : 0;
+                    const minutesLeft = pending < getMaxPending(b.level) ? getMinutesUntilNext(b, now) : 0;
                     const timeLeft = minutesLeft > 0
                       ? minutesLeft >= 60
                         ? `${Math.floor(minutesLeft / 60)}h${minutesLeft % 60 > 0 ? String(minutesLeft % 60).padStart(2, '0') : ''}`

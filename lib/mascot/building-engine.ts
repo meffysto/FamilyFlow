@@ -14,8 +14,16 @@ import {
 import { type TechBonuses } from './tech-engine';
 import { type WearEffects } from './wear-engine';
 
-/** Nombre maximum de ressources en attente par batiment */
+/** Nombre maximum de ressources en attente par batiment au niveau 1 (avant bonus tech) */
 export const MAX_PENDING = 3;
+
+/**
+ * Capacité de stockage scalée avec le niveau du bâtiment.
+ * L1 → 3, L2 → 4, ..., L10 → 12. Multipliée ensuite par buildingCapacityMultiplier (×2 elevage-2).
+ */
+export function getMaxPending(level: number): number {
+  return MAX_PENDING + Math.max(0, level - 1);
+}
 
 // ── Serialisation / Parsing ─────────────────────────────────────
 
@@ -145,7 +153,7 @@ export function getPendingResources(
   // Toit endommage = production 2x plus lente (intervalle double)
   const wearMultiplier = wearEffects?.damagedBuildings.includes(building.cellId) ? 2 : 1;
   const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0) * wearMultiplier;
-  const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
+  const effectiveMaxPending = Math.floor(getMaxPending(building.level) * (techBonuses?.buildingCapacityMultiplier ?? 1));
 
   const lastCollect = new Date(building.lastCollectAt);
   // questSpeedMultiplier > 1 simule une production plus rapide (ex: production_boost = 2x)
@@ -171,7 +179,7 @@ export function getMinutesUntilNext(
   // Toit endommage = production 2x plus lente (intervalle double)
   const wearMultiplier = wearEffects?.damagedBuildings.includes(building.cellId) ? 2 : 1;
   const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0) * wearMultiplier;
-  const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
+  const effectiveMaxPending = Math.floor(getMaxPending(building.level) * (techBonuses?.buildingCapacityMultiplier ?? 1));
 
   const lastCollect = new Date(building.lastCollectAt);
   const elapsedMs = (now.getTime() - lastCollect.getTime()) * questSpeedMultiplier;
@@ -207,7 +215,7 @@ export function collectBuilding(
   // Si le cap a ete atteint, repartir de maintenant pour eviter l'accumulation infinie
   const tier = def.tiers[building.level - 1];
   const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0);
-  const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
+  const effectiveMaxPending = Math.floor(getMaxPending(building.level) * (techBonuses?.buildingCapacityMultiplier ?? 1));
   const rateMs = effectiveRate * 3600 * 1000;
   const lastCollect = new Date(building.lastCollectAt);
   const elapsedMs = (now.getTime() - lastCollect.getTime()) * questSpeedMultiplier;
