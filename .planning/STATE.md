@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-29T12:17:27.366Z"
-last_activity: 2026-04-29 -- Phase 43 execution started
+last_updated: "2026-04-29T12:18:40.828Z"
+last_activity: 2026-04-29
 progress:
   total_phases: 15
   completed_phases: 9
   total_plans: 41
-  completed_plans: 39
+  completed_plans: 40
   percent: 100
 ---
 
@@ -25,14 +25,14 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 43 (Auberge — Modèle & moteur visiteurs) — EXECUTING
-Plan: 1 of 4
+Plan: 2 of 4
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-29 -- Phase 43 execution started
+Last activity: 2026-04-29
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
-Status: Executing Phase 43
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -204,6 +204,7 @@ Status: Executing Phase 43
 | Phase 42 P08 | ~8min | 3 tasks | 3 files |
 | Phase 42 P09 | 8min | 3 tasks | 4 files |
 | Phase 43 P02 | 2min | 2 tasks | 3 files |
+| Phase 43 P01 | 6min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -392,6 +393,8 @@ Recent decisions affecting current work:
 - [Phase 42]: Option A locked : patchMascotte signature Partial<MascotteSnapshot> inchangée — feedBuffActive acceptée automatiquement par ajout à l'interface
 - [Phase 42]: Wiring centralisé dans hooks/useVault.ts:feedCompanion — tree.tsx inchangé — élimine overlap Plan 42-08/42-09
 - [Phase 43]: Plan 43-02: 4 champs auberge_* persistés comme chaînes opaques (encodage CSV/JSON géré par auberge-engine.ts Plan 03), CACHE_VERSION inchangé (ferme exclue du cache)
+- [Phase 43]: [Phase 43-01]: VisitorRequestSource type alias dédié dans types.ts (pas inline) — DRY, importé par visitor-catalog.ts
+- [Phase 43]: [Phase 43-01]: Comtesse parfum_orchidee retenu (sellValue 1200, dominant catalogue) + second template fromage+corn pour variété
 
 ### Todos
 
@@ -403,5 +406,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T12:17:27.317Z
+Last session: 2026-04-29T12:18:40.825Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
