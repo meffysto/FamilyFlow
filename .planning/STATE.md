@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: verifying
-last_updated: "2026-04-29T21:43:25.679Z"
+last_updated: "2026-04-29T21:47:57.202Z"
 last_activity: 2026-04-29
 progress:
   total_phases: 19
   completed_phases: 13
   total_plans: 57
-  completed_plans: 56
+  completed_plans: 57
   percent: 100
 ---
 
@@ -221,6 +221,7 @@ Status: Phase complete — ready for verification
 | Phase 46 P02 | 10min | 2 tasks | 1 files |
 | Phase 47 P02 | ~4 min | 2 tasks | 7 files |
 | Phase 47 P03 | 10min | 3 tasks | 4 files |
+| Phase 47 P04 | 10min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -422,6 +423,7 @@ Recent decisions affecting current work:
 - [Phase 44]: Plan 44-02: Auberge ajoutée à BUILDING_CATALOG (producesResource: false, techRequired: social-1, cost 1800 🍃, minTreeStage arbuste) + 2 clés i18n FR
 - [Phase 45-auberge-ui-modal-dashboard-dev-spawn]: AubergeSheet : map FR locale pour les 6 PNJ (i18n catalogue différée), 2 hex timer constantées (TIMER_AMBER/TIMER_RED) alignées pattern wear
 - [Phase 47]: Plan 47-02 : registry visitor-sprites.ts avec clés alignées sur VISITOR_CATALOG (hugo_boulanger, meme_lucette, voyageuse, yann_apiculteur, marchand_ambulant, comtesse) ; sprites placeholders procéduraux PIL faute d'accès pixellab — itération visuelle deferred
+- [Phase 47]: Plan 47-04: trigger anim optimiste (avant await deliverVisitor) → l'effet joue avant que le moteur retire le visiteur
 
 ### Todos
 
@@ -433,5 +435,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T21:43:25.675Z
+Last session: 2026-04-29T21:47:57.198Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
