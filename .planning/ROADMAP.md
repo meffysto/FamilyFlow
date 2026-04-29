@@ -395,3 +395,16 @@ Plans:
 - [x] 46-02-PLAN.md — Wiring useVault.ts : tickAubergeAuto post-refresh + souscription subscribeTaskComplete
 - [x] 46-03-PLAN.md — Cancel notifs sur deliverVisitor / dismissVisitor dans hooks/useAuberge.ts
 - [x] 46-04-PLAN.md — Re-gate __DEV__ autour du bouton 'Forcer un visiteur' dans AubergeSheet.tsx
+
+### Phase 47: Auberge — Sprites pixel art + animations + microcopy
+
+**Goal:** Polish visuel et feel : remplacer les emojis fallback par des sprites pixel art (1 bâtiment 3 niveaux + 6 portraits PNJ), ajouter une animation Reanimated festive à la livraison, migrer les couleurs hex vers le thème, snapshotter `lootChance` au spawn, et polir la microcopy (empty state, bios PNJ, toast, notifs).
+**Requirements**: AUBERGE-SPRITES-BUILDING, AUBERGE-SPRITES-VISITORS, AUBERGE-WIRING-SPRITES, AUBERGE-THEME-COLORS, AUBERGE-LOOTCHANCE-SNAPSHOT, AUBERGE-DELIVERY-ANIMATION, AUBERGE-MICROCOPY-POLISH
+**Depends on:** Phase 46
+**Plans:** 4 plans
+
+Plans:
+- [ ] 47-01-PLAN.md — Sprites bâtiment auberge L1/L2/L3 (pixellab) + extension BUILDING_SPRITES
+- [ ] 47-02-PLAN.md — 6 portraits PNJ (pixellab) + nouveau registry lib/mascot/visitor-sprites.ts
+- [ ] 47-03-PLAN.md — Wiring sprites dans AubergeSheet/DashboardAuberge + theme colors + ActiveVisitor.lootChance snapshot
+- [ ] 47-04-PLAN.md — Animation livraison Reanimated (scale + flash + particule) + microcopy polish (empty state, bios, toast, notifs)
