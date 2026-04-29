@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────
 
 /** Identifiant de branche technologique */
-export type TechBranchId = 'culture' | 'elevage' | 'expansion';
+export type TechBranchId = 'culture' | 'elevage' | 'expansion' | 'social';
 
 /** Noeud individuel de l'arbre de technologies */
 export interface TechNode {
@@ -28,6 +28,10 @@ export interface TechBonuses {
   extraCropCells: number;               // parcelles crop supplementaires
   extraBuildingCells: number;           // parcelles building supplementaires
   hasLargeCropCell: boolean;            // parcelle geante disponible
+  /** Phase 44 — Bonus +N visiteurs actifs simultanés à l'Auberge (default 0, social-2 → 1). */
+  aubergeMaxActiveBonus: number;
+  /** Phase 44 — Multiplicateur reward livraison Auberge (default 1.0, social-3 → 1.2). */
+  aubergeRewardMultiplier: number;
 }
 
 // ── Arbre de technologies ──────────────────────────────────────
@@ -95,6 +99,23 @@ export const TECH_TREE: TechNode[] = [
     labelKey: 'tech.expansion-3', descriptionKey: 'tech.expansion-3_desc',
     emoji: '⭐', cost: 7500, requires: 'expansion-2',
   },
+
+  // Branche Social — Auberge & visiteurs (Phase 44)
+  {
+    id: 'social-1', branch: 'social', order: 1,
+    labelKey: 'tech.social-1', descriptionKey: 'tech.social-1_desc',
+    emoji: '🛖', cost: 300, requires: null,
+  },
+  {
+    id: 'social-2', branch: 'social', order: 2,
+    labelKey: 'tech.social-2', descriptionKey: 'tech.social-2_desc',
+    emoji: '🍻', cost: 1500, requires: 'social-1',
+  },
+  {
+    id: 'social-3', branch: 'social', order: 3,
+    labelKey: 'tech.social-3', descriptionKey: 'tech.social-3_desc',
+    emoji: '✨', cost: 4000, requires: 'social-2',
+  },
 ];
 
 // ── Fonctions pures ────────────────────────────────────────────
@@ -161,6 +182,8 @@ export function getTechBonuses(unlockedTechs: string[]): TechBonuses {
     extraCropCells: 0,
     extraBuildingCells: 0,
     hasLargeCropCell: false,
+    aubergeMaxActiveBonus: 0,
+    aubergeRewardMultiplier: 1.0,
   };
 
   for (const techId of unlockedTechs) {
@@ -199,6 +222,17 @@ export function getTechBonuses(unlockedTechs: string[]): TechBonuses {
         break;
       case 'expansion-3':
         bonuses.hasLargeCropCell = true;
+        break;
+
+      // Social (Phase 44)
+      case 'social-1':
+        // Gating pur — débloque la construction de l'Auberge via BUILDING_CATALOG.techRequired
+        break;
+      case 'social-2':
+        bonuses.aubergeMaxActiveBonus = 1;
+        break;
+      case 'social-3':
+        bonuses.aubergeRewardMultiplier = 1.2;
         break;
     }
   }
