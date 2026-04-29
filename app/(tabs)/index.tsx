@@ -1437,7 +1437,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontFamily: FontFamily.serif,
-    fontSize: FontSize.title,
+    fontSize: FontSize.subtitle,
     textTransform: 'capitalize',
     letterSpacing: -0.3,
   },
