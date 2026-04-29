@@ -94,6 +94,7 @@ import { patchMascotte } from '../lib/mascotte-live-activity';
 import { getCompanionStage } from '../lib/mascot/companion-engine';
 import { pickLABubbleShort, type LAStage } from '../lib/mascot/la-bubbles';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
+import { tickAubergeAuto } from '../lib/auberge/auto-tick';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultLoveNotes } from './useVaultLoveNotes';
 import { useVaultWishlist } from './useVaultWishlist';
@@ -220,6 +221,7 @@ export interface VaultState {
   duplicateList: (id: string, newNom: string) => Promise<void>;
   archiveList: (id: string, archive: boolean) => Promise<void>;
   mergeCourseIngredientsToList: (listId: string, items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
+  setListParcours: (id: string, parcours: string[]) => Promise<void>;
   memories: Memory[];
   addMemory: (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
   updateMemory: (oldMemory: Memory, newMemory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
@@ -1552,6 +1554,11 @@ export function useVaultInternal(): VaultState {
         hasGrossesse: profiles.some(p => p.statut === 'grossesse' && p.dateTerme),
         lang: i18n.language,
       }).catch(() => {});
+      // Phase 46 : tente un spawn Auberge auto sur le profil actif (cooldown 6h géré par le moteur)
+      const aubergeActiveId = activeProfileIdForWidgetRef.current;
+      if (aubergeActiveId && profilesSnapshot.length > 0) {
+        tickAubergeAuto(aubergeActiveId, { vault, profiles: profilesSnapshot }).catch(() => {});
+      }
       setPhotoDates(val(results[6], {}));
       setMemories(val(results[7], []));
       healthHook.setHealthRecords(val(results[8], []));
@@ -2269,6 +2276,7 @@ export function useVaultInternal(): VaultState {
     duplicateList: coursesHook.duplicateList,
     archiveList: coursesHook.archiveList,
     mergeCourseIngredientsToList: coursesHook.mergeCourseIngredientsToList,
+    setListParcours: coursesHook.setListParcours,
     memories,
     addMemory,
     updateMemory,
