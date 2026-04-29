@@ -541,22 +541,20 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
                 </CollapsibleSection>
               </View>
 
-              {/* Bouton dev */}
-              {__DEV__ && (
-                <TouchableOpacity
-                  onPress={handleForceSpawn}
-                  style={[
-                    styles.devBtn,
-                    { backgroundColor: colors.cardAlt, borderColor: colors.border },
-                  ]}
-                  accessibilityLabel="Forcer un visiteur (dev)"
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.devBtnText, { color: colors.textMuted }]}>
-                    🪄 Forcer un visiteur (dev)
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {/* Bouton dev — temporairement exposé en release pour test Phase 45 (à remettre derrière __DEV__ avant ship) */}
+              <TouchableOpacity
+                onPress={handleForceSpawn}
+                style={[
+                  styles.devBtn,
+                  { backgroundColor: colors.cardAlt, borderColor: colors.border },
+                ]}
+                accessibilityLabel="Forcer un visiteur (dev)"
+                accessibilityRole="button"
+              >
+                <Text style={[styles.devBtnText, { color: colors.textMuted }]}>
+                  🪄 Forcer un visiteur (dev)
+                </Text>
+              </TouchableOpacity>
             </ScrollView>
           </SectionErrorBoundary>
         </View>
