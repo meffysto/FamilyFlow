@@ -4334,6 +4334,8 @@
       "moulin_desc": "Un moulin a vent. Produit de la farine automatiquement.",
       "ruche": "Ruche",
       "ruche_desc": "Une ruche bourdonnante. Produit du miel automatiquement.",
+      "auberge": "Auberge",
+      "auberge_desc": "Un refuge chaleureux pour les voyageurs. Bientôt habitée…",
       "buy": "Construire",
       "dailyIncome": "+{{amount}} 🍃/jour",
       "owned": "Construit",
