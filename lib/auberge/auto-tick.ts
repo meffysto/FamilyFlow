@@ -26,6 +26,7 @@ import {
   scheduleAubergeVisitorReminder,
   cancelAubergeVisitorNotifs,
 } from '../scheduled-notifications';
+import i18n from '../i18n';
 
 export interface AutoTickDeps {
   vault: VaultManager;
@@ -76,8 +77,11 @@ export async function tickAubergeAuto(
           1,
           Math.round((deadlineDate.getTime() - now.getTime()) / 3600000),
         );
-        // Nom = labelKey i18n non branché Phase 46 → fallback def.id lisible
-        const visitorName = humanizeVisitorId(def.id);
+        // Nom localisé via i18n (fallback humanizeVisitorId si la clé est absente)
+        const translated = i18n.t(def.labelKey);
+        const visitorName = translated && translated !== def.labelKey
+          ? translated
+          : humanizeVisitorId(def.id);
         await scheduleAubergeVisitorArrival(v.instanceId, visitorName, def.emoji, hours).catch(() => {});
         await scheduleAubergeVisitorReminder(v.instanceId, visitorName, def.emoji, deadlineDate).catch(() => {});
       }

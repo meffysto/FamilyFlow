@@ -14,6 +14,7 @@ import * as Notifications from 'expo-notifications';
 import { RDV, Task, StockItem } from './types';
 import type { LoveNote } from './types';
 import * as SecureStore from 'expo-secure-store';
+import i18n from './i18n';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -720,8 +721,8 @@ export async function scheduleAubergeVisitorArrival(
     await Notifications.scheduleNotificationAsync({
       identifier: `${CAT_AUBERGE_ARRIVAL}-${instanceId}`,
       content: {
-        title: `${emoji} ${visitorName} pousse la porte`,
-        body: `Une commande l'attend — ${deadlineHours}h pour l'honorer.`,
+        title: i18n.t('auberge.notif.arrival.title', { emoji, name: visitorName }),
+        body: i18n.t('auberge.notif.arrival.body', { hours: deadlineHours }),
         sound: true,
         data: { type: 'auberge_visitor_arrival', instanceId },
       },
@@ -750,8 +751,8 @@ export async function scheduleAubergeVisitorReminder(
     await Notifications.scheduleNotificationAsync({
       identifier: `${CAT_AUBERGE_REMINDER}-${instanceId}`,
       content: {
-        title: `⏰ ${emoji} ${visitorName} s'impatiente`,
-        body: `Plus que 4h avant son départ — la commande t'attend toujours.`,
+        title: i18n.t('auberge.notif.reminder.title', { emoji, name: visitorName }),
+        body: i18n.t('auberge.notif.reminder.body'),
         sound: true,
         data: { type: 'auberge_visitor_reminder', instanceId },
       },
