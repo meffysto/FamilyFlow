@@ -10,7 +10,7 @@
  * couleurs sémantiques de timer (ambre / rouge) sont constantées (alignées
  * sur le pattern wear de DashboardGarden).
  */
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,21 @@ import {
   Pressable,
   Image,
 } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withSpring,
+  withTiming,
+  useReducedMotion,
+} from 'react-native-reanimated';
+
+// ─── Constantes animation livraison ──────────────────────────────────────
+const SPRING_CONFIG = { damping: 10, stiffness: 180 };
+const DELIVERY_FLASH_DURATION = 100;
+const DELIVERY_FADE_DURATION = 400;
+const DELIVERY_PARTICLE_DURATION = 600;
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -53,27 +67,27 @@ import { Shadows } from '../../constants/shadows';
 const VISITOR_LABELS_FR: Record<string, { name: string; bio: string }> = {
   hugo_boulanger: {
     name: 'Hugo le boulanger',
-    bio: 'Le four chauffe — il lui faut farine et œufs frais.',
+    bio: 'Son four ronfle déjà — il lui faut juste farine et œufs frais.',
   },
   meme_lucette: {
     name: 'Mémé Lucette',
-    bio: 'Une bonne soupe demande lait et légumes du jardin.',
+    bio: 'Mijote une soupe pour ses petits — lait et légumes feront l’affaire.',
   },
   yann_apiculteur: {
     name: 'Yann l’apiculteur',
-    bio: 'Les ruches sont vides, il troque son miel contre du tien.',
+    bio: 'Parle à ses abeilles ; troque volontiers son miel contre le tien.',
   },
   voyageuse: {
     name: 'La Voyageuse',
-    bio: 'Cherche un bouquet ou une soupe pour la route.',
+    bio: 'Fait halte avant de repartir — un bouquet ou une soupe suffira.',
   },
   marchand_ambulant: {
     name: 'Le Marchand ambulant',
-    bio: 'Un fromage, un pain — il paie bien les craftés.',
+    bio: 'Toujours preneur d’un crafté de qualité — il paie en sonnant.',
   },
   comtesse: {
     name: 'La Comtesse',
-    bio: 'N’accepte que ce qu’il y a de plus raffiné.',
+    bio: 'Sa carriole patiente dehors. Elle ne descend que pour le très raffiné.',
   },
 };
 
@@ -139,6 +153,7 @@ interface VisitorCardProps {
   onDeliver: (visitor: ActiveVisitor) => void;
   onDismiss: (visitor: ActiveVisitor) => void;
   index: number;
+  deliverTrigger: number;
 }
 
 const VisitorCard = React.memo(function VisitorCard({
@@ -148,6 +163,7 @@ const VisitorCard = React.memo(function VisitorCard({
   onDeliver,
   onDismiss,
   index,
+  deliverTrigger,
 }: VisitorCardProps) {
   const { colors, primary } = useThemeColors();
   const def = getVisitorDef(visitor.visitorId);
@@ -163,14 +179,66 @@ const VisitorCard = React.memo(function VisitorCard({
     ? Math.round((visitor.lootChance ?? 0.18) * 100)
     : 0;
 
+  // ─── Animation livraison festive ────────────────────────────────────
+  const reducedMotion = useReducedMotion();
+  const cardScale = useSharedValue(1);
+  const flashOpacity = useSharedValue(0);
+  const particleY = useSharedValue(0);
+  const particleOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (!deliverTrigger) return;
+    if (reducedMotion) return;
+    cardScale.value = withSequence(
+      withTiming(1.15, { duration: 150 }),
+      withSpring(1, SPRING_CONFIG),
+    );
+    flashOpacity.value = withSequence(
+      withTiming(0.4, { duration: DELIVERY_FLASH_DURATION }),
+      withTiming(0, { duration: DELIVERY_FADE_DURATION }),
+    );
+    particleY.value = 0;
+    particleOpacity.value = 1;
+    particleY.value = withTiming(-50, { duration: DELIVERY_PARTICLE_DURATION });
+    particleOpacity.value = withSequence(
+      withTiming(1, { duration: 100 }),
+      withTiming(0, { duration: 500 }),
+    );
+  }, [deliverTrigger, reducedMotion, cardScale, flashOpacity, particleY, particleOpacity]);
+
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+  const flashStyle = useAnimatedStyle(() => ({ opacity: flashOpacity.value }));
+  const particleStyle = useAnimatedStyle(() => ({
+    opacity: particleOpacity.value,
+    transform: [{ translateY: particleY.value }],
+  }));
+
   return (
     <Animated.View
       entering={FadeIn.delay(60 * index).springify().damping(14).stiffness(180)}
       style={[
         styles.card,
         { backgroundColor: colors.card, borderColor: colors.border },
+        cardAnimStyle,
       ]}
     >
+      {/* Flash overlay (animation livraison) */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: colors.success, borderRadius: Radius.lg },
+          flashStyle,
+        ]}
+      />
+      {/* Particule "+X 🍃" qui flotte vers le haut */}
+      <Animated.View pointerEvents="none" style={[styles.particle, particleStyle]}>
+        <Text style={[styles.particleText, { color: colors.success }]}>
+          +{visitor.rewardCoins} 🍃
+        </Text>
+      </Animated.View>
       {/* Ligne 1 : portrait + identité */}
       <View style={styles.cardRow}>
         <View style={[styles.portrait, { backgroundColor: colors.cardAlt }]}>
@@ -377,16 +445,26 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
     [reputations],
   );
 
+  // ─── Triggers d'animation de livraison (instanceId → compteur) ────────
+  const [deliveryTriggers, setDeliveryTriggers] = useState<Record<string, number>>({});
+
   // ─── Handlers ─────────────────────────────────────────────────────────
   const handleDeliver = useCallback(
     async (visitor: ActiveVisitor) => {
       if (!activeProfile) return;
+      // Trigger animation OPTIMISTE — démarre avant que le moteur retire le visiteur.
+      setDeliveryTriggers(prev => ({
+        ...prev,
+        [visitor.instanceId]: (prev[visitor.instanceId] ?? 0) + 1,
+      }));
       try {
         const result = await deliverVisitor(activeProfile.id, visitor.instanceId);
         if (result.ok && result.reward) {
           await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          const def = getVisitorDef(visitor.visitorId);
+          const name = VISITOR_LABELS_FR[visitor.visitorId]?.name ?? def?.id ?? 'Visiteur';
           showToast(
-            `Livré ! +${result.reward.coins} 🍃${result.reward.loot ? ' + 🎁' : ''}`,
+            `${name} repart ravi(e) ! +${result.reward.coins} 🍃${result.reward.loot ? ' + 🎁' : ''}`,
             'success',
           );
         } else {
@@ -492,10 +570,10 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyEmoji}>🛖</Text>
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                    L’auberge est calme…
+                    L’auberge est paisible ce soir
                   </Text>
                   <Text style={[styles.emptyBody, { color: colors.textMuted }]}>
-                    Un visiteur arrivera bientôt.
+                    Quelqu’un poussera la porte d’ici peu — fais bouillir l’eau du thé.
                   </Text>
                 </View>
               ) : (
@@ -510,6 +588,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
                       onDeliver={handleDeliver}
                       onDismiss={handleDismiss}
                       index={idx}
+                      deliverTrigger={deliveryTriggers[v.instanceId] ?? 0}
                     />
                   );
                 })
@@ -661,7 +740,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing['2xl'],
     gap: Spacing.lg,
+    overflow: 'hidden',
     ...Shadows.sm,
+  },
+  particle: {
+    position: 'absolute',
+    top: 8,
+    alignSelf: 'center',
+    zIndex: 10,
+  },
+  particleText: {
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.heavy,
   },
   cardRow: {
     flexDirection: 'row',
