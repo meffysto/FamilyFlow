@@ -601,14 +601,14 @@ export function LootBoxOpener({
   // ─── Particle data ─────────────────────────────────────────────────────
 
   const [idleParticles] = useState(() =>
-    generateParticles(12, [...theme.confettiColors.slice(0, 3), 'rgba(255,255,255,0.5)'], screenWidth, screenHeight),
+    generateParticles(6, [...theme.confettiColors.slice(0, 3), 'rgba(255,255,255,0.5)'], screenWidth, screenHeight),
   );
   const [revealParticles, setRevealParticles] = useState<Particle[]>([]);
 
   // ─── Sparkle data for reveal ───────────────────────────────────────────
 
   const [sparkles] = useState(() =>
-    Array.from({ length: 8 }, (_, i) => ({
+    Array.from({ length: 4 }, (_, i) => ({
       id: i,
       x: screenWidth * 0.15 + Math.random() * screenWidth * 0.7,
       y: screenHeight * 0.2 + Math.random() * screenHeight * 0.4,
@@ -837,7 +837,7 @@ export function LootBoxOpener({
     const rColor = RARITY_COLORS[box.rarity];
     setRevealParticles(
       generateParticles(
-        boxIsMythique ? 30 : isHighTier ? 20 : 10,
+        boxIsMythique ? 14 : isHighTier ? 10 : 6,
         boxIsMythique
           ? ['#FFD700', '#EF4444', '#FF6B6B', '#FFFFFF', '#FFA500']
           : [rColor, '#FFFFFF', theme.confettiColors[0]],
@@ -962,7 +962,7 @@ export function LootBoxOpener({
           <>
             <ConfettiCannon
               ref={confettiRef}
-              count={isMythique ? 250 : isLegendaire ? 180 : 120}
+              count={isMythique ? 90 : isLegendaire ? 70 : 50}
               origin={{ x: -10, y: 0 }}
               autoStart={false}
               fadeOut
@@ -978,7 +978,7 @@ export function LootBoxOpener({
             {isMythique && (
               <ConfettiCannon
                 ref={confettiRef2}
-                count={200}
+                count={70}
                 origin={{ x: screenWidth + 10, y: 0 }}
                 autoStart={false}
                 fadeOut
@@ -1026,10 +1026,10 @@ export function LootBoxOpener({
           {!reduceMotion && phase === 'spinning' && (
             <View style={styles.spinContainer}>
               <View style={styles.raysContainer}>
-                {Array.from({ length: 12 }, (_, i) => (
+                {Array.from({ length: 6 }, (_, i) => (
                   <LightRay
                     key={i}
-                    angle={i * 30}
+                    angle={i * 60}
                     color={theme.confettiColors[0]}
                     delay={i * 50}
                   />

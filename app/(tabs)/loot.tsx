@@ -60,7 +60,7 @@ import { format } from 'date-fns';
 import { Gift } from 'lucide-react-native';
 
 export default function LootScreen() {
-  const { profiles, gamiData, activeProfile, markLootUsed, notifPrefs, vault, refresh, isLoading } = useVault();
+  const { profiles, gamiData, activeProfile, markLootUsed, notifPrefs, vault, refresh, refreshGamification, isLoading } = useVault();
   const { openLootBox, isProcessing } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors, isDark } = useThemeColors();
 
@@ -102,13 +102,15 @@ export default function LootScreen() {
     if (!selectedProfile || !gamiData) return null;
     try {
       const { box } = await openLootBox(selectedProfile, gamiData);
-      await refresh();
+      // Refresh gami uniquement (pas le vault complet) et fire-and-forget
+      // pour ne pas bloquer le thread JS pendant l'animation reveal.
+      refreshGamification().catch(() => {});
       return box;
     } catch (e) {
       showToast(t('loot.toast.openError'), 'error');
       return null;
     }
-  }, [selectedProfile, gamiData, openLootBox, refresh]);
+  }, [selectedProfile, gamiData, openLootBox, refreshGamification]);
 
   const leaderboard = buildLeaderboard(profiles);
 
