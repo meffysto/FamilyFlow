@@ -36,6 +36,7 @@ export interface RDV {
   sourceFile: string;
   questions?: string[];     // Questions à poser au médecin
   reponses?: string;        // Réponses / notes post-consultation
+  rappels?: string[];       // Rappels personnalisés (clés: 1w|3d|1d|3h|1h|30m)
 }
 
 export interface JournalEntry {

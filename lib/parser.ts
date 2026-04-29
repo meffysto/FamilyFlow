@@ -350,6 +350,9 @@ export function parseRDV(relativePath: string, content: string): RDV | null {
     sourceFile: relativePath,
     questions: parseBulletSection(body, 'Questions à poser'),
     reponses: extractBodySection(body, 'Réponses du médecin') || undefined,
+    rappels: Array.isArray(data.rappels)
+      ? (data.rappels as unknown[]).map((r) => String(r)).filter((r) => r.length > 0)
+      : undefined,
   };
 }
 
@@ -368,6 +371,15 @@ export function serializeRDV(rdv: Omit<RDV, 'sourceFile' | 'title'>): string {
     `médecin: ${rdv.médecin}`,
     `lieu: ${rdv.lieu}`,
     `statut: ${rdv.statut}`,
+  ];
+
+  const validRappels = (rdv.rappels ?? []).filter((r) => r.trim().length > 0);
+  if (validRappels.length > 0) {
+    lines.push('rappels:');
+    for (const r of validRappels) lines.push(`  - ${r}`);
+  }
+
+  lines.push(
     'tags:',
     '  - rdv',
     '---',
@@ -376,7 +388,7 @@ export function serializeRDV(rdv: Omit<RDV, 'sourceFile' | 'title'>): string {
     '',
     '## Questions à poser',
     '',
-  ];
+  );
 
   const validQuestions = (rdv.questions ?? []).filter((q) => q.trim().length > 0);
   for (const q of validQuestions) {

@@ -97,6 +97,17 @@ const STORAGE_KEY = 'notif_schedule_config_v2';
 const CAT_RDV_VEILLE = 'rdv-veille';
 const CAT_RDV_MATIN = 'rdv-matin';
 const CAT_RDV_AVANT = 'rdv-avant';
+const CAT_RDV_CUSTOM = 'rdv-custom';
+
+/** Rappels personnalisés disponibles : clé → minutes avant le RDV. */
+export const RDV_RAPPEL_OFFSETS: Record<string, number> = {
+  '1w': 7 * 24 * 60,
+  '3d': 3 * 24 * 60,
+  '1d': 24 * 60,
+  '3h': 3 * 60,
+  '1h': 60,
+  '30m': 30,
+};
 const CAT_TASK = 'task-due';
 const CAT_TASK_REMINDER = 'task-reminder';
 const CAT_MENAGE = 'menage-weekly';
@@ -157,6 +168,37 @@ async function cancelByCategory(prefix: string): Promise<void> {
 
 // ─── 1. RDV ──────────────────────────────────────────────────────────────────
 
+function formatRappelLabel(key: string, isFr: boolean): string {
+  if (isFr) {
+    switch (key) {
+      case '1w': return '1 semaine avant';
+      case '3d': return '3 jours avant';
+      case '1d': return 'la veille';
+      case '3h': return '3 h avant';
+      case '1h': return '1 h avant';
+      case '30m': return '30 min avant';
+      default: return 'avant';
+    }
+  }
+  switch (key) {
+    case '1w': return '1 week before';
+    case '3d': return '3 days before';
+    case '1d': return '1 day before';
+    case '3h': return '3 h before';
+    case '1h': return '1 h before';
+    case '30m': return '30 min before';
+    default: return 'before';
+  }
+}
+
+function formatDateFr(d: Date): string {
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+function formatDateEn(d: Date): string {
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
 export async function scheduleRDVAlerts(
   rdvs: RDV[],
   config: NotifScheduleConfig,
@@ -165,6 +207,7 @@ export async function scheduleRDVAlerts(
   await cancelByCategory(CAT_RDV_VEILLE);
   await cancelByCategory(CAT_RDV_MATIN);
   await cancelByCategory(CAT_RDV_AVANT);
+  await cancelByCategory(CAT_RDV_CUSTOM);
 
   if (!config.rdvEnabled) return 0;
 
@@ -232,6 +275,29 @@ export async function scheduleRDVAlerts(
           sound: true,
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: avantDate },
+      });
+      scheduled++;
+    }
+
+    // Rappels personnalisés (1w / 3d / 1d / 3h / 1h / 30m) — uniques par RDV
+    for (const key of rdv.rappels ?? []) {
+      const minutes = RDV_RAPPEL_OFFSETS[key];
+      if (!minutes) continue;
+      const rappelDate = new Date(rdvDate.getTime() - minutes * 60 * 1000);
+      if (rappelDate <= now) continue;
+      const label = formatRappelLabel(key, isFr);
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${CAT_RDV_CUSTOM}-${key}-${rdv.sourceFile}`,
+        content: {
+          title: isFr
+            ? `⏰ Rappel ${label} : ${typeLabel}${enfantLabel}`
+            : `⏰ Reminder ${label}: ${typeLabel}${enfantLabel}`,
+          body: isFr
+            ? `${formatDateFr(rdvDate)} à ${rdv.heure}${lieuLabel}`
+            : `${formatDateEn(rdvDate)} at ${rdv.heure}${lieuLabel}`,
+          sound: true,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: rappelDate },
       });
       scheduled++;
     }

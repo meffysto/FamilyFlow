@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -10,6 +10,8 @@ interface ChipProps {
   selected?: boolean;
   onPress?: () => void;
   emoji?: string;
+  /** Icône (Lucide ou autre) — alternative à `emoji`. Reçoit `color` côté appelant. */
+  icon?: React.ReactNode;
   /** Override la couleur d'accent (cas legacy — par défaut warm bois) */
   color?: string;
   size?: 'sm' | 'md';
@@ -22,6 +24,7 @@ export const Chip = React.memo(function Chip({
   selected = false,
   onPress,
   emoji,
+  icon,
   color,
   size = 'md',
   variant = 'default',
@@ -94,6 +97,7 @@ export const Chip = React.memo(function Chip({
       accessibilityState={onPress ? { selected } : undefined}
       hitSlop={6}
     >
+      {icon ? <View style={styles.icon}>{icon}</View> : null}
       {emoji ? <Text style={styles.emoji}>{emoji} </Text> : null}
       <Text style={textStyle}>{label}</Text>
     </TouchableOpacity>
@@ -103,5 +107,8 @@ export const Chip = React.memo(function Chip({
 const styles = StyleSheet.create({
   emoji: {
     fontSize: FontSize.sm,
+  },
+  icon: {
+    marginRight: Spacing.xs,
   },
 });

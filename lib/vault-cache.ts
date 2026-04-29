@@ -49,8 +49,9 @@ import type { JournalSummaryEntry } from './ai-service';
 //                + CraftedItem.grade optional
 // v7 : Phase 42 — CompanionData étendu (lastFedAt?: string + feedBuff?: FeedBuff | null)
 // v8 : Stories — Profile étendu (voiceCloneType, voiceTrainingStatus, voiceTrainingStartedAt, voiceTrainingMessage)
-const CACHE_VERSION = 8;
-const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v8.json';
+// v9 : RDV.rappels?: string[] — rappels personnalisés par RDV (1w|3d|1d|3h|1h|30m)
+const CACHE_VERSION = 9;
+const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v9.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {
