@@ -388,10 +388,10 @@ Plans:
 **Goal:** Faire passer l'''Auberge de démo testable à feature jouable — visiteurs apparaissent automatiquement au launch + après chaque tâche, avec notifs locales d'''arrivée et rappel H-4, et cancellation propre sur deliver/dismiss/expire.
 **Requirements**: AUBERGE-46-01 (spawn auto au launch), AUBERGE-46-02 (spawn auto sur task complete), AUBERGE-46-03 (cancel notifs sur deliver/dismiss), AUBERGE-46-04 (toggle BUILTIN visiteurs auberge), AUBERGE-46-05 (re-gate bouton dev __DEV__)
 **Depends on:** Phase 45
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 - [x] 46-01-PLAN.md — Helper lib/auberge/auto-tick.ts + 3 fonctions notifs Auberge + entrée BUILTIN_NOTIFICATIONS + tests Jest
 - [ ] 46-02-PLAN.md — Wiring useVault.ts : tickAubergeAuto post-refresh + souscription subscribeTaskComplete
-- [ ] 46-03-PLAN.md — Cancel notifs sur deliverVisitor / dismissVisitor dans hooks/useAuberge.ts
+- [x] 46-03-PLAN.md — Cancel notifs sur deliverVisitor / dismissVisitor dans hooks/useAuberge.ts
 - [x] 46-04-PLAN.md — Re-gate __DEV__ autour du bouton 'Forcer un visiteur' dans AubergeSheet.tsx
