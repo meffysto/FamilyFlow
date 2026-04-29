@@ -12,7 +12,7 @@
  * Toutes les durées affichées sont **effectives** (avec bonus tech & wear appliqués).
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,7 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { BUILDING_CATALOG, type PlacedBuilding } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
+import { AubergeSheet } from './AubergeSheet';
 import {
   getPendingResources,
   getUpgradeCost,
@@ -283,12 +284,14 @@ export function BuildingDetailSheet({
   onClose,
 }: BuildingDetailSheetProps) {
   const { t } = useTranslation();
+  const [aubergeOpen, setAubergeOpen] = useState(false);
 
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return null;
 
   // Phase 44 — Bâtiment non-productif (Auberge & co.) : affichage gracieux
   const isProductive = def.producesResource !== false;
+  const isAuberge = def.id === 'auberge';
 
   const tier = def.tiers[building.level - 1];
   const nextTier = def.tiers[building.level] ?? null;
@@ -346,6 +349,7 @@ export function BuildingDetailSheet({
   const missingCoins = Math.max(0, upgradeCost - coins);
 
   return (
+    <>
     <Modal
       visible={visible}
       transparent
@@ -498,10 +502,25 @@ export function BuildingDetailSheet({
                 style={styles.nonProductiveCard}
               >
                 <Text style={styles.nonProductiveIcon}>🛖</Text>
-                <Text style={styles.nonProductiveTitle}>Bâtiment social</Text>
-                <Text style={styles.nonProductiveBody}>
-                  Ce bâtiment ne produit pas de ressources passives. Voir l'intérieur prochainement.
-                </Text>
+                <Text style={styles.nonProductiveTitle}>{isAuberge ? 'Auberge' : 'Bâtiment social'}</Text>
+                {isAuberge ? (
+                  <>
+                    <Text style={styles.nonProductiveBody}>
+                      Accueille des visiteurs et livre leurs demandes pour gagner de la réputation et des récompenses.
+                    </Text>
+                    <View style={{ height: Spacing.md }} />
+                    <CTA
+                      label="Voir l'auberge"
+                      emoji="🛖"
+                      variant="primary"
+                      onPress={() => setAubergeOpen(true)}
+                    />
+                  </>
+                ) : (
+                  <Text style={styles.nonProductiveBody}>
+                    Ce bâtiment ne produit pas de ressources passives. Voir l'intérieur prochainement.
+                  </Text>
+                )}
               </Animated.View>
             )}
 
@@ -569,6 +588,8 @@ export function BuildingDetailSheet({
         </View>
       </View>
     </Modal>
+    <AubergeSheet visible={aubergeOpen} onClose={() => setAubergeOpen(false)} />
+    </>
   );
 }
 
