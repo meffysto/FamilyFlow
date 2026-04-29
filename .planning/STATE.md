@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: executing
-last_updated: "2026-04-29T12:27:23.993Z"
+last_updated: "2026-04-29T12:33:24.833Z"
 last_activity: 2026-04-29
 progress:
   total_phases: 15
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 41
-  completed_plans: 41
+  completed_plans: 42
   percent: 100
 ---
 
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 43 (Auberge — Modèle & moteur visiteurs) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
 Last activity: 2026-04-29
@@ -206,6 +206,7 @@ Status: Ready to execute
 | Phase 43 P02 | 2min | 2 tasks | 3 files |
 | Phase 43 P01 | 6min | 2 tasks | 2 files |
 | Phase 43 P03 | 12min | 2 tasks | 2 files |
+| Phase 43 P04 | 10min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -397,6 +398,7 @@ Recent decisions affecting current work:
 - [Phase 43]: [Phase 43-01]: VisitorRequestSource type alias dédié dans types.ts (pas inline) — DRY, importé par visitor-catalog.ts
 - [Phase 43]: [Phase 43-01]: Comtesse parfum_orchidee retenu (sellValue 1200, dominant catalogue) + second template fromage+corn pour variété
 - [Phase 43]: Plan 43-03: format auberge_visitors = JSON-escape ||/§ entre visiteurs ; auberge_reputations = CSV plat avec ISO reconstitué slice(4).join(':')
+- [Phase 43]: Plan 43-04: hook useAuberge autonome (pattern useExpeditions) — 1 writeFile farm + addCoins APRÈS persistance ferme (anti-double-crédit), treeStage via profile.level (pas tree_stage dans FarmProfileData), VaultContext/useVault/CACHE_VERSION untouched
 
 ### Todos
 
@@ -408,5 +410,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T12:27:23.989Z
+Last session: 2026-04-29T12:33:24.829Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
