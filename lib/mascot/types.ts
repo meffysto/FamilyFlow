@@ -554,3 +554,59 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     tiers: generateTiers(12, 2000),
   },
 ];
+
+// ============================================================
+// Phase 43 — Auberge (visiteurs PNJ qui apportent des requêtes)
+// ============================================================
+
+/** Rareté d'un visiteur — détermine pondération spawn, deadline et bonus de récompense. */
+export type VisitorRarity = 'common' | 'uncommon' | 'rare';
+
+/** Origine d'un item demandé par un visiteur. */
+export type VisitorRequestSource = 'building' | 'crop' | 'crafted';
+
+/** Statut d'un visiteur dans le tableau opérationnel. */
+export type VisitorStatus = 'active' | 'delivered' | 'expired';
+
+/** Item demandé par un visiteur. Quantité figée à la création (résolue depuis [min,max]). */
+export interface VisitorRequestItem {
+  itemId: string;
+  source: VisitorRequestSource;
+  quantity: number;
+}
+
+/** Instance vivante d'un visiteur (status active = visible UI, delivered/expired = historique court). */
+export interface ActiveVisitor {
+  visitorId: string;
+  instanceId: string;
+  arrivedAt: string;
+  deadlineAt: string;
+  request: VisitorRequestItem[];
+  status: VisitorStatus;
+  rewardCoins: number;
+  rewardLootKey?: string;
+}
+
+/** Réputation cumulée par PNJ. level cap 5, floor 0. lastSeenAt sert le cooldown anti-spam 24h. */
+export interface VisitorReputation {
+  visitorId: string;
+  level: number;
+  successCount: number;
+  failureCount: number;
+  lastSeenAt: string;
+}
+
+/**
+ * État Auberge persisté par profil.
+ * - `visitors` : tableau opérationnel (actifs + delivered/expired < 7 jours).
+ *   Les anciens sont archivés silencieusement par le moteur.
+ * - `totalDeliveries` : compteur lifetime, incrémenté à chaque deliverVisitor.
+ *   JAMAIS dérivé du tableau visitors (éviterait le double-count post-archivage,
+ *   voir Pitfall 8 du RESEARCH Phase 43).
+ */
+export interface AubergeState {
+  visitors: ActiveVisitor[];
+  reputations: VisitorReputation[];
+  lastSpawnAt?: string;
+  totalDeliveries: number;
+}
