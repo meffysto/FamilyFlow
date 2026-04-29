@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: verifying
-last_updated: "2026-04-29T13:41:48.258Z"
+last_updated: "2026-04-29T13:42:38.665Z"
 last_activity: 2026-04-29
 progress:
   total_phases: 17
   completed_phases: 10
   total_plans: 45
-  completed_plans: 43
+  completed_plans: 44
   percent: 100
 ---
 
@@ -208,6 +208,7 @@ Status: Phase complete — ready for verification
 | Phase 43 P03 | 12min | 2 tasks | 2 files |
 | Phase 43 P04 | 10min | 1 tasks | 1 files |
 | Phase 44 P01 | 10min | 2 tasks | 3 files |
+| Phase 44-auberge-b-timent-branche-tech-social P03 | 12min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -403,6 +404,7 @@ Recent decisions affecting current work:
 - [Phase 43]: Plan 43-03: format auberge_visitors = JSON-escape ||/§ entre visiteurs ; auberge_reputations = CSV plat avec ISO reconstitué slice(4).join(':')
 - [Phase 43]: Plan 43-04: hook useAuberge autonome (pattern useExpeditions) — 1 writeFile farm + addCoins APRÈS persistance ferme (anti-double-crédit), treeStage via profile.level (pas tree_stage dans FarmProfileData), VaultContext/useVault/CACHE_VERSION untouched
 - [Phase 44]: [Phase 44-01]: Garde producesResource === false placée APRÈS check !def, AVANT calcul tier/wear — préserve les early returns existants
+- [Phase 44-auberge-b-timent-branche-tech-social]: Plan 44-03: social-1 gating pur (no-op getTechBonuses) — consommation côté BUILDING_CATALOG.techRequired Plan 44-02; defaults TechBonuses 0/1.0 non-cassants
 
 ### Todos
 
@@ -414,5 +416,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T13:41:40.653Z
+Last session: 2026-04-29T13:42:33.350Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
