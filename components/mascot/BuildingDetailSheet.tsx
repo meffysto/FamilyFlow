@@ -287,6 +287,9 @@ export function BuildingDetailSheet({
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return null;
 
+  // Phase 44 — Bâtiment non-productif (Auberge & co.) : affichage gracieux
+  const isProductive = def.producesResource !== false;
+
   const tier = def.tiers[building.level - 1];
   const nextTier = def.tiers[building.level] ?? null;
   const upgradable = canUpgrade(building);
@@ -326,6 +329,8 @@ export function BuildingDetailSheet({
     cycleLabel: '1 unité toutes les',
     subtitle: 'Production',
   };
+  // Phase 44 — override subtitle pour les bâtiments non-productifs
+  const titleSubtitle = isProductive ? labels.subtitle : 'Bâtiment social';
   const resourceEmoji =
     def.resourceType === 'oeuf' ? '🥚' :
     def.resourceType === 'lait' ? '🥛' :
@@ -388,7 +393,7 @@ export function BuildingDetailSheet({
             </View>
             <View style={styles.titleText}>
               <Text style={styles.titleH1}>{t(def.labelKey)}</Text>
-              <Text style={styles.titleSub}>{labels.subtitle}</Text>
+              <Text style={styles.titleSub}>{titleSubtitle}</Text>
             </View>
           </Animated.View>
 
@@ -397,8 +402,8 @@ export function BuildingDetailSheet({
             contentContainerStyle={styles.body}
             showsVerticalScrollIndicator={false}
           >
-            {/* Banner toit endommagé en priorité */}
-            {isDamaged && onRepairRoof && (
+            {/* Banner toit endommagé en priorité — uniquement si productif */}
+            {isProductive && isDamaged && onRepairRoof && (
               <Animated.View
                 entering={FadeIn.delay(60).springify().damping(12).stiffness(180)}
               >
@@ -426,6 +431,8 @@ export function BuildingDetailSheet({
               </Animated.View>
             )}
 
+            {isProductive ? (
+              <>
             {/* Hero card — production actuelle */}
             <Animated.View
               entering={FadeIn.delay(100).springify().damping(12).stiffness(180)}
@@ -484,6 +491,19 @@ export function BuildingDetailSheet({
                 onPress={handleCollect}
               />
             </Animated.View>
+              </>
+            ) : (
+              <Animated.View
+                entering={FadeIn.delay(100).springify().damping(12).stiffness(180)}
+                style={styles.nonProductiveCard}
+              >
+                <Text style={styles.nonProductiveIcon}>🛖</Text>
+                <Text style={styles.nonProductiveTitle}>Bâtiment social</Text>
+                <Text style={styles.nonProductiveBody}>
+                  Ce bâtiment ne produit pas de ressources passives. Voir l'intérieur prochainement.
+                </Text>
+              </Animated.View>
+            )}
 
             {/* Section upgrade */}
             <Animated.View
@@ -1006,5 +1026,33 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: '600',
     textAlign: 'center',
+  },
+
+  // ── Non-productif (Phase 44) ─────────────────────
+  nonProductiveCard: {
+    backgroundColor: T.surface2,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: T.accentLine,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    ...Shadows.sm,
+  },
+  nonProductiveIcon: {
+    fontSize: 32,
+    marginBottom: Spacing.sm,
+  },
+  nonProductiveTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: T.ink,
+    marginBottom: 4,
+  },
+  nonProductiveBody: {
+    fontSize: 13,
+    color: T.ink3,
+    textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: 18,
   },
 });
