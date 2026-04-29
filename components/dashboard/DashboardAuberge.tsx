@@ -208,7 +208,7 @@ function DashboardAubergeInner(_props: DashboardSectionProps) {
             <View style={styles.empty}>
               <Text style={[styles.emptyEmoji]}>🛖</Text>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                L’auberge est calme... un visiteur arrivera bientôt.
+                Tout est calme à l’auberge — un voyageur est en chemin.
               </Text>
             </View>
           ) : (

@@ -720,8 +720,8 @@ export async function scheduleAubergeVisitorArrival(
     await Notifications.scheduleNotificationAsync({
       identifier: `${CAT_AUBERGE_ARRIVAL}-${instanceId}`,
       content: {
-        title: `${emoji} ${visitorName} à l'auberge`,
-        body: `Une nouvelle commande t'attend : ${deadlineHours}h pour livrer.`,
+        title: `${emoji} ${visitorName} pousse la porte`,
+        body: `Une commande l'attend — ${deadlineHours}h pour l'honorer.`,
         sound: true,
         data: { type: 'auberge_visitor_arrival', instanceId },
       },
@@ -750,8 +750,8 @@ export async function scheduleAubergeVisitorReminder(
     await Notifications.scheduleNotificationAsync({
       identifier: `${CAT_AUBERGE_REMINDER}-${instanceId}`,
       content: {
-        title: `⏰ ${emoji} ${visitorName}`,
-        body: `Plus que 4h pour livrer la commande de ${visitorName}.`,
+        title: `⏰ ${emoji} ${visitorName} s'impatiente`,
+        body: `Plus que 4h avant son départ — la commande t'attend toujours.`,
         sound: true,
         data: { type: 'auberge_visitor_reminder', instanceId },
       },
