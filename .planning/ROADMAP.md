@@ -349,10 +349,10 @@ Plans:
 **Goal:** Livrer les fondations pures et invisibles du système Auberge (types, catalogue 6 PNJ, moteur pur testé, parsers vault, hook React) sans aucune UI ni notif. Phase complète bout-en-bout, testable via Jest, qui débloque les phases UI/notif/sprite ultérieures.
 **Requirements**: TBD (newly added phase, no requirement mapping yet)
 **Depends on:** Phase 42
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 - [ ] 43-01-PLAN.md — Types Auberge + catalogue 6 visiteurs (lib/mascot/types.ts + visitor-catalog.ts)
-- [ ] 43-02-PLAN.md — Persistance vault (FarmProfileData + parseFarmProfile/serializeFarmProfile + tests)
+- [x] 43-02-PLAN.md — Persistance vault (FarmProfileData + parseFarmProfile/serializeFarmProfile + tests)
 - [ ] 43-03-PLAN.md — Moteur pur auberge-engine.ts (12 fonctions + serialize/parse + 15+ tests Jest)
 - [ ] 43-04-PLAN.md — Hook useAuberge (orchestrateur deliver/dismiss/tick atomique)

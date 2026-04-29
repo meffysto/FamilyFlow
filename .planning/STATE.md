@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
-status: Phase 42 complète — shippable sur TestFlight
-last_updated: "2026-04-28T11:30:00Z"
-last_activity: "2026-04-28 - Completed quick task 260428-kqx: DictaphoneRecorder autoSubmit pour courses (skip écran édition + résumé IA)"
+status: executing
+last_updated: "2026-04-29T12:17:27.366Z"
+last_activity: 2026-04-29 -- Phase 43 execution started
 progress:
-  total_phases: 14
+  total_phases: 15
   completed_phases: 9
-  total_plans: 37
-  completed_plans: 38
+  total_plans: 41
+  completed_plans: 39
   percent: 100
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 42 — Nourrir le compagnon (COMPLÈTE)
+**Current focus:** Phase 43 — Auberge — Modèle & moteur visiteurs
 
 ## Current Position
 
-Phase: 42
-Plan: 9/9 complétés
+Phase: 43 (Auberge — Modèle & moteur visiteurs) — EXECUTING
+Plan: 1 of 4
 Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
 Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-28 - Completed quick task 260428-kqx: DictaphoneRecorder autoSubmit pour courses
+Last activity: 2026-04-29 -- Phase 43 execution started
 
 Progress: [██████████] 100% (9/9 plans Phase 42)
 
-Status: Phase 42 complète — shippable sur TestFlight
+Status: Executing Phase 43
 
 ### Quick Tasks Completed
 
@@ -203,6 +203,7 @@ Status: Phase 42 complète — shippable sur TestFlight
 | Phase 42 P07 | 12min | 2 tasks | 3 files |
 | Phase 42 P08 | ~8min | 3 tasks | 3 files |
 | Phase 42 P09 | 8min | 3 tasks | 4 files |
+| Phase 43 P02 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -231,6 +232,7 @@ Recent decisions affecting current work:
 - [Init v1.7]: Bump CACHE_VERSION dans lib/vault-cache.ts:41 mandatory car shape FarmCrop change — évite invalidation silencieuse au premier boot post-migration
 - [Init v1.7]: Pari Sporée bienveillant — jamais de pénalité feuilles sur pari perdu, seul coût = Sporée consommée ; préserve la Core Value bien-être familial
 - Phase 42 added: Nourrir le compagnon — buff XP temporaire via crops récoltés, affinités espèce/crop, cooldown 3h, Live Activity
+- Phase 43 added: Auberge — Modèle & moteur visiteurs (fondations pures : types, catalogue 6 PNJ, engine pur, parsers, hook, tests Jest — pas d'UI ni notifs)
 - [Init v1.7]: SPOR-13 (tests Jest) éclaté sur Phases 38 et 39 — deux suites distinctes (fondations CSV/économie en 38, moteur prorata/poids/filtre en 39) au lieu d'une phase tests en bout de chaîne
 - [Init v1.6]: Phase 34 (fondation données) isolée de toute UI — livre type + parser + hook + cache + tests en invisible avant toute vue, minimise le risque de régression
 - [Init v1.6]: Phase 35 livre d'abord la visibilité (carte enveloppe + écran) AVANT la composition — l'utilisateur peut voir l'état du domaine avant de pouvoir écrire, permet test sur données seed manuelles
@@ -389,6 +391,7 @@ Recent decisions affecting current work:
 - [Phase 42]: Plan 42-09: Option A Live Activity locked — patchMascotte Partial<MascotteSnapshot> accepte feedBuffActive sans extension signature
 - [Phase 42]: Option A locked : patchMascotte signature Partial<MascotteSnapshot> inchangée — feedBuffActive acceptée automatiquement par ajout à l'interface
 - [Phase 42]: Wiring centralisé dans hooks/useVault.ts:feedCompanion — tree.tsx inchangé — élimine overlap Plan 42-08/42-09
+- [Phase 43]: Plan 43-02: 4 champs auberge_* persistés comme chaînes opaques (encodage CSV/JSON géré par auberge-engine.ts Plan 03), CACHE_VERSION inchangé (ferme exclue du cache)
 
 ### Todos
 
@@ -400,5 +403,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-24T11:59:30.583Z
+Last session: 2026-04-29T12:17:27.317Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
