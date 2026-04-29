@@ -42,23 +42,37 @@ const CAP_BY_STAGE: Record<TreeStage, number> = {
   pousse: 1,
   arbuste: 2,
   arbre: 3,
-  majestueux: 3,
-  legendaire: 3,
+  majestueux: 4,   // équilibrage : un visiteur de plus en endgame
+  legendaire: 4,
 };
 
 /** Bonus de récompense selon la rareté du visiteur. */
 const RARITY_BONUS: Record<'common' | 'uncommon' | 'rare', number> = {
   common: 1.0,
-  uncommon: 1.15,
-  rare: 1.4,
+  uncommon: 1.10,  // équilibrage : 1.15 → 1.10 pour resserrer la courbe
+  rare: 1.25,      // équilibrage : 1.4 → 1.25 (le rewardMultiplier 1.8 fait déjà beaucoup)
 };
 
 /** Probabilité de drop d'un loot rare à la livraison. */
 const LOOT_CHANCE: Record<'common' | 'uncommon' | 'rare', number> = {
   common: 0.08,
   uncommon: 0.18,
-  rare: 0.35,
+  rare: 0.30,      // équilibrage : 0.35 → 0.30 (rare reste désirable mais pas systématique)
 };
+
+/** XP profil par livraison selon la rareté (snapshot au spawn). */
+const XP_REWARD: Record<'common' | 'uncommon' | 'rare', number> = {
+  common: 5,
+  uncommon: 10,
+  rare: 20,
+};
+
+/** Multiplicateur de loyauté appliqué au reward selon la réputation actuelle avec le PNJ. */
+function getLoyaltyBonus(reputationLevel: number): number {
+  if (reputationLevel >= 5) return 1.20;  // ❤❤❤❤❤ : +20%
+  if (reputationLevel >= 3) return 1.10;  // ❤❤❤+ : +10%
+  return 1.0;
+}
 
 /** Poids de tirage au spawn — inverse de rareté (les communs apparaissent plus). */
 const RARITY_WEIGHT: Record<'common' | 'uncommon' | 'rare', number> = {
@@ -264,9 +278,11 @@ export function spawnVisitor(
     quantity: randInt(it.quantity[0], it.quantity[1], rng),
   }));
 
-  // Calcul reward (snapshot)
+  // Calcul reward (snapshot) — inclut le bonus de loyauté basé sur la réputation actuelle
+  const currentRep = state.reputations.find(r => r.visitorId === def.id)?.level ?? 0;
+  const loyaltyBonus = getLoyaltyBonus(currentRep);
   const baseValue = request.reduce((sum, it) => sum + it.quantity * estimatedSellValue(it), 0);
-  const rewardCoins = Math.round(baseValue * def.rewardMultiplier * RARITY_BONUS[def.rarity]);
+  const rewardCoins = Math.round(baseValue * def.rewardMultiplier * RARITY_BONUS[def.rarity] * loyaltyBonus);
 
   // Deadline absolue
   const deadlineAt = new Date(now.getTime() + def.deadlineHours * 60 * 60 * 1000).toISOString();
@@ -281,6 +297,7 @@ export function spawnVisitor(
     status: 'active',
     rewardCoins,
     lootChance: LOOT_CHANCE[def.rarity],
+    xpReward: XP_REWARD[def.rarity],
   };
 
   // Met à jour reputation.lastSeenAt (créer si absent)

@@ -100,8 +100,8 @@ export function useAuberge() {
   // ─── Crédit coins atomique (gami-{id}.md séparé) ────────────────────────
   // Pattern useExpeditions.addCoins — appelé APRÈS la persistance ferme réussie
   // pour garantir l'ordre delivery-persisted-then-credited.
-  const addCoins = useCallback(async (profileId: string, amount: number, note: string): Promise<void> => {
-    if (!vault || amount <= 0) return;
+  const addCoins = useCallback(async (profileId: string, amount: number, note: string, xpAmount: number = 0): Promise<void> => {
+    if (!vault || (amount <= 0 && xpAmount <= 0)) return;
     const file = gamiFile(profileId);
     const content = await vault.readFile(file).catch(() => '');
     const gami = parseGamification(content);
@@ -110,11 +110,13 @@ export function useAuberge() {
     );
     if (!gamiProfile) return;
 
-    gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) + amount;
+    if (amount > 0) gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) + amount;
+    if (xpAmount > 0) gamiProfile.points = (gamiProfile.points ?? 0) + xpAmount;
+
     const newEntry = {
       profileId,
       action: `+${amount}`,
-      points: amount,
+      points: xpAmount,  // XP réelle pour l'historique
       note,
       timestamp: new Date().toISOString(),
     };
@@ -227,11 +229,13 @@ export function useAuberge() {
     const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
     await vault.writeFile(file, serializeFarmProfile(profileName, farmData));
 
-    // Crédit coins APRÈS persistance ferme — garantit que la livraison est
+    // Crédit coins + XP APRÈS persistance ferme — garantit que la livraison est
     // durable avant la récompense (évite double-crédit en cas de retry).
-    if (result.reward.coins > 0) {
-      const note = `🍻 Auberge : ${visitor.visitorId} (+${result.reward.coins} 🍃)`;
-      await addCoins(profileId, result.reward.coins, note);
+    if (result.reward.coins > 0 || (visitor.xpReward ?? 0) > 0) {
+      const xp = visitor.xpReward ?? 0;
+      const xpSuffix = xp > 0 ? ` · +${xp} XP` : '';
+      const note = `🍻 Auberge : ${visitor.visitorId} (+${result.reward.coins} 🍃${xpSuffix})`;
+      await addCoins(profileId, result.reward.coins, note, xp);
     }
 
     await refreshFarm(profileId);

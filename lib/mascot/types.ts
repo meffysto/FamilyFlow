@@ -604,6 +604,8 @@ export interface ActiveVisitor {
   /** Phase 47 — chance de drop loot (0..1) snapshotée au spawn selon rareté.
    *  Optionnel : visiteurs pré-Phase 47 n'ont pas le champ → fallback LOOT_CHANCE moteur. */
   lootChance?: number;
+  /** Équilibrage — XP profil snapshotée au spawn selon rareté (5/10/20). */
+  xpReward?: number;
 }
 
 /** Réputation cumulée par PNJ. level cap 5, floor 0. lastSeenAt sert le cooldown anti-spam 24h. */
