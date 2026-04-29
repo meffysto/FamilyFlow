@@ -465,6 +465,8 @@ export interface CourseListMeta {
   icon: string; // nom lucide kebab-case (ex "shopping-cart")
   archive: boolean;
   createdAt: string;
+  /** Ordre appris/défini des sections pour le mode magasin (parcours optimisé). */
+  parcours?: string[];
 }
 
 /** Mapping ascendant emoji legacy → icône lucide pour la migration douce. */
@@ -552,11 +554,16 @@ export function parseCourseList(
     icon = 'shopping-cart';
   }
 
+  const parcours = Array.isArray(data.parcours)
+    ? (data.parcours as unknown[]).filter((s): s is string => typeof s === 'string' && s.length > 0)
+    : undefined;
+
   const meta: CourseListMeta = {
     nom: typeof data.nom === 'string' ? data.nom : 'Sans nom',
     icon,
     archive: data.archive === true,
     createdAt,
+    ...(parcours && parcours.length > 0 ? { parcours } : {}),
   };
 
   // Calcule l'offset (en lignes) du body dans le fichier complet pour
@@ -589,15 +596,25 @@ export function serializeCourseListMeta(meta: CourseListMeta): string {
   const nomSerialized = needsQuote
     ? `'${meta.nom.replace(/'/g, "''")}'`
     : meta.nom;
-  return [
+  const lines = [
     '---',
     `nom: ${nomSerialized}`,
     `icon: ${meta.icon}`,
     `archive: ${meta.archive}`,
     `createdAt: ${meta.createdAt}`,
-    '---',
-    '',
-  ].join('\n');
+  ];
+  if (meta.parcours && meta.parcours.length > 0) {
+    lines.push('parcours:');
+    for (const section of meta.parcours) {
+      const needsQuoteSection = /[:"'#&*?|<>=!%@`]/.test(section) || section.includes('\n');
+      const sectionSerialized = needsQuoteSection
+        ? `'${section.replace(/'/g, "''")}'`
+        : section;
+      lines.push(`  - ${sectionSerialized}`);
+    }
+  }
+  lines.push('---', '');
+  return lines.join('\n');
 }
 
 /**

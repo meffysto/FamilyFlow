@@ -70,6 +70,8 @@ export interface CourseList {
   createdAt: string;
   itemCount: number;
   remainingCount: number;
+  /** Ordre appris des sections pour le mode magasin (parcours optimisé). */
+  parcours?: string[];
 }
 
 export interface UseVaultCoursesResult {
@@ -97,6 +99,7 @@ export interface UseVaultCoursesResult {
     listId: string,
     items: { text: string; name: string; quantity: number | null; section: string }[],
   ) => Promise<{ added: number; merged: number }>;
+  setListParcours: (id: string, parcours: string[]) => Promise<void>;
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -157,6 +160,7 @@ export function useVaultCourses(
           createdAt: meta.createdAt,
           itemCount: items.length,
           remainingCount: items.filter(i => !i.completed).length,
+          ...(meta.parcours && meta.parcours.length > 0 ? { parcours: meta.parcours } : {}),
         });
       } catch (e) {
         warnUnexpected(`loadListes(${entry})`, e);
@@ -735,6 +739,29 @@ export function useVaultCourses(
     });
   }, [mergeCourseIngredients, enqueueWrite, loadListes]);
 
+  // ─── Parcours (mode magasin) ──────────────────────────────────────────────
+
+  const setListParcours = useCallback(async (id: string, parcours: string[]): Promise<void> => {
+    const vm = vaultRef.current;
+    if (!vm) return;
+    return enqueueWrite(async () => {
+      try {
+        const path = pathOf(id);
+        const content = await vm.readFile(path);
+        const { meta, items } = parseCourseList(content, path);
+        const cleaned = parcours.filter(s => typeof s === 'string' && s.length > 0);
+        const newMeta: CourseListMeta = {
+          ...meta,
+          ...(cleaned.length > 0 ? { parcours: cleaned } : { parcours: undefined }),
+        };
+        await vm.writeFile(path, serializeCourseList(newMeta, items));
+        loadListes().catch(() => {});
+      } catch (e) {
+        warnUnexpected('setListParcours', e);
+      }
+    });
+  }, [enqueueWrite, loadListes]);
+
   // ─── totalRemainingAllLists ───────────────────────────────────────────────
 
   const totalRemainingAllLists = useMemo(() => {
@@ -772,5 +799,6 @@ export function useVaultCourses(
     duplicateList,
     archiveList,
     mergeCourseIngredientsToList,
+    setListParcours,
   };
 }

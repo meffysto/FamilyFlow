@@ -74,6 +74,10 @@ import type { VoiceCourseItem } from '../../lib/parse-voice-courses';
 import { Check, FolderOpen, Maximize2, Mic, Plus, ShoppingBag, ShoppingCart, Star, X } from 'lucide-react-native';
 import { CourseAutocomplete } from '../../components/CourseAutocomplete';
 import { ShoppingModeView } from '../../components/ShoppingModeView';
+import { ShoppingBilanModal } from '../../components/ShoppingBilanModal';
+import { ParcoursEditorModal } from '../../components/ParcoursEditorModal';
+import { PreDepartView } from '../../components/PreDepartView';
+import { computeCadenceSuggestions } from '../../lib/courses-suggestions';
 import type { CourseList } from '../../hooks/useVaultCourses';
 import { trackCourseAdd, getFrequentCourses, clearCourseHistory } from '../../lib/course-history';
 import { parseVoiceCourses } from '../../lib/parse-voice-courses';
@@ -143,7 +147,7 @@ export default function MealsScreen() {
     meals, updateMeal, loadMealsForWeek,
     courses, vault,
     addCourseItem, removeCourseItem, moveCourseItem, updateCourseItem, mergeCourseIngredients, toggleCourseItem,
-    listes, activeListId, setActiveList, createList, renameList, deleteList, duplicateList, archiveList, mergeCourseIngredientsToList,
+    listes, activeListId, setActiveList, createList, renameList, deleteList, duplicateList, archiveList, mergeCourseIngredientsToList, setListParcours,
     stock, updateStockQuantity, addStockItem,
     recipes, loadRecipes, deleteRecipe, renameRecipe,
     saveRecipeImage, getRecipeImageUri,
@@ -219,8 +223,18 @@ export default function MealsScreen() {
   // Suggestions visibles uniquement quand l'input d'ajout a le focus → libère la liste
   const [addInputFocused, setAddInputFocused] = useState(false);
 
-  // Mode shopping plein écran (chrome minimal, gros checkboxes, KeepAwake)
+  // Flow shopping :
+  //  - showPreDepart : écran préparation (sélection liste + preview parcours)
+  //  - showShoppingMode : mode magasin proprement dit (gros checkboxes, breadcrumb)
+  //  - bilanObservedOrder : Bilan post-courses (apparait quand allDone)
+  //  - showParcoursEditor : édition manuelle du parcours
+  const [showPreDepart, setShowPreDepart] = useState(false);
   const [showShoppingMode, setShowShoppingMode] = useState(false);
+  const [bilanObservedOrder, setBilanObservedOrder] = useState<string[] | null>(null);
+  const [showParcoursEditor, setShowParcoursEditor] = useState(false);
+  // Pile d'annulation pour le mode magasin : items cochés pendant la session
+  // (texte + section). Réinitialisée à l'ouverture du mode magasin.
+  const [shoppingUndoStack, setShoppingUndoStack] = useState<{ text: string; section: string }[]>([]);
 
   // Historique budget multi-mois pour le lookup prix (le state budgetEntries de
   // useVault ne contient que le mois courant — insuffisant pour retrouver le
@@ -673,6 +687,23 @@ export default function MealsScreen() {
     return map;
   }, [courses, priceLookupEntries]);
 
+  // Suggestions cadence-based : calculées seulement quand Pré-départ est ouvert
+  // (sinon coût inutile à chaque toggle d'item).
+  const cadenceSuggestions = useMemo(() => {
+    if (!showPreDepart) return [];
+    return computeCadenceSuggestions(priceLookupEntries, courses, 5);
+  }, [showPreDepart, priceLookupEntries, courses]);
+
+  const handleShoppingUndoLast = useCallback(async () => {
+    setShoppingUndoStack(prev => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      // ré-ajoute en arrière-plan (best effort)
+      addCourseItem(last.text, last.section).catch(() => {});
+      return prev.slice(0, -1);
+    });
+  }, [addCourseItem]);
+
   const handleCourseToggle = useCallback(async (item: CourseItem) => {
     if (!vault) return;
     try {
@@ -684,6 +715,10 @@ export default function MealsScreen() {
 
       // Feedback tactile au moment du check (avant la disparition de l'item)
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+
+      // Pile d'annulation pour le mode magasin (avant la suppression).
+      // Permet à l'utilisateur de récupérer un article coché par erreur.
+      setShoppingUndoStack(prev => [...prev, { text: item.text, section: item.section ?? COURSES_DEFAULT_SECTION }]);
 
       // Cocher → supprimer + restocker (existant ou nouveau si catégorie stockable)
       const autoStock = await getAutomationFlag('autoStockFromCourses');
@@ -1362,24 +1397,6 @@ export default function MealsScreen() {
 
   // ─── Render ─────────────────────────────────────────────────────
 
-  // Mode shopping in-place : remplace header + body de l'onglet courses.
-  // Aucun modal — l'utilisateur reste sur le même écran, juste un autre rendu.
-  if (tab === 'courses' && showShoppingMode) {
-    return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
-        <ShoppingModeView
-          listName={listes.find(l => l.id === activeListId)?.nom ?? t('meals.header.shoppingTitle')}
-          sections={courseSections}
-          itemsBySection={coursesBySection}
-          onToggle={handleCourseToggle}
-          onClose={() => setShowShoppingMode(false)}
-          priceByItemId={coursePriceByItemId}
-          remainingEstimate={courseRemainingEstimate}
-          formatPrice={formatPrice}
-        />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
@@ -1394,10 +1411,10 @@ export default function MealsScreen() {
               <TouchableOpacity
                 onPress={() => {
                   Haptics.selectionAsync().catch(() => {});
-                  setShowShoppingMode(true);
+                  setShowPreDepart(true);
                 }}
                 activeOpacity={0.6}
-                accessibilityLabel="Ouvrir le mode shopping"
+                accessibilityLabel="Préparer la sortie courses"
                 accessibilityRole="button"
                 hitSlop={10}
                 style={styles.shoppingModeBtn}
@@ -3209,6 +3226,114 @@ export default function MealsScreen() {
           { ref: tabBarRef, ...HELP_CONTENT.meals[1] },
         ]}
       />
+
+      {/* ─── Flow shopping plein écran (au-dessus de la tab bar) ───────── */}
+      <Modal
+        visible={showPreDepart}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowPreDepart(false)}
+      >
+        <PreDepartView
+          listName={listes.find(l => l.id === activeListId)?.nom ?? t('meals.header.shoppingTitle')}
+          lists={listes
+            .filter(l => !l.archive)
+            .map(l => ({ id: l.id, nom: l.nom, remainingCount: l.id === activeListId ? courses.filter(c => !c.completed).length : l.remainingCount }))}
+          activeListId={activeListId}
+          onSwitchList={(id) => { setActiveList(id).catch(() => {}); }}
+          sections={courseSections}
+          itemsBySection={coursesBySection}
+          parcours={listes.find(l => l.id === activeListId)?.parcours}
+          remainingEstimate={courseRemainingEstimate}
+          formatPrice={formatPrice}
+          suggestions={cadenceSuggestions}
+          onAddSuggestion={async (label) => {
+            try {
+              await addCourseItem(label);
+            } catch { /* non-critical */ }
+          }}
+          onStart={() => {
+            setShowPreDepart(false);
+            // Reset la pile d'annulation au début de chaque session shopping
+            setShoppingUndoStack([]);
+            setShowShoppingMode(true);
+          }}
+          onEditParcours={() => setShowParcoursEditor(true)}
+          onClose={() => setShowPreDepart(false)}
+        />
+        <ParcoursEditorModal
+          visible={showParcoursEditor}
+          listName={listes.find(l => l.id === activeListId)?.nom ?? ''}
+          sections={courseSections}
+          parcours={listes.find(l => l.id === activeListId)?.parcours}
+          onClose={() => setShowParcoursEditor(false)}
+          onSave={async (newOrder) => {
+            if (activeListId) {
+              try { await setListParcours(activeListId, newOrder); } catch { /* non-critical */ }
+            }
+            setShowParcoursEditor(false);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        visible={showShoppingMode}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowShoppingMode(false)}
+      >
+        <ShoppingModeView
+          listName={listes.find(l => l.id === activeListId)?.nom ?? t('meals.header.shoppingTitle')}
+          sections={courseSections}
+          itemsBySection={coursesBySection}
+          onToggle={handleCourseToggle}
+          onClose={() => setShowShoppingMode(false)}
+          priceByItemId={coursePriceByItemId}
+          remainingEstimate={courseRemainingEstimate}
+          formatPrice={formatPrice}
+          parcours={listes.find(l => l.id === activeListId)?.parcours}
+          onComplete={(observed) => setBilanObservedOrder(observed)}
+          onEditParcours={() => setShowParcoursEditor(true)}
+          undoStack={shoppingUndoStack}
+          onUndoLast={handleShoppingUndoLast}
+        />
+        <ShoppingBilanModal
+          visible={bilanObservedOrder !== null}
+          observedOrder={bilanObservedOrder ?? []}
+          currentOrder={
+            listes.find(l => l.id === activeListId)?.parcours ?? courseSections
+          }
+          totalCount={courses.length}
+          onApply={async (newOrder) => {
+            if (activeListId) {
+              try { await setListParcours(activeListId, newOrder); } catch { /* non-critical */ }
+            }
+            setBilanObservedOrder(null);
+            setShowShoppingMode(false);
+          }}
+          onAdjust={() => {
+            setBilanObservedOrder(null);
+            setShowParcoursEditor(true);
+          }}
+          onIgnore={() => {
+            setBilanObservedOrder(null);
+            setShowShoppingMode(false);
+          }}
+        />
+        <ParcoursEditorModal
+          visible={showParcoursEditor}
+          listName={listes.find(l => l.id === activeListId)?.nom ?? ''}
+          sections={courseSections}
+          parcours={listes.find(l => l.id === activeListId)?.parcours}
+          onClose={() => setShowParcoursEditor(false)}
+          onSave={async (newOrder) => {
+            if (activeListId) {
+              try { await setListParcours(activeListId, newOrder); } catch { /* non-critical */ }
+            }
+            setShowParcoursEditor(false);
+          }}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
