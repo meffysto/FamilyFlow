@@ -53,6 +53,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
   const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
   const [showCookingMode, setShowCookingMode] = useState(false);
+  const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
 
   // ─── Détection de conflits alimentaires (PREF-08, PREF-10, PREF-11) ────────
   const { profiles, dietary } = useVault();
@@ -180,20 +181,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
                   if (!onChangeCategory || !availableCategories?.length) return;
                   const others = availableCategories.filter(c => c !== recipe.category);
                   if (others.length === 0) return;
-                  Alert.alert(
-                    'Changer de catégorie',
-                    `Catégorie actuelle : ${recipe.category}`,
-                    [
-                      ...others.map(cat => ({
-                        text: cat,
-                        onPress: () => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          onChangeCategory(cat);
-                        },
-                      })),
-                      { text: 'Annuler', style: 'cancel' as const },
-                    ],
-                  );
+                  setCategoryPickerVisible(true);
                 }}
               >
                 <Text style={[styles.category, { color: colors.textMuted }]}>
@@ -418,6 +406,60 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
           onFinish={onCookingFinished}
         />
       )}
+
+      {/* Sélecteur de catégorie — modal scrollable (remplace Alert tronqué iOS) */}
+      <Modal
+        visible={categoryPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCategoryPickerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.categoryBackdrop}
+          activeOpacity={1}
+          onPress={() => setCategoryPickerVisible(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={[styles.categorySheet, { backgroundColor: colors.bg }]}
+          >
+            <Text style={[styles.categorySheetTitle, { color: colors.text }]}>
+              Changer de catégorie
+            </Text>
+            <Text style={[styles.categorySheetSubtitle, { color: colors.textMuted }]}>
+              Catégorie actuelle : {recipe.category}
+            </Text>
+            <ScrollView
+              style={styles.categoryScroll}
+              contentContainerStyle={styles.categoryScrollContent}
+              showsVerticalScrollIndicator
+            >
+              {(availableCategories ?? [])
+                .filter(c => c !== recipe.category)
+                .map(cat => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[styles.categoryItem, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setCategoryPickerVisible(false);
+                      onChangeCategory?.(cat);
+                    }}
+                  >
+                    <Text style={[styles.categoryItemText, { color: colors.text }]}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.categoryCancel, { borderTopColor: colors.borderLight }]}
+              onPress={() => setCategoryPickerVisible(false)}
+            >
+              <Text style={[styles.categoryCancelText, { color: primary }]}>Annuler</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Sélecteur convives — volatile, sans persistance (PREF-FUT-01) */}
       <ConvivesPickerModal
@@ -659,6 +701,60 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   conflictCheckerText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  categoryBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  categorySheet: {
+    width: '100%',
+    maxWidth: 420,
+    maxHeight: '75%',
+    borderRadius: 20,
+    paddingTop: 20,
+    overflow: 'hidden',
+  },
+  categorySheetTitle: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    paddingHorizontal: 20,
+    marginBottom: 4,
+  },
+  categorySheetSubtitle: {
+    fontSize: FontSize.sm,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  categoryScroll: {
+    flexGrow: 0,
+  },
+  categoryScrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 8,
+  },
+  categoryItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  categoryItemText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+    textAlign: 'center',
+  },
+  categoryCancel: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  categoryCancelText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
   },
