@@ -972,8 +972,7 @@ export default function DashboardScreen() {
             accessibilityLabel={t('index.a11y.search')}
             accessibilityRole="search"
           >
-            <Search size={18} strokeWidth={2} color={colors.text} />
-            <Text style={[styles.headerBtnLabel, { color: colors.text }]}>{t('index.header.search')}</Text>
+            <Search size={20} strokeWidth={2} color={colors.text} />
           </TouchableOpacity>
           {!isChildMode && (
             <TouchableOpacity
@@ -985,11 +984,10 @@ export default function DashboardScreen() {
               accessibilityRole="button"
             >
               {isSendingRecap ? (
-                <Loader size={18} strokeWidth={2} color={colors.text} />
+                <Loader size={20} strokeWidth={2} color={colors.text} />
               ) : (
-                <Send size={18} strokeWidth={2} color={colors.text} />
+                <Send size={20} strokeWidth={2} color={colors.text} />
               )}
-              <Text style={[styles.headerBtnLabel, { color: colors.text }]}>{t('index.header.recap')}</Text>
             </TouchableOpacity>
           )}
           {!isChildMode && (
@@ -1000,8 +998,7 @@ export default function DashboardScreen() {
               accessibilityLabel={t('index.a11y.configureSections')}
               accessibilityRole="button"
             >
-              <Settings2 size={18} strokeWidth={2} color={colors.text} />
-              <Text style={[styles.headerBtnLabel, { color: colors.text }]}>{t('index.header.sections')}</Text>
+              <Settings2 size={20} strokeWidth={2} color={colors.text} />
             </TouchableOpacity>
           )}
         </View>
@@ -1437,7 +1434,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontFamily: FontFamily.serif,
-    fontSize: FontSize.subtitle,
+    fontSize: FontSize.title,
     textTransform: 'capitalize',
     letterSpacing: -0.3,
   },
@@ -1447,11 +1444,10 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   headerBtn: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    gap: 1,
     borderRadius: 10,
     shadowColor: '#000',
     shadowOpacity: 0.08,
