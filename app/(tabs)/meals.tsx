@@ -632,6 +632,18 @@ export default function MealsScreen() {
     return sections;
   }, [courses]);
 
+  const pickerSections = useMemo(() => {
+    const seen = new Set<string>();
+    const all: string[] = [];
+    for (const cat of COURSE_CATEGORIES) {
+      if (!seen.has(cat)) { seen.add(cat); all.push(cat); }
+    }
+    for (const s of courseSections) {
+      if (!seen.has(s)) { seen.add(s); all.push(s); }
+    }
+    return all;
+  }, [courseSections]);
+
   const coursesBySection = useMemo(() => {
     const map: Record<string, CourseItem[]> = {};
     for (const c of courses) {
@@ -2339,7 +2351,8 @@ export default function MealsScreen() {
         >
           <View style={[styles.pickerContent, { backgroundColor: colors.card }]}>
             <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('meals.shopping.categoryTitle')}</Text>
-            {courseSections.map((s) => (
+            <ScrollView style={styles.pickerScroll} contentContainerStyle={styles.pickerScrollContent} showsVerticalScrollIndicator={false}>
+            {pickerSections.map((s) => (
               <TouchableOpacity
                 key={s}
                 style={[
@@ -2384,6 +2397,7 @@ export default function MealsScreen() {
                 {t('meals.shopping.endOfList')}
               </Text>
             </TouchableOpacity>
+            </ScrollView>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -3720,6 +3734,13 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     textAlign: 'center',
     marginBottom: 8,
+  },
+  pickerScroll: {
+    maxHeight: 420,
+  },
+  pickerScrollContent: {
+    gap: 6,
+    paddingBottom: 4,
   },
   pickerOption: {
     padding: 14,

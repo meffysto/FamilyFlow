@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: verifying
-last_updated: "2026-04-29T19:03:40.251Z"
+last_updated: "2026-04-29T19:09:07.901Z"
 last_activity: 2026-04-29
 progress:
   total_phases: 17
   completed_phases: 11
   total_plans: 49
-  completed_plans: 47
+  completed_plans: 48
   percent: 100
 ---
 
@@ -212,6 +212,7 @@ Status: Phase complete — ready for verification
 | Phase 44 P02 | 3min | 2 tasks | 2 files |
 | Phase 44 P04 | 5 min | 1 tasks | 1 files |
 | Phase 45 P01 | 1min | 1 tasks | 1 files |
+| Phase 45-auberge-ui-modal-dashboard-dev-spawn P02 | ~6min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -409,6 +410,7 @@ Recent decisions affecting current work:
 - [Phase 44]: [Phase 44-01]: Garde producesResource === false placée APRÈS check !def, AVANT calcul tier/wear — préserve les early returns existants
 - [Phase 44-auberge-b-timent-branche-tech-social]: Plan 44-03: social-1 gating pur (no-op getTechBonuses) — consommation côté BUILDING_CATALOG.techRequired Plan 44-02; defaults TechBonuses 0/1.0 non-cassants
 - [Phase 44]: Plan 44-02: Auberge ajoutée à BUILDING_CATALOG (producesResource: false, techRequired: social-1, cost 1800 🍃, minTreeStage arbuste) + 2 clés i18n FR
+- [Phase 45-auberge-ui-modal-dashboard-dev-spawn]: AubergeSheet : map FR locale pour les 6 PNJ (i18n catalogue différée), 2 hex timer constantées (TIMER_AMBER/TIMER_RED) alignées pattern wear
 
 ### Todos
 
@@ -420,5 +422,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T19:03:40.247Z
+Last session: 2026-04-29T19:09:07.897Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
