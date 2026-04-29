@@ -953,6 +953,13 @@ export function parseFarmProfile(content: string): FarmProfileData {
     wagerMarathonWins: props.wager_marathon_wins !== undefined
       ? (n => isNaN(n) ? undefined : n)(parseInt(props.wager_marathon_wins, 10))
       : undefined,
+    // Phase 43 — Auberge (chaînes opaques)
+    auberge_visitors: props.auberge_visitors || undefined,
+    auberge_reputations: props.auberge_reputations || undefined,
+    auberge_last_spawn: props.auberge_last_spawn || undefined,
+    auberge_total_deliveries: props.auberge_total_deliveries !== undefined
+      ? (n => isNaN(n) ? undefined : n)(parseInt(props.auberge_total_deliveries, 10))
+      : undefined,
   };
 }
 
@@ -1035,6 +1042,19 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   // Phase 41 — Compteur codex vanité long terme (SPOR-10)
   if (typeof data.wagerMarathonWins === 'number' && data.wagerMarathonWins > 0) {
     lines.push(`wager_marathon_wins: ${data.wagerMarathonWins}`);
+  }
+  // Phase 43 — Auberge (sérialisation conditionnelle, chaînes opaques)
+  if (data.auberge_visitors) {
+    lines.push(`auberge_visitors: ${data.auberge_visitors}`);
+  }
+  if (data.auberge_reputations) {
+    lines.push(`auberge_reputations: ${data.auberge_reputations}`);
+  }
+  if (data.auberge_last_spawn) {
+    lines.push(`auberge_last_spawn: ${data.auberge_last_spawn}`);
+  }
+  if (typeof data.auberge_total_deliveries === 'number' && data.auberge_total_deliveries > 0) {
+    lines.push(`auberge_total_deliveries: ${data.auberge_total_deliveries}`);
   }
 
   return lines.join('\n') + '\n';

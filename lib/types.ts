@@ -668,6 +668,11 @@ export interface FarmProfileData {
   wagerLastRecomputeDate?: string;         // ISO YYYY-MM-DD — dernier passage de maybeRecompute pour ce profil
   // Phase 41 — Compteur codex vanité long terme (SPOR-10)
   wagerMarathonWins?: number;              // total paris Sporée gagnés (vanité, jamais reset)
+  // Phase 43 — Auberge (chaînes opaques, encodage interne géré par auberge-engine.ts)
+  auberge_visitors?: string;               // CSV opaque des visiteurs actifs/livrés non archivés
+  auberge_reputations?: string;            // CSV opaque des réputations par PNJ
+  auberge_last_spawn?: string;             // ISO datetime — dernier spawn (cooldown global 6h)
+  auberge_total_deliveries?: number;       // compteur lifetime (incrémenté à chaque deliver)
 }
 
 // ─── Phase 33 — Expeditions ──────────────────────────────────────────────────
