@@ -538,20 +538,32 @@ export function BuildingDetailSheet({
                   </View>
 
                   <View style={styles.upgradeLines}>
-                    <UpgradeLine
-                      icon="⏱"
-                      description={labels.cycleLabel}
-                      fromText={formatHours(currentCycleHours / wearMul)}
-                      toText={formatHours(nextCycleHours)}
-                      delta={deltaPercent(currentCycleHours / wearMul, nextCycleHours)}
-                    />
-                    <UpgradeLine
-                      icon="📦"
-                      description="Stockage maximum"
-                      fromText={`${currentMaxPending}`}
-                      toText={`${nextMaxPending} ${pluralizeResource(def.resourceType, nextMaxPending)}`}
-                      delta={`+${nextMaxPending - currentMaxPending}`}
-                    />
+                    {isProductive ? (
+                      <>
+                        <UpgradeLine
+                          icon="⏱"
+                          description={labels.cycleLabel}
+                          fromText={formatHours(currentCycleHours / wearMul)}
+                          toText={formatHours(nextCycleHours)}
+                          delta={deltaPercent(currentCycleHours / wearMul, nextCycleHours)}
+                        />
+                        <UpgradeLine
+                          icon="📦"
+                          description="Stockage maximum"
+                          fromText={`${currentMaxPending}`}
+                          toText={`${nextMaxPending} ${pluralizeResource(def.resourceType, nextMaxPending)}`}
+                          delta={`+${nextMaxPending - currentMaxPending}`}
+                        />
+                      </>
+                    ) : (
+                      <UpgradeLine
+                        icon="✨"
+                        description="Améliore l'accueil de l'auberge"
+                        fromText={`Niv. ${building.level}`}
+                        toText={`Niv. ${building.level + 1}`}
+                        delta=""
+                      />
+                    )}
                   </View>
 
                   <View style={styles.upgradeFooter}>
