@@ -57,6 +57,7 @@ import { getTreeStageInfo } from '../lib/mascot/engine';
 import { removeFromGradedInventory, countItemByGrade } from '../lib/mascot/grade-engine';
 import type { HarvestGrade } from '../lib/mascot/grade-engine';
 import type { FarmProfileData } from '../lib/types';
+import { cancelAubergeVisitorNotifs } from '../lib/scheduled-notifications';
 
 // ─── Helpers chemin fichier ──────────────────────────────────────────────────
 
@@ -236,6 +237,9 @@ export function useAuberge() {
     await refreshFarm(profileId);
     await refreshGamification();
 
+    // Phase 46 : cancel notifs locales du visiteur livré (idempotent, fire-and-forget)
+    cancelAubergeVisitorNotifs(instanceId).catch(() => {});
+
     return { ok: true, reward: result.reward };
   }, [vault, profiles, addCoins, applyAubergeToFarmData, refreshFarm, refreshGamification]);
 
@@ -261,6 +265,9 @@ export function useAuberge() {
     const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
     await vault.writeFile(file, serializeFarmProfile(profileName, farmData));
     await refreshFarm(profileId);
+
+    // Phase 46 : cancel notifs locales du visiteur refusé (idempotent, fire-and-forget)
+    cancelAubergeVisitorNotifs(instanceId).catch(() => {});
   }, [vault, profiles, applyAubergeToFarmData, refreshFarm]);
 
   // ─── tickAuberge — expire puis tente spawn (atomique) ──────────────────
