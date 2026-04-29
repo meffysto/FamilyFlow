@@ -678,7 +678,7 @@ export async function importRecipeFromPhoto(
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         system: COOK_VISION_SYSTEM_PROMPT,
         messages: [{ role: 'user', content }],
