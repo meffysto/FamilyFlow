@@ -40,6 +40,13 @@ import type { SkillTreeData } from './types';
 
 export type InsightCategory = 'alert' | 'reminder' | 'suggestion' | 'stat';
 export type InsightPriority = 'high' | 'medium' | 'low';
+/**
+ * Audience d'un insight :
+ * - 'me'     : concerne directement l'utilisateur actif (tâche assignée, RDV de ses enfants ou de lui)
+ * - 'family' : alerte famille à surveiller (stock, anniv, jalon red-flag, défi qui finit)
+ * - 'idea'   : suggestion douce (repas, photo, gratitude, loot)
+ */
+export type InsightAudience = 'me' | 'family' | 'idea';
 
 export interface InsightAction {
   label: string;
@@ -56,7 +63,15 @@ export interface Insight {
   body: string;
   priority: InsightPriority;
   category: InsightCategory;
+  audience: InsightAudience;
   action?: InsightAction;
+}
+
+export interface CategorizedInsights {
+  me: Insight[];
+  family: Insight[];
+  idea: Insight[];
+  total: number;
 }
 
 // ─── Input (sous-ensemble du VaultState) ────────────────────────────────────────
@@ -81,6 +96,29 @@ export interface InsightInput {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
+
+function normalizeName(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s_]+/g, '');
+}
+
+/** Une tâche est attribuée au profil actif si une de ses mentions @user matche son nom. */
+function isTaskForProfile(task: Task, profile: Profile | null): boolean {
+  if (!profile || !task.mentions || task.mentions.length === 0) return false;
+  const target = normalizeName(profile.name);
+  return task.mentions.some((m) => normalizeName(m) === target);
+}
+
+/**
+ * Un RDV est "pour le profil actif" si :
+ * - c'est SON RDV (adulte ou enfant nommé)
+ * - OU le profil actif est un adulte (parent → suit les RDV des enfants)
+ */
+function isRdvForProfile(rdv: RDV, profile: Profile | null): boolean {
+  if (!profile) return false;
+  if (rdv.enfant && normalizeName(rdv.enfant) === normalizeName(profile.name)) return true;
+  if (profile.role === 'adulte' || profile.role === 'ado') return true;
+  return false;
+}
 
 function daysSince(now: Date, dateStr: string): number {
   return differenceInCalendarDays(now, parseISO(dateStr));
@@ -119,8 +157,27 @@ function overdueTaskInsights(input: InsightInput, tc: TimeContext): Insight[] {
 
   if (overdue.length === 0) return insights;
 
-  // Tâches en retard critique (> 3 jours)
-  const critical = overdue.filter((tk) => daysSince(tc.now, tk.dueDate!) > 3);
+  // Tâches assignées au profil actif → insight "me" séparé et prioritaire
+  const mineOverdue = overdue.filter((tk) => isTaskForProfile(tk, input.activeProfile));
+  if (mineOverdue.length > 0) {
+    const oldest = Math.max(...mineOverdue.map((tk) => daysSince(tc.now, tk.dueDate!)));
+    insights.push({
+      id: 'overdue-mine',
+      Icon: ClipboardList,
+      title: t('insights:overdueMine.title', { count: mineOverdue.length }),
+      body: mineOverdue.slice(0, 2).map((tk) => tk.text).join(', '),
+      priority: oldest > 3 ? 'high' : 'medium',
+      category: 'alert',
+      audience: 'me',
+      action: { label: t('insights:actions.viewTasks'), type: 'navigate', route: '/(tabs)/tasks', params: { filter: 'mes-taches' } },
+    });
+  }
+
+  // Reste des retards (non assignés ou assignés à d'autres) → famille
+  const others = overdue.filter((tk) => !isTaskForProfile(tk, input.activeProfile));
+  if (others.length === 0) return insights;
+
+  const critical = others.filter((tk) => daysSince(tc.now, tk.dueDate!) > 3);
   if (critical.length > 0) {
     const oldest = Math.max(...critical.map((tk) => daysSince(tc.now, tk.dueDate!)));
     insights.push({
@@ -130,19 +187,48 @@ function overdueTaskInsights(input: InsightInput, tc: TimeContext): Insight[] {
       body: t('insights:overdueCritical.body', { days: oldest }),
       priority: 'high',
       category: 'alert',
+      audience: 'family',
       action: { label: t('insights:actions.viewTasks'), type: 'navigate', route: '/(tabs)/tasks' },
     });
-  } else if (overdue.length > 0) {
+  } else if (others.length > 0) {
     insights.push({
       id: 'overdue-tasks',
       Icon: AlertTriangle,
-      title: t('insights:overdueTasks.title', { count: overdue.length }),
-      body: overdue.slice(0, 3).map((tk) => tk.text).join(', '),
+      title: t('insights:overdueTasks.title', { count: others.length }),
+      body: others.slice(0, 3).map((tk) => tk.text).join(', '),
       priority: 'medium',
       category: 'alert',
+      audience: 'family',
       action: { label: t('insights:actions.viewTasks'), type: 'navigate', route: '/(tabs)/tasks' },
     });
   }
+
+  return insights;
+}
+
+/** Tâches dues bientôt (aujourd'hui ou demain) attribuées au profil actif. */
+function upcomingMineTaskInsights(input: InsightInput, tc: TimeContext): Insight[] {
+  const insights: Insight[] = [];
+  if (!input.activeProfile) return insights;
+
+  const upcoming = input.tasks.filter((tk) => {
+    if (tk.completed || !tk.dueDate) return false;
+    const d = daysUntil(tc.now, tk.dueDate);
+    return d >= 0 && d <= 1 && isTaskForProfile(tk, input.activeProfile);
+  });
+
+  if (upcoming.length === 0) return insights;
+
+  insights.push({
+    id: 'upcoming-mine',
+    Icon: ClipboardList,
+    title: t('insights:upcomingMine.title', { count: upcoming.length }),
+    body: upcoming.slice(0, 2).map((tk) => tk.text).join(', '),
+    priority: 'medium',
+    category: 'reminder',
+    audience: 'me',
+    action: { label: t('insights:actions.viewTasks'), type: 'navigate', route: '/(tabs)/tasks', params: { filter: 'mes-taches' } },
+  });
 
   return insights;
 }
@@ -167,6 +253,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
       body: `${rdv.heure || ''} — ${rdv.lieu || rdv.médecin || ''}${questionsNote}`,
       priority: 'high',
       category: 'reminder',
+      audience: isRdvForProfile(rdv, input.activeProfile) ? 'me' : 'family',
       action: { label: t('insights:actions.viewRdv'), type: 'navigate', route: '/(tabs)/rdv' },
     });
   }
@@ -184,6 +271,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
       body: t('insights:rdvVaccin.body', { time: rdv.heure, doctor: rdv.médecin || rdv.lieu || '' }),
       priority: 'medium',
       category: 'reminder',
+      audience: isRdvForProfile(rdv, input.activeProfile) ? 'me' : 'family',
     });
   }
 
@@ -205,6 +293,7 @@ function stockInsights(input: InsightInput): Insight[] {
       body: t('insights:stockCritical.body'),
       priority: 'high',
       category: 'alert',
+      audience: 'family',
       action: { label: t('insights:actions.viewStock'), type: 'navigate', route: '/(tabs)/stock' },
     });
   }
@@ -225,6 +314,7 @@ function stockInsights(input: InsightInput): Insight[] {
         body: notInCourses.map((s) => `${s.produit} (${s.quantite}/${s.seuil})`).join(', '),
         priority: 'medium',
         category: 'alert',
+        audience: 'family',
         action: {
           label: t('insights:actions.viewStock'),
           type: 'navigate',
@@ -270,6 +360,7 @@ function mealInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: relevant.map((m) => m.mealType).join(', ') + ` — ${todayDayDisplay}`,
         priority: 'medium',
         category: 'suggestion',
+        audience: 'idea',
         action: { label: t('insights:actions.plan'), type: 'navigate', route: '/(tabs)/meals' },
       });
     }
@@ -293,6 +384,7 @@ function mealInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: `${tomorrowDayDisplay} : ${tomorrowMissing.map((m) => m.mealType).join(', ')}`,
         priority: 'low',
         category: 'suggestion',
+        audience: 'idea',
       });
     }
   }
@@ -336,6 +428,7 @@ function photoInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: bodyParts.join(', '),
         priority: 'medium',
         category: 'reminder',
+        audience: 'idea',
         action: { label: t('insights:actions.viewPhotos'), type: 'navigate', route: '/(tabs)/photos' },
       });
     } else if (missingPhoto.length > 0) {
@@ -346,6 +439,7 @@ function photoInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: t('insights:photosMissingToday.body', { names: missingPhoto.map((e) => e.name).join(', ') }),
         priority: 'low',
         category: 'reminder',
+        audience: 'idea',
         action: { label: t('insights:actions.addPhoto'), type: 'navigate', route: '/(tabs)/photos' },
       });
     }
@@ -368,6 +462,7 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
       body: t('insights:streakTasks.body'),
       priority: 'low',
       category: 'stat',
+      audience: 'idea',
     });
   }
 
@@ -387,6 +482,7 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
       body: t('insights:gratitudeReminder.body'),
       priority: 'low',
       category: 'reminder',
+      audience: 'idea',
       action: { label: t('insights:actions.write'), type: 'navigate', route: '/(tabs)/gratitude' },
     });
   }
@@ -412,6 +508,7 @@ function defiInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: t('insights:defiEnding.body', { emoji: defi.emoji, count: daysLeft }),
         priority: 'high',
         category: 'reminder',
+        audience: 'family',
         action: { label: t('insights:actions.viewChallenge'), type: 'navigate', route: '/(tabs)/defis' },
       });
     }
@@ -429,6 +526,7 @@ function defiInsights(input: InsightInput, tc: TimeContext): Insight[] {
           body: t('insights:defiCheckin.body'),
           priority: 'medium',
           category: 'reminder',
+          audience: 'me',
         });
       }
     }
@@ -449,6 +547,7 @@ function coursesInsights(input: InsightInput): Insight[] {
       body: t('insights:coursesLong.body'),
       priority: 'medium',
       category: 'suggestion',
+      audience: 'family',
       action: { label: t('insights:actions.viewList'), type: 'navigate', route: '/(tabs)/meals', params: { tab: 'courses' } },
     });
   }
@@ -470,6 +569,7 @@ function vacationInsights(input: InsightInput, tc: TimeContext): Insight[] {
       body: daysLeft === 0 ? t('insights:vacationEnding.bodyToday') : t('insights:vacationEnding.bodyTomorrow'),
       priority: 'medium',
       category: 'reminder',
+      audience: 'family',
     });
   }
 
@@ -496,6 +596,7 @@ function gamificationInsights(input: InsightInput): Insight[] {
         body: t('insights:lootClose.body'),
         priority: 'low',
         category: 'stat',
+        audience: 'idea',
       });
     }
   }
@@ -509,6 +610,7 @@ function gamificationInsights(input: InsightInput): Insight[] {
       body: t('insights:lootAvailable.body'),
       priority: 'medium',
       category: 'suggestion',
+      audience: 'me',
       action: { label: t('insights:actions.open'), type: 'navigate', route: '/(tabs)/loot' },
     });
   }
@@ -550,6 +652,7 @@ function anniversaryInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: t('insights:anniversaryToday.body', { name: a.name, age: ageText }),
         priority: 'high',
         category: 'reminder',
+        audience: 'family',
       });
     } else {
       const quand = days === 1 ? t('insights:relative.tomorrow') : t('insights:relative.inDays', { count: days });
@@ -560,6 +663,7 @@ function anniversaryInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: `${a.name}${ageText}${a.category ? ` · ${a.category}` : ''}`,
         priority: days === 1 ? 'medium' : 'low',
         category: 'reminder',
+        audience: 'family',
       });
     }
   }
@@ -612,6 +716,7 @@ function skillTreeInsights(input: InsightInput): Insight[] {
         body: t('insights:skillRedFlag.body', { label: first.label, months: months - first.expectedMonths! }),
         priority: 'high',
         category: 'alert',
+        audience: 'family',
         action: { label: t('insights:actions.viewSkills'), type: 'navigate', route: '/(tabs)/skills' },
       });
     }
@@ -626,6 +731,7 @@ function skillTreeInsights(input: InsightInput): Insight[] {
         body: t('insights:skillOnboard.body', { count: dueJalons.length }),
         priority: 'medium',
         category: 'suggestion',
+        audience: 'idea',
         action: { label: t('insights:actions.start'), type: 'navigate', route: '/(tabs)/skills' },
       });
     } else if (dueJalons.length > 0) {
@@ -641,6 +747,7 @@ function skillTreeInsights(input: InsightInput): Insight[] {
         body: t('insights:skillDue.body', { label: mostRecent.label, months: mostRecent.expectedMonths }),
         priority: 'medium',
         category: 'suggestion',
+        audience: 'idea',
         action: { label: t('insights:actions.viewSkills'), type: 'navigate', route: '/(tabs)/skills' },
       });
     }
@@ -666,6 +773,7 @@ export function generateInsights(input: InsightInput): Insight[] {
 
   const all: Insight[] = [
     ...overdueTaskInsights(input, tc),
+    ...upcomingMineTaskInsights(input, tc),
     ...rdvInsights(input, tc),
     ...stockInsights(input),
     ...mealInsights(input, tc),
@@ -684,4 +792,24 @@ export function generateInsights(input: InsightInput): Insight[] {
   all.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
   return all;
+}
+
+/**
+ * Sépare les insights en 3 zones (Pour toi / À surveiller / Idées) avec caps.
+ * Si "me" est vide et qu'il y a des alertes famille high-priority, on en
+ * promeut une dans "me" pour éviter une zone vide en haut de la card.
+ */
+export function categorizeInsights(
+  all: Insight[],
+  caps: { me?: number; family?: number; idea?: number } = {},
+): CategorizedInsights {
+  const meCap = caps.me ?? 3;
+  const familyCap = caps.family ?? 2;
+  const ideaCap = caps.idea ?? 2;
+
+  const me = all.filter((i) => i.audience === 'me').slice(0, meCap);
+  const family = all.filter((i) => i.audience === 'family').slice(0, familyCap);
+  const idea = all.filter((i) => i.audience === 'idea').slice(0, ideaCap);
+
+  return { me, family, idea, total: all.length };
 }

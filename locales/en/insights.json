@@ -8,6 +8,14 @@
     "title_one": "{{count}} overdue task",
     "title_other": "{{count}} overdue tasks"
   },
+  "overdueMine": {
+    "title_one": "{{count}} overdue task for you",
+    "title_other": "{{count}} overdue tasks for you"
+  },
+  "upcomingMine": {
+    "title_one": "{{count}} upcoming task",
+    "title_other": "{{count}} upcoming tasks"
+  },
   "rdvImminent": {
     "prepareQuestions": " — remember to prepare your questions"
   },

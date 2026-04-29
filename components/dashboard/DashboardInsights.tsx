@@ -1,5 +1,9 @@
 /**
- * DashboardInsights.tsx — Section suggestions (insights locaux + IA optionnelle)
+ * DashboardInsights.tsx — Section suggestions en 3 zones
+ *
+ * Pour toi    : tâches/RDV attribués au profil actif (priorité haute)
+ * À surveiller: alertes famille (stock, anniv, jalon, défi)
+ * Idées       : suggestions douces (repas, photo, gratitude, loot)
  */
 
 import React, { useState, useMemo } from 'react';
@@ -15,6 +19,7 @@ import { DashboardCard } from '../DashboardCard';
 import { MarkdownText } from '../ui/MarkdownText';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { categorizeInsights, type Insight, type InsightAudience } from '../../lib/insights';
 import type { DashboardSectionProps } from './types';
 
 function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProps) {
@@ -33,97 +38,116 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
   const [aiLoading, setAiLoading] = useState(false);
 
   const insights = insightsProp ?? [];
+  const grouped = useMemo(() => categorizeInsights(insights), [insights]);
 
   const hasInsights = insights.length > 0;
   const hasAI = ai.isConfigured;
   if (!hasInsights && !hasAI) return null;
 
-  const topInsights = insights.slice(0, 5);
-
-  const handleAIRequest = async () => {
-    setAiLoading(true);
-    const ctx = {
-      tasks, menageTasks: tasks.filter(t => t.section != null && t.section.toLowerCase().includes('ménage')), rdvs, stock, meals, courses,
-      memories, defis, wishlistItems, recipes, profiles, activeProfile,
-      journalStats, healthRecords,
-    };
-    const resp = await ai.getSuggestions(ctx);
-    setAiSuggestions(resp.error || resp.text);
-    setAiLoading(false);
+  const handlePress = (insight: Insight) => {
+    if (insight.action?.type === 'navigate' && insight.action.route) {
+      if (insight.action.params) {
+        router.push({ pathname: insight.action.route as any, params: insight.action.params });
+      } else {
+        router.push(insight.action.route as any);
+      }
+    } else if (insight.action?.type === 'addCourse' && insight.action.payload) {
+      const items: { text: string; section?: string }[] = insight.action.payload;
+      (async () => {
+        for (const item of items) {
+          await addCourseItem(item.text, item.section);
+        }
+        showToast(t('dashboard.insights.addedToCourses', { count: items.length }));
+      })();
+    }
   };
 
+  const renderRow = (insight: Insight) => {
+    const priorityColor = insight.priority === 'high' ? colors.error
+      : insight.priority === 'medium' ? colors.warning
+      : colors.success;
+    const iconColor = insight.audience === 'me' ? primary : priorityColor;
+    const iconBg = iconColor + '1F';
+
+    return (
+      <TouchableOpacity
+        key={insight.id}
+        style={styles.row}
+        activeOpacity={insight.action ? 0.7 : 1}
+        onPress={() => handlePress(insight)}
+      >
+        <View style={[styles.iconBadge, { backgroundColor: iconBg }]}>
+          <insight.Icon size={16} strokeWidth={1.75} color={iconColor} />
+        </View>
+        <View style={styles.body}>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
+          <Text style={[styles.meta, { color: colors.textSub }]} numberOfLines={1}>{insight.body}</Text>
+        </View>
+        {insight.action && (
+          <Text style={[styles.action, { color: primary }]}>
+            {insight.action.type === 'addCourse' ? '+' : '›'}
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderSection = (key: InsightAudience, items: Insight[], showEmpty = false) => {
+    if (items.length === 0 && !showEmpty) return null;
+
+    const labelKey = key === 'me' ? 'sectionMe' : key === 'family' ? 'sectionFamily' : 'sectionIdea';
+    const dotColor = key === 'me' ? primary
+      : key === 'family' ? colors.warning
+      : colors.success;
+
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHead}>
+          <View style={[styles.dot, { backgroundColor: dotColor }]} />
+          <Text style={[styles.sectionLabel, { color: colors.textSub }]}>
+            {t(`dashboard.insights.${labelKey}`)}
+          </Text>
+          {key === 'me' && activeProfile && (
+            <View style={[styles.mePill, { backgroundColor: primary + '1A' }]}>
+              <Text style={[styles.mePillText, { color: primary }]}>@{activeProfile.name}</Text>
+            </View>
+          )}
+        </View>
+        {items.length === 0 ? (
+          <Text style={[styles.empty, { color: colors.textMuted }]}>
+            {t('dashboard.insights.emptyMe')}
+          </Text>
+        ) : (
+          items.map(renderRow)
+        )}
+      </View>
+    );
+  };
+
+  // Si "me" est vide mais qu'on a un profil, on affiche quand même la section vide
+  // (sentiment d'apaisement) — sauf si "me" + "family" + "idea" sont tous vides
+  const showMeEmpty = grouped.me.length === 0 && (grouped.family.length > 0 || grouped.idea.length > 0);
+
   return (
-    <DashboardCard key="insights" title={t('dashboard.insights.title')} count={hasInsights ? insights.length : undefined} color={colors.brand.soilMuted} variant="narrative" collapsible cardId="insights">
-      {topInsights.map((insight, idx) => {
-        const isFirst = idx === 0;
-        const priorityColor = insight.priority === 'high' ? colors.error
-          : insight.priority === 'medium' ? colors.warning
-          : colors.textMuted;
+    <DashboardCard
+      key="insights"
+      title={t('dashboard.insights.title')}
+      count={hasInsights ? grouped.total : undefined}
+      color={colors.brand.soilMuted}
+      variant="narrative"
+      collapsible
+      cardId="insights"
+    >
+      {renderSection('me', grouped.me, showMeEmpty)}
+      {grouped.family.length > 0 && (
+        <View style={[styles.divider, { backgroundColor: colors.separator }]} />
+      )}
+      {renderSection('family', grouped.family)}
+      {grouped.idea.length > 0 && (
+        <View style={[styles.divider, { backgroundColor: colors.separator }]} />
+      )}
+      {renderSection('idea', grouped.idea)}
 
-        const handlePress = () => {
-          if (insight.action?.type === 'navigate' && insight.action.route) {
-            if (insight.action.params) {
-              router.push({ pathname: insight.action.route as any, params: insight.action.params });
-            } else {
-              router.push(insight.action.route as any);
-            }
-          } else if (insight.action?.type === 'addCourse' && insight.action.payload) {
-            const items: { text: string; section?: string }[] = insight.action.payload;
-            (async () => {
-              for (const item of items) {
-                await addCourseItem(item.text, item.section);
-              }
-              showToast(t('dashboard.insights.addedToCourses', { count: items.length }));
-            })();
-          }
-        };
-
-        if (isFirst) {
-          return (
-            <TouchableOpacity
-              key={insight.id}
-              style={styles.insightRowMain}
-              activeOpacity={insight.action?.route ? 0.7 : 1}
-              onPress={handlePress}
-            >
-              <View style={[styles.insightIconBadgeMain, { backgroundColor: priorityColor + '18' }]}>
-                <insight.Icon size={20} strokeWidth={1.75} color={priorityColor} />
-              </View>
-              <View style={styles.insightContent}>
-                <Text style={[styles.insightTitleMain, { color: colors.text }]} numberOfLines={2}>{insight.title}</Text>
-                <Text style={[styles.insightBodyMain, { color: colors.textSub }]} numberOfLines={2}>{insight.body}</Text>
-              </View>
-              {insight.action && (
-                <Text style={[styles.insightAction, { color: primary }]}>
-                  {insight.action.type === 'addCourse' ? '+' : '›'}
-                </Text>
-              )}
-            </TouchableOpacity>
-          );
-        }
-
-        return (
-          <TouchableOpacity
-            key={insight.id}
-            style={styles.insightRow}
-            activeOpacity={insight.action?.route ? 0.7 : 1}
-            onPress={handlePress}
-          >
-            <View style={[styles.insightIconBadge, { backgroundColor: priorityColor + '18' }]}>
-              <insight.Icon size={14} strokeWidth={1.75} color={priorityColor} />
-            </View>
-            <View style={styles.insightContent}>
-              <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
-              <Text style={[styles.insightBody, { color: colors.textSub }]} numberOfLines={1}>{insight.body}</Text>
-            </View>
-            {insight.action && (
-              <Text style={[styles.insightActionSmall, { color: primary }]}>
-                {insight.action.type === 'addCourse' ? '+' : '›'}
-              </Text>
-            )}
-          </TouchableOpacity>
-        );
-      })}
       {hasAI && (
         <>
           {hasInsights && (
@@ -134,7 +158,17 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
               <MarkdownText style={{ color: colors.text }}>{aiSuggestions}</MarkdownText>
               <TouchableOpacity
                 style={[styles.aiBtn, { backgroundColor: primary + '14', borderColor: primary + '33' }]}
-                onPress={handleAIRequest}
+                onPress={async () => {
+                  setAiLoading(true);
+                  const ctx = {
+                    tasks, menageTasks: tasks.filter(tk => tk.section != null && tk.section.toLowerCase().includes('ménage')), rdvs, stock, meals, courses,
+                    memories, defis, wishlistItems, recipes, profiles, activeProfile,
+                    journalStats, healthRecords,
+                  };
+                  const resp = await ai.getSuggestions(ctx);
+                  setAiSuggestions(resp.error || resp.text);
+                  setAiLoading(false);
+                }}
                 disabled={aiLoading}
                 activeOpacity={0.7}
               >
@@ -151,7 +185,17 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
           ) : (
             <TouchableOpacity
               style={[styles.aiBtn, { backgroundColor: primary + '14', borderColor: primary + '33' }]}
-              onPress={handleAIRequest}
+              onPress={async () => {
+                setAiLoading(true);
+                const ctx = {
+                  tasks, menageTasks: tasks.filter(tk => tk.section != null && tk.section.toLowerCase().includes('ménage')), rdvs, stock, meals, courses,
+                  memories, defis, wishlistItems, recipes, profiles, activeProfile,
+                  journalStats, healthRecords,
+                };
+                const resp = await ai.getSuggestions(ctx);
+                setAiSuggestions(resp.error || resp.text);
+                setAiLoading(false);
+              }}
               disabled={aiLoading}
               activeOpacity={0.7}
             >
@@ -174,33 +218,42 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
 export const DashboardInsights = React.memo(DashboardInsightsInner);
 
 const styles = StyleSheet.create({
-  // Premier insight — gros et visible
-  insightRowMain: {
+  section: {
+    marginTop: Spacing.xs,
+  },
+  sectionHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xs,
-    marginBottom: Spacing.sm,
-    borderRadius: Radius.xs,
-    gap: Spacing.md,
+    gap: Spacing.xs,
+    marginBottom: Spacing.xs,
+    paddingHorizontal: 2,
   },
-  insightIconBadgeMain: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  insightTitleMain: {
-    fontSize: FontSize.lg,
+  sectionLabel: {
+    fontSize: FontSize.micro,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
-  insightBodyMain: {
-    fontSize: FontSize.sm,
-    marginTop: 2,
+  mePill: {
+    marginLeft: 'auto',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
   },
-  // Insights suivants — compacts
-  insightRow: {
+  mePillText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.semibold,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: Spacing.md,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.xs,
@@ -209,33 +262,34 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xs,
     gap: Spacing.md,
   },
-  insightIconBadge: {
-    width: 26,
-    height: 26,
+  iconBadge: {
+    width: 30,
+    height: 30,
     borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  insightContent: {
+  body: {
     flex: 1,
   },
-  insightTitle: {
-    fontSize: FontSize.caption,
+  title: {
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
-  insightBody: {
+  meta: {
     fontSize: FontSize.micro,
     marginTop: 1,
   },
-  insightAction: {
+  action: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.semibold,
-    marginLeft: 8,
+    marginLeft: 4,
   },
-  insightActionSmall: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-    marginLeft: 6,
+  empty: {
+    fontSize: FontSize.micro,
+    fontStyle: 'italic',
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
   },
   aiDivider: {
     height: StyleSheet.hairlineWidth,
@@ -250,7 +304,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing['2xl'],
     borderRadius: Radius.full,
     borderWidth: 1,
-    marginTop: Spacing.xs,
+    marginTop: Spacing.md,
   },
   aiBtnText: {
     fontSize: FontSize.sm,

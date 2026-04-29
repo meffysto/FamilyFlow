@@ -1577,7 +1577,11 @@
       "enrichAI": "Enhance with AI",
       "aiLoading": "Analyzing...",
       "addedToCourses_one": "{{count}} item added to shopping list",
-      "addedToCourses_other": "{{count}} items added to shopping list"
+      "addedToCourses_other": "{{count}} items added to shopping list",
+      "sectionMe": "For you",
+      "sectionFamily": "Watch list",
+      "sectionIdea": "Ideas",
+      "emptyMe": "Nothing urgent for you today."
     },
     "leaderboard": {
       "title": "Leaderboard"

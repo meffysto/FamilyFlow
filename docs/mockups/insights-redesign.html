@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mockup — Card Suggestions repensée</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #ffffff;
+    --text: #1f1d1a;
+    --textSub: #6b6760;
+    --textMuted: #9c9890;
+    --separator: rgba(0,0,0,0.06);
+    --primary: #c97a3a;
+    --primarySoft: rgba(201,122,58,0.10);
+    --primaryBorder: rgba(201,122,58,0.22);
+    --error: #c0463b;
+    --warning: #d39410;
+    --success: #5a8b3e;
+    --soil: #8a6b4a;
+    --soilMuted: #d9c8b1;
+    --me: #4a6fa8;
+    --meSoft: rgba(74,111,168,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14110d;
+      --card: #1f1c17;
+      --text: #f0ebe0;
+      --textSub: #a8a299;
+      --textMuted: #6b6760;
+      --separator: rgba(255,255,255,0.08);
+      --primarySoft: rgba(201,122,58,0.18);
+      --primaryBorder: rgba(201,122,58,0.35);
+      --meSoft: rgba(120,160,220,0.18);
+      --me: #8aaedf;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 16px 64px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage {
+    max-width: 420px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .label {
+    font-size: 12px;
+    color: var(--textMuted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    margin: 8px 4px 0;
+  }
+
+  /* ─── Card ─────────────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 18px 16px 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+    border-left: 3px solid var(--soilMuted);
+  }
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .card-count {
+    font-size: 13px;
+    color: var(--textMuted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── Section header dans la card ──────────────────────── */
+  .section {
+    margin-top: 10px;
+  }
+  .section + .section {
+    border-top: 1px solid var(--separator);
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    padding: 0 2px;
+  }
+  .section-head .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--textMuted);
+  }
+  .section-head.me .dot { background: var(--me); }
+  .section-head.family .dot { background: var(--warning); }
+  .section-head.idea .dot { background: var(--success); }
+  .section-head .label-text {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--textSub);
+  }
+  .section-head .me-pill {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--me);
+    background: var(--meSoft);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+
+  /* ─── Row ──────────────────────────────────────────────── */
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 120ms;
+  }
+  .row:hover { background: rgba(0,0,0,0.025); }
+  .row + .row { margin-top: 2px; }
+
+  .icon {
+    width: 30px; height: 30px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .icon svg { width: 16px; height: 16px; stroke-width: 1.75; }
+  .before .row.main .icon svg { width: 20px; height: 20px; }
+  .icon.high   { background: rgba(192,70,59,0.14);  color: var(--error); }
+  .icon.medium { background: rgba(211,148,16,0.16); color: var(--warning); }
+  .icon.low    { background: rgba(90,139,62,0.14);  color: var(--success); }
+  .icon.me     { background: var(--meSoft);          color: var(--me); }
+
+  .body { flex: 1; min-width: 0; }
+  .body .title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .body .meta {
+    font-size: 12px;
+    color: var(--textSub);
+    margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .meta .sep { color: var(--textMuted); opacity: 0.5; }
+  .meta .urgency-late   { color: var(--error);   font-weight: 600; }
+  .meta .urgency-today  { color: var(--warning); font-weight: 600; }
+  .meta .urgency-soon   { color: var(--textSub); }
+
+  .chevron, .plus {
+    color: var(--primary);
+    flex-shrink: 0;
+    margin-left: 4px;
+    display: flex; align-items: center;
+  }
+  .chevron svg, .plus svg { width: 18px; height: 18px; stroke-width: 2; }
+
+  /* ─── État vide / fallback ─────────────────────────────── */
+  .empty {
+    padding: 6px 4px 4px;
+    font-size: 12px;
+    color: var(--textMuted);
+    font-style: italic;
+  }
+
+  /* ─── Bouton IA ────────────────────────────────────────── */
+  .ai-btn {
+    margin-top: 14px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-radius: 999px;
+    background: var(--primarySoft);
+    border: 1px solid var(--primaryBorder);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .ai-btn:hover { background: var(--primarySoft); filter: brightness(1.05); }
+  .ai-btn svg { width: 16px; height: 16px; stroke-width: 2; }
+
+  /* ─── Variante : card actuelle (avant) ─────────────────── */
+  .before .row.main {
+    padding: 12px 4px;
+    gap: 14px;
+  }
+  .before .row.main .icon { width: 38px; height: 38px; font-size: 18px; border-radius: 11px; }
+  .before .row.main .body .title { font-size: 16px; font-weight: 700; white-space: normal; }
+  .before .row.main .body .meta { white-space: normal; }
+
+  /* ─── Caption de version ───────────────────────────────── */
+  .version-caption {
+    font-size: 11px;
+    color: var(--textMuted);
+    text-align: center;
+    margin-top: -16px;
+    margin-bottom: -8px;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="label">Avant — flux plat priorisé</div>
+  <div class="card before">
+    <div class="card-head">
+      <div class="card-title">Suggestions</div>
+      <div class="card-count">8</div>
+    </div>
+    <div class="row main">
+      <div class="icon high"><i data-lucide="alert-triangle"></i></div>
+      <div class="body">
+        <div class="title">3 tâches en retard</div>
+        <div class="meta">la plus ancienne il y a 5 jours</div>
+      </div>
+      <div class="chevron"><i data-lucide="chevron-right"></i></div>
+    </div>
+    <div class="row">
+      <div class="icon high"><i data-lucide="heart-pulse"></i></div>
+      <div class="body">
+        <div class="title">Pédiatre Lucas demain</div>
+        <div class="meta">14:00 — Dr. Martin</div>
+      </div>
+      <div class="chevron"><i data-lucide="chevron-right"></i></div>
+    </div>
+    <div class="row">
+      <div class="icon high"><i data-lucide="cake"></i></div>
+      <div class="body">
+        <div class="title">Anniv Mamie aujourd'hui</div>
+        <div class="meta">Mamie (72)</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="icon medium"><i data-lucide="package"></i></div>
+      <div class="body">
+        <div class="title">Lait épuisé</div>
+        <div class="meta">à racheter</div>
+      </div>
+      <div class="chevron"><i data-lucide="chevron-right"></i></div>
+    </div>
+    <div class="row">
+      <div class="icon medium"><i data-lucide="utensils-crossed"></i></div>
+      <div class="body">
+        <div class="title">Dîner non planifié</div>
+        <div class="meta">Dîner — mardi</div>
+      </div>
+      <div class="chevron"><i data-lucide="chevron-right"></i></div>
+    </div>
+    <button class="ai-btn"><i data-lucide="sparkles"></i> Enrichir avec l'IA</button>
+  </div>
+
+  <div class="label">Après — 3 zones (Pour toi · Famille · Idées)</div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Suggestions</div>
+      <div class="card-count">8</div>
+    </div>
+
+    <!-- POUR TOI -->
+    <div class="section">
+      <div class="section-head me">
+        <div class="dot"></div>
+        <div class="label-text">Pour toi</div>
+        <div class="me-pill">@gabriel</div>
+      </div>
+      <div class="row">
+        <div class="icon me"><i data-lucide="clipboard-list"></i></div>
+        <div class="body">
+          <div class="title">Ranger le garage</div>
+          <div class="meta">
+            <span class="urgency-late">en retard · 2j</span>
+            <span class="sep">·</span>
+            <span>tâche assignée</span>
+          </div>
+        </div>
+        <div class="chevron"><i data-lucide="chevron-right"></i></div>
+      </div>
+      <div class="row">
+        <div class="icon me"><i data-lucide="heart-pulse"></i></div>
+        <div class="body">
+          <div class="title">Pédiatre Lucas</div>
+          <div class="meta">
+            <span class="urgency-today">demain 14:00</span>
+            <span class="sep">·</span>
+            <span>Dr. Martin</span>
+          </div>
+        </div>
+        <div class="chevron"><i data-lucide="chevron-right"></i></div>
+      </div>
+      <div class="row">
+        <div class="icon me"><i data-lucide="phone"></i></div>
+        <div class="body">
+          <div class="title">Appeler la banque</div>
+          <div class="meta">
+            <span class="urgency-soon">jeudi</span>
+            <span class="sep">·</span>
+            <span>tâche assignée</span>
+          </div>
+        </div>
+        <div class="chevron"><i data-lucide="chevron-right"></i></div>
+      </div>
+    </div>
+
+    <!-- À SURVEILLER -->
+    <div class="section">
+      <div class="section-head family">
+        <div class="dot"></div>
+        <div class="label-text">À surveiller</div>
+      </div>
+      <div class="row">
+        <div class="icon high"><i data-lucide="package"></i></div>
+        <div class="body">
+          <div class="title">Lait épuisé</div>
+          <div class="meta">stock à 0 · ajouter aux courses ?</div>
+        </div>
+        <div class="plus"><i data-lucide="plus"></i></div>
+      </div>
+      <div class="row">
+        <div class="icon medium"><i data-lucide="cake"></i></div>
+        <div class="body">
+          <div class="title">Anniv Mamie aujourd'hui</div>
+          <div class="meta">72 ans · pense à appeler</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IDÉES -->
+    <div class="section">
+      <div class="section-head idea">
+        <div class="dot"></div>
+        <div class="label-text">Idées</div>
+      </div>
+      <div class="row">
+        <div class="icon low"><i data-lucide="utensils-crossed"></i></div>
+        <div class="body">
+          <div class="title">Planifier le dîner</div>
+          <div class="meta">mardi soir vide</div>
+        </div>
+        <div class="chevron"><i data-lucide="chevron-right"></i></div>
+      </div>
+      <div class="row">
+        <div class="icon low"><i data-lucide="camera"></i></div>
+        <div class="body">
+          <div class="title">Photo de Lucas</div>
+          <div class="meta">3 jours sans cliché</div>
+        </div>
+        <div class="chevron"><i data-lucide="chevron-right"></i></div>
+      </div>
+    </div>
+
+    <button class="ai-btn"><i data-lucide="sparkles"></i> Enrichir avec l'IA</button>
+  </div>
+
+  <div class="version-caption">↑ "Pour toi" en premier — l'utilisateur voit immédiatement ses tâches assignées et ses RDV avant les alertes famille.</div>
+
+  <div class="label">Cas limite — rien pour toi aujourd'hui</div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Suggestions</div>
+      <div class="card-count">3</div>
+    </div>
+    <div class="section">
+      <div class="section-head me">
+        <div class="dot"></div>
+        <div class="label-text">Pour toi</div>
+        <div class="me-pill">@gabriel</div>
+      </div>
+      <div class="empty">Rien d'urgent pour toi aujourd'hui.</div>
+    </div>
+    <div class="section">
+      <div class="section-head family">
+        <div class="dot"></div>
+        <div class="label-text">À surveiller</div>
+      </div>
+      <div class="row">
+        <div class="icon medium"><i data-lucide="package"></i></div>
+        <div class="body">
+          <div class="title">2 produits à racheter</div>
+          <div class="meta">lait, pain</div>
+        </div>
+        <div class="chevron"><i data-lucide="chevron-right"></i></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-head idea">
+        <div class="dot"></div>
+        <div class="label-text">Idées</div>
+      </div>
+      <div class="row">
+        <div class="icon low"><i data-lucide="hand-heart"></i></div>
+        <div class="body">
+          <div class="title">Gratitude du jour</div>
+          <div class="meta">série de 4 jours en cours</div>
+        </div>
+        <div class="chevron"><i data-lucide="chevron-right"></i></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

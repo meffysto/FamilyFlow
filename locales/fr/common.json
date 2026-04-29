@@ -1585,7 +1585,11 @@
       "enrichAI": "Enrichir avec l'IA",
       "aiLoading": "Analyse en cours...",
       "addedToCourses_one": "{{count}} article ajouté aux courses",
-      "addedToCourses_other": "{{count}} articles ajoutés aux courses"
+      "addedToCourses_other": "{{count}} articles ajoutés aux courses",
+      "sectionMe": "Pour toi",
+      "sectionFamily": "À surveiller",
+      "sectionIdea": "Idées",
+      "emptyMe": "Rien d'urgent pour toi aujourd'hui."
     },
     "leaderboard": {
       "title": "Classement"
