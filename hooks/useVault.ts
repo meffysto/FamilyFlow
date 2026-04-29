@@ -795,6 +795,20 @@ export function useVaultInternal(): VaultState {
   gamiDataForWidgetRef.current = gamiData;
   activeProfileIdForWidgetRef.current = activeProfileId ?? null;
 
+  // Phase 46 : tick Auberge auto sur chaque tâche complétée (transition false→true)
+  // Utilise les refs live pour éviter les re-souscriptions à chaque rerender.
+  const profilesRefForAuberge = useRef(profiles);
+  profilesRefForAuberge.current = profiles;
+  useEffect(() => {
+    const unsub = tasksHook.subscribeTaskComplete(() => {
+      const activeId = activeProfileIdForWidgetRef.current;
+      const vault = vaultRef.current;
+      if (!activeId || !vault) return;
+      tickAubergeAuto(activeId, { vault, profiles: profilesRefForAuberge.current }).catch(() => {});
+    });
+    return unsub;
+  }, [tasksHook]);
+
   // ─── Backup consolidé : flush gamiData → gamification.md (1×/jour) ─────────
   const lastGamiBackupDate = useRef<string | null>(null);
   useEffect(() => {
