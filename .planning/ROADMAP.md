@@ -372,10 +372,13 @@ Plans:
 
 ### Phase 45: Auberge — UI modal + dashboard + dev spawn
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Rendre l'Auberge testable bout-en-bout (modal AubergeSheet, carte DashboardAuberge conditionnelle, bouton dev `__DEV__` "Forcer un visiteur", wiring du CTA dans BuildingDetailSheet).
+**Requirements**: AUB45-01-FORCE-SPAWN, AUB45-02-AUBERGE-SHEET, AUB45-03-DASHBOARD-AUBERGE, AUB45-04-WIRING-CTA
 **Depends on:** Phase 44
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 45 to break down)
+- [ ] 45-01-PLAN.md — Hook useAuberge : ajout forceSpawn(profileId) (debug bypass shouldSpawn)
+- [ ] 45-02-PLAN.md — AubergeSheet.tsx : modale principale (cartes visiteurs, empty state, réputation repliée, bouton dev)
+- [ ] 45-03-PLAN.md — DashboardAuberge.tsx + enregistrement section (zone farm, toggle prefs auto)
+- [ ] 45-04-PLAN.md — Wiring CTA "Voir l'auberge" dans BuildingDetailSheet
