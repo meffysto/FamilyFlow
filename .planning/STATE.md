@@ -236,6 +236,8 @@ Recent decisions affecting current work:
 - [Init v1.7]: Pari Sporée bienveillant — jamais de pénalité feuilles sur pari perdu, seul coût = Sporée consommée ; préserve la Core Value bien-être familial
 - Phase 42 added: Nourrir le compagnon — buff XP temporaire via crops récoltés, affinités espèce/crop, cooldown 3h, Live Activity
 - Phase 43 added: Auberge — Modèle & moteur visiteurs (fondations pures : types, catalogue 6 PNJ, engine pur, parsers, hook, tests Jest — pas d'UI ni notifs)
+- Phase 44 added: Auberge — Bâtiment & branche tech social (refacto producesResource, ajout 'auberge' à BUILDING_CATALOG, tech social-1/2/3)
+- Phase 45 added: Auberge — UI modal + dashboard + dev spawn (AubergeSheet, DashboardAuberge, bouton dev __DEV__ pour forcer un spawn — testable bout-en-bout)
 - [Init v1.7]: SPOR-13 (tests Jest) éclaté sur Phases 38 et 39 — deux suites distinctes (fondations CSV/économie en 38, moteur prorata/poids/filtre en 39) au lieu d'une phase tests en bout de chaîne
 - [Init v1.6]: Phase 34 (fondation données) isolée de toute UI — livre type + parser + hook + cache + tests en invisible avant toute vue, minimise le risque de régression
 - [Init v1.6]: Phase 35 livre d'abord la visibilité (carte enveloppe + écran) AVANT la composition — l'utilisateur peut voir l'état du domaine avant de pouvoir écrire, permet test sur données seed manuelles
