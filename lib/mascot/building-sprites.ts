@@ -15,6 +15,9 @@ const MOULIN_LV3 = require('../../assets/buildings/moulin_lv3.png');
 const RUCHE_LV1 = require('../../assets/buildings/ruche_lv1.png');
 const RUCHE_LV2 = require('../../assets/buildings/ruche_lv2.png');
 const RUCHE_LV3 = require('../../assets/buildings/ruche_lv3.png');
+const AUBERGE_LV1 = require('../../assets/buildings/auberge_lv1.png');
+const AUBERGE_LV2 = require('../../assets/buildings/auberge_lv2.png');
+const AUBERGE_LV3 = require('../../assets/buildings/auberge_lv3.png');
 
 /**
  * Sprites par batimentId -> niveau -> source image.
@@ -31,4 +34,5 @@ export const BUILDING_SPRITES: Record<string, Record<number, any>> = {
   grange: expandSprites(GRANGE_LV1, GRANGE_LV2, GRANGE_LV3),
   moulin: expandSprites(MOULIN_LV1, MOULIN_LV2, MOULIN_LV3),
   ruche: expandSprites(RUCHE_LV1, RUCHE_LV2, RUCHE_LV3),
+  auberge: expandSprites(AUBERGE_LV1, AUBERGE_LV2, AUBERGE_LV3),
 };
