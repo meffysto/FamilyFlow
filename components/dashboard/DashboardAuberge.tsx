@@ -14,7 +14,7 @@
  * appliqué par le parent (`app/(tabs)/index.tsx` ligne 1231).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -29,16 +29,13 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuberge } from '../../hooks/useAuberge';
 import { getRemainingMinutes } from '../../lib/mascot/auberge-engine';
 import { VISITOR_CATALOG } from '../../lib/mascot/visitor-catalog';
+import { VISITOR_SPRITES } from '../../lib/mascot/visitor-sprites';
 import { DashboardCard } from '../DashboardCard';
 import { AubergeSheet } from '../mascot/AubergeSheet';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import type { DashboardSectionProps } from './types';
 import type { ActiveVisitor, PlacedBuilding } from '../../lib/mascot/types';
-
-// ─── Couleurs sémantiques timer (alignées AubergeSheet Plan 45-02) ──────
-const TIMER_AMBER = '#F59E0B'; // < 6h
-const TIMER_RED = '#EF4444';   // < 2h (urgence)
 
 const URGENT_THRESHOLD_MIN = 120; // 2h
 const AMBER_THRESHOLD_MIN = 360;  // 6h
@@ -61,9 +58,9 @@ function formatRemaining(min: number): string {
   return `${m}min`;
 }
 
-function timerColor(min: number, fallback: string): string {
-  if (min < URGENT_THRESHOLD_MIN) return TIMER_RED;
-  if (min < AMBER_THRESHOLD_MIN) return TIMER_AMBER;
+function timerColor(min: number, fallback: string, amber: string, red: string): string {
+  if (min < URGENT_THRESHOLD_MIN) return red;
+  if (min < AMBER_THRESHOLD_MIN) return amber;
   return fallback;
 }
 
@@ -84,6 +81,8 @@ interface VisitorRowProps {
   mutedColor: string;
   borderColor: string;
   cardBg: string;
+  amberColor: string;
+  redColor: string;
 }
 
 const VisitorRow = React.memo(function VisitorRow({
@@ -93,11 +92,21 @@ const VisitorRow = React.memo(function VisitorRow({
   mutedColor,
   borderColor,
   cardBg,
+  amberColor,
+  redColor,
 }: VisitorRowProps) {
-  const tColor = timerColor(remainingMin, mutedColor);
+  const tColor = timerColor(remainingMin, mutedColor, amberColor, redColor);
   return (
     <View style={[styles.row, { borderColor, backgroundColor: cardBg }]}>
-      <Text style={styles.rowEmoji}>{getVisitorEmoji(visitor.visitorId)}</Text>
+      {VISITOR_SPRITES[visitor.visitorId] ? (
+        <Image
+          source={VISITOR_SPRITES[visitor.visitorId]}
+          style={styles.rowSprite}
+          resizeMode="contain"
+        />
+      ) : (
+        <Text style={styles.rowEmoji}>{getVisitorEmoji(visitor.visitorId)}</Text>
+      )}
       <View style={styles.rowBody}>
         <Text style={[styles.rowName, { color: textColor }]} numberOfLines={1}>
           {getVisitorName(visitor.visitorId)}
@@ -213,6 +222,8 @@ function DashboardAubergeInner(_props: DashboardSectionProps) {
                   mutedColor={colors.textMuted}
                   borderColor={colors.borderLight}
                   cardBg={colors.cardAlt}
+                  amberColor={colors.warning}
+                  redColor={colors.error}
                 />
               ))}
               {visitorCount > previewVisitors.length && (
@@ -270,6 +281,10 @@ const styles = StyleSheet.create({
   },
   rowEmoji: {
     fontSize: 28,
+  },
+  rowSprite: {
+    width: 32,
+    height: 32,
   },
   rowBody: {
     flex: 1,
