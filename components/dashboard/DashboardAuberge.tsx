@@ -24,6 +24,7 @@ import Animated, {
   cancelAnimation,
   useReducedMotion,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuberge } from '../../hooks/useAuberge';
@@ -40,18 +41,8 @@ import type { ActiveVisitor, PlacedBuilding } from '../../lib/mascot/types';
 const URGENT_THRESHOLD_MIN = 120; // 2h
 const AMBER_THRESHOLD_MIN = 360;  // 6h
 
-// ─── Lookup map FR pour les 6 PNJ (cohérente avec AubergeSheet) ─────────
-const VISITOR_NAMES_FR: Record<string, string> = {
-  hugo_boulanger:    'Hugo le boulanger',
-  meme_lucette:      'Mémé Lucette',
-  yann_apiculteur:   'Yann l’apiculteur',
-  voyageuse:         'La Voyageuse',
-  marchand_ambulant: 'Le Marchand ambulant',
-  comtesse:          'La Comtesse',
-};
-
-function formatRemaining(min: number): string {
-  if (min <= 0) return 'Expiré';
+function formatRemaining(min: number, expiredLabel: string): string {
+  if (min <= 0) return expiredLabel;
   const h = Math.floor(min / 60);
   const m = min % 60;
   if (h > 0) return `${h}h${String(m).padStart(2, '0')}`;
@@ -68,8 +59,8 @@ function getVisitorEmoji(visitorId: string): string {
   return VISITOR_CATALOG.find(d => d.id === visitorId)?.emoji ?? '🧑';
 }
 
-function getVisitorName(visitorId: string): string {
-  return VISITOR_NAMES_FR[visitorId] ?? visitorId;
+function getVisitorLabelKey(visitorId: string): string | undefined {
+  return VISITOR_CATALOG.find(d => d.id === visitorId)?.labelKey;
 }
 
 // ─── Sous-composant memo : ligne d'aperçu visiteur ──────────────────────
@@ -95,7 +86,10 @@ const VisitorRow = React.memo(function VisitorRow({
   amberColor,
   redColor,
 }: VisitorRowProps) {
+  const { t } = useTranslation();
   const tColor = timerColor(remainingMin, mutedColor, amberColor, redColor);
+  const labelKey = getVisitorLabelKey(visitor.visitorId);
+  const name = labelKey ? t(labelKey) : visitor.visitorId;
   return (
     <View style={[styles.row, { borderColor, backgroundColor: cardBg }]}>
       {VISITOR_SPRITES[visitor.visitorId] ? (
@@ -109,14 +103,14 @@ const VisitorRow = React.memo(function VisitorRow({
       )}
       <View style={styles.rowBody}>
         <Text style={[styles.rowName, { color: textColor }]} numberOfLines={1}>
-          {getVisitorName(visitor.visitorId)}
+          {name}
         </Text>
         <Text style={[styles.rowMeta, { color: mutedColor }]} numberOfLines={1}>
-          {visitor.request.length} item{visitor.request.length > 1 ? 's' : ''} demandé{visitor.request.length > 1 ? 's' : ''}
+          {t('auberge.request.items', { count: visitor.request.length })}
         </Text>
       </View>
       <Text style={[styles.rowTimer, { color: tColor }]}>
-        ⏱ {formatRemaining(remainingMin)}
+        ⏱ {formatRemaining(remainingMin, t('auberge.timer.expired'))}
       </Text>
     </View>
   );
@@ -125,6 +119,7 @@ const VisitorRow = React.memo(function VisitorRow({
 // ─── Composant principal ────────────────────────────────────────────────
 
 function DashboardAubergeInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const { activeProfile } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { activeVisitors, totalReputation } = useAuberge();
@@ -197,7 +192,9 @@ function DashboardAubergeInner(_props: DashboardSectionProps) {
   return (
     <>
       <DashboardCard
-        title={`🛖 Auberge${visitorCount > 0 ? ` — ${visitorCount} visiteur${visitorCount > 1 ? 's' : ''}` : ''}`}
+        title={visitorCount > 0
+          ? t('auberge.header.card_title_with_count', { count: visitorCount })
+          : t('auberge.header.card_title')}
         color={cardColor}
         tinted
         collapsible
@@ -208,7 +205,7 @@ function DashboardAubergeInner(_props: DashboardSectionProps) {
             <View style={styles.empty}>
               <Text style={[styles.emptyEmoji]}>🛖</Text>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Tout est calme à l’auberge — un voyageur est en chemin.
+                {t('auberge.empty.dashboard')}
               </Text>
             </View>
           ) : (
@@ -228,7 +225,7 @@ function DashboardAubergeInner(_props: DashboardSectionProps) {
               ))}
               {visitorCount > previewVisitors.length && (
                 <Text style={[styles.moreLabel, { color: colors.textMuted }]}>
-                  + {visitorCount - previewVisitors.length} autre{visitorCount - previewVisitors.length > 1 ? 's' : ''} visiteur{visitorCount - previewVisitors.length > 1 ? 's' : ''}
+                  {t('auberge.request.more_visitors', { count: visitorCount - previewVisitors.length })}
                 </Text>
               )}
             </View>
@@ -239,10 +236,12 @@ function DashboardAubergeInner(_props: DashboardSectionProps) {
             onPress={handleOpen}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel="Voir l'auberge"
+            accessibilityLabel={t('auberge.cta.see_inn')}
           >
             <Text style={[styles.ctaText, { color: ctaText }]}>
-              Voir l’auberge {totalReputation > 0 ? `· ❤ ${totalReputation}` : ''}
+              {totalReputation > 0
+                ? t('auberge.cta.see_inn_with_rep', { reputation: totalReputation })
+                : t('auberge.cta.see_inn')}
             </Text>
           </TouchableOpacity>
         </Animated.View>

@@ -333,7 +333,7 @@ export function BuildingDetailSheet({
     subtitle: 'Production',
   };
   // Phase 44 — override subtitle pour les bâtiments non-productifs
-  const titleSubtitle = isProductive ? labels.subtitle : 'Bâtiment social';
+  const titleSubtitle = isProductive ? labels.subtitle : t('auberge.building.subtitle');
   const resourceEmoji =
     def.resourceType === 'oeuf' ? '🥚' :
     def.resourceType === 'lait' ? '🥛' :
@@ -502,15 +502,15 @@ export function BuildingDetailSheet({
                 style={styles.nonProductiveCard}
               >
                 <Text style={styles.nonProductiveIcon}>🛖</Text>
-                <Text style={styles.nonProductiveTitle}>{isAuberge ? 'Auberge' : 'Bâtiment social'}</Text>
+                <Text style={styles.nonProductiveTitle}>{isAuberge ? t('auberge.building.title') : t('auberge.building.subtitle')}</Text>
                 {isAuberge ? (
                   <>
                     <Text style={styles.nonProductiveBody}>
-                      Accueille des visiteurs et livre leurs demandes pour gagner de la réputation et des récompenses.
+                      {t('auberge.building.description')}
                     </Text>
                     <View style={{ height: Spacing.md }} />
                     <CTA
-                      label="Voir l'auberge"
+                      label={t('auberge.cta.see_inn')}
                       emoji="🛖"
                       variant="primary"
                       onPress={() => onOpenAuberge?.()}
@@ -518,7 +518,7 @@ export function BuildingDetailSheet({
                   </>
                 ) : (
                   <Text style={styles.nonProductiveBody}>
-                    Ce bâtiment ne produit pas de ressources passives. Voir l'intérieur prochainement.
+                    {t('auberge.building.non_productive_fallback')}
                   </Text>
                 )}
               </Animated.View>
@@ -558,7 +558,7 @@ export function BuildingDetailSheet({
                     ) : (
                       <UpgradeLine
                         icon="✨"
-                        description="Améliore l'accueil de l'auberge"
+                        description={t('auberge.building.upgrade_label')}
                         fromText={`Niv. ${building.level}`}
                         toText={`Niv. ${building.level + 1}`}
                         delta=""
