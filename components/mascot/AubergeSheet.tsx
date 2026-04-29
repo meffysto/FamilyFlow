@@ -38,6 +38,7 @@ const DELIVERY_FLASH_DURATION = 100;
 const DELIVERY_FADE_DURATION = 400;
 const DELIVERY_PARTICLE_DURATION = 600;
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -63,37 +64,9 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
-// ─── Lookup map FR pour les 6 PNJ ───────────────────────────────────────
-const VISITOR_LABELS_FR: Record<string, { name: string; bio: string }> = {
-  hugo_boulanger: {
-    name: 'Hugo le boulanger',
-    bio: 'Son four ronfle déjà — il lui faut juste farine et œufs frais.',
-  },
-  meme_lucette: {
-    name: 'Mémé Lucette',
-    bio: 'Mijote une soupe pour ses petits — lait et légumes feront l’affaire.',
-  },
-  yann_apiculteur: {
-    name: 'Yann l’apiculteur',
-    bio: 'Parle à ses abeilles ; troque volontiers son miel contre le tien.',
-  },
-  voyageuse: {
-    name: 'La Voyageuse',
-    bio: 'Fait halte avant de repartir — un bouquet ou une soupe suffira.',
-  },
-  marchand_ambulant: {
-    name: 'Le Marchand ambulant',
-    bio: 'Toujours preneur d’un crafté de qualité — il paie en sonnant.',
-  },
-  comtesse: {
-    name: 'La Comtesse',
-    bio: 'Sa carriole patiente dehors. Elle ne descend que pour le très raffiné.',
-  },
-};
-
 // ─── Helpers formatage ───────────────────────────────────────────────────
-function formatRemaining(minutes: number): string {
-  if (minutes <= 0) return 'Expiré';
+function formatRemaining(minutes: number, expiredLabel: string): string {
+  if (minutes <= 0) return expiredLabel;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   if (h === 0) return `${m}min`;
@@ -166,11 +139,11 @@ const VisitorCard = React.memo(function VisitorCard({
   deliverTrigger,
 }: VisitorCardProps) {
   const { colors, primary } = useThemeColors();
+  const { t } = useTranslation();
   const def = getVisitorDef(visitor.visitorId);
-  const labels = VISITOR_LABELS_FR[visitor.visitorId];
   const emoji = def?.emoji ?? '🧑';
-  const name = labels?.name ?? visitor.visitorId;
-  const bio = labels?.bio ?? '';
+  const name = def ? t(def.labelKey) : visitor.visitorId;
+  const bio = def ? t(def.descriptionKey) : '';
 
   const minutes = getRemainingMinutes(visitor, new Date());
   const tColor = timerColor(minutes, colors.textMuted, colors.warning, colors.error);
@@ -297,13 +270,13 @@ const VisitorCard = React.memo(function VisitorCard({
       {/* Ligne 3 : timer + reward preview */}
       <View style={styles.metaRow}>
         <View style={styles.metaCell}>
-          <Text style={[styles.metaLabel, { color: colors.textFaint }]}>Repart dans</Text>
+          <Text style={[styles.metaLabel, { color: colors.textFaint }]}>{t('auberge.timer.repart_in')}</Text>
           <Text style={[styles.metaValue, { color: tColor }]}>
-            {formatRemaining(minutes)}
+            {formatRemaining(minutes, t('auberge.timer.expired'))}
           </Text>
         </View>
         <View style={styles.metaCell}>
-          <Text style={[styles.metaLabel, { color: colors.textFaint }]}>Récompense</Text>
+          <Text style={[styles.metaLabel, { color: colors.textFaint }]}>{t('auberge.reward.label')}</Text>
           <Text style={[styles.metaValue, { color: colors.text }]}>
             +{visitor.rewardCoins} 🍃{lootPct > 0 ? ` · ${lootPct}% loot` : ''}
           </Text>
@@ -322,11 +295,11 @@ const VisitorCard = React.memo(function VisitorCard({
               opacity: canDeliverOk ? 1 : 0.4,
             },
           ]}
-          accessibilityLabel="Livrer le visiteur"
+          accessibilityLabel={t('auberge.cta.deliver')}
           accessibilityRole="button"
         >
           <Text style={[styles.ctaPrimaryText, { color: colors.onPrimary }]}>
-            Livrer
+            {t('auberge.cta.deliver')}
           </Text>
         </Pressable>
         <Pressable
@@ -335,11 +308,11 @@ const VisitorCard = React.memo(function VisitorCard({
             styles.ctaSecondary,
             { borderColor: colors.border, backgroundColor: colors.card },
           ]}
-          accessibilityLabel="Décliner le visiteur"
+          accessibilityLabel={t('auberge.cta.dismiss')}
           accessibilityRole="button"
         >
           <Text style={[styles.ctaSecondaryText, { color: colors.textMuted }]}>
-            Décliner
+            {t('auberge.cta.dismiss')}
           </Text>
         </Pressable>
       </View>
@@ -359,8 +332,8 @@ const ReputationRow = React.memo(function ReputationRow({
   reputation,
 }: ReputationRowProps) {
   const { colors } = useThemeColors();
-  const labels = VISITOR_LABELS_FR[visitorDef.id];
-  const name = labels?.name ?? visitorDef.id;
+  const { t } = useTranslation();
+  const name = t(visitorDef.labelKey);
   const level = reputation?.level ?? 0;
   const seen = reputation && (reputation.successCount > 0 || reputation.failureCount > 0);
 
@@ -373,7 +346,7 @@ const ReputationRow = React.memo(function ReputationRow({
         {name}
       </Text>
       <Text style={[styles.repHearts, { color: colors.textMuted }]}>
-        {seen ? hearts : 'Jamais rencontré'}
+        {seen ? hearts : t('auberge.reputation.never_met')}
       </Text>
     </View>
   );
@@ -390,6 +363,7 @@ interface AubergeSheetProps {
 
 function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
   const { activeProfile } = useVault();
   const { showToast } = useToast();
   const {
@@ -462,9 +436,10 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
         if (result.ok && result.reward) {
           await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           const def = getVisitorDef(visitor.visitorId);
-          const name = VISITOR_LABELS_FR[visitor.visitorId]?.name ?? def?.id ?? 'Visiteur';
+          const name = def ? t(def.labelKey) : t('auberge.fallback_visitor_name');
+          const toastKey = result.reward.loot ? 'auberge.reward.toast_with_loot' : 'auberge.reward.toast';
           showToast(
-            `${name} repart ravi(e) ! +${result.reward.coins} 🍃${result.reward.loot ? ' + 🎁' : ''}`,
+            t(toastKey, { name, coins: result.reward.coins }),
             'success',
           );
         } else {
@@ -474,19 +449,19 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
         if (__DEV__) console.warn('[AubergeSheet] deliver error', e);
       }
     },
-    [activeProfile, deliverVisitor, showToast],
+    [activeProfile, deliverVisitor, showToast, t],
   );
 
   const handleDismiss = useCallback(
     (visitor: ActiveVisitor) => {
       if (!activeProfile) return;
       Alert.alert(
-        'Décliner ce visiteur ?',
-        'Il repartira sans rien et il faudra attendre avant qu’il revienne.',
+        t('auberge.dismiss_confirm.title'),
+        t('auberge.dismiss_confirm.body'),
         [
-          { text: 'Annuler', style: 'cancel' },
+          { text: t('auberge.dismiss_confirm.cancel'), style: 'cancel' },
           {
-            text: 'Décliner',
+            text: t('auberge.dismiss_confirm.confirm'),
             style: 'destructive',
             onPress: async () => {
               try {
@@ -500,7 +475,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
         ],
       );
     },
-    [activeProfile, dismissVisitor],
+    [activeProfile, dismissVisitor, t],
   );
 
   const handleForceSpawn = useCallback(async () => {
@@ -510,7 +485,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
       const v = await forceSpawn(activeProfile.id);
       if (!v) {
         showToast(
-          'Aucun visiteur éligible (arbre trop jeune ou cap atteint)',
+          t('auberge.dev.no_eligible'),
           'info',
         );
       } else {
@@ -519,7 +494,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
     } catch (e) {
       if (__DEV__) console.warn('[AubergeSheet] forceSpawn error', e);
     }
-  }, [activeProfile, forceSpawn, showToast]);
+  }, [activeProfile, forceSpawn, showToast, t]);
 
   return (
     <Modal
@@ -543,16 +518,16 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
           <View style={styles.header}>
             <View style={styles.headerTitleWrap}>
               <Text style={[styles.headerTitle, { color: colors.text }]}>
-                🛖 Auberge
+                {t('auberge.title')}
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-                {activeVisitors.length} visiteur{activeVisitors.length > 1 ? 's' : ''} · ❤ {totalReputation}
+                {t('auberge.header.subtitle_visitors', { count: activeVisitors.length, reputation: totalReputation })}
               </Text>
             </View>
             <TouchableOpacity
               onPress={onClose}
               style={[styles.closeBtn, { backgroundColor: colors.cardAlt }]}
-              accessibilityLabel="Fermer"
+              accessibilityLabel={t('auberge.cta.close')}
               accessibilityRole="button"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
@@ -570,10 +545,10 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyEmoji}>🛖</Text>
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                    L’auberge est paisible ce soir
+                    {t('auberge.empty.title')}
                   </Text>
                   <Text style={[styles.emptyBody, { color: colors.textMuted }]}>
-                    Quelqu’un poussera la porte d’ici peu — fais bouillir l’eau du thé.
+                    {t('auberge.empty.body')}
                   </Text>
                 </View>
               ) : (
@@ -598,7 +573,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
               <View style={styles.repSectionWrap}>
                 <CollapsibleSection
                   id="auberge-reputation"
-                  title="Réputation"
+                  title={t('auberge.reputation.title')}
                   defaultCollapsed
                 >
                   <View
@@ -634,11 +609,11 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
                     styles.devBtn,
                     { backgroundColor: colors.cardAlt, borderColor: colors.border },
                   ]}
-                  accessibilityLabel="Forcer un visiteur (dev)"
+                  accessibilityLabel={t('auberge.dev.force_spawn_a11y')}
                   accessibilityRole="button"
                 >
                   <Text style={[styles.devBtnText, { color: colors.textMuted }]}>
-                    🪄 Forcer un visiteur (dev)
+                    {t('auberge.dev.force_spawn')}
                   </Text>
                 </TouchableOpacity>
               )}
