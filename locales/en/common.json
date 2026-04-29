@@ -4880,5 +4880,101 @@
   },
   "more": {
     "title": "Menu"
+  },
+  "auberge": {
+    "title": "🛖 Inn",
+    "header": {
+      "subtitle_visitors_one": "{{count}} visitor · ❤ {{reputation}}",
+      "subtitle_visitors_other": "{{count}} visitors · ❤ {{reputation}}",
+      "card_title_with_count_one": "🛖 Inn — {{count}} visitor",
+      "card_title_with_count_other": "🛖 Inn — {{count}} visitors",
+      "card_title": "🛖 Inn"
+    },
+    "empty": {
+      "title": "The inn is peaceful tonight",
+      "body": "Someone will push the door soon — get the kettle boiling.",
+      "dashboard": "All quiet at the inn — a traveler is on the way."
+    },
+    "cta": {
+      "deliver": "Deliver",
+      "dismiss": "Decline",
+      "see_inn": "Visit the inn",
+      "see_inn_with_rep": "Visit the inn · ❤ {{reputation}}",
+      "close": "Close"
+    },
+    "dev": {
+      "force_spawn": "🪄 Force a visitor (dev)",
+      "force_spawn_a11y": "Force a visitor (dev)",
+      "no_eligible": "No eligible visitor (tree too young or cap reached)"
+    },
+    "dismiss_confirm": {
+      "title": "Decline this visitor?",
+      "body": "They will leave empty-handed and you'll have to wait before they come back.",
+      "cancel": "Cancel",
+      "confirm": "Decline"
+    },
+    "timer": {
+      "repart_in": "Leaves in",
+      "expired": "Expired"
+    },
+    "reward": {
+      "label": "Reward",
+      "toast_with_loot": "{{name}} leaves happy! +{{coins}} 🍃 + 🎁",
+      "toast": "{{name}} leaves happy! +{{coins}} 🍃"
+    },
+    "request": {
+      "items_one": "{{count}} item requested",
+      "items_other": "{{count}} items requested",
+      "more_visitors_one": "+ {{count}} more visitor",
+      "more_visitors_other": "+ {{count}} more visitors"
+    },
+    "reputation": {
+      "title": "Reputation",
+      "never_met": "Never met"
+    },
+    "building": {
+      "title": "Inn",
+      "subtitle": "Social building",
+      "description": "Welcomes visitors and fulfills their requests to earn reputation and rewards.",
+      "non_productive_fallback": "This building does not produce passive resources. Interior coming soon.",
+      "upgrade_label": "Improves the inn's hospitality"
+    },
+    "notif": {
+      "arrival": {
+        "title": "{{emoji}} {{name}} steps inside",
+        "body": "An order awaits — {{hours}}h to fulfill it."
+      },
+      "reminder": {
+        "title": "⏰ {{emoji}} {{name}} is getting impatient",
+        "body": "Only 4h left before they leave — the order is still waiting."
+      }
+    },
+    "fallback_visitor_name": "Visitor",
+    "visitor": {
+      "hugo_boulanger": {
+        "name": "Hugo the baker",
+        "bio": "His oven is already humming — he just needs flour and fresh eggs."
+      },
+      "meme_lucette": {
+        "name": "Granny Lucette",
+        "bio": "Simmering a soup for her little ones — milk and veggies will do."
+      },
+      "yann_apiculteur": {
+        "name": "Yann the beekeeper",
+        "bio": "Speaks to his bees; gladly trades his honey for yours."
+      },
+      "voyageuse": {
+        "name": "The Wanderer",
+        "bio": "Stops by before moving on — a bouquet or a soup will be enough."
+      },
+      "marchand_ambulant": {
+        "name": "The Traveling Merchant",
+        "bio": "Always after a quality crafted item — he pays in coin."
+      },
+      "comtesse": {
+        "name": "The Countess",
+        "bio": "Her carriage waits outside. She only steps out for the truly refined."
+      }
+    }
   }
 }

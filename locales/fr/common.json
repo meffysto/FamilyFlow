@@ -4947,5 +4947,101 @@
   },
   "more": {
     "title": "Menu"
+  },
+  "auberge": {
+    "title": "🛖 Auberge",
+    "header": {
+      "subtitle_visitors_one": "{{count}} visiteur · ❤ {{reputation}}",
+      "subtitle_visitors_other": "{{count}} visiteurs · ❤ {{reputation}}",
+      "card_title_with_count_one": "🛖 Auberge — {{count}} visiteur",
+      "card_title_with_count_other": "🛖 Auberge — {{count}} visiteurs",
+      "card_title": "🛖 Auberge"
+    },
+    "empty": {
+      "title": "L'auberge est paisible ce soir",
+      "body": "Quelqu'un poussera la porte d'ici peu — fais bouillir l'eau du thé.",
+      "dashboard": "Tout est calme à l'auberge — un voyageur est en chemin."
+    },
+    "cta": {
+      "deliver": "Livrer",
+      "dismiss": "Décliner",
+      "see_inn": "Voir l'auberge",
+      "see_inn_with_rep": "Voir l'auberge · ❤ {{reputation}}",
+      "close": "Fermer"
+    },
+    "dev": {
+      "force_spawn": "🪄 Forcer un visiteur (dev)",
+      "force_spawn_a11y": "Forcer un visiteur (dev)",
+      "no_eligible": "Aucun visiteur éligible (arbre trop jeune ou cap atteint)"
+    },
+    "dismiss_confirm": {
+      "title": "Décliner ce visiteur ?",
+      "body": "Il repartira sans rien et il faudra attendre avant qu'il revienne.",
+      "cancel": "Annuler",
+      "confirm": "Décliner"
+    },
+    "timer": {
+      "repart_in": "Repart dans",
+      "expired": "Expiré"
+    },
+    "reward": {
+      "label": "Récompense",
+      "toast_with_loot": "{{name}} repart ravi(e) ! +{{coins}} 🍃 + 🎁",
+      "toast": "{{name}} repart ravi(e) ! +{{coins}} 🍃"
+    },
+    "request": {
+      "items_one": "{{count}} item demandé",
+      "items_other": "{{count}} items demandés",
+      "more_visitors_one": "+ {{count}} autre visiteur",
+      "more_visitors_other": "+ {{count}} autres visiteurs"
+    },
+    "reputation": {
+      "title": "Réputation",
+      "never_met": "Jamais rencontré"
+    },
+    "building": {
+      "title": "Auberge",
+      "subtitle": "Bâtiment social",
+      "description": "Accueille des visiteurs et livre leurs demandes pour gagner de la réputation et des récompenses.",
+      "non_productive_fallback": "Ce bâtiment ne produit pas de ressources passives. Voir l'intérieur prochainement.",
+      "upgrade_label": "Améliore l'accueil de l'auberge"
+    },
+    "notif": {
+      "arrival": {
+        "title": "{{emoji}} {{name}} pousse la porte",
+        "body": "Une commande l'attend — {{hours}}h pour l'honorer."
+      },
+      "reminder": {
+        "title": "⏰ {{emoji}} {{name}} s'impatiente",
+        "body": "Plus que 4h avant son départ — la commande t'attend toujours."
+      }
+    },
+    "fallback_visitor_name": "Visiteur",
+    "visitor": {
+      "hugo_boulanger": {
+        "name": "Hugo le boulanger",
+        "bio": "Son four ronfle déjà — il lui faut juste farine et œufs frais."
+      },
+      "meme_lucette": {
+        "name": "Mémé Lucette",
+        "bio": "Mijote une soupe pour ses petits — lait et légumes feront l'affaire."
+      },
+      "yann_apiculteur": {
+        "name": "Yann l'apiculteur",
+        "bio": "Parle à ses abeilles ; troque volontiers son miel contre le tien."
+      },
+      "voyageuse": {
+        "name": "La Voyageuse",
+        "bio": "Fait halte avant de repartir — un bouquet ou une soupe suffira."
+      },
+      "marchand_ambulant": {
+        "name": "Le Marchand ambulant",
+        "bio": "Toujours preneur d'un crafté de qualité — il paie en sonnant."
+      },
+      "comtesse": {
+        "name": "La Comtesse",
+        "bio": "Sa carriole patiente dehors. Elle ne descend que pour le très raffiné."
+      }
+    }
   }
 }
