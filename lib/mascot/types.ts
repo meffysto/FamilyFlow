@@ -556,6 +556,19 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     techRequired: 'elevage-3',
     tiers: generateTiers(12, 2000),
   },
+  // Phase 44 — Auberge : bâtiment social non-productif (gating social-1, débloque visiteurs PNJ Phase 43)
+  {
+    id: 'auberge',
+    labelKey: 'farm.building.auberge',
+    emoji: '🛖',
+    cost: 1800,
+    dailyIncome: 0,
+    minTreeStage: 'arbuste',
+    resourceType: 'oeuf', // placeholder requis par le type — non-lu (producesResource: false)
+    producesResource: false,
+    techRequired: 'social-1',
+    tiers: generateTiers(0, 1500),
+  },
 ];
 
 // ============================================================
