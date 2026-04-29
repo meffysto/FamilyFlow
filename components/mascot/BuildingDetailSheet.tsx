@@ -12,7 +12,7 @@
  * Toutes les durées affichées sont **effectives** (avec bonus tech & wear appliqués).
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -35,7 +35,6 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { BUILDING_CATALOG, type PlacedBuilding } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
-import { AubergeSheet } from './AubergeSheet';
 import {
   getPendingResources,
   getUpgradeCost,
@@ -268,6 +267,7 @@ interface BuildingDetailSheetProps {
   onUpgrade: (cellId: string) => void;
   onRepairRoof?: () => void;
   onClose: () => void;
+  onOpenAuberge?: () => void;
 }
 
 // ── Composant principal ──────────────────────────────────────────
@@ -282,9 +282,9 @@ export function BuildingDetailSheet({
   onUpgrade,
   onRepairRoof,
   onClose,
+  onOpenAuberge,
 }: BuildingDetailSheetProps) {
   const { t } = useTranslation();
-  const [aubergeOpen, setAubergeOpen] = useState(false);
 
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return null;
@@ -513,7 +513,7 @@ export function BuildingDetailSheet({
                       label="Voir l'auberge"
                       emoji="🛖"
                       variant="primary"
-                      onPress={() => setAubergeOpen(true)}
+                      onPress={() => onOpenAuberge?.()}
                     />
                   </>
                 ) : (
@@ -588,7 +588,6 @@ export function BuildingDetailSheet({
         </View>
       </View>
     </Modal>
-    <AubergeSheet visible={aubergeOpen} onClose={() => setAubergeOpen(false)} />
     </>
   );
 }

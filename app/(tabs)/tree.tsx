@@ -63,6 +63,7 @@ import { GiftReceiptModal } from '../../components/mascot/GiftReceiptModal';
 import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
 import { PlotUpgradeSheet } from '../../components/mascot/PlotUpgradeSheet';
 import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
+import { AubergeSheet } from '../../components/mascot/AubergeSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { FamilyQuestBanner } from '../../components/mascot/FamilyQuestBanner';
 import { FamilyQuestDetailSheet } from '../../components/mascot/FamilyQuestDetailSheet';
@@ -523,6 +524,7 @@ export default function TreeScreen() {
   const [showBuildingDetail, setShowBuildingDetail] = useState(false);
   const [selectedBuildingCellId, setSelectedBuildingCellId] = useState<string | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<PlacedBuilding | null>(null);
+  const [showAuberge, setShowAuberge] = useState(false);
 
   // Quêtes coopératives familiales
   const [showQuestDetail, setShowQuestDetail] = useState(false);
@@ -3062,8 +3064,16 @@ export default function TreeScreen() {
           onUpgrade={handleUpgradeBuilding}
           onRepairRoof={handleRepairRoof}
           onClose={() => { setShowBuildingDetail(false); setSelectedBuilding(null); }}
+          onOpenAuberge={() => {
+            setShowBuildingDetail(false);
+            setSelectedBuilding(null);
+            setTimeout(() => setShowAuberge(true), 350);
+          }}
         />
       )}
+
+      {/* Modal Auberge — montée au niveau racine pour éviter le stacking de Modals */}
+      <AubergeSheet visible={showAuberge} onClose={() => setShowAuberge(false)} />
 
       {/* Badges */}
       <BadgesSheet
