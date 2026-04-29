@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Modifiers de plants
 status: verifying
-last_updated: "2026-04-29T20:19:01.635Z"
+last_updated: "2026-04-29T20:38:16.902Z"
 last_activity: 2026-04-29
 progress:
-  total_phases: 18
+  total_phases: 19
   completed_phases: 13
-  total_plans: 53
-  completed_plans: 54
+  total_plans: 57
+  completed_plans: 55
   percent: 100
 ---
 
@@ -219,6 +219,7 @@ Status: Phase complete — ready for verification
 | Phase 46 P01 | 25min | 2 tasks | 5 files |
 | Phase 46-auberge-spawn-automatique-notifications-locales P03 | 5min | 1 tasks | 1 files |
 | Phase 46 P02 | 10min | 2 tasks | 1 files |
+| Phase 47 P02 | ~4 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -419,6 +420,7 @@ Recent decisions affecting current work:
 - [Phase 44-auberge-b-timent-branche-tech-social]: Plan 44-03: social-1 gating pur (no-op getTechBonuses) — consommation côté BUILDING_CATALOG.techRequired Plan 44-02; defaults TechBonuses 0/1.0 non-cassants
 - [Phase 44]: Plan 44-02: Auberge ajoutée à BUILDING_CATALOG (producesResource: false, techRequired: social-1, cost 1800 🍃, minTreeStage arbuste) + 2 clés i18n FR
 - [Phase 45-auberge-ui-modal-dashboard-dev-spawn]: AubergeSheet : map FR locale pour les 6 PNJ (i18n catalogue différée), 2 hex timer constantées (TIMER_AMBER/TIMER_RED) alignées pattern wear
+- [Phase 47]: Plan 47-02 : registry visitor-sprites.ts avec clés alignées sur VISITOR_CATALOG (hugo_boulanger, meme_lucette, voyageuse, yann_apiculteur, marchand_ambulant, comtesse) ; sprites placeholders procéduraux PIL faute d'accès pixellab — itération visuelle deferred
 
 ### Todos
 
@@ -430,5 +432,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T20:19:01.630Z
+Last session: 2026-04-29T20:38:16.897Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
