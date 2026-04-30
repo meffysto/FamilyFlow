@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useAI } from '../contexts/AIContext';
@@ -41,6 +42,7 @@ import type { DietaryExtraction, GuestProfile } from '../lib/dietary/types';
 
 export default function DietaryScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { profiles, dietary } = useVault();
   const { colors } = useThemeColors();
   const { config } = useAI();
@@ -60,10 +62,7 @@ export default function DietaryScreen() {
       if (!text.trim()) return; // pitfall 5 : ignore les transcriptions vides
       if (!config) {
         // Pas de config IA — fallback vers l'alerte standard
-        Alert.alert(
-          'IA non configurée',
-          'Configurez une clé API Claude dans les réglages pour utiliser la saisie vocale.',
-        );
+        Alert.alert(t('dietary.alert.aiDisabledTitle'), t('dietary.alert.aiDisabledMsg'));
         return;
       }
       try {
@@ -73,23 +72,17 @@ export default function DietaryScreen() {
         });
         if (results.length === 0) {
           // D-15 : aucune extraction — informer sans crash, pas de toast retry
-          Alert.alert(
-            'Aucune préférence détectée',
-            'La dictée n\'a pas permis d\'extraire des préférences. Essayez à nouveau ou ajoutez manuellement.',
-          );
+          Alert.alert(t('dietary.alert.noResultsTitle'), t('dietary.alert.noResultsMsg'));
           return;
         }
         setExtractions(results);
       } catch (e) {
         if (__DEV__) console.warn('extractDietaryConstraints failed', e);
         // D-15 : fallback gracieux — pas de toast retry, juste une alerte informative
-        Alert.alert(
-          'Saisie vocale indisponible',
-          'L\'extraction automatique a échoué. Veuillez ajouter vos préférences manuellement.',
-        );
+        Alert.alert(t('dietary.alert.errorTitle'), t('dietary.alert.errorMsg'));
       }
     },
-    [config, profiles, dietary.guests],
+    [config, profiles, dietary.guests, t],
   );
 
   const handleConfirmVoiceExtractions = useCallback(
@@ -185,12 +178,12 @@ export default function DietaryScreen() {
 
   const handleAddGuest = useCallback(() => {
     Alert.prompt(
-      'Ajouter un invité',
-      'Entrez le prénom de l\'invité récurrent :',
+      t('dietary.guestPrompt.title'),
+      t('dietary.guestPrompt.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('dietary.guestPrompt.cancel'), style: 'cancel' },
         {
-          text: 'Ajouter',
+          text: t('dietary.guestPrompt.confirm'),
           onPress: (name?: string) => {
             const trimmed = name?.trim();
             if (!trimmed) return;
@@ -215,7 +208,7 @@ export default function DietaryScreen() {
       ],
       'plain-text',
     );
-  }, [upsertGuest]);
+  }, [upsertGuest, t]);
 
   // ─── Rendu ──────────────────────────────────────────────────────────────────
 
@@ -232,19 +225,19 @@ export default function DietaryScreen() {
         {/* En-tête */}
         <View style={styles.header}>
           <Button
-            label="←"
+            label={t('dietary.back')}
             onPress={() => router.back()}
             variant="ghost"
             size="sm"
           />
           <Text style={[styles.screenTitle, { color: colors.text }]}>
-            Préférences alimentaires
+            {t('dietary.title')}
           </Text>
           {/* Bouton micro — PREF-13 (D-13) : un seul bouton micro dans le header */}
           <TouchableOpacity
             style={styles.micButton}
             onPress={() => setRecorderVisible(true)}
-            accessibilityLabel="Saisir les préférences par la voix"
+            accessibilityLabel={t('dietary.voiceA11y')}
             accessibilityRole="button"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -254,10 +247,10 @@ export default function DietaryScreen() {
 
         {/* Section Membres de la famille */}
         <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-          Membres de la famille
+          {t('dietary.familySection')}
         </Text>
 
-        <SectionErrorBoundary name="Membres de la famille">
+        <SectionErrorBoundary name={t('dietary.familySection')}>
           {profiles.map((profile) => (
             <ProfileFoodCard
               key={profile.id}
@@ -272,14 +265,14 @@ export default function DietaryScreen() {
 
         {/* Section Invités récurrents */}
         <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-          Invités récurrents
+          {t('dietary.guestsSection')}
         </Text>
 
-        <SectionErrorBoundary name="Invités récurrents">
+        <SectionErrorBoundary name={t('dietary.guestsSection')}>
           {guests.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyStateText, { color: colors.textFaint }]}>
-                Aucun invité récurrent enregistré
+                {t('dietary.guestsEmpty')}
               </Text>
             </View>
           ) : (
@@ -294,7 +287,7 @@ export default function DietaryScreen() {
           )}
 
           <Button
-            label="Ajouter un invité"
+            label={t('dietary.addGuest')}
             onPress={handleAddGuest}
             variant="secondary"
             icon="+"
@@ -315,7 +308,7 @@ export default function DietaryScreen() {
           onRequestClose={() => setRecorderVisible(false)}
         >
           <DictaphoneRecorder
-            context={{ title: 'Préférences alimentaires', subtitle: 'Dictez les préférences…' }}
+            context={{ title: t('dietary.voiceTitle'), subtitle: t('dietary.voiceSubtitle') }}
             onResult={handleVoiceTranscript}
             onClose={() => setRecorderVisible(false)}
           />

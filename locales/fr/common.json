@@ -2379,6 +2379,53 @@
       "deleted": "Mot supprimé"
     }
   },
+  "dietary": {
+    "title": "Préférences alimentaires",
+    "back": "Retour",
+    "voiceA11y": "Saisir les préférences par la voix",
+    "familySection": "Membres de la famille",
+    "guestsSection": "Invités récurrents",
+    "guestsEmpty": "Aucun invité récurrent enregistré",
+    "addGuest": "Ajouter un invité",
+    "voiceTitle": "Préférences alimentaires",
+    "voiceSubtitle": "Dictez les préférences…",
+    "guestPrompt": {
+      "title": "Ajouter un invité",
+      "message": "Entrez le prénom de l'invité récurrent :",
+      "placeholder": "Prénom",
+      "cancel": "Annuler",
+      "confirm": "Ajouter"
+    },
+    "alert": {
+      "aiDisabledTitle": "IA non configurée",
+      "aiDisabledMsg": "Configurez une clé API Claude dans les réglages pour utiliser la saisie vocale.",
+      "noResultsTitle": "Aucune préférence détectée",
+      "noResultsMsg": "La dictée n'a pas permis d'extraire des préférences. Essayez à nouveau ou ajoutez manuellement.",
+      "errorTitle": "Saisie vocale indisponible",
+      "errorMsg": "L'extraction automatique a échoué. Veuillez ajouter vos préférences manuellement.",
+      "presetTitle": "Ajouter les restrictions associées ?",
+      "presetMsg": "Ce régime s'accompagne de restrictions usuelles. Les ajouter ?",
+      "presetCancel": "Non, juste le régime",
+      "presetConfirm": "Ajouter",
+      "deleteGuestTitle": "Supprimer {{name}} ?",
+      "deleteGuestMsg": "Cet invité et toutes ses préférences seront supprimés.",
+      "deleteGuestCancel": "Ne pas supprimer",
+      "deleteGuestConfirm": "Supprimer"
+    },
+    "categories": {
+      "allergies": "Allergies",
+      "intolerances": "Intolérances",
+      "regimes": "Régimes alimentaires",
+      "aversions": "Aversions"
+    },
+    "emptyHint": "Aucune {{category}} enregistrée — appuyez + pour ajouter",
+    "a11y": {
+      "deleteItem": "Supprimer cette préférence",
+      "deleteItemAction": "Supprimer",
+      "addItem": "Ajouter une préférence alimentaire",
+      "deleteGuest": "Supprimer l'invité {{name}}"
+    }
+  },
   "common": {
     "close": "Fermer",
     "error": "Erreur",

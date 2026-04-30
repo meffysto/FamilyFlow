@@ -2371,6 +2371,53 @@
       "deleted": "Quote deleted"
     }
   },
+  "dietary": {
+    "title": "Dietary preferences",
+    "back": "Back",
+    "voiceA11y": "Enter preferences by voice",
+    "familySection": "Family members",
+    "guestsSection": "Recurring guests",
+    "guestsEmpty": "No recurring guest saved",
+    "addGuest": "Add a guest",
+    "voiceTitle": "Dietary preferences",
+    "voiceSubtitle": "Dictate the preferences…",
+    "guestPrompt": {
+      "title": "Add a guest",
+      "message": "Enter the recurring guest's first name:",
+      "placeholder": "First name",
+      "cancel": "Cancel",
+      "confirm": "Add"
+    },
+    "alert": {
+      "aiDisabledTitle": "AI not configured",
+      "aiDisabledMsg": "Set up a Claude API key in settings to use voice input.",
+      "noResultsTitle": "No preference detected",
+      "noResultsMsg": "Dictation could not extract preferences. Try again or add them manually.",
+      "errorTitle": "Voice input unavailable",
+      "errorMsg": "Automatic extraction failed. Please add your preferences manually.",
+      "presetTitle": "Add the related restrictions?",
+      "presetMsg": "This regime usually comes with related restrictions. Add them?",
+      "presetCancel": "No, regime only",
+      "presetConfirm": "Add",
+      "deleteGuestTitle": "Delete {{name}}?",
+      "deleteGuestMsg": "This guest and all their preferences will be removed.",
+      "deleteGuestCancel": "Keep",
+      "deleteGuestConfirm": "Delete"
+    },
+    "categories": {
+      "allergies": "Allergies",
+      "intolerances": "Intolerances",
+      "regimes": "Dietary regimes",
+      "aversions": "Aversions"
+    },
+    "emptyHint": "No {{category}} saved — tap + to add",
+    "a11y": {
+      "deleteItem": "Delete this preference",
+      "deleteItemAction": "Delete",
+      "addItem": "Add a dietary preference",
+      "deleteGuest": "Delete guest {{name}}"
+    }
+  },
   "common": {
     "close": "Close",
     "error": "Error",

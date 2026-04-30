@@ -17,6 +17,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -36,17 +37,16 @@ import { getPresetItemsToAdd, REGIME_PRESET_ITEMS } from '../../lib/dietary/pres
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-/** Structure des 4 catégories alimentaires */
+/** Structure des 4 catégories alimentaires (label résolu via i18n dans le composant) */
 const CATEGORIES: Array<{
   key: 'allergies' | 'intolerances' | 'regimes' | 'aversions';
-  label: string;
   severity: DietarySeverity;
   foodField: keyof Pick<Profile, 'foodAllergies' | 'foodIntolerances' | 'foodRegimes' | 'foodAversions'>;
 }> = [
-  { key: 'allergies', label: 'Allergies', severity: 'allergie', foodField: 'foodAllergies' },
-  { key: 'intolerances', label: 'Intolérances', severity: 'intolerance', foodField: 'foodIntolerances' },
-  { key: 'regimes', label: 'Régimes alimentaires', severity: 'regime', foodField: 'foodRegimes' },
-  { key: 'aversions', label: 'Aversions', severity: 'aversion', foodField: 'foodAversions' },
+  { key: 'allergies', severity: 'allergie', foodField: 'foodAllergies' },
+  { key: 'intolerances', severity: 'intolerance', foodField: 'foodIntolerances' },
+  { key: 'regimes', severity: 'regime', foodField: 'foodRegimes' },
+  { key: 'aversions', severity: 'aversion', foodField: 'foodAversions' },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -92,6 +92,7 @@ const AnimatedChip = React.memo(function AnimatedChip({
   onDelete,
 }: AnimatedChipProps) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
 
   const renderRightActions = useCallback(() => (
     <TouchableOpacity
@@ -99,11 +100,11 @@ const AnimatedChip = React.memo(function AnimatedChip({
       onPress={onDelete}
       activeOpacity={0.8}
       accessibilityRole="button"
-      accessibilityLabel="Supprimer cette préférence"
+      accessibilityLabel={t('dietary.a11y.deleteItem')}
     >
-      <Text style={[styles.deleteActionText, { color: colors.onPrimary }]}>Supprimer</Text>
+      <Text style={[styles.deleteActionText, { color: colors.onPrimary }]}>{t('dietary.a11y.deleteItemAction')}</Text>
     </TouchableOpacity>
-  ), [colors.error, colors.onPrimary, onDelete]);
+  ), [colors.error, colors.onPrimary, onDelete, t]);
 
   return (
     <ReanimatedSwipeable
@@ -134,7 +135,10 @@ const CategorySection = React.memo(function CategorySection({
   onUpdate,
 }: CategorySectionProps) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState('');
+
+  const categoryLabel = t(`dietary.categories.${category.key}`);
 
   const handleDelete = useCallback((item: string) => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
@@ -148,20 +152,19 @@ const CategorySection = React.memo(function CategorySection({
     setInputValue('');
   }, [items, category.key, onUpdate]);
 
-  const emptyHint = `Aucune ${category.label.toLowerCase()} enregistrée`;
+  const emptyHint = t('dietary.emptyHint', { category: categoryLabel.toLowerCase() });
 
   return (
     <CollapsibleSection
       id={`dietary-${profileId}-${category.key}`}
-      title={category.label}
+      title={categoryLabel}
       defaultCollapsed
     >
       {items.length === 0 ? (
         <Text
           style={[styles.emptyHint, { color: colors.textFaint }]}
-          accessibilityLabel={emptyHint}
         >
-          {emptyHint} — appuyez + pour ajouter
+          {emptyHint}
         </Text>
       ) : (
         <View style={styles.chipsContainer}>
@@ -192,7 +195,7 @@ const CategorySection = React.memo(function CategorySection({
           onPress={() => handleSubmit(inputValue)}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="Ajouter une préférence alimentaire"
+          accessibilityLabel={t('dietary.a11y.addItem')}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={[styles.addButtonText, { color: colors.text }]}>+</Text>
@@ -210,6 +213,7 @@ export const ProfileFoodCard = React.memo(function ProfileFoodCard({
   onDelete,
 }: ProfileFoodCardProps) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
 
   // Nom affiché : Profile a .name, GuestProfile aussi
   const displayName = profile.name;
@@ -243,22 +247,22 @@ export const ProfileFoodCard = React.memo(function ProfileFoodCard({
       }
 
       Alert.alert(
-        'Ajouter les restrictions associées ?',
-        `Le régime « Femme enceinte » s'accompagne de restrictions usuelles (lait cru, charcuterie crue, poisson cru, alcool, etc.). Les ajouter aux régimes ?`,
+        t('dietary.alert.presetTitle'),
+        t('dietary.alert.presetMsg'),
         [
           {
-            text: 'Non, juste le régime',
+            text: t('dietary.alert.presetCancel'),
             style: 'cancel',
             onPress: () => onUpdate(category, items),
           },
           {
-            text: 'Ajouter',
+            text: t('dietary.alert.presetConfirm'),
             onPress: () => onUpdate(category, [...items, ...toAdd]),
           },
         ],
       );
     },
-    [profile, onUpdate],
+    [profile, onUpdate, t],
   );
 
   // Avatar : uniquement disponible sur Profile (les invités n'en ont pas)
@@ -283,17 +287,17 @@ export const ProfileFoodCard = React.memo(function ProfileFoodCard({
             style={styles.deleteProfileButton}
             onPress={() =>
               Alert.alert(
-                `Supprimer ${displayName} ?`,
-                'Cet invité et toutes ses préférences seront supprimés.',
+                t('dietary.alert.deleteGuestTitle', { name: displayName }),
+                t('dietary.alert.deleteGuestMsg'),
                 [
-                  { text: 'Ne pas supprimer', style: 'cancel' },
-                  { text: 'Supprimer', style: 'destructive', onPress: onDelete },
+                  { text: t('dietary.alert.deleteGuestCancel'), style: 'cancel' },
+                  { text: t('dietary.alert.deleteGuestConfirm'), style: 'destructive', onPress: onDelete },
                 ],
               )
             }
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel={`Supprimer l'invité ${displayName}`}
+            accessibilityLabel={t('dietary.a11y.deleteGuest', { name: displayName })}
           >
             <Text style={[styles.deleteProfileIcon, { color: colors.error }]}>✕</Text>
           </TouchableOpacity>

@@ -192,9 +192,12 @@ function VaccineForm({ onSave, onClose }: { onSave: (entry: VaccineEntry) => voi
               key={v}
               style={[formStyles.chip, { backgroundColor: nom === v ? primary + '20' : colors.cardAlt, borderColor: nom === v ? primary : 'transparent' }]}
               onPress={() => setNom(v)}
+              accessibilityRole="button"
+              accessibilityLabel={v}
+              accessibilityState={{ selected: nom === v }}
             >
-              <Text style={[formStyles.chipText, { color: nom === v ? primary : colors.textSub }]} numberOfLines={1}>
-                {v.length > 20 ? v.slice(0, 20) + '…' : v}
+              <Text style={[formStyles.chipText, { color: nom === v ? primary : colors.textSub }]} numberOfLines={1} ellipsizeMode="tail">
+                {v}
               </Text>
             </TouchableOpacity>
           ))}
