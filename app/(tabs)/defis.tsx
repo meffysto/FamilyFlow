@@ -58,6 +58,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 import { EmptyState } from '../../components/EmptyState';
 import { useTranslation } from 'react-i18next';
+import { Check, X as XIcon } from 'lucide-react-native';
 
 type TabId = 'actifs' | 'templates' | 'historique';
 
@@ -508,8 +509,8 @@ function DefiDetailModal({
                 <Text style={[detailStyles.calendarDayNum, { color: isFuture ? colors.textFaint : allDone ? colors.success : hasFail ? colors.error : colors.textMuted }]}>
                   {dayNum}
                 </Text>
-                {allDone && <Text style={detailStyles.calendarIcon}>✓</Text>}
-                {hasFail && <Text style={detailStyles.calendarIcon}>✗</Text>}
+                {allDone && <Check size={12} strokeWidth={2.5} color={colors.success} />}
+                {hasFail && <XIcon size={12} strokeWidth={2.5} color={colors.error} />}
               </View>
             );
           })}
@@ -662,7 +663,6 @@ const detailStyles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', borderWidth: 2,
   },
   calendarDayNum: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  calendarIcon: { fontSize: FontSize.micro },
   participantRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.lg,
     padding: Spacing.xl, borderRadius: Radius.md,
@@ -882,13 +882,11 @@ export default function DefisScreen() {
         {activeTab === 'historique' && (
           <>
             {historyDefis.length === 0 && (
-              <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
-                <Text style={styles.emptyEmoji}>📜</Text>
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('defis.empty.historyTitle')}</Text>
-                <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
-                  {t('defis.empty.historySubtitle')}
-                </Text>
-              </View>
+              <EmptyState
+                emoji="📜"
+                title={t('defis.empty.historyTitle')}
+                subtitle={t('defis.empty.historySubtitle')}
+              />
             )}
             {historyDefis.map((d) => {
               const isCompleted = d.status === 'completed';
@@ -970,20 +968,6 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
-  emptyState: {
-    padding: Spacing['3xl'],
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    gap: Spacing.lg,
-  },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy },
-  emptyDesc: { fontSize: FontSize.body, textAlign: 'center' },
-  emptyBtn: {
-    paddingHorizontal: Spacing['3xl'], paddingVertical: Spacing.xl,
-    borderRadius: Radius.md, marginTop: Spacing.lg,
-  },
-  emptyBtnText: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
   categoryTitle: {
     fontSize: FontSize.label, fontWeight: FontWeight.bold,
     textTransform: 'uppercase', letterSpacing: 0.5,

@@ -57,7 +57,7 @@ import { Shadows } from '../../constants/shadows';
 import { Layout, Spacing, Radius } from '../../constants/spacing';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
-import { Gift, X as XIcon, BarChart3, Users } from 'lucide-react-native';
+import { Gift, X as XIcon, BarChart3, Users, Check } from 'lucide-react-native';
 
 // Catalogue complet des badges (rareté × reward) — constant, calculé une fois.
 const ALL_BADGES = (Object.entries(REWARDS) as [LootRarity, typeof REWARDS[LootRarity]][]).flatMap(
@@ -463,8 +463,11 @@ export default function LootScreen() {
                             } as UsedLoot);
                             await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                           }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Marquer ${noteLabel} comme utilisé`}
                         >
-                          <Text style={[styles.markBtnText, { color: colors.onPrimary }]}>{'✓ Utilisé'}</Text>
+                          <Check size={14} strokeWidth={2.5} color={colors.onPrimary} />
+                          <Text style={[styles.markBtnText, { color: colors.onPrimary }]}>{'Utilisé'}</Text>
                         </TouchableOpacity>
                       ) : (
                         <View style={[styles.markBtn, { backgroundColor: colors.success, opacity: 0.4 }]}>
@@ -491,7 +494,10 @@ export default function LootScreen() {
                         <Text style={[styles.rewardCardLabel, { color: colors.text }]}>{usedLoot.emoji} {usedLoot.label}</Text>
                       </View>
                       <View style={[styles.usedBadge, { backgroundColor: colors.successBg }]}>
-                        <Text style={[styles.usedBadgeText, { color: colors.success }]}>{'✓ Utilisé'}</Text>
+                        <View style={styles.usedBadgeRow}>
+                          <Check size={12} strokeWidth={2.5} color={colors.success} />
+                          <Text style={[styles.usedBadgeText, { color: colors.success }]}>{'Utilisé'}</Text>
+                        </View>
                         <Text style={[styles.usedBadgeDate, { color: colors.success }]}>{usedAtFormatted}</Text>
                       </View>
                     </View>
@@ -603,7 +609,7 @@ export default function LootScreen() {
                       <Text style={[styles.drRewardPts, { color: colors.success }]}>+{reward.bonusPoints}</Text>
                     )}
                     {reward.requiresParent && (
-                      <Text style={styles.drParentTag}>👨‍👩‍👧</Text>
+                      <Users size={14} strokeWidth={2} color={colors.textFaint} />
                     )}
                   </View>
                 ))}
@@ -819,10 +825,12 @@ const styles = StyleSheet.create({
   rewardCardProfile: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
   rewardCardLabel: { fontSize: FontSize.sm },
   markBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
-    alignItems: 'center',
   },
   markBtnText: {
     fontSize: FontSize.label,
@@ -834,6 +842,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     gap: 2,
+  },
+  usedBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
   usedBadgeText: {
     fontSize: FontSize.caption,
@@ -924,7 +937,6 @@ const styles = StyleSheet.create({
   drRewardEmoji: { fontSize: FontSize.title },
   drRewardName: { flex: 1, fontSize: FontSize.label },
   drRewardPts: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
-  drParentTag: { fontSize: FontSize.sm },
   drCloseButton: {
     borderRadius: 14,
     padding: 16,
