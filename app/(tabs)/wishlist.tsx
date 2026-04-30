@@ -310,11 +310,7 @@ export default function WishlistScreen() {
                 />
               ))}
             </ScrollView>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={[styles.filterScroll, styles.filterScrollSecond]}
-            >
+            <View style={[styles.filterScroll, styles.filterScrollSecond]}>
               {occasionChips.map((chip) => (
                 <Chip
                   key={chip.id}
@@ -324,7 +320,7 @@ export default function WishlistScreen() {
                   size="sm"
                 />
               ))}
-            </ScrollView>
+            </View>
           </View>
         }
         scrollY={scrollY}
