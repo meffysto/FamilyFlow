@@ -603,6 +603,17 @@
     "totalSpent": "Total dépensé",
     "outOf": "sur {{amount}}",
     "month": "Mois : {{month}}",
+    "usageStats_one": "{{percent}}% utilisé · {{count}} dépense",
+    "usageStats_other": "{{percent}}% utilisé · {{count}} dépenses",
+    "config": {
+      "title": "Configurer le budget",
+      "sectionLabel": "Plafond par catégorie (€)",
+      "limitA11y": "Plafond {{name}}",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "invalidAmount": "Montant invalide pour {{name}}",
+      "savedToast": "Plafonds mis à jour"
+    },
     "empty": {
       "title": "Aucun budget",
       "subtitle": "Suivez vos dépenses familiales",

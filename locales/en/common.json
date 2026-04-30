@@ -603,6 +603,17 @@
     "totalSpent": "Total spent",
     "outOf": "out of {{amount}}",
     "month": "Month: {{month}}",
+    "usageStats_one": "{{percent}}% used · {{count}} expense",
+    "usageStats_other": "{{percent}}% used · {{count}} expenses",
+    "config": {
+      "title": "Configure budget",
+      "sectionLabel": "Limit per category (€)",
+      "limitA11y": "{{name}} limit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "invalidAmount": "Invalid amount for {{name}}",
+      "savedToast": "Limits updated"
+    },
     "empty": {
       "title": "No budget yet",
       "subtitle": "Track your family expenses",

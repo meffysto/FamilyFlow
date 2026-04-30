@@ -31,6 +31,7 @@ import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
+import { Camera, Search, Settings } from 'lucide-react-native';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
@@ -438,7 +439,7 @@ export default function BudgetScreen() {
       const raw = (configLimits[cat.name] ?? '').replace(',', '.');
       const val = parseFloat(raw);
       if (isNaN(val) || val < 0) {
-        showToast('Montant invalide pour ' + cat.name, 'error');
+        showToast(t('budget.config.invalidAmount', { name: cat.name }), 'error');
         return;
       }
     }
@@ -451,9 +452,9 @@ export default function BudgetScreen() {
     };
     await updateBudgetConfig(newConfig);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast('Plafonds mis à jour', 'success');
+    showToast(t('budget.config.savedToast'), 'success');
     setConfigModalVisible(false);
-  }, [budgetConfig, configLimits, updateBudgetConfig, showToast]);
+  }, [budgetConfig, configLimits, updateBudgetConfig, showToast, t]);
 
   // ─── Rendu onglet évolution ────────────────────────────────────────────────
 
@@ -510,10 +511,11 @@ export default function BudgetScreen() {
                 style={[styles.headerIconBtn, { backgroundColor: colors.card }]}
                 onPress={handleOpenConfigModal}
                 activeOpacity={0.7}
-                accessibilityLabel="Configurer les plafonds du budget"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                accessibilityLabel={t('budget.config.title')}
                 accessibilityRole="button"
               >
-                <Text style={styles.headerIconText}>⚙️</Text>
+                <Settings size={20} color={colors.text} strokeWidth={2} />
               </TouchableOpacity>
               {aiConfigured && (
                 <TouchableOpacity
@@ -521,6 +523,7 @@ export default function BudgetScreen() {
                   onPress={handleScanReceipt}
                   activeOpacity={0.7}
                   disabled={scanning}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                   accessibilityLabel={scanning ? t('budget.scan.scanning') : t('budget.scan.button')}
                   accessibilityRole="button"
                   accessibilityState={{ disabled: scanning }}
@@ -528,7 +531,7 @@ export default function BudgetScreen() {
                   {scanning ? (
                     <ActivityIndicator size="small" color={primary} />
                   ) : (
-                    <Text style={styles.headerIconText}>📸</Text>
+                    <Camera size={20} color={colors.text} strokeWidth={2} />
                   )}
                 </TouchableOpacity>
               )}
@@ -536,6 +539,7 @@ export default function BudgetScreen() {
                 style={[styles.addBtn, { backgroundColor: primary }]}
                 onPress={() => setAddModalVisible(true)}
                 activeOpacity={0.7}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 accessibilityLabel={t('budget.header.addExpenseA11y')}
                 accessibilityRole="button"
               >
@@ -607,7 +611,7 @@ export default function BudgetScreen() {
               const entriesCount = budgetEntries.length;
               return (
                 <Text style={[styles.totalStats, { color: colors.textMuted }]}>
-                  {usagePct}{'% utilisé · '}{entriesCount}{' '}{entriesCount > 1 ? 'dépenses' : 'dépense'}
+                  {t('budget.usageStats', { percent: usagePct, count: entriesCount })}
                 </Text>
               );
             })()}
@@ -664,7 +668,7 @@ export default function BudgetScreen() {
           {/* Barre de recherche + filtres catégorie */}
           <View style={[styles.filterContainer, { backgroundColor: colors.bg }]}>
             <View style={[styles.searchBar, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
-              <Text style={[styles.searchIcon, { color: colors.textFaint }]}>🔍</Text>
+              <Search size={16} color={colors.textFaint} strokeWidth={2} style={styles.searchIcon} />
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
                 placeholder={t('budget.filter.search')}
@@ -881,7 +885,7 @@ export default function BudgetScreen() {
                     onPress={() => setSelectedCategory(cat)}
                     activeOpacity={0.7}
                     accessibilityLabel={t('budget.addModal.categoryA11y', { name: cat.name })}
-                    accessibilityRole="tab"
+                    accessibilityRole="button"
                     accessibilityState={{ selected }}
                   >
                     <Text style={[styles.chipText, { color: selected ? colors.onPrimary : colors.text }]}>
@@ -958,8 +962,8 @@ export default function BudgetScreen() {
             <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
           </View>
           <ScrollView contentContainerStyle={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Configurer le budget</Text>
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Plafond par catégorie (€)</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('budget.config.title')}</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.config.sectionLabel')}</Text>
             {budgetConfig.categories.map((cat) => (
               <View key={cat.name} style={styles.configRow}>
                 <Text style={[styles.configCatLabel, { color: colors.text }]}>
@@ -972,7 +976,7 @@ export default function BudgetScreen() {
                   onChangeText={(txt) => setConfigLimits((prev) => ({ ...prev, [cat.name]: txt }))}
                   placeholder="0"
                   placeholderTextColor={colors.textFaint}
-                  accessibilityLabel={`Plafond ${cat.name}`}
+                  accessibilityLabel={t('budget.config.limitA11y', { name: cat.name })}
                 />
               </View>
             ))}
@@ -982,7 +986,7 @@ export default function BudgetScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
             >
-              <Text style={[styles.submitBtnText, { color: colors.onPrimary }]}>Enregistrer</Text>
+              <Text style={[styles.submitBtnText, { color: colors.onPrimary }]}>{t('budget.config.save')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.cancelBtn}
@@ -990,7 +994,7 @@ export default function BudgetScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
             >
-              <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Annuler</Text>
+              <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>{t('budget.config.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -1019,24 +1023,23 @@ export default function BudgetScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   headerIconBtn: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerIconText: { fontSize: FontSize.sm },
   addBtn: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addBtnText: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    lineHeight: 18,
+    lineHeight: 22,
   },
   tabsWrap: { paddingVertical: Spacing.xs },
   monthNav: {
@@ -1105,7 +1108,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   searchIcon: {
-    fontSize: FontSize.body,
     marginRight: Spacing.md,
   },
   searchInput: {

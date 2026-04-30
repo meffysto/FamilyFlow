@@ -30,6 +30,7 @@ import Animated, {
   useAnimatedScrollHandler,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { ExternalLink, Lock, ShoppingCart } from 'lucide-react-native';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { AvatarIcon } from '../../components/ui/AvatarIcon';
 
@@ -284,6 +285,7 @@ export default function WishlistScreen() {
               style={[styles.addBtn, { backgroundColor: primary }]}
               onPress={() => openEditor()}
               activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={t('wishlist.a11y.addWish')}
               accessibilityRole="button"
             >
@@ -425,7 +427,7 @@ export default function WishlistScreen() {
                             accessibilityLabel={t('wishlist.openLink')}
                             accessibilityRole="link"
                           >
-                            <Text style={[styles.linkIcon, { color: primary }]}>🔗</Text>
+                            <ExternalLink size={16} color={primary} strokeWidth={2} />
                           </TouchableOpacity>
                         ) : null}
                       </View>
@@ -458,7 +460,10 @@ export default function WishlistScreen() {
                         accessibilityLabel={item.bought ? t('wishlist.a11y.markUnbought') : t('wishlist.a11y.markBought')}
                         accessibilityRole="button"
                       >
-                        <Text style={{ fontSize: 16 }}>{item.bought ? '🔒' : '🛒'}</Text>
+                        {item.bought
+                          ? <Lock size={18} color={colors.success} strokeWidth={2} />
+                          : <ShoppingCart size={18} color={colors.textSub} strokeWidth={2} />
+                        }
                       </TouchableOpacity>
                     )}
                   </View>
@@ -586,16 +591,16 @@ const styles = StyleSheet.create({
   },
   countText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   addBtn: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addBtnText: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    lineHeight: 18,
+    lineHeight: 22,
   },
   // Filtres
   filterScroll: {
@@ -670,7 +675,6 @@ const styles = StyleSheet.create({
   itemContent: { flex: 1, gap: Spacing.xs },
   itemTextRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   itemText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
-  linkIcon: { fontSize: 16 },
   itemNotes: { fontSize: FontSize.sm },
   itemBadges: { flexDirection: 'row', gap: Spacing.sm },
   budgetPill: {
