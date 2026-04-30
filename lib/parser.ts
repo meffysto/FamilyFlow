@@ -1316,6 +1316,9 @@ export function parseGamification(content: string): GamificationData {
         multiplier: parseFloat(currentProps.multiplier ?? '1'),
         multiplierRemaining: parseInt(currentProps.multiplier_remaining ?? '0', 10),
         pityCounter: parseInt(currentProps.pity_counter ?? '0', 10),
+        earnedBadges: currentProps.earned_badges
+          ? currentProps.earned_badges.split(',').map((s) => s.trim()).filter(Boolean)
+          : [],
       });
     }
   };
@@ -1395,7 +1398,8 @@ streak: ${p.streak}
 loot_boxes_available: ${p.lootBoxesAvailable}
 multiplier: ${p.multiplier}
 multiplier_remaining: ${p.multiplierRemaining}
-pity_counter: ${p.pityCounter ?? 0}`
+pity_counter: ${p.pityCounter ?? 0}
+earned_badges: ${(p.earnedBadges ?? []).join(',')}`
     )
     .join('\n\n');
 
@@ -1470,6 +1474,7 @@ export function mergeProfiles(
       multiplier: gami?.multiplier ?? 1,
       multiplierRemaining: gami?.multiplierRemaining ?? 0,
       pityCounter: gami?.pityCounter ?? 0,
+      earnedBadges: gami?.earnedBadges ?? [],
     };
   });
 }

@@ -277,6 +277,13 @@ export function openLootBox(
     pityCounter: newPityCounter,
   };
 
+  if (rewardDef.rewardType === 'badge') {
+    const current = updatedProfile.earnedBadges ?? [];
+    if (!current.includes(rewardDef.emoji)) {
+      updatedProfile = { ...updatedProfile, earnedBadges: [...current, rewardDef.emoji] };
+    }
+  }
+
   // Apply bonus points if any
   if (rewardDef.bonusPoints > 0) {
     const { profile: withBonus, entry: bonusEntry } = addPoints(
@@ -493,6 +500,13 @@ export function openAgentSecretLootBox(
 
   // NE PAS décrémenter lootBoxesAvailable — c'est un bonus gratuit
   let updatedProfile: Profile = { ...profile };
+
+  if (rewardDef.rewardType === 'badge') {
+    const current = updatedProfile.earnedBadges ?? [];
+    if (!current.includes(rewardDef.emoji)) {
+      updatedProfile = { ...updatedProfile, earnedBadges: [...current, rewardDef.emoji] };
+    }
+  }
 
   // Appliquer les points bonus
   if (rewardDef.bonusPoints > 0) {

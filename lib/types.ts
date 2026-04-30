@@ -130,6 +130,7 @@ export interface Profile {
   sagaTitle?: string;         // titre temporaire affiché après complétion saga (7 jours)
   sagaItems?: SagaItem[];     // items temporaires obtenus via sagas (expirent après 7 jours)
   completedSagas?: string[];  // IDs des sagas terminées
+  earnedBadges?: string[];    // emojis des badges collectés (persistant, survit à la troncature du journal)
 }
 
 /** Item temporaire obtenu via saga */

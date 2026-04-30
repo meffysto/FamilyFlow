@@ -378,12 +378,15 @@ export default function LootScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('loot.sections.badgeCollection')}</Text>
           {profiles.map((profile) => {
-            // Badges obtenus par ce profil (extraire les emojis uniques)
-            const earnedEmojis = new Set(
-              (gamiData?.history ?? [])
-                .filter((h) => h.profileId === profile.id && h.action.startsWith('loot:') && h.note.includes('Badge'))
-                .map((h) => h.note.split(' ')[0])
-            );
+            // Badges obtenus : source persistée (profile.earnedBadges) + fallback historique
+            // pour les badges encore présents dans les 100 dernières entrées.
+            const earnedEmojis = new Set<string>(profile.earnedBadges ?? []);
+            (gamiData?.history ?? [])
+              .filter((h) => h.profileId === profile.id && h.action.startsWith('loot:') && h.note.includes('Badge'))
+              .forEach((h) => {
+                const emoji = h.note.split(' ')[0];
+                if (emoji) earnedEmojis.add(emoji);
+              });
 
             const allBadges = ALL_BADGES;
             const earnedCount = allBadges.filter((b) => earnedEmojis.has(b.emoji)).length;
