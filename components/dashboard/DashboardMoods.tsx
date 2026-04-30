@@ -45,7 +45,12 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
             if (!entry) return null;
             const Icon = MOOD_ICONS[entry.level];
             return (
-              <View key={p.id} style={styles.moodItem}>
+              <View
+                key={p.id}
+                style={styles.moodItem}
+                accessible
+                accessibilityLabel={t('moodsScreen.a11y.moodLevelFor', { level: entry.level, name: p.name })}
+              >
                 <Icon size={28} strokeWidth={1.75} color={getMoodIconColor(entry.level, colors)} />
                 <Text style={[styles.name, { color: colors.textMuted }]} numberOfLines={1}>{p.name}</Text>
               </View>

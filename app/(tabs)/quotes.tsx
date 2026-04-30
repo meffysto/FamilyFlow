@@ -16,7 +16,10 @@ import {
   TextInput,
   RefreshControl,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import { ChevronRight, ChevronDown, Mic, Plus } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Animated, {
@@ -61,8 +64,7 @@ export default function QuotesScreen() {
   const [contexte, setContexte] = useState('');
   const [selectedEnfant, setSelectedEnfant] = useState('');
   const [editingQuote, setEditingQuote] = useState<ChildQuote | null>(null);
-  const [dictaphoneVisible, setDictaphoneVisible] = useState(false);
-  const dictaphoneResultRef = useRef<string>('');
+  const [modalMode, setModalMode] = useState<'form' | 'dictaphone'>('form');
   const [filterEnfant, setFilterEnfant] = useState<string | null>(null);
 
   const enfants = useMemo(
@@ -123,6 +125,7 @@ export default function QuotesScreen() {
     setContexte('');
     setSelectedEnfant(enfants.length === 1 ? enfants[0].name : '');
     setEditingQuote(null);
+    setModalMode('form');
     setModalVisible(true);
   }, [enfants]);
 
@@ -131,12 +134,13 @@ export default function QuotesScreen() {
     setContexte(quote.contexte ?? '');
     setSelectedEnfant(quote.enfant);
     setEditingQuote(quote);
+    setModalMode('form');
     setModalVisible(true);
   }, []);
 
   const handleSave = useCallback(async () => {
     if (!citation.trim() || !selectedEnfant) {
-      Alert.alert(t('quotes.title'), t('quotes.toast.fillRequired'));
+      showToast(t('quotes.toast.fillRequired'), 'error');
       return;
     }
     if (editingQuote) {
@@ -169,10 +173,17 @@ export default function QuotesScreen() {
     );
   }, [deleteQuote, showToast]);
 
+  const openDictaphoneMode = useCallback(() => {
+    setModalMode('dictaphone');
+  }, []);
+
   const handleDictaphoneResult = useCallback((text: string) => {
-    dictaphoneResultRef.current = text;
-    setDictaphoneVisible(false);
     setCitation((prev) => (prev ? prev + ' ' : '') + text);
+    setModalMode('form');
+  }, []);
+
+  const closeDictaphoneMode = useCallback(() => {
+    setModalMode('form');
   }, []);
 
   const keyExtractor = useCallback(
@@ -183,7 +194,14 @@ export default function QuotesScreen() {
   const renderItem = useCallback(({ item }: { item: ChildQuote }) => {
     const avatar = enfants.find(e => e.name === item.enfant)?.avatar ?? 'smile';
     return (
-      <TouchableOpacity activeOpacity={0.7} onPress={() => openEdit(item)} onLongPress={() => handleDelete(item)}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => openEdit(item)}
+        onLongPress={() => handleDelete(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.enfant} — ${item.citation}`}
+        accessibilityHint={t('quotes.deleteHint')}
+      >
         <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
           <View style={styles.cardHeader}>
             <AvatarIcon name={avatar} color={primary} size={32} />
@@ -197,32 +215,14 @@ export default function QuotesScreen() {
         </View>
       </TouchableOpacity>
     );
-  }, [colors, primary, handleDelete, openEdit, enfants]);
-
-  // Fermer le modal principal avant d'ouvrir le dictaphone (max 1 niveau)
-  const openDictaphone = useCallback(() => {
-    setModalVisible(false);
-    setTimeout(() => setDictaphoneVisible(true), 350);
-  }, []);
-
-  const closeDictaphone = useCallback(() => {
-    setDictaphoneVisible(false);
-    setTimeout(() => setModalVisible(true), 350);
-  }, []);
-
-  const handleDictaphoneClose = useCallback((text: string) => {
-    dictaphoneResultRef.current = text;
-    setDictaphoneVisible(false);
-    setCitation((prev) => (prev ? prev + ' ' : '') + text);
-    setTimeout(() => setModalVisible(true), 350);
-  }, []);
+  }, [colors, primary, handleDelete, openEdit, enfants, t]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={[]}>
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('quotes.title')}
-        subtitle={quotes.length > 0 ? t('quotes.count', { count: quotes.length, defaultValue: `${quotes.length} mots collectés` }) : undefined}
+        subtitle={quotes.length > 0 ? t('quotes.count', { count: quotes.length }) : undefined}
         scrollY={scrollY}
         actions={
           <TouchableOpacity
@@ -230,8 +230,9 @@ export default function QuotesScreen() {
             onPress={openModal}
             accessibilityLabel={t('quotes.addA11y')}
             accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+            <Plus size={18} strokeWidth={2.5} color={colors.onPrimary} />
           </TouchableOpacity>
         }
         bottom={
@@ -276,10 +277,15 @@ export default function QuotesScreen() {
                 onPress={() => toggleMonth(section.key)}
                 style={styles.sectionHeaderRow}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: !collapsed }}
+                accessibilityLabel={`${section.title}, ${section.count}`}
               >
                 <Text style={[styles.sectionHeader, { color: colors.textSub }]}>{section.title}</Text>
                 <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.count}</Text>
-                <Text style={[styles.chevron, { color: colors.textMuted }]}>{collapsed ? '▶' : '▼'}</Text>
+                {collapsed
+                  ? <ChevronRight size={14} color={colors.textMuted} strokeWidth={2.5} />
+                  : <ChevronDown size={14} color={colors.textMuted} strokeWidth={2.5} />}
               </TouchableOpacity>
             );
           }}
@@ -293,71 +299,81 @@ export default function QuotesScreen() {
         />
       )}
 
-      {/* Modal ajout */}
+      {/* Modal ajout — bascule entre formulaire et dictaphone via modalMode */}
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalVisible(false)}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
-          <ModalHeader title={editingQuote ? t('quotes.editQuote') : t('quotes.newQuote')} onClose={() => setModalVisible(false)} />
-
-          <View style={styles.modalContent}>
-            {/* Sélecteur enfant — désactivé en mode édition */}
-            <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.child')}</Text>
-            <View style={styles.chipRow}>
-              {enfants.map((e) => (
-                <Chip
-                  key={e.id}
-                  label={e.name}
-                  emoji={e.avatar}
-                  selected={selectedEnfant === e.name}
-                  onPress={editingQuote ? undefined : () => setSelectedEnfant(e.name)}
-                />
-              ))}
-            </View>
-
-            {/* Citation */}
-            <View style={styles.citationHeader}>
-              <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.quote')}</Text>
-              <TouchableOpacity onPress={openDictaphone}>
-                <Text style={{ fontSize: FontSize.title }}>🎙️</Text>
-              </TouchableOpacity>
-            </View>
-            <TextInput
-              style={[styles.input, styles.citationInput, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder={t('quotes.form.quotePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              value={citation}
-              onChangeText={setCitation}
-              multiline
-              textAlignVertical="top"
+          {modalMode === 'dictaphone' ? (
+            <DictaphoneRecorder
+              onResult={handleDictaphoneResult}
+              onClose={closeDictaphoneMode}
             />
+          ) : (
+            <>
+              <ModalHeader title={editingQuote ? t('quotes.editQuote') : t('quotes.newQuote')} onClose={() => setModalVisible(false)} />
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.modalContainer}
+              >
+                <View style={styles.modalContent}>
+                  {/* Sélecteur enfant — désactivé en mode édition */}
+                  <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.child')}</Text>
+                  <View style={styles.chipRow}>
+                    {enfants.map((e) => (
+                      <Chip
+                        key={e.id}
+                        label={e.name}
+                        emoji={e.avatar}
+                        selected={selectedEnfant === e.name}
+                        onPress={editingQuote ? undefined : () => setSelectedEnfant(e.name)}
+                      />
+                    ))}
+                  </View>
 
-            {/* Contexte */}
-            <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.context')}</Text>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder={t('quotes.form.contextPlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              value={contexte}
-              onChangeText={setContexte}
-            />
+                  {/* Citation */}
+                  <View style={styles.citationHeader}>
+                    <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.quote')}</Text>
+                    <TouchableOpacity
+                      onPress={openDictaphoneMode}
+                      accessibilityLabel={t('quotes.dictation')}
+                      accessibilityRole="button"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Mic size={22} color={primary} strokeWidth={1.75} />
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={[styles.input, styles.citationInput, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
+                    placeholder={t('quotes.form.quotePlaceholder')}
+                    placeholderTextColor={colors.textMuted}
+                    value={citation}
+                    onChangeText={setCitation}
+                    multiline
+                    textAlignVertical="top"
+                    maxLength={500}
+                  />
 
-            <View style={styles.saveBtn}>
-              <Button
-                label={editingQuote ? t('quotes.form.update') : t('quotes.form.save')}
-                onPress={handleSave}
-                variant="primary"
-              />
-            </View>
-          </View>
-        </SafeAreaView>
-      </Modal>
+                  {/* Contexte */}
+                  <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.context')}</Text>
+                  <TextInput
+                    style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
+                    placeholder={t('quotes.form.contextPlaceholder')}
+                    placeholderTextColor={colors.textMuted}
+                    value={contexte}
+                    onChangeText={setContexte}
+                    maxLength={200}
+                  />
 
-      {/* Dictaphone — modal séparé (max 1 niveau) */}
-      <Modal visible={dictaphoneVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={closeDictaphone}>
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
-          <DictaphoneRecorder
-            onResult={handleDictaphoneClose}
-            onClose={closeDictaphone}
-          />
+                  <View style={styles.saveBtn}>
+                    <Button
+                      label={editingQuote ? t('quotes.form.update') : t('quotes.form.save')}
+                      onPress={handleSave}
+                      variant="primary"
+                    />
+                  </View>
+                </View>
+              </KeyboardAvoidingView>
+            </>
+          )}
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -374,11 +390,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  addBtnText: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    lineHeight: FontSize.lg + 2,
   },
   list: {
     paddingHorizontal: Spacing.lg,
@@ -401,11 +412,6 @@ const styles = StyleSheet.create({
   sectionCount: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
-  },
-  chevron: {
-    fontSize: 11,
-    width: 16,
-    textAlign: 'center',
   },
   filterBar: {
     flexDirection: 'row',

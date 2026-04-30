@@ -2342,7 +2342,10 @@
   "quotes": {
     "title": "Kids' Quotes",
     "addA11y": "Add a quote",
+    "deleteHint": "Long press to delete",
     "addBtn": "Add a quote",
+    "count_one": "{{count}} quote saved",
+    "count_other": "{{count}} quotes saved",
     "emptyTitle": "No quotes yet",
     "emptySubtitle": "Write down your kids' gems to keep them forever!",
     "newQuote": "New quote",
@@ -2362,7 +2365,7 @@
     },
     "filterAll": "All",
     "toast": {
-      "fillRequired": "Please fill in at least the child and the quote",
+      "fillRequired": "Pick a child and write the quote",
       "added": "Quote added!",
       "edited": "Quote updated!",
       "deleted": "Quote deleted"
@@ -3345,6 +3348,7 @@
       "today": "Today",
       "history": "History"
     },
+    "todayShort": "today",
     "sectionTitle": "How are you feeling?",
     "yourMood": "Your mood: {{emoji}}",
     "familyToday": "The family today",

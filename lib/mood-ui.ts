@@ -8,6 +8,7 @@
 import { Frown, Meh, Smile, Laugh, Sparkles } from 'lucide-react-native';
 import type { MoodLevel } from './types';
 import type { AppColors } from '../constants/colors';
+import { withAlpha } from './colors';
 
 export const MOOD_ICONS = {
   1: Frown,
@@ -25,4 +26,9 @@ export function getMoodIconColor(level: MoodLevel, colors: AppColors): string {
     case 4: return colors.success;
     case 5: return colors.brand.or;
   }
+}
+
+// Teinte de fond pour la heatmap historique — dérivée du palette thématisé.
+export function getMoodBgColor(level: MoodLevel, colors: AppColors): string {
+  return withAlpha(getMoodIconColor(level, colors), 0.18);
 }

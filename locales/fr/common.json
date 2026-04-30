@@ -2350,7 +2350,10 @@
   "quotes": {
     "title": "Mots d'enfants",
     "addA11y": "Ajouter un mot",
+    "deleteHint": "Appui long pour supprimer",
     "addBtn": "Ajouter un mot",
+    "count_one": "{{count}} mot collecté",
+    "count_other": "{{count}} mots collectés",
     "emptyTitle": "Aucun mot enregistré",
     "emptySubtitle": "Notez les perles de vos enfants pour les garder précieusement !",
     "newQuote": "Nouveau mot",
@@ -2370,7 +2373,7 @@
     },
     "filterAll": "Tous",
     "toast": {
-      "fillRequired": "Remplissez au moins l'enfant et la citation",
+      "fillRequired": "Choisis un enfant et écris la citation",
       "added": "Mot ajouté !",
       "edited": "Mot modifié !",
       "deleted": "Mot supprimé"
@@ -3353,6 +3356,7 @@
       "today": "Aujourd'hui",
       "history": "Historique"
     },
+    "todayShort": "auj.",
     "sectionTitle": "Comment tu te sens ?",
     "yourMood": "Ton humeur : {{emoji}}",
     "familyToday": "La famille aujourd'hui",

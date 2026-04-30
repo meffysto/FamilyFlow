@@ -12,7 +12,7 @@ import { Quote } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontFamily } from '../../constants/typography';
-import { Spacing } from '../../constants/spacing';
+import { Spacing, Radius } from '../../constants/spacing';
 
 function DashboardQuotesInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     paddingLeft: Spacing.sm,
     paddingVertical: Spacing.xxs,
-    borderRadius: 4,
+    borderRadius: Radius.xs,
   },
   citation: {
     fontFamily: FontFamily.handwrite,

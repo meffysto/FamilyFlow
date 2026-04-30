@@ -16,6 +16,8 @@ import {
   RefreshControl,
   TextInput,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,22 +40,13 @@ import { Button } from '../../components/ui/Button';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { MOOD_EMOJIS, type MoodLevel } from '../../lib/types';
-import { MOOD_ICONS, getMoodIconColor } from '../../lib/mood-ui';
+import { MOOD_ICONS, getMoodIconColor, getMoodBgColor } from '../../lib/mood-ui';
 
 type TabId = 'aujourdhui' | 'historique';
 const MOOD_LEVELS: MoodLevel[] = [1, 2, 3, 4, 5];
 const HISTORY_DAYS = 30;
 
 const BTN_SPRING = { damping: 14, stiffness: 300 };
-
-// Couleurs heatmap humeur (fond cellule historique)
-const MOOD_COLORS: Record<MoodLevel, string> = {
-  1: '#ef444430',
-  2: '#f9731630',
-  3: '#eab30830',
-  4: '#22c55e30',
-  5: '#8b5cf630',
-};
 
 // ─── Bouton humeur animé ─────────────────────────────────────────────────────
 
@@ -133,9 +126,9 @@ export default function MoodsScreen() {
   }, [activeTab]);
 
   const moodTabs: ReadonlyArray<PillTab<TabId>> = useMemo(() => ([
-    { id: 'aujourdhui', label: "Aujourd'hui" },
-    { id: 'historique', label: 'Historique' },
-  ]), []);
+    { id: 'aujourdhui', label: t('moodsScreen.tabs.today') },
+    { id: 'historique', label: t('moodsScreen.tabs.history') },
+  ]), [t]);
   const [noteModal, setNoteModal] = useState<{ visible: boolean; level: MoodLevel | null; profileId: string | null; profileName: string | null }>({ visible: false, level: null, profileId: null, profileName: null });
   const [noteText, setNoteText] = useState('');
 
@@ -329,21 +322,31 @@ export default function MoodsScreen() {
                 ]}
               >
                 <Text style={[styles.gridDate, { color: i === 0 ? primary : colors.textMuted, fontWeight: i === 0 ? FontWeight.semibold : FontWeight.normal }]}>
-                  {i === 0 ? 'auj.' : day.label}
+                  {i === 0 ? t('moodsScreen.todayShort') : day.label}
                 </Text>
                 {moodableProfiles.map(p => {
                   const level = day.entries.get(p.id);
                   return (
                     <View key={p.id} style={styles.gridCellWrapper}>
                       {level ? (
-                        <View style={[styles.gridCellBubble, { backgroundColor: MOOD_COLORS[level] }]}>
+                        <View
+                          style={[styles.gridCellBubble, { backgroundColor: getMoodBgColor(level, colors) }]}
+                          accessible
+                          accessibilityRole="image"
+                          accessibilityLabel={t('moodsScreen.a11y.cell', {
+                            date: day.label,
+                            name: p.name,
+                            level,
+                            defaultValue: `${p.name} — ${day.label} — humeur ${level} sur 5`,
+                          })}
+                        >
                           {(() => {
                             const Icon = MOOD_ICONS[level];
                             return <Icon size={16} strokeWidth={2} color={getMoodIconColor(level, colors)} />;
                           })()}
                         </View>
                       ) : (
-                        <Text style={[styles.gridCellEmpty, { color: colors.separator }]}>·</Text>
+                        <View style={[styles.gridCellEmptyDot, { backgroundColor: colors.separator }]} />
                       )}
                     </View>
                   );
@@ -358,19 +361,25 @@ export default function MoodsScreen() {
       <Modal visible={noteModal.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNoteModal({ visible: false, level: null, profileId: null, profileName: null })}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
           <ModalHeader title={noteModal.level ? t('moodsScreen.moodOf', { emoji: MOOD_EMOJIS[noteModal.level], name: noteModal.profileName || '' }) : t('moodsScreen.mood')} onClose={() => setNoteModal({ visible: false, level: null, profileId: null, profileName: null })} />
-          <View style={styles.modalContent}>
-            <Text style={[styles.label, { color: colors.textSub }]}>{t('moodsScreen.addNote')}</Text>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder={t('moodsScreen.placeholder')}
-              placeholderTextColor={colors.textMuted}
-              value={noteText}
-              onChangeText={setNoteText}
-            />
-            <View style={styles.saveBtn}>
-              <Button label={t('moodsScreen.save')} onPress={handleSaveMood} variant="primary" />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalContainer}
+          >
+            <View style={styles.modalContent}>
+              <Text style={[styles.label, { color: colors.textSub }]}>{t('moodsScreen.addNote')}</Text>
+              <TextInput
+                style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
+                placeholder={t('moodsScreen.placeholder')}
+                placeholderTextColor={colors.textMuted}
+                value={noteText}
+                onChangeText={setNoteText}
+                maxLength={200}
+              />
+              <View style={styles.saveBtn}>
+                <Button label={t('moodsScreen.save')} onPress={handleSaveMood} variant="primary" />
+              </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -511,9 +520,11 @@ const styles = StyleSheet.create({
   gridCellEmoji: {
     fontSize: 16,
   },
-  gridCellEmpty: {
-    fontSize: 14,
-    lineHeight: 28,
+  gridCellEmptyDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    opacity: 0.5,
   },
   // Modal
   modalContainer: { flex: 1 },
