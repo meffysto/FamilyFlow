@@ -5,9 +5,11 @@
  * 3 états visuels : verrouillé, débloquable (glow pulse), débloqué (check badge + glow)
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { FontSize, FontWeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
+import { Lock, Zap, Check } from 'lucide-react-native';
+import { FontSize } from '../constants/typography';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,15 +20,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
-import { Shadows } from '../constants/shadows';
 
 interface SkillNodeProps {
+  skillId: string;
   label: string;
   emoji: string;
   categoryColor: string;
   state: 'locked' | 'unlockable' | 'unlocked';
   xp: number;
-  onPress: () => void;
+  onPress: (skillId: string) => void;
 }
 
 const CIRCLE_SIZE = 56;
@@ -34,12 +36,14 @@ const BADGE_SIZE = 20;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: SkillNodeProps) {
+function SkillNodeInner({ skillId, label, emoji, categoryColor, state, xp, onPress }: SkillNodeProps) {
+  const handlePress = React.useCallback(() => onPress(skillId), [onPress, skillId]);
   const { colors } = useThemeColors();
+  const { t } = useTranslation('skills');
 
   const scale = useSharedValue(1);
   const glowPulse = useSharedValue(0);
-  const prevState = useSharedValue(state);
+  const prevStateRef = useRef(state);
 
   // Pulsation du glow pour l'état débloquable
   useEffect(() => {
@@ -59,19 +63,18 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
 
   // Animation spring + haptics lors du déblocage
   useEffect(() => {
-    if (prevState.value !== 'unlocked' && state === 'unlocked') {
+    if (prevStateRef.current !== 'unlocked' && state === 'unlocked') {
       scale.value = 0.6;
       scale.value = withSpring(1, { damping: 8, stiffness: 300 });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    prevState.value = state;
+    prevStateRef.current = state;
   }, [state]);
 
   const animatedScaleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const categoryRgb = hexToRgbValues(categoryColor);
   const lighterBorder = lightenHex(categoryColor, 0.3);
 
   // Glow animé pour l'état débloquable
@@ -116,9 +119,9 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
     }
   };
 
-  const renderEmoji = () => {
+  const renderIcon = () => {
     if (state === 'locked') {
-      return <Text style={styles.emoji}>{'🔒'}</Text>;
+      return <Lock size={22} color={colors.textMuted} strokeWidth={2.2} />;
     }
     return <Text style={styles.emoji}>{emoji}</Text>;
   };
@@ -127,20 +130,26 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
     switch (state) {
       case 'unlocked':
         return (
-          <Text style={[styles.xpText, { color: colors.success }]}>
-            {'⚡ +'}{xp}{' XP · Débloqué'}
-          </Text>
+          <View style={styles.xpRow}>
+            <Zap size={12} color={colors.success} strokeWidth={2.5} fill={colors.success} />
+            <Text style={[styles.xpText, { color: colors.success }]}>
+              {`+${xp} XP · ${t('node.unlocked', { defaultValue: 'Débloqué' })}`}
+            </Text>
+          </View>
         );
       case 'unlockable':
         return (
-          <Text style={[styles.xpText, { color: categoryColor }]}>
-            {'⚡ +'}{xp}{' XP'}
-          </Text>
+          <View style={styles.xpRow}>
+            <Zap size={12} color={categoryColor} strokeWidth={2.5} fill={categoryColor} />
+            <Text style={[styles.xpText, { color: categoryColor }]}>
+              {`+${xp} XP`}
+            </Text>
+          </View>
         );
       case 'locked':
         return (
           <Text style={[styles.xpText, { color: colors.textMuted }]}>
-            {'+'}{xp}{' XP'}
+            {`+${xp} XP`}
           </Text>
         );
     }
@@ -160,23 +169,23 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
   const stateLabel = () => {
     switch (state) {
       case 'locked':
-        return 'verrouillé';
+        return t('node.state.locked', { defaultValue: 'verrouillé' });
       case 'unlockable':
-        return 'débloquable';
+        return t('node.state.unlockable', { defaultValue: 'débloquable' });
       case 'unlocked':
-        return 'débloqué';
+        return t('node.state.unlocked', { defaultValue: 'débloqué' });
     }
   };
 
   return (
     <AnimatedPressable
-      onPress={onPress}
+      onPress={handlePress}
       style={[styles.row, animatedScaleStyle]}
       accessibilityRole="button"
-      accessibilityLabel={`${label}, ${stateLabel()}, ${xp} points d'expérience`}
+      accessibilityLabel={`${label}, ${stateLabel()}, ${t('node.xpPoints', { count: xp, defaultValue: `${xp} points d'expérience` })}`}
       accessibilityState={{ disabled: state === 'locked' }}
     >
-      {/* Cercle avec emoji */}
+      {/* Cercle avec icône */}
       <Animated.View
         style={[
           styles.circle,
@@ -184,12 +193,12 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
           state === 'unlockable' && animatedGlowStyle,
         ]}
       >
-        {renderEmoji()}
+        {renderIcon()}
 
-        {/* Badge check vert pour l'état débloqué */}
+        {/* Badge check pour l'état débloqué */}
         {state === 'unlocked' && (
           <View style={[styles.checkBadge, { backgroundColor: colors.success }]}>
-            <Text style={[styles.checkText, { color: colors.onPrimary }]}>{'✓'}</Text>
+            <Check size={12} color={colors.onPrimary} strokeWidth={3} />
           </View>
         )}
       </Animated.View>
@@ -214,16 +223,7 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
   );
 }
 
-/**
- * Convertit un hex (#RRGGBB) en string "R, G, B" pour rgba()
- */
-function hexToRgbValues(hex: string): string {
-  const clean = hex.replace('#', '');
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  return `${r}, ${g}, ${b}`;
-}
+export const SkillNode = React.memo(SkillNodeInner);
 
 /**
  * Éclaircit une couleur hex d'un facteur donné (0-1)
@@ -266,10 +266,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkText: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-    lineHeight: 14,
+  xpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 2,
   },
   textContainer: {
     flex: 1,

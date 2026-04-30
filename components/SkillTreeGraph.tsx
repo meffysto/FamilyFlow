@@ -8,7 +8,9 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { withAlpha } from '../lib/colors';
 import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { SkillNode } from './SkillNode';
@@ -100,7 +102,7 @@ export function SkillTreeGraph({
                 style={[
                   styles.iconCircle,
                   {
-                    backgroundColor: category.color + '26', // 15% opacity
+                    backgroundColor: withAlpha(category.color, 0.15),
                   },
                 ]}
               >
@@ -140,15 +142,11 @@ export function SkillTreeGraph({
               </View>
 
               {/* Chevron */}
-              <Text
-                style={[
-                  styles.chevron,
-                  { color: colors.textMuted },
-                  isCollapsed && styles.chevronCollapsed,
-                ]}
-              >
-                ›
-              </Text>
+              {isCollapsed ? (
+                <ChevronRight size={20} color={colors.textMuted} strokeWidth={2.5} />
+              ) : (
+                <ChevronDown size={20} color={colors.textMuted} strokeWidth={2.5} />
+              )}
             </Pressable>
 
             {/* Nœuds (visibles quand non collapsé) */}
@@ -172,12 +170,13 @@ export function SkillTreeGraph({
                     <React.Fragment key={skill.id}>
                       <View style={styles.nodeRow}>
                         <SkillNode
+                          skillId={skill.id}
                           label={skillLabel(skill.id)}
                           emoji={category.emoji}
                           categoryColor={category.color}
                           state={state}
                           xp={xp}
-                          onPress={() => onSkillPress(skill.id)}
+                          onPress={onSkillPress}
                         />
                       </View>
 
@@ -251,14 +250,6 @@ const styles = StyleSheet.create({
   progressFill: {
     height: 4,
     borderRadius: 2,
-  },
-  chevron: {
-    fontSize: FontSize.display,
-    fontWeight: FontWeight.bold as '700',
-    transform: [{ rotate: '90deg' }],
-  },
-  chevronCollapsed: {
-    transform: [{ rotate: '0deg' }],
   },
   nodesContainer: {
     paddingHorizontal: Spacing.md,

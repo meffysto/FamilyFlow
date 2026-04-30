@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
+import { ChevronDown, Zap } from 'lucide-react-native';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip, AvatarIcon } from '../../components/ui';
@@ -22,6 +23,7 @@ import { CategoryCompleteOverlay } from '../../components/CategoryCompleteOverla
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { Spacing, Layout } from '../../constants/spacing';
+import { withAlpha } from '../../lib/colors';
 import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../../constants/typography';
 import {
@@ -232,7 +234,7 @@ export default function SkillsScreen() {
                       style={[
                         styles.avatarBubble,
                         {
-                          backgroundColor: isActive ? primary + '20' : colors.card,
+                          backgroundColor: isActive ? withAlpha(primary, 0.13) : colors.card,
                           borderColor: isActive ? primary : 'transparent',
                         },
                       ]}
@@ -314,7 +316,7 @@ export default function SkillsScreen() {
             </Text>
             {/* Sélecteur tranche d'âge intégré */}
             <TouchableOpacity
-              style={[styles.bracketPill, { backgroundColor: primary + '15' }]}
+              style={[styles.bracketPill, { backgroundColor: withAlpha(primary, 0.08) }]}
               onPress={() => setBracketPickerVisible(true)}
               accessibilityLabel={t('skillsScreen.a11y.changeBracket')}
               accessibilityRole="button"
@@ -322,11 +324,12 @@ export default function SkillsScreen() {
               <Text style={[styles.bracketPillText, { color: primary }]}>
                 {sk.bracketLabel(activeBracket)} · {sk.bracketSubtitle(activeBracket)}
               </Text>
-              <Text style={[styles.bracketPillArrow, { color: primary }]}> ▾</Text>
+              <ChevronDown size={14} color={primary} strokeWidth={2.5} />
             </TouchableOpacity>
-            <View style={[styles.xpBadge, { backgroundColor: primary + '26' }]}>
+            <View style={[styles.xpBadge, { backgroundColor: withAlpha(primary, 0.15) }]}>
+              <Zap size={12} color={primary} strokeWidth={2.5} fill={primary} />
               <Text style={[styles.xpText, { color: primary }]}>
-                ⚡ {totalXp} XP gagnés
+                {totalXp} XP gagnés
               </Text>
             </View>
           </View>
@@ -385,7 +388,7 @@ export default function SkillsScreen() {
         onRequestClose={() => setBracketPickerVisible(false)}
       >
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: withAlpha(colors.text, 0.4) }]}
           activeOpacity={1}
           onPress={() => setBracketPickerVisible(false)}
         >
@@ -404,7 +407,7 @@ export default function SkillsScreen() {
                     style={[
                       styles.bracketOption,
                       {
-                        backgroundColor: isActive ? primary + '15' : 'transparent',
+                        backgroundColor: isActive ? withAlpha(primary, 0.08) : 'transparent',
                         borderColor: isActive ? primary : colors.borderLight,
                       },
                     ]}
@@ -420,7 +423,7 @@ export default function SkillsScreen() {
                       {item.label} — {item.subtitle}
                     </Text>
                     {isCurrent && (
-                      <View style={[styles.currentBadge, { backgroundColor: primary + '26' }]}>
+                      <View style={[styles.currentBadge, { backgroundColor: withAlpha(primary, 0.15) }]}>
                         <Text style={[styles.currentBadgeText, { color: primary }]}>{t('skillsScreen.bracketCurrent')}</Text>
                       </View>
                     )}
@@ -443,9 +446,9 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   avatarBubble: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -496,6 +499,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
     marginTop: Spacing.xs,
     paddingHorizontal: Spacing.md,
     paddingVertical: 3,
@@ -505,10 +509,10 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
   },
-  bracketPillArrow: {
-    fontSize: FontSize.micro,
-  },
   xpBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     alignSelf: 'flex-start',
     marginTop: Spacing.sm,
     paddingHorizontal: 8,
@@ -539,7 +543,6 @@ const styles = StyleSheet.create({
   // Modal picker tranche d'âge
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
   bracketSheet: {

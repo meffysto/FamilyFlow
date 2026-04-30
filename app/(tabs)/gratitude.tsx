@@ -26,6 +26,7 @@ import Animated, {
   useAnimatedScrollHandler,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { ChevronLeft, ChevronRight, Flame, Mic } from 'lucide-react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -297,8 +298,12 @@ export default function GratitudeScreen() {
         subtitle={t('gratitude.subtitle')}
         actions={
           streak > 0 ? (
-            <View style={[styles.streakBadge, { backgroundColor: withAlpha(colors.info, 0.12) }]}>
-              <Text style={[styles.streakText, { color: colors.info }]}>🔥 {streak}</Text>
+            <View
+              style={[styles.streakBadge, { backgroundColor: withAlpha(colors.info, 0.12) }]}
+              accessibilityLabel={t('gratitude.a11y.streak', { count: streak, defaultValue: `${streak} jours de suite` })}
+            >
+              <Flame size={14} color={colors.info} strokeWidth={2.5} fill={colors.info} />
+              <Text style={[styles.streakText, { color: colors.info }]}>{streak}</Text>
             </View>
           ) : undefined
         }
@@ -325,7 +330,7 @@ export default function GratitudeScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('gratitude.a11y.prevDay')}
             >
-              <Text style={[styles.dateArrowText, { color: primary }]}>←</Text>
+              <ChevronLeft size={28} color={primary} strokeWidth={2.5} />
             </TouchableOpacity>
             <View style={styles.dateCenter}>
               <Text style={[styles.dateLabel, { color: colors.text }]}>{dateDisplay}</Text>
@@ -349,7 +354,7 @@ export default function GratitudeScreen() {
               accessibilityLabel={t('gratitude.a11y.nextDay')}
               accessibilityState={{ disabled: selectedDate >= todayStr }}
             >
-              <Text style={[styles.dateArrowText, { color: selectedDate >= todayStr ? colors.textFaint : primary }]}>→</Text>
+              <ChevronRight size={28} color={selectedDate >= todayStr ? colors.textFaint : primary} strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
@@ -494,7 +499,7 @@ export default function GratitudeScreen() {
                 accessibilityLabel={t('gratitude.a11y.dictate')}
                 accessibilityRole="button"
               >
-                <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
+                <Mic size={14} color={primary} strokeWidth={2.5} />
                 <Text style={[styles.dictaphoneBtnText, { color: primary }]}>{t('gratitude.dictateLabel')}</Text>
               </TouchableOpacity>
             </View>
@@ -549,6 +554,9 @@ export default function GratitudeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
@@ -565,7 +573,6 @@ const styles = StyleSheet.create({
   dateArrow: {
     padding: Spacing.lg,
   },
-  dateArrowText: { fontSize: FontSize.titleLg, fontWeight: FontWeight.bold },
   dateCenter: { alignItems: 'center', gap: Spacing.xs },
   dateLabel: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy },
   todayLink: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
@@ -656,9 +663,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.full,
     borderWidth: 1.5,
-  },
-  dictaphoneBtnEmoji: {
-    fontSize: FontSize.sm,
   },
   dictaphoneBtnText: {
     fontSize: FontSize.caption,

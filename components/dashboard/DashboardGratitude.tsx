@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { Heart } from 'lucide-react-native';
+import { Heart, Flame } from 'lucide-react-native';
 import { DashboardCard } from '../DashboardCard';
 import { computeGratitudeStreak } from '../../app/(tabs)/gratitude';
 import { isBabyProfile } from '../../lib/types';
@@ -49,7 +49,10 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
         </View>
       )}
       {gratitudeStreak > 0 && (
-        <Text style={[styles.streak, { color: colors.textMuted }]}>{gratitudeStreak}j 🔥</Text>
+        <View style={styles.streakRow}>
+          <Flame size={12} color={colors.textMuted} strokeWidth={2.5} />
+          <Text style={[styles.streak, { color: colors.textMuted }]}>{gratitudeStreak}j</Text>
+        </View>
       )}
     </DashboardCard>
   );
@@ -80,8 +83,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: FontWeight.medium,
   },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: Spacing.sm,
+  },
   streak: {
     fontSize: FontSize.caption,
-    marginTop: Spacing.sm,
   },
 });
