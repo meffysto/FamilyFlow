@@ -16,8 +16,8 @@ import {
 // ─── WORLD_GRID shape ────────────────────────────────────────────────────────
 
 describe('WORLD_GRID', () => {
-  it('contient exactement 20 cellules', () => {
-    expect(WORLD_GRID).toHaveLength(20);
+  it('contient exactement 21 cellules', () => {
+    expect(WORLD_GRID).toHaveLength(21);
   });
 
   it('chaque cellule a un id unique', () => {
@@ -79,8 +79,8 @@ describe('BUILDING_CELLS', () => {
     }
   });
 
-  it('contient 3 cellules de bâtiment', () => {
-    expect(BUILDING_CELLS).toHaveLength(3);
+  it('contient 4 cellules de bâtiment', () => {
+    expect(BUILDING_CELLS).toHaveLength(4);
   });
 });
 
