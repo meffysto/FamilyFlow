@@ -365,8 +365,8 @@ const styles = StyleSheet.create({
 
   // ── Toggle vue liste/grille ──
   viewToggle: {
-    height: 44,
-    borderRadius: Radius.full,
+    height: 32,
+    borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Spacing.md,
     justifyContent: 'center',

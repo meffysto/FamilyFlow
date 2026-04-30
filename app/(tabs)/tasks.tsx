@@ -41,7 +41,7 @@ import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { ArrowUpDown, ListTodo, Clock, Home, Sun } from 'lucide-react-native';
+import { ArrowUpDown, ListTodo, Clock, Home, Sun, User, Baby } from 'lucide-react-native';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { EmptyState } from '../../components/EmptyState';
@@ -183,13 +183,20 @@ const STATIC_FILTER_IDS: { id: string; labelKey: string; iconFactory: (color: st
   { id: 'maison', labelKey: 'tasks.filters.home',    iconFactory: (c) => <Home      size={12} color={c} strokeWidth={2} /> },
 ];
 
+function profileIconFactory(role: Profile['role']) {
+  return (c: string) =>
+    role === 'enfant'
+      ? <Baby size={12} color={c} strokeWidth={2} />
+      : <User size={12} color={c} strokeWidth={2} />;
+}
+
 /** Build dynamic filters from enfant profiles */
 function buildFilters(profiles: Profile[], activeProfile: Profile | null, t: (key: string) => string): FilterDef[] {
   const enfants = profiles.filter((p) => p.role === 'enfant');
   const enfantFilters = enfants.map((p) => ({
     id: `enfant:${p.name}`,
     label: p.name,
-    emoji: p.avatar,
+    iconFactory: profileIconFactory(p.role),
   }));
   const [tousFilter, retardFilter, maisonFilter] = STATIC_FILTER_IDS.map((f) => ({
     id: f.id,
@@ -197,7 +204,7 @@ function buildFilters(profiles: Profile[], activeProfile: Profile | null, t: (ke
     iconFactory: f.iconFactory,
   }));
   const mesTaches: FilterDef[] = activeProfile
-    ? [{ id: 'mes-taches', label: t('tasks.filters.myTasks'), emoji: activeProfile.avatar }]
+    ? [{ id: 'mes-taches', label: t('tasks.filters.myTasks'), iconFactory: profileIconFactory(activeProfile.role) }]
     : [];
   return [tousFilter, retardFilter, ...mesTaches, ...enfantFilters, maisonFilter];
 }
@@ -212,7 +219,7 @@ function buildTargetFiles(profiles: Profile[], t: (key: string) => string) {
   const enfants = profiles.filter((p) => p.role === 'enfant');
   return [
     ...enfants.map((p) => ({
-      label: `${p.avatar} ${p.name}`,
+      label: p.name,
       value: `01 - Enfants/${p.name}/Tâches récurrentes.md`,
     })),
     { label: t('tasks.targetFiles.home'), value: '02 - Maison/Tâches récurrentes.md' },
