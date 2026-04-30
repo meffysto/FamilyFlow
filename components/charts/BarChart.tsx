@@ -41,18 +41,19 @@ function AnimatedBar({
   showValue: boolean;
 }) {
   const { colors } = useThemeColors();
-  const barHeight = useSharedValue(0);
-  const targetHeight = maxValue > 0 ? (value / maxValue) * height : 0;
+  const progress = useSharedValue(0);
+  const targetProgress = maxValue > 0 ? value / maxValue : 0;
+  const fullBarHeight = Math.max(height, 2);
 
   useEffect(() => {
-    barHeight.value = withDelay(
+    progress.value = withDelay(
       index * 80,
-      withSpring(targetHeight, { damping: 12, stiffness: 100 }),
+      withSpring(targetProgress, { damping: 12, stiffness: 100 }),
     );
-  }, [targetHeight]);
+  }, [targetProgress, index, progress]);
 
   const animStyle = useAnimatedStyle(() => ({
-    height: barHeight.value,
+    transform: [{ scaleY: progress.value }],
   }));
 
   return (
@@ -64,7 +65,12 @@ function AnimatedBar({
         <Animated.View
           style={[
             styles.bar,
-            { backgroundColor: color, borderRadius: Radius.xs },
+            {
+              backgroundColor: color,
+              borderRadius: Radius.xs,
+              height: fullBarHeight,
+              transformOrigin: 'bottom',
+            },
             animStyle,
           ]}
         />
@@ -87,18 +93,18 @@ function HorizontalBar({
   index: number;
 }) {
   const { colors } = useThemeColors();
-  const barWidth = useSharedValue(0);
-  const targetWidth = maxValue > 0 ? (value / maxValue) * 100 : 0;
+  const progress = useSharedValue(0);
+  const targetProgress = maxValue > 0 ? value / maxValue : 0;
 
   useEffect(() => {
-    barWidth.value = withDelay(
+    progress.value = withDelay(
       index * 100,
-      withSpring(targetWidth, { damping: 12, stiffness: 100 }),
+      withSpring(targetProgress, { damping: 12, stiffness: 100 }),
     );
-  }, [targetWidth]);
+  }, [targetProgress, index, progress]);
 
   const animStyle = useAnimatedStyle(() => ({
-    width: `${barWidth.value}%`,
+    transform: [{ scaleX: progress.value }],
   }));
 
   return (
@@ -108,7 +114,15 @@ function HorizontalBar({
       </Text>
       <View style={[styles.hBarTrack, { backgroundColor: colors.borderLight }]}>
         <Animated.View
-          style={[styles.hBar, { backgroundColor: color, borderRadius: Radius.xs }, animStyle]}
+          style={[
+            styles.hBar,
+            {
+              backgroundColor: color,
+              borderRadius: Radius.xs,
+              transformOrigin: 'left',
+            },
+            animStyle,
+          ]}
         />
       </View>
       <Text style={[styles.hBarValue, { color: colors.textMuted }]}>{value}</Text>
@@ -240,6 +254,7 @@ const styles = StyleSheet.create({
   },
   hBar: {
     height: '100%',
+    width: '100%',
   },
   hBarValue: {
     width: 28,

@@ -382,9 +382,9 @@ export default function AnniversairesScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   addBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.full,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },

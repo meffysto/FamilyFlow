@@ -14,12 +14,12 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -169,19 +169,25 @@ export default function StatsScreen() {
             <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.tasksTitle')}</Text>
           </View>
           <View style={styles.weekNav}>
-            <TouchableOpacity onPress={() => setWeekOffset((o) => o - 1)} hitSlop={8} accessibilityLabel={t('statsScreen.a11y.prevWeek')} accessibilityRole="button">
-              <Text style={[styles.navBtn, { color: primary }]}>◀</Text>
-            </TouchableOpacity>
-            <Text style={[styles.weekLabel, { color: colors.textSub }]}>{weekLabel}</Text>
-            <TouchableOpacity
-              onPress={() => setWeekOffset((o) => Math.min(o + 1, 0))}
-              hitSlop={8}
-              disabled={weekOffset >= 0}
-              accessibilityLabel={t('statsScreen.a11y.nextWeek')}
+            <Pressable
+              onPress={() => setWeekOffset((o) => o - 1)}
+              style={styles.navBtn}
+              accessibilityLabel={t('statsScreen.a11y.prevWeek')}
               accessibilityRole="button"
             >
-              <Text style={[styles.navBtn, { color: weekOffset >= 0 ? colors.textFaint : primary }]}>▶</Text>
-            </TouchableOpacity>
+              <ChevronLeft size={22} strokeWidth={2} color={primary} />
+            </Pressable>
+            <Text style={[styles.weekLabel, { color: colors.textSub }]}>{weekLabel}</Text>
+            <Pressable
+              onPress={() => setWeekOffset((o) => Math.min(o + 1, 0))}
+              disabled={weekOffset >= 0}
+              style={styles.navBtn}
+              accessibilityLabel={t('statsScreen.a11y.nextWeek')}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: weekOffset >= 0 }}
+            >
+              <ChevronRight size={22} strokeWidth={2} color={weekOffset >= 0 ? colors.textFaint : primary} />
+            </Pressable>
           </View>
           <BarChart data={taskData} height={100} barColor={colors.success} />
           <Text style={[styles.summary, { color: colors.textMuted }]}>
@@ -293,9 +299,10 @@ const styles = StyleSheet.create({
     gap: Spacing['2xl'],
   },
   navBtn: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    paddingHorizontal: Spacing.md,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   weekLabel: {
     fontSize: FontSize.sm,
