@@ -64,7 +64,7 @@ export function ScreenHeader({ title, icon, subtitle, leading, actions, bottom, 
     const y = scrollY.value;
     return {
       opacity: interpolate(y, [0, COLLAPSE_RANGE], [1, 0], Extrapolation.CLAMP),
-      height: interpolate(y, [0, COLLAPSE_RANGE], [44, 0], Extrapolation.CLAMP),
+      height: interpolate(y, [0, COLLAPSE_RANGE], [60, 0], Extrapolation.CLAMP),
       overflow: 'hidden',
     };
   });
@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: FontFamily.serif,
     fontSize: FontSize.display,
+    lineHeight: 32,
     letterSpacing: -0.3,
   },
   subtitle: {
