@@ -57,7 +57,15 @@ import { Shadows } from '../../constants/shadows';
 import { Layout, Spacing, Radius } from '../../constants/spacing';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
-import { Gift } from 'lucide-react-native';
+import { Gift, X as XIcon, BarChart3, Users } from 'lucide-react-native';
+
+// Catalogue complet des badges (rareté × reward) — constant, calculé une fois.
+const ALL_BADGES = (Object.entries(REWARDS) as [LootRarity, typeof REWARDS[LootRarity]][]).flatMap(
+  ([rarity, rewards]) =>
+    rewards
+      .filter((r) => r.rewardType === 'badge')
+      .map((r) => ({ ...r, rarity })),
+);
 
 export default function LootScreen() {
   const { profiles, gamiData, activeProfile, markLootUsed, notifPrefs, vault, refresh, refreshGamification, isLoading } = useVault();
@@ -112,38 +120,47 @@ export default function LootScreen() {
     }
   }, [selectedProfile, gamiData, openLootBox, refreshGamification]);
 
-  const leaderboard = buildLeaderboard(profiles);
+  const leaderboard = useMemo(() => buildLeaderboard(profiles), [profiles]);
 
   // Active rewards
-  const activeRewards = processActiveRewards(gamiData?.activeRewards ?? []);
-
-  // Collect earned badges from history
-  const badges = (gamiData?.history ?? [])
-    .filter((h) => h.action.startsWith('loot:'))
-    .slice(-30)
-    .reverse();
+  const activeRewards = useMemo(
+    () => processActiveRewards(gamiData?.activeRewards ?? []),
+    [gamiData?.activeRewards],
+  );
 
   // Recent history (last 10 task completions)
-  const recentHistory = (gamiData?.history ?? [])
-    .slice(-10)
-    .reverse();
+  const recentHistory = useMemo(
+    () => (gamiData?.history ?? []).slice(-10).reverse(),
+    [gamiData?.history],
+  );
 
   // Loots physiques : entrées d'historique de type loot avec une récompense physique
   // Une récompense est physique : pas un badge, pas des points bonus, pas des graines/déco/habitant (appliqués automatiquement)
-  const earnedPhysicalLoots = (gamiData?.history ?? [])
-    .filter((h) => h.action.startsWith('loot:') && !h.note.includes('Badge') && !h.note.includes('points bonus') && !h.note.startsWith('+'));
+  const earnedPhysicalLoots = useMemo(
+    () =>
+      (gamiData?.history ?? []).filter(
+        (h) =>
+          h.action.startsWith('loot:') &&
+          !h.note.includes('Badge') &&
+          !h.note.includes('points bonus') &&
+          !h.note.startsWith('+'),
+      ),
+    [gamiData?.history],
+  );
 
-  const usedLoots = gamiData?.usedLoots ?? [];
-  const usedLootIds = new Set(usedLoots.map((u) => u.id));
+  const usedLoots = useMemo(() => gamiData?.usedLoots ?? [], [gamiData?.usedLoots]);
+  const usedLootIds = useMemo(() => new Set(usedLoots.map((u) => u.id)), [usedLoots]);
 
   // Loots à utiliser (non cochés), identifiés par profileId_timestamp
-  const toUseLoots = earnedPhysicalLoots.filter(
-    (h) => !usedLootIds.has(`${h.profileId}_${h.timestamp}`)
+  const toUseLoots = useMemo(
+    () => earnedPhysicalLoots.filter((h) => !usedLootIds.has(`${h.profileId}_${h.timestamp}`)),
+    [earnedPhysicalLoots, usedLootIds],
   );
 
   // Loots utilisés, triés par usedAt décroissant
-  const usedLootsSorted = [...usedLoots].sort(
-    (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
+  const usedLootsSorted = useMemo(
+    () => [...usedLoots].sort((a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()),
+    [usedLoots],
   );
 
   const lootTabs: ReadonlyArray<PillTab<LootTabId>> = [
@@ -162,11 +179,10 @@ export default function LootScreen() {
           <TouchableOpacity
             style={[styles.dropRatesBtn, { backgroundColor: colors.card }]}
             onPress={() => setShowDropRates(true)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel={t('loot.a11y.showDropRates')}
             accessibilityRole="button"
           >
-            <Text style={styles.dropRatesBtnText}>📊</Text>
+            <BarChart3 size={20} strokeWidth={2} color={colors.textSub} />
           </TouchableOpacity>
         }
         bottom={
@@ -346,14 +362,7 @@ export default function LootScreen() {
                 .map((h) => h.note.split(' ')[0])
             );
 
-            // Catalogue complet des badges par rareté
-            const allBadges = (Object.entries(REWARDS) as [LootRarity, typeof REWARDS[LootRarity]][]).flatMap(
-              ([rarity, rewards]) =>
-                rewards
-                  .filter((r) => r.rewardType === 'badge')
-                  .map((r) => ({ ...r, rarity }))
-            );
-
+            const allBadges = ALL_BADGES;
             const earnedCount = allBadges.filter((b) => earnedEmojis.has(b.emoji)).length;
 
             return (
@@ -403,6 +412,8 @@ export default function LootScreen() {
               <TouchableOpacity
                 style={[styles.subTab, { backgroundColor: rewardsSubTab === 'to-use' ? primary : colors.bg }]}
                 onPress={() => setRewardsSubTab('to-use')}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: rewardsSubTab === 'to-use' }}
               >
                 <Text style={[styles.subTabText, { color: rewardsSubTab === 'to-use' ? colors.onPrimary : colors.textMuted }]}>
                   {'À utiliser'}{toUseLoots.length > 0 ? ` (${toUseLoots.length})` : ''}
@@ -411,6 +422,8 @@ export default function LootScreen() {
               <TouchableOpacity
                 style={[styles.subTab, { backgroundColor: rewardsSubTab === 'used' ? primary : colors.bg }]}
                 onPress={() => setRewardsSubTab('used')}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: rewardsSubTab === 'used' }}
               >
                 <Text style={[styles.subTabText, { color: rewardsSubTab === 'used' ? colors.onPrimary : colors.textMuted }]}>
                   {'Historique'}{usedLootsSorted.length > 0 ? ` (${usedLootsSorted.length})` : ''}
@@ -498,8 +511,13 @@ export default function LootScreen() {
             {/* Header */}
             <View style={styles.drHeader}>
               <Text style={[styles.drTitle, { color: colors.text }]}>{t('loot.dropRates.title')}</Text>
-              <TouchableOpacity onPress={() => setShowDropRates(false)} accessibilityLabel={t('loot.a11y.close')} accessibilityRole="button">
-                <Text style={[styles.drCloseBtn, { color: colors.textFaint }]}>✕</Text>
+              <TouchableOpacity
+                onPress={() => setShowDropRates(false)}
+                style={styles.drCloseBtn}
+                accessibilityLabel={t('loot.a11y.close')}
+                accessibilityRole="button"
+              >
+                <XIcon size={22} strokeWidth={2} color={colors.textFaint} />
               </TouchableOpacity>
             </View>
 
@@ -636,13 +654,12 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
   dropRatesBtn: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dropRatesBtnText: { fontSize: FontSize.sm },
   nextEventCard: {
     borderRadius: 12,
     paddingHorizontal: 14,
@@ -778,9 +795,11 @@ const styles = StyleSheet.create({
   },
   subTab: {
     flex: 1,
-    paddingVertical: 8,
+    minHeight: 44,
+    paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   subTabText: {
     fontSize: FontSize.label,
@@ -837,7 +856,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   drTitle: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
-  drCloseBtn: { fontSize: FontSize.titleLg, padding: 4 },
+  drCloseBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   drCard: {
     borderRadius: 16,
     padding: 16,

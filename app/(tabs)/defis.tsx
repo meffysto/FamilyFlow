@@ -64,10 +64,13 @@ type TabId = 'actifs' | 'templates' | 'historique';
 // ─── Barre de progression animée ──────────────────────────────────────────
 
 function ProgressBar({ progress, color }: { progress: number; color: string }) {
-  const width = useSharedValue(0);
-  width.value = withSpring(Math.min(1, Math.max(0, progress)), { damping: 15, stiffness: 100 });
+  const scale = useSharedValue(0);
+  const target = Math.min(1, Math.max(0, progress));
+  useEffect(() => {
+    scale.value = withSpring(target, { damping: 15, stiffness: 100 });
+  }, [target, scale]);
   const animStyle = useAnimatedStyle(() => ({
-    width: `${width.value * 100}%`,
+    transform: [{ scaleX: scale.value }],
   }));
   const { colors } = useThemeColors();
   return (
@@ -79,7 +82,7 @@ function ProgressBar({ progress, color }: { progress: number; color: string }) {
 
 const barStyles = StyleSheet.create({
   bg: { height: 8, borderRadius: Radius.full, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: Radius.full },
+  fill: { height: '100%', width: '100%', borderRadius: Radius.full, transformOrigin: 'left' },
 });
 
 // ─── Carte défi actif ───────────────────────────────────────────────────────
@@ -172,9 +175,11 @@ const cardStyles = StyleSheet.create({
   avatars: { flexDirection: 'row', gap: 2 },
   avatar: { fontSize: FontSize.heading },
   checkInBtn: {
+    minHeight: 44,
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   checkInText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   doneToday: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, textAlign: 'center' },
