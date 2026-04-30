@@ -1,11 +1,6 @@
-/**
- * notes.tsx — Écran Notes & Articles
- *
- * Coffre-fort familial : importer des articles web (defuddle),
- * créer des notes, organiser par catégories. Adultes uniquement.
- */
+// Notes & Articles — import web (defuddle), création/édition, catégories. Adultes only.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -37,7 +32,77 @@ import { NoteViewer } from '../../components/NoteViewer';
 import { EmptyState } from '../../components/EmptyState';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
+type NoteListRow =
+  | { type: 'header'; category: string; count: number }
+  | { type: 'note'; note: Note };
+
+const AnimatedFlatList = Animated.createAnimatedComponent(
+  FlatList as new () => FlatList<NoteListRow>,
+);
+
+interface NoteRowProps {
+  note: Note;
+  cardBg: string;
+  textColor: string;
+  textSubColor: string;
+  textFaintColor: string;
+  primaryColor: string;
+  hint: string;
+  onPress: (note: Note) => void;
+  onLongPress: (note: Note) => void;
+  onDelete: (note: Note) => void;
+}
+
+const NoteRow = React.memo(function NoteRow({
+  note,
+  cardBg,
+  textColor,
+  textSubColor,
+  textFaintColor,
+  primaryColor,
+  hint,
+  onPress,
+  onLongPress,
+  onDelete,
+}: NoteRowProps) {
+  return (
+    <SwipeToDelete onDelete={() => onDelete(note)} skipConfirm hintId="notes">
+      <TouchableOpacity
+        style={[styles.noteCard, { backgroundColor: cardBg }]}
+        onPress={() => onPress(note)}
+        onLongPress={() => onLongPress(note)}
+        activeOpacity={0.7}
+        accessibilityLabel={`${note.title}, ${formatDateLocalized(note.created)}${note.url ? ', article web' : ''}`}
+        accessibilityRole="button"
+        accessibilityHint={hint}
+      >
+        <View style={styles.noteHeader}>
+          <Text style={[styles.noteTitle, { color: textColor }]} numberOfLines={1}>
+            {note.title}
+          </Text>
+          {note.url && (
+            <Text style={[styles.urlIndicator, { color: primaryColor }]}>🔗</Text>
+          )}
+        </View>
+        <Text style={[styles.notePreview, { color: textSubColor }]} numberOfLines={2}>
+          {note.content.slice(0, 120)}
+        </Text>
+        <View style={styles.noteMeta}>
+          <Text style={[styles.noteDate, { color: textFaintColor }]}>
+            {formatDateLocalized(note.created)}
+          </Text>
+          {note.tags.length > 0 && (
+            <View style={styles.tagRow}>
+              {note.tags.slice(0, 3).map((tag) => (
+                <Chip key={tag} label={tag} size="sm" />
+              ))}
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    </SwipeToDelete>
+  );
+});
 
 const CATEGORY_KEY_MAP: Record<string, string> = {
   '📋 Administratif': 'administratif',
@@ -50,10 +115,13 @@ const CATEGORY_KEY_MAP: Record<string, string> = {
 
 export default function NotesScreen() {
   const { t } = useTranslation();
-  const translateCategory = (cat: string) => {
-    const key = CATEGORY_KEY_MAP[cat];
-    return key ? t(`notesScreen.categories.${key}`) : cat;
-  };
+  const translateCategory = useCallback(
+    (cat: string) => {
+      const key = CATEGORY_KEY_MAP[cat];
+      return key ? t(`notesScreen.categories.${key}`) : cat;
+    },
+    [t],
+  );
   const { notes, addNote, updateNote, deleteNote, activeProfile, refresh } = useVault();
   const { primary, colors, isDark } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -122,7 +190,7 @@ export default function NotesScreen() {
 
   // Flat list data avec headers
   const listData = useMemo(() => {
-    const data: ({ type: 'header'; category: string; count: number } | { type: 'note'; note: Note })[] = [];
+    const data: NoteListRow[] = [];
     for (const [cat, catNotes] of groupedNotes) {
       data.push({ type: 'header', category: cat, count: catNotes.length });
       for (const note of catNotes) {
@@ -195,69 +263,38 @@ export default function NotesScreen() {
     );
   }
 
-  const renderItem = ({ item }: { item: typeof listData[number] }) => {
-    if (item.type === 'header') {
+  const noteHint = t('notesScreen.a11y.noteHint');
+  const renderItem = useCallback(
+    ({ item }: { item: NoteListRow }) => {
+      if (item.type === 'header') {
+        return (
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              {translateCategory(item.category)}
+            </Text>
+            <Text style={[styles.sectionCount, { color: colors.textFaint }]}>
+              {item.count}
+            </Text>
+          </View>
+        );
+      }
       return (
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {translateCategory(item.category)}
-          </Text>
-          <Text style={[styles.sectionCount, { color: colors.textFaint }]}>
-            {item.count}
-          </Text>
-        </View>
+        <NoteRow
+          note={item.note}
+          cardBg={colors.card}
+          textColor={colors.text}
+          textSubColor={colors.textSub}
+          textFaintColor={colors.textFaint}
+          primaryColor={primary}
+          hint={noteHint}
+          onPress={openViewer}
+          onLongPress={openEditor}
+          onDelete={handleDelete}
+        />
       );
-    }
-
-    const note = item.note;
-    return (
-      <SwipeToDelete
-        onDelete={() => handleDelete(note)}
-        skipConfirm
-        hintId="notes"
-      >
-        <TouchableOpacity
-          style={[styles.noteCard, { backgroundColor: colors.card }]}
-          onPress={() => openViewer(note)}
-          onLongPress={() => openEditor(note)}
-          activeOpacity={0.7}
-          accessibilityLabel={`${note.title}, ${formatDateLocalized(note.created)}${note.url ? ', article web' : ''}`}
-          accessibilityRole="button"
-          accessibilityHint={t('notesScreen.a11y.noteHint')}
-        >
-          <View style={styles.noteHeader}>
-            <Text
-              style={[styles.noteTitle, { color: colors.text }]}
-              numberOfLines={1}
-            >
-              {note.title}
-            </Text>
-            {note.url && (
-              <Text style={[styles.urlIndicator, { color: primary }]}>🔗</Text>
-            )}
-          </View>
-          <Text
-            style={[styles.notePreview, { color: colors.textSub }]}
-            numberOfLines={2}
-          >
-            {note.content.slice(0, 120)}
-          </Text>
-          <View style={styles.noteMeta}>
-            <Text style={[styles.noteDate, { color: colors.textFaint }]}>
-              {formatDateLocalized(note.created)}
-            </Text>
-            {note.tags.length > 0 && (
-              <View style={styles.tagRow}>
-                {note.tags.slice(0, 3).map((tag) => (
-                  <Chip key={tag} label={tag} size="sm" />
-                ))}
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-      </SwipeToDelete>
-    );
-  };
+    },
+    [colors, primary, noteHint, handleDelete, openViewer, openEditor, translateCategory],
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
@@ -330,10 +367,10 @@ export default function NotesScreen() {
         />
       ) : (
         <AnimatedFlatList
-          data={listData as any}
-          keyExtractor={((item: any) =>
-            item.type === 'header' ? `h-${item.category}` : `n-${item.note.sourceFile}`) as any}
-          renderItem={renderItem as any}
+          data={listData}
+          keyExtractor={(item) =>
+            item.type === 'header' ? `h-${item.category}` : `n-${item.note.sourceFile}`}
+          renderItem={renderItem}
           onScroll={onScrollHandler}
           scrollEventThrottle={16}
           contentContainerStyle={[styles.listContent, Layout.contentContainer]}
@@ -374,8 +411,8 @@ export default function NotesScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   addButton: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,19 +1,5 @@
-/**
- * app/(tabs)/lovenotes.tsx — Écran Boîte aux lettres (Phase 35 Plan 01 + Phase 36 Plan 03)
- *
- * Skeleton : 3 segments (Reçues / Envoyées / Archivées) + FlatList
- * virtualisées + empty state textuel. Les cartes d'items sont le vrai
- * LoveNoteCard (Plan 35-02).
- *
- * Phase 36 Plan 03 :
- * - FAB "✏️ Écrire" → ouvre LoveNoteEditor (pageSheet)
- * - handleSave consomme le sourceFile retourné par addLoveNote (Plan 01 Task 4)
- *   puis appelle scheduleLoveNoteReveal({...note, sourceFile}) — zéro reconstruction de chemin
- * - useRevealOnForeground branché : pending → revealed au mount + foreground
- *
- * Route hidden via href:null dans app/(tabs)/_layout.tsx — accessible
- * uniquement par router.push('/(tabs)/lovenotes').
- */
+// Boîte aux lettres — segments Reçues/Envoyées/Archivées + composer love note.
+// Route cachée (href:null dans _layout) — accès via router.push.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native';
@@ -24,8 +10,6 @@ import Animated, {
   useAnimatedScrollHandler,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -42,6 +26,10 @@ import { useRevealOnForeground } from '../../hooks/useRevealOnForeground';
 import type { LoveNote, LoveNoteStatus } from '../../lib/types';
 import { Spacing } from '../../constants/spacing';
 import { FontSize } from '../../constants/typography';
+
+const AnimatedFlatList = Animated.createAnimatedComponent(
+  FlatList as new () => FlatList<LoveNote>,
+);
 
 type Segment = 'received' | 'sent' | 'archived';
 
@@ -221,9 +209,9 @@ export default function LoveNotesScreen() {
         </View>
       ) : (
         <AnimatedFlatList
-          data={data as any}
-          keyExtractor={((n: any) => n.sourceFile) as any}
-          renderItem={renderItem as any}
+          data={data}
+          keyExtractor={(n) => n.sourceFile}
+          renderItem={renderItem}
           contentContainerStyle={styles.list}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
           initialNumToRender={10}
@@ -267,9 +255,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },

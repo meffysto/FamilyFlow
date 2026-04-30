@@ -1,13 +1,4 @@
-/**
- * LoveNoteEditor.tsx — Modal composition love note (Phase 36 Plan 03)
- *
- * Modal presentationStyle="pageSheet" (drag-to-dismiss iOS natif) :
- * - Chips destinataire (filtre exclut auteur — Pitfall 9)
- * - TextInput body markdown + toggle preview MarkdownText
- * - Chips presets (Demain matin / Dimanche soir / Dans 1 mois / Personnaliser) + DateInput date + DateInput time
- * - Pré-rempli avec preset "Demain matin" au mount (RESEARCH Open Q 5)
- * - Validation : destinataire non vide, body trim non vide, revealAt > now+60s
- */
+// Modal composition love note — destinataire, body markdown, presets reveal.
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
@@ -46,6 +37,16 @@ import {
 import type { Profile } from '../../lib/types';
 
 type PresetKey = 'tomorrow' | 'sunday' | 'month' | 'custom';
+
+const AI_STYLES: Array<{ id: LoveNoteStyle; label: string; emoji: string; hint: string }> = [
+  { id: 'normal', label: 'Normal', emoji: '✍️', hint: 'Corrige fautes + fluidifie' },
+  { id: 'tendre', label: 'Tendre', emoji: '🫶', hint: 'Chaleureux et doux' },
+  { id: 'poetique', label: 'Poétique', emoji: '🌸', hint: 'Images évocatrices' },
+  { id: 'drole', label: 'Drôle', emoji: '😄', hint: 'Léger et taquin' },
+  { id: 'encourageant', label: 'Encourageant', emoji: '💪', hint: 'Positif et motivant' },
+  { id: 'concis', label: 'Concis', emoji: '✂️', hint: '1-2 phrases max' },
+  { id: 'romantique', label: 'Romantique', emoji: '❤️', hint: 'Intense, partenaire' },
+];
 
 /** Concatene le texte de base + la dictee avec un espacement propre. */
 function joinBase(base: string, dictated: string): string {
@@ -258,16 +259,6 @@ export function LoveNoteEditor({
     },
     [body, selection],
   );
-
-  const AI_STYLES: Array<{ id: LoveNoteStyle; label: string; emoji: string; hint: string }> = [
-    { id: 'normal', label: 'Normal', emoji: '✍️', hint: 'Corrige fautes + fluidifie' },
-    { id: 'tendre', label: 'Tendre', emoji: '🫶', hint: 'Chaleureux et doux' },
-    { id: 'poetique', label: 'Poétique', emoji: '🌸', hint: 'Images évocatrices' },
-    { id: 'drole', label: 'Drôle', emoji: '😄', hint: 'Léger et taquin' },
-    { id: 'encourageant', label: 'Encourageant', emoji: '💪', hint: 'Positif et motivant' },
-    { id: 'concis', label: 'Concis', emoji: '✂️', hint: '1-2 phrases max' },
-    { id: 'romantique', label: 'Romantique', emoji: '❤️', hint: 'Intense, partenaire' },
-  ];
 
   // Reset state au mount du Modal (préremplit preset "Demain matin")
   useEffect(() => {
@@ -664,8 +655,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   mdBtn: {
-    width: 36,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',

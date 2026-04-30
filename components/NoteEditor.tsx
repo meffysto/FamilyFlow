@@ -1,6 +1,4 @@
-/**
- * NoteEditor.tsx — Modal pour créer/éditer des notes et importer des URLs en markdown
- */
+// Modal note : créer/éditer + import URL via defuddle.
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
@@ -155,7 +153,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
     } finally {
       setImporting(false);
     }
-  }, [urlInput, title]);
+  }, [urlInput, title, t]);
 
   const handleSave = useCallback(() => {
     if (!title.trim()) {
@@ -172,11 +170,14 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
       title: title.trim(),
       url: urlInput.trim() || undefined,
       category: selectedCategory,
-      created: note?.created || new Date().toISOString().split('T')[0],
+      created: note?.created || (() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      })(),
       tags,
       content,
     });
-  }, [title, urlInput, selectedCategory, tagsInput, content, note, onSave]);
+  }, [title, urlInput, selectedCategory, tagsInput, content, note, onSave, t]);
 
   const handleDelete = useCallback(() => {
     Alert.alert(
@@ -187,7 +188,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
         { text: t('editors.delete'), style: 'destructive', onPress: () => note && onDelete?.(note) },
       ]
     );
-  }, [onDelete]);
+  }, [onDelete, note, t]);
 
   return (
     <Modal

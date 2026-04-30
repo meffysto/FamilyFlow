@@ -1,13 +1,4 @@
-/**
- * LoveNoteCard.tsx — Item liste mémoïsé de la Boîte aux lettres (Phase 35 Plan 02)
- *
- * Affiche : icône d'état (cachet mini animé si revealed/unread, horloge si
- * pending future, enveloppe sobre si read), expéditeur (lookup profile),
- * preview body 2 lignes (markdown strippé inline), date JJ/MM/AAAA.
- *
- * React.memo + comparateur custom (sourceFile / status / readAt / profiles)
- * pour éviter le re-render cascade lors d'un scroll FlatList (Pitfall 3).
- */
+// Item liste mémoïsé : icône statut, expéditeur, preview body, date.
 
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
@@ -18,6 +9,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing } from '../../constants/spacing';
 import { FontSize } from '../../constants/typography';
 import type { LoveNote, Profile } from '../../lib/types';
+import { localIso } from '../../lib/lovenotes/reveal-engine';
 import { WaxSeal } from './WaxSeal';
 
 interface LoveNoteCardProps {
@@ -51,8 +43,8 @@ function LoveNoteCardBase({
   const sender = profiles.find((p) => p.id === note.from);
   const senderName = sender?.name ?? 'Famille';
 
-  // Pending programmée future = revealAt > now
-  const nowIso = new Date().toISOString().slice(0, 19);
+  // Pending programmée future = revealAt > now (compare en local ISO, jamais UTC)
+  const nowIso = localIso(new Date());
   const isPendingFuture =
     note.status === 'pending' && note.revealAt > nowIso;
 
@@ -82,11 +74,15 @@ function LoveNoteCardBase({
       <Pressable
         onPress={handleArchive}
         style={[styles.swipeAction, { backgroundColor: primary }]}
+        accessibilityRole="button"
+        accessibilityLabel={archiveLabel}
       >
-        <Text style={styles.swipeActionText}>📦 {archiveLabel}</Text>
+        <Text style={[styles.swipeActionText, { color: colors.onPrimary }]}>
+          📦 {archiveLabel}
+        </Text>
       </Pressable>
     ),
-    [handleArchive, archiveLabel, primary],
+    [handleArchive, archiveLabel, primary, colors.onPrimary],
   );
 
   // Choix icône d'état
@@ -112,9 +108,21 @@ function LoveNoteCardBase({
 
   const isUnread = note.status === 'revealed';
 
+  const statusLabel =
+    note.status === 'revealed'
+      ? 'non lue'
+      : isPendingFuture
+        ? `scellée jusqu'au ${formatDateFR(note.revealAt)}`
+        : note.status === 'read'
+          ? 'lue'
+          : 'en attente';
+
   const cardInner = (
     <Pressable
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={`Note de ${senderName}, ${statusLabel}, reçue le ${formatDateFR(note.createdAt)}`}
+      accessibilityState={{ disabled: isPendingFuture || note.status === 'read' }}
       style={[
         styles.card,
         {
@@ -151,7 +159,7 @@ function LoveNoteCardBase({
         )}
       </View>
 
-      <Text style={[styles.date, { color: colors.textMuted }]}>
+      <Text style={[styles.date, { color: colors.textMuted }]} numberOfLines={1}>
         {formatDateFR(note.createdAt)}
       </Text>
     </Pressable>
@@ -219,7 +227,6 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   swipeActionText: {
-    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: FontSize.sm,
   },
