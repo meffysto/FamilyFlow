@@ -57,7 +57,7 @@ import { Shadows } from '../../constants/shadows';
 import { Layout, Spacing, Radius } from '../../constants/spacing';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
-import { Gift, X as XIcon, BarChart3, Users, Check } from 'lucide-react-native';
+import { Gift, X as XIcon, BarChart3, Users, Check, UserCircle } from 'lucide-react-native';
 
 // Catalogue complet des badges (rareté × reward) — constant, calculé une fois.
 const ALL_BADGES = (Object.entries(REWARDS) as [LootRarity, typeof REWARDS[LootRarity]][]).flatMap(
@@ -66,6 +66,29 @@ const ALL_BADGES = (Object.entries(REWARDS) as [LootRarity, typeof REWARDS[LootR
       .filter((r) => r.rewardType === 'badge')
       .map((r) => ({ ...r, rarity })),
 );
+
+/** Libellé "X/Y pts" pour la progression vers la prochaine loot box. */
+function getLootProgressLabel(role: Profile['role'], points: number): string {
+  const threshold = LOOT_THRESHOLD[role] ?? 100;
+  return `${points % threshold}/${threshold} pts`;
+}
+
+/**
+ * Affiche l'emoji avatar du profil, ou un UserCircle Lucide en fallback
+ * (cas edge où le profil n'existe plus).
+ */
+function ProfileAvatarText({
+  avatar,
+  fontSize,
+  fallbackColor,
+}: {
+  avatar: string | undefined;
+  fontSize: number;
+  fallbackColor: string;
+}) {
+  if (avatar) return <Text style={{ fontSize }}>{avatar}</Text>;
+  return <UserCircle size={fontSize} color={fallbackColor} strokeWidth={1.75} />;
+}
 
 export default function LootScreen() {
   const { profiles, gamiData, activeProfile, markLootUsed, notifPrefs, vault, refresh, refreshGamification, isLoading } = useVault();
@@ -267,7 +290,7 @@ export default function LootScreen() {
               ) : (
                 <View style={[styles.noLootBadge, { backgroundColor: colors.bg }]}>
                   <Text style={[styles.noLootText, { color: colors.textFaint }]}>
-                    {(() => { const t = LOOT_THRESHOLD[profile.role] ?? 100; return `${profile.points % t}/${t} pts`; })()}
+                    {getLootProgressLabel(profile.role, profile.points)}
                   </Text>
                 </View>
               )}
@@ -287,7 +310,7 @@ export default function LootScreen() {
                     <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
                     <View style={styles.activeRewardInfo}>
                       <Text style={[styles.activeRewardName, { color: colors.textSub }]}>
-                        {ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId}
+                        {ownerProfile?.avatar ? `${ownerProfile.avatar} ` : ''}{ownerProfile?.name ?? reward.profileId}
                       </Text>
                       <Text style={[styles.activeRewardLabel, { color: colors.text }]}>{reward.label}</Text>
                       <Text style={[styles.activeRewardMeta, { color: colors.error }]}>
@@ -321,7 +344,7 @@ export default function LootScreen() {
                 const rarity = isLoot ? entry.action.split(':')[1] : null;
                 return (
                   <View key={idx} style={[styles.historyRow, { borderBottomColor: colors.bg }]}>
-                    <Text style={styles.historyAvatar}>{profileObj?.avatar ?? '👤'}</Text>
+                    <ProfileAvatarText avatar={profileObj?.avatar} fontSize={FontSize.display} fallbackColor={colors.textFaint} />
                     <View style={styles.historyInfo}>
                       <View style={styles.historyNameRow}>
                         <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
@@ -444,7 +467,7 @@ export default function LootScreen() {
                   const noteLabel = loot.note.slice(noteEmoji.length).trim() || loot.note;
                   return (
                     <View key={lootId} style={[styles.rewardCard, { backgroundColor: colors.card }]}>
-                      <Text style={styles.rewardCardAvatar}>{profileObj?.avatar ?? '👤'}</Text>
+                      <ProfileAvatarText avatar={profileObj?.avatar} fontSize={FontSize.hero} fallbackColor={colors.textFaint} />
                       <View style={styles.rewardCardInfo}>
                         <Text style={[styles.rewardCardProfile, { color: colors.textSub }]}>{profileObj?.name ?? loot.profileId}</Text>
                         <Text style={[styles.rewardCardLabel, { color: colors.text }]}>{noteEmoji} {noteLabel}</Text>
@@ -488,7 +511,7 @@ export default function LootScreen() {
                   const usedAtFormatted = format(new Date(usedLoot.usedAt), 'dd/MM/yyyy');
                   return (
                     <View key={usedLoot.id} style={[styles.rewardCard, { backgroundColor: colors.card }]}>
-                      <Text style={styles.rewardCardAvatar}>{profileObj?.avatar ?? '👤'}</Text>
+                      <ProfileAvatarText avatar={profileObj?.avatar} fontSize={FontSize.hero} fallbackColor={colors.textFaint} />
                       <View style={styles.rewardCardInfo}>
                         <Text style={[styles.rewardCardProfile, { color: colors.textSub }]}>{profileObj?.name ?? usedLoot.profileId}</Text>
                         <Text style={[styles.rewardCardLabel, { color: colors.text }]}>{usedLoot.emoji} {usedLoot.label}</Text>
@@ -783,7 +806,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     gap: 10,
   },
-  historyAvatar: { fontSize: FontSize.display },
   historyInfo: { flex: 1, gap: 2 },
   historyNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   historyName: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
@@ -820,7 +842,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     ...Shadows.sm,
   },
-  rewardCardAvatar: { fontSize: FontSize.hero },
   rewardCardInfo: { flex: 1, gap: 2 },
   rewardCardProfile: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
   rewardCardLabel: { fontSize: FontSize.sm },
