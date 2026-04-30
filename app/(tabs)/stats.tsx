@@ -19,7 +19,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -257,7 +257,7 @@ export default function StatsScreen() {
         {/* État vide */}
         {!isLoading && !hasData && (
           <View style={styles.emptyState}>
-            <Text style={[styles.emptyEmoji]}>📊</Text>
+            <BarChart3 size={48} strokeWidth={1.5} color={colors.textFaint} />
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
               {t('statsScreen.empty')}
             </Text>
@@ -317,9 +317,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing['5xl'],
     gap: Spacing.xl,
-  },
-  emptyEmoji: {
-    fontSize: 48,
   },
   emptyText: {
     fontSize: FontSize.body,

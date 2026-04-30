@@ -30,7 +30,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Cake, PartyPopper } from 'lucide-react-native';
+import { Cake, PartyPopper, Contact, Calendar } from 'lucide-react-native';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
@@ -202,6 +202,14 @@ export default function AnniversairesScreen() {
             style={[styles.card, { backgroundColor: colors.card }]}
             onPress={() => handleEdit(item)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('anniversairesScreen.a11y.card', {
+              name: item.name,
+              date: dateDisplay,
+              age: item.age != null ? `, ${item.age} ${t('anniversairesScreen.years')}` : '',
+              countdown: formatCountdown(item.daysUntil, t),
+            })}
+            accessibilityHint={t('anniversairesScreen.a11y.editHint')}
           >
             <View style={styles.cardLeft}>
               <View style={[styles.cardIconBox, { backgroundColor: colors.brand.wash }]}>
@@ -307,8 +315,10 @@ export default function AnniversairesScreen() {
                 style={[styles.importBar, styles.importBarHalf, { backgroundColor: tint, borderColor: primary + '30' }]}
                 onPress={() => setImporterVisible(true)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('anniversairesScreen.a11y.importContacts')}
               >
-                <Text style={styles.importEmoji}>{'📇'}</Text>
+                <Contact size={18} strokeWidth={1.75} color={primary} />
                 <Text style={[styles.importText, { color: primary }]}>
                   {t('anniversairesScreen.importContacts')}
                 </Text>
@@ -317,8 +327,10 @@ export default function AnniversairesScreen() {
                 style={[styles.importBar, styles.importBarHalf, { backgroundColor: tint, borderColor: primary + '30' }]}
                 onPress={() => setCalendarImporterVisible(true)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('anniversairesScreen.a11y.importCalendar')}
               >
-                <Text style={styles.importEmoji}>{'📅'}</Text>
+                <Calendar size={18} strokeWidth={1.75} color={primary} />
                 <Text style={[styles.importText, { color: primary }]}>
                   {t('anniversairesScreen.importCalendar')}
                 </Text>
@@ -408,9 +420,6 @@ const styles = StyleSheet.create({
   },
   importBarHalf: {
     flex: 1,
-  },
-  importEmoji: {
-    fontSize: FontSize.lg,
   },
   importText: {
     fontSize: FontSize.sm,

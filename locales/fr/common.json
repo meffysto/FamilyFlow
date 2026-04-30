@@ -3412,7 +3412,11 @@
       "deleted": "Anniversaire supprimé"
     },
     "a11y": {
-      "addBirthday": "Ajouter un anniversaire"
+      "addBirthday": "Ajouter un anniversaire",
+      "card": "Anniversaire de {{name}}, le {{date}}{{age}}, {{countdown}}",
+      "editHint": "Appuyez pour modifier",
+      "importContacts": "Importer depuis les contacts",
+      "importCalendar": "Importer depuis le calendrier"
     }
   },
   "statsScreen": {

@@ -3404,7 +3404,11 @@
       "deleted": "Birthday deleted"
     },
     "a11y": {
-      "addBirthday": "Add a birthday"
+      "addBirthday": "Add a birthday",
+      "card": "{{name}}'s birthday, on {{date}}{{age}}, {{countdown}}",
+      "editHint": "Tap to edit",
+      "importContacts": "Import from contacts",
+      "importCalendar": "Import from calendar"
     }
   },
   "statsScreen": {
