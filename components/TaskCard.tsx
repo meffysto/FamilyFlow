@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { Zap } from 'lucide-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -202,6 +203,29 @@ export const TaskCard = React.memo(function TaskCard({
                   : task.recurrence}
             </Text>
           )}
+          {!!task.xpOverride && !task.completed && (
+            <View style={[
+              styles.xpBadge,
+              task.xpOverride > 20
+                ? { backgroundColor: colors.warningBg }
+                : { backgroundColor: colors.brand.wash },
+            ]}>
+              <Zap
+                size={compact ? 9 : 10}
+                color={task.xpOverride > 20 ? colors.warningText : colors.textMuted}
+                fill={task.xpOverride > 20 ? colors.warningText : colors.textMuted}
+              />
+              <Text style={[
+                styles.xpBadgeText,
+                compact && { fontSize: FontSize.micro },
+                task.xpOverride > 20
+                  ? { color: colors.warningText, fontWeight: FontWeight.semibold }
+                  : { color: colors.textMuted },
+              ]}>
+                {task.xpOverride}
+              </Text>
+            </View>
+          )}
         </View>
 
         {task.tags.length > 0 && (
@@ -331,6 +355,18 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: FontSize.caption,
+  },
+  xpBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xxs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xxs,
+    borderRadius: Radius.xs,
+  },
+  xpBadgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
   },
   separator: {
     position: 'absolute',

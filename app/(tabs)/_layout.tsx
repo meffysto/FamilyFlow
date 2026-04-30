@@ -2,7 +2,7 @@
  * (tabs)/_layout.tsx — Tab bar configuration + profile picker modal
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -11,6 +11,9 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
+  withRepeat,
+  withSequence,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
@@ -22,7 +25,7 @@ import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 
 import { GlassView } from '../../components/ui/GlassView';
 import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
-import { FontSize, FontWeight } from '../../constants/typography';
+import { FontSize, FontWeight, FontFamily } from '../../constants/typography';
 import { Layout, Spacing, Radius } from '../../constants/spacing';
 import {
   Home,
@@ -38,35 +41,79 @@ import {
 
 const SPRING_CONFIG = { damping: 10, stiffness: 180 };
 
-function TabIcon({ Icon, focused }: { Icon: LucideIcon; focused: boolean }) {
-  const { tint, primary, colors } = useThemeColors();
-  const scale = useSharedValue(focused ? 1 : 0);
-  const iconScale = useSharedValue(focused ? 1.15 : 1);
+type TabBadgeProps = { kind: 'dot' | 'progress'; value?: string };
+
+function TabBadge({ kind, value }: TabBadgeProps) {
+  const { primary, colors } = useThemeColors();
+  const scale = useSharedValue(1);
 
   useEffect(() => {
-    scale.value = withSpring(focused ? 1 : 0, SPRING_CONFIG);
-    iconScale.value = withSpring(focused ? 1.15 : 1, SPRING_CONFIG);
+    if (kind !== 'dot') return;
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.3, { duration: 700 }),
+        withTiming(1, { duration: 700 }),
+      ),
+      -1,
+      false,
+    );
+  }, [kind]);
+
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  if (kind === 'dot') {
+    return (
+      <Animated.View style={[tabBadgeStyles.dot, { backgroundColor: primary }, pulseStyle]} />
+    );
+  }
+
+  return (
+    <View style={[tabBadgeStyles.progress, { backgroundColor: primary }]}>
+      <Text style={[tabBadgeStyles.progressText, { color: colors.onPrimary }]}>{value}</Text>
+    </View>
+  );
+}
+
+function TabIcon({
+  Icon,
+  focused,
+  badge,
+}: {
+  Icon: LucideIcon;
+  focused: boolean;
+  badge?: TabBadgeProps;
+}) {
+  const { primary, colors } = useThemeColors();
+  const iconScale = useSharedValue(focused ? 1.1 : 1);
+  const barScaleX = useSharedValue(focused ? 1 : 0);
+  const barOpacity = useSharedValue(focused ? 1 : 0);
+
+  useEffect(() => {
+    iconScale.value = withSpring(focused ? 1.1 : 1, SPRING_CONFIG);
+    barScaleX.value = withSpring(focused ? 1 : 0, SPRING_CONFIG);
+    barOpacity.value = withTiming(focused ? 1 : 0, { duration: 200 });
   }, [focused]);
 
-  const pillStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: scale.value,
+  const iconWrapStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: iconScale.value }],
   }));
 
-  const iconWrapStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }, { translateY: focused ? -1 : 0 }],
+  const barStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: barScaleX.value }, { rotate: '-2deg' }],
+    opacity: barOpacity.value,
   }));
 
   return (
     <View style={tabIconStyles.container} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Animated.View style={[tabIconStyles.pill, { backgroundColor: tint }, pillStyle]} />
       <Animated.View style={iconWrapStyle}>
         <Icon
           size={22}
           strokeWidth={focused ? 2 : 1.75}
           color={focused ? primary : colors.textMuted}
         />
+        {badge && <TabBadge kind={badge.kind} value={badge.value} />}
       </Animated.View>
+      <Animated.View style={[tabIconStyles.bar, { backgroundColor: primary }, barStyle]} />
     </View>
   );
 }
@@ -74,14 +121,43 @@ function TabIcon({ Icon, focused }: { Icon: LucideIcon; focused: boolean }) {
 const tabIconStyles = StyleSheet.create({
   container: {
     width: 48,
-    height: 32,
+    height: 36,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 4,
   },
-  pill: {
+  bar: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 16,
+    bottom: 0,
+    width: 24,
+    height: 2,
+    borderRadius: 2,
+  },
+});
+
+const tabBadgeStyles = StyleSheet.create({
+  dot: {
+    position: 'absolute',
+    top: -3,
+    right: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  progress: {
+    position: 'absolute',
+    top: -5,
+    right: -8,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 99,
+    minWidth: 16,
+    alignItems: 'center',
+  },
+  progressText: {
+    fontSize: 9,
+    fontWeight: '700' as const,
+    lineHeight: 11,
   },
 });
 
@@ -89,6 +165,8 @@ interface ThemedTabsContentProps {
   profiles: ReturnType<typeof useVault>['profiles'];
   activeProfile: ReturnType<typeof useVault>['activeProfile'];
   setActiveProfile: ReturnType<typeof useVault>['setActiveProfile'];
+  taskBadgeCount: number;
+  rdvBadgeActive: boolean;
 }
 
 function VacationBanner({ vacationConfig, isVacationActive }: {
@@ -116,7 +194,7 @@ function VacationBanner({ vacationConfig, isVacationActive }: {
   );
 }
 
-function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacationConfig, isVacationActive }: ThemedTabsContentProps & {
+function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacationConfig, isVacationActive, taskBadgeCount, rdvBadgeActive }: ThemedTabsContentProps & {
   vacationConfig: ReturnType<typeof useVault>['vacationConfig'];
   isVacationActive: boolean;
 }) {
@@ -243,8 +321,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
           tabBarActiveTintColor: primary,
           tabBarInactiveTintColor: colors.tabBarOff,
           tabBarLabelStyle: {
-            fontSize: FontSize.micro,
-            fontWeight: FontWeight.semibold,
+            fontFamily: FontFamily.handwriteSemibold,
+            fontSize: 14,
             marginBottom: 2,
           },
         }}
@@ -261,7 +339,13 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
           name="tasks"
           options={{
             title: t('tabs.tasks'),
-            tabBarIcon: ({ focused }) => <TabIcon Icon={ListChecks} focused={focused} />,
+            tabBarIcon: ({ focused }) => (
+              <TabIcon
+                Icon={ListChecks}
+                focused={focused}
+                badge={taskBadgeCount > 0 ? { kind: 'progress', value: String(taskBadgeCount) } : undefined}
+              />
+            ),
           }}
         />
         <Tabs.Screen
@@ -275,7 +359,13 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
           name="calendar"
           options={{
             title: t('tabs.calendar'),
-            tabBarIcon: ({ focused }) => <TabIcon Icon={CalendarIcon} focused={focused} />,
+            tabBarIcon: ({ focused }) => (
+              <TabIcon
+                Icon={CalendarIcon}
+                focused={focused}
+                badge={rdvBadgeActive ? { kind: 'dot' } : undefined}
+              />
+            ),
           }}
         />
         <Tabs.Screen
@@ -435,12 +525,24 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 }
 
 export default function TabsLayout() {
-  const { profiles, activeProfile, setActiveProfile, vacationConfig, isVacationActive } = useVault();
+  const { profiles, activeProfile, setActiveProfile, vacationConfig, isVacationActive, tasks, rdvs } = useVault();
   const { setThemeId } = useThemeColors();
-  // Sync le thème du profil actif avec le ThemeProvider racine
+
   useEffect(() => {
     setThemeId(activeProfile?.theme ?? '');
   }, [activeProfile?.theme, setThemeId]);
+
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const taskBadgeCount = useMemo(
+    () => tasks.filter(t => !t.completed && t.dueDate === todayStr).length,
+    [tasks, todayStr],
+  );
+
+  const rdvBadgeActive = useMemo(() => {
+    const weekLater = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    return rdvs.some(r => r.date_rdv >= todayStr && r.date_rdv <= weekLater);
+  }, [rdvs, todayStr]);
 
   return (
     <ThemedTabsContent
@@ -449,6 +551,8 @@ export default function TabsLayout() {
       setActiveProfile={setActiveProfile}
       vacationConfig={vacationConfig}
       isVacationActive={isVacationActive}
+      taskBadgeCount={taskBadgeCount}
+      rdvBadgeActive={rdvBadgeActive}
     />
   );
 }

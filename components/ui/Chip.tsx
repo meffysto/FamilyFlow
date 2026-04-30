@@ -10,8 +10,10 @@ interface ChipProps {
   selected?: boolean;
   onPress?: () => void;
   emoji?: string;
-  /** Icône (Lucide ou autre) — alternative à `emoji`. Reçoit `color` côté appelant. */
+  /** Icône statique — alternative à `emoji`. Couleur gérée par l'appelant. */
   icon?: React.ReactNode;
+  /** Fabrique d'icône qui reçoit la couleur calculée (sélectionné vs repos). */
+  iconFactory?: (color: string) => React.ReactNode;
   /** Override la couleur d'accent (cas legacy — par défaut warm bois) */
   color?: string;
   size?: 'sm' | 'md';
@@ -25,6 +27,7 @@ export const Chip = React.memo(function Chip({
   onPress,
   emoji,
   icon,
+  iconFactory,
   color,
   size = 'md',
   variant = 'default',
@@ -97,7 +100,7 @@ export const Chip = React.memo(function Chip({
       accessibilityState={onPress ? { selected } : undefined}
       hitSlop={6}
     >
-      {icon ? <View style={styles.icon}>{icon}</View> : null}
+      {iconFactory ? <View style={styles.icon}>{iconFactory(textColor)}</View> : icon ? <View style={styles.icon}>{icon}</View> : null}
       {emoji ? <Text style={styles.emoji}>{emoji} </Text> : null}
       <Text style={textStyle}>{label}</Text>
     </TouchableOpacity>

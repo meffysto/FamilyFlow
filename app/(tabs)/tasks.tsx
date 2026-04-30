@@ -6,7 +6,7 @@
  * Toggle task completion → updates vault file + awards points
  */
 
-import { useCallback, useState, useMemo, useRef, useEffect } from 'react';
+import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -41,7 +41,7 @@ import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { ArrowUpDown } from 'lucide-react-native';
+import { ArrowUpDown, ListTodo, Clock, Home, Sun } from 'lucide-react-native';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { EmptyState } from '../../components/EmptyState';
@@ -71,7 +71,8 @@ const ICON_BTN_HITSLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 interface FilterDef {
   id: string;
   label: string;
-  emoji: string;
+  emoji?: string;
+  iconFactory?: (color: string) => React.ReactNode;
 }
 
 // ─── Météo des tâches (profils enfants) ─────────────────────────────────────
@@ -176,10 +177,10 @@ const weatherStyles = StyleSheet.create({
 });
 
 // Les labels sont résolus dynamiquement via t() dans buildFilters
-const STATIC_FILTER_IDS = [
-  { id: 'tous', labelKey: 'tasks.filters.all', emoji: '📋' },
-  { id: 'retard', labelKey: 'tasks.filters.overdue', emoji: '⚠️' },
-  { id: 'maison', labelKey: 'tasks.filters.home', emoji: '🏠' },
+const STATIC_FILTER_IDS: { id: string; labelKey: string; iconFactory: (color: string) => React.ReactNode }[] = [
+  { id: 'tous',   labelKey: 'tasks.filters.all',     iconFactory: (c) => <ListTodo size={12} color={c} strokeWidth={2} /> },
+  { id: 'retard', labelKey: 'tasks.filters.overdue', iconFactory: (c) => <Clock     size={12} color={c} strokeWidth={2} /> },
+  { id: 'maison', labelKey: 'tasks.filters.home',    iconFactory: (c) => <Home      size={12} color={c} strokeWidth={2} /> },
 ];
 
 /** Build dynamic filters from enfant profiles */
@@ -193,7 +194,7 @@ function buildFilters(profiles: Profile[], activeProfile: Profile | null, t: (ke
   const [tousFilter, retardFilter, maisonFilter] = STATIC_FILTER_IDS.map((f) => ({
     id: f.id,
     label: t(f.labelKey),
-    emoji: f.emoji,
+    iconFactory: f.iconFactory,
   }));
   const mesTaches: FilterDef[] = activeProfile
     ? [{ id: 'mes-taches', label: t('tasks.filters.myTasks'), emoji: activeProfile.avatar }]
@@ -246,11 +247,9 @@ export default function TasksScreen() {
   useEffect(() => {
     if (addNew === '1') setAddModalVisible(true);
   }, [addNew]);
-  const filters = useMemo(() => {
+  const filters = useMemo<FilterDef[]>(() => {
     if (isVacationActive) {
-      return [
-        { id: 'tous', label: 'Tous', emoji: '☀️' },
-      ];
+      return [{ id: 'tous', label: 'Tous', iconFactory: (c) => <Sun size={12} color={c} strokeWidth={2} /> }];
     }
     return buildFilters(profiles, activeProfile, t);
   }, [profiles, activeProfile, isVacationActive, t]);
@@ -774,6 +773,7 @@ export default function TasksScreen() {
                       key={f.id}
                       label={f.label}
                       emoji={f.emoji}
+                      iconFactory={f.iconFactory}
                       selected={filter === f.id}
                       onPress={() => setFilter(f.id)}
                       size="sm"
