@@ -39,7 +39,7 @@ import { type WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Farm } from '../../constants/farm-theme';
-import { PlantWagerBadge } from './PlantWagerBadge';
+import { useThemeColors } from '../../contexts/ThemeContext';
 import { computePaceLevel, daysBetween } from '../../lib/mascot/wager-ui-helpers';
 import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
 
@@ -120,6 +120,7 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
   onRepairWeed?: (plotIndex: number) => void;
   onRepairFence?: (plotIndex: number) => void;
 }) {
+  const { colors } = useThemeColors();
   const growScaleX = useSharedValue(1);
   const growScaleY = useSharedValue(1);
   const prevStage = React.useRef(crop?.currentStage ?? -1);
@@ -178,6 +179,14 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
     return computePaceLevel(cumulCurrent, cumulTarget, daysElapsed, totalDays);
   }, [wager, cumulCurrent, cumulTarget]);
 
+  const wagerPillColors = useMemo(() => {
+    switch (paceLevel) {
+      case 'yellow': return { bg: colors.warningBg, border: colors.warning, text: colors.warningText };
+      case 'orange': return { bg: colors.errorBg, border: colors.error, text: colors.errorText };
+      default:       return { bg: colors.successBg, border: colors.success, text: colors.successText };
+    }
+  }, [paceLevel, colors]);
+
   // tasksToday — B1 : lu directement depuis wager.tasksCompletedToday (persisté Plan 01).
   const tasksToday = wager?.tasksCompletedToday ?? 0;
 
@@ -235,20 +244,27 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
                 <Text style={styles.cropEmoji}>{cropDef.emoji}</Text>
               );
             })()}
-            {/* Badge saisonnier masqué — le terrain tileset suffit */}
-            <View style={styles.stageRow}>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.stageDot,
-                    i < crop.currentStage
-                      ? (isMature ? styles.stageDotMature : (isMainPlot ? styles.stageDotMain : styles.stageDotFilled))
-                      : styles.stageDotEmpty,
-                  ]}
-                />
-              ))}
-            </View>
+            {showBadge && wager ? (
+              <View style={[styles.wagerPill, { backgroundColor: wagerPillColors.bg, borderColor: wagerPillColors.border }]}>
+                <Text style={[styles.wagerPillText, { color: wagerPillColors.text }]} allowFontScaling={false}>
+                  {cumulTarget === 0 ? '✓' : `${cumulCurrent}/${cumulTarget}`}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.stageRow}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.stageDot,
+                      i < crop.currentStage
+                        ? (isMature ? styles.stageDotMature : (isMainPlot ? styles.stageDotMain : styles.stageDotFilled))
+                        : styles.stageDotEmpty,
+                    ]}
+                  />
+                ))}
+              </View>
+            )}
           </View>
         ) : (
           <Text style={styles.emptyPlus}>+</Text>
@@ -282,16 +298,6 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
           Double gate mûr + cumul atteint (Phase 40 Plan 03). */}
       {showReadyRing && (
         <Text style={styles.wagerReadyHint} pointerEvents="none">{'🍄'}</Text>
-      )}
-      {/* Badge Sporée 2-lignes — visible dès stage 0 (G6), Phase 40 Plan 03 */}
-      {showBadge && wager && (
-        <PlantWagerBadge
-          cumulCurrent={cumulCurrent}
-          cumulTarget={cumulTarget}
-          tasksToday={tasksToday}
-          tasksTargetToday={tasksTargetToday}
-          paceLevel={paceLevel}
-        />
       )}
     </Animated.View>
   );
@@ -1034,6 +1040,8 @@ const styles = StyleSheet.create({
   seasonBadge: { fontSize: 8, position: 'absolute', top: -2, right: -4 },
   stageRow: { flexDirection: 'row', gap: 3, marginTop: 2 },
   stageDot: { width: 5, height: 5, borderRadius: 3 },
+  wagerPill: { marginTop: 2, borderWidth: 1, borderRadius: 3, paddingHorizontal: 3, paddingVertical: 1, alignSelf: 'center' },
+  wagerPillText: { fontSize: 7, fontWeight: '600' as const, textAlign: 'center' as const, lineHeight: 8 },
   stageDotFilled: { backgroundColor: '#8B6914' },
   stageDotMain: { backgroundColor: '#60A5FA' },
   stageDotMature: { backgroundColor: '#FFD700' },
