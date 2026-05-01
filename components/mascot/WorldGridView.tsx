@@ -38,6 +38,7 @@ import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 import { type WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Farm } from '../../constants/farm-theme';
 import { PlantWagerBadge } from './PlantWagerBadge';
 import { computePaceLevel, daysBetween } from '../../lib/mascot/wager-ui-helpers';
 import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
@@ -1043,7 +1044,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -20,
     alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: Farm.parchment,
+    borderWidth: 1,
+    borderColor: Farm.woodHighlight,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
@@ -1052,15 +1055,16 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
     zIndex: 15,
   },
-  cropBubbleText: { fontSize: 10, textAlign: 'center' as const, color: '#1F2937' },
+  cropBubbleText: { fontSize: 10, textAlign: 'center' as const, color: Farm.brownText },
   buildingCell: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    backgroundColor: Farm.parchmentDark,
     borderRadius: 10,
     borderCurve: 'continuous',
-    borderWidth: 1.5,
-    borderColor: 'rgba(139, 92, 246, 0.3)',
+    borderWidth: 2,
+    borderColor: Farm.woodHighlight,
+    borderStyle: 'dashed',
     overflow: 'hidden',
   },
   buildingCellPlaced: {

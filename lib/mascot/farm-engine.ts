@@ -7,6 +7,7 @@ import { getCurrentSeason, type Season } from './seasons';
 import { type TechBonuses } from './tech-engine';
 import { type WearEffects } from './wear-engine';
 
+/** Stade final d'une culture (seed → sprout → growing → mature) */
 export const MAX_CROP_STAGE = 4;
 
 // ─── Amélioration des parcelles ──────────────────────────────────────────────
@@ -196,7 +197,7 @@ export function getMainPlotIndex(crops: PlantedCrop[]): number | null {
   const sorted = [...crops].sort(
     (a, b) => a.plantedAt.localeCompare(b.plantedAt) || a.plotIndex - b.plotIndex,
   );
-  const target = sorted.find(c => c.currentStage < 4);
+  const target = sorted.find(c => c.currentStage < MAX_CROP_STAGE);
   return target ? target.plotIndex : null;
 }
 

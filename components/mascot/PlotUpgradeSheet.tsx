@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   Pressable,
   Modal,
-  Alert,
   Image,
 } from 'react-native';
 import Animated, {
@@ -161,31 +160,18 @@ export function PlotUpgradeSheet({
   const canAfford = upgradeCost !== null && coins >= upgradeCost;
   const nextLevel = Math.min(currentLevel + 1, MAX_PLOT_LEVEL);
 
-  const handleUpgrade = useCallback(() => {
+  const handleUpgrade = useCallback(async () => {
     if (!upgradeCost) return;
-    Alert.alert(
-      'Améliorer la parcelle ?',
-      `Niveau ${currentLevel} → ${nextLevel}\n${LEVEL_DESCRIPTIONS[nextLevel]}\n\nCoût : ${upgradeCost.toLocaleString('fr-FR')} 🍃`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Améliorer',
-          style: 'default',
-          onPress: async () => {
-            try {
-              await onUpgrade(plotIndex);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              onMessage?.(`Parcelle ${plotIndex + 1} améliorée au niveau ${nextLevel} !`, 'success');
-              onClose();
-            } catch (e: any) {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              onMessage?.(e.message ?? 'Erreur', 'error');
-            }
-          },
-        },
-      ],
-    );
-  }, [upgradeCost, currentLevel, nextLevel, plotIndex, onUpgrade, onMessage, onClose]);
+    try {
+      await onUpgrade(plotIndex);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      onMessage?.(`Parcelle ${plotIndex + 1} améliorée au niveau ${nextLevel} !`, 'success');
+      onClose();
+    } catch (e: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      onMessage?.(e.message ?? 'Erreur', 'error');
+    }
+  }, [upgradeCost, nextLevel, plotIndex, onUpgrade, onMessage, onClose]);
 
   return (
     <Modal

@@ -7,8 +7,8 @@
  * - mutation_rare : fond violet, losanges pixel en orbite, sparkles, pulse rings
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, Image, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -428,6 +428,11 @@ export function HarvestEventOverlay({ event, onDismiss }: HarvestEventOverlayPro
     }
   }, [event]);
 
+  const handleTapDismiss = useCallback(() => {
+    Haptics.selectionAsync();
+    onDismiss();
+  }, [onDismiss]);
+
   if (!event) return null;
 
   return (
@@ -436,9 +441,11 @@ export function HarvestEventOverlay({ event, onDismiss }: HarvestEventOverlayPro
       exiting={FadeOut.duration(300)}
       style={[styles.overlay, { backgroundColor: BG_COLORS[event.type] ?? 'rgba(0,0,0,0.8)' }]}
     >
-      {event.type === 'insectes' && <InsectesContent event={event} />}
-      {event.type === 'pluie_doree' && <PluieDoreeContent event={event} />}
-      {event.type === 'mutation_rare' && <MutationContent event={event} />}
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleTapDismiss}>
+        {event.type === 'insectes' && <InsectesContent event={event} />}
+        {event.type === 'pluie_doree' && <PluieDoreeContent event={event} />}
+        {event.type === 'mutation_rare' && <MutationContent event={event} />}
+      </Pressable>
     </Animated.View>
   );
 }

@@ -3108,28 +3108,35 @@ export default function TreeScreen() {
         },
       ]}>
         <View style={styles.hudContent}>
-          {/* Phase 18-04 : ref cible tutoriel étape 4 (XP/loot) */}
-          <View ref={hudXpRef} style={styles.hudItem}>
-            <Text style={styles.hudEmoji}>{'🍃'}</Text>
-            <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{profile.coins ?? 0}</Text>
+          {/* Stats passives groupées avec dividers verticaux */}
+          <View style={styles.hudStatsGroup}>
+            {/* Phase 18-04 : ref cible tutoriel étape 4 (XP/loot) */}
+            <View ref={hudXpRef} style={styles.hudItem}>
+              <Text style={styles.hudEmoji}>{'🍃'}</Text>
+              <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{profile.coins ?? 0}</Text>
+            </View>
+            <View style={styles.hudDivider} />
+            <View style={styles.hudItem}>
+              <Text style={styles.hudEmoji}>{'🔥'}</Text>
+              <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{profile.streak ?? 0}</Text>
+            </View>
+            <View style={styles.hudDivider} />
+            <View style={styles.hudItem}>
+              <Text style={styles.hudEmoji}>{'🌿'}</Text>
+              <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{growingCount}</Text>
+            </View>
+            <View style={styles.hudDivider} />
+            <View style={styles.hudItem}>
+              <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
+              <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{t(seasonInfo.labelKey)}</Text>
+            </View>
           </View>
-          <View style={styles.hudItem}>
-            <Text style={styles.hudEmoji}>{'🔥'}</Text>
-            <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{profile.streak ?? 0}</Text>
-          </View>
-          <View style={styles.hudItem}>
-            <Text style={styles.hudEmoji}>{'🌿'}</Text>
-            <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{growingCount}</Text>
-          </View>
-          <View style={styles.hudItem}>
-            <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
-            <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{t(seasonInfo.labelKey)}</Text>
-          </View>
-          {/* 5e item HUD : bouton codex ferme (Phase 17, D-12/D-13) */}
+          {/* Bouton codex ferme — affordance tap distincte (Phase 17, D-12/D-13) */}
           <TouchableOpacity
-            style={styles.hudItem}
+            style={styles.hudCodexButton}
             onPress={() => { Haptics.selectionAsync(); setShowCodex(true); }}
             accessibilityLabel={t('codex:modal.title')}
+            accessibilityRole="button"
           >
             <Text style={styles.hudEmoji}>{'📖'}</Text>
           </TouchableOpacity>
@@ -3626,10 +3633,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  hudStatsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: Spacing.sm,
+  },
+  hudDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: Farm.woodHighlight,
+    opacity: 0.5,
+  },
   hudItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xxs,
+  },
+  hudCodexButton: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
+    backgroundColor: Farm.parchmentDark,
+    borderWidth: 2,
+    borderColor: Farm.woodDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.sm,
   },
   hudEmoji: {
     fontSize: 14,
