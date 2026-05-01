@@ -3494,6 +3494,7 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
   if (story.spectacle) lines.push(`spectacle: true`);
   if (story.audioMode) lines.push(`audio_mode: ${story.audioMode}`);
   if (typeof story.ambienceVolume === 'number') lines.push(`ambience_volume: ${story.ambienceVolume.toFixed(2)}`);
+  if (story.voice.multiVoice) lines.push(`multi_voice: true`);
   // ─── Livre/chapitres (frontmatter snake_case, optionnels) ───────────────
   if (story.livreId) lines.push(`livre_id: ${story.livreId}`);
   if (story.livreTitre) lines.push(`livre_titre: "${story.livreTitre.replace(/"/g, "'")}"`);
@@ -3582,6 +3583,7 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
       language: (d.voice_language === 'en' ? 'en' : 'fr') as 'fr' | 'en',
       elevenLabsVoiceId: d.voice_id || undefined,
       fishAudioReferenceId: d.fish_audio_ref || undefined,
+      multiVoice: d.multi_voice === 'true' ? true : undefined,
     };
     const validLengths = new Set(['courte', 'moyenne', 'longue', 'tres-longue']);
     const length = d.length && validLengths.has(d.length)
