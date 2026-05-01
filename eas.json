@@ -8,12 +8,14 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "ios": {
         "simulator": true
       }
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "ios": {
         "simulator": false
       }
@@ -21,6 +23,7 @@
     "production": {
       "autoIncrement": true,
       "credentialsSource": "remote",
+      "channel": "production",
       "env": {
         "EXPO_PUBLIC_SENTRY_DSN": "https://35ec8aa68c232e25c643c77255e32eb9@o4511135016157184.ingest.de.sentry.io/4511135026118736"
       }

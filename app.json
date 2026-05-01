@@ -7,6 +7,13 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "updates": {
+      "url": "https://u.expo.dev/0ca7b0af-8d38-4a79-8e90-7863bff80584",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "splash": {
       "backgroundColor": "#F9FAFB"
     },
