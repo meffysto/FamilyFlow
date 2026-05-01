@@ -2675,20 +2675,32 @@ tags:
 > **Qualité** (1-5):
 > **Notes**:
 
+## 😊 Humeur
+
+> **Humeur** (1-5):
+> **Ressenti**:
+> **Notes**:
+
+## ⚡ Énergie
+
+> **Énergie** (1-5):
+> **Notes**:
+
 ## 🤒 Symptômes
 
 1.
 
-## 😊 Humeur & Observations
+## 🤕 Douleurs
 
-> Comment te sens-tu aujourd'hui ?
+1.
 
-## 🎯 Objectifs
-- [ ]
+## 💬 Observations
 
-## 🙏 Gratitude
+1.
 
-> [!tip] 3 choses positives aujourd'hui
+## 👶 Mouvements bébé
+
+1.
 `;
   }
 
@@ -2701,18 +2713,24 @@ tags:
 
 # Journal — ${prenom} — ${todayDisplay}
 
-## 📝 Notes du jour
-
 ## 😊 Humeur
 
-> Comment s'est passée la journée ?
+> **Humeur** (1-5):
+> **Ressenti**:
+> **Notes**:
 
-## 🎯 Objectifs
-- [ ]
+## ⚡ Énergie
 
-## 🙏 Gratitude
+> **Énergie** (1-5):
+> **Notes**:
 
-> [!tip] 3 choses positives aujourd'hui
+## 🤒 Symptômes
+
+1.
+
+## 💬 Observations
+
+1.
 `;
 }
 
