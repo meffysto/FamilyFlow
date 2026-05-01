@@ -42,6 +42,7 @@ export interface UseVaultBudgetResult {
   setBudgetMonth: (month: string) => void;
   addExpense: (date: string, category: string, amount: number, label: string) => Promise<void>;
   deleteExpense: (lineIndex: number) => Promise<void>;
+  updateExpense: (lineIndex: number, updated: { date: string; category: string; amount: number; label: string }) => Promise<void>;
   updateBudgetConfig: (config: BudgetConfig) => Promise<void>;
   loadBudgetData: (month?: string) => Promise<void>;
   loadBudgetMonths: (count: number) => Promise<BudgetEntry[]>;
@@ -137,6 +138,39 @@ export function useVaultBudget(
     }
   }, [budgetMonth, vaultRef]);
 
+  const updateExpense = useCallback(async (
+    lineIndex: number,
+    updated: { date: string; category: string; amount: number; label: string }
+  ) => {
+    if (!vaultRef.current) return;
+    const oldMonth = budgetMonth;
+    const newMonth = updated.date.slice(0, 7);
+    const sameMonth = oldMonth === newMonth;
+
+    if (sameMonth) {
+      // Modifier la ligne sur place
+      const monthFile = `${BUDGET_DIR}/${oldMonth}.md`;
+      let content: string;
+      try {
+        content = await vaultRef.current.readFile(monthFile);
+      } catch (e) {
+        warnUnexpected('updateExpense-read', e);
+        return;
+      }
+      const lines = content.split('\n');
+      if (lineIndex >= 0 && lineIndex < lines.length) {
+        lines[lineIndex] = `- ${updated.date} | ${updated.category} | ${updated.amount.toFixed(2)} | ${updated.label}`;
+        const updatedContent = lines.join('\n');
+        await vaultRef.current.writeFile(monthFile, updatedContent);
+        setBudgetEntries(parseBudgetMonth(updatedContent));
+      }
+    } else {
+      // Supprimer de l'ancien mois et ajouter dans le nouveau
+      await deleteExpense(lineIndex);
+      await addExpense(updated.date, updated.category, updated.amount, updated.label);
+    }
+  }, [budgetMonth, vaultRef, deleteExpense, addExpense]);
+
   const loadBudgetMonths = useCallback(async (count: number): Promise<BudgetEntry[]> => {
     if (!vaultRef.current) return [];
     const now = new Date();
@@ -164,6 +198,7 @@ export function useVaultBudget(
     setBudgetMonth,
     addExpense,
     deleteExpense,
+    updateExpense,
     updateBudgetConfig,
     loadBudgetData,
     loadBudgetMonths,

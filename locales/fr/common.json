@@ -652,7 +652,8 @@
       "added_one": "{{count}} dépense ajoutée",
       "added_other": "{{count}} dépenses ajoutées",
       "scanError": "Erreur lors du scan",
-      "configureApi": "Configure ta clé API dans les réglages"
+      "configureApi": "Configure ta clé API dans les réglages",
+      "updated": "Dépense modifiée"
     },
     "scan": {
       "scanning": "Scan en cours",
@@ -697,6 +698,12 @@
       "avgFirst": "Moy. début",
       "avgLast": "Moy. récent",
       "purchases": "{{count}} achats"
+    },
+    "editModal": {
+      "title": "Modifier la dépense",
+      "category": "Catégorie",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
     }
   },
   "health": {

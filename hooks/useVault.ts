@@ -266,6 +266,7 @@ export interface VaultState {
   setBudgetMonth: (month: string) => void;
   addExpense: (date: string, category: string, amount: number, label: string) => Promise<void>;
   deleteExpense: (lineIndex: number) => Promise<void>;
+  updateExpense: (lineIndex: number, updated: { date: string; category: string; amount: number; label: string }) => Promise<void>;
   updateBudgetConfig: (config: BudgetConfig) => Promise<void>;
   loadBudgetData: (month?: string) => Promise<void>;
   loadBudgetMonths: (count: number) => Promise<BudgetEntry[]>;

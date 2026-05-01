@@ -106,6 +106,7 @@ export default function BudgetScreen() {
     loadBudgetMonths,
     addExpense,
     deleteExpense,
+    updateExpense,
     updateBudgetConfig,
     activeProfile,
     refresh,
@@ -139,6 +140,14 @@ export default function BudgetScreen() {
   const [amountText, setAmountText] = useState('');
   const [labelText, setLabelText] = useState('');
   const [dateText, setDateText] = useState(todayISO());
+
+  // Edit modal state
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editEntry, setEditEntry] = useState<BudgetEntry | null>(null);
+  const [editCategory, setEditCategory] = useState<BudgetCategory | null>(null);
+  const [editAmountText, setEditAmountText] = useState('');
+  const [editLabelText, setEditLabelText] = useState('');
+  const [editDateText, setEditDateText] = useState('');
 
   // Scanner ticket
   const { config: aiConfig, isConfigured: aiConfigured } = useAI();
@@ -424,6 +433,41 @@ export default function BudgetScreen() {
     setReceiptReviewVisible(false);
     setReceiptData(null);
   }, [addExpense, showToast]);
+
+  // ─── Modal "Modifier la dépense" ──────────────────────────────────────────
+
+  const handleEditOpen = useCallback((entry: BudgetEntry) => {
+    const matchedCat = budgetConfig.categories.find(c => `${c.emoji} ${c.name}` === entry.category) ?? null;
+    setEditEntry(entry);
+    setEditCategory(matchedCat);
+    setEditAmountText(entry.amount.toFixed(2).replace('.', ','));
+    setEditLabelText(entry.label);
+    setEditDateText(entry.date);
+    setEditModalVisible(true);
+    Haptics.selectionAsync();
+  }, [budgetConfig.categories]);
+
+  const handleEditSave = useCallback(async () => {
+    if (!editEntry || !editCategory || !editAmountText.trim() || !editLabelText.trim()) {
+      showToast(t('budget.toast.fillRequired'), 'error');
+      return;
+    }
+    const amount = parseFloat(editAmountText.replace(',', '.'));
+    if (isNaN(amount) || amount <= 0) {
+      showToast(t('budget.toast.invalidAmount'), 'error');
+      return;
+    }
+    await updateExpense(editEntry.lineIndex, {
+      date: editDateText,
+      category: `${editCategory.emoji} ${editCategory.name}`,
+      amount,
+      label: editLabelText.trim(),
+    });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    showToast(t('budget.toast.updated'), 'success');
+    setEditModalVisible(false);
+    setEditEntry(null);
+  }, [editEntry, editCategory, editAmountText, editLabelText, editDateText, updateExpense, showToast, t]);
 
   // ─── Modal "Configurer le budget" ─────────────────────────────────────────
 
@@ -761,7 +805,7 @@ export default function BudgetScreen() {
                       { backgroundColor: isSelected ? primary + '15' : colors.card },
                       isSelected && { borderColor: primary, borderWidth: 1 },
                     ]}
-                    onPress={selectionMode ? () => toggleSelection(item.lineIndex) : undefined}
+                    onPress={selectionMode ? () => toggleSelection(item.lineIndex) : () => handleEditOpen(item)}
                     onLongPress={selectionMode ? undefined : () => enterSelectionMode(item.lineIndex)}
                     activeOpacity={0.7}
                   >
@@ -942,6 +986,99 @@ export default function BudgetScreen() {
               accessibilityRole="button"
             >
               <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>{t('budget.addModal.cancel')}</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Modal "Modifier la dépense" */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={[styles.modalContainer, { backgroundColor: colors.bg }]}
+        >
+          <View style={styles.dragHandleBar}>
+            <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
+          </View>
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('budget.editModal.title')}</Text>
+
+            {/* Sélecteur de catégorie */}
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.editModal.category')}</Text>
+            <View style={styles.chipRow}>
+              {budgetConfig.categories.map((cat) => {
+                const selected = editCategory?.name === cat.name;
+                return (
+                  <TouchableOpacity
+                    key={cat.name}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: selected ? primary : colors.cardAlt,
+                        borderColor: selected ? primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => setEditCategory(cat)}
+                    activeOpacity={0.7}
+                    accessibilityLabel={t('budget.addModal.categoryA11y', { name: cat.name })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                  >
+                    <Text style={[styles.chipText, { color: selected ? colors.onPrimary : colors.text }]}>
+                      {cat.emoji} {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Montant */}
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.addModal.amount')}</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+              placeholder={t('budget.addModal.amountPlaceholder')}
+              placeholderTextColor={colors.textFaint}
+              keyboardType="decimal-pad"
+              value={editAmountText}
+              onChangeText={setEditAmountText}
+              accessibilityLabel={t('budget.addModal.amountA11y')}
+            />
+
+            {/* Libellé */}
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.addModal.labelField')}</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+              placeholder={t('budget.addModal.labelPlaceholder')}
+              placeholderTextColor={colors.textFaint}
+              value={editLabelText}
+              onChangeText={setEditLabelText}
+              accessibilityLabel={t('budget.addModal.labelA11y')}
+            />
+
+            {/* Date */}
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.addModal.date')}</Text>
+            <DateInput value={editDateText} onChange={setEditDateText} placeholder={t('budget.addModal.datePlaceholder')} />
+
+            <TouchableOpacity
+              style={[styles.submitBtn, { backgroundColor: primary }]}
+              onPress={handleEditSave}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.submitBtnText, { color: colors.onPrimary }]}>{t('budget.editModal.save')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelBtn}
+              onPress={() => setEditModalVisible(false)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>{t('budget.editModal.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>

@@ -652,7 +652,8 @@
       "added_one": "{{count}} expense added",
       "added_other": "{{count}} expenses added",
       "scanError": "Error scanning receipt",
-      "configureApi": "Set up your API key in settings"
+      "configureApi": "Set up your API key in settings",
+      "updated": "Expense updated"
     },
     "scan": {
       "scanning": "Scanning...",
@@ -697,6 +698,12 @@
       "avgFirst": "Avg. first",
       "avgLast": "Avg. recent",
       "purchases": "{{count}} purchases"
+    },
+    "editModal": {
+      "title": "Edit expense",
+      "category": "Category",
+      "save": "Save",
+      "cancel": "Cancel"
     }
   },
   "health": {
