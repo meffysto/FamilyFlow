@@ -1204,6 +1204,10 @@ export default function DashboardScreen() {
             leaderboard: profiles.length > 0,
             lootProgress: !!activeProfile,
             companionDay: profiles.length > 0,
+            garden: profiles.length > 0,
+            auberge: Array.isArray(activeProfile?.farmBuildings)
+              && activeProfile.farmBuildings.some((b: { buildingId?: string }) => b.buildingId === 'auberge'),
+            photos: enfants.length > 0,
           };
           const sectionsToRender = visibleSections.filter((s) => hasContent[s.id] !== false);
 
