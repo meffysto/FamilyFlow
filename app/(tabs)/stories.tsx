@@ -134,6 +134,14 @@ const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAv
     }
   }, [story.date]);
 
+  // Badges modèle — résolus avec rétrocompat (audioMode peut vivre sur story ou voice ; spectacle legacy)
+  const audioMode = story.audioMode
+    ?? story.voice?.audioMode
+    ?? (story.spectacle || story.voice?.spectacle ? 'spectacle' : undefined);
+  const audioModeIcon = audioMode === 'spectacle' ? '🎭' : audioMode === 'doux' ? '🌙' : null;
+  const multiVoice = story.voice?.multiVoice === true;
+  const premiumVoice = story.voice?.engine === 'elevenlabs' || story.voice?.engine === 'fish-audio';
+
   return (
     <Pressable
       style={[storyCardStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -141,12 +149,23 @@ const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAv
       onLongPress={onLongPress ? () => onLongPress(story) : undefined}
       delayLongPress={500}
     >
-      {/* Badge audio */}
-      {audioAvailable && (
-        <View style={[storyCardStyles.audioBadge, { backgroundColor: `${primary}20` }]}>
-          <Text style={[storyCardStyles.audioBadgeText, { color: primary }]}>🔊</Text>
-        </View>
-      )}
+      {/* Badges modèle (emojis) + audio dispo */}
+      <View style={storyCardStyles.badgeRow}>
+        {audioModeIcon && (
+          <Text style={storyCardStyles.modelBadge}>{audioModeIcon}</Text>
+        )}
+        {multiVoice && (
+          <Text style={storyCardStyles.modelBadge}>👥</Text>
+        )}
+        {premiumVoice && (
+          <Text style={storyCardStyles.modelBadge}>✨</Text>
+        )}
+        {audioAvailable && (
+          <View style={[storyCardStyles.audioBadge, { backgroundColor: `${primary}20` }]}>
+            <Text style={[storyCardStyles.audioBadgeText, { color: primary }]}>🔊</Text>
+          </View>
+        )}
+      </View>
       {/* Titre */}
       <Text style={[storyCardStyles.title, { color: colors.text }]} numberOfLines={2}>
         {story.titre}
@@ -174,10 +193,19 @@ const storyCardStyles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: Spacing.md,
   },
-  audioBadge: {
+  badgeRow: {
     position: 'absolute',
     top: Spacing.md,
     right: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    zIndex: 1,
+  },
+  modelBadge: {
+    fontSize: FontSize.caption,
+  },
+  audioBadge: {
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -315,7 +343,7 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
 
   const toggleCollapse = useCallback((universId: StoryUniverseId) => {
     Haptics.selectionAsync();
-    setCollapsedUnivers(prev => ({ ...prev, [universId]: !prev[universId] }));
+    setCollapsedUnivers(prev => ({ ...prev, [universId]: !(prev[universId] ?? true) }));
   }, []);
 
   const showEnfantName = !selectedEnfantId;
