@@ -585,7 +585,7 @@ export function BuildingDetailSheet({
                       label={canAffordUpgrade
                         ? `Améliorer ${t(def.labelKey).toLowerCase()}`
                         : `Il manque ${fmtNum(missingCoins)} 🍃`}
-                      variant={canAffordUpgrade ? 'secondary' : 'disabled'}
+                      variant={canAffordUpgrade ? 'primary' : 'disabled'}
                       onPress={() => onUpgrade(building.cellId)}
                     />
                     <View style={styles.balanceLine}>
