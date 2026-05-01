@@ -938,8 +938,14 @@ export default function TreeScreen() {
   // Timer unique pour éviter les races de timers entre fallback et IA
   const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Fermer le message compagnon manuellement (tap sur bulle — FAM-14)
+  const handleDismissCompanionMessage = useCallback(() => {
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+    setCompanionMessage(null);
+  }, []);
+
   // Afficher un message compagnon (template ou IA) et le persister en mémoire
-  const showCompanionMsg = useCallback((msg: string, context: any, duration = 8000, event: CompanionEvent = 'greeting') => {
+  const showCompanionMsg = useCallback((msg: string, context: any, duration = 15000, event: CompanionEvent = 'greeting') => {
     // Annuler tout timer précédent pour éviter les races
     if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
     const isI18nKey = msg.startsWith('companion.msg.');
@@ -994,12 +1000,12 @@ export default function TreeScreen() {
     };
 
     // Afficher le template immédiatement comme fallback
-    showCompanionMsg(pickCompanionMessage('greeting', context), context, 4000, 'greeting');
+    showCompanionMsg(pickCompanionMessage('greeting', context), context, 12000, 'greeting');
 
     // Tenter un message IA au tap (remplace le fallback si réussi)
     if (aiCall) {
       generateCompanionAIMessage('greeting', context, aiCall).then(msg => {
-        showCompanionMsg(msg, context, 4000, 'greeting');
+        showCompanionMsg(msg, context, 12000, 'greeting');
       });
     }
   }, [companion, activeProfile, recentTasksCount, recentCompletedTasks, nextRdv, todayMeals, aiCall, showCompanionMsg, hoursSinceLastActivity, pendingTasksToday, timeOfDay]);
@@ -1055,12 +1061,12 @@ export default function TreeScreen() {
     };
 
     // Fallback template immédiat
-    showCompanionMsg(pickCompanionMessage(event, context), context, 5000, event);
+    showCompanionMsg(pickCompanionMessage(event, context), context, 12000, event);
 
     // Tenter IA (remplace si réussi)
     if (aiCall) {
       generateCompanionAIMessage(event, context, aiCall).then(msg => {
-        showCompanionMsg(msg, context, 5000, event);
+        showCompanionMsg(msg, context, 12000, event);
       });
     }
   }, [aiCall, showCompanionMsg, hoursSinceLastActivity, timeOfDay]);
@@ -2649,6 +2655,7 @@ export default function TreeScreen() {
                   name={companion.name}
                   message={companionMessage}
                   onTap={handleCompanionTap}
+                  onDismissMessage={handleDismissCompanionMessage}
                   onLongPress={() => {
                     // Phase 42 D-29 — tap long sur sprite ouvre directement FeedPicker
                     Haptics.selectionAsync().catch(() => {});

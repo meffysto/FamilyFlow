@@ -527,6 +527,7 @@ interface CompanionSlotProps {
   message?: string | null;
   onTap: () => void;
   onLongPress?: () => void;         // Phase 42 — tap long ouvre FeedPicker (D-29)
+  onDismissMessage?: () => void;    // FAM-14 — tap sur bulle pour fermer le message
   containerWidth: number;
   containerHeight: number;
   harvestables?: HarvestableInfo[];  // crops prêtes à récolter
@@ -572,6 +573,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   message,
   onTap,
   onLongPress,
+  onDismissMessage,
   containerWidth,
   containerHeight,
   harvestables = [],
@@ -996,20 +998,32 @@ export const CompanionSlot = React.memo(function CompanionSlot({
           Le clamp horizontal et la translation sont gérés dans bubbleAnimStyle (worklet),
           qui lit posX.value pour rester dans le viewport quoi qu'il arrive. */}
       {showBubble && (
-        <Animated.View
-          style={[
-            styles.messageBubble,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            },
-            bubbleAnimStyle,
-          ]}
+        <Pressable
+          onPress={() => {
+            if (message && onDismissMessage) {
+              onDismissMessage();
+            } else {
+              setHarvestHint(null);
+            }
+          }}
+          accessibilityLabel="Fermer le message"
+          accessibilityRole="button"
         >
-          <Text style={[styles.messageText, { color: colors.text }]} numberOfLines={5}>
-            {displayText}
-          </Text>
-        </Animated.View>
+          <Animated.View
+            style={[
+              styles.messageBubble,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+              bubbleAnimStyle,
+            ]}
+          >
+            <Text style={[styles.messageText, { color: colors.text }]} numberOfLines={5}>
+              {displayText}
+            </Text>
+          </Animated.View>
+        </Pressable>
       )}
 
       {/* Emoji d'humeur — seulement à l'arrêt, pas en marchant */}
