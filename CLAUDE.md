@@ -27,10 +27,12 @@
 
 ## Architecture
 - `contexts/VaultContext.tsx` — VaultProvider + useVault() (source unique d'état)
-- `hooks/useVault.ts` — useVaultInternal() orchestrateur + 21 hooks domaine (Tasks, Recipes, Defis, Profiles, Stock, Courses, Health, SecretMissions, Meals, RDV, Photos, Memories, Vacation, Budget, Notes, Anniversaires, Wishlist, Gratitude, Quotes, Moods, Routines)
+- `hooks/useVault.ts` — useVaultInternal() orchestrateur + hooks domaine (Tasks, Recipes, Defis, Profiles, Stock, Courses, Health, SecretMissions, Meals, RDV, Photos, Memories, Vacation, Budget, Notes, Anniversaires, Wishlist, Gratitude, Quotes, Moods, Routines, LoveNotes, Stories, Dietary, FamilyQuests, Auberge, Expeditions, Garden, Farm)
 - `lib/parser.ts` — parse/serialize markdown vault files (parse* / serialize* pairs)
 - `lib/vault.ts` — VaultManager: file I/O, path traversal prevention, iCloud coordination
 - `contexts/ThemeContext.tsx` — `useThemeColors()` → `{ primary, tint, colors, isDark }`
+- `contexts/AuthContext.tsx` — AuthProvider + useAuth() (lock screen / PIN)
+- `contexts/StoryVoiceContext.tsx` — StoryVoiceProvider (TTS voix histoires du soir)
 - `constants/` — colors, spacing, typography, shadows, themes (9 profils), rewards
 - `components/ui/` — Chip, Badge, Button, DateInput, ModalHeader, MarkdownText, CollapsibleSection
 - `components/dashboard/` — sections dashboard + types (DashboardSectionProps)
@@ -42,14 +44,14 @@
 ### Cache (lib/vault-cache.ts)
 Snapshot JSON des domaines stables réhydraté au boot → dashboard visible en ~50ms au re-launch.
 **Exclusions volontaires** (toujours chargés frais depuis le vault) : jardin, ferme, mascotte, companion, gamification (points/coins/XP), défis, skill-trees, quêtes coop, champs farm/mascot des profils.
-**Bumper `CACHE_VERSION`** (lib/vault-cache.ts:41) quand :
+**Bumper `CACHE_VERSION`** (lib/vault-cache.ts:53) quand :
 - Shape d'un type caché change (Task, MealItem, Profile base, CourseItem, StockItem, RDV, Memory, HealthRecord, Routine, Note, Anniversary, WishlistItem, GratitudeDay, ChildQuote, MoodEntry, NotificationPreferences, VacationConfig, JournalSummaryEntry)
 - Ajout/retrait d'un domaine dans `VaultCacheState`
 Pas besoin de bumper pour des modifs de parsers, composants UI, ou domaines non cachés.
 Debug : `clearCache()` exporté pour forcer un reset.
 
 ### Hiérarchie providers (app/_layout.tsx)
-SafeAreaProvider > GestureHandler > VaultProvider > ThemeProvider > AIProvider > HelpProvider > ParentalControls > ToastProvider
+SafeAreaProvider > GestureHandler > VaultProvider > AuthProvider > ThemeProvider > AIProvider > StoryVoiceProvider > HelpProvider > ParentalControls > ToastProvider
 
 ### Barrel files
 - `components/ui/index.ts`, `components/dashboard/index.ts`, `lib/gamification/index.ts`, `lib/mascot/index.ts`
