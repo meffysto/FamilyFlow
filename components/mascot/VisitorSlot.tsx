@@ -141,6 +141,12 @@ const SAGA_SPRITES: Record<string, { idle: number[]; walk: number[]; cast?: numb
       require('../../assets/garden/animals/masque_ombre/walk_left_5.png'),
       require('../../assets/garden/animals/masque_ombre/walk_left_6.png'),
     ],
+    cast: [
+      require('../../assets/garden/animals/masque_ombre/cast_1.png'),
+      require('../../assets/garden/animals/masque_ombre/cast_2.png'),
+      require('../../assets/garden/animals/masque_ombre/cast_3.png'),
+      require('../../assets/garden/animals/masque_ombre/cast_4.png'),
+    ],
   },
   graine_anciens: {
     idle: [
