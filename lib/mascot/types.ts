@@ -145,7 +145,7 @@ export interface SceneSlot {
   zone: SceneZone;
 }
 
-/** 10 emplacements repartis sur le diorama (fractions 0-1) */
+/** 20 emplacements repartis sur le diorama (fractions 0-1) */
 export const SCENE_SLOTS: SceneSlot[] = [
   { id: 'slot-1',  x: 0.13, y: 0.48, zone: 'ground' },   // herbe gauche milieu
   { id: 'slot-2',  x: 0.57, y: 0.56, zone: 'ground' },   // pied arbre centre
@@ -156,7 +156,17 @@ export const SCENE_SLOTS: SceneSlot[] = [
   { id: 'slot-7',  x: 0.85, y: 0.92, zone: 'ground' },   // herbe bas droite
   { id: 'slot-8',  x: 0.90, y: 0.23, zone: 'ground' },   // a droite du potager
   { id: 'slot-9',  x: 0.91, y: 0.11, zone: 'ground' },   // haut droite
-  { id: 'slot-10', x: 0.92, y: 0.04, zone: 'sky' },       // coin haut droite
+  { id: 'slot-10', x: 0.92, y: 0.04, zone: 'sky' },      // coin haut droite
+  { id: 'slot-11', x: 0.27, y: 0.52, zone: 'ground' },   // herbe gauche-centre
+  { id: 'slot-12', x: 0.20, y: 0.72, zone: 'ground' },   // herbe basse gauche
+  { id: 'slot-13', x: 0.07, y: 0.85, zone: 'ground' },   // herbe bas extreme gauche
+  { id: 'slot-14', x: 0.48, y: 0.92, zone: 'ground' },   // bas centre
+  { id: 'slot-15', x: 0.05, y: 0.62, zone: 'ground' },   // herbe extreme gauche milieu
+  { id: 'slot-16', x: 0.78, y: 0.40, zone: 'ground' },   // milieu droite
+  { id: 'slot-17', x: 0.10, y: 0.18, zone: 'sky' },      // sky gauche
+  { id: 'slot-18', x: 0.32, y: 0.10, zone: 'sky' },      // sky centre-gauche
+  { id: 'slot-19', x: 0.55, y: 0.06, zone: 'sky' },      // sky centre
+  { id: 'slot-20', x: 0.78, y: 0.06, zone: 'sky' },      // sky droite
 ];
 
 /** Décoration achetable pour l'arbre */
