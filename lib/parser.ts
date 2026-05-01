@@ -1388,7 +1388,7 @@ export function parseGamification(content: string): GamificationData {
  * Serialize gamification data back to Markdown string.
  * Called after any points/loot change.
  */
-export function serializeGamification(data: GamificationData, museumSection?: string): string {
+export function serializeGamification(data: GamificationData): string {
   const profileSections = data.profiles
     .map(
       (p) => `## ${p.name}
@@ -1425,11 +1425,6 @@ earned_badges: ${(p.earnedBadges ?? []).join(',')}`
     )
     .join('\n');
 
-  // Phase 23 : Préserver la section ## Musée si elle existait (MUSEUM-03)
-  const museumSuffix = museumSection && museumSection.trim()
-    ? `\n\n${museumSection.trim()}\n`
-    : '';
-
   return `---
 tags:
   - gamification
@@ -1447,7 +1442,7 @@ ${activeRewardLines}
 ${usedLootLines}
 
 ## Journal des gains
-${historyLines}${museumSuffix}`;
+${historyLines}`;
 }
 
 /**

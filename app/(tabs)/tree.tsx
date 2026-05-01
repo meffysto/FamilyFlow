@@ -56,7 +56,6 @@ import { TileMapRenderer, GRASS_TILE_IMAGE } from '../../components/mascot/TileM
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
 import { CraftSheet } from '../../components/mascot/CraftSheet';
 import { FarmCodexModal } from '../../components/mascot/FarmCodexModal';
-import { MuseumModal } from '../../components/mascot/MuseumModal';
 import { FarmTutorialOverlay } from '../../components/mascot/FarmTutorialOverlay';
 import { GiftSenderSheet } from '../../components/mascot/GiftSenderSheet';
 import { GiftReceiptModal } from '../../components/mascot/GiftReceiptModal';
@@ -170,7 +169,6 @@ const ACTION_SPRITES = {
   savoirs:  require('../../assets/ui/actions/savoirs.png'),
   embellir: require('../../assets/ui/actions/embellir.png'),
   trophees: require('../../assets/ui/actions/trophees.png'),
-  galerie:  require('../../assets/ui/actions/galerie.png'),
 } as const;
 
 // SCREEN_W, SCREEN_H, TREE_SIZE, TERRAIN_HEIGHT, DIORAMA_HEIGHT_BY_STAGE
@@ -463,9 +461,6 @@ export default function TreeScreen() {
 
   // Codex ferme (Phase 17)
   const [showCodex, setShowCodex] = useState(false);
-
-  // Musée des effets (Phase 23)
-  const [showMuseum, setShowMuseum] = useState(false);
 
   // Expéditions (Phase 33)
   const [showExpeditions, setShowExpeditions] = useState(false);
@@ -2716,10 +2711,6 @@ export default function TreeScreen() {
                 <Image source={ACTION_SPRITES.trophees} style={styles.chipCozySprite} />
                 <Text style={styles.chipCozyLabel}>{t('mascot.actions.trophees', 'Trophées')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.chipCozy} onPress={() => { Haptics.selectionAsync(); setShowMuseum(true); }} activeOpacity={0.7}>
-                <Image source={ACTION_SPRITES.galerie} style={styles.chipCozySprite} />
-                <Text style={styles.chipCozyLabel}>{t('mascot.actions.galerie', 'Galerie')}</Text>
-              </TouchableOpacity>
               {companion && (
                 <TouchableOpacity
                   style={[styles.chipCozy, styles.chipCozyCompanion]}
@@ -3081,14 +3072,6 @@ export default function TreeScreen() {
         onClose={() => setShowBadges(false)}
         profile={profile}
         gamiData={gamiData ?? { profiles: [], history: [], activeRewards: [] }}
-      />
-
-      {/* Musée des effets (Phase 23) */}
-      <MuseumModal
-        visible={showMuseum}
-        onClose={() => setShowMuseum(false)}
-        profileId={activeProfile?.id ?? null}
-        vault={vault}
       />
 
       {/* Phase 42 — CompanionCard (refonte visuelle parchemin cozy, self-contained Modal) */}

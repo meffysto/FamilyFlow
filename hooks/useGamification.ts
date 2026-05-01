@@ -54,8 +54,6 @@ import type { Task } from '../lib/types';
 import { loadSagaProgress, saveSagaProgress } from '../lib/mascot/sagas-storage';
 import type { SagaTrait } from '../lib/mascot/sagas-types';
 import { EFFECT_TOASTS, CATEGORY_HAPTIC_FN } from '../lib/semantic/effect-toasts';
-import { appendMuseumEntryToVault, extractMuseumSection } from '../lib/museum/engine';
-import type { MuseumEntry } from '../lib/museum/engine';
 import i18n from '../lib/i18n';
 import * as SecureStore from 'expo-secure-store';
 
@@ -182,9 +180,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         };
 
         // Write back to vault (fichier per-profil)
-        // Phase 23 : Extraire la section ## Musée pour la préserver (MUSEUM-03)
-        const museumSection = extractMuseumSection(gamiContent);
-        await vault.writeFile(file, serializeGamification(singleData, museumSection));
+        await vault.writeFile(file, serializeGamification(singleData));
 
         // Progression quêtes coopératives (tasks)
         if (onQuestProgress) {
@@ -316,25 +312,6 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           }
         }
 
-        // Phase 23 : Musée des effets (MUSEUM-01, MUSEUM-03)
-        if (effectResult?.effectApplied && derivedCategory) {
-          try {
-            const catId = derivedCategory.id;
-            const toastDef = EFFECT_TOASTS[catId];
-            if (toastDef) {
-              const lang = i18n.language?.startsWith('en') ? 'en' : 'fr';
-              const label = lang === 'en' ? toastDef.en : toastDef.fr;
-              const museumEntry: MuseumEntry = {
-                date: new Date(),
-                categoryId: catId,
-                icon: toastDef.icon,
-                label,
-              };
-              appendMuseumEntryToVault(vault, profile.id, museumEntry).catch(() => {});
-            }
-          } catch { /* Musée — non-critical */ }
-        }
-
         // Contribution village (COOP-02) -- fire-and-forget non-critical
         if (onContribution) {
           try { await onContribution('task', profile.id); } catch { /* Village -- non-critical */ }
@@ -434,16 +411,13 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
 
         // Ecrire uniquement les donnees du profil actif dans son fichier per-profil
         const file = gamiFile(profile.id);
-        // Phase 23 : Lire le contenu brut pour préserver la section ## Musée (MUSEUM-03)
-        const gamiRawContent = await vault.readFile(file).catch(() => '');
-        const lootMuseumSection = extractMuseumSection(gamiRawContent);
         const singleData = {
           profiles: newData.profiles.filter((p: Profile) => p.id === profile.id),
           history: newData.history.filter((e: any) => e.profileId === profile.id),
           activeRewards: (newData.activeRewards ?? []).filter((r: any) => r.profileId === profile.id),
           usedLoots: (newData.usedLoots ?? []).filter((u: any) => u.profileId === profile.id),
         };
-        await vault.writeFile(file, serializeGamification(singleData, lootMuseumSection));
+        await vault.writeFile(file, serializeGamification(singleData));
 
         // Persister les items mascotte droppés dans farm-{id}.md
         if (box.mascotItemId && (box.rewardType === 'mascot_deco' || box.rewardType === 'mascot_hab')) {
