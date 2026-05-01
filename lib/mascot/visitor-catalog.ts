@@ -56,7 +56,8 @@ export interface VisitorDefinition {
  *  - rare (Comtesse)                : 72h / ×1.8 / minTreeStage 'arbre' + unlockMinReputation 15
  */
 export const VISITOR_CATALOG: VisitorDefinition[] = [
-  // 🧑‍🍳 Hugo le boulanger — commun, 48h, ×1.4 (farine + œuf + wheat)
+  // 🧑‍🍳 Hugo le boulanger — commun, 48h, ×1.4 (œuf + blé)
+  // farine retiré : le moulin est disponible au stade arbre, 2 stades après le spawn de Hugo.
   {
     id: 'hugo_boulanger',
     labelKey: 'auberge.visitor.hugo_boulanger.name',
@@ -68,8 +69,8 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     minTreeStage: 'pousse',
     requestPool: [
       { weight: 3, items: [
-        { itemId: 'farine', source: 'building', quantity: [2, 4] },
-        { itemId: 'oeuf',   source: 'building', quantity: [3, 5] },
+        { itemId: 'oeuf',  source: 'building', quantity: [3, 5] },
+        { itemId: 'wheat', source: 'crop',     quantity: [3, 6] },
       ]},
       { weight: 2, items: [
         { itemId: 'wheat', source: 'crop', quantity: [4, 8] },
@@ -78,8 +79,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
   },
 
   // 👵 Mémé Lucette — commun, 48h, ×1.4 (lait + légumes racine)
-  // CONTEXT.md mentionnait chou/patate/betterave : tous présents dans CROP_CATALOG
-  // (cabbage, potato, beetroot) — pas de fallback nécessaire.
+  // minTreeStage relevé à 'arbuste' : lait (grange) et chou (cabbage) ne sont dispo qu'à arbuste.
   {
     id: 'meme_lucette',
     labelKey: 'auberge.visitor.meme_lucette.name',
@@ -88,7 +88,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     rarity: 'common',
     deadlineHours: 48,
     rewardMultiplier: 1.4,
-    minTreeStage: 'pousse',
+    minTreeStage: 'arbuste',
     requestPool: [
       { weight: 3, items: [
         { itemId: 'lait',     source: 'building', quantity: [2, 4] },
@@ -101,7 +101,8 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     ],
   },
 
-  // 🐝 Yann l'apiculteur — uncommon, 60h, ×1.6 (miel + farine)
+  // 🐝 Yann l'apiculteur — uncommon, 60h, ×1.6 (miel + fromage)
+  // farine remplacé par fromage : le moulin est disponible au stade arbre, après le spawn de Yann.
   {
     id: 'yann_apiculteur',
     labelKey: 'auberge.visitor.yann_apiculteur.name',
@@ -113,8 +114,8 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     minTreeStage: 'arbuste',
     requestPool: [
       { weight: 3, items: [
-        { itemId: 'miel',   source: 'building', quantity: [2, 4] },
-        { itemId: 'farine', source: 'building', quantity: [2, 3] },
+        { itemId: 'miel',    source: 'building', quantity: [2, 4] },
+        { itemId: 'fromage', source: 'crafted',  quantity: [1, 2] },
       ]},
       { weight: 2, items: [
         { itemId: 'miel', source: 'building', quantity: [3, 5] },
@@ -123,8 +124,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
   },
 
   // 🧙 La Voyageuse — uncommon, 60h, ×1.6 (fruits saisonniers + craftés simples)
-  // Items craftés simples dispo : soupe (150), bouquet (200), bortsch (130), confiture (460).
-  // Fruits/herbes saisonniers : strawberry, tomato (CROP_CATALOG).
+  // strawberry remplacé par tomato dans la pool 2 : fraise dispo au stade arbre, après le spawn.
   {
     id: 'voyageuse',
     labelKey: 'auberge.visitor.voyageuse.name',
@@ -136,17 +136,18 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     minTreeStage: 'arbuste',
     requestPool: [
       { weight: 3, items: [
-        { itemId: 'bouquet',    source: 'crafted', quantity: [1, 2] },
-        { itemId: 'tomato',     source: 'crop',    quantity: [3, 5] },
+        { itemId: 'bouquet', source: 'crafted', quantity: [1, 2] },
+        { itemId: 'tomato',  source: 'crop',    quantity: [3, 5] },
       ]},
       { weight: 2, items: [
-        { itemId: 'soupe',      source: 'crafted', quantity: [1, 2] },
-        { itemId: 'strawberry', source: 'crop',    quantity: [2, 4] },
+        { itemId: 'soupe',  source: 'crafted', quantity: [1, 2] },
+        { itemId: 'tomato', source: 'crop',    quantity: [2, 4] },
       ]},
     ],
   },
 
   // 🪙 Le Marchand ambulant — uncommon, 60h, ×1.6 (craftés à fort sellValue)
+  // minTreeStage relevé à 'arbre' : pain et gateau (arbre) sont dans sa pool principale.
   // Cibles ≥ 400 : fromage 480, hydromel 660, pain 480, gateau 540, popcorn 540.
   {
     id: 'marchand_ambulant',
@@ -156,7 +157,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     rarity: 'uncommon',
     deadlineHours: 60,
     rewardMultiplier: 1.6,
-    minTreeStage: 'arbuste',
+    minTreeStage: 'arbre',
     requestPool: [
       { weight: 3, items: [
         { itemId: 'fromage',  source: 'crafted', quantity: [1, 2] },
