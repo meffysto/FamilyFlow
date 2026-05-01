@@ -1825,6 +1825,7 @@ export const ANIMAL_IDLE_FRAMES: Record<string, [any, any]> = {
   vache:    [require('../../assets/garden/animals/vache/idle_1.png'),    require('../../assets/garden/animals/vache/idle_2.png')],
   ecureuil: [require('../../assets/garden/animals/ecureuil/idle_1.png'), require('../../assets/garden/animals/ecureuil/idle_2.png')],
   oiseau:   [require('../../assets/garden/animals/oiseau/idle_1.png'),   require('../../assets/garden/animals/oiseau/idle_2.png')],
+  licorne:  [require('../../assets/garden/animals/licorne/idle_1.png'),  require('../../assets/garden/animals/licorne/idle_2.png')],
 };
 
 /** Walk frames par animal (direction bas) */
