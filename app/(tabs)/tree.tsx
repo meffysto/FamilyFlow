@@ -1882,9 +1882,11 @@ export default function TreeScreen() {
   return (
     <View style={[styles.safe, { backgroundColor: colors.bg }]} onTouchStart={pokeActivity}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, Layout.contentContainer, { paddingTop: insets.top + 44 }]}
+        contentContainerStyle={[styles.scroll, Layout.contentContainer, { paddingTop: insets.top + 30 }]}
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={pokeActivity}
+        bounces={false}
+        overScrollMode="never"
       >
 
         {/* Bandeau saga active */}
@@ -2465,7 +2467,7 @@ export default function TreeScreen() {
             ]}
           >
             {/* Conteneur clippé pour le terrain (empêche l'image de déborder) */}
-            <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }]}>
+            <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', borderRadius: 28 }]}>
               {usePixelForgeMap ? (
                 <Image
                   source={PIXEL_FORGE_MAP_LAYERS.base}
