@@ -138,8 +138,8 @@ import {
 import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS, type TreeSpecies, type TreeStage } from '../../lib/mascot/types';
 import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
 import { createEmptySagaProgress, type SagaProgress, type SagaTrait } from '../../lib/mascot/sagas-types';
-import { getSagaById, getSagaCompletionResult, getNextSagaForProfile } from '../../lib/mascot/sagas-engine';
-import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion, clearSagaProgress } from '../../lib/mascot/sagas-storage';
+import { getSagaById, getSagaCompletionResult, getNextSagaForProfile, shouldStartSaga } from '../../lib/mascot/sagas-engine';
+import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion, clearSagaProgress, loadLastSagaCompletion, loadCompletedSagas, saveCompletedSagas, resetAllSagaState } from '../../lib/mascot/sagas-storage';
 import { formatDateStr } from '../../lib/mascot/utils';
 import type { SeasonalEventProgress } from '../../lib/mascot/seasonal-events-types';
 import { getVisibleEventId, buildSeasonalEventAsSaga, drawGuaranteedSeasonalReward, SEASONAL_EVENT_BONUS_XP } from '../../lib/mascot/seasonal-events-engine';
@@ -706,10 +706,32 @@ export default function TreeScreen() {
 
   useEffect(() => {
     if (!profile?.id) return;
-    loadSagaProgress(profile.id).then(p => {
-      if (p && p.status === 'active') setSagaProgress(p);
-      else setSagaProgress(null);
-    });
+    const profileId = profile.id;
+
+    async function initSaga() {
+      const existing = await loadSagaProgress(profileId);
+      if (existing && existing.status === 'active') {
+        setSagaProgress(existing);
+        return;
+      }
+
+      // Aucune saga active → vérifier si une nouvelle doit démarrer
+      const [completedSagas, lastCompletion] = await Promise.all([
+        loadCompletedSagas(profileId),
+        loadLastSagaCompletion(profileId),
+      ]);
+
+      const result = shouldStartSaga(profileId, completedSagas, lastCompletion);
+      if (result.start && result.sagaId) {
+        const newProgress = createEmptySagaProgress(result.sagaId, profileId, formatDateStr());
+        await saveSagaProgress(newProgress);
+        setSagaProgress(newProgress);
+      } else {
+        setSagaProgress(null);
+      }
+    }
+
+    initSaga();
     // Reset des states visiteur quand le profil change
     setVisitorShouldDepart(false);
     setVisitorReaction(undefined);
@@ -1800,6 +1822,11 @@ export default function TreeScreen() {
 
     if (isFinal) {
       await saveLastSagaCompletion(profile.id, today);
+      // Persister l'ID dans la liste des sagas complétées pour la rotation
+      const completed = await loadCompletedSagas(profile.id);
+      if (!completed.includes(sagaProgress.sagaId)) {
+        await saveCompletedSagas(profile.id, [...completed, sagaProgress.sagaId]);
+      }
     }
 
     await saveSagaProgress(updatedProgress);
@@ -3000,6 +3027,55 @@ export default function TreeScreen() {
                 >
                   <Text style={styles.chipCozyEmoji}>{'💧'}</Text>
                   <Text style={styles.chipCozyLabel}>{devWaterCast ? 'Reset' : 'Bulle'}</Text>
+                </TouchableOpacity>
+              )}
+              {__DEV__ && profile && (
+                <TouchableOpacity
+                  style={styles.chipCozy}
+                  onPress={async () => {
+                    const todayStr = formatDateStr();
+
+                    // Cas 1 : chapitre déjà joué aujourd'hui → débloquer pour rejouer
+                    if (sagaProgress && sagaProgress.status === 'active' && sagaProgress.lastChapterDate === todayStr) {
+                      const unlocked = { ...sagaProgress, lastChapterDate: '' };
+                      await saveSagaProgress(unlocked);
+                      setSagaProgress(unlocked);
+                      showToast(`ch.${sagaProgress.currentChapter} débloqué`);
+                      return;
+                    }
+
+                    // Cas 2 : saga terminée ou absente → démarrer la suivante (bypass repos)
+                    const currentId = sagaProgress?.sagaId ?? null;
+                    const completed = await loadCompletedSagas(profile.id);
+                    const newCompleted = currentId && !completed.includes(currentId)
+                      ? [...completed, currentId]
+                      : completed;
+                    await Promise.all([
+                      clearSagaProgress(profile.id),
+                      saveCompletedSagas(profile.id, newCompleted),
+                    ]);
+                    const next = getNextSagaForProfile(profile.id, newCompleted);
+                    if (next) {
+                      const newProg = createEmptySagaProgress(next.id, profile.id, todayStr);
+                      await saveSagaProgress(newProg);
+                      setSagaProgress(newProg);
+                      showToast(`Saga → ${next.id} (${newCompleted.length + 1}/4)`);
+                    } else {
+                      setSagaProgress(null);
+                      showToast('Cycle complet — reset');
+                      await resetAllSagaState(profile.id);
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.chipCozyEmoji}>{'📖'}</Text>
+                  <Text style={styles.chipCozyLabel}>
+                    {sagaProgress?.status === 'active' && sagaProgress.lastChapterDate === formatDateStr()
+                      ? `↻ ch.${sagaProgress.currentChapter}`
+                      : sagaProgress
+                        ? `→ ${sagaProgress.sagaId.split('_')[0]}`
+                        : 'Saga↺'}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>

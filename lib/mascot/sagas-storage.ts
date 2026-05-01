@@ -75,3 +75,47 @@ export async function saveLastSagaCompletion(profileId: string, date: string): P
     // Silently fail
   }
 }
+
+/** Clé SecureStore pour la liste des sagas complétées d'un profil */
+function completedSagasKey(profileId: string): string {
+  return `saga_completed_${profileId}`;
+}
+
+/**
+ * Charge la liste des IDs de sagas complétées par un profil.
+ */
+export async function loadCompletedSagas(profileId: string): Promise<string[]> {
+  try {
+    const raw = await SecureStore.getItemAsync(completedSagasKey(profileId));
+    if (!raw) return [];
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Sauvegarde la liste des IDs de sagas complétées par un profil.
+ */
+export async function saveCompletedSagas(profileId: string, ids: string[]): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(completedSagasKey(profileId), JSON.stringify(ids));
+  } catch {
+    // Silently fail
+  }
+}
+
+/**
+ * Réinitialise tout l'état saga d'un profil (dev only).
+ */
+export async function resetAllSagaState(profileId: string): Promise<void> {
+  try {
+    await Promise.all([
+      SecureStore.deleteItemAsync(sagaKey(profileId)),
+      SecureStore.deleteItemAsync(lastCompletionKey(profileId)),
+      SecureStore.deleteItemAsync(completedSagasKey(profileId)),
+    ]);
+  } catch {
+    // Silently fail
+  }
+}
