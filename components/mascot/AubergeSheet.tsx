@@ -6,9 +6,9 @@
  * un visiteur" qui appelle `useAuberge.forceSpawn` (livré Plan 45-01).
  *
  * Pattern modal pageSheet + drag-to-dismiss aligné sur BuildingDetailSheet.
- * Toutes les couleurs proviennent de useThemeColors() — seules les 2
- * couleurs sémantiques de timer (ambre / rouge) sont constantées (alignées
- * sur le pattern wear de DashboardGarden).
+ * Esthétique "cozy farm game" : fond parchemin, auvent rayé, cadre bois —
+ * aligné sur PlotUpgradeSheet. Seules 2 couleurs sémantiques (#E74C3C,
+ * #27AE60) restent hardcodées pour error/success.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -40,7 +40,6 @@ const DELIVERY_PARTICLE_DURATION = 600;
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
-import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuberge } from '../../hooks/useAuberge';
 import {
@@ -63,6 +62,11 @@ import { SectionErrorBoundary } from '../SectionErrorBoundary';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
+
+// ─── Couleurs sémantiques (seules constantes non-Farm) ──────────────────
+const COLOR_ERROR = '#E74C3C';
+const COLOR_SUCCESS = '#27AE60';
 
 // ─── Helpers formatage ───────────────────────────────────────────────────
 function formatRemaining(minutes: number, expiredLabel: string): string {
@@ -73,11 +77,11 @@ function formatRemaining(minutes: number, expiredLabel: string): string {
   return `${h}h ${String(m).padStart(2, '0')}min`;
 }
 
-function timerColor(minutes: number, fallback: string, amber: string, red: string): string {
-  if (minutes <= 0) return red;
-  if (minutes < 60) return red;
-  if (minutes < 360) return amber;
-  return fallback;
+function timerColor(minutes: number): string {
+  if (minutes <= 0) return COLOR_ERROR;
+  if (minutes < 60) return COLOR_ERROR;
+  if (minutes < 360) return '#E8943A';
+  return Farm.brownTextSub;
 }
 
 function getVisitorDef(visitorId: string): VisitorDefinition | undefined {
@@ -117,6 +121,38 @@ function itemEmoji(item: VisitorRequestItem): string {
   return map[item.itemId] ?? (item.source === 'crafted' ? '🍽️' : '📦');
 }
 
+// ─── Sous-composant : auvent rayé ────────────────────────────────────────
+
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningStripe,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={styles.awningShadow} />
+      <View style={styles.awningScallop}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningScallopDot,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ─── Sous-composant : carte visiteur ────────────────────────────────────
 
 interface VisitorCardProps {
@@ -138,7 +174,6 @@ const VisitorCard = React.memo(function VisitorCard({
   index,
   deliverTrigger,
 }: VisitorCardProps) {
-  const { colors, primary } = useThemeColors();
   const { t } = useTranslation();
   const def = getVisitorDef(visitor.visitorId);
   const emoji = def?.emoji ?? '🧑';
@@ -146,7 +181,7 @@ const VisitorCard = React.memo(function VisitorCard({
   const bio = def ? t(def.descriptionKey) : '';
 
   const minutes = getRemainingMinutes(visitor, new Date());
-  const tColor = timerColor(minutes, colors.textMuted, colors.warning, colors.error);
+  const tColor = timerColor(minutes);
 
   const lootPct = def?.preferredLoot && def.preferredLoot.length > 0
     ? Math.round((visitor.lootChance ?? 0.18) * 100)
@@ -191,30 +226,26 @@ const VisitorCard = React.memo(function VisitorCard({
   return (
     <Animated.View
       entering={FadeIn.delay(60 * index).springify().damping(14).stiffness(180)}
-      style={[
-        styles.card,
-        { backgroundColor: colors.card, borderColor: colors.border },
-        cardAnimStyle,
-      ]}
+      style={[styles.card, cardAnimStyle]}
     >
       {/* Flash overlay (animation livraison) */}
       <Animated.View
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: colors.success, borderRadius: Radius.lg },
+          { backgroundColor: COLOR_SUCCESS, borderRadius: Radius.lg },
           flashStyle,
         ]}
       />
       {/* Particule "+X 🍃" qui flotte vers le haut */}
       <Animated.View pointerEvents="none" style={[styles.particle, particleStyle]}>
-        <Text style={[styles.particleText, { color: colors.success }]}>
+        <Text style={styles.particleText}>
           +{visitor.rewardCoins} 🍃
         </Text>
       </Animated.View>
       {/* Ligne 1 : portrait + identité */}
       <View style={styles.cardRow}>
-        <View style={[styles.portrait, { backgroundColor: colors.cardAlt }]}>
+        <View style={styles.portrait}>
           {VISITOR_SPRITES[visitor.visitorId] ? (
             <Image
               source={VISITOR_SPRITES[visitor.visitorId]}
@@ -226,10 +257,10 @@ const VisitorCard = React.memo(function VisitorCard({
           )}
         </View>
         <View style={styles.identity}>
-          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
+          <Text style={styles.name} numberOfLines={1}>
             {name}
           </Text>
-          <Text style={[styles.bio, { color: colors.textMuted }]} numberOfLines={2}>
+          <Text style={styles.bio} numberOfLines={2}>
             {bio}
           </Text>
         </View>
@@ -244,22 +275,14 @@ const VisitorCard = React.memo(function VisitorCard({
               key={`${item.itemId}-${i}`}
               style={[
                 styles.requestItem,
-                {
-                  backgroundColor: colors.cardAlt,
-                  borderColor: ok ? colors.success : colors.error,
-                },
+                { borderColor: ok ? Farm.awningGreen : COLOR_ERROR },
               ]}
             >
               <Text style={styles.requestEmoji}>{itemEmoji(item)}</Text>
-              <Text style={[styles.requestQty, { color: colors.text }]}>
+              <Text style={styles.requestQty}>
                 {item.quantity}×
               </Text>
-              <Text
-                style={[
-                  styles.requestStatus,
-                  { color: ok ? colors.successText : colors.errorText },
-                ]}
-              >
+              <Text style={styles.requestStatus}>
                 {ok ? '✅' : '❌'}
               </Text>
             </View>
@@ -270,14 +293,14 @@ const VisitorCard = React.memo(function VisitorCard({
       {/* Ligne 3 : timer + reward preview */}
       <View style={styles.metaRow}>
         <View style={styles.metaCell}>
-          <Text style={[styles.metaLabel, { color: colors.textFaint }]}>{t('auberge.timer.repart_in')}</Text>
+          <Text style={styles.metaLabel}>{t('auberge.timer.repart_in')}</Text>
           <Text style={[styles.metaValue, { color: tColor }]}>
             {formatRemaining(minutes, t('auberge.timer.expired'))}
           </Text>
         </View>
         <View style={styles.metaCell}>
-          <Text style={[styles.metaLabel, { color: colors.textFaint }]}>{t('auberge.reward.label')}</Text>
-          <Text style={[styles.metaValue, { color: colors.text }]}>
+          <Text style={styles.metaLabel}>{t('auberge.reward.label')}</Text>
+          <Text style={styles.metaValueReward}>
             +{visitor.rewardCoins} 🍃{lootPct > 0 ? ` · ${lootPct}% loot` : ''}
           </Text>
         </View>
@@ -290,28 +313,22 @@ const VisitorCard = React.memo(function VisitorCard({
           disabled={!canDeliverOk}
           style={[
             styles.ctaPrimary,
-            {
-              backgroundColor: primary,
-              opacity: canDeliverOk ? 1 : 0.4,
-            },
+            { backgroundColor: canDeliverOk ? Farm.greenBtn : Farm.parchmentDark },
           ]}
           accessibilityLabel={t('auberge.cta.deliver')}
           accessibilityRole="button"
         >
-          <Text style={[styles.ctaPrimaryText, { color: colors.onPrimary }]}>
+          <Text style={[styles.ctaPrimaryText, { color: canDeliverOk ? '#FFFFFF' : Farm.brownTextSub }]}>
             {t('auberge.cta.deliver')}
           </Text>
         </Pressable>
         <Pressable
           onPress={() => onDismiss(visitor)}
-          style={[
-            styles.ctaSecondary,
-            { borderColor: colors.border, backgroundColor: colors.card },
-          ]}
+          style={styles.ctaSecondary}
           accessibilityLabel={t('auberge.cta.dismiss')}
           accessibilityRole="button"
         >
-          <Text style={[styles.ctaSecondaryText, { color: colors.textMuted }]}>
+          <Text style={styles.ctaSecondaryText}>
             {t('auberge.cta.dismiss')}
           </Text>
         </Pressable>
@@ -331,7 +348,6 @@ const ReputationRow = React.memo(function ReputationRow({
   visitorDef,
   reputation,
 }: ReputationRowProps) {
-  const { colors } = useThemeColors();
   const { t } = useTranslation();
   const name = t(visitorDef.labelKey);
   const level = reputation?.level ?? 0;
@@ -340,8 +356,8 @@ const ReputationRow = React.memo(function ReputationRow({
   const hearts = '❤️'.repeat(level) + '🤍'.repeat(Math.max(0, 5 - level));
 
   return (
-    <View style={[styles.repRow, { borderBottomColor: colors.borderLight }]}>
-      <View style={[styles.repPortrait, { backgroundColor: colors.cardAlt }]}>
+    <View style={styles.repRow}>
+      <View style={styles.repPortrait}>
         {VISITOR_SPRITES[visitorDef.id] ? (
           <Image
             source={VISITOR_SPRITES[visitorDef.id]}
@@ -352,10 +368,10 @@ const ReputationRow = React.memo(function ReputationRow({
           <Text style={styles.repEmoji}>{visitorDef.emoji}</Text>
         )}
       </View>
-      <Text style={[styles.repName, { color: colors.text }]} numberOfLines={1}>
+      <Text style={styles.repName} numberOfLines={1}>
         {name}
       </Text>
-      <Text style={[styles.repHearts, { color: colors.textMuted }]}>
+      <Text style={styles.repHearts}>
         {seen ? hearts : t('auberge.reputation.never_met')}
       </Text>
     </View>
@@ -372,7 +388,6 @@ interface AubergeSheetProps {
 // ─── Composant principal ────────────────────────────────────────────────
 
 function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
-  const { colors } = useThemeColors();
   const { t } = useTranslation();
   const { activeProfile } = useVault();
   const { showToast } = useToast();
@@ -520,28 +535,31 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
           onPress={onClose}
         />
 
-        <View style={[styles.sheet, { backgroundColor: colors.bg }]}>
+        <View style={styles.sheet}>
           {/* Grabber */}
-          <View style={[styles.grabber, { backgroundColor: colors.border }]} />
+          <View style={styles.grabber} />
+
+          {/* Auvent rayé — esthétique farm game */}
+          <AwningStripes />
 
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleWrap}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>
+              <Text style={styles.headerTitle}>
                 {t('auberge.title')}
               </Text>
-              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
+              <Text style={styles.headerSubtitle}>
                 {t('auberge.header.subtitle_visitors', { count: activeVisitors.length, reputation: totalReputation })}
               </Text>
             </View>
             <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeBtn, { backgroundColor: colors.cardAlt }]}
+              style={styles.closeBtn}
               accessibilityLabel={t('auberge.cta.close')}
               accessibilityRole="button"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+              <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
 
@@ -554,10 +572,10 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
               {activeVisitors.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyEmoji}>🛖</Text>
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                  <Text style={styles.emptyTitle}>
                     {t('auberge.empty.title')}
                   </Text>
-                  <Text style={[styles.emptyBody, { color: colors.textMuted }]}>
+                  <Text style={styles.emptyBody}>
                     {t('auberge.empty.body')}
                   </Text>
                 </View>
@@ -586,12 +604,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
                   title={t('auberge.reputation.title')}
                   defaultCollapsed
                 >
-                  <View
-                    style={[
-                      styles.repList,
-                      { backgroundColor: colors.card, borderColor: colors.border },
-                    ]}
-                  >
+                  <View style={styles.repList}>
                     {VISITOR_CATALOG.map(def => {
                       const rep = repByVisitor.get(def.id);
                       // S'aligne sur getReputation pour le level (cohérence moteur)
@@ -615,14 +628,11 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
               {__DEV__ && (
                 <TouchableOpacity
                   onPress={handleForceSpawn}
-                  style={[
-                    styles.devBtn,
-                    { backgroundColor: colors.cardAlt, borderColor: colors.border },
-                  ]}
+                  style={styles.devBtn}
                   accessibilityLabel={t('auberge.dev.force_spawn_a11y')}
                   accessibilityRole="button"
                 >
-                  <Text style={[styles.devBtnText, { color: colors.textMuted }]}>
+                  <Text style={styles.devBtnText}>
                     {t('auberge.dev.force_spawn')}
                   </Text>
                 </TouchableOpacity>
@@ -653,6 +663,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: 'hidden',
+    backgroundColor: Farm.parchment,
     ...Shadows.xl,
   },
   grabber: {
@@ -661,7 +672,36 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignSelf: 'center',
     marginTop: Spacing.lg,
+    backgroundColor: Farm.woodMed,
   },
+
+  // ── Auvent ──
+  awning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  awningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  awningStripe: {
+    flex: 1,
+  },
+  awningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  awningScallop: {
+    flexDirection: 'row',
+    height: 8,
+    marginTop: -4,
+  },
+  awningScallopDot: {
+    flex: 1,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -678,10 +718,12 @@ const styles = StyleSheet.create({
     fontSize: FontSize.title,
     fontWeight: FontWeight.heavy,
     letterSpacing: -0.3,
+    color: Farm.brownText,
   },
   headerSubtitle: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
+    color: Farm.brownTextSub,
   },
   closeBtn: {
     width: 32,
@@ -689,10 +731,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Farm.parchmentDark,
   },
   closeBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
+    color: Farm.brownTextSub,
   },
   body: {
     paddingHorizontal: Spacing['3xl'],
@@ -712,17 +756,21 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.heavy,
+    color: Farm.brownText,
   },
   emptyBody: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
     textAlign: 'center',
+    color: Farm.brownTextSub,
   },
 
   // ── Visitor card ──
   card: {
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderColor: Farm.parchmentDark,
+    backgroundColor: Farm.parchment,
     padding: Spacing['2xl'],
     gap: Spacing.lg,
     overflow: 'hidden',
@@ -737,6 +785,7 @@ const styles = StyleSheet.create({
   particleText: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.heavy,
+    color: Farm.awningGreen,
   },
   cardRow: {
     flexDirection: 'row',
@@ -749,6 +798,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Farm.parchmentDark,
   },
   portraitEmoji: {
     fontSize: 56,
@@ -765,11 +815,13 @@ const styles = StyleSheet.create({
     fontSize: FontSize.lg,
     fontWeight: FontWeight.heavy,
     letterSpacing: -0.2,
+    color: Farm.brownText,
   },
   bio: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
     lineHeight: 18,
+    color: Farm.brownTextSub,
   },
 
   requestGrid: {
@@ -785,6 +837,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     borderWidth: 1.5,
+    backgroundColor: Farm.parchmentDark,
   },
   requestEmoji: {
     fontSize: FontSize.lg,
@@ -792,9 +845,11 @@ const styles = StyleSheet.create({
   requestQty: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
+    color: Farm.brownText,
   },
   requestStatus: {
     fontSize: FontSize.sm,
+    color: Farm.brownText,
   },
 
   metaRow: {
@@ -810,10 +865,17 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
+    color: Farm.brownTextSub,
   },
   metaValue: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.heavy,
+    // color injected inline (timer dynamic color)
+  },
+  metaValueReward: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.heavy,
+    color: Farm.brownText,
   },
 
   ctaRow: {
@@ -839,10 +901,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
+    backgroundColor: Farm.woodBtn,
+    borderColor: Farm.woodBtnShadow,
   },
   ctaSecondaryText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
+    color: Farm.parchment,
   },
 
   // ── Reputation section ──
@@ -853,6 +918,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     overflow: 'hidden',
+    backgroundColor: Farm.parchment,
+    borderColor: Farm.parchmentDark,
   },
   repRow: {
     flexDirection: 'row',
@@ -861,6 +928,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Farm.parchmentDark,
   },
   repPortrait: {
     width: 36,
@@ -868,6 +936,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Farm.parchmentDark,
   },
   repSprite: {
     width: 32,
@@ -880,10 +949,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
   },
   repHearts: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
+    color: Farm.brownTextSub,
   },
 
   // ── Dev button ──
@@ -894,9 +965,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
     alignItems: 'center',
+    backgroundColor: Farm.parchmentDark,
+    borderColor: Farm.woodLight,
   },
   devBtnText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
+    color: Farm.brownTextSub,
   },
 });
