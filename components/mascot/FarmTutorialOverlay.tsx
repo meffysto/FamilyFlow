@@ -28,6 +28,7 @@ import { CoachMarkOverlay } from '../help/CoachMarkOverlay';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
 
 const SCREEN_ID = 'farm_tutorial';
 const TRIGGER_DELAY_MS = 600;
@@ -261,60 +262,118 @@ function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite }: Narrativ
       <View style={styles.backdrop} />
       <Animated.View
         style={[
-          styles.card,
+          styles.woodFrame,
           { width: cardMaxWidth },
           animatedStyle,
-          { backgroundColor: colors.colors.card, borderColor: colors.colors.border },
-          Shadows.lg,
+          Shadows.xl,
         ]}
       >
-        <View style={styles.illustrationWrap}>
-          {step === 0 && treeSprite ? (
-            <Image source={treeSprite} style={styles.treeSprite} resizeMode="contain" />
-          ) : step === 0 ? (
-            <Text style={styles.bigEmoji}>🌳</Text>
-          ) : (
-            <Text style={styles.bigEmoji}>📖</Text>
-          )}
-        </View>
+        <View style={styles.woodFrameInner}>
+          <AwningStripes />
 
-        <Text style={[styles.title, { color: colors.colors.text }]}>
-          {t(`${stepKey}.title`)}
-        </Text>
-        <Text style={[styles.body, { color: colors.colors.textSub }]}>
-          {t(`${stepKey}.body`)}
-        </Text>
+          <View style={styles.parchment}>
+            <View style={styles.handle} />
 
-        <View style={styles.footer}>
-          <Pressable
-            onPress={onSkip}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel={t('help:farm_tutorial.skip')}
-          >
-            <Text style={[styles.skipLabel, { color: colors.colors.textMuted }]}>
-              {t('help:farm_tutorial.skip')}
-            </Text>
-          </Pressable>
+            <View style={styles.illustrationWrap}>
+              {step === 0 && treeSprite ? (
+                <Image source={treeSprite} style={styles.treeSprite} resizeMode="contain" />
+              ) : step === 0 ? (
+                <Text style={styles.bigEmoji}>🌳</Text>
+              ) : (
+                <Text style={styles.bigEmoji}>📖</Text>
+              )}
+            </View>
 
-          <View style={styles.rightFooter}>
-            <Text style={[styles.stepIndicator, { color: colors.colors.textFaint }]}>
-              {step + 1}/5
-            </Text>
-            <Pressable
-              onPress={onNext}
-              style={[styles.nextButton, { backgroundColor: colors.primary }]}
-              accessibilityRole="button"
-              accessibilityLabel={nextLabel}
-            >
-              <Text style={[styles.nextLabel, { color: colors.colors.onPrimary }]}>
-                {nextLabel}
-              </Text>
-            </Pressable>
+            <Text style={styles.title}>{t(`${stepKey}.title`)}</Text>
+            <Text style={styles.body}>{t(`${stepKey}.body`)}</Text>
+
+            <View style={styles.footer}>
+              <Pressable
+                onPress={onSkip}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('help:farm_tutorial.skip')}
+              >
+                <Text style={styles.skipLabel}>{t('help:farm_tutorial.skip')}</Text>
+              </Pressable>
+
+              <View style={styles.rightFooter}>
+                <Text style={styles.stepIndicator}>{step + 1}/5</Text>
+                <View style={styles.nextBtnWrap}>
+                  <FarmButton label={nextLabel} onPress={onNext} />
+                </View>
+              </View>
+            </View>
           </View>
         </View>
       </Animated.View>
     </View>
+  );
+}
+
+// ── Sous-composants visuels farm ──────────────────────────────
+
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningStripe,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={styles.awningShadow} />
+      <View style={styles.awningScallop}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningScallopDot,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function FarmButton({ label, onPress }: { label: string; onPress?: () => void }) {
+  const pressedY = useSharedValue(0);
+
+  const btnStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: pressedY.value }],
+  }));
+  const shadowStyle = useAnimatedStyle(() => ({
+    opacity: 1 - pressedY.value / 4,
+  }));
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        pressedY.value = withSpring(4, SPRING_CONFIG);
+      }}
+      onPressOut={() => {
+        pressedY.value = withSpring(0, SPRING_CONFIG);
+      }}
+    >
+      <Animated.View
+        style={[styles.farmBtnShadow, { backgroundColor: Farm.greenBtnShadow }, shadowStyle]}
+      />
+      <Animated.View
+        style={[styles.farmBtnBody, { backgroundColor: Farm.greenBtn }, btnStyle]}
+      >
+        <View style={[styles.farmBtnGloss, { backgroundColor: Farm.greenBtnHighlight }]} />
+        <Text style={styles.farmBtnText}>{label}</Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -329,16 +388,66 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.7)',
   },
-  card: {
-    borderRadius: Radius.xl,
-    padding: Spacing['3xl'],
-    borderWidth: 1,
-    alignItems: 'stretch',
+  // ── Cadre bois ──
+  woodFrame: {
+    borderRadius: Radius['2xl'],
+    backgroundColor: Farm.woodDark,
+    padding: 5,
   },
+  woodFrameInner: {
+    borderRadius: Radius['2xl'] - 3,
+    overflow: 'hidden',
+    backgroundColor: Farm.woodLight,
+  },
+
+  // ── Auvent ──
+  awning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  awningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  awningStripe: {
+    flex: 1,
+  },
+  awningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  awningScallop: {
+    flexDirection: 'row',
+    height: 8,
+    marginTop: -4,
+  },
+  awningScallopDot: {
+    flex: 1,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+
+  // ── Parchemin ──
+  parchment: {
+    backgroundColor: Farm.parchmentDark,
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing['2xl'],
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+    backgroundColor: Farm.woodHighlight,
+  },
+
   illustrationWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing['2xl'],
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xl,
     minHeight: 140,
   },
   treeSprite: {
@@ -354,13 +463,15 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.md,
     textAlign: 'center',
+    color: Farm.brownText,
   },
   body: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.normal,
     lineHeight: 22,
-    marginBottom: Spacing['3xl'],
+    marginBottom: Spacing['2xl'],
     textAlign: 'center',
+    color: Farm.brownTextSub,
   },
   footer: {
     flexDirection: 'row',
@@ -370,6 +481,8 @@ const styles = StyleSheet.create({
   skipLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
+    color: Farm.brownTextSub,
+    opacity: 0.75,
   },
   rightFooter: {
     flexDirection: 'row',
@@ -379,14 +492,47 @@ const styles = StyleSheet.create({
   stepIndicator: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
+    color: Farm.brownTextSub,
+    opacity: 0.65,
   },
-  nextButton: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+  nextBtnWrap: {
+    minWidth: 110,
   },
-  nextLabel: {
+
+  // ── Bouton farm 3D ──
+  farmBtnShadow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 40,
+    borderRadius: Radius.lg,
+  },
+  farmBtnBody: {
+    height: 40,
+    borderRadius: Radius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  farmBtnGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '45%',
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    opacity: 0.35,
+  },
+  farmBtnText: {
     fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });

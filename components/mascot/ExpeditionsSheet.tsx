@@ -661,15 +661,15 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
   const failurePct = Math.round(failureRate * 100);
 
   return (
-    <Animated.View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderLight }, cardAnim]}>
+    <Animated.View style={[styles.card, { backgroundColor: Farm.parchment, borderColor: Farm.woodHighlight }, cardAnim]}>
       {/* Row principale : emoji + info + badge difficulté */}
       <View style={styles.cardRow}>
         <Text style={styles.missionEmoji}>{mission.emoji}</Text>
         <View style={styles.cardInfo}>
-          <Text style={[styles.missionName, { color: colors.text }]} numberOfLines={1}>
+          <Text style={[styles.missionName, { color: Farm.brownText }]} numberOfLines={1}>
             {mission.name}
           </Text>
-          <Text style={[styles.missionDuration, { color: colors.textMuted }]}>
+          <Text style={[styles.missionDuration, { color: Farm.brownTextSub }]}>
             {`${mission.durationHours}h · ${mission.description.slice(0, 50)}...`}
           </Text>
         </View>
@@ -720,7 +720,7 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
 
       {/* Gains possibles */}
       <View style={styles.lootRow}>
-        <Text style={[styles.lootLabel, { color: colors.textMuted }]}>1 gain au sort parmi :</Text>
+        <Text style={[styles.lootLabel, { color: Farm.brownTextSub }]}>1 gain au sort parmi :</Text>
         <View style={styles.lootChips}>
           {EXPEDITION_LOOT_TABLE[mission.difficulty].map((item) => (
             <View key={item.itemId} style={[styles.lootChip, { backgroundColor: colors.catJeux + '18', borderColor: colors.catJeux + '44' }]}>
@@ -738,12 +738,12 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
         style={[
           styles.launchBtn,
           canLaunch
-            ? { backgroundColor: primary }
-            : { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.borderLight, opacity: 0.5 },
+            ? { backgroundColor: Farm.greenBtn, shadowColor: Farm.greenBtnShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 0 }
+            : { backgroundColor: Farm.parchmentDark, borderWidth: 1, borderColor: Farm.woodHighlight, opacity: 0.6 },
         ]}
         activeOpacity={0.8}
       >
-        <Text style={[styles.launchBtnText, { color: canLaunch ? colors.onPrimary : colors.textMuted }]}>
+        <Text style={[styles.launchBtnText, { color: canLaunch ? '#FFFFFF' : Farm.brownTextSub }]}>
           {canLaunch ? "Lancer l'expédition" : 'Complet'}
         </Text>
       </TouchableOpacity>
@@ -771,10 +771,10 @@ const ActiveExpeditionRow = React.memo(function ActiveExpeditionRow({
   const diffColor = difficultyColor(expedition.difficulty, colors);
 
   return (
-    <View style={[styles.activeRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+    <View style={[styles.activeRow, { backgroundColor: Farm.parchment, borderColor: Farm.woodHighlight }]}>
       <Text style={styles.rowEmoji}>{mission?.emoji ?? '🗺️'}</Text>
       <View style={styles.rowInfo}>
-        <Text style={[styles.rowName, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.rowName, { color: Farm.brownText }]} numberOfLines={1}>
           {mission?.name ?? expedition.missionId}
         </Text>
         <View style={styles.rowMeta}>
@@ -797,10 +797,10 @@ const ActiveExpeditionRow = React.memo(function ActiveExpeditionRow({
       {isReady && (
         <TouchableOpacity
           onPress={onCollect}
-          style={[styles.collectBtn, { backgroundColor: primary }]}
+          style={[styles.collectBtn, { backgroundColor: Farm.greenBtn, shadowColor: Farm.greenBtnShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 0 }]}
           activeOpacity={0.8}
         >
-          <Text style={[styles.collectBtnText, { color: colors.onPrimary }]}>{'Collecter'}</Text>
+          <Text style={[styles.collectBtnText, { color: '#FFFFFF' }]}>{'Collecter'}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -828,10 +828,10 @@ const ResultRow = React.memo(function ResultRow({
     : null;
 
   return (
-    <View style={[styles.resultRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+    <View style={[styles.resultRow, { backgroundColor: Farm.parchment, borderColor: Farm.woodHighlight }]}>
       <Text style={styles.rowEmoji}>{mission?.emoji ?? '🗺️'}</Text>
       <View style={styles.rowInfo}>
-        <Text style={[styles.rowName, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.rowName, { color: Farm.brownText }]} numberOfLines={1}>
           {mission?.name ?? expedition.missionId}
         </Text>
         <View style={[styles.outcomeBadge, { backgroundColor: outColor + '22', borderColor: outColor }]}>
@@ -867,7 +867,7 @@ const ResultRow = React.memo(function ResultRow({
         activeOpacity={0.7}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Text style={[styles.dismissText, { color: colors.textMuted }]}>{'Supprimer'}</Text>
+        <Text style={[styles.dismissText, { color: Farm.brownTextSub }]}>{'Supprimer'}</Text>
       </TouchableOpacity>
     </View>
   );

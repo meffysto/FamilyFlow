@@ -369,7 +369,6 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses, plotLevels
 
 /** Banniere hint one-shot ferme — s'affiche la premiere visite, dismiss via useHelp */
 function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
-  const { primary, colors } = useThemeColors();
   return (
     <Animated.View
       entering={FadeInUp.delay(800).duration(500).springify()}
@@ -379,15 +378,15 @@ function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
         left: Spacing.md,
         right: Spacing.md,
         zIndex: 25,
-        backgroundColor: colors.card,
+        backgroundColor: Farm.parchment,
         borderRadius: Radius.lg,
         padding: Spacing.md,
-        ...Shadows.md,
+        ...Shadows.sm,
         borderWidth: 1,
-        borderColor: colors.borderLight,
+        borderColor: Farm.woodHighlight,
       }}
     >
-      <Text style={{ fontSize: FontSize.sm, color: colors.text, marginBottom: Spacing.xs, lineHeight: FontSize.sm * 1.5 }}>
+      <Text style={{ fontSize: FontSize.sm, color: Farm.brownText, marginBottom: Spacing.xs, lineHeight: FontSize.sm * 1.5 }}>
         {'🌱 Complète des tâches pour faire pousser tes cultures ! Le plot avec les points bleus avance en priorité.'}
       </Text>
       <TouchableOpacity
@@ -397,11 +396,13 @@ function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
           alignSelf: 'flex-end',
           paddingVertical: Spacing.xxs,
           paddingHorizontal: Spacing.sm,
-          backgroundColor: primary + '20',
+          backgroundColor: Farm.awningGreen + '20',
           borderRadius: Radius.md,
+          borderWidth: 1,
+          borderColor: Farm.woodHighlight,
         }}
       >
-        <Text style={{ fontSize: FontSize.caption, color: primary, fontWeight: '600' }}>
+        <Text style={{ fontSize: FontSize.caption, color: Farm.awningGreen, fontWeight: '600' }}>
           {"J'ai compris"}
         </Text>
       </TouchableOpacity>

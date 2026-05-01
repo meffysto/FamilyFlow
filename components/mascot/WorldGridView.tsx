@@ -1059,12 +1059,11 @@ const styles = StyleSheet.create({
   buildingCell: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
     borderRadius: 10,
     borderCurve: 'continuous',
-    borderWidth: 2,
-    borderColor: Farm.woodHighlight,
-    borderStyle: 'dashed',
+    borderWidth: 1.5,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
     overflow: 'hidden',
   },
   buildingCellPlaced: {

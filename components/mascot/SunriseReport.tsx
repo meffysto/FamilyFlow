@@ -7,17 +7,25 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Pressable, Modal } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInLeft,
   FadeInUp,
   ZoomIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Farm } from '../../constants/farm-theme';
+
+// ── Constantes ──────────────────────────────────
+
+const SPRING_CONFIG = { damping: 12, stiffness: 180 };
 
 // ── Types ──────────────────────────────────────
 
@@ -43,6 +51,77 @@ interface SunriseReportProps {
   hasBonus: boolean;
   dailyDeal?: SunriseDailyDeal | null;
   onDismiss: () => void;
+}
+
+// ── Sous-composant : auvent rayé ────────────────
+
+function AwningStripes() {
+  return (
+    <View style={styles.awning}>
+      <View style={styles.awningStripes}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningStripe,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={styles.awningShadow} />
+      <View style={styles.awningScallop}>
+        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.awningScallopDot,
+              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ── Sous-composant : bouton farm 3D ─────────────
+
+function FarmButton({ label, enabled, onPress }: { label: string; enabled: boolean; onPress?: () => void }) {
+  const pressedY = useSharedValue(0);
+
+  const bg = enabled ? Farm.greenBtn : Farm.parchmentDark;
+  const shadow = enabled ? Farm.greenBtnShadow : '#D0CBC3';
+  const highlight = enabled ? Farm.greenBtnHighlight : Farm.parchment;
+
+  const btnStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: pressedY.value }],
+  }));
+  const shadowStyle = useAnimatedStyle(() => ({
+    opacity: 1 - pressedY.value / 4,
+  }));
+
+  return (
+    <Pressable
+      onPress={enabled ? onPress : undefined}
+      onPressIn={() => {
+        if (enabled) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          pressedY.value = withSpring(4, SPRING_CONFIG);
+        }
+      }}
+      onPressOut={() => { pressedY.value = withSpring(0, SPRING_CONFIG); }}
+      style={styles.btnFullWidth}
+    >
+      <Animated.View style={[styles.farmBtnShadow, { backgroundColor: shadow }, shadowStyle]} />
+      <Animated.View style={[styles.farmBtnBody, { backgroundColor: bg }, btnStyle]}>
+        <View style={[styles.farmBtnGloss, { backgroundColor: highlight }]} />
+        <Text style={[styles.farmBtnText, { color: enabled ? '#FFFFFF' : Farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' }]}>
+          {label}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
 }
 
 // ── Composant ──────────────────────────────────
@@ -74,76 +153,77 @@ export function SunriseReport({
       <TouchableWithoutFeedback onPress={onDismiss}>
         <Animated.View entering={FadeIn.duration(400)} style={styles.overlay}>
           <Animated.View entering={ZoomIn.duration(400).springify().damping(16).stiffness(120)} style={styles.cardWrapper}>
-            <LinearGradient
-              colors={['#FFF7ED', '#FEF3C7', '#FFFBEB']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.card}
-            >
-              {/* Soleil */}
-              <Animated.Text entering={FadeInUp.delay(200).duration(400)} style={styles.sunEmoji}>
-                {'☀️'}
-              </Animated.Text>
+            <View style={styles.woodFrame}>
+              <View style={styles.woodFrameInner}>
+                <AwningStripes />
 
-              {/* Salutation */}
-              <Animated.Text entering={FadeIn.delay(300).duration(300)} style={styles.greeting}>
-                {`Bonjour ${profileName} !`}
-              </Animated.Text>
+                <View style={styles.parchment}>
+                  {/* Soleil */}
+                  <Animated.Text entering={FadeInUp.delay(200).duration(400)} style={styles.sunEmoji}>
+                    {'☀️'}
+                  </Animated.Text>
 
-              <Animated.Text entering={FadeIn.delay(450).duration(300)} style={styles.subtitle}>
-                {'Pendant ton absence, ta ferme a accumul\u00E9\u00A0:'}
-              </Animated.Text>
+                  {/* Salutation */}
+                  <Animated.Text entering={FadeIn.delay(300).duration(300)} style={styles.greeting}>
+                    {`Bonjour ${profileName} !`}
+                  </Animated.Text>
 
-              {/* Ressources */}
-              <View style={styles.resourceList}>
-                {filteredResources.map((res, idx) => (
+                  <Animated.Text entering={FadeIn.delay(450).duration(300)} style={styles.subtitle}>
+                    {'Pendant ton absence, ta ferme a accumulé :'}
+                  </Animated.Text>
+
+                  {/* Ressources */}
+                  <View style={styles.resourceList}>
+                    {filteredResources.map((res, idx) => (
+                      <Animated.View
+                        key={res.label}
+                        entering={FadeInLeft.delay(600 + idx * 150).duration(300)}
+                        style={styles.resourceRow}
+                      >
+                        <Text style={styles.resourceEmoji}>{res.emoji}</Text>
+                        <Text style={styles.resourceLabel}>{res.label}</Text>
+                        <Text style={styles.resourceQty}>{`x${res.quantity}`}</Text>
+                      </Animated.View>
+                    ))}
+                  </View>
+
+                  {/* Total en attente */}
                   <Animated.View
-                    key={res.label}
-                    entering={FadeInLeft.delay(600 + idx * 150).duration(300)}
-                    style={styles.resourceRow}
+                    entering={FadeIn.delay(600 + filteredResources.length * 150 + 300).duration(400)}
+                    style={styles.totalBox}
                   >
-                    <Text style={styles.resourceEmoji}>{res.emoji}</Text>
-                    <Text style={styles.resourceLabel}>{res.label}</Text>
-                    <Text style={styles.resourceQty}>{`x${res.quantity}`}</Text>
+                    <Text style={styles.totalText}>
+                      {`${totalCollected} ressource${totalCollected > 1 ? 's' : ''} à récuperer`}
+                    </Text>
                   </Animated.View>
-                ))}
+
+                  {/* Deal du jour au village */}
+                  {dailyDeal && (
+                    <Animated.View
+                      entering={FadeIn.delay(600 + filteredResources.length * 150 + 350).duration(400)}
+                      style={styles.dealBox}
+                    >
+                      <Text style={styles.dealTitle}>{'🏷️ Deal du jour au village'}</Text>
+                      <Text style={styles.dealItem}>
+                        {`${dailyDeal.emoji} ${dailyDeal.label}`}
+                      </Text>
+                      <Text style={styles.dealPrice}>
+                        {`${dailyDeal.discountedPrice} 🍃 `}
+                        <Text style={styles.dealPriceOriginal}>{`au lieu de ${dailyDeal.originalPrice}`}</Text>
+                      </Text>
+                    </Animated.View>
+                  )}
+
+                  {/* Bouton continuer */}
+                  <Animated.View
+                    entering={FadeIn.delay(600 + filteredResources.length * 150 + 500).duration(300)}
+                    style={styles.actionSection}
+                  >
+                    <FarmButton label="Continuer" enabled={true} onPress={onDismiss} />
+                  </Animated.View>
+                </View>
               </View>
-
-              {/* Total en attente */}
-              <Animated.View
-                entering={FadeIn.delay(600 + filteredResources.length * 150 + 300).duration(400)}
-                style={styles.totalBox}
-              >
-                <Text style={styles.totalText}>
-                  {`${totalCollected} ressource${totalCollected > 1 ? 's' : ''} \u00E0 r\u00E9cuperer`}
-                </Text>
-              </Animated.View>
-
-              {/* Deal du jour au village */}
-              {dailyDeal && (
-                <Animated.View
-                  entering={FadeIn.delay(600 + filteredResources.length * 150 + 350).duration(400)}
-                  style={styles.dealBox}
-                >
-                  <Text style={styles.dealTitle}>{'\uD83C\uDFF7\uFE0F Deal du jour au village'}</Text>
-                  <Text style={styles.dealItem}>
-                    {`${dailyDeal.emoji} ${dailyDeal.label}`}
-                  </Text>
-                  <Text style={styles.dealPrice}>
-                    {`${dailyDeal.discountedPrice} \uD83C\uDF43 `}
-                    <Text style={styles.dealPriceOriginal}>{`au lieu de ${dailyDeal.originalPrice}`}</Text>
-                  </Text>
-                </Animated.View>
-              )}
-
-              {/* Hint fermer */}
-              <Animated.Text
-                entering={FadeIn.delay(600 + filteredResources.length * 150 + 500).duration(300)}
-                style={styles.dismissHint}
-              >
-                {'Touche pour continuer'}
-              </Animated.Text>
-            </LinearGradient>
+            </View>
           </Animated.View>
         </Animated.View>
       </TouchableWithoutFeedback>
@@ -166,12 +246,55 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     ...Shadows.lg,
   },
-  card: {
-    borderRadius: Radius.xl,
-    paddingVertical: Spacing['3xl'],
+
+  // ── Cadre bois ──
+  woodFrame: {
+    borderRadius: Radius['2xl'],
+    backgroundColor: Farm.woodDark,
+    padding: 5,
+    ...Shadows.xl,
+  },
+  woodFrameInner: {
+    borderRadius: Radius['2xl'] - 3,
+    overflow: 'hidden',
+    backgroundColor: Farm.woodLight,
+  },
+
+  // ── Auvent ──
+  awning: {
+    height: 36,
+    overflow: 'hidden',
+  },
+  awningStripes: {
+    flexDirection: 'row',
+    height: 28,
+  },
+  awningStripe: {
+    flex: 1,
+  },
+  awningShadow: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  awningScallop: {
+    flexDirection: 'row',
+    height: 8,
+    marginTop: -4,
+  },
+  awningScallopDot: {
+    flex: 1,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+
+  // ── Parchemin ──
+  parchment: {
+    backgroundColor: Farm.parchmentDark,
+    paddingVertical: Spacing['2xl'],
     paddingHorizontal: Spacing['2xl'],
     alignItems: 'center',
   },
+
   sunEmoji: {
     fontSize: 48,
     marginBottom: Spacing.md,
@@ -179,13 +302,13 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: FontSize.titleLg,
     fontWeight: FontWeight.bold,
-    color: '#92400E',
+    color: Farm.brownText,
     marginBottom: Spacing.xs,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: FontSize.sm,
-    color: '#A16207',
+    color: Farm.brownTextSub,
     marginBottom: Spacing.xl,
     textAlign: 'center',
   },
@@ -197,7 +320,7 @@ const styles = StyleSheet.create({
   resourceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: Farm.parchment,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     borderRadius: Radius.md,
@@ -210,15 +333,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
-    color: '#78350F',
+    color: Farm.brownText,
   },
   resourceQty: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    color: '#92400E',
+    color: Farm.brownText,
   },
   bonusBox: {
-    backgroundColor: 'rgba(74,222,128,0.2)',
+    backgroundColor: Farm.awningGreen + '33',
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
@@ -228,12 +351,12 @@ const styles = StyleSheet.create({
   },
   bonusText: {
     fontSize: FontSize.sm,
-    color: '#065F46',
+    color: Farm.awningGreen,
   },
   bonusHighlight: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: '#059669',
+    color: Farm.awningGreen,
   },
   totalBox: {
     marginBottom: Spacing.xl,
@@ -241,46 +364,84 @@ const styles = StyleSheet.create({
   totalText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: '#92400E',
+    color: Farm.brownText,
   },
   dealBox: {
     width: '100%',
-    backgroundColor: 'rgba(217,119,6,0.12)',
+    backgroundColor: Farm.gold + '22',
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(217,119,6,0.35)',
+    borderColor: Farm.gold,
   },
   dealTitle: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: '#92400E',
+    color: Farm.brownText,
     marginBottom: 2,
     letterSpacing: 0.5,
   },
   dealItem: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: '#78350F',
+    color: Farm.brownText,
     marginBottom: 2,
   },
   dealPrice: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: '#B45309',
+    color: Farm.goldText,
   },
   dealPriceOriginal: {
     fontWeight: FontWeight.normal,
-    color: '#B45309',
+    color: Farm.goldText,
     textDecorationLine: 'line-through',
     opacity: 0.7,
   },
-  dismissHint: {
-    fontSize: FontSize.caption,
-    color: '#B45309',
-    opacity: 0.6,
+
+  // ── Action ──
+  actionSection: {
+    width: '100%',
+    paddingTop: Spacing.sm,
+  },
+
+  // ── Bouton farm 3D ──
+  btnFullWidth: {
+    width: '100%',
+  },
+  farmBtnShadow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 44,
+    borderRadius: Radius.lg,
+  },
+  farmBtnBody: {
+    height: 44,
+    borderRadius: Radius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  farmBtnGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '45%',
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    opacity: 0.35,
+  },
+  farmBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
