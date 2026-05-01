@@ -535,7 +535,7 @@ export default function TabsLayout() {
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const taskBadgeCount = useMemo(
-    () => tasks.filter(t => !t.completed && t.dueDate === todayStr).length,
+    () => tasks.filter(t => !t.completed && !!t.dueDate && t.dueDate <= todayStr).length,
     [tasks, todayStr],
   );
 
