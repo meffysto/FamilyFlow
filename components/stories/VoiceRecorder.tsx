@@ -22,6 +22,7 @@ import {
   createPvcVoice,
   addPvcSamples,
   triggerPvcTraining,
+  getPvcVoiceState,
 } from '../../lib/voice-clone-pro';
 import {
   VOICE_CLONE_SCRIPT_FR,
@@ -106,11 +107,24 @@ export interface VoiceRecorderProps {
     source: VoiceCloneSource,
     status: 'ready' | 'training',
   ) => void;
+  /**
+   * PVC uniquement — appelé après chaque sample uploadé avec succès.
+   * Permet de persister le voice_id dans le profil dès la 1re prise pour
+   * que la session soit récupérable même si l'utilisateur ferme le modal.
+   * Ne ferme PAS le modal (différence clé avec onVoiceReady).
+   */
+  onPvcSampleAdded?: (voiceId: string, samplesCount: number) => void;
   apiKey: string;
   cloneEngine?: 'elevenlabs' | 'fish-audio';
   language?: 'fr' | 'en';
   /** 'instant' (défaut, comportement actuel) ou 'professional' (multi-prises + training). */
   cloneType?: 'instant' | 'professional';
+  /**
+   * PVC uniquement — si fourni, on reprend une voix PVC existante (résumée depuis
+   * une session précédente) au lieu d'en créer une nouvelle au 1er sample.
+   * Permet d'éviter les voix orphelines sur ElevenLabs.
+   */
+  existingPvcVoiceId?: string;
 }
 
 // ─── Options d'enregistrement avec metering activé ───────────────────────────
@@ -123,19 +137,21 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
 // ─── VoiceRecorder ───────────────────────────────────────────────────────────
 
 interface PvcTake {
-  uri: string;
+  uri?: string;          // absent si la prise est issue d'une session reprise
   durationSecs: number;
-  sampleId?: string; // rempli après upload effectif
+  sampleId?: string;     // rempli après upload effectif
 }
 
 function VoiceRecorder({
   profileId: _profileId,
   profileName,
   onVoiceReady,
+  onPvcSampleAdded,
   apiKey,
   cloneEngine = 'elevenlabs',
   language = 'fr',
   cloneType = 'instant',
+  existingPvcVoiceId,
 }: VoiceRecorderProps) {
   const { primary, colors } = useThemeColors();
   const isPvc = cloneType === 'professional';
@@ -154,11 +170,21 @@ function VoiceRecorder({
 
   const [status, setStatus] = useState<'idle' | 'recording' | 'uploading' | 'training' | 'done'>('idle');
   const [elapsed, setElapsed] = useState(0);
-  // PVC : voice_id créé au 1er sample, conservé pour les suivants
-  const [pvcVoiceId, setPvcVoiceId] = useState<string | null>(null);
+  // PVC : voice_id créé au 1er sample, conservé pour les suivants.
+  // Si existingPvcVoiceId est fourni, on reprend cette voix au lieu d'en créer une.
+  const [pvcVoiceId, setPvcVoiceId] = useState<string | null>(existingPvcVoiceId ?? null);
   const [pvcTakes, setPvcTakes] = useState<PvcTake[]>([]);
   // PVC option C : mode "lecture libre" (pas de script imposé) — utile pour les longues sessions
   const [pvcFreeReading, setPvcFreeReading] = useState(false);
+  // PVC : repli/déploiement du script pour libérer de la place après la 1re prise
+  const [scriptCollapsed, setScriptCollapsed] = useState(false);
+  // PVC : état de la vérification ElevenLabs (samples côté serveur)
+  const [verifyState, setVerifyState] = useState<
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'ok'; samplesCount: number; datasetSecs: number | null; voiceId: string }
+    | { status: 'error'; message: string }
+  >({ status: 'idle' });
 
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -185,6 +211,31 @@ function VoiceRecorder({
       recordingRef.current?.stopAndUnloadAsync().catch(() => {});
     };
   }, []);
+
+  // Reprise d'une voix PVC existante : hydrate les prises depuis ElevenLabs
+  // pour que le récap, le seuil minimum et le bouton de validation soient corrects.
+  useEffect(() => {
+    if (!isPvc || !existingPvcVoiceId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const state = await getPvcVoiceState(apiKey, existingPvcVoiceId);
+        if (cancelled) return;
+        // On reconstruit le tableau avec une durée moyenne par échantillon
+        // (l'API renvoie le nombre + la durée totale du dataset).
+        const count = state.samplesCount;
+        const totalSecs = state.datasetDurationSeconds ?? 0;
+        if (count > 0) {
+          const avg = totalSecs / count;
+          setPvcTakes(Array.from({ length: count }, () => ({ durationSecs: avg })));
+          setScriptCollapsed(true);
+        }
+      } catch (e) {
+        if (__DEV__) console.warn('VoiceRecorder: hydratation PVC échouée:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isPvc, existingPvcVoiceId, apiKey]);
 
   // ── IVC : flow original (1 prise → upload → done) ────────────────────────
   const stopRecordingIvc = useCallback(async () => {
@@ -276,14 +327,25 @@ function VoiceRecorder({
       const uploaded = await addPvcSamples(apiKey, voiceId, [uri]);
       const sampleId = uploaded[0]?.sampleId;
       const durationSecs = uploaded[0]?.durationSecs ?? elapsedSecs;
+      const newTakesCount = pvcTakes.length + 1;
       setPvcTakes(prev => [...prev, { uri, durationSecs, sampleId }]);
+      // Persiste le voice_id dans le profil dès cette prise — la session sera
+      // récupérable même si l'utilisateur ferme le modal avant le training.
+      try {
+        onPvcSampleAdded?.(voiceId, newTakesCount);
+      } catch (e) {
+        if (__DEV__) console.warn('VoiceRecorder: onPvcSampleAdded callback failed:', e);
+      }
+      // Replie le script automatiquement après la 1re prise pour rendre les
+      // boutons immédiatement visibles sans avoir à scroller.
+      setScriptCollapsed(true);
       setStatus('idle');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Impossible d\'ajouter cette prise.';
       Alert.alert('Erreur upload', msg);
       setStatus('idle');
     }
-  }, [elapsed, pvcVoiceId, apiKey, profileName, language, resetAmplitudes]);
+  }, [elapsed, pvcVoiceId, pvcTakes.length, apiKey, profileName, language, resetAmplitudes, onPvcSampleAdded]);
 
   const stopRecording = useCallback(async () => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
@@ -344,6 +406,23 @@ function VoiceRecorder({
     else if (status === 'recording') stopRecording();
   }, [status, startRecording, stopRecording]);
 
+  const verifyPvc = useCallback(async () => {
+    if (!pvcVoiceId) return;
+    setVerifyState({ status: 'loading' });
+    try {
+      const state = await getPvcVoiceState(apiKey, pvcVoiceId);
+      setVerifyState({
+        status: 'ok',
+        samplesCount: state.samplesCount,
+        datasetSecs: state.datasetDurationSeconds,
+        voiceId: pvcVoiceId,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Vérification impossible.';
+      setVerifyState({ status: 'error', message: msg });
+    }
+  }, [apiKey, pvcVoiceId]);
+
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
   const timerLabel = `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -400,8 +479,22 @@ function VoiceRecorder({
         </View>
       )}
 
-      {/* Script ou consignes lecture libre */}
-      {(!isPvc || !pvcFreeReading) ? (
+      {/* Script ou consignes lecture libre — repliable en PVC pour libérer de la place */}
+      {isPvc && pvcTakes.length > 0 && (
+        <Pressable
+          onPress={() => setScriptCollapsed(c => !c)}
+          style={[styles.collapseToggle, { borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel={scriptCollapsed ? 'Afficher le script' : 'Masquer le script'}
+        >
+          <Text style={[styles.collapseToggleText, { color: colors.textMuted }]}>
+            {scriptCollapsed
+              ? (language === 'en' ? '▸ Show the script' : '▸ Afficher le script')
+              : (language === 'en' ? '▾ Hide the script' : '▾ Masquer le script')}
+          </Text>
+        </Pressable>
+      )}
+      {!scriptCollapsed && ((!isPvc || !pvcFreeReading) ? (
         <ScrollView
           style={[styles.scriptBox, { backgroundColor: colors.card, borderColor: colors.border }]}
           contentContainerStyle={styles.scriptContent}
@@ -427,7 +520,7 @@ function VoiceRecorder({
               : '• Lecture calme — comme au coucher\n• Joyeuse, avec des exclamations\n• Chuchotée, comme un secret\n• Dialogues avec voix de personnages différents\n• Suspense, avec des pauses\n\nChaque prise doit durer au moins 30 secondes. Vise 30 min au total pour une voix vraiment fidèle (1h idéal). 15 min minimum.'}
           </Text>
         </View>
-      )}
+      ))}
 
       <View style={styles.waveformRow}>
         {Array.from({ length: BAR_COUNT }, (_, i) => (
@@ -452,6 +545,37 @@ function VoiceRecorder({
                 ? `⚠️ Minimum atteint mais qualité limitée. Continue jusqu'à 30 min pour une voix vraiment fidèle (encore ${Math.max(0, Math.ceil((PVC_RECOMMENDED_TOTAL_SECS - pvcTotalSecs) / 60))} min).`
                 : `Encore ${pvcMinutesLeft} min minimum avant de pouvoir lancer (qualité ElevenLabs requiert 15 min mini, 30 min recommandés).`}
           </Text>
+
+          {/* Vérification ElevenLabs : confirme que les prises sont bien arrivées côté serveur */}
+          <Pressable
+            onPress={verifyPvc}
+            disabled={verifyState.status === 'loading' || !pvcVoiceId}
+            style={[styles.verifyButton, { borderColor: colors.border }]}
+            accessibilityRole="button"
+            accessibilityLabel="Vérifier mes prises sur ElevenLabs"
+          >
+            {verifyState.status === 'loading' ? (
+              <ActivityIndicator color={primary} />
+            ) : (
+              <Text style={[styles.verifyButtonText, { color: primary }]}>
+                🔍 Vérifier mes prises sur ElevenLabs
+              </Text>
+            )}
+          </Pressable>
+          {verifyState.status === 'ok' && (
+            <Text style={[styles.pvcRecapSub, { color: colors.success ?? primary }]}>
+              ✓ {verifyState.samplesCount} échantillon{verifyState.samplesCount > 1 ? 's' : ''} confirmé{verifyState.samplesCount > 1 ? 's' : ''} sur ElevenLabs
+              {verifyState.datasetSecs != null
+                ? ` — ${Math.floor(verifyState.datasetSecs / 60)}:${Math.floor(verifyState.datasetSecs % 60).toString().padStart(2, '0')} acceptés`
+                : ''}
+              {'\n'}voice_id : {verifyState.voiceId}
+            </Text>
+          )}
+          {verifyState.status === 'error' && (
+            <Text style={[styles.pvcRecapSub, { color: colors.error ?? primary }]}>
+              ⚠ {verifyState.message}
+            </Text>
+          )}
         </View>
       )}
 
@@ -624,5 +748,28 @@ const styles = StyleSheet.create({
   freeReadingText: {
     fontSize: FontSize.body,
     lineHeight: 22,
+  },
+  collapseToggle: {
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  collapseToggleText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  verifyButton: {
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  verifyButtonText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
 });

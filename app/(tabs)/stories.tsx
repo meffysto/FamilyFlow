@@ -1718,9 +1718,29 @@ export default function StoriesScreen() {
                 const BELLA_ID = 'EXAVITQu4vr4xnSDxMaL';
                 const ADAM_ID = 'pNInz6obpgDQGcFmaJgB';
                 const hasClone = !!p.voiceElevenLabsId;
+                const isPvc = p.voiceCloneType === 'professional';
+                const pvcStatus = p.voiceTrainingStatus;
                 const fallbackLabel = lang === 'fr'
                   ? (p.gender === 'fille' ? 'Bella (auto)' : 'Adam (auto)')
                   : (p.gender === 'fille' ? 'Bella (auto)' : 'Adam (auto)');
+                let cloneBadge: string;
+                if (!hasClone) cloneBadge = fallbackLabel;
+                else if (isPvc && pvcStatus === 'samples') cloneBadge = lang === 'fr' ? '🎙 Pro · prises en cours' : '🎙 Pro · takes in progress';
+                else if (isPvc && pvcStatus === 'training') cloneBadge = lang === 'fr' ? '🎙 Pro · entraînement…' : '🎙 Pro · training…';
+                else if (isPvc && pvcStatus === 'ready') cloneBadge = lang === 'fr' ? '🎙 Pro · prête' : '🎙 Pro · ready';
+                else cloneBadge = lang === 'fr' ? '🎙 Clonée (Standard)' : '🎙 Cloned (Standard)';
+                // Le bouton est toujours présent — son label dépend de l'état :
+                // - pas de voix : "+"   (créer)
+                // - voix IVC    : "⇪"   (upgrade vers Pro)
+                // - voix PVC en cours (samples / training) : "↻" (reprendre la session)
+                // - voix PVC prête : "+" (re-cloner — long-press conseillé pour confirmer)
+                const canResumePvc = isPvc && (pvcStatus === 'samples' || pvcStatus === 'training');
+                let btnLabel: string;
+                let btnA11y: string;
+                if (!hasClone) { btnLabel = '+'; btnA11y = lang === 'fr' ? `Créer la voix clonée de ${p.name}` : `Clone ${p.name}'s voice`; }
+                else if (canResumePvc) { btnLabel = '↻'; btnA11y = lang === 'fr' ? `Reprendre la session Pro de ${p.name}` : `Resume Pro session for ${p.name}`; }
+                else if (!isPvc) { btnLabel = '⇪'; btnA11y = lang === 'fr' ? `Améliorer en Pro la voix de ${p.name}` : `Upgrade ${p.name}'s voice to Pro`; }
+                else { btnLabel = '+'; btnA11y = lang === 'fr' ? `Re-cloner la voix de ${p.name}` : `Re-clone ${p.name}'s voice`; }
                 const isSelected = voiceSelectedParentId === p.id;
                 return (
                   <View key={p.id} style={styles.voiceParentWrap}>
@@ -1731,18 +1751,21 @@ export default function StoriesScreen() {
                       <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={32} />
                       <Text style={[styles.voiceParentName, { color: isSelected ? '#fff' : colors.text }]}>{p.name}</Text>
                       <Text style={[styles.voiceParentBadge, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
-                        {hasClone ? (lang === 'fr' ? '🎙 Clonée' : '🎙 Cloned') : fallbackLabel}
+                        {cloneBadge}
                       </Text>
                     </Pressable>
-                    {!hasClone && (
-                      <Pressable
-                        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setVoiceRecorderProfileId(p.id); }}
-                        style={[styles.voiceAddBtn, { borderColor: colors.border }]}
-                        accessibilityLabel={lang === 'fr' ? `Créer la voix clonée de ${p.name}` : `Clone ${p.name}'s voice`}
-                      >
-                        <Text style={[styles.voiceAddBtnText, { color: primary }]}>+</Text>
-                      </Pressable>
-                    )}
+                    <Pressable
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        // Pré-sélectionne le mode adapté à l'intention
+                        if (canResumePvc || (hasClone && !isPvc)) setVoiceCloneMode('professional');
+                        setVoiceRecorderProfileId(p.id);
+                      }}
+                      style={[styles.voiceAddBtn, { borderColor: colors.border }]}
+                      accessibilityLabel={btnA11y}
+                    >
+                      <Text style={[styles.voiceAddBtnText, { color: primary }]}>{btnLabel}</Text>
+                    </Pressable>
                   </View>
                 );
               })}
@@ -1994,6 +2017,30 @@ export default function StoriesScreen() {
                   cloneEngine={localVoiceEngine === 'fish-audio' ? 'fish-audio' : 'elevenlabs'}
                   language={voiceConfig.language}
                   cloneType={localVoiceEngine === 'elevenlabs' ? voiceCloneMode : 'instant'}
+                  existingPvcVoiceId={
+                    localVoiceEngine === 'elevenlabs'
+                      && voiceCloneMode === 'professional'
+                      && target.voiceCloneType === 'professional'
+                      && (target.voiceTrainingStatus === 'samples' || target.voiceTrainingStatus === 'training')
+                      ? target.voiceElevenLabsId
+                      : undefined
+                  }
+                  onPvcSampleAdded={async (voiceId, _samplesCount) => {
+                    // Persiste le voice_id PVC dès la 1re prise pour que la
+                    // session soit récupérable même si le modal est fermé
+                    // avant le déclenchement du training.
+                    const update: Partial<Profile> = {
+                      voiceElevenLabsId: voiceId,
+                      voiceSource: 'elevenlabs-cloned',
+                      voiceCloneType: 'professional',
+                      voiceTrainingStatus: 'samples',
+                    };
+                    try {
+                      await updateProfile(target.id, update);
+                    } catch (e) {
+                      if (__DEV__) console.warn('Persistance voice_id PVC echouee :', e);
+                    }
+                  }}
                   onVoiceReady={async (voiceId, source, trainingStatus) => {
                     try {
                       let profileUpdate: Partial<Profile>;
