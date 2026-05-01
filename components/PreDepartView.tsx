@@ -51,6 +51,7 @@ interface Props {
 
   remainingEstimate?: number;
   formatPrice?: (n: number) => string;
+  formatTotalEstimate?: (n: number) => string;
 
   /** Suggestions cadence-based (vide si pas d'historique). */
   suggestions?: CadenceSuggestion[];
@@ -72,6 +73,7 @@ export function PreDepartView({
   parcours,
   remainingEstimate,
   formatPrice,
+  formatTotalEstimate,
   suggestions,
   onAddSuggestion,
   onStart,
@@ -170,9 +172,9 @@ export function PreDepartView({
               {' '}/ {totalCount}
             </Text>
           </Text>
-          {remainingEstimate !== undefined && remainingEstimate > 0 && formatPrice && (
+          {remainingEstimate !== undefined && remainingEstimate > 0 && (
             <Text style={[styles.progressEstimate, { color: colors.text }]}>
-              ≈ {formatPrice(remainingEstimate)} restants
+              {(formatTotalEstimate ?? ((n: number) => `≈ ${Math.round(n)} €`))(remainingEstimate)} restants
             </Text>
           )}
         </View>

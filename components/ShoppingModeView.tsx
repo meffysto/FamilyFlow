@@ -46,6 +46,8 @@ import type { CourseItem } from '../lib/types';
 interface PriceInfo {
   price: number;
   stale: boolean;
+  confidence?: 'high' | 'low';
+  sampleSize?: 1 | 2 | 3;
 }
 
 interface Props {
@@ -57,6 +59,7 @@ interface Props {
   priceByItemId?: Map<string, PriceInfo | null | undefined>;
   remainingEstimate?: number;
   formatPrice?: (n: number) => string;
+  formatTotalEstimate?: (n: number) => string;
   /** Ordre appris des sections (parcours magasin). Optionnel — fallback sur `sections`. */
   parcours?: string[];
   /** Callback déclenché quand toutes les cases sont cochées (après délai 700 ms).
@@ -81,6 +84,7 @@ export function ShoppingModeView({
   priceByItemId,
   remainingEstimate,
   formatPrice,
+  formatTotalEstimate,
   parcours,
   onComplete,
   onEditParcours,
@@ -286,13 +290,12 @@ export function ShoppingModeView({
               / {totalCount}
             </Text>
             {remainingEstimate !== undefined &&
-              remainingEstimate > 0 &&
-              formatPrice && (
+              remainingEstimate > 0 && (
                 <Text
                   style={[styles.progressEstimate, { color: colors.text }]}
                   numberOfLines={1}
                 >
-                  {`≈ ${formatPrice(remainingEstimate)} restants`}
+                  {`${(formatTotalEstimate ?? ((n: number) => `≈ ${Math.round(n)} €`))(remainingEstimate)} restants`}
                 </Text>
               )}
           </View>
@@ -527,23 +530,29 @@ export function ShoppingModeView({
                       >
                         {item.text}
                       </Text>
-                      {priceInfo && formatPrice && (
-                        <Text
-                          style={[
-                            styles.itemPrice,
-                            {
-                              color: priceInfo.stale
-                                ? colors.textFaint
-                                : colors.textMuted,
-                            },
-                            item.completed && {
-                              textDecorationLine: 'line-through',
-                            },
-                          ]}
-                        >
-                          {`≈ ${formatPrice(priceInfo.price)}`}
-                        </Text>
-                      )}
+                      {priceInfo && formatPrice && (() => {
+                        const lowConf = priceInfo.confidence === 'low'
+                          || priceInfo.stale
+                          || priceInfo.sampleSize === 1;
+                        const prefix = lowConf ? '~ ' : '≈ ';
+                        return (
+                          <Text
+                            style={[
+                              styles.itemPrice,
+                              {
+                                color: priceInfo.stale
+                                  ? colors.textFaint
+                                  : colors.textMuted,
+                              },
+                              item.completed && {
+                                textDecorationLine: 'line-through',
+                              },
+                            ]}
+                          >
+                            {`${prefix}${formatPrice(priceInfo.price)}`}
+                          </Text>
+                        );
+                      })()}
                     </TouchableOpacity>
                   </Animated.View>
                 );

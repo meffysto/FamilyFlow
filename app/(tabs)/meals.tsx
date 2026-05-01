@@ -49,7 +49,7 @@ import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngr
 import { CourseItemEditor } from '../../components/CourseItemEditor';
 import { CourseListEditor } from '../../components/CourseListEditor';
 import { renderListIcon } from '../../lib/list-icons';
-import { getLastPriceFor, computeRemainingEstimate, formatPrice } from '../../lib/courses-prices';
+import { getLastPriceFor, computeRemainingEstimate, formatPrice, formatTotalEstimate } from '../../lib/courses-prices';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, cleanCookContent, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -1389,7 +1389,7 @@ export default function MealsScreen() {
             {'  ·  '}
           </Text>
           <Text style={[styles.headerEstimateAccent, { color: colors.text }]}>
-            {`≈ ${formatPrice(courseRemainingEstimate)}`}
+            {formatTotalEstimate(courseRemainingEstimate)}
           </Text>
         </Text>
       )
@@ -1854,6 +1854,10 @@ export default function MealsScreen() {
                             {(() => {
                               const priceInfo = coursePriceByItemId.get(item.id);
                               if (!priceInfo) return null;
+                              const lowConf = priceInfo.confidence === 'low'
+                                || priceInfo.stale
+                                || priceInfo.sampleSize === 1;
+                              const prefix = lowConf ? '~ ' : '≈ ';
                               return (
                                 <Text
                                   style={[
@@ -1862,7 +1866,7 @@ export default function MealsScreen() {
                                     item.completed && { textDecorationLine: 'line-through' },
                                   ]}
                                 >
-                                  {`≈ ${formatPrice(priceInfo.price)}`}
+                                  {`${prefix}${formatPrice(priceInfo.price)}`}
                                 </Text>
                               );
                             })()}
@@ -3246,6 +3250,7 @@ export default function MealsScreen() {
           parcours={listes.find(l => l.id === activeListId)?.parcours}
           remainingEstimate={courseRemainingEstimate}
           formatPrice={formatPrice}
+          formatTotalEstimate={formatTotalEstimate}
           suggestions={cadenceSuggestions}
           onAddSuggestion={async (label) => {
             try {
@@ -3291,6 +3296,7 @@ export default function MealsScreen() {
           priceByItemId={coursePriceByItemId}
           remainingEstimate={courseRemainingEstimate}
           formatPrice={formatPrice}
+          formatTotalEstimate={formatTotalEstimate}
           parcours={listes.find(l => l.id === activeListId)?.parcours}
           onComplete={(observed) => setBilanObservedOrder(observed)}
           onEditParcours={() => setShowParcoursEditor(true)}
