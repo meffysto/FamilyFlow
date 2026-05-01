@@ -454,7 +454,7 @@ function generateTiers(baseHours: number, baseUpgradeCost: number): BuildingTier
       level,
       productionRateHours: baseHours * Math.pow(CYCLE_RATIO, level - 1),
       upgradeCoins: level === 1 ? 0 : Math.round(baseUpgradeCost * Math.pow(COST_RATIO, level - 2)),
-      spriteSuffix: level === 1 ? '' : `_lv${Math.min(level, 3)}`,
+      spriteSuffix: level === 1 ? '' : `_lv${[0,2,2,3,3,4,4,5,5,6][level - 1] ?? 3}`,
     };
   });
 }
