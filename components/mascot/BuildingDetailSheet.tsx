@@ -555,6 +555,14 @@ export function BuildingDetailSheet({
                           delta={`+${nextMaxPending - currentMaxPending}`}
                         />
                       </>
+                    ) : isAuberge ? (
+                      <UpgradeLine
+                        icon="⏱"
+                        description="Délai entre deux visiteurs"
+                        fromText={formatHours(Math.max(2, 6 - (building.level - 1) * (20 / 60)))}
+                        toText={formatHours(Math.max(2, 6 - building.level * (20 / 60)))}
+                        delta={building.level < 10 ? '−20 min' : ''}
+                      />
                     ) : (
                       <UpgradeLine
                         icon="✨"

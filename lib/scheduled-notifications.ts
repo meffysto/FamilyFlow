@@ -724,7 +724,7 @@ export async function scheduleAubergeVisitorArrival(
         title: i18n.t('auberge.notif.arrival.title', { emoji, name: visitorName }),
         body: i18n.t('auberge.notif.arrival.body', { hours: deadlineHours }),
         sound: true,
-        data: { type: 'auberge_visitor_arrival', instanceId },
+        data: { type: 'auberge_visitor_arrival', instanceId, route: '/(tabs)/tree' },
       },
       trigger: null,
     });
@@ -754,7 +754,7 @@ export async function scheduleAubergeVisitorReminder(
         title: i18n.t('auberge.notif.reminder.title', { emoji, name: visitorName }),
         body: i18n.t('auberge.notif.reminder.body'),
         sound: true,
-        data: { type: 'auberge_visitor_reminder', instanceId },
+        data: { type: 'auberge_visitor_reminder', instanceId, route: '/(tabs)/tree' },
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderDate },
     });

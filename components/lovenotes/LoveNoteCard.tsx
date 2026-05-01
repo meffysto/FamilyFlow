@@ -122,7 +122,7 @@ function LoveNoteCardBase({
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={`Note de ${senderName}, ${statusLabel}, reçue le ${formatDateFR(note.createdAt)}`}
-      accessibilityState={{ disabled: isPendingFuture || note.status === 'read' }}
+      accessibilityState={{ disabled: isPendingFuture }}
       style={[
         styles.card,
         {
@@ -148,7 +148,7 @@ function LoveNoteCardBase({
               fontStyle: isUnread ? 'italic' : 'normal',
             },
           ]}
-          numberOfLines={2}
+          numberOfLines={3}
         >
           {preview}
         </Text>

@@ -20,6 +20,7 @@ import {
   getTotalReputation as engineGetTotalReputation,
 } from '../mascot/auberge-engine';
 import { getTreeStageInfo } from '../mascot/engine';
+import { getTechBonuses } from '../mascot/tech-engine';
 import { VISITOR_CATALOG } from '../mascot/visitor-catalog';
 import {
   scheduleAubergeVisitorArrival,
@@ -54,6 +55,9 @@ export async function tickAubergeAuto(
       totalDeliveries: farmData.auberge_total_deliveries,
     });
 
+    const aubergeBuilding = farmData.farmBuildings?.find(b => b.buildingId === 'auberge');
+    if (!aubergeBuilding) return;
+
     const now = new Date();
 
     // 1. Expire (cancel notifs des expirés)
@@ -63,10 +67,23 @@ export async function tickAubergeAuto(
       await cancelAubergeVisitorNotifs(exp.instanceId).catch(() => {});
     }
 
-    // 2. Tente spawn
+    // 2. Bonus niveau bâtiment : -20min de cooldown par niveau au-dessus de 1 (plancher 2h)
+    const COOLDOWN_BASE_MS = 6 * 60 * 60 * 1000;
+    const COOLDOWN_FLOOR_MS = 2 * 60 * 60 * 1000;
+    const levelBonus = Math.max(0, (aubergeBuilding.level ?? 1) - 1);
+    const effectiveCooldownMs = Math.max(
+      COOLDOWN_FLOOR_MS,
+      COOLDOWN_BASE_MS - levelBonus * 20 * 60 * 1000,
+    );
+
+    // 3. Bonus tech social-2 : +1 slot actif
+    const techBonuses = getTechBonuses(farmData.farmTech ?? []);
+    const extraSlots = techBonuses.aubergeMaxActiveBonus;
+
+    // 4. Tente spawn
     const treeStage = getTreeStageInfo(profile.level ?? 1).stage;
     const totalRep = engineGetTotalReputation(nextState);
-    const spawnResult = engineSpawn(nextState, treeStage, now, totalRep);
+    const spawnResult = engineSpawn(nextState, treeStage, now, totalRep, Math.random, extraSlots, effectiveCooldownMs);
     if (spawnResult) {
       nextState = spawnResult.state;
       const v = spawnResult.visitor;

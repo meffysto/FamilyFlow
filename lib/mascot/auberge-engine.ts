@@ -229,14 +229,16 @@ export function shouldSpawnVisitor(
   state: AubergeState,
   now: Date,
   treeStage: TreeStage,
+  extraSlots: number = 0,
+  cooldownMs: number = SPAWN_COOLDOWN_MS,
 ): boolean {
-  const cap = CAP_BY_STAGE[treeStage] ?? 0;
+  const cap = (CAP_BY_STAGE[treeStage] ?? 0) + extraSlots;
   if (cap <= 0) return false;
   const active = getActiveVisitors(state, now);
   if (active.length >= cap) return false;
   if (state.lastSpawnAt) {
     const last = new Date(state.lastSpawnAt).getTime();
-    if (now.getTime() - last < SPAWN_COOLDOWN_MS) return false;
+    if (now.getTime() - last < cooldownMs) return false;
   }
   return true;
 }
@@ -257,8 +259,10 @@ export function spawnVisitor(
   now: Date,
   totalReputation: number,
   rng: () => number = Math.random,
+  extraSlots: number = 0,
+  cooldownMs: number = SPAWN_COOLDOWN_MS,
 ): { state: AubergeState; visitor: ActiveVisitor } | null {
-  if (!shouldSpawnVisitor(state, now, treeStage)) return null;
+  if (!shouldSpawnVisitor(state, now, treeStage, extraSlots, cooldownMs)) return null;
 
   const eligible = getEligibleVisitors(state, treeStage, totalReputation, now);
   if (eligible.length === 0) return null;

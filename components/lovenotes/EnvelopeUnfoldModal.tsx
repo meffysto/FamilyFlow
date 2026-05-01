@@ -90,10 +90,13 @@ function formatPostmarkDate(d: Date = new Date()): string {
 export function EnvelopeUnfoldModal({
   visible, fromName, toName, body, onClose, onUnfoldComplete,
 }: EnvelopeUnfoldModalProps) {
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const ENVELOPE_W = Math.min(SCREEN_WIDTH - Spacing['2xl'] * 2, 340);
   const ENVELOPE_H = Math.round(ENVELOPE_W / (2 / 1.15));
   const FLAP_H = Math.round(ENVELOPE_H * 0.55);
+  // Hauteur de la lettre révélée : assez grande pour scroller un texte long
+  // sans être contrainte par ENVELOPE_H (≈196px).
+  const LETTER_H = Math.round(SCREEN_HEIGHT * 0.55);
   // Anim shared values
   const envelopeScale = useSharedValue(0.85);
   const envelopeFloat = useSharedValue(0);
@@ -246,14 +249,17 @@ export function EnvelopeUnfoldModal({
           />
 
           {/* Lettre interieure (cream) — revelee apres unfold */}
-          <Animated.View style={[styles.letter, contentStyle]}>
+          <Animated.View style={[styles.letter, { width: ENVELOPE_W, height: LETTER_H }, contentStyle]}>
             <LinearGradient
               colors={[LETTER_LIGHT, LETTER_MID]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFillObject}
             />
-            <ScrollView contentContainerStyle={[styles.letterInner, { paddingTop: FLAP_H + Spacing.md }]}>
+            <ScrollView
+              contentContainerStyle={[styles.letterInner, { paddingTop: FLAP_H + Spacing.md }]}
+              showsVerticalScrollIndicator={false}
+            >
               <Text style={styles.letterFrom}>De {fromName}</Text>
               <Text style={styles.letterBody}>{body}</Text>
             </ScrollView>
@@ -314,7 +320,9 @@ const styles = StyleSheet.create({
   },
   envelope: {
     borderRadius: 8,
-    overflow: 'hidden',
+    // overflow visible pour que la lettre révélée puisse dépasser ENVELOPE_H
+    // et être scrollable — le flap kraft reste dans les limites visuelles.
+    overflow: 'visible',
     position: 'relative',
     borderWidth: 1,
     borderColor: PAPER_EDGE,
@@ -340,8 +348,11 @@ const styles = StyleSheet.create({
   },
   // ─── Lettre intérieure (cream) ─────────────────────────────
   letter: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
     zIndex: 2,
+    borderRadius: 8,
     overflow: 'hidden',
   },
   letterInner: {

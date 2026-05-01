@@ -87,7 +87,7 @@ export default function LoveNotesScreen() {
   // pending due → upgrade puis ouvre).
   const handleCardPress = useCallback(
     (note: LoveNote) => {
-      if (note.status === 'revealed') {
+      if (note.status === 'revealed' || note.status === 'read') {
         setUnfoldNote(note);
         return;
       }
@@ -99,7 +99,7 @@ export default function LoveNotesScreen() {
           });
         return;
       }
-      // pending future / read → noop (future : navigation détail)
+      // pending future → noop
     },
     [updateLoveNoteStatus],
   );
