@@ -51,9 +51,11 @@ export interface VisitorDefinition {
  * Les 6 visiteurs au lancement Phase 43.
  *
  * Tiers :
- *  - common (Hugo, Lucette)         : 48h / ×1.4 / minTreeStage 'pousse'
- *  - uncommon (Yann, Voyageuse, Marchand) : 60h / ×1.6 / minTreeStage 'arbuste'
- *  - rare (Comtesse)                : 72h / ×1.8 / minTreeStage 'arbre' + unlockMinReputation 15
+ *  - common  Hugo              : 48h / ×1.4 / minTreeStage 'pousse'
+ *  - common  Lucette           : 48h / ×1.4 / minTreeStage 'arbuste'
+ *  - uncommon Yann, Voyageuse  : 60h / ×1.6 / minTreeStage 'arbuste'
+ *  - uncommon Marchand         : 60h / ×1.6 / minTreeStage 'arbre'
+ *  - rare    Comtesse          : 72h / ×1.8 / minTreeStage 'arbre' + unlockMinReputation 15
  */
 export const VISITOR_CATALOG: VisitorDefinition[] = [
   // 🧑‍🍳 Hugo le boulanger — commun, 48h, ×1.4 (œuf + blé)
