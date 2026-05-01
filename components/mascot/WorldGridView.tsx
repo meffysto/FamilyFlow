@@ -980,7 +980,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     borderCurve: 'continuous',
-    overflow: 'hidden',
+    // overflow retiré pour permettre aux sprites 32x64 de déborder verticalement (fix fleur_lave visibility)
   },
   dirtBg: {
     position: 'absolute',
@@ -999,7 +999,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(74, 222, 128, 0.1)',
   },
   cropContainer: { alignItems: 'center', justifyContent: 'center' },
-  cropSprite: { width: 36, height: 44 },
+  cropSprite: { width: 32, height: 64 }, // Dimensions réelles des assets PNG (fix fleur_lave + tous crops)
   cropEmoji: { fontSize: 24, textAlign: 'center' },
   seasonBadge: { fontSize: 8, position: 'absolute', top: -2, right: -4 },
   stageRow: { flexDirection: 'row', gap: 3, marginTop: 2 },
