@@ -21,10 +21,12 @@ import {
   ImageSourcePropType,
   Alert,
   AppState,
+  Pressable,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import type { GestureResponderEvent } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -161,6 +163,65 @@ const TERRAIN_IMAGES: Record<Season, any> = {
   automne: require('../../assets/terrain/ground_automne.png'),
   hiver: require('../../assets/terrain/ground_hiver.png'),
 };
+
+// ── Map Pixel Forge ──
+// Pour rollback: passer USE_PIXEL_FORGE_MAP a false → repasse au tilemap Wang.
+const USE_PIXEL_FORGE_MAP = true;
+
+const PIXEL_FORGE_MAP_LAYERS = {
+  base: require('../../assets/farm-map/base.png'),
+} as const;
+const PIXEL_FORGE_WELL_IMAGE = require('../../assets/garden/decos/farm/well.png');
+
+const PIXEL_FORGE_CROP_X = [0.2189, 0.3383, 0.4577, 0.5771, 0.6965] as const;
+const PIXEL_FORGE_EXTENSION_CROP_X = [0.2339, 0.3533, 0.4727, 0.5921, 0.7115] as const;
+const PIXEL_FORGE_CROP_Y = [0.0846, 0.1505, 0.2351, 0.3197] as const;
+const PIXEL_FORGE_EXTENSION_CROP_Y = 0.2251;
+const PIXEL_FORGE_BUILDING_X = 0.892;
+const PIXEL_FORGE_BUILDING_Y = [0.342, 0.4167, 0.4914, 0.5423, 0.607] as const;
+const PIXEL_FORGE_MEGA_PLOT_POSITION = { x: 0.1567, y: 0.3718 } as const;
+const PIXEL_FORGE_EXPEDITION_BOAT_POSITION = { x: 0.1493, y: 0.7177 } as const;
+const PIXEL_FORGE_VILLAGE_PORTAL_POSITION = { x: 0.796, y: 0.7761 } as const;
+const PIXEL_FORGE_WELL_POSITION = { x: 0.4129, y: 0.8358 } as const;
+const PIXEL_FORGE_MAIN_TREE_POSITION = { x: 0.4701, y: 0.4301 } as const;
+const PIXEL_FORGE_SIGN_POST_POSITION = { x: 0.4726, y: 0.8731 } as const;
+const PIXEL_FORGE_SIGN_POST_IMAGE = require('../../assets/garden/decos/farm/sign_post.png');
+const PIXEL_FORGE_SIGN_POST_SIZE = { width: 44, height: 66 };
+
+const PIXEL_FORGE_CELL_POSITION_OVERRIDES = {
+  // Points deduits depuis la calibration dans la vraie vue ferme.
+  // Ancres mesurees : c1 (0.3383, 0.0846), c5 (0.2189, 0.1505),
+  // c10 (0.209, 0.2351), c20 (0.1567, 0.3818),
+  // b0 (0.8905, 0.342), b1 (0.893, 0.4167), b3 (0.8856, 0.607),
+  // camp_exp (0.1493, 0.7177).
+  c0: { x: PIXEL_FORGE_CROP_X[0], y: PIXEL_FORGE_CROP_Y[0] },
+  c1: { x: PIXEL_FORGE_CROP_X[1], y: PIXEL_FORGE_CROP_Y[0] },
+  c2: { x: PIXEL_FORGE_CROP_X[2], y: PIXEL_FORGE_CROP_Y[0] },
+  c3: { x: PIXEL_FORGE_CROP_X[3], y: PIXEL_FORGE_CROP_Y[0] },
+  c4: { x: PIXEL_FORGE_CROP_X[4], y: PIXEL_FORGE_CROP_Y[0] },
+  c5: { x: PIXEL_FORGE_CROP_X[0], y: PIXEL_FORGE_CROP_Y[1] },
+  c6: { x: PIXEL_FORGE_CROP_X[1], y: PIXEL_FORGE_CROP_Y[1] },
+  c7: { x: PIXEL_FORGE_CROP_X[2], y: PIXEL_FORGE_CROP_Y[1] },
+  c8: { x: PIXEL_FORGE_CROP_X[3], y: PIXEL_FORGE_CROP_Y[1] },
+  c9: { x: PIXEL_FORGE_CROP_X[4], y: PIXEL_FORGE_CROP_Y[1] },
+  c10: { x: PIXEL_FORGE_CROP_X[0], y: PIXEL_FORGE_CROP_Y[2] },
+  c11: { x: PIXEL_FORGE_CROP_X[1], y: PIXEL_FORGE_CROP_Y[2] },
+  c12: { x: PIXEL_FORGE_CROP_X[2], y: PIXEL_FORGE_CROP_Y[2] },
+  c13: { x: PIXEL_FORGE_CROP_X[3], y: PIXEL_FORGE_CROP_Y[2] },
+  c14: { x: PIXEL_FORGE_CROP_X[4], y: PIXEL_FORGE_CROP_Y[2] },
+  c15: { x: PIXEL_FORGE_EXTENSION_CROP_X[0], y: PIXEL_FORGE_EXTENSION_CROP_Y },
+  c16: { x: PIXEL_FORGE_EXTENSION_CROP_X[1], y: PIXEL_FORGE_EXTENSION_CROP_Y },
+  c17: { x: PIXEL_FORGE_EXTENSION_CROP_X[2], y: PIXEL_FORGE_EXTENSION_CROP_Y },
+  c18: { x: PIXEL_FORGE_EXTENSION_CROP_X[3], y: PIXEL_FORGE_EXTENSION_CROP_Y },
+  c19: { x: PIXEL_FORGE_EXTENSION_CROP_X[4], y: PIXEL_FORGE_EXTENSION_CROP_Y },
+  c20: PIXEL_FORGE_MEGA_PLOT_POSITION,
+  b0: { x: PIXEL_FORGE_BUILDING_X, y: PIXEL_FORGE_BUILDING_Y[0] },
+  b1: { x: PIXEL_FORGE_BUILDING_X, y: PIXEL_FORGE_BUILDING_Y[1] },
+  b4: { x: PIXEL_FORGE_BUILDING_X, y: PIXEL_FORGE_BUILDING_Y[2] },
+  b2: { x: PIXEL_FORGE_BUILDING_X, y: PIXEL_FORGE_BUILDING_Y[3] },
+  b3: { x: 0.8856, y: PIXEL_FORGE_BUILDING_Y[4] },
+  camp_exp: PIXEL_FORGE_EXPEDITION_BOAT_POSITION,
+} as const;
 
 // Sprites des actions cozy (variante C — panneau de ferme)
 const ACTION_SPRITES = {
@@ -359,7 +420,9 @@ export default function TreeScreen() {
   const { primary, tint, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
-  const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
+  const TREE_SIZE = USE_PIXEL_FORGE_MAP
+    ? Math.min(SCREEN_W * 0.45, 200)
+    : Math.min(SCREEN_W * 0.65, 280);
   const TERRAIN_HEIGHT = SCREEN_W * 2;
   const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
     0: TERRAIN_HEIGHT, 1: TERRAIN_HEIGHT, 2: TERRAIN_HEIGHT,
@@ -665,6 +728,16 @@ export default function TreeScreen() {
   // Événement saisonnier actif non complété
   const [devEventOverride, setDevEventOverride] = useState<string | null>(null);
   const [showDevEffects, setShowDevEffects] = useState(false);
+  const [usePixelForgeMap, setUsePixelForgeMap] = useState(USE_PIXEL_FORGE_MAP);
+  const [showPixelForgeCalibration, setShowPixelForgeCalibration] = useState(false);
+  const [pixelForgeCalibrationPoint, setPixelForgeCalibrationPoint] = useState<{
+    x: number;
+    y: number;
+    nx: number;
+    ny: number;
+    col: number;
+    row: number;
+  } | null>(null);
   const activeEventId = (__DEV__ && devEventOverride)
     ? devEventOverride
     : (eventProgressLoaded ? getVisibleEventId(eventProgressList, profile?.id ?? '', new Date()) : null);
@@ -1300,6 +1373,25 @@ export default function TreeScreen() {
   const levelsLeft = levelsUntilEvolution(level);
   const sp = SPECIES_INFO[species];
   const stageIdx = getStageIndex(level);
+  const handlePixelForgeCalibrationPress = useCallback((event: GestureResponderEvent) => {
+    const dioramaH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
+    const x = Math.round(event.nativeEvent.locationX);
+    const y = Math.round(event.nativeEvent.locationY);
+    const nx = Number((x / SCREEN_W).toFixed(4));
+    const ny = Number((y / dioramaH).toFixed(4));
+    const point = {
+      x,
+      y,
+      nx,
+      ny,
+      col: Math.floor(nx * 12),
+      row: Math.floor(ny * 20),
+    };
+    setPixelForgeCalibrationPoint(point);
+    if (__DEV__) {
+      console.log('[PixelForgeFarmCalibration]', point);
+    }
+  }, [DIORAMA_HEIGHT_BY_STAGE, SCREEN_H, SCREEN_W, stageIdx]);
 
   // XP progress vers prochain niveau
   const currentXP = profile?.points ?? 0;
@@ -2369,23 +2461,116 @@ export default function TreeScreen() {
           >
             {/* Conteneur clippé pour le terrain (empêche l'image de déborder) */}
             <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }]}>
-              {/* Couche 0 : Fond herbe — tile foncée du tileset repetee */}
-              <Image
-                source={GRASS_TILE_IMAGE}
-                style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
-                resizeMode="repeat"
-              />
-              {/* Couche 1 : Tilemap Wang — transitions terrain */}
-              <TileMapRenderer
-                treeStage={stageInfo.stage}
-                containerWidth={SCREEN_W}
-                containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
-                season={season}
-                paused={animationsPaused}
-              />
+              {usePixelForgeMap ? (
+                <Image
+                  source={PIXEL_FORGE_MAP_LAYERS.base}
+                  style={[StyleSheet.absoluteFill, { width: SCREEN_W, height: DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60 }]}
+                  resizeMode="stretch"
+                />
+              ) : (
+                <>
+                  {/* Couche 0 : Fond herbe — tile foncée du tileset repetee */}
+                  <Image
+                    source={GRASS_TILE_IMAGE}
+                    style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+                    resizeMode="repeat"
+                  />
+                  {/* Couche 1 : Tilemap Wang — transitions terrain */}
+                  <TileMapRenderer
+                    treeStage={stageInfo.stage}
+                    containerWidth={SCREEN_W}
+                    containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                    season={season}
+                    paused={animationsPaused}
+                  />
+                </>
+              )}
             </View>
 
             {/* Couche 2 : Décorations sol désactivées — le terrain tileset les remplace */}
+
+            {__DEV__ && (
+              <View style={styles.mapDevControls} pointerEvents="box-none">
+                <TouchableOpacity
+                  onPress={() => setUsePixelForgeMap((value) => !value)}
+                  activeOpacity={0.78}
+                  style={[styles.mapDevButton, usePixelForgeMap && styles.mapDevButtonActive]}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: usePixelForgeMap }}
+                  accessibilityLabel="Activer la map Pixel Forge"
+                >
+                  <Text style={styles.mapDevButtonText}>
+                    {usePixelForgeMap ? 'Pixel Forge' : 'Wang'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setShowPixelForgeCalibration((value) => !value)}
+                  activeOpacity={0.78}
+                  style={[styles.mapDevButton, showPixelForgeCalibration && styles.mapDevButtonActive]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Activer la grille de calibration Pixel Forge"
+                >
+                  <Text style={styles.mapDevButtonText}>
+                    {showPixelForgeCalibration ? 'Calibrage' : 'Calibrer'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {__DEV__ && showPixelForgeCalibration && (
+              <Pressable
+                style={styles.mapCalibrationLayer}
+                onPress={handlePixelForgeCalibrationPress}
+                accessibilityRole="button"
+                accessibilityLabel="Zone de calibration Pixel Forge"
+              >
+                {Array.from({ length: 13 }).map((_, index) => (
+                  <View
+                    key={`cal-v-${index}`}
+                    pointerEvents="none"
+                    style={[
+                      styles.mapCalibrationLineVertical,
+                      { left: `${(index / 12) * 100}%` },
+                    ]}
+                  />
+                ))}
+                {Array.from({ length: 21 }).map((_, index) => (
+                  <View
+                    key={`cal-h-${index}`}
+                    pointerEvents="none"
+                    style={[
+                      styles.mapCalibrationLineHorizontal,
+                      { top: `${(index / 20) * 100}%` },
+                    ]}
+                  />
+                ))}
+                {pixelForgeCalibrationPoint && (
+                  <>
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        styles.mapCalibrationMarker,
+                        {
+                          left: pixelForgeCalibrationPoint.x - 9,
+                          top: pixelForgeCalibrationPoint.y - 9,
+                        },
+                      ]}
+                    />
+                    <View pointerEvents="none" style={styles.mapCalibrationReadout}>
+                      <Text style={styles.mapCalibrationText}>
+                        x {pixelForgeCalibrationPoint.x} · y {pixelForgeCalibrationPoint.y}
+                      </Text>
+                      <Text style={styles.mapCalibrationText}>
+                        nx {pixelForgeCalibrationPoint.nx} · ny {pixelForgeCalibrationPoint.ny}
+                      </Text>
+                      <Text style={styles.mapCalibrationText}>
+                        col {pixelForgeCalibrationPoint.col} · row {pixelForgeCalibrationPoint.row}
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </Pressable>
+            )}
 
             {/* Couche 3 : Grille monde (cultures + batiments) */}
             <WorldGridView
@@ -2394,6 +2579,7 @@ export default function TreeScreen() {
               ownedBuildings={profile.farmBuildings ?? []}
               containerWidth={SCREEN_W}
               containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+              cellPositionOverrides={usePixelForgeMap ? PIXEL_FORGE_CELL_POSITION_OVERRIDES : undefined}
               techBonuses={techBonuses}
               wearEffects={profile ? getWearEffects(profile.id) : undefined}
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
@@ -2554,7 +2740,23 @@ export default function TreeScreen() {
             )}
 
             {/* Couche 4 : Arbre pixel au premier plan */}
-            <View style={styles.treeOverlay} pointerEvents="box-none">
+            <View
+              style={[
+                styles.treeOverlay,
+                usePixelForgeMap && {
+                  position: 'absolute',
+                  left: PIXEL_FORGE_MAIN_TREE_POSITION.x * SCREEN_W - TREE_SIZE / 2,
+                  top: PIXEL_FORGE_MAIN_TREE_POSITION.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) - TREE_SIZE / 2,
+                  width: TREE_SIZE,
+                  height: TREE_SIZE,
+                  marginLeft: 0,
+                  paddingHorizontal: 0,
+                  paddingBottom: 0,
+                  zIndex: 7,
+                },
+              ]}
+              pointerEvents="box-none"
+            >
               <TreeView
                 species={species}
                 level={level}
@@ -2636,14 +2838,36 @@ export default function TreeScreen() {
             {/* Couche 7 : Portail village — sur le chemin, à côté des cannes à pêche */}
             <PortalSprite
               onPress={handlePortalPress}
-              x={0.42 * SCREEN_W}
-              y={0.70 * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60)}
+              x={(usePixelForgeMap ? PIXEL_FORGE_VILLAGE_PORTAL_POSITION.x : 0.42) * SCREEN_W}
+              y={(usePixelForgeMap ? PIXEL_FORGE_VILLAGE_PORTAL_POSITION.y : 0.70) * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60)}
               badgeCount={villagePendingCount}
             />
+
+            {/* Panneau bois decoratif dans le rond du bas (Pixel Forge) */}
+            {usePixelForgeMap && (() => {
+              const dioH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
+              return (
+                <Image
+                  source={PIXEL_FORGE_SIGN_POST_IMAGE}
+                  style={{
+                    position: 'absolute',
+                    left: PIXEL_FORGE_SIGN_POST_POSITION.x * SCREEN_W - PIXEL_FORGE_SIGN_POST_SIZE.width / 2,
+                    top: PIXEL_FORGE_SIGN_POST_POSITION.y * dioH - PIXEL_FORGE_SIGN_POST_SIZE.height,
+                    width: PIXEL_FORGE_SIGN_POST_SIZE.width,
+                    height: PIXEL_FORGE_SIGN_POST_SIZE.height,
+                    zIndex: 6,
+                  }}
+                  resizeMode="contain"
+                />
+              );
+            })()}
 
             {/* Couche 8 : Camp d'exploration (Phase 33) */}
             {(() => {
               const dioH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
+              const expeditionCell = usePixelForgeMap
+                ? PIXEL_FORGE_CELL_POSITION_OVERRIDES.camp_exp
+                : CAMP_EXPLORATION_CELL;
               const remainingMinutes = activeExpeditions
                 .filter(e => e.result === undefined && !isExpeditionComplete(e))
                 .map(e => getExpeditionRemainingMinutes(e));
@@ -2651,8 +2875,8 @@ export default function TreeScreen() {
                 <View
                   style={{
                     position: 'absolute',
-                    left: CAMP_EXPLORATION_CELL.x * SCREEN_W - 32,
-                    top: CAMP_EXPLORATION_CELL.y * dioH - 32,
+                    left: expeditionCell.x * SCREEN_W - 32,
+                    top: expeditionCell.y * dioH - 32,
                     zIndex: 6,
                   }}
                   pointerEvents="box-none"
@@ -3302,6 +3526,75 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
+  },
+  mapDevControls: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    zIndex: 50,
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  mapDevButton: {
+    backgroundColor: 'rgba(17, 24, 39, 0.78)',
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+  },
+  mapDevButtonActive: {
+    backgroundColor: 'rgba(22, 101, 52, 0.84)',
+    borderColor: 'rgba(187, 247, 208, 0.66)',
+  },
+  mapDevButtonText: {
+    color: '#FFFFFF',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+  },
+  mapCalibrationLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 35,
+    overflow: 'hidden',
+  },
+  mapCalibrationLineVertical: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+  },
+  mapCalibrationLineHorizontal: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+  },
+  mapCalibrationMarker: {
+    position: 'absolute',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(239, 68, 68, 0.86)',
+  },
+  mapCalibrationReadout: {
+    position: 'absolute',
+    left: Spacing.md,
+    bottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: 'rgba(17, 24, 39, 0.84)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+  },
+  mapCalibrationText: {
+    color: '#FFFFFF',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   farmHud: {
     paddingVertical: Spacing.sm,

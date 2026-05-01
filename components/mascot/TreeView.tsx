@@ -223,9 +223,9 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
     );
   }, [animate]);
 
-  // Style animé pour le mode pixel (vue top-down) : léger pulse, pas de sway
+  // Mode pixel (vue top-down) : pas d'animation pulse — l'arbre reste statique
   const pixelAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: breathe.value }],
+    transform: [],
   }));
 
   // Style pour le conteneur SVG fallback (pas d'animation de transform ici)

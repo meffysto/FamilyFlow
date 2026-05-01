@@ -48,6 +48,7 @@ interface WorldGridViewProps {
   ownedBuildings: PlacedBuilding[];
   containerWidth: number;
   containerHeight: number;
+  cellPositionOverrides?: Partial<Record<string, Pick<WorldCell, 'x' | 'y'>>>;
   techBonuses?: TechBonuses;
   wearEffects?: WearEffects;
   onCropPlotPress?: (cellId: string, crop: PlantedCrop | null) => void;
@@ -72,6 +73,14 @@ const DIRT_SPRITES: Record<number, number> = {
   4: require('../../assets/garden/ground/dirt_golden.png'),
   5: require('../../assets/garden/ground/dirt_crystal.png'),
 };
+
+function applyCellPositionOverride(
+  cell: WorldCell,
+  overrides?: WorldGridViewProps['cellPositionOverrides'],
+): WorldCell {
+  const override = overrides?.[cell.id];
+  return override ? { ...cell, ...override } : cell;
+}
 
 function getDirtSprite(level: number): number {
   return DIRT_SPRITES[level] ?? DIRT_SPRITES[1];
@@ -686,8 +695,28 @@ export function WorldGridView({
   onPlotLongPress,
   playerCoins = 0,
   paused = false,
+  cellPositionOverrides,
 }: WorldGridViewProps) {
-  const unlockedCrops = getUnlockedCropCells(treeStage);
+  const unlockedCrops = useMemo(
+    () => getUnlockedCropCells(treeStage).map(cell => applyCellPositionOverride(cell, cellPositionOverrides)),
+    [treeStage, cellPositionOverrides],
+  );
+  const expansionCropCells = useMemo(
+    () => EXPANSION_CROP_CELLS.map(cell => applyCellPositionOverride(cell, cellPositionOverrides)),
+    [cellPositionOverrides],
+  );
+  const buildingCells = useMemo(
+    () => BUILDING_CELLS.map(cell => applyCellPositionOverride(cell, cellPositionOverrides)),
+    [cellPositionOverrides],
+  );
+  const expansionBuildingCell = useMemo(
+    () => applyCellPositionOverride(EXPANSION_BUILDING_CELL, cellPositionOverrides),
+    [cellPositionOverrides],
+  );
+  const expansionLargeCropCell = useMemo(
+    () => applyCellPositionOverride(EXPANSION_LARGE_CROP_CELL, cellPositionOverrides),
+    [cellPositionOverrides],
+  );
   const crops = parseCrops(farmCropsCSV);
   const mainPlotIndex = getMainPlotIndex(crops);
 
@@ -721,10 +750,10 @@ export function WorldGridView({
   const [whisperCellId, setWhisperCellId] = useState<string | null>(null);
   const allCropCells = useMemo(() => {
     const expansion = techBonuses && techBonuses.extraCropCells > 0
-      ? EXPANSION_CROP_CELLS.slice(0, techBonuses.extraCropCells)
+      ? expansionCropCells.slice(0, techBonuses.extraCropCells)
       : [];
     return [...unlockedCrops, ...expansion];
-  }, [unlockedCrops, techBonuses]);
+  }, [expansionCropCells, unlockedCrops, techBonuses]);
 
   const farmCropsCSVRef = React.useRef(farmCropsCSV);
   farmCropsCSVRef.current = farmCropsCSV;
@@ -761,7 +790,7 @@ export function WorldGridView({
 
   // Les cellules d'expansion a rendre (debloquees)
   const unlockedExpansionCrops = expansionCropsUnlocked
-    ? EXPANSION_CROP_CELLS.slice(0, techBonuses!.extraCropCells)
+    ? expansionCropCells.slice(0, techBonuses!.extraCropCells)
     : [];
 
   return (
@@ -837,7 +866,7 @@ export function WorldGridView({
       {/* Prochaine parcelle d'expansion (une seule) */}
       {!expansionCropsUnlocked && techBonuses !== undefined && EXPANSION_CROP_CELLS.length > 0 && (
         <NextExpansionCell
-          cell={EXPANSION_CROP_CELLS[0]}
+          cell={expansionCropCells[0]}
           containerWidth={containerWidth}
           containerHeight={containerHeight}
           paused={paused}
@@ -846,7 +875,7 @@ export function WorldGridView({
 
       {/* Parcelle geante — debloquee */}
       {largeCropUnlocked && (() => {
-        const cell = EXPANSION_LARGE_CROP_CELL;
+        const cell = expansionLargeCropCell;
         const allExpandedCells = [...unlockedCrops, ...unlockedExpansionCrops, cell];
         const cellIdx = allExpandedCells.indexOf(cell);
         const crop = crops.find(c => c.plotIndex === cellIdx) ?? null;
@@ -889,7 +918,7 @@ export function WorldGridView({
       {/* Parcelle géante — masquée tant que non débloquée */}
 
       {/* Cellules de batiment */}
-      {BUILDING_CELLS.map(cell => {
+      {buildingCells.map(cell => {
         const placedBuilding = ownedBuildings.find(b => b.cellId === cell.id) ?? null;
         const pendingCount = placedBuilding ? getPendingResources(placedBuilding, new Date(), techBonuses) : 0;
         return (
@@ -911,7 +940,7 @@ export function WorldGridView({
 
       {/* Cellule batiment expansion — debloquee */}
       {expansionBuildingUnlocked && (() => {
-        const cell = EXPANSION_BUILDING_CELL;
+        const cell = expansionBuildingCell;
         const placedBuilding = ownedBuildings.find(b => b.cellId === cell.id) ?? null;
         const pendingCount = placedBuilding ? getPendingResources(placedBuilding, new Date(), techBonuses) : 0;
         return (
@@ -934,7 +963,7 @@ export function WorldGridView({
       {/* Prochain emplacement bâtiment expansion (un seul) */}
       {!expansionBuildingUnlocked && techBonuses !== undefined && (
         <NextExpansionCell
-          cell={EXPANSION_BUILDING_CELL}
+          cell={expansionBuildingCell}
           containerWidth={containerWidth}
           containerHeight={containerHeight}
           paused={paused}

@@ -57,6 +57,13 @@ yarn-error.*
 .kiro/
 .mcp.json
 skills-lock.json
+.codex/
+
+# Generation tooling (sources brutes, lourdes, non versionnees)
+agent-sprite-forge/
+docs/sprite-forge-map-test/
+docs/farm-map-v2-manifest.json
+docs/farm-map-v2-preview.html
 
 # Build artifacts
 *.ipa
