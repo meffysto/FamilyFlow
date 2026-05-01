@@ -51,6 +51,96 @@ import { Sparkles, Library } from 'lucide-react-native';
 
 const TAB_SPRING = { damping: 32, stiffness: 200 };
 
+// ─── Décor "ciel étoilé" (écran d'accueil wizard) ───────────────────────────
+
+interface FloatingDecorationProps {
+  emoji: string;
+  size: number;
+  top: number | string;
+  left?: number | string;
+  right?: number | string;
+  delay?: number;
+  amplitude?: number;
+  duration?: number;
+  opacity?: number;
+}
+
+function FloatingDecoration({
+  emoji, size, top, left, right, delay = 0, amplitude = 8, duration = 3000, opacity = 0.5,
+}: FloatingDecorationProps) {
+  const offset = useSharedValue(0);
+  React.useEffect(() => {
+    offset.value = withRepeat(
+      withTiming(1, { duration }),
+      -1,
+      true,
+    );
+    return () => cancelAnimation(offset);
+  }, [offset, duration]);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -amplitude + offset.value * amplitude * 2 }],
+  }));
+  const positionStyle = {
+    position: 'absolute' as const,
+    top: top as number,
+    ...(left !== undefined ? { left: left as number } : {}),
+    ...(right !== undefined ? { right: right as number } : {}),
+    opacity,
+  };
+  return (
+    <Animated.View style={[positionStyle, animStyle]} pointerEvents="none">
+      <Text style={{ fontSize: size }}>{emoji}</Text>
+    </Animated.View>
+  );
+}
+
+interface AvatarHaloProps {
+  size: number;
+  color: string;
+  children: React.ReactNode;
+}
+
+function AvatarHalo({ size, color, children }: AvatarHaloProps) {
+  const pulse = useSharedValue(0);
+  React.useEffect(() => {
+    pulse.value = withRepeat(withTiming(1, { duration: 2200 }), -1, false);
+    return () => cancelAnimation(pulse);
+  }, [pulse]);
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + pulse.value * 0.35 }],
+    opacity: 0.45 * (1 - pulse.value),
+  }));
+  const ringSize = size + 24;
+  return (
+    <View style={{ width: ringSize, height: ringSize, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing['2xl'] }}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            width: ringSize,
+            height: ringSize,
+            borderRadius: ringSize / 2,
+            backgroundColor: color,
+          },
+          ringStyle,
+        ]}
+      />
+      <View
+        style={{
+          width: size + 8,
+          height: size + 8,
+          borderRadius: (size + 8) / 2,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
 // ─── Types machine à états ──────────────────────────────────────────────────
 
 /** Contexte livre transmis à PersonnaliserStep + GenerationStep pour générer un chapitre N>=2 */
@@ -1050,34 +1140,55 @@ export default function StoriesScreen() {
     const { height } = useWindowDimensions();
 
     return (
-      <View>
-        <Text style={[styles.stepTitle, { color: colors.text }]}>{lang === 'fr' ? 'Des histoires uniques' : 'Unique stories'}</Text>
-        <Text style={[styles.stepSubtitle, { color: colors.textMuted }]}>{lang === 'fr' ? "Personnalisées par la vie de votre enfant · À écouter avec votre propre voix" : "Personalized by your child's life · Listen with your own voice"}</Text>
+      <View style={styles.welcomeRoot}>
+        {/* Décor ciel étoilé — flottant en arrière-plan */}
+        <FloatingDecoration emoji="🌙" size={44} top={4} right={12} delay={0} amplitude={6} duration={3600} opacity={0.55} />
+        <FloatingDecoration emoji="✨" size={20} top={70} left={28} amplitude={5} duration={2800} opacity={0.55} />
+        <FloatingDecoration emoji="⭐" size={14} top={30} left={'42%'} amplitude={4} duration={3200} opacity={0.4} />
+        <FloatingDecoration emoji="✨" size={16} top={110} right={'30%'} amplitude={6} duration={2400} opacity={0.45} />
+        <FloatingDecoration emoji="⭐" size={12} top={150} right={36} amplitude={3} duration={3400} opacity={0.35} />
+
+        <Text style={[styles.stepTitle, styles.welcomeTitle, { color: colors.text }]}>
+          {lang === 'fr' ? 'Histoires du soir ✨' : 'Bedtime stories ✨'}
+        </Text>
+        <Text style={[styles.stepSubtitle, styles.welcomeSubtitle, { color: colors.textMuted }]}>
+          {lang === 'fr' ? "Personnalisées par la vie de votre enfant · À écouter avec votre propre voix" : "Personalized by your child's life · Listen with your own voice"}
+        </Text>
         {childProfiles.length === 1 ? (
           // Enfant unique — carte centrée horizontalement et verticalement
           (() => {
             const p = childProfiles[0]!;
             const mood = lastMoodFor(p.id);
+            const childTheme = getTheme(p.theme).primary;
             return (
-              <View style={{ height: height * 0.6, justifyContent: 'center', alignItems: 'center' }}>
+              <View style={{ height: height * 0.55, justifyContent: 'center', alignItems: 'center' }}>
               <Pressable
-                style={[styles.profileCardSolo, { backgroundColor: colors.card, borderColor: primary }]}
+                style={[styles.profileCardSolo, { backgroundColor: colors.card, borderColor: childTheme }]}
                 onPress={() => {
                   Haptics.selectionAsync();
                   setSelectedUniversId(null);
                   goTo({ etape: 'choisir_univers', enfantId: p.id, enfantName: p.name });
                 }}
               >
-                <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={64} />
+                <AvatarHalo size={64} color={childTheme}>
+                  <AvatarIcon name={p.avatar} color={childTheme} size={64} />
+                </AvatarHalo>
                 <Text style={[styles.profileNameSolo, { color: colors.text }]}>{p.name}</Text>
                 {mood && (
                   <Text style={[styles.profileBadge, { color: colors.textMuted }]}>
                     {['😢', '😐', '😊', '😄', '🤩'][mood.level - 1]}
                   </Text>
                 )}
-                <Text style={[styles.profileReady, { color: colors.textMuted }]}>{lang === 'fr' ? 'Prêt pour dormir ?' : 'Ready for bed?'}</Text>
+                <Text style={[styles.profileReady, { color: colors.textMuted }]}>{lang === 'fr' ? '🌙 Prêt pour dormir ?' : '🌙 Ready for bed?'}</Text>
               </Pressable>
-              {(() => { const hint = moodHintFor(p.id); return hint ? <Text style={[styles.moodHint, { color: colors.textMuted }]}>{hint}</Text> : null; })()}
+              {(() => {
+                const hint = moodHintFor(p.id);
+                return hint ? (
+                  <View style={[styles.moodBubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.moodHint, { color: colors.textMuted }]}>{hint}</Text>
+                  </View>
+                ) : null;
+              })()}
               </View>
             );
           })()
@@ -1090,6 +1201,7 @@ export default function StoriesScreen() {
             renderItem={({ item: p }) => {
               const mood = lastMoodFor(p.id);
               const hint = moodHintFor(p.id);
+              const childTheme = getTheme(p.theme).primary;
               return (
                 <View style={{ flex: 1 }}>
                   <Pressable
@@ -1100,7 +1212,9 @@ export default function StoriesScreen() {
                       goTo({ etape: 'choisir_univers', enfantId: p.id, enfantName: p.name });
                     }}
                   >
-                    <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={48} />
+                    <AvatarHalo size={48} color={childTheme}>
+                      <AvatarIcon name={p.avatar} color={childTheme} size={48} />
+                    </AvatarHalo>
                     <Text style={[styles.profileName, { color: colors.text }]}>{p.name}</Text>
                     {mood && (
                       <Text style={[styles.profileBadge, { color: colors.textMuted }]}>
@@ -1109,7 +1223,11 @@ export default function StoriesScreen() {
                     )}
                     <Text style={[styles.profileReady, { color: colors.textMuted }]}>{lang === 'fr' ? '🌙 Prêt pour dormir ?' : '🌙 Ready for bed?'}</Text>
                   </Pressable>
-                  {hint && <Text style={[styles.moodHint, { color: colors.textMuted }]}>{hint}</Text>}
+                  {hint && (
+                    <View style={[styles.moodBubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <Text style={[styles.moodHint, { color: colors.textMuted }]}>{hint}</Text>
+                    </View>
+                  )}
                 </View>
               );
             }}
@@ -2719,7 +2837,19 @@ const styles = StyleSheet.create({
   profileNameSolo: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing.md },
   profileBadge: { fontSize: 20, marginBottom: Spacing.xs },
   profileReady: { fontSize: FontSize.micro, textAlign: 'center' },
-  moodHint: { fontSize: FontSize.micro, textAlign: 'center', marginTop: Spacing.sm, paddingHorizontal: Spacing.md },
+  moodHint: { fontSize: FontSize.micro, textAlign: 'center', fontStyle: 'italic' },
+  moodBubble: {
+    alignSelf: 'center',
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    maxWidth: '90%',
+  },
+  welcomeRoot: { position: 'relative', minHeight: 400 },
+  welcomeTitle: { textAlign: 'center', fontSize: FontSize.subtitle, marginTop: Spacing['4xl'] },
+  welcomeSubtitle: { textAlign: 'center', paddingHorizontal: Spacing['2xl'] },
   primaryButton: { borderRadius: Radius.full, paddingVertical: Spacing['2xl'], paddingHorizontal: Spacing['4xl'], alignItems: 'center', marginTop: Spacing['2xl'] },
   primaryButtonText: { color: '#fff', fontSize: FontSize.body, fontWeight: FontWeight.bold },
   secondaryButton: { borderRadius: Radius.full, paddingVertical: Spacing.lg, paddingHorizontal: Spacing['4xl'], alignItems: 'center', marginTop: Spacing.lg, borderWidth: 1.5 },
