@@ -341,7 +341,17 @@ const ReputationRow = React.memo(function ReputationRow({
 
   return (
     <View style={[styles.repRow, { borderBottomColor: colors.borderLight }]}>
-      <Text style={styles.repEmoji}>{visitorDef.emoji}</Text>
+      <View style={[styles.repPortrait, { backgroundColor: colors.cardAlt }]}>
+        {VISITOR_SPRITES[visitorDef.id] ? (
+          <Image
+            source={VISITOR_SPRITES[visitorDef.id]}
+            style={styles.repSprite}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={styles.repEmoji}>{visitorDef.emoji}</Text>
+        )}
+      </View>
       <Text style={[styles.repName, { color: colors.text }]} numberOfLines={1}>
         {name}
       </Text>
@@ -851,6 +861,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  repPortrait: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  repSprite: {
+    width: 32,
+    height: 32,
   },
   repEmoji: {
     fontSize: FontSize.icon,
