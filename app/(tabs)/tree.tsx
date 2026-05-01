@@ -3104,10 +3104,7 @@ export default function TreeScreen() {
           right: 0,
           zIndex: 10,
           backgroundColor: isDark ? 'rgba(48, 32, 18, 0.72)' : 'rgba(255, 248, 236, 0.78)',
-          borderBottomWidth: 2,
-          borderBottomColor: isDark ? 'rgba(107, 66, 38, 0.65)' : 'rgba(107, 66, 38, 0.45)',
-          borderBottomLeftRadius: 16,
-          borderBottomRightRadius: 16,
+          borderRadius: 16,
         },
       ]}>
         <View style={styles.hudContent}>
