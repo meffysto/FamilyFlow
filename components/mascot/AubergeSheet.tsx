@@ -536,11 +536,11 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
         />
 
         <View style={styles.sheet}>
+          {/* Auvent rayé — doit être en premier pour coller au bord arrondi */}
+          <AwningStripes />
+
           {/* Grabber */}
           <View style={styles.grabber} />
-
-          {/* Auvent rayé — esthétique farm game */}
-          <AwningStripes />
 
           {/* Header */}
           <View style={styles.header}>
