@@ -198,6 +198,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
   const seasonParticles = SEASONAL_PARTICLES[currentSeason];
   const reducedMotion = useReducedMotion();
   const animate = interactive && !reducedMotion && !paused;
+  const placedItemIds = useMemo(() => new Set(Object.values(placements)), [placements]);
 
   // ── Animations idle ──
   const sway = useSharedValue(0);
@@ -429,12 +430,21 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
 
             {treeElements}
 
-            {/* Ancien rendu fixe — uniquement en mode preview (boutique) */}
-            {previewMode && decorations.length > 0 && (
-              <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode species={species} />
+            {/* Rendu fixe sur l'arbre — décorations/habitants non placés sur un slot diorama */}
+            {decorations.length > 0 && (
+              <DecorationOverlay
+                decorationIds={previewMode ? decorations : decorations.filter(id => !placedItemIds.has(id))}
+                stageIdx={stageIdx}
+                previewMode={previewMode}
+                species={species}
+              />
             )}
-            {previewMode && inhabitants.length > 0 && (
-              <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} species={species} />
+            {inhabitants.length > 0 && (
+              <InhabitantOverlay
+                inhabitantIds={previewMode ? inhabitants : inhabitants.filter(id => !placedItemIds.has(id))}
+                stageIdx={stageIdx}
+                species={species}
+              />
             )}
           </AnimatedG>
 
