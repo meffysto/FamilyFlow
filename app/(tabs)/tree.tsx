@@ -732,6 +732,7 @@ export default function TreeScreen() {
 
   // Événement saisonnier actif non complété
   const [devEventOverride, setDevEventOverride] = useState<string | null>(null);
+  const [devWaterCast, setDevWaterCast] = useState(false);
   const [showDevEffects, setShowDevEffects] = useState(false);
   const [usePixelForgeMap, setUsePixelForgeMap] = useState(USE_PIXEL_FORGE_MAP);
   const [showPixelForgeCalibration, setShowPixelForgeCalibration] = useState(false);
@@ -2666,14 +2667,14 @@ export default function TreeScreen() {
             )}
 
             {/* Couche 3.6 : Visiteur saga — apparaît quand un chapitre est disponible */}
-            {sagaChapterAvailable && isOwnTree && sagaProgress && (
+            {(sagaChapterAvailable || (__DEV__ && devWaterCast)) && isOwnTree && (sagaProgress || __DEV__) && (
               <View
                 style={{ ...StyleSheet.absoluteFillObject, zIndex: showSagaEvent ? 20 : 3 }}
                 pointerEvents={showEventDialogue ? 'none' : 'box-none'}
               >
                 <VisitorSlot
-                  visible={sagaChapterAvailable && !showSagaEvent}
-                  sagaId={sagaProgress.sagaId}
+                  visible={(sagaChapterAvailable && !showSagaEvent) || (__DEV__ && devWaterCast)}
+                  sagaId={(__DEV__ && devWaterCast) ? 'source_cachee' : (sagaProgress?.sagaId ?? 'source_cachee')}
                   containerWidth={SCREEN_W}
                   containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
                   onTap={() => {
@@ -2681,7 +2682,7 @@ export default function TreeScreen() {
                     setShowSagaEvent(true);
                   }}
                   shouldDepart={visitorShouldDepart}
-                  isLastChapter={activeSaga ? sagaProgress.currentChapter >= activeSaga.chapters.length : false}
+                  isLastChapter={activeSaga && sagaProgress ? sagaProgress.currentChapter >= activeSaga.chapters.length : false}
                   onDepartComplete={() => setVisitorShouldDepart(false)}
                   reactionType={visitorReaction}
                   onReactionComplete={() => {
@@ -2983,6 +2984,16 @@ export default function TreeScreen() {
                   <Text style={styles.chipCozyLabel}>{'Effets'}</Text>
                 </TouchableOpacity>
               )}
+              {__DEV__ && (
+                <TouchableOpacity
+                  style={[styles.chipCozy, devWaterCast && { borderColor: '#60B4D0', borderWidth: 1.5 }]}
+                  onPress={() => setDevWaterCast(v => !v)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.chipCozyEmoji}>{'💧'}</Text>
+                  <Text style={styles.chipCozyLabel}>{devWaterCast ? 'Reset' : 'Bulle'}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </Animated.View>
@@ -3083,7 +3094,7 @@ export default function TreeScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* HUD ferme — flottant par-dessus le diorama */}
+      {/* HUD ferme — flottant par-dessus le diorama, style parchemin translucide */}
       <View style={[
         styles.farmHud,
         {
@@ -3092,26 +3103,30 @@ export default function TreeScreen() {
           left: 0,
           right: 0,
           zIndex: 10,
-          backgroundColor: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)',
+          backgroundColor: isDark ? 'rgba(48, 32, 18, 0.72)' : 'rgba(255, 248, 236, 0.78)',
+          borderBottomWidth: 2,
+          borderBottomColor: isDark ? 'rgba(107, 66, 38, 0.65)' : 'rgba(107, 66, 38, 0.45)',
+          borderBottomLeftRadius: 16,
+          borderBottomRightRadius: 16,
         },
       ]}>
         <View style={styles.hudContent}>
           {/* Phase 18-04 : ref cible tutoriel étape 4 (XP/loot) */}
           <View ref={hudXpRef} style={styles.hudItem}>
             <Text style={styles.hudEmoji}>{'🍃'}</Text>
-            <Text style={[styles.hudValue, { color: colors.text }]}>{profile.coins ?? 0}</Text>
+            <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{profile.coins ?? 0}</Text>
           </View>
           <View style={styles.hudItem}>
             <Text style={styles.hudEmoji}>{'🔥'}</Text>
-            <Text style={[styles.hudValue, { color: colors.text }]}>{profile.streak ?? 0}</Text>
+            <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{profile.streak ?? 0}</Text>
           </View>
           <View style={styles.hudItem}>
             <Text style={styles.hudEmoji}>{'🌿'}</Text>
-            <Text style={[styles.hudValue, { color: colors.text }]}>{growingCount}</Text>
+            <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{growingCount}</Text>
           </View>
           <View style={styles.hudItem}>
             <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
-            <Text style={[styles.hudValue, { color: colors.text }]}>{t(seasonInfo.labelKey)}</Text>
+            <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{t(seasonInfo.labelKey)}</Text>
           </View>
           {/* 5e item HUD : bouton codex ferme (Phase 17, D-12/D-13) */}
           <TouchableOpacity

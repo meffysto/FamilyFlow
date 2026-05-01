@@ -61,7 +61,7 @@ export interface VisitorSlotProps {
   paused?: boolean;
 }
 
-type VisitorState = 'entering' | 'idle' | 'reacting' | 'departing' | 'departed';
+type VisitorState = 'entering' | 'idle' | 'casting' | 'reacting' | 'departing' | 'departed';
 
 // ── Constantes géométrie ──────────────────────────────
 
@@ -93,7 +93,7 @@ const SAGA_TINT: Record<string, string> = {
 
 // ── Sprites par saga ─────────────────────────────────
 
-const SAGA_SPRITES: Record<string, { idle: number[]; walk: number[] }> = {
+const SAGA_SPRITES: Record<string, { idle: number[]; walk: number[]; cast?: number[] }> = {
   voyageur_argent: {
     idle: [
       require('../../assets/garden/animals/voyageur/idle_1.png'),
@@ -120,6 +120,12 @@ const SAGA_SPRITES: Record<string, { idle: number[]; walk: number[] }> = {
       require('../../assets/garden/animals/esprit_eau/walk_left_4.png'),
       require('../../assets/garden/animals/esprit_eau/walk_left_5.png'),
       require('../../assets/garden/animals/esprit_eau/walk_left_6.png'),
+    ],
+    cast: [
+      require('../../assets/garden/animals/esprit_eau/cast_1.png'),
+      require('../../assets/garden/animals/esprit_eau/cast_2.png'),
+      require('../../assets/garden/animals/esprit_eau/cast_3.png'),
+      require('../../assets/garden/animals/esprit_eau/cast_4.png'),
     ],
   },
   carnaval_ombres: {
@@ -176,11 +182,13 @@ export function VisitorSlot({
   const sprites = SAGA_SPRITES[sagaId] ?? DEFAULT_SPRITES;
   const IDLE_FRAMES = sprites.idle;
   const WALK_FRAMES = sprites.walk;
+  const CAST_FRAMES = sprites.cast ?? [];
 
   // ── État machine ──────────────────────────────────
   const [state, setState] = useState<VisitorState>('entering');
   const [frameIdx, setFrameIdx] = useState(0);
   const [walkFrameIdx, setWalkFrameIdx] = useState(0);
+  const [castFrameIdx, setCastFrameIdx] = useState(0);
   const [isWalking, setIsWalking] = useState(true); // true pendant entering + departing
   const [flipForDepart, setFlipForDepart] = useState(false); // scaleX: -1 sur Image pour walk_right
   const [flipForEntry, setFlipForEntry] = useState(false);  // scaleX: -1 si entrée par la gauche
@@ -254,6 +262,37 @@ export function VisitorSlot({
     }, 150);
     return () => clearInterval(interval);
   }, [isWalking, paused]);
+
+  // ── Animation cast sort d'eau ─────────────────────
+  useEffect(() => {
+    if (state !== 'casting' || CAST_FRAMES.length === 0) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    bounceY.value = withTiming(0, { duration: 100 });
+
+    // Scale-up léger au moment du lancer
+    reactionScale.value = withSequence(
+      withSpring(1.15, { damping: 8, stiffness: 200 }),
+      withTiming(1.0, { duration: 300 }),
+    );
+
+    setCastFrameIdx(0);
+    let frame = 0;
+    const interval = setInterval(() => {
+      frame += 1;
+      if (frame < CAST_FRAMES.length) {
+        if (mounted.current) setCastFrameIdx(frame);
+      } else {
+        clearInterval(interval);
+        if (mounted.current) {
+          setState('idle');
+          onTap();
+        }
+      }
+    }, 160);
+
+    return () => clearInterval(interval);
+  }, [state]);
 
   // ── Animation idle bounce + bulle "!" ────────────
   useEffect(() => {
@@ -441,7 +480,9 @@ export function VisitorSlot({
   // ── Frame courante ────────────────────────────────
   const currentFrame = isWalking
     ? WALK_FRAMES[walkFrameIdx % WALK_FRAMES.length]
-    : IDLE_FRAMES[frameIdx % IDLE_FRAMES.length];
+    : state === 'casting' && CAST_FRAMES.length > 0
+      ? CAST_FRAMES[castFrameIdx % CAST_FRAMES.length]
+      : IDLE_FRAMES[frameIdx % IDLE_FRAMES.length];
 
   // ── Tint couleur saga ─────────────────────────────
   const tintColor = SAGA_TINT[sagaId] ?? null;
@@ -465,8 +506,12 @@ export function VisitorSlot({
       <Pressable
         onPress={() => {
           if (state !== 'idle') return;
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onTap();
+          if (CAST_FRAMES.length > 0) {
+            setState('casting');
+          } else {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onTap();
+          }
         }}
         disabled={state !== 'idle'}
       >
