@@ -15,7 +15,7 @@
 import type { BudgetEntry, CourseItem } from './types';
 
 const STALE_DAYS = 30;
-const COURSES_CATEGORY_TOKEN = 'courses';
+const SHOPPING_CATEGORY_TOKENS = ['courses', 'bebe', 'maison'];
 
 /** Mots vides FR + abréviations supermarché courantes (filtrage à la tokenization fuzzy). */
 const STOP_WORDS = new Set([
@@ -220,7 +220,8 @@ function findMatches(
 
   const out: FoundEntry[] = [];
   for (const entry of entries) {
-    if (!normalize(entry.category).includes(COURSES_CATEGORY_TOKEN)) continue;
+    const normCat = normalize(entry.category);
+    if (!SHOPPING_CATEGORY_TOKENS.some(tok => normCat.includes(tok))) continue;
     const entryTokens = tokenizeEntry(entry.label);
     const { matched, total } = scoreMatch(queryTokens, entryTokens);
     if (matched < requiredMatch || total === 0) continue;

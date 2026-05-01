@@ -154,11 +154,27 @@ describe('getLastPriceFor', () => {
     expect(getLastPriceFor('quinoa rouge', entries)).toBeNull();
   });
 
-  it('catégorie pas "courses" → ignorée', () => {
+  it('catégorie pas "shopping" → ignorée', () => {
     const entries: BudgetEntry[] = [
       { date: today, category: '🎉 Loisirs', amount: 4.2, label: 'YAOURTS DANONE 6x125g', lineIndex: 0 },
     ];
     expect(getLastPriceFor('yaourt', entries)).toBeNull();
+  });
+
+  it('catégorie Bébé → matchée (cas HIPP)', () => {
+    const entries: BudgetEntry[] = [
+      { date: today, category: '👶 Bébé', amount: 12.5, label: 'HIPP3 FLM BIO', lineIndex: 0 },
+    ];
+    const info = getLastPriceFor('hipp', entries);
+    expect(info).not.toBeNull();
+    expect(info?.price).toBe(12.5);
+  });
+
+  it('catégorie Maison → matchée', () => {
+    const entries: BudgetEntry[] = [
+      { date: today, category: '🏠 Maison', amount: 5.9, label: 'LESSIVE LIQUIDE 1.5L', lineIndex: 0 },
+    ];
+    expect(getLastPriceFor('lessive', entries)).not.toBeNull();
   });
 
   it('plusieurs matches → sampleSize plafonné à 3 et price = médiane des 3 récents', () => {
