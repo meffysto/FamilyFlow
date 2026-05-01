@@ -670,6 +670,7 @@ export default function DashboardScreen() {
       hasBaby,
       isVacationActive: !!isVacationActive,
       activeSections,
+      sectionZone: SECTION_ZONE,
       counts: {
         overdue: overdueTasks.length,
         menagePending: pendingMenage.length,
@@ -1190,16 +1191,29 @@ export default function DashboardScreen() {
           // le `return null` interne des composants Dashboard correspondants.
           // Les sections non listées sont considérées comme ayant du contenu.
           const nowHour = new Date().getHours();
-          const isSunday = new Date().getDay() === 0;
+          const nowDay = new Date().getDay();
+          const isSunday = nowDay === 0;
+          const isSaturdayEvening = nowDay === 6 && nowHour >= 18;
           const hasContent: Record<string, boolean> = {
             onThisDay: memories.length > 0 || Object.keys(photoDates).length > 0,
             anniversaires: (anniversaries ?? []).length > 0,
             gratitude: gratitudeDays.length > 0,
             wishlist: wishlistItems.length > 0,
-            bilanSemaine: isSunday,
+            bilanSemaine: isSunday || isSaturdayEvening,
             nightMode: profiles.some(isBabyProfile) && (nowHour >= 20 || nowHour < 8),
             defis: defis.some((d) => d.status === 'active'),
-            secretMissions: secretMissions.some((m) => m.secretStatus !== 'validated'),
+            secretMissions: (() => {
+              if (!activeProfile) return false;
+              if (isChildMode) {
+                return secretMissions.some(
+                  (m) => m.targetProfileId === activeProfile.id && m.secretStatus !== 'validated',
+                );
+              }
+              if (activeProfile.role === 'adulte') {
+                return secretMissions.some((m) => m.secretStatus === 'pending');
+              }
+              return false;
+            })(),
             rewards: (gamiData?.activeRewards ?? []).length > 0,
             leaderboard: profiles.length > 0,
             lootProgress: !!activeProfile,

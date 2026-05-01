@@ -29,6 +29,13 @@ export interface SmartSortContext {
     defisActive?: number;     // défis actifs
     dayOfWeek?: number;       // 0=dimanche, 6=samedi
   };
+  /**
+   * Zone de chaque section (today / home / farm / none).
+   * Quand fourni, le tri respecte les zones : on trie par score à l'intérieur
+   * de chaque zone, puis on concatène les zones dans l'ordre canonique.
+   * Sans ce paramètre, l'ancien comportement (tri global) est conservé.
+   */
+  sectionZone?: Record<string, string>;
 }
 
 /** Clamp un score entre min et max */
@@ -159,8 +166,13 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
   }
 }
 
+const ZONE_ORDER = ['none', 'today', 'home', 'farm'] as const;
+
 /**
  * Trie les sections visibles par score contextuel décroissant.
+ * Quand `ctx.sectionZone` est fourni, le tri est zone-aware : les sections
+ * restent groupées par zone (today → home → farm) et le score ne s'applique
+ * qu'à l'intérieur de chaque zone. Sans sectionZone, comportement original.
  * Les sections masquées conservent leur position relative (en fin de liste).
  */
 export function smartSortSections(
@@ -174,14 +186,31 @@ export function smartSortSections(
     section: s,
     score: getContextScore(s.id, ctx),
     index: i,
+    zone: ctx.sectionZone?.[s.id] ?? 'none',
   }));
 
-  // Tri stable : score décroissant, index original en cas d'égalité
-  scored.sort((a, b) => b.score - a.score || a.index - b.index);
+  let result: SectionPref[];
 
-  // Regrouper les cartes half en paires consécutives
-  const sorted = scored.map((s) => s.section);
-  const result = clusterHalfCards(sorted);
+  if (ctx.sectionZone) {
+    // Tri zone-aware : score à l'intérieur de chaque zone, zones dans l'ordre
+    // canonique. clusterHalfCards est appliqué par zone pour éviter les
+    // transferts cross-zone de cartes half.
+    const groups: Record<string, typeof scored> = {};
+    for (const item of scored) {
+      if (!groups[item.zone]) groups[item.zone] = [];
+      groups[item.zone].push(item);
+    }
+    result = ZONE_ORDER.flatMap((zone) => {
+      const group = groups[zone];
+      if (!group || group.length === 0) return [];
+      group.sort((a, b) => b.score - a.score || a.index - b.index);
+      return clusterHalfCards(group.map((s) => s.section));
+    });
+  } else {
+    // Comportement original : tri global par score
+    scored.sort((a, b) => b.score - a.score || a.index - b.index);
+    result = clusterHalfCards(scored.map((s) => s.section));
+  }
 
   return [...result, ...hidden];
 }
