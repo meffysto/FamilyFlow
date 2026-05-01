@@ -535,7 +535,32 @@ interface CompanionSlotProps {
   hasLake?: boolean;                // true si le lac est visible (stade >= pousse)
   paused?: boolean;                 // stopper animations quand app en background
   feedState?: FeedState;            // Phase 42 — déclenche animation pulse/recul selon affinité
+  mapVariant?: 'wang' | 'pixelforge'; // map de fond active — détermine les zones marchables
 }
+
+// ── Zones marchables Pixel Forge ──
+// Calibrées sur la map base.png (assets/farm-map/base.png).
+// Bloqueurs implicites (zones non listées) : eau du lac, base de l'arbre, colonne batiments.
+const PIXEL_FORGE_STATIC_ZONES: WalkableZone[] = [
+  // Médaillon central autour de l'arbre — favori
+  { id: 'pf-home', xMin: 0.36, xMax: 0.58, yMin: 0.46, yMax: 0.58, weight: 4, pauseMin: 2500, pauseMax: 6000 },
+  // Allée verticale arbre → rond du bas
+  { id: 'pf-path-south', xMin: 0.42, xMax: 0.52, yMin: 0.55, yMax: 0.83, weight: 3, pauseMin: 800, pauseMax: 2500 },
+  // Rond du bas (panneau / camp) — xMin poussé pour éviter le bulge sud-est du lac
+  { id: 'pf-circle-south', xMin: 0.38, xMax: 0.55, yMin: 0.85, yMax: 0.94, weight: 2, pauseMin: 2000, pauseMax: 5000 },
+  // Allée verticale arbre → potager
+  { id: 'pf-path-north', xMin: 0.42, xMax: 0.52, yMin: 0.36, yMax: 0.42, weight: 2, pauseMin: 500, pauseMax: 2000 },
+  // Allée est vers cour des bâtiments (cobblestone)
+  { id: 'pf-path-east', xMin: 0.55, xMax: 0.74, yMin: 0.42, yMax: 0.50, weight: 2, pauseMin: 500, pauseMax: 2000 },
+  // Cour des bâtiments (devant la colonne)
+  { id: 'pf-buildings', xMin: 0.72, xMax: 0.83, yMin: 0.34, yMax: 0.62, weight: 2, pauseMin: 2000, pauseMax: 4500 },
+  // Rive du lac (bande étroite sur terre, à l'est du lac uniquement)
+  { id: 'pf-lake-shore', xMin: 0.30, xMax: 0.36, yMin: 0.66, yMax: 0.80, weight: 2, pauseMin: 3000, pauseMax: 6000 },
+  // Allée potager (entre les rangées top)
+  { id: 'pf-potager-row-2', xMin: 0.20, xMax: 0.78, yMin: 0.115, yMax: 0.135, weight: 1, pauseMin: 800, pauseMax: 2500 },
+  { id: 'pf-potager-row-3', xMin: 0.20, xMax: 0.78, yMin: 0.20, yMax: 0.22, weight: 1, pauseMin: 800, pauseMax: 2500 },
+  { id: 'pf-potager-row-4', xMin: 0.20, xMax: 0.78, yMin: 0.28, yMax: 0.30, weight: 1, pauseMin: 800, pauseMax: 2500 },
+];
 
 // ── Composant ─────────────────────────────────────────
 
@@ -555,6 +580,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   hasLake = true,
   paused = false,
   feedState = null,
+  mapVariant = 'wang',
 }: CompanionSlotProps) {
   const { colors } = useThemeColors();
   const [frameIdx, setFrameIdx] = useState(0);
@@ -602,6 +628,11 @@ export const CompanionSlot = React.memo(function CompanionSlot({
 
   // Construire les zones marchables selon l'état réel de la ferme
   const activeZones = React.useMemo((): WalkableZone[] => {
+    // Map Pixel Forge — zones recalibrées sur la nouvelle map base.png
+    if (mapVariant === 'pixelforge') {
+      return PIXEL_FORGE_STATIC_ZONES;
+    }
+
     const zones: WalkableZone[] = [];
 
     // ── Zones statiques (toujours présentes) ──
@@ -686,7 +717,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     }
 
     return zones;
-  }, [plantedCropYs, builtBuildingYs, hasLake]);
+  }, [plantedCropYs, builtBuildingYs, hasLake, mapVariant]);
 
   // Référence à la dernière zone visitée (pour éviter 2 fois de suite la même)
   const lastZoneIdRef = React.useRef<string | null>(null);
@@ -707,11 +738,13 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       const dfx = targetFx - currentFx.current;
       const dfy = targetFy - currentFy.current;
       const dist = Math.sqrt(dfx * dfx + dfy * dfy);
-      const duration = Math.max(2000, Math.min(8000, dist * 14000));
+      const duration = Math.max(3000, Math.min(14000, dist * 22000));
 
       setFacingLeft(dfx < -0.02);
       setGoingUp(dfy < -0.02);
-      setIsHorizontal(Math.abs(dfx) > Math.abs(dfy));
+      // Comparer en pixels visuels, pas en coords normalisees
+      // (containerHeight peut etre 2x containerWidth → biais sinon)
+      setIsHorizontal(Math.abs(dfx) * containerWidth > Math.abs(dfy) * containerHeight);
       setIsWalking(true);
 
       posX.value = withTiming((targetFx - HOME_FX) * containerWidth, { duration, easing: Easing.inOut(Easing.sin) });

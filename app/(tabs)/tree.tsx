@@ -558,6 +558,11 @@ export default function TreeScreen() {
     return getTechBonuses(profile?.farmTech ?? []);
   }, [profile?.farmTech]);
 
+  const farmBoostMultiplier = useMemo(() => {
+    if (profile?.buildingTurboUntil && new Date(profile.buildingTurboUntil) > new Date()) return 2;
+    return 1;
+  }, [profile?.buildingTurboUntil]);
+
   // Quête active et droits de démarrage (adulte/ado uniquement)
   const activeQuest = useMemo(() => familyQuests?.find(q => q.status === 'active') ?? null, [familyQuests]);
   const canStartQuest = activeProfile?.role === 'adulte' || activeProfile?.role === 'ado';
@@ -2653,6 +2658,7 @@ export default function TreeScreen() {
                   hasLake={stageIdx >= 1}
                   paused={animationsPaused}
                   feedState={feedState}
+                  mapVariant={USE_PIXEL_FORGE_MAP ? 'pixelforge' : 'wang'}
                 />
               </View>
             )}
@@ -3275,6 +3281,7 @@ export default function TreeScreen() {
           coins={profile.coins ?? 0}
           techBonuses={techBonuses}
           isDamaged={selectedBuildingCellId ? (getWearEffects(profile.id).damagedBuildings.includes(selectedBuildingCellId)) : false}
+          questSpeedMultiplier={farmBoostMultiplier}
           onCollect={handleCollectBuilding}
           onUpgrade={handleUpgradeBuilding}
           onRepairRoof={handleRepairRoof}

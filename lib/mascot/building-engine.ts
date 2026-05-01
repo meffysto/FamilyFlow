@@ -217,16 +217,18 @@ export function collectBuilding(
   // Mettre a jour lastCollectAt — avancer au moment de la derniere unite produite
   // Si le cap a ete atteint, repartir de maintenant pour eviter l'accumulation infinie
   const tier = def.tiers[building.level - 1];
-  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0);
+  const wearMultiplier = wearEffects?.damagedBuildings.includes(building.cellId) ? 2 : 1;
+  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0) * wearMultiplier;
   const effectiveMaxPending = Math.floor(getMaxPending(building.level) * (techBonuses?.buildingCapacityMultiplier ?? 1));
   const rateMs = effectiveRate * 3600 * 1000;
   const lastCollect = new Date(building.lastCollectAt);
   const elapsedMs = (now.getTime() - lastCollect.getTime()) * questSpeedMultiplier;
   const totalProduced = Math.floor(elapsedMs / rateMs);
-  // Si on a atteint le cap, repartir de maintenant (pas d'accumulation retro)
+  // Si on a atteint le cap, repartir de maintenant (pas d'accumulation retro).
+  // On divise par questSpeedMultiplier pour convertir le temps virtuel en temps réel.
   const newLastCollect = totalProduced >= effectiveMaxPending
     ? now
-    : new Date(lastCollect.getTime() + pending * rateMs);
+    : new Date(lastCollect.getTime() + (pending * rateMs) / questSpeedMultiplier);
 
   const updatedBuildings = buildings.map(b =>
     b.cellId === cellId ? { ...b, lastCollectAt: newLastCollect.toISOString() } : b,

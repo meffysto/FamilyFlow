@@ -263,6 +263,7 @@ interface BuildingDetailSheetProps {
   coins: number;
   techBonuses?: TechBonuses;
   isDamaged?: boolean;
+  questSpeedMultiplier?: number;
   onCollect: (cellId: string) => void;
   onUpgrade: (cellId: string) => void;
   onRepairRoof?: () => void;
@@ -278,6 +279,7 @@ export function BuildingDetailSheet({
   coins,
   techBonuses,
   isDamaged,
+  questSpeedMultiplier = 1,
   onCollect,
   onUpgrade,
   onRepairRoof,
@@ -304,9 +306,9 @@ export function BuildingDetailSheet({
   const techCapMul = techBonuses?.buildingCapacityMultiplier ?? 1;
   const wearMul = isDamaged ? 2 : 1;
 
-  // Cycle effectif (avec wear)
-  const currentCycleHours = (tier?.productionRateHours ?? 1) * techRateMul * wearMul;
-  const nextCycleHours = nextTier ? nextTier.productionRateHours * techRateMul : 0;
+  // Cycle effectif (avec wear + boost vitesse)
+  const currentCycleHours = (tier?.productionRateHours ?? 1) * techRateMul * wearMul / questSpeedMultiplier;
+  const nextCycleHours = nextTier ? nextTier.productionRateHours * techRateMul / questSpeedMultiplier : 0;
 
   // Cap effectif
   const currentMaxPending = Math.floor(getMaxPending(building.level) * techCapMul);
@@ -315,9 +317,9 @@ export function BuildingDetailSheet({
     : currentMaxPending;
 
   // État pending + progression
-  const pendingCount = getPendingResources(building, new Date(), techBonuses);
+  const pendingCount = getPendingResources(building, new Date(), techBonuses, undefined, questSpeedMultiplier);
   const isFull = pendingCount >= currentMaxPending;
-  const minutesUntilNext = getMinutesUntilNext(building, new Date(), techBonuses);
+  const minutesUntilNext = getMinutesUntilNext(building, new Date(), techBonuses, undefined, questSpeedMultiplier);
   const totalMinutes = currentCycleHours * 60;
   const elapsedMinutes = totalMinutes - minutesUntilNext;
   const progressRatio = isFull

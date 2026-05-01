@@ -110,6 +110,7 @@ export interface Profile {
   sporeeShopBoughtToday?: number;          // achats shop du jour 0-2
   sporeeShopLastResetDate?: string;        // YYYY-MM-DD local — dernier reset cap quotidien
   // Phase 20 — bonus temporels effets sémantiques (mergés depuis FarmProfileData)
+  buildingTurboUntil?: string;      // ISO datetime — EFFECTS-03 : production bâtiments 2x
   growthSprintUntil?: string;       // ISO datetime — EFFECTS-05 : -1 task/stage temporaire
   wearEvents?: import('./mascot/wear-engine').WearEvent[];          // Evenements d'usure ferme
   companion?: import('./mascot/companion-types').CompanionData | null; // Compagnon actif du profil
