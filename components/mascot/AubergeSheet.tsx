@@ -121,6 +121,25 @@ function itemEmoji(item: VisitorRequestItem): string {
   return map[item.itemId] ?? (item.source === 'crafted' ? '🍽️' : '📦');
 }
 
+// Ressources bâtiment (oeuf/lait/farine/miel) — pas dans le codex i18n
+const BUILDING_LABELS: Record<string, string> = {
+  oeuf: 'Œufs',
+  lait: 'Lait',
+  farine: 'Farine',
+  miel: 'Miel',
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function itemLabel(item: VisitorRequestItem, t: (key: string, opts?: any) => string): string {
+  if (item.source === 'building') {
+    return BUILDING_LABELS[item.itemId] ?? item.itemId;
+  }
+  if (item.source === 'crop') {
+    return t(`crop.${item.itemId}.name`, { ns: 'codex', defaultValue: item.itemId });
+  }
+  return t(`craft.${item.itemId}.name`, { ns: 'codex', defaultValue: item.itemId });
+}
+
 // ─── Sous-composant : auvent rayé ────────────────────────────────────────
 
 function AwningStripes() {
@@ -278,12 +297,13 @@ const VisitorCard = React.memo(function VisitorCard({
                 { borderColor: ok ? Farm.awningGreen : COLOR_ERROR },
               ]}
             >
-              <Text style={styles.requestEmoji}>{itemEmoji(item)}</Text>
-              <Text style={styles.requestQty}>
-                {item.quantity}×
-              </Text>
-              <Text style={styles.requestStatus}>
-                {ok ? '✅' : '❌'}
+              <View style={styles.requestItemTop}>
+                <Text style={styles.requestEmoji}>{itemEmoji(item)}</Text>
+                <Text style={styles.requestQty}>{item.quantity}×</Text>
+                <Text style={styles.requestStatus}>{ok ? '✅' : '❌'}</Text>
+              </View>
+              <Text style={styles.requestItemName} numberOfLines={2}>
+                {itemLabel(item, t)}
               </Text>
             </View>
           );
@@ -830,14 +850,27 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   requestItem: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: Spacing.xs,
+    gap: Spacing.xxs,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     borderWidth: 1.5,
     backgroundColor: Farm.parchmentDark,
+    minWidth: 72,
+  },
+  requestItemTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  requestItemName: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Farm.brownText,
+    textAlign: 'center',
+    maxWidth: 90,
   },
   requestEmoji: {
     fontSize: FontSize.lg,
