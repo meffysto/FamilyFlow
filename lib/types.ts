@@ -83,7 +83,9 @@ export interface Profile {
   dateTerme?: string;        // YYYY-MM-DD expected due date (grossesse only)
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
   // ─── Voix TTS (IVC + PVC ElevenLabs + iOS Personal Voice) ──────
-  voiceElevenLabsId?: string;   // voice_id ElevenLabs (cloné ou prédéfini)
+  voiceElevenLabsId?: string;   // voice_id ElevenLabs ACTIF (mirroir de IvcId ou PvcId selon voiceCloneType)
+  voiceElevenLabsIvcId?: string; // voice_id ElevenLabs Instant Voice Clone (slot indépendant)
+  voiceElevenLabsPvcId?: string; // voice_id ElevenLabs Professional Voice Clone (slot indépendant)
   voiceFishAudioId?: string;    // reference_id Fish Audio (cloné via /model)
   voicePersonalId?: string;     // identifier iOS Personal Voice
   voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'fish-audio-cloned' | 'expo-speech';
@@ -92,6 +94,7 @@ export interface Profile {
   voiceTrainingStatus?: 'idle' | 'samples' | 'training' | 'ready' | 'failed'; // état du training PVC
   voiceTrainingStartedAt?: string;                                            // ISO datetime du déclenchement /train
   voiceTrainingMessage?: string;                                              // dernier message d'erreur/info ElevenLabs
+  voiceTrainingProgress?: number;                                             // 0..1 — dernière progression connue (mise à jour via getPvcVoiceState)
   gardenName?: string;           // nom personnalisé du jardin (fallback "Mon jardin")
   treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
   mascotDecorations: string[];   // IDs des décorations achetées

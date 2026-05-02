@@ -40,11 +40,31 @@ const ALLOWED_PERFORMANCE_TAGS = new Set([
 ]);
 
 /**
+ * Seul Eleven v3 supporte les audio tags paralinguistiques (`[whispers]`,
+ * `[chuckles]`, `[laughs]`, etc.). Confirmé par la doc officielle
+ * (https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices) :
+ * Multilingual v2, Turbo v2.5 et Flash v2.5 lisent tous les tags littéralement.
+ * → On ne garde la whitelist que pour v3, strip total partout ailleurs.
+ */
+const MODELS_WITH_TAG_SUPPORT = new Set(['eleven_v3']);
+
+/** Style par défaut selon le modèle (0.4 sur v3 pour activer les tags). */
+function defaultStyleForModel(model?: string): number {
+  if (model && MODELS_WITH_TAG_SUPPORT.has(model)) return 0.4;
+  return 0;
+}
+
+/**
  * Strip les tags entre crochets non whitelistés avant envoi à ElevenLabs.
- * Conserve les tags reconnus tels quels. Insensible à la casse.
+ * - Sur v3 (seul modèle qui interprète les tags) : conserve la whitelist
+ * - Sur tout autre modèle (multilingual_v2, turbo, flash) : strip total
+ *   sinon les tags sont lus littéralement à voix haute.
  * Exporté pour usage par le caller si besoin (ex. preview).
  */
-export function sanitizePerformanceTags(text: string): string {
+export function sanitizePerformanceTags(text: string, model?: string): string {
+  if (!model || !MODELS_WITH_TAG_SUPPORT.has(model)) {
+    return stripAllPerformanceTags(text);
+  }
   return text.replace(/\[([^\]\n]{1,30})\]/g, (_full, inner: string) => {
     const norm = inner.trim().toLowerCase();
     return ALLOWED_PERFORMANCE_TAGS.has(norm) ? `[${norm}]` : '';
@@ -220,11 +240,11 @@ async function performGenerateSpeech(
     model = 'eleven_v3',
     stability = 0.5,
     similarityBoost = 0.75,
-    style = 0,
+    style = defaultStyleForModel(options.model ?? 'eleven_v3'),
     useSpeakerBoost = true,
   } = options;
 
-  const sanitized = sanitizePerformanceTags(text);
+  const sanitized = sanitizePerformanceTags(text, model);
 
   // Garde-fou quota quotidien : refuse l'appel si la limite est dépassée.
   // Mesure les chars effectivement envoyés (post-sanitize), pas le brut.
@@ -337,11 +357,11 @@ async function performGenerateWithTimestamps(
     model = 'eleven_v3',
     stability = 0.5,
     similarityBoost = 0.75,
-    style = 0,
+    style = defaultStyleForModel(options.model ?? 'eleven_v3'),
     useSpeakerBoost = true,
   } = options;
 
-  const sanitized = sanitizePerformanceTags(text);
+  const sanitized = sanitizePerformanceTags(text, model);
 
   // Garde-fou quota — même check que generateSpeech
   const quota = await canConsume(sanitized.length);

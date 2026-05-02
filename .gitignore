@@ -77,3 +77,8 @@ apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/gen/
 apps/desktop/dist/
 .mockups/
+
+# ElevenLabs TTS test outputs (générés par scripts/test-elevenlabs-tags.mjs et test-voice-remix.mjs)
+test-*.mp3
+remix-preview-*.mp3
+voice-cloning-script.md

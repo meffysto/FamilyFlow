@@ -970,6 +970,8 @@ export interface StoryGenerationConfig {
   availableSfxTags?: string[];
   /** Multi-voix : demander à Claude de baliser les dialogues avec speaker → voix de personnage */
   multiVoice?: boolean;
+  /** Modèle ElevenLabs cible — détermine si les tags d'expression sont supportés (v3) ou s'il faut tomber sur ponctuation/contexte */
+  elevenLabsModel?: import('./types').ElevenLabsModel;
   /** Tranche d'âge cible — règle vocabulaire/thèmes (livres/chapitres) */
   trancheAge?: '3-5' | '6-8' | '9+';
   /** Contexte livre — présent uniquement pour les chapitres N>=2 d'un livre */
@@ -1127,7 +1129,7 @@ RÈGLES STRICTES pour le script :
 - **CHAQUE beat sfx DOIT avoir un champ "triggerWord"** : le mot OU groupe de 2-3 mots EXACTS, copiés tels quels depuis la phrase narration précédente, qui correspond à l'évènement sonore. Ce mot servira à synchroniser le SFX précisément quand il est prononcé. Exemples :
   - narration "Les oiseaux chantent dans les arbres." → sfx { tag: "chirp_bird", triggerWord: "chantent" }
   - narration "La porte grince doucement." → sfx { tag: "door_creak_slow", triggerWord: "grince" }
-  - narration "Maxence pose un pied dans l'herbe." → sfx { tag: "footsteps_grass", triggerWord: "pose un pied" }
+  - narration "Lucas pose un pied dans l'herbe." → sfx { tag: "footsteps_grass", triggerWord: "pose un pied" }
 - Format obligatoire des beats :
   - { "kind": "narration", "text": "Une seule phrase complète." }
   - { "kind": "sfx", "tag": "tag_de_la_bibliotheque", "triggerWord": "mot exact de la phrase précédente" }
@@ -1150,10 +1152,13 @@ RÈGLES STRICTES pour le script :
     ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ ${exampleBeats}, ... ] }${memorySummaryField} }`
     : `{ "titre": "...", "texte": "${paragraphesTemplate}"${memorySummaryField} }`;
 
-  // Tags de performance vocale ElevenLabs (interprétés par le moteur TTS).
-  // Reste en ANGLAIS même quand l'histoire est en français : c'est la convention API.
-  // Parcimonie volontaire : trop de tags = lecture théâtrale fatigante.
-  const performanceTagsRules = `
+  // Tags de performance vocale ElevenLabs : SEUL eleven_v3 les interprète.
+  // Pour les autres modèles (multilingual_v2, turbo_v2_5, flash_v2_5) — y compris
+  // les voix PVC qui ne sont pas compatibles v3 — on bascule sur des techniques
+  // d'expression par ponctuation/capitalisation/verbes de parole inline.
+  const tagsSupported = story.elevenLabsModel === 'eleven_v3';
+
+  const performanceTagsRules = tagsSupported ? `
 
 PERFORMANCE VOCALE — Tags d'expression (interprétés par le moteur de voix) :
 Pour rendre la lecture plus immersive, tu peux insérer ces tags ENTRE CROCHETS directement dans le texte. Le moteur TTS les transforme en effet vocal (chuchotement, rire, soupir…). Les tags ne sont PAS lus à voix haute.
@@ -1174,7 +1179,41 @@ RÈGLES de placement :
 - Pour exprimer la joie, utilise [chuckles] (discret) ou [laughs] (franc) — pas autre chose
 - Évite [laughs] dans les 2 derniers paragraphes (ralentissement vers le sommeil)
 - N'utilise JAMAIS d'autres tags que ceux listés (les tags inconnus seront supprimés)
-- Les tags doivent apparaître DANS le champ "texte"${spectacleEnabled ? ' ET dans les beats narration correspondants (concaténation préservée)' : ''}`;
+- Les tags doivent apparaître DANS le champ "texte"${spectacleEnabled ? ' ET dans les beats narration correspondants (concaténation préservée)' : ''}` : `
+
+EXPRESSIVITÉ NARRATIVE (sans tags — moteur de voix actuel ne les interprète pas) :
+N'utilise JAMAIS de tags entre crochets ([whispers], [chuckles], etc.) — ils seraient lus à voix haute comme des mots. À la place, transmets l'émotion via la STRUCTURE et la PONCTUATION du texte :
+
+Pour une intensité forte (joie, surprise, exclamation) :
+- CAPITALISE le mot-clé : "Lucas ouvre la porte… GÉNIAL ! Une fée brille."
+- Ajoute des ! et empile-les pour l'enthousiasme : "Aventure ! Surprise ! Magie !"
+
+Pour le murmure / le secret :
+- Décris l'action de chuchoter avec un verbe de parole inline + ponctuation suspensive : « Elle s'approche de son oreille et lui souffle, tout doucement : "Ce caillou est magique…" »
+- Précède toujours la réplique chuchotée d'un contexte explicite (« souffle », « murmure », « tout doucement », « dans un secret »)
+
+Pour le rire / la joie discrète :
+- Inscris l'onomatopée directement dans le texte : "Lucas rit, hihihi, c'est merveilleux !"
+- Variantes : "héhéhé", "hahaha" — pas trop par paragraphe (1 max)
+
+Pour le soupir / la respiration :
+- Onomatopée allongée : "ahhh…", "ohhh…", "mmmh…"
+- Toujours suivie de "…" pour suspendre
+
+Pour les pauses et silences :
+- Ellipses "…" pour pause courte
+- Tiret cadratin "—" pour rupture nette : "Soudain — un bruit étrange dans la forêt."
+- Phrases courtes à virgules pour rythme staccato : "Un pas. Deux pas. Trois pas."
+
+Pour le calme / l'apaisement :
+- Phrases longues fluides, peu de ponctuation cassante
+- Mots doux répétés : "tout doucement, tout doucement"
+- Le moteur de voix portera naturellement la douceur via le rythme du texte — laisse l'ambiance audio porter le silence
+
+RÈGLES STRICTES :
+- Aucun tag entre crochets. Jamais. Ni en français ni en anglais.
+- Maximum 1 effet expressif par paragraphe (CAPS ou onomatopée ou interjection — pas tout en même temps)
+- Privilégie l'expressivité textuelle aux 3 premiers paragraphes (action) ; les 2 derniers restent calmes (préparation au sommeil)`;
 
   const systemPrompt = `Tu es un conteur d'histoires pour enfants expert. Tu crées des histoires du soir douces et apaisantes, parfaites pour endormir un enfant de ${story.enfantAge}.
 

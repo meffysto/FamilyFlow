@@ -1166,6 +1166,13 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         theme,
         // ─── Voix TTS (IVC ElevenLabs + iOS Personal Voice) ───────────
         voiceElevenLabsId: currentProps.voiceElevenLabsId || undefined,
+        // Migration douce : si voiceCloneType précise IVC/PVC mais le slot
+        // dédié est vide, on y rapatrie voiceElevenLabsId. Permet aux profils
+        // pré-v11 de garder leur voix accessible via le sélecteur IVC/Pro.
+        voiceElevenLabsIvcId: currentProps.voiceElevenLabsIvcId
+          || (currentProps.voiceCloneType === 'instant' ? (currentProps.voiceElevenLabsId || undefined) : undefined),
+        voiceElevenLabsPvcId: currentProps.voiceElevenLabsPvcId
+          || (currentProps.voiceCloneType === 'professional' ? (currentProps.voiceElevenLabsId || undefined) : undefined),
         voiceFishAudioId: currentProps.voiceFishAudioId || undefined,
         voicePersonalId: currentProps.voicePersonalId || undefined,
         voiceSource: (['ios-personal', 'elevenlabs-cloned', 'elevenlabs-preset', 'fish-audio-cloned', 'expo-speech'].includes(currentProps.voiceSource)
@@ -1179,6 +1186,9 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
           : undefined),
         voiceTrainingStartedAt: currentProps.voiceTrainingStartedAt || undefined,
         voiceTrainingMessage: currentProps.voiceTrainingMessage || undefined,
+        voiceTrainingProgress: currentProps.voiceTrainingProgress && !Number.isNaN(Number(currentProps.voiceTrainingProgress))
+          ? Math.max(0, Math.min(1, Number(currentProps.voiceTrainingProgress)))
+          : undefined,
         // Farm/mascot/companion fields live in farm-{profileId}.md — defaults here
         treeSpecies: undefined,
         mascotDecorations: [],
@@ -1242,6 +1252,8 @@ export function serializeFamille(
     if (profile.theme) lines.push(`theme: ${profile.theme}`);
     // Voix TTS — omises si vides (lisibilité Obsidian)
     if (profile.voiceElevenLabsId) lines.push(`voiceElevenLabsId: ${profile.voiceElevenLabsId}`);
+    if (profile.voiceElevenLabsIvcId) lines.push(`voiceElevenLabsIvcId: ${profile.voiceElevenLabsIvcId}`);
+    if (profile.voiceElevenLabsPvcId) lines.push(`voiceElevenLabsPvcId: ${profile.voiceElevenLabsPvcId}`);
     if (profile.voiceFishAudioId) lines.push(`voiceFishAudioId: ${profile.voiceFishAudioId}`);
     if (profile.voicePersonalId) lines.push(`voicePersonalId: ${profile.voicePersonalId}`);
     if (profile.voiceSource) lines.push(`voiceSource: ${profile.voiceSource}`);
@@ -1249,6 +1261,7 @@ export function serializeFamille(
     if (profile.voiceTrainingStatus) lines.push(`voiceTrainingStatus: ${profile.voiceTrainingStatus}`);
     if (profile.voiceTrainingStartedAt) lines.push(`voiceTrainingStartedAt: ${profile.voiceTrainingStartedAt}`);
     if (profile.voiceTrainingMessage) lines.push(`voiceTrainingMessage: ${profile.voiceTrainingMessage}`);
+    if (typeof profile.voiceTrainingProgress === 'number') lines.push(`voiceTrainingProgress: ${profile.voiceTrainingProgress.toFixed(2)}`);
     if (profile.sagaTitle) lines.push(`sagaTitle: ${profile.sagaTitle}`);
     // Préférences alimentaires — omises si vides (lisibilité Obsidian)
     if (profile.foodAllergies && profile.foodAllergies.length > 0) {
