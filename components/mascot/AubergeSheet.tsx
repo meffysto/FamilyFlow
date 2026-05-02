@@ -121,9 +121,9 @@ function itemEmoji(item: VisitorRequestItem): string {
   return map[item.itemId] ?? (item.source === 'crafted' ? '🍽️' : '📦');
 }
 
-// Ressources bâtiment (oeuf/lait/farine/miel) — pas dans le codex i18n
+// Ressources bâtiment — alignées sur BuildingDetailSheet (capitalisé singulier)
 const BUILDING_LABELS: Record<string, string> = {
-  oeuf: 'Œufs',
+  oeuf: 'Œuf',
   lait: 'Lait',
   farine: 'Farine',
   miel: 'Miel',
@@ -135,9 +135,11 @@ function itemLabel(item: VisitorRequestItem, t: (key: string, opts?: any) => str
     return BUILDING_LABELS[item.itemId] ?? item.itemId;
   }
   if (item.source === 'crop') {
-    return t(`crop.${item.itemId}.name`, { ns: 'codex', defaultValue: item.itemId });
+    // Aligné sur la ferme (CraftSheet/Garden) : farm.crop.{id}
+    return t(`farm.crop.${item.itemId}`, { defaultValue: item.itemId });
   }
-  return t(`craft.${item.itemId}.name`, { ns: 'codex', defaultValue: item.itemId });
+  // Aligné sur l'Atelier (CraftSheet) : farm.recipe.{id}
+  return t(`farm.recipe.${item.itemId}`, { defaultValue: item.itemId });
 }
 
 // ─── Sous-composant : auvent rayé ────────────────────────────────────────
