@@ -238,7 +238,22 @@ export async function refreshMascotte(snap: MascotteSnapshot): Promise<void> {
  * Utile pour les sites d'appel qui ne connaissent qu'une partie des données.
  */
 export async function patchMascotte(patch: Partial<MascotteSnapshot>): Promise<void> {
-  if (!lastSnapshot) return;
+  // Cold start (JS process tué pendant background) : lastSnapshot est null mais
+  // la LA native peut être encore vivante. Si le patch contient les champs
+  // identifiants (mascotteName + compteurs), on traite le patch comme un
+  // snapshot complet → permet au reconcile foreground de réarmer la staleDate
+  // sans avoir à passer par startMascotte.
+  if (!lastSnapshot) {
+    if (
+      typeof patch.mascotteName === 'string' &&
+      typeof patch.tasksDone === 'number' &&
+      typeof patch.tasksTotal === 'number' &&
+      typeof patch.xpGained === 'number'
+    ) {
+      return refreshMascotte(patch as MascotteSnapshot);
+    }
+    return;
+  }
   const merged: MascotteSnapshot = { ...lastSnapshot, ...patch };
   return refreshMascotte(merged);
 }

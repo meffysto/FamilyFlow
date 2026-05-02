@@ -2,6 +2,7 @@ import ExpoModulesCore
 import Foundation
 import WidgetKit
 import ActivityKit
+import BackgroundTasks
 import LiveActivityShared
 
 // Types FeedingActivityAttributes et MascotteActivityAttributes sont déclarés
@@ -69,12 +70,116 @@ private func mascotteNextTransitionDate(from now: Date = Date()) -> Date {
     return now.addingTimeInterval(3600)
 }
 
+// MARK: - BGTask : rotation autonome de la Live Activity mascotte
+//
+// Sans BGTask, iOS n'utilise la `staleDate` qu'une seule fois (au premier
+// franchissement) puis ne re-render plus le widget. Le foreground reconcile
+// (cf. MascotteForegroundReconciler côté JS) couvre le cas "user ouvre l'app",
+// mais pas "user regarde juste le lockscreen sans ouvrir l'app". Le BGTask
+// comble ce trou : iOS réveille brièvement le process à la prochaine transition
+// horaire, on push un `update()` avec une staleDate fraîche, et on replanifie
+// le suivant. Best-effort — iOS ne garantit pas l'exécution exacte (peut
+// décaler de qq min selon batterie/usage/thermique).
+
+private let MASCOTTE_ROTATE_TASK_ID = "com.familyvault.mascotte-rotate"
+
+@available(iOS 16.2, *)
+private func scheduleMascotteRotation(from now: Date = Date()) {
+    let request = BGAppRefreshTaskRequest(identifier: MASCOTTE_ROTATE_TASK_ID)
+    request.earliestBeginDate = mascotteNextTransitionDate(from: now)
+    do {
+        try BGTaskScheduler.shared.submit(request)
+    } catch {
+        // Silencieux — feature non critique. Causes typiques : identifier non
+        // déclaré dans Info.plist, ou trop de tasks pending. Le foreground
+        // reconcile rattrape les rotations manquées au prochain ouvrage de l'app.
+    }
+}
+
+private func cancelMascotteRotation() {
+    BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: MASCOTTE_ROTATE_TASK_ID)
+}
+
+@available(iOS 16.2, *)
+private func handleMascotteRotation(_ task: BGAppRefreshTask) {
+    // iOS impose un budget court (~30s). On set d'abord l'expiration handler
+    // au cas où on dépasserait — la Task doit toujours être marquée completed
+    // pour que iOS ne nous blackliste pas.
+    task.expirationHandler = {
+        task.setTaskCompleted(success: false)
+    }
+
+    Task {
+        defer {
+            // Replanifier le suivant AVANT de marquer completed — sinon iOS
+            // pourrait ne plus jamais nous réveiller. Idempotent : si le user
+            // a stoppé la LA entre-temps, le request reste pending sans effet
+            // (sera annulé au prochain stopMascotteActivity).
+            scheduleMascotteRotation()
+        }
+
+        guard let activity = Activity<MascotteActivityAttributes>.activities.first else {
+            // LA n'est plus active (user a tappé "Dodo", iOS l'a expirée après
+            // 8h, ou crash). Pas de re-scheduling — defer ci-dessus s'en charge
+            // mais ce sera un no-op pratique car le prochain wake n'aura
+            // toujours pas d'activity à update.
+            task.setTaskCompleted(success: true)
+            return
+        }
+
+        // Re-utiliser le ContentState courant à l'identique : on ne change que
+        // la staleDate. Le widget re-render avec Date() courant → le stage
+        // horaire bascule (boulot → midi → jeu → ...) sans qu'on ait à le
+        // calculer ici (logique centralisée dans MascotteStage.for(date:)).
+        let currentState = activity.content.state
+        let newContent = ActivityContent(
+            state: currentState,
+            staleDate: mascotteNextTransitionDate()
+        )
+        await activity.update(newContent)
+        task.setTaskCompleted(success: true)
+    }
+}
+
+// Garde-fou : register doit avoir lieu avant que iOS ait la moindre chance
+// d'invoquer le handler, soit avant la fin de didFinishLaunchingWithOptions.
+// Expo Modules `OnCreate` est appelé pendant la phase d'init du module
+// registry, qui s'exécute dans didFinishLaunching. Marqué `nonisolated(unsafe)`
+// pour être lu depuis OnCreate sans warning de concurrency.
+nonisolated(unsafe) private var mascotteRotateHandlerRegistered = false
+
+@available(iOS 16.2, *)
+private func registerMascotteRotateHandlerIfNeeded() {
+    guard !mascotteRotateHandlerRegistered else { return }
+    mascotteRotateHandlerRegistered = true
+    BGTaskScheduler.shared.register(
+        forTaskWithIdentifier: MASCOTTE_ROTATE_TASK_ID,
+        using: nil
+    ) { task in
+        guard let refreshTask = task as? BGAppRefreshTask else {
+            task.setTaskCompleted(success: false)
+            return
+        }
+        handleMascotteRotation(refreshTask)
+    }
+}
+
 public class VaultAccessModule: Module {
   /// Tracks active security-scoped resources to stop accessing on cleanup
   private var activeURLs: [URL] = []
 
   public func definition() -> ModuleDefinition {
     Name("VaultAccess")
+
+    // Register le handler BGTask au plus tôt dans le cycle de vie du process.
+    // OnCreate s'exécute pendant l'init du module registry, qui est elle-même
+    // déclenchée depuis didFinishLaunchingWithOptions → on respecte la
+    // contrainte iOS "register avant la fin de didFinishLaunching".
+    OnCreate {
+      if #available(iOS 16.2, *) {
+        registerMascotteRotateHandlerIfNeeded()
+      }
+    }
 
     /// Start accessing a security-scoped URL and save a bookmark for persistent access
     AsyncFunction("startAccessing") { (uriString: String) -> Bool in
@@ -559,6 +664,10 @@ public class VaultAccessModule: Module {
             content: content,
             pushType: nil
           )
+          // Programmer le 1er BGTask de rotation dès le start. Sera réarmé
+          // automatiquement à chaque exécution du handler (cf. defer dans
+          // handleMascotteRotation).
+          scheduleMascotteRotation()
           return true
         } catch {
           return false
@@ -589,6 +698,10 @@ public class VaultAccessModule: Module {
         )
         let content = ActivityContent(state: state, staleDate: mascotteNextTransitionDate())
         await activity.update(content)
+        // Réarmer le BGTask à chaque update — couvre le cas où le précédent
+        // request aurait été annulé/expiré, ou où le user revient au foreground
+        // après une longue pause (le foreground reconcile passe par ici).
+        scheduleMascotteRotation()
       }
     }
 
@@ -598,6 +711,7 @@ public class VaultAccessModule: Module {
         for activity in Activity<MascotteActivityAttributes>.activities {
           await activity.end(nil, dismissalPolicy: .immediate)
         }
+        cancelMascotteRotation()
       }
     }
 

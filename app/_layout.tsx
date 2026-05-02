@@ -23,7 +23,8 @@ import { Redirect, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { VaultProvider, useVault } from '../contexts/VaultContext';
-import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, TouchableOpacity, DevSettings, Share } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, TouchableOpacity, DevSettings, Share, AppState, type AppStateStatus, Platform } from 'react-native';
+import { isMascotteActive } from '../lib/mascotte-live-activity';
 import * as FileSystem from 'expo-file-system/legacy';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -107,6 +108,37 @@ function AuthLockOverlay() {
 // URL format widget : family-vault:///meals → extractExpoPathFromURL → "meals" → (tabs)/meals
 
 // ─── Redirection onboarding ─────────────────────────────────────────────────
+/**
+ * Réarme la staleDate de la Live Activity mascotte au passage foreground.
+ *
+ * Sans ce hook, iOS n'utilise la `staleDate` qu'une seule fois (au premier
+ * franchissement) puis l'oublie : le widget se fige sur le stage atteint à
+ * cette transition. En repoussant un `update()` à chaque retour au premier
+ * plan, on recalcule `mascotteNextTransitionDate()` côté natif → la rotation
+ * suivante (boulot → midi → jeu → routine → dodo) peut se déclencher.
+ *
+ * Limite assumée : ne couvre PAS le cas "user regarde le lockscreen sans
+ * jamais ouvrir l'app". Pour ça il faudrait un BGAppRefreshTask natif.
+ *
+ * Doit être monté DANS VaultProvider pour accéder à triggerWidgetRefresh.
+ */
+function MascotteForegroundReconciler() {
+  const { triggerWidgetRefresh } = useVault();
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    const sub = AppState.addEventListener('change', async (s: AppStateStatus) => {
+      if (s !== 'active') return;
+      try {
+        if (await isMascotteActive()) {
+          triggerWidgetRefresh();
+        }
+      } catch { /* silencieux — feature non critique */ }
+    });
+    return () => sub.remove();
+  }, [triggerWidgetRefresh]);
+  return null;
+}
+
 // Doit être DANS le VaultProvider pour réagir quand setVaultPath() est appelé
 // depuis setup.tsx. Sinon hasVault reste false et Redirect boucle vers /setup.
 function VaultRedirect({ langReady }: { langReady: boolean }) {
@@ -270,6 +302,7 @@ function RootLayout() {
               <ParentalControlsProvider>
               <ToastProvider>
                 <LiveActivityGamificationBridge />
+                <MascotteForegroundReconciler />
                 <StatusBar style="auto" />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="onboarding" />

@@ -163,6 +163,7 @@ export interface VaultState {
   notifPrefs: NotificationPreferences;
   vault: VaultManager | null;
   refresh: () => Promise<void>;
+  triggerWidgetRefresh: () => void;
   setVaultPath: (path: string) => Promise<void>;
   setActiveProfile: (profileId: string) => Promise<void>;
   saveNotifPrefs: (prefs: NotificationPreferences) => Promise<void>;
@@ -685,8 +686,15 @@ export function useVaultInternal(): VaultState {
       const nextTask = uncompletedToday.find(t => t.recurrence) ?? uncompletedToday[0] ?? null;
       const nextTaskText = nextTask?.text ?? null;
       const nextTaskId = nextTask?.id ?? null;
+      // Champs identifiants — nécessaires pour que patchMascotte puisse
+      // reconstruire un snapshot complet quand lastSnapshot est null (cas
+      // cold-start JS pendant que la LA native est encore vivante).
+      const mascotteName = activeProfileForBonus?.companion?.name || 'Pousse';
+      const companionSpecies = activeProfileForBonus?.companion?.activeSpecies ?? null;
+      const companionStage = getCompanionStage(currentLevel);
       // patchMascotte : merge avec le lastSnapshot → préserve mascotteName et companionSpriteBase64
       patchMascotte({
+        mascotteName,
         tasksDone: doneCount,
         tasksTotal: totalCount,
         xpGained: xpGainedToday,
@@ -696,6 +704,8 @@ export function useVaultInternal(): VaultState {
         nextTaskId,
         nextRdvText,
         speechBubble,
+        companionSpecies,
+        companionStage,
       });
     }, 300);
   }, []);
@@ -2240,6 +2250,7 @@ export function useVaultInternal(): VaultState {
     notifPrefs,
     vault,
     refresh,
+    triggerWidgetRefresh,
     setVaultPath,
     setActiveProfile: profilesHook.setActiveProfile,
     saveNotifPrefs,

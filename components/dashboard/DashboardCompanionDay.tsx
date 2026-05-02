@@ -216,11 +216,13 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
 
   useEffect(() => { refreshActive(); }, [refreshActive]);
   useFocusEffect(useCallback(() => { refreshActive(); }, [refreshActive]));
+  // Note : le réarmement de la staleDate au foreground est désormais centralisé
+  // dans <MascotteForegroundReconciler /> (app/_layout.tsx) — toujours monté,
+  // contrairement à ce composant qui ne vit que quand le dashboard est visible.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
       if (s !== 'active') return;
       refreshActive();
-      patchMascotte({}).catch(() => {});
     });
     return () => sub.remove();
   }, [refreshActive]);

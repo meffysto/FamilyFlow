@@ -41,7 +41,11 @@
           "tel"
         ],
         "UIBackgroundModes": [
-          "audio"
+          "audio",
+          "fetch"
+        ],
+        "BGTaskSchedulerPermittedIdentifiers": [
+          "com.familyvault.mascotte-rotate"
         ]
       },
       "buildNumber": "24"
