@@ -362,6 +362,75 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             </View>
           );
         })()}
+        {/* Décos + habitants non-pixel-animaux (oiseaux non animés, lanternes, nid, etc.) */}
+        {(() => {
+          const treeRect = {
+            left: (size - scaledW) / 2,
+            top: topOffset,
+            width: scaledW,
+            height: scaledH,
+          };
+          const centerX = treeRect.left + treeRect.width / 2;
+          const groundPxY = treeRect.top + treeRect.height;
+          const crownCenterY = treeRect.top + treeRect.height * 0.35;
+          const crownR = treeRect.width / 2;
+          const adj = SPECIES_ADJUSTMENTS[species];
+          const stageMult = STAGE_SIZE_MULT[Math.min(stageIdx, STAGE_SIZE_MULT.length - 1)];
+
+          const computePos = (slot: SlotDef) => {
+            let x = centerX + slot.dxFactor * crownR * adj.scale;
+            let y: number;
+            if (slot.groundRelY !== undefined) {
+              y = groundPxY + slot.groundRelY * (treeRect.height / VIEWBOX_H);
+            } else {
+              y = crownCenterY + slot.dyFactor * crownR;
+            }
+            x += adj.dx * (treeRect.width / VIEWBOX_W);
+            y += adj.dy * (treeRect.height / VIEWBOX_H);
+            const rarityMult = RARITY_SIZE_MULT[slot.rarity] ?? 1;
+            const fontSize = slot.baseSize * rarityMult * stageMult;
+            return { x, y, fontSize };
+          };
+
+          const decoItems = (previewMode ? decorations : decorations.filter(id => !placedItemIds.has(id)))
+            .map(id => ({ id, def: DECORATIONS.find(d => d.id === id), slot: DECO_SLOTS[id] }))
+            .filter(it => it.def && it.slot);
+
+          const habItems = (previewMode ? inhabitants : inhabitants.filter(id => !placedItemIds.has(id)))
+            .filter(id => !pixelAnimalIds.has(id))
+            .map(id => ({ id, def: INHABITANTS.find(h => h.id === id), slot: HAB_SLOTS[id] }))
+            .filter(it => it.def && it.slot);
+
+          if (decoItems.length === 0 && habItems.length === 0) return null;
+
+          return (
+            <View style={[StyleSheet.absoluteFill, { zIndex: 9 }]} pointerEvents="none">
+              {[...decoItems, ...habItems].map(({ id, def, slot }) => {
+                const pos = computePos(slot!);
+                const illustration = ITEM_ILLUSTRATIONS[id];
+                const s = pos.fontSize * 1.5;
+                if (illustration) {
+                  return (
+                    <Image
+                      key={id}
+                      source={illustration}
+                      style={{ position: 'absolute', left: pos.x - s / 2, top: pos.y - s / 2, width: s, height: s, resizeMode: 'contain' } as any}
+                    />
+                  );
+                }
+                return (
+                  <Text
+                    key={id}
+                    style={{ position: 'absolute', left: pos.x - s / 2, top: pos.y - s / 2, fontSize: pos.fontSize, width: s, height: s, textAlign: 'center' }}
+                    allowFontScaling={false}
+                  >
+                    {def!.emoji}
+                  </Text>
+                );
+              })}
+            </View>
+          );
+        })()}
         {/* Compagnon mascotte déplacé dans tree.tsx comme couche diorama indépendante */}
       </View>
     );
