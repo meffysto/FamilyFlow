@@ -219,7 +219,7 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
   };
 
   return (
-    <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size }, animStyle]}>
+    <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size, zIndex: showBadge ? 30 : undefined }, animStyle]}>
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={handleCropCellPress}
@@ -1040,7 +1040,7 @@ const styles = StyleSheet.create({
   seasonBadge: { fontSize: 8, position: 'absolute', top: -2, right: -4 },
   stageRow: { flexDirection: 'row', gap: 3, marginTop: 2 },
   stageDot: { width: 5, height: 5, borderRadius: 3 },
-  wagerPill: { marginTop: 2, borderWidth: 1, borderRadius: 3, paddingHorizontal: 3, paddingVertical: 1, alignSelf: 'center' },
+  wagerPill: { marginTop: 2, borderWidth: 1, borderRadius: 3, paddingHorizontal: 3, paddingVertical: 1, alignSelf: 'center', zIndex: 50, elevation: 50 },
   wagerPillText: { fontSize: 7, fontWeight: '600' as const, textAlign: 'center' as const, lineHeight: 8 },
   stageDotFilled: { backgroundColor: '#8B6914' },
   stageDotMain: { backgroundColor: '#60A5FA' },
