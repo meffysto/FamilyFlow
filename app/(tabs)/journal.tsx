@@ -242,23 +242,23 @@ function parseRowToFields(type: EntryType, row: string): Record<string, string> 
     case 'Observation':
       return { text: row.replace(/^\d+\.\s*/, '').trim() };
     case 'SommeilAdulte': {
-      const coucher = row.match(/\*\*Coucher\*\*:\s*(.*)/)?.[1]?.trim() || '';
-      const lever = row.match(/\*\*Lever\*\*:\s*(.*)/)?.[1]?.trim() || '';
-      const qualite = row.match(/\*\*Qualité\*\*\s*\(1-5\):\s*(.*)/)?.[1]?.trim() || '';
-      const notes = row.match(/\*\*Notes\*\*:\s*(.*)/)?.[1]?.trim() || '';
+      const coucher = row.match(/\*\*Coucher\*\*:[ \t]*([^\n]*)/)?.[1]?.trim() || '';
+      const lever = row.match(/\*\*Lever\*\*:[ \t]*([^\n]*)/)?.[1]?.trim() || '';
+      const qualite = row.match(/\*\*Qualité\*\*\s*\(1-5\):[ \t]*([^\n]*)/)?.[1]?.trim() || '';
+      const notes = row.match(/\*\*Notes\*\*:[ \t]*([^\n]*)/)?.[1]?.trim() || '';
       return { coucher, lever, qualite, notes };
     }
     case 'SymptomeAdulte':
       return { text: row.replace(/^\d+\.\s*/, '').trim() };
     case 'HumeurAdulte': {
-      const humeur = row.match(/\*\*Humeur\*\*\s*\([^)]*\):\s*(.*)/)?.[1]?.trim() || '';
-      const ressenti = row.match(/\*\*Ressenti\*\*:\s*(.*)/)?.[1]?.trim() || '';
-      const notes = row.match(/\*\*Notes\*\*:\s*(.*)/)?.[1]?.trim() || '';
+      const humeur = row.match(/\*\*Humeur\*\*\s*\([^)]*\):[ \t]*([^\n]*)/)?.[1]?.trim() || '';
+      const ressenti = row.match(/\*\*Ressenti\*\*:[ \t]*([^\n]*)/)?.[1]?.trim() || '';
+      const notes = row.match(/\*\*Notes\*\*:[ \t]*([^\n]*)/)?.[1]?.trim() || '';
       return { humeur, ressenti, notes };
     }
     case 'EnergieAdulte': {
-      const energie = row.match(/\*\*Énergie\*\*\s*\([^)]*\):\s*(.*)/)?.[1]?.trim() || '';
-      const notes = row.match(/\*\*Notes\*\*:\s*(.*)/)?.[1]?.trim() || '';
+      const energie = row.match(/\*\*Énergie\*\*\s*\([^)]*\):[ \t]*([^\n]*)/)?.[1]?.trim() || '';
+      const notes = row.match(/\*\*Notes\*\*:[ \t]*([^\n]*)/)?.[1]?.trim() || '';
       return { energie, notes };
     }
     case 'ObservationAdulte':
