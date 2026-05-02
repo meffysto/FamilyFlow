@@ -79,11 +79,12 @@ export async function tickAubergeAuto(
     // 3. Bonus tech social-2 : +1 slot actif
     const techBonuses = getTechBonuses(farmData.farmTech ?? []);
     const extraSlots = techBonuses.aubergeMaxActiveBonus;
+    const rewardMultiplier = techBonuses.aubergeRewardMultiplier;
 
     // 4. Tente spawn
     const treeStage = getTreeStageInfo(profile.level ?? 1).stage;
     const totalRep = engineGetTotalReputation(nextState);
-    const spawnResult = engineSpawn(nextState, treeStage, now, totalRep, Math.random, extraSlots, effectiveCooldownMs);
+    const spawnResult = engineSpawn(nextState, treeStage, now, totalRep, Math.random, extraSlots, effectiveCooldownMs, rewardMultiplier);
     if (spawnResult) {
       nextState = spawnResult.state;
       const v = spawnResult.visitor;

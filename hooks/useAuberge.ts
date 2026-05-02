@@ -54,6 +54,7 @@ import type {
   ResourceType,
 } from '../lib/mascot/types';
 import { getTreeStageInfo } from '../lib/mascot/engine';
+import { getTechBonuses } from '../lib/mascot/tech-engine';
 import { removeFromGradedInventory, countItemByGrade } from '../lib/mascot/grade-engine';
 import type { HarvestGrade } from '../lib/mascot/grade-engine';
 import type { FarmProfileData } from '../lib/types';
@@ -305,7 +306,17 @@ export function useAuberge() {
 
     // 3. Tente spawn (peut être null si cooldown/cap/aucun candidat)
     const totalRep = engineGetTotalReputation(nextState);
-    const spawnResult = engineSpawn(nextState, treeStage, now, totalRep);
+    const techBonuses = getTechBonuses(farmData.farmTech ?? []);
+    const spawnResult = engineSpawn(
+      nextState,
+      treeStage,
+      now,
+      totalRep,
+      Math.random,
+      techBonuses.aubergeMaxActiveBonus,
+      undefined,
+      techBonuses.aubergeRewardMultiplier,
+    );
     let spawned: ActiveVisitor | undefined;
     if (spawnResult) {
       nextState = spawnResult.state;
@@ -357,7 +368,17 @@ export function useAuberge() {
       lastSpawnAt: undefined,
     };
 
-    const result = engineSpawn(stateForBypass, treeStage, now, totalRep);
+    const techBonuses = getTechBonuses(farmData.farmTech ?? []);
+    const result = engineSpawn(
+      stateForBypass,
+      treeStage,
+      now,
+      totalRep,
+      Math.random,
+      techBonuses.aubergeMaxActiveBonus,
+      undefined,
+      techBonuses.aubergeRewardMultiplier,
+    );
     if (!result) return null;
 
     // Reconstruire le nouvel état en réinjectant les reputations actualisées

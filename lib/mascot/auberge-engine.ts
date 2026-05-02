@@ -261,6 +261,7 @@ export function spawnVisitor(
   rng: () => number = Math.random,
   extraSlots: number = 0,
   cooldownMs: number = SPAWN_COOLDOWN_MS,
+  rewardMultiplier: number = 1.0,
 ): { state: AubergeState; visitor: ActiveVisitor } | null {
   if (!shouldSpawnVisitor(state, now, treeStage, extraSlots, cooldownMs)) return null;
 
@@ -286,7 +287,7 @@ export function spawnVisitor(
   const currentRep = state.reputations.find(r => r.visitorId === def.id)?.level ?? 0;
   const loyaltyBonus = getLoyaltyBonus(currentRep);
   const baseValue = request.reduce((sum, it) => sum + it.quantity * estimatedSellValue(it), 0);
-  const rewardCoins = Math.round(baseValue * def.rewardMultiplier * RARITY_BONUS[def.rarity] * loyaltyBonus);
+  const rewardCoins = Math.round(baseValue * def.rewardMultiplier * RARITY_BONUS[def.rarity] * loyaltyBonus * rewardMultiplier);
 
   // Deadline absolue
   const deadlineAt = new Date(now.getTime() + def.deadlineHours * 60 * 60 * 1000).toISOString();
