@@ -49,6 +49,37 @@ import {
 } from '../../lib/mascot/auberge-engine';
 import { VISITOR_CATALOG, type VisitorDefinition } from '../../lib/mascot/visitor-catalog';
 import { VISITOR_SPRITES } from '../../lib/mascot/visitor-sprites';
+import { CRAFT_RECIPES } from '../../lib/mascot/craft-engine';
+
+// ─── Sprites items ───────────────────────────────────────────────────────
+// Alignés sur CraftSheet : sprites png pour cultures et craftés.
+// Bâtiments (oeuf/lait/farine/miel) restent en emoji (pas de sprite dispo).
+const CROP_ICON_SPRITES: Record<string, ReturnType<typeof require>> = {
+  carrot:       require('../../assets/garden/crops/carrot/icon.png'),
+  wheat:        require('../../assets/garden/crops/wheat/icon.png'),
+  beetroot:     require('../../assets/garden/crops/beetroot/icon.png'),
+  cabbage:      require('../../assets/garden/crops/cabbage/icon.png'),
+  tomato:       require('../../assets/garden/crops/tomato/icon.png'),
+  potato:       require('../../assets/garden/crops/potato/icon.png'),
+  cucumber:     require('../../assets/garden/crops/cucumber/icon.png'),
+  corn:         require('../../assets/garden/crops/corn/icon.png'),
+  strawberry:   require('../../assets/garden/crops/strawberry/icon.png'),
+  sunflower:    require('../../assets/garden/crops/sunflower/icon.png'),
+  pumpkin:      require('../../assets/garden/crops/pumpkin/icon.png'),
+  orchidee:     require('../../assets/garden/crops/orchidee/icon.png'),
+  truffe:       require('../../assets/garden/crops/truffe/icon.png'),
+  rose_doree:   require('../../assets/garden/crops/rose_doree/icon.png'),
+  fruit_dragon: require('../../assets/garden/crops/fruit_dragon/icon.png'),
+};
+
+function itemSprite(item: VisitorRequestItem): ReturnType<typeof require> | null {
+  if (item.source === 'crop') return CROP_ICON_SPRITES[item.itemId] ?? null;
+  if (item.source === 'crafted') {
+    const recipe = CRAFT_RECIPES.find(r => r.id === item.itemId);
+    return recipe?.sprite ?? null;
+  }
+  return null;
+}
 import type {
   ActiveVisitor,
   VisitorRequestItem,
@@ -300,7 +331,14 @@ const VisitorCard = React.memo(function VisitorCard({
               ]}
             >
               <View style={styles.requestItemTop}>
-                <Text style={styles.requestEmoji}>{itemEmoji(item)}</Text>
+                {(() => {
+                  const sprite = itemSprite(item);
+                  return sprite ? (
+                    <Image source={sprite} style={styles.requestSprite} resizeMode="contain" />
+                  ) : (
+                    <Text style={styles.requestEmoji}>{itemEmoji(item)}</Text>
+                  );
+                })()}
                 <Text style={styles.requestQty}>{item.quantity}×</Text>
                 <Text style={styles.requestStatus}>{ok ? '✅' : '❌'}</Text>
               </View>
@@ -876,6 +914,10 @@ const styles = StyleSheet.create({
   },
   requestEmoji: {
     fontSize: FontSize.lg,
+  },
+  requestSprite: {
+    width: 28,
+    height: 28,
   },
   requestQty: {
     fontSize: FontSize.sm,
