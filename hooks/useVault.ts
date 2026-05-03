@@ -107,7 +107,6 @@ import { useVaultRecipes } from './useVaultRecipes';
 import { useVaultDefis } from './useVaultDefis';
 import { useVaultFamilyQuests } from './useVaultFamilyQuests';
 import { parseFamilyQuests, FAMILY_QUESTS_FILE, LOVENOTES_DIR, NOTES_DIR } from '../lib/parser';
-import { STORIES_DIR } from '../lib/stories';
 import type { FamilyQuest } from '../lib/quest-engine';
 import { useVaultProfiles, ACTIVE_PROFILE_KEY } from './useVaultProfiles';
 import { useVaultDietary } from './useVaultDietary';
@@ -1462,30 +1461,11 @@ export function useVaultInternal(): VaultState {
           } catch (e) { warnUnexpected('skills-refresh', e); }
         },
       });
-      // Folder-based : stories (listDir per enfant + per-file mtimes)
-      TARGETED_DOMAINS.push({
-        name: 'stories',
-        detect: async () => {
-          for (const name of enfantNames) {
-            try {
-              const dir = `${STORIES_DIR}/${name}`;
-              if (!(await vault.exists(dir))) continue;
-              const files = await vault.listDir(dir);
-              const mds = files.filter(f => f.endsWith('.md'));
-              const mtimes = await Promise.all(mds.map(f => vault.getFileMtime(`${dir}/${f}`)));
-              if (mtimes.some(m => m !== null && m > cacheSavedAtMs)) return true;
-            } catch { /* skip */ }
-          }
-          return false;
-        },
-        refresh: async () => {
-          try {
-            const fresh = await storiesHook.loadStories(vault, enfantNames);
-            storiesHook.setStories(fresh);
-            targetedCacheUpdates.stories = fresh;
-          } catch (e) { warnUnexpected('stories-refresh', e); }
-        },
-      });
+      // Stories : EXCLUS du targeted detect car
+      //  1. l'app écrit elle-même les .md de stories (génération AI) → faux
+      //     positifs à chaque relaunch même sans modif depuis l'autre iPhone
+      //  2. le refresh wakup iCloud sur les .mp3 du dossier → lent (download)
+      // Refresh stories uniquement via full Phase 2 (cache > 6h) ou pull-to-refresh.
       // Folder-based : love-notes
       TARGETED_DOMAINS.push({
         name: 'love-notes',
