@@ -5,6 +5,10 @@
  * depuis un snapshot de la session précédente, pendant que loadVaultData()
  * lit les vrais fichiers en arrière-plan.
  *
+ * **API synchrone** (depuis SDK 54) — utilise expo-file-system File.textSync()
+ * et file.write() pour permettre l'hydratation des useState dès le mount,
+ * avant le premier render. Plus de double-paint vide → rempli.
+ *
  * Exclusions volontaires (toujours chargés frais depuis le vault) :
  * - gamiData, defis, skillTrees, familyQuests (gamification)
  * - gardenRaw (jardin du village)
@@ -17,7 +21,7 @@
  * - Cache hit n'empêche jamais loadVaultData() de tourner après
  */
 
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Paths } from 'expo-file-system';
 import type {
   Anniversary,
   ChildQuote,
@@ -53,7 +57,7 @@ import type { JournalSummaryEntry } from './ai-service';
 // v10: Profile.voiceTrainingProgress?: number — progression PVC ElevenLabs (0..1)
 // v11: Profile.voiceElevenLabsIvcId / voiceElevenLabsPvcId — slots IVC + PVC indépendants
 const CACHE_VERSION = 11;
-const CACHE_FILE_URI = FileSystem.documentDirectory + 'vault-cache-v11.json';
+const CACHE_FILENAME = 'vault-cache-v11.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {
@@ -164,41 +168,68 @@ export function hydrateProfileFromCache(entry: ProfileCacheEntry): Profile {
   };
 }
 
-export async function saveCache(payload: VaultCachePayload): Promise<void> {
+function getCacheFile(): File {
+  return new File(Paths.document, CACHE_FILENAME);
+}
+
+// Mémoïsation de la première lecture — évite de relire le fichier si plusieurs
+// consommateurs appellent readCacheSync au boot (useState initializers).
+let _memoizedSnapshot: VaultCacheState | null | undefined;
+
+/**
+ * Lit le snapshot mis en cache de manière **synchrone**. Utilisable dans un
+ * `useState(() => readCacheSync()?.tasks ?? [])` pour pré-remplir l'état au
+ * mount, avant le premier render.
+ *
+ * Retourne `null` si le cache n'existe pas, est corrompu, ou si la version
+ * ne correspond pas (le fichier est alors supprimé silencieusement).
+ */
+export function readCacheSync(): VaultCacheState | null {
+  if (_memoizedSnapshot !== undefined) return _memoizedSnapshot;
+  try {
+    const file = getCacheFile();
+    if (!file.exists) {
+      _memoizedSnapshot = null;
+      return null;
+    }
+    const raw = file.textSync();
+    const parsed = JSON.parse(raw) as Partial<VaultCacheState>;
+    if (parsed.version !== CACHE_VERSION) {
+      try { file.delete(); } catch { /* silent */ }
+      _memoizedSnapshot = null;
+      return null;
+    }
+    _memoizedSnapshot = parsed as VaultCacheState;
+    return _memoizedSnapshot;
+  } catch (e) {
+    if (__DEV__) console.warn('[vault-cache] readCacheSync failed:', e);
+    _memoizedSnapshot = null;
+    return null;
+  }
+}
+
+export function saveCache(payload: VaultCachePayload): void {
   try {
     const data: VaultCacheState = {
       version: CACHE_VERSION,
       savedAt: new Date().toISOString(),
       ...payload,
     };
-    await FileSystem.writeAsStringAsync(CACHE_FILE_URI, JSON.stringify(data));
+    const file = getCacheFile();
+    if (!file.exists) {
+      file.create();
+    }
+    file.write(JSON.stringify(data));
+    _memoizedSnapshot = data;
   } catch (e) {
     if (__DEV__) console.warn('[vault-cache] saveCache failed:', e);
   }
 }
 
-export async function hydrateFromCache(): Promise<VaultCacheState | null> {
+export function clearCache(): void {
   try {
-    const info = await FileSystem.getInfoAsync(CACHE_FILE_URI);
-    if (!info.exists) return null;
-    const raw = await FileSystem.readAsStringAsync(CACHE_FILE_URI);
-    const parsed = JSON.parse(raw) as Partial<VaultCacheState>;
-    if (parsed.version !== CACHE_VERSION) {
-      await FileSystem.deleteAsync(CACHE_FILE_URI, { idempotent: true }).catch(() => {});
-      return null;
-    }
-    return parsed as VaultCacheState;
-  } catch (e) {
-    if (__DEV__) console.warn('[vault-cache] hydrateFromCache failed:', e);
-    try {
-      await FileSystem.deleteAsync(CACHE_FILE_URI, { idempotent: true });
-    } catch { /* silent */ }
-    return null;
-  }
-}
-
-export async function clearCache(): Promise<void> {
-  try {
-    await FileSystem.deleteAsync(CACHE_FILE_URI, { idempotent: true });
+    const file = getCacheFile();
+    if (file.exists) file.delete();
   } catch { /* silent */ }
+  _memoizedSnapshot = null;
 }

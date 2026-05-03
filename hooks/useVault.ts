@@ -113,8 +113,8 @@ import { useVaultDietary } from './useVaultDietary';
 import type { VaultDietaryState } from './useVaultDietary';
 import { VILLAGE_FILE } from '../lib/village';
 import {
-  hydrateFromCache,
   hydrateProfileFromCache,
+  readCacheSync,
   saveCache,
   stripProfileForCache,
 } from '../lib/vault-cache';
@@ -904,15 +904,23 @@ export function useVaultInternal(): VaultState {
 
   // Load vault path + active profile from SecureStore on mount
   useEffect(() => {
+    const __tMount = __DEV__ ? performance.now() : 0;
+    const __markMount = __DEV__ ? (label: string, since: number) => {
+      console.log(`[BOOT] ${label}: ${(performance.now() - since).toFixed(0)}ms`);
+    } : () => {};
+    if (__DEV__) console.log('[BOOT] mount-start');
     (async () => {
       try {
         // Restaurer l'accès security-scoped (iOS) ou SAF persistable (Android)
         const restoredUri = await restoreAccess();
+        __markMount('restoreAccess', __tMount);
+        const __tSecure = __DEV__ ? performance.now() : 0;
 
         const [stored, storedProfileId] = await Promise.all([
           SecureStore.getItemAsync(VAULT_PATH_KEY),
           SecureStore.getItemAsync(ACTIVE_PROFILE_KEY),
         ]);
+        __markMount('secure-store', __tSecure);
         if (storedProfileId) setActiveProfileId(storedProfileId);
         if (stored) {
           // Vérifier que la permission est toujours valide (SAF peut la révoquer)
@@ -926,8 +934,15 @@ export function useVaultInternal(): VaultState {
           // Hydrate depuis le cache local — dashboard visible immédiatement.
           // loadVaultData() écrasera ensuite avec les vraies données du vault.
           // Exclut jardin/ferme/gamification : toujours chargés frais (voir vault-cache.ts).
-          const cached = await hydrateFromCache();
-          if (cached && cached.vaultPath === stored) {
+          // Lecture sync (<1ms) : React 18 batche les setState en 1 seul re-render.
+          const __tCache = __DEV__ ? performance.now() : 0;
+          const cached = readCacheSync();
+          __markMount('readCacheSync', __tCache);
+          // VaultManager normalise le path (strip trailing slash) → comparer
+          // contre le path normalisé pour éviter cache MISS perpétuel.
+          const normalizedVaultPath = vaultRef.current.vaultPath;
+          if (cached && cached.vaultPath === normalizedVaultPath) {
+            const __tHydrate = __DEV__ ? performance.now() : 0;
             try {
               setProfiles(cached.profiles.map(hydrateProfileFromCache));
               tasksHook.setTasks(cached.tasks);
@@ -953,12 +968,17 @@ export function useVaultInternal(): VaultState {
               missionsHook.setSecretMissions(cached.secretMissions);
               loveNotesHook.setLoveNotes(cached.loveNotes);
               setIsLoading(false);
+              __markMount('cache-hydrate-setState', __tHydrate);
             } catch (e) {
               if (__DEV__) console.warn('[vault-cache] hydration apply failed:', e);
             }
+          } else if (__DEV__) {
+            console.log(`[BOOT] cache MISS (cached=${!!cached}, vaultPath match=${cached?.vaultPath === normalizedVaultPath})`);
+            if (cached) console.log(`[BOOT]   cached.vaultPath="${cached.vaultPath}" vs normalized="${normalizedVaultPath}"`);
           }
 
           await loadVaultData(vaultRef.current);
+          __markMount('TOTAL-mount-to-loaded', __tMount);
         }
       } catch (e) {
         setError(String(e));
@@ -1066,6 +1086,10 @@ export function useVaultInternal(): VaultState {
   const loadVaultData = useCallback(async (vault: VaultManager) => {
     setError(null);
     const debugErrors: string[] = [];
+    const __t0 = __DEV__ ? performance.now() : 0;
+    const __mark = __DEV__ ? (label: string, since: number) => {
+      console.log(`[BOOT] ${label}: ${(performance.now() - since).toFixed(0)}ms`);
+    } : () => {};
 
     try {
       // Load profiles first (needed for dynamic task file paths)
@@ -1555,6 +1579,19 @@ export function useVaultInternal(): VaultState {
         // [23] Love Notes — 1 fichier par note classe par destinataire (Phase 34)
         loveNotesHook.loadLoveNotes(vault).catch(() => [] as LoveNote[]),
       ]);
+      const __t_settled = __DEV__ ? performance.now() : 0;
+      __mark('vault-load-allSettled', __t0);
+
+      // Family quests : chargées séquentiellement APRÈS allSettled (évite la
+      // contention iCloud d'un 24e fichier en parallèle), MAIS avant le bloc
+      // setState pour que tous les setState restent dans un seul tick batché
+      // par React 18 (1 seul re-render au lieu de 2).
+      const loadedQuests = await (async () => {
+        const c = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+        return await questsHook.checkAndExpireQuests(parseFamilyQuests(c));
+      })().catch(() => [] as FamilyQuest[]);
+      __mark('family-quests', __t_settled);
+      const __t_setstate = __DEV__ ? performance.now() : 0;
 
       // Apply results — use helper to extract settled values
       const val = <T,>(r: PromiseSettledResult<T>, fallback: T): T =>
@@ -1614,12 +1651,6 @@ export function useVaultInternal(): VaultState {
         }
       }
       defisHook.setDefis(newDefis);
-
-      // Quêtes coopératives familiales : chargement + détection expiration
-      const questsContent = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
-      let loadedQuests = parseFamilyQuests(questsContent);
-      // Détection expiration au chargement — notification locale si quête expirée
-      loadedQuests = await questsHook.checkAndExpireQuests(loadedQuests);
       questsHook.setFamilyQuests(loadedQuests);
 
       setGratitudeDays(val(results[11], []));
@@ -1644,6 +1675,8 @@ export function useVaultInternal(): VaultState {
 
       // Sync feedings du widget vers le vault markdown (fire-and-forget)
       syncWidgetFeedingsToVault(vault).catch(() => {});
+      __mark('setState-block', __t_setstate);
+      const __t_save = __DEV__ ? performance.now() : 0;
 
       // Persister un snapshot pour accélérer le prochain re-launch.
       // Exclut volontairement jardin/ferme/gamification (toujours chargés frais).
@@ -1672,7 +1705,9 @@ export function useVaultInternal(): VaultState {
         moods: val(results[18], []) as MoodEntry[],
         secretMissions: val(results[20], []) as Task[],
         loveNotes: val(results[23] as PromiseSettledResult<LoveNote[]>, []) as LoveNote[],
-      }).catch(() => { /* Cache save non-critical */ });
+      });
+      __mark('save-cache', __t_save);
+      __mark('TOTAL-loadVaultData', __t0);
 
     } catch (e) {
       debugErrors.push(`global: ${e}`);
