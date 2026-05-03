@@ -40,6 +40,7 @@ import type {
   StoryVoiceEngine,
   StoryAudioMode,
   StoryLength,
+  ElevenLabsModel,
 } from '../lib/types';
 
 const ENGINE_LABELS: Record<StoryVoiceEngine, string> = {
@@ -52,6 +53,13 @@ const AUDIO_MODE_OPTIONS: { key: StoryAudioMode; emoji: string; label: string; h
   { key: 'off', emoji: '🔇', label: 'Off', hint: 'Voix seule' },
   { key: 'doux', emoji: '🌙', label: 'Doux', hint: 'Ambiance' },
   { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: 'Ambiance + SFX' },
+];
+
+const ELEVENLABS_MODEL_OPTIONS: { key: ElevenLabsModel; label: string; hint: string }[] = [
+  { key: 'eleven_v3',              label: 'Cinéma v3',  hint: 'Émotions + tags (chuchotement, rire…)' },
+  { key: 'eleven_multilingual_v2', label: 'Premium',    hint: 'Qualité stable — coût standard' },
+  { key: 'eleven_turbo_v2_5',      label: 'Économique', hint: '−50% crédits — qualité quasi identique' },
+  { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−50% crédits — voix plus mécanique' },
 ];
 
 export default function StorySettingsScreen() {
@@ -132,6 +140,7 @@ export default function StorySettingsScreen() {
   const currentLanguage: 'fr' | 'en' = defaults.language ?? 'fr';
   const currentAudioMode: StoryAudioMode = defaults.audioMode ?? 'off';
   const currentLength: StoryLength = defaults.defaultLength ?? 'moyenne';
+  const currentModel: ElevenLabsModel = defaults.elevenLabsModel ?? 'eleven_v3';
   const elevenLabsVoices = currentLanguage === 'fr' ? ELEVENLABS_FRENCH_VOICES : ELEVENLABS_ENGLISH_VOICES;
 
   if (childProfiles.length === 0) {
@@ -441,6 +450,38 @@ export default function StorySettingsScreen() {
           </View>
         )}
 
+        {/* Modèle ElevenLabs — compromis qualité / coût */}
+        {currentEngine === 'elevenlabs' && (
+          <>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Modèle ElevenLabs</Text>
+            <View style={styles.modelGrid}>
+              {ELEVENLABS_MODEL_OPTIONS.map(m => {
+                const isSelected = currentModel === m.key;
+                return (
+                  <Pressable
+                    key={m.key}
+                    style={[
+                      styles.modelChip,
+                      {
+                        backgroundColor: isSelected ? primary : colors.card,
+                        borderColor: isSelected ? primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => persist({ elevenLabsModel: m.key })}
+                  >
+                    <Text style={[styles.modelLabel, { color: isSelected ? '#fff' : colors.text }]}>
+                      {m.label}
+                    </Text>
+                    <Text style={[styles.modelHint, { color: isSelected ? '#ffffffcc' : colors.textMuted }]}>
+                      {m.hint}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
+
         {/* Longueur par défaut */}
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Longueur préférée</Text>
         <View style={styles.lengthRow}>
@@ -697,6 +738,18 @@ const styles = StyleSheet.create({
   toggleLabelWrap: { flex: 1 },
   toggleLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   toggleHint: { fontSize: FontSize.micro, marginTop: 2 },
+
+  modelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  modelChip: {
+    flexBasis: '48%',
+    flexGrow: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  modelLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  modelHint: { fontSize: FontSize.micro, marginTop: 2 },
 
   lengthRow: { flexDirection: 'row', gap: Spacing.sm },
   lengthChip: {
