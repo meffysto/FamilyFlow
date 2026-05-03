@@ -19,26 +19,61 @@ interface WeeklyGoalProps {
   weeklyTaskCount: number;
   colors: AppColors;
   t: (key: string, opts?: any) => string;
+  /** True quand objectif atteint ET pas encore réclamé cette semaine. */
+  claimable?: boolean;
+  /** True une fois la récompense réclamée — la barre passe en état "claimed". */
+  alreadyClaimed?: boolean;
+  /** Handler async appelé au tap "Réclamer" (uniquement si claimable). */
+  onClaim?: () => Promise<void> | void;
 }
 
-export function WeeklyGoal({ weeklyTaskCount, colors, t }: WeeklyGoalProps) {
+export function WeeklyGoal({
+  weeklyTaskCount,
+  colors,
+  t,
+  claimable = false,
+  alreadyClaimed = false,
+  onClaim,
+}: WeeklyGoalProps) {
   const [dismissed, setDismissed] = useState(false);
+  const [claiming, setClaiming] = useState(false);
   const progress = Math.min(1, weeklyTaskCount / WEEKLY_TARGET);
   const isComplete = weeklyTaskCount >= WEEKLY_TARGET;
 
   const handleDismiss = useCallback(() => setDismissed(true), []);
+  const handleClaim = useCallback(async () => {
+    if (!onClaim || claiming) return;
+    setClaiming(true);
+    try { await onClaim(); } finally { setClaiming(false); }
+  }, [onClaim, claiming]);
 
   if (dismissed) return null;
 
+  // État réclamable = tap principal = Réclamer (pas dismiss).
+  // État autre (en cours, déjà claim) = tap principal = Dismiss.
+  const primaryAction = claimable ? handleClaim : handleDismiss;
+  const fillColor = alreadyClaimed
+    ? colors.textMuted
+    : claimable
+      ? colors.success
+      : isComplete
+        ? colors.success
+        : colors.info;
+  const subtitle = alreadyClaimed
+    ? t('farm.weeklyGoal.claimed')
+    : isComplete
+      ? t('farm.weeklyGoal.complete', { reward: WEEKLY_REWARD })
+      : t('farm.weeklyGoal.progress', { remaining: WEEKLY_TARGET - weeklyTaskCount, reward: WEEKLY_REWARD });
+
   return (
     <Animated.View entering={FadeInDown.delay(300).duration(400)} exiting={FadeOut.duration(300)}>
-      <TouchableOpacity activeOpacity={0.8} onPress={handleDismiss}>
+      <TouchableOpacity activeOpacity={0.8} onPress={primaryAction} disabled={claiming}>
       <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
-            {isComplete ? '🎉' : '🎯'} {t('farm.weeklyGoal.title')}
+            {alreadyClaimed ? '✅' : isComplete ? '🎉' : '🎯'} {t('farm.weeklyGoal.title')}
           </Text>
-          <Text style={[styles.count, { color: isComplete ? colors.success : colors.textSub }]}>
+          <Text style={[styles.count, { color: alreadyClaimed ? colors.textMuted : isComplete ? colors.success : colors.textSub }]}>
             {weeklyTaskCount}/{WEEKLY_TARGET}
           </Text>
         </View>
@@ -50,20 +85,29 @@ export function WeeklyGoal({ weeklyTaskCount, colors, t }: WeeklyGoalProps) {
               styles.progressFill,
               {
                 width: `${progress * 100}%`,
-                backgroundColor: isComplete ? colors.success : colors.info,
+                backgroundColor: fillColor,
               },
             ]}
           />
         </View>
 
-        <Text style={[styles.subtitle, { color: isComplete ? colors.success : colors.textMuted }]}>
-          {isComplete
-            ? t('farm.weeklyGoal.complete', { reward: WEEKLY_REWARD })
-            : t('farm.weeklyGoal.progress', { remaining: WEEKLY_TARGET - weeklyTaskCount, reward: WEEKLY_REWARD })}
+        <Text style={[styles.subtitle, { color: alreadyClaimed ? colors.textMuted : isComplete ? colors.success : colors.textMuted }]}>
+          {subtitle}
         </Text>
-        <Text style={[styles.hint, { color: colors.textFaint }]}>
-          {t('farm.weeklyGoal.hint')}
-        </Text>
+
+        {claimable && (
+          <View style={[styles.claimBtn, { backgroundColor: colors.success }]}>
+            <Text style={[styles.claimBtnText, { color: colors.onPrimary }]}>
+              {claiming ? '…' : t('farm.weeklyGoal.claim', { reward: WEEKLY_REWARD })}
+            </Text>
+          </View>
+        )}
+
+        {!isComplete && (
+          <Text style={[styles.hint, { color: colors.textFaint }]}>
+            {t('farm.weeklyGoal.hint')}
+          </Text>
+        )}
       </View>
       </TouchableOpacity>
     </Animated.View>
@@ -126,5 +170,16 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 11,
     marginTop: 2,
+  },
+  claimBtn: {
+    marginTop: Spacing.sm,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+  },
+  claimBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

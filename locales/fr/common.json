@@ -4439,7 +4439,9 @@
     "weeklyGoal": {
       "title": "Objectif de la semaine",
       "progress": "Encore {{remaining}} tâches pour gagner {{reward}} 🍃",
-      "complete": "Bravo ! +{{reward}} 🍃 gagné !",
+      "complete": "Bravo ! +{{reward}} 🍃 à réclamer",
+      "claimed": "Réclamé cette semaine — rendez-vous lundi !",
+      "claim": "Réclamer +{{reward}} 🍃",
       "hint": "Complète des tâches pour remplir la barre !"
     },
     "seasonal": {

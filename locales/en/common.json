@@ -4423,7 +4423,9 @@
     "weeklyGoal": {
       "title": "Weekly Goal",
       "progress": "{{remaining}} more tasks to earn {{reward}} 🍃",
-      "complete": "Well done! +{{reward}} 🍃 earned!",
+      "complete": "Well done! +{{reward}} 🍃 to claim",
+      "claimed": "Claimed this week — see you Monday!",
+      "claim": "Claim +{{reward}} 🍃",
       "hint": "Complete tasks to fill the bar!"
     },
     "seasonal": {

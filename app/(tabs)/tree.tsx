@@ -126,6 +126,8 @@ import { AmbientParticles } from '../../components/mascot/AmbientParticles';
 import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
 import { SporeeOnboardingTooltip } from '../../components/mascot/SporeeOnboardingTooltip';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
+import { addPoints } from '../../lib/gamification/engine';
+import { parseGamification, serializeGamification } from '../../lib/parser';
 import {
   getTreeStage,
   getTreeStageInfo,
@@ -429,7 +431,7 @@ export default function TreeScreen() {
     0: TERRAIN_HEIGHT, 1: TERRAIN_HEIGHT, 2: TERRAIN_HEIGHT,
     3: TERRAIN_HEIGHT, 4: TERRAIN_HEIGHT, 5: TERRAIN_HEIGHT,
   };
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, buySporee, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, feedCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, buySporee, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, feedCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault, refreshGamification } = useVault();
   const { showToast, showHarvestCard } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded, activeFarmTutorialStep } = useHelp();
@@ -792,6 +794,30 @@ export default function TreeScreen() {
     const diffMs = Date.now() - new Date(lastEntry.timestamp).getTime();
     return diffMs / (1000 * 60 * 60);
   }, [gamiData, activeProfile]);
+
+  // Phase WeeklyGoal (F2) — compte des tâches cette semaine ISO + détection claim
+  const weeklyTaskCount = useMemo(() => {
+    if (!gamiData || !profile) return 0;
+    return countWeeklyTasks(gamiData.history ?? [], profile.id);
+  }, [gamiData, profile]);
+
+  const weeklyGoalAlreadyClaimed = useMemo(() => {
+    if (!gamiData || !profile) return false;
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+    return (gamiData.history ?? []).some((e: any) =>
+      e.profileId === profile.id
+        && e.note === 'Objectif hebdo'
+        && e.timestamp
+        && new Date(e.timestamp) >= monday,
+    );
+  }, [gamiData, profile]);
+
+  const weeklyGoalClaimable = !weeklyGoalAlreadyClaimed && weeklyTaskCount >= 15 && isOwnTree;
 
   const companionStage = companion && activeProfile ? getCompanionStage(calculateLevel(activeProfile.points ?? 0)) : undefined;
   const companionMoodResult = companion ? computeMoodScore({
@@ -1669,6 +1695,46 @@ export default function TreeScreen() {
   const handleWagerSealerClose = useCallback(() => {
     setShowWagerSealer(false);
   }, []);
+
+  /** F2 — Réclamer le bonus de l'objectif hebdomadaire (+50 🍃, 1×/semaine ISO) */
+  const handleWeeklyGoalClaim = useCallback(async () => {
+    if (!profile || !vault || !weeklyGoalClaimable) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    try {
+      const gamiPath = `gami-${profile.id}.md`;
+      const raw = await vault.readFile(gamiPath).catch(() => '');
+      if (!raw) return;
+      const gami = parseGamification(raw);
+      const gamiProfile = gami.profiles.find((p: Profile) => p.id === profile.id);
+      if (!gamiProfile) return;
+      const { profile: updated } = addPoints(gamiProfile, 50, 'Objectif hebdo');
+      gamiProfile.points = updated.points;
+      gamiProfile.coins = updated.coins;
+      gamiProfile.level = updated.level;
+      const newEntry = {
+        profileId: profile.id,
+        action: '+50',
+        points: 50,
+        note: 'Objectif hebdo',
+        timestamp: new Date().toISOString(),
+      };
+      const newData = {
+        profiles: [gamiProfile],
+        history: [
+          ...gami.history.filter((e: any) => e.profileId === profile.id),
+          newEntry,
+        ],
+        activeRewards: (gami.activeRewards ?? []).filter((r: any) => r.profileId === profile.id),
+        usedLoots: (gami.usedLoots ?? []).filter((u: any) => u.profileId === profile.id),
+      };
+      await vault.writeFile(gamiPath, serializeGamification(newData));
+      await refreshGamification();
+      showToast('🎉 +50 🍃 — objectif hebdo réclamé !', 'success');
+    } catch (e) {
+      if (__DEV__) console.warn('[WeeklyGoal] claim failed:', e);
+      showToast(t('common.error'), 'error');
+    }
+  }, [profile, vault, weeklyGoalClaimable, refreshGamification, showToast, t]);
 
   /** Tap sur une cellule batiment */
   const handleBuildingCellPress = useCallback((cellId: string, building: PlacedBuilding | null) => {
@@ -3174,6 +3240,17 @@ export default function TreeScreen() {
           </TouchableOpacity>
         ) : null}
 
+        {/* F2 — Objectif hebdo : barre de progression + claim 50🍃 */}
+        {profile && (
+          <WeeklyGoal
+            weeklyTaskCount={weeklyTaskCount}
+            colors={colors}
+            t={t}
+            claimable={weeklyGoalClaimable}
+            alreadyClaimed={weeklyGoalAlreadyClaimed}
+            onClaim={handleWeeklyGoalClaim}
+          />
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
