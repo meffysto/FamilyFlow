@@ -1393,20 +1393,39 @@ export default function StoriesScreen() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const buildFinalVoiceConfig = (): StoryVoiceConfig => {
-      const lang = voiceConfig.language;
-      const audioMode = voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off');
-      const spectacle = audioMode === 'spectacle' ? true : undefined;
-      const ambienceVolume = voiceConfig.ambienceVolume;
-      const length = voiceConfig.length;
-      const elevenLabsModel = voiceConfig.elevenLabsModel;
-      // Multi-voix : auto-activé en mode doux/spectacle si provider ElevenLabs.
-      // Apple/Fish n'ont pas accès à la voice library publique — toggle inopérant.
-      const multiVoice = audioMode !== 'off' && localVoiceEngine === 'elevenlabs' ? true : undefined;
-      const base = { language: lang, spectacle, audioMode, ambienceVolume, length, elevenLabsModel, multiVoice } as const;
-      if (localVoiceEngine === 'elevenlabs') {
-        if (voiceSelectedParentId) {
-          const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
+    // Phase B — préférences durables stockées sur le profil enfant.
+    // Le wizard ne montre plus les pickers durables ; on lit `storyDefaults`
+    // pour résoudre voix / mode audio / multi-voix / langue à la génération,
+    // et on utilise le voiceConfig global comme fallback.
+    const childProfile = profiles.find(p => p.id === enfantId);
+    const childDefaults = childProfile?.storyDefaults;
+    const effectiveEngine: StoryVoiceEngine = childDefaults?.engine ?? voiceConfig.engine;
+    const effectiveLanguage: 'fr' | 'en' = childDefaults?.language ?? voiceConfig.language;
+    const effectiveAudioMode: import('../../lib/types').StoryAudioMode =
+      childDefaults?.audioMode ?? voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off');
+    const effectiveAmbienceVolume = childDefaults?.ambienceVolume ?? voiceConfig.ambienceVolume;
+    const effectiveElevenLabsModel = childDefaults?.elevenLabsModel ?? voiceConfig.elevenLabsModel;
+    const effectiveMultiVoice = childDefaults?.multiVoice;
+
+    const buildFinalVoiceConfig = (lengthOverride: StoryLength): StoryVoiceConfig => {
+      const spectacle = effectiveAudioMode === 'spectacle' ? true : undefined;
+      // Multi-voix : explicite sur le profil sinon auto en mode doux/spectacle (ElevenLabs only).
+      const multiVoice = typeof effectiveMultiVoice === 'boolean'
+        ? effectiveMultiVoice
+        : (effectiveAudioMode !== 'off' && effectiveEngine === 'elevenlabs' ? true : undefined);
+      const base = {
+        language: effectiveLanguage,
+        spectacle,
+        audioMode: effectiveAudioMode,
+        ambienceVolume: effectiveAmbienceVolume,
+        length: lengthOverride,
+        elevenLabsModel: effectiveElevenLabsModel,
+        multiVoice,
+      } as const;
+
+      if (effectiveEngine === 'elevenlabs') {
+        if (childDefaults?.voiceParentId) {
+          const parent = adultProfiles.find((p: Profile) => p.id === childDefaults.voiceParentId);
           if (parent) {
             const BELLA_ID = 'EXAVITQu4vr4xnSDxMaL';
             const ADAM_ID = 'pNInz6obpgDQGcFmaJgB';
@@ -1414,26 +1433,30 @@ export default function StoriesScreen() {
             return { engine: 'elevenlabs', elevenLabsVoiceId: voiceId, ...base };
           }
         }
-        return { engine: 'elevenlabs', elevenLabsVoiceId: voiceConfig.elevenLabsVoiceId, ...base };
+        const voiceId = childDefaults?.elevenLabsVoiceId ?? voiceConfig.elevenLabsVoiceId;
+        return { engine: 'elevenlabs', elevenLabsVoiceId: voiceId, ...base };
       }
-      if (localVoiceEngine === 'fish-audio') {
-        if (voiceSelectedParentId) {
-          const parent = adultProfiles.find((p: Profile) => p.id === voiceSelectedParentId);
+      if (effectiveEngine === 'fish-audio') {
+        if (childDefaults?.voiceParentId) {
+          const parent = adultProfiles.find((p: Profile) => p.id === childDefaults.voiceParentId);
           if (parent?.voiceFishAudioId) {
             return { engine: 'fish-audio', fishAudioReferenceId: parent.voiceFishAudioId, ...base };
           }
         }
-        return { engine: 'fish-audio', fishAudioReferenceId: voiceConfig.fishAudioReferenceId, ...base };
+        const refId = childDefaults?.fishAudioReferenceId ?? voiceConfig.fishAudioReferenceId;
+        return { engine: 'fish-audio', fishAudioReferenceId: refId, ...base };
       }
-      // expo-speech — voix Premium/Enhanced optionnelle (persistee si choisie)
       return {
         engine: 'expo-speech',
-        voiceIdentifier: voiceSelectedPersonalVoice?.identifier,
+        voiceIdentifier: childDefaults?.voiceIdentifier ?? voiceConfig.voiceIdentifier,
         ...base,
       };
     };
 
-    const currentLength: StoryLength = voiceConfig.length ?? 'moyenne';
+    // Longueur visible dans le wizard comme override 1-tap (préselect = settings enfant).
+    const defaultLength: StoryLength = childDefaults?.defaultLength ?? voiceConfig.length ?? 'moyenne';
+    const [lengthOverride, setLengthOverride] = useState<StoryLength>(defaultLength);
+    const currentLength: StoryLength = lengthOverride;
 
     const generate = (detail: string) => {
       if (!aiConfig) {
@@ -1443,7 +1466,7 @@ export default function StoriesScreen() {
         );
         return;
       }
-      setVoiceConfig(buildFinalVoiceConfig());
+      setVoiceConfig(buildFinalVoiceConfig(currentLength));
       goTo({
         etape: 'generation',
         enfantId,
@@ -1735,8 +1758,8 @@ export default function StoriesScreen() {
           multiline
         />
 
-        {/* Sélecteur taille histoire */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? "Durée de l'histoire" : 'Story length'}</Text>
+        {/* Override longueur — 1-tap, préselect = settings enfant (Phase B) */}
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? "Durée ce soir" : 'Length tonight'}</Text>
         <View style={styles.lengthRow}>
           {STORY_LENGTH_ORDER.map(key => {
             const cfg = STORY_LENGTHS[key];
@@ -1757,7 +1780,7 @@ export default function StoriesScreen() {
                 ]}
                 onPress={() => {
                   Haptics.selectionAsync();
-                  setVoiceConfig({ ...voiceConfig, length: key });
+                  setLengthOverride(key);
                 }}
               >
                 <Text style={styles.lengthEmoji}>{cfg.emoji}</Text>
@@ -1772,467 +1795,6 @@ export default function StoriesScreen() {
           })}
         </View>
 
-        {/* Mode audio — 3 paliers : Off (voix seule) / Doux (+ ambiance) / Spectacle (+ SFX) */}
-        {(() => {
-          const currentMode: import('../../lib/types').StoryAudioMode =
-            voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off');
-          const ambienceVol = typeof voiceConfig.ambienceVolume === 'number'
-            ? voiceConfig.ambienceVolume
-            : 0.4;
-          // Spectacle (SFX automatiques) marche avec ElevenLabs (synchro mot-à-mot via
-          // timestamps) et Fish Audio (synchro ratio basée sur la position dans le script).
-          // Indisponible avec la voix système (expo-speech) qui n'expose ni l'un ni l'autre.
-          const spectacleAvailable = localVoiceEngine !== 'expo-speech';
-          const MODES: { key: import('../../lib/types').StoryAudioMode; emoji: string; label: string; hint: string }[] = lang === 'fr'
-            ? [
-                { key: 'off',       emoji: '🔇', label: 'Off',       hint: 'Voix seule' },
-                { key: 'doux',      emoji: '🌙', label: 'Doux',      hint: 'Ambiance' },
-                { key: 'spectacle', emoji: '🎭', label: 'Spectacle', hint: spectacleAvailable ? 'Ambiance + SFX' : 'ElevenLabs ou Fish Audio' },
-              ]
-            : [
-                { key: 'off',       emoji: '🔇', label: 'Off',     hint: 'Voice only' },
-                { key: 'doux',      emoji: '🌙', label: 'Soft',    hint: 'Ambience' },
-                { key: 'spectacle', emoji: '🎭', label: 'Theater', hint: spectacleAvailable ? 'Ambience + SFX' : 'ElevenLabs or Fish Audio' },
-              ];
-          const setMode = (mode: import('../../lib/types').StoryAudioMode) => {
-            if (mode === 'spectacle' && !spectacleAvailable) return;
-            Haptics.selectionAsync();
-            setVoiceConfig({
-              ...voiceConfig,
-              audioMode: mode,
-              spectacle: mode === 'spectacle' ? true : undefined,
-            });
-          };
-          const adjustVolume = (delta: number) => {
-            Haptics.selectionAsync();
-            const next = Math.max(0, Math.min(1, Math.round((ambienceVol + delta) * 10) / 10));
-            setVoiceConfig({ ...voiceConfig, ambienceVolume: next });
-          };
-          return (
-            <>
-              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Mode audio' : 'Audio mode'}</Text>
-              <View style={styles.audioModeRow}>
-                {MODES.map(m => {
-                  const selected = currentMode === m.key;
-                  const disabled = m.key === 'spectacle' && !spectacleAvailable;
-                  return (
-                    <Pressable
-                      key={m.key}
-                      disabled={disabled}
-                      style={[
-                        styles.audioModeChip,
-                        {
-                          backgroundColor: selected ? primary : colors.card,
-                          borderColor: selected ? primary : colors.border,
-                          opacity: disabled ? 0.45 : 1,
-                        },
-                      ]}
-                      onPress={() => setMode(m.key)}
-                      accessibilityState={{ disabled, selected }}
-                      accessibilityHint={disabled ? (lang === 'fr' ? 'Sélectionnez ElevenLabs ou Fish Audio pour activer le mode Spectacle' : 'Select ElevenLabs or Fish Audio to enable Theater mode') : undefined}
-                    >
-                      <Text style={styles.audioModeEmoji}>{m.emoji}</Text>
-                      <Text style={[styles.audioModeLabel, { color: selected ? '#fff' : colors.text }]}>
-                        {m.label}
-                      </Text>
-                      <Text style={[styles.audioModeHint, { color: selected ? '#ffffffcc' : colors.textMuted }]}>
-                        {m.hint}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              {currentMode !== 'off' && (
-                <View style={[styles.volumeRow, { borderColor: colors.border, backgroundColor: colors.card }]}>
-                  <Text style={[styles.volumeLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Volume ambiance' : 'Ambience volume'}</Text>
-                  <Pressable
-                    style={[styles.volumeButton, { borderColor: colors.border }]}
-                    onPress={() => adjustVolume(-0.1)}
-                    disabled={ambienceVol <= 0}
-                    accessibilityLabel={lang === 'fr' ? 'Baisser le volume' : 'Lower volume'}
-                  >
-                    <Text style={[styles.volumeButtonText, { color: colors.text }]}>−</Text>
-                  </Pressable>
-                  <Text style={[styles.volumeValue, { color: colors.text }]}>{Math.round(ambienceVol * 100)}%</Text>
-                  <Pressable
-                    style={[styles.volumeButton, { borderColor: colors.border }]}
-                    onPress={() => adjustVolume(0.1)}
-                    disabled={ambienceVol >= 1}
-                    accessibilityLabel={lang === 'fr' ? 'Augmenter le volume' : 'Raise volume'}
-                  >
-                    <Text style={[styles.volumeButtonText, { color: colors.text }]}>+</Text>
-                  </Pressable>
-                </View>
-              )}
-            </>
-          );
-        })()}
-
-        {/* Sélecteur voix unifié */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Voix de narration' : 'Narration voice'}</Text>
-
-        {/* Sélecteur moteur (tap → ActionSheet) */}
-        <Pressable
-          style={[styles.voiceEnginePicker, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={() => {
-            const notConfigured = lang === 'fr' ? ' (clé non configurée)' : ' (key not set)';
-            const engines: { key: StoryVoiceEngine; label: string }[] = [
-              { key: 'expo-speech', label: lang === 'fr' ? '🆓 Système (gratuit, hors-ligne)' : '🆓 System (free, offline)' },
-              { key: 'elevenlabs', label: `✨ ElevenLabs${isElevenLabsConfigured ? '' : notConfigured}` },
-              { key: 'fish-audio', label: `🐟 Fish Audio${isFishAudioConfigured ? '' : notConfigured}` },
-            ];
-            if (Platform.OS === 'ios') {
-              ActionSheetIOS.showActionSheetWithOptions(
-                { options: [...engines.map(e => e.label), lang === 'fr' ? 'Annuler' : 'Cancel'], cancelButtonIndex: engines.length, title: lang === 'fr' ? 'Moteur de voix' : 'Voice engine' },
-                (idx) => { if (idx < engines.length) { Haptics.selectionAsync(); setLocalVoiceEngine(engines[idx].key); } },
-              );
-            } else {
-              // Fallback Android : cycle simple
-              const keys: StoryVoiceEngine[] = ['expo-speech', 'elevenlabs', 'fish-audio'];
-              const next = keys[(keys.indexOf(localVoiceEngine) + 1) % keys.length];
-              Haptics.selectionAsync();
-              setLocalVoiceEngine(next);
-            }
-          }}
-        >
-          <Text style={[styles.voiceEnginePickerLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Moteur' : 'Engine'}</Text>
-          <Text style={[styles.voiceEnginePickerValue, { color: colors.text }]}>
-            {localVoiceEngine === 'expo-speech' ? (lang === 'fr' ? '🆓 Système' : '🆓 System') : localVoiceEngine === 'elevenlabs' ? '✨ ElevenLabs' : '🐟 Fish Audio'}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 16 }}>›</Text>
-        </Pressable>
-
-        {/* Langue */}
-        <View style={[styles.voiceEngineRow, { marginTop: Spacing.md }]}>
-          {(['fr', 'en'] as const).map(voiceLang => (
-            <Pressable
-              key={voiceLang}
-              style={[styles.voiceChip, { backgroundColor: voiceConfig.language === voiceLang ? primary : colors.card, borderColor: colors.border }]}
-              onPress={() => setVoiceConfig({ ...voiceConfig, language: voiceLang })}
-            >
-              <Text style={[styles.chipText, { color: voiceConfig.language === voiceLang ? '#fff' : colors.text }]}>
-                {voiceLang === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* ElevenLabs — profils adultes */}
-        {localVoiceEngine === 'elevenlabs' && adultProfiles.length > 0 && (
-          <View style={{ marginTop: Spacing.lg }}>
-            <Text style={[styles.voiceSubLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Narrateur' : 'Narrator'}</Text>
-            <View style={styles.voiceParentRow}>
-              {adultProfiles.map((p: Profile) => {
-                const BELLA_ID = 'EXAVITQu4vr4xnSDxMaL';
-                const ADAM_ID = 'pNInz6obpgDQGcFmaJgB';
-                const hasClone = !!p.voiceElevenLabsId;
-                const isPvc = p.voiceCloneType === 'professional';
-                const pvcStatus = p.voiceTrainingStatus;
-                const fallbackLabel = lang === 'fr'
-                  ? (p.gender === 'fille' ? 'Bella (auto)' : 'Adam (auto)')
-                  : (p.gender === 'fille' ? 'Bella (auto)' : 'Adam (auto)');
-                const progressPct = typeof p.voiceTrainingProgress === 'number'
-                  ? Math.round(p.voiceTrainingProgress * 100)
-                  : null;
-                let cloneBadge: string;
-                if (!hasClone) cloneBadge = fallbackLabel;
-                else if (isPvc && pvcStatus === 'samples') cloneBadge = lang === 'fr' ? '🎙 Pro · prises en cours' : '🎙 Pro · takes in progress';
-                else if (isPvc && pvcStatus === 'training') {
-                  cloneBadge = progressPct !== null && progressPct > 0
-                    ? (lang === 'fr' ? `🎙 Pro · entraînement ${progressPct}%` : `🎙 Pro · training ${progressPct}%`)
-                    : (lang === 'fr' ? '🎙 Pro · entraînement…' : '🎙 Pro · training…');
-                }
-                else if (isPvc && pvcStatus === 'ready') cloneBadge = lang === 'fr' ? '🎙 Pro · prête' : '🎙 Pro · ready';
-                else if (isPvc && pvcStatus === 'failed') cloneBadge = lang === 'fr' ? '🎙 Pro · échec' : '🎙 Pro · failed';
-                else cloneBadge = lang === 'fr' ? '🎙 Clonée (Standard)' : '🎙 Cloned (Standard)';
-                // Le bouton est toujours présent — son label dépend de l'état :
-                // - pas de voix : "+"   (créer)
-                // - voix IVC    : "⇪"   (upgrade vers Pro)
-                // - voix PVC en cours (samples / training) : "↻" (reprendre la session)
-                // - voix PVC prête : "+" (re-cloner — long-press conseillé pour confirmer)
-                const canResumePvc = isPvc && (pvcStatus === 'samples' || pvcStatus === 'training');
-                let btnLabel: string;
-                let btnA11y: string;
-                if (!hasClone) { btnLabel = '+'; btnA11y = lang === 'fr' ? `Créer la voix clonée de ${p.name}` : `Clone ${p.name}'s voice`; }
-                else if (canResumePvc) { btnLabel = '↻'; btnA11y = lang === 'fr' ? `Reprendre la session Pro de ${p.name}` : `Resume Pro session for ${p.name}`; }
-                else if (!isPvc) { btnLabel = '⇪'; btnA11y = lang === 'fr' ? `Améliorer en Pro la voix de ${p.name}` : `Upgrade ${p.name}'s voice to Pro`; }
-                else { btnLabel = '+'; btnA11y = lang === 'fr' ? `Re-cloner la voix de ${p.name}` : `Re-clone ${p.name}'s voice`; }
-                const isSelected = voiceSelectedParentId === p.id;
-                const hasIvc = !!p.voiceElevenLabsIvcId;
-                const hasPvc = !!p.voiceElevenLabsPvcId;
-                const showCloneSwitcher = hasIvc && hasPvc;
-                const switchToClone = async (target: 'instant' | 'professional') => {
-                  if (target === 'instant' && !hasIvc) return;
-                  if (target === 'professional' && !hasPvc) return;
-                  Haptics.selectionAsync();
-                  const nextVoiceId = target === 'instant' ? p.voiceElevenLabsIvcId : p.voiceElevenLabsPvcId;
-                  if (!nextVoiceId) return;
-                  try {
-                    const update: Partial<Profile> = {
-                      voiceElevenLabsId: nextVoiceId,
-                      voiceCloneType: target,
-                      voiceTrainingStatus: target === 'instant' ? 'ready' : (p.voiceTrainingStatus ?? 'ready'),
-                    };
-                    await updateProfile(p.id, update);
-                  } catch (e) {
-                    if (__DEV__) console.warn('switch IVC/PVC échoué:', e);
-                  }
-                };
-                return (
-                  <View key={p.id} style={styles.voiceParentWrap}>
-                    <Pressable
-                      onPress={() => { Haptics.selectionAsync(); setVoiceSelectedParentId(isSelected ? null : p.id); }}
-                      style={[styles.voiceParentChip, { backgroundColor: isSelected ? primary : colors.card, borderColor: isSelected ? primary : colors.border }]}
-                    >
-                      <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={32} />
-                      <Text style={[styles.voiceParentName, { color: isSelected ? '#fff' : colors.text }]}>{p.name}</Text>
-                      <Text style={[styles.voiceParentBadge, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
-                        {cloneBadge}
-                      </Text>
-                      {showCloneSwitcher && (
-                        <View style={styles.cloneSwitcherRow}>
-                          <Pressable
-                            onPress={(e) => { e.stopPropagation(); switchToClone('instant'); }}
-                            style={[
-                              styles.cloneSwitcherPill,
-                              {
-                                backgroundColor: !isPvc ? (isSelected ? '#ffffff33' : `${primary}33`) : 'transparent',
-                                borderColor: isSelected ? '#ffffff66' : colors.border,
-                              },
-                            ]}
-                          >
-                            <Text style={[styles.cloneSwitcherText, { color: isSelected ? '#fff' : (!isPvc ? primary : colors.textMuted) }]}>IVC</Text>
-                          </Pressable>
-                          <Pressable
-                            onPress={(e) => { e.stopPropagation(); switchToClone('professional'); }}
-                            style={[
-                              styles.cloneSwitcherPill,
-                              {
-                                backgroundColor: isPvc ? (isSelected ? '#ffffff33' : `${primary}33`) : 'transparent',
-                                borderColor: isSelected ? '#ffffff66' : colors.border,
-                              },
-                            ]}
-                          >
-                            <Text style={[styles.cloneSwitcherText, { color: isSelected ? '#fff' : (isPvc ? primary : colors.textMuted) }]}>Pro</Text>
-                          </Pressable>
-                        </View>
-                      )}
-                    </Pressable>
-                    <Pressable
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        // Pré-sélectionne le mode adapté à l'intention
-                        if (canResumePvc || (hasClone && !isPvc)) setVoiceCloneMode('professional');
-                        setVoiceRecorderProfileId(p.id);
-                      }}
-                      style={[styles.voiceAddBtn, { borderColor: colors.border }]}
-                      accessibilityLabel={btnA11y}
-                    >
-                      <Text style={[styles.voiceAddBtnText, { color: primary }]}>{btnLabel}</Text>
-                    </Pressable>
-                    {isPvc && pvcStatus === 'training' && (
-                      <Pressable
-                        onPress={async () => {
-                          if (verifyingPvcId) return;
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          setVerifyingPvcId(p.id);
-                          await refreshPvcStatus(p);
-                          setVerifyingPvcId(null);
-                        }}
-                        style={[styles.voiceAddBtn, { borderColor: colors.border, marginLeft: Spacing.xs }]}
-                        accessibilityLabel={lang === 'fr' ? `Vérifier l'état d'entraînement de ${p.name}` : `Check ${p.name}'s training status`}
-                      >
-                        {verifyingPvcId === p.id
-                          ? <ActivityIndicator size="small" color={primary} />
-                          : <Text style={[styles.voiceAddBtnText, { color: primary }]}>↺</Text>}
-                      </Pressable>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        )}
-
-        {/* ElevenLabs — pas de profil adulte → voix génériques */}
-        {localVoiceEngine === 'elevenlabs' && adultProfiles.length === 0 && (
-          <View style={{ marginTop: Spacing.lg }}>
-            {voiceOptions.map(v => (
-              <Pressable
-                key={v.id}
-                style={[styles.voiceOption, { backgroundColor: voiceConfig.elevenLabsVoiceId === v.id ? `${primary}20` : colors.card, borderColor: voiceConfig.elevenLabsVoiceId === v.id ? primary : colors.border }]}
-                onPress={() => setVoiceConfig({ ...voiceConfig, elevenLabsVoiceId: v.id })}
-              >
-                <Text style={{ color: colors.text, fontSize: FontSize.sm }}>{v.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-
-        {/* Sélecteur de modèle ElevenLabs (compromis qualité/coût) */}
-        {localVoiceEngine === 'elevenlabs' && (() => {
-          const currentModel = voiceConfig.elevenLabsModel ?? 'eleven_v3';
-          const MODELS: { key: import('../../lib/types').ElevenLabsModel; label: string; hint: string }[] = lang === 'fr'
-            ? [
-                { key: 'eleven_v3',              label: 'Cinéma v3',  hint: 'Émotions + tags (chuchotement, rire…)' },
-                { key: 'eleven_multilingual_v2', label: 'Premium',    hint: 'Qualité stable — coût standard' },
-                { key: 'eleven_turbo_v2_5',      label: 'Économique', hint: '−50% crédits — qualité quasi identique' },
-                { key: 'eleven_flash_v2_5',      label: 'Ultra éco',  hint: '−50% crédits — voix plus mécanique' },
-              ]
-            : [
-                { key: 'eleven_v3',              label: 'Cinema v3', hint: 'Emotions + tags (whisper, laugh…)' },
-                { key: 'eleven_multilingual_v2', label: 'Premium',   hint: 'Stable quality — standard cost' },
-                { key: 'eleven_turbo_v2_5',      label: 'Economy',   hint: '−50% credits — near identical quality' },
-                { key: 'eleven_flash_v2_5',      label: 'Ultra-eco', hint: '−50% credits — slightly more robotic' },
-              ];
-          return (
-            <View style={{ marginTop: Spacing.lg }}>
-              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Modèle ElevenLabs' : 'ElevenLabs model'}</Text>
-              <View style={styles.audioModeRow}>
-                {MODELS.map(m => {
-                  const selected = currentModel === m.key;
-                  return (
-                    <Pressable
-                      key={m.key}
-                      style={[
-                        styles.audioModeChip,
-                        {
-                          backgroundColor: selected ? primary : colors.card,
-                          borderColor: selected ? primary : colors.border,
-                        },
-                      ]}
-                      onPress={() => {
-                        Haptics.selectionAsync();
-                        setVoiceConfig({ ...voiceConfig, elevenLabsModel: m.key });
-                      }}
-                    >
-                      <Text style={[styles.audioModeLabel, { color: selected ? '#fff' : colors.text }]}>{m.label}</Text>
-                      <Text style={[styles.audioModeHint, { color: selected ? '#ffffffcc' : colors.textMuted }]}>{m.hint}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          );
-        })()}
-
-        {/* Fish Audio — profils adultes avec clonage */}
-        {localVoiceEngine === 'fish-audio' && adultProfiles.length > 0 && (
-          <View style={{ marginTop: Spacing.lg }}>
-            <Text style={[styles.voiceSubLabel, { color: colors.textMuted }]}>{lang === 'fr' ? 'Narrateur' : 'Narrator'}</Text>
-            <View style={styles.voiceParentRow}>
-              {adultProfiles.map((p: Profile) => {
-                const hasClone = !!p.voiceFishAudioId;
-                const isSelected = voiceSelectedParentId === p.id;
-                return (
-                  <View key={p.id} style={styles.voiceParentWrap}>
-                    <Pressable
-                      onPress={() => { Haptics.selectionAsync(); setVoiceSelectedParentId(isSelected ? null : p.id); }}
-                      style={[styles.voiceParentChip, { backgroundColor: isSelected ? primary : colors.card, borderColor: isSelected ? primary : colors.border }]}
-                    >
-                      <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={32} />
-                      <Text style={[styles.voiceParentName, { color: isSelected ? '#fff' : colors.text }]}>{p.name}</Text>
-                      <Text style={[styles.voiceParentBadge, { color: isSelected ? '#ffffffaa' : colors.textMuted }]}>
-                        {hasClone ? (lang === 'fr' ? '🎙 Clonée' : '🎙 Cloned') : (lang === 'fr' ? 'Voix par défaut' : 'Default voice')}
-                      </Text>
-                    </Pressable>
-                    {!hasClone && (
-                      <Pressable
-                        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setVoiceRecorderProfileId(p.id); }}
-                        style={[styles.voiceAddBtn, { borderColor: colors.border }]}
-                        accessibilityLabel={lang === 'fr' ? `Créer la voix clonée de ${p.name}` : `Clone ${p.name}'s voice`}
-                      >
-                        <Text style={[styles.voiceAddBtnText, { color: primary }]}>+</Text>
-                      </Pressable>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        )}
-
-        {/* Fish Audio — pas de profil adulte → info */}
-        {localVoiceEngine === 'fish-audio' && adultProfiles.length === 0 && (
-          <View style={{ marginTop: Spacing.lg, paddingHorizontal: Spacing.md }}>
-            <Text style={[{ color: colors.textMuted, fontSize: FontSize.sm, textAlign: 'center' }]}>
-              {lang === 'fr'
-                ? 'Fish Audio utilisera sa voix par défaut. Ajoutez un profil adulte pour cloner votre voix.'
-                : 'Fish Audio will use its default voice. Add an adult profile to clone your voice.'}
-            </Text>
-          </View>
-        )}
-
-        {/* Systeme — selecteur voix Enhanced/Premium filtrees par langue */}
-        {localVoiceEngine === 'expo-speech' && (
-          <View style={{ marginTop: Spacing.lg }}>
-            <View style={styles.voicePremiumHeader}>
-              <Text style={[styles.voiceSubLabel, { color: colors.textMuted, marginBottom: 0 }]}>
-                {lang === 'fr'
-                  ? `Voix premium ${voiceConfig.language === 'fr' ? 'françaises' : 'anglaises'}`
-                  : `${voiceConfig.language === 'fr' ? 'French' : 'English'} premium voices`}
-              </Text>
-              <Pressable
-                onPress={refreshPersonalVoices}
-                hitSlop={8}
-                accessibilityLabel={lang === 'fr' ? 'Rafraîchir la liste des voix' : 'Refresh voice list'}
-              >
-                <Text style={[styles.voiceRefreshText, { color: primary }]}>{lang === 'fr' ? '↻ Rafraîchir' : '↻ Refresh'}</Text>
-              </Pressable>
-            </View>
-
-            {/* Option « voix par défaut » (= laisser iOS choisir) */}
-            <Pressable
-              onPress={() => { Haptics.selectionAsync(); setVoiceSelectedPersonalVoice(null); }}
-              style={[
-                styles.voiceOption,
-                {
-                  backgroundColor: voiceSelectedPersonalVoice === null ? `${primary}20` : colors.card,
-                  borderColor: voiceSelectedPersonalVoice === null ? primary : colors.border,
-                },
-              ]}
-            >
-              <Text style={{ color: colors.text, fontSize: FontSize.sm, fontWeight: FontWeight.medium }}>
-                {lang === 'fr' ? 'Voix par défaut du système' : 'System default voice'}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: FontSize.micro }}>
-                {lang === 'fr' ? 'Qualité standard · gratuit · hors-ligne' : 'Standard quality · free · offline'}
-              </Text>
-            </Pressable>
-
-            {voicePersonalLoading ? (
-              <ActivityIndicator color={primary} style={{ marginTop: Spacing.lg }} />
-            ) : voicePersonalVoices.length === 0 ? (
-              <View style={[styles.voiceEmptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Text style={[styles.voiceEmptyTitle, { color: colors.text }]}>
-                  {lang === 'fr' ? 'Aucune voix premium installée' : 'No premium voice installed'}
-                </Text>
-                <Text style={[styles.voiceEmptyText, { color: colors.textMuted }]}>
-                  {lang === 'fr' ? 'Téléchargez des voix haute qualité dans' : 'Download high-quality voices in'}{'\n'}
-                  <Text style={{ fontWeight: FontWeight.bold }}>{lang === 'fr' ? 'Réglages › Accessibilité ›\nContenu énoncé › Voix' : 'Settings › Accessibility ›\nSpoken Content › Voices'}</Text>
-                  {'\n\n'}
-                  {lang === 'fr' ? <>Cherchez <Text style={{ fontWeight: FontWeight.bold }}>Audrey</Text>, <Text style={{ fontWeight: FontWeight.bold }}>Thomas</Text> ou <Text style={{ fontWeight: FontWeight.bold }}>Aurélie</Text> (Premium), puis revenez ici et appuyez sur Rafraîchir.</> : <>Search for <Text style={{ fontWeight: FontWeight.bold }}>Audrey</Text>, <Text style={{ fontWeight: FontWeight.bold }}>Thomas</Text> or <Text style={{ fontWeight: FontWeight.bold }}>Aurélie</Text> (Premium), then come back and tap Refresh.</>}
-                </Text>
-              </View>
-            ) : (
-              voicePersonalVoices.map(v => {
-                const isSelected = voiceSelectedPersonalVoice?.identifier === v.identifier;
-                return (
-                  <Pressable
-                    key={v.identifier}
-                    onPress={() => { Haptics.selectionAsync(); setVoiceSelectedPersonalVoice(isSelected ? null : v); }}
-                    style={[styles.voiceOption, { backgroundColor: isSelected ? `${primary}20` : colors.card, borderColor: isSelected ? primary : colors.border }]}
-                  >
-                    <Text style={{ color: colors.text, fontSize: FontSize.sm, fontWeight: FontWeight.medium }}>{v.name}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: FontSize.micro }}>
-                      {v.language} · {v.quality === 'Enhanced' ? 'Enhanced (HD)' : v.quality}
-                    </Text>
-                  </Pressable>
-                );
-              })
-            )}
-          </View>
-        )}
 
         {/* Modal VoiceRecorder — hoisté au niveau StoriesScreen pour éviter
             le remount lié au remount de PersonnaliserStep (cf. fin du composant) */}
@@ -2856,30 +2418,52 @@ export default function StoriesScreen() {
           ) : undefined
         }
         actions={
-          // V3 — Bouton 📖 Lecture immersive : visible quand une histoire est
-          // en cours de lecture (set par GenerationStep ou ReplayStep), désactivé
-          // tant que l'audio n'est pas prêt côté player inline.
-          headerStory ? (
-            <Pressable
-              style={[
-                styles.headerImmersiveBtn,
-                { borderColor: primary },
-                !headerAudioReady && styles.headerImmersiveBtnDisabled,
-              ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setIsFullscreen(true);
-              }}
-              disabled={!headerAudioReady}
-              accessibilityRole="button"
-              accessibilityLabel={lang === 'fr' ? 'Lecture immersive' : 'Immersive reading'}
-              hitSlop={8}
-            >
-              <Text style={[styles.headerImmersiveIcon, { color: primary }, !headerAudioReady && { opacity: 0.4 }]}>
-                {headerAudioReady ? '📖' : '⏳'}
-              </Text>
-            </Pressable>
-          ) : undefined
+          // 📖 Lecture immersive (V3) + ⚙️ Settings histoires (Phase B).
+          // ⚙️ visible sur choisir_enfant et personnaliser ; 📖 dès qu'une
+          // histoire est en cours de lecture (audio prêt → activé, sinon ⏳).
+          (() => {
+            const showSettings = step.etape === 'choisir_enfant' || step.etape === 'personnaliser';
+            if (!headerStory && !showSettings) return undefined;
+            return (
+              <View style={styles.headerActionsRow}>
+                {showSettings && (
+                  <Pressable
+                    style={[styles.headerImmersiveBtn, { borderColor: primary }]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      router.push('/story-settings');
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={lang === 'fr' ? 'Paramètres histoires' : 'Story settings'}
+                    hitSlop={8}
+                  >
+                    <Text style={[styles.headerImmersiveIcon, { color: primary }]}>⚙️</Text>
+                  </Pressable>
+                )}
+                {headerStory && (
+                  <Pressable
+                    style={[
+                      styles.headerImmersiveBtn,
+                      { borderColor: primary },
+                      !headerAudioReady && styles.headerImmersiveBtnDisabled,
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setIsFullscreen(true);
+                    }}
+                    disabled={!headerAudioReady}
+                    accessibilityRole="button"
+                    accessibilityLabel={lang === 'fr' ? 'Lecture immersive' : 'Immersive reading'}
+                    hitSlop={8}
+                  >
+                    <Text style={[styles.headerImmersiveIcon, { color: primary }, !headerAudioReady && { opacity: 0.4 }]}>
+                      {headerAudioReady ? '📖' : '⏳'}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })()
         }
         bottom={
           showStoryTabs ? (
@@ -3093,6 +2677,7 @@ const styles = StyleSheet.create({
   },
   headerImmersiveBtnDisabled: { opacity: 0.5 },
   headerImmersiveIcon: { fontSize: 18, lineHeight: 20 },
+  headerActionsRow: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
   tabsWrap: { paddingVertical: Spacing.xs },
   content: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['6xl'] },
