@@ -748,6 +748,7 @@ export interface BedtimeStory {
   ambienceVolume?: number;      // 0..1 — défaut 0.4
   script?: StoryScript; // V2 — screenplay structuré avec SFX (chargé depuis sidecar .script.json)
   alignment?: StoryAudioAlignment; // V2.3 — alignement caractère→timestamp (sidecar .alignment.json)
+  scenes?: StoryScenes; // V3 — scènes illustrées Mode Picture-book (sidecar .scenes.json)
   version: number;
   sourceFile: string;
   // ─── Livre/chapitres (rétrocompat 100% — tous optionnels) ───────────────
@@ -848,6 +849,55 @@ export type StoryBeat =
 export interface StoryScript {
   version: 2;
   beats: StoryBeat[];
+}
+
+// ─── V3 : Scènes illustrées (Mode Picture-book) ───────────────────────────
+// Stocké dans un sidecar `<storyId>.scenes.json` à côté du `.md` (parallèle
+// au `.script.json` et `.alignment.json`). Quand présent, le player rend
+// l'histoire en mode livre illustré : une page par scène, image bundlée
+// matchée par {univers, archetype}, mots-clés colorés.
+//
+// Indépendant du `.script.json` (multi-voix/spectacle) : une histoire peut
+// avoir des scènes sans script, ou un script sans scènes.
+
+/** Archétype narratif d'une scène — enum fermé pour le matching d'image catalogue */
+export type SceneArchetype =
+  | 'paysage'      // décor sans personnage — ouverture/fermeture
+  | 'rencontre'    // héros découvre un autre personnage/créature
+  | 'decouverte'   // close-up héros + objet/lumière magique
+  | 'vulnerable'   // héros minuscule dans grand monde — doute/aventure
+  | 'echange'      // héros + autre personnage — don/échange
+  | 'etreinte';    // close-up tendresse — résolution
+
+/** Mot/expression à mettre en valeur visuellement (couleur teal) dans le texte rendu d'une scène.
+ *  Indices RELATIFS au texte de la scène (substring de BedtimeStory.texte). */
+export interface HighlightSpan {
+  /** Index char inclusif (0-based) dans le texte de la scène */
+  startChar: number;
+  /** Index char exclusif dans le texte de la scène */
+  endChar: number;
+  /** Type de mise en valeur — pour l'instant 'keyword' uniquement */
+  kind: 'keyword';
+}
+
+/** Une scène = un panneau du livre = une page lue */
+export interface SceneSpec {
+  /** Numéro de panneau, base 1 */
+  panelIndex: number;
+  /** Archétype pour le matching catalogue → image bundlée */
+  archetype: SceneArchetype;
+  /** Index char inclusif dans BedtimeStory.texte où commence le texte de cette scène */
+  textStart: number;
+  /** Index char exclusif dans BedtimeStory.texte où finit le texte de cette scène */
+  textEnd: number;
+  /** Mots-clés à mettre en couleur (indices relatifs à la scène) */
+  highlights: HighlightSpan[];
+}
+
+/** Container des scènes — sidecar `<storyId>.scenes.json` */
+export interface StoryScenes {
+  version: 1;
+  scenes: SceneSpec[];
 }
 
 export interface StoryUniverse {

@@ -244,9 +244,18 @@ interface Props {
   /** V2.3 — appelé quand l'alignement caractère→timestamp vient d'être généré.
    *  Le parent doit persister via saveStory pour sidecar `.alignment.json`. */
   onAlignmentReady?: (alignment: StoryAudioAlignment) => void;
+  /** V3 — quand `true`, met l'audio en pause + mute. Utilisé par le parent pour
+   *  réduire au silence ce player quand le modal fullscreen prend le relais
+   *  (un autre StoryPlayer y joue le même MP3 depuis le cache disque, 0 € API). */
+  forceMute?: boolean;
+  /** V3 — appelé une fois que l'audio est prêt à être lu :
+   *   - ElevenLabs/Fish Audio : quand `audioPath` est défini (cache disque hit ou génération terminée)
+   *   - expo-speech : immédiatement au mount (la voix iOS native est toujours dispo)
+   *  Permet au parent (header de l'écran) d'activer le bouton "Lecture immersive". */
+  onAudioReady?: () => void;
 }
 
-function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish, autoGenerate = true, onAlignmentReady }: Props) {
+function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish, autoGenerate = true, onAlignmentReady, forceMute = false, onAudioReady }: Props) {
   const { primary, colors } = useThemeColors();
   const { vault } = useVault();
   const isElevenLabs = voiceConfig.engine === 'elevenlabs';
@@ -850,6 +859,33 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       }
     }
   }, [isApiVoice, isPlaying, audioPath, startElevenLabs, pauseElevenLabs, startExpoSpeech, stopExpoSpeech]);
+
+  // V3 — forceMute : pause silencieuse quand un 2ᵉ player (modal fullscreen)
+  // prend le relais. Pas de re-fetch ElevenLabs : le MP3 est déjà cached
+  // sur disque, le modal hit le même fichier (lib/elevenlabs.ts:208).
+  useEffect(() => {
+    if (!forceMute) return;
+    if (isApiVoice) {
+      pauseElevenLabs().catch(() => { /* non-critique */ });
+    } else {
+      stopExpoSpeech();
+    }
+  }, [forceMute, isApiVoice, pauseElevenLabs, stopExpoSpeech]);
+
+  // V3 — onAudioReady : signale au parent que la lecture immersive peut s'ouvrir.
+  // - API voice : attend que audioPath soit défini (cache disque OU génération OK)
+  // - expo-speech : prêt immédiatement au mount (TTS natif iOS, pas d'attente)
+  // Le ref empêche un double-call si le parent se re-render.
+  const audioReadyFiredRef = useRef(false);
+  useEffect(() => {
+    if (audioReadyFiredRef.current) return;
+    if (!onAudioReady) return;
+    const ready = isApiVoice ? !!audioPath : true;
+    if (ready) {
+      audioReadyFiredRef.current = true;
+      onAudioReady();
+    }
+  }, [audioPath, isApiVoice, onAudioReady]);
 
   // ─── Changement de vitesse ────────────────────────────────────────────────
   const changeExpoSpeed = useCallback(async (newSpeed: StoryReadingSpeed) => {

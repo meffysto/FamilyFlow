@@ -1148,9 +1148,37 @@ RÈGLES STRICTES pour le script :
     spectacleEnabled ? `{ "kind": "sfx", "tag": "...", "triggerWord": "..." }` : null,
   ].filter(Boolean).join(', ');
   const memorySummaryField = `, "memorySummary": "résumé neutre 4-5 phrases — lieux, personnages, objets clés, état final du héros — pas d'émotion ni de style narratif"`;
+
+  // V3 — Scènes illustrées (mode picture-book) : TOUJOURS produit, indépendant
+  // du script audio. Permet de découper l'histoire en panneaux visuels avec
+  // archétype narratif (pour le matching catalogue) et mots-clés colorés.
+  // Format compact : on demande les 5 premiers mots de la scène (sceneStart)
+  // au lieu du texte complet — le parser localise via indexOf et déduit la
+  // fin via le sceneStart suivant. Évite de DOUBLER les tokens en réponse.
+  const scenesCount = Math.max(3, Math.min(6, lengthCfg.paragraphs + 1));
+  const scenesField = `, "scenes": [ { "panelIndex": 1, "archetype": "paysage", "sceneStart": "5 premiers mots EXACTS de la scène", "highlights": ["mot 1", "mot 2"] }, ... ${scenesCount} scènes ... ]`;
+
+  const scenesRules = `
+
+SCÈNES ILLUSTRÉES (toujours produit) :
+Tu dois découper l'histoire en exactement ${scenesCount} scènes visuelles ("scenes") pour la mise en page livre illustré.
+
+RÈGLES STRICTES :
+- "sceneStart" = les 5 PREMIERS MOTS EXACTS de la scène, copiés tels quels depuis le champ "texte" (avec ponctuation et accents identiques). Le code reconstitue le découpage en cherchant ces mots dans le texte. Les sceneStart doivent apparaître dans l'ordre du texte et être disjoints.
+- "archetype" = choisi parmi cette liste fermée selon ce qui se passe dans la scène :
+  * "paysage"    — décor, ambiance, AUCUN personnage actif (typique : ouverture, transition, fin contemplative)
+  * "rencontre"  — le héros découvre/croise un autre personnage ou une créature
+  * "decouverte" — le héros est seul ou en gros plan avec un objet/lumière/élément magique
+  * "vulnerable" — le héros minuscule dans un grand espace, doute, parcours, vu de loin
+  * "echange"    — le héros + un autre personnage, don/échange/dialogue clé
+  * "etreinte"   — moment tendre, paix retrouvée, étreinte, sommeil — typique de la dernière scène
+- 1ère scène : sceneStart = les 5 premiers mots du texte. archetype typiquement "paysage" ou "rencontre".
+- Dernière scène : archetype typiquement "etreinte" — résout sur l'apaisement.
+- "highlights" = 1 à 3 mots ou groupes de 2-3 mots EXACTEMENT présents dans le segment de scène, choisis pour leur charge émotionnelle ou poétique : sensations ("douce", "chaud"), créatures ("dragon", "fée"), objets magiques ("fleur de lumière"), émotions fortes ("courage", "tendresse"). JAMAIS de verbes communs ("dit", "va", "fait"), jamais de connecteurs ("alors", "puis").`;
+
   const outputFormat = scriptEnabled
-    ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ ${exampleBeats}, ... ] }${memorySummaryField} }`
-    : `{ "titre": "...", "texte": "${paragraphesTemplate}"${memorySummaryField} }`;
+    ? `{ "titre": "...", "texte": "${paragraphesTemplate}", "script": { "version": 2, "beats": [ ${exampleBeats}, ... ] }${scenesField}${memorySummaryField} }`
+    : `{ "titre": "...", "texte": "${paragraphesTemplate}"${scenesField}${memorySummaryField} }`;
 
   // Tags de performance vocale ElevenLabs : SEUL eleven_v3 les interprète.
   // Pour les autres modèles (multilingual_v2, turbo_v2_5, flash_v2_5) — y compris
@@ -1228,7 +1256,7 @@ ${vocabLine}
 ${moodContext ? `- Adapte le ton selon l'humeur : ${moodContext}` : ''}
 ${quotesContext ? `- Intègre subtilement une expression de l'enfant : ${quotesContext}` : ''}
 ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesContext}` : ''}
-${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${performanceTagsRules}${charactersRules}${bookMemorySection}${castingLockedSection}${spectacleRules}
+${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${performanceTagsRules}${charactersRules}${bookMemorySection}${castingLockedSection}${spectacleRules}${scenesRules}
 - Le champ "memorySummary" doit être un résumé NEUTRE en 4-5 phrases focalisé sur ce qui pourrait revenir dans un chapitre futur (lieux, personnages introduits, objets clés, état final du héros). Pas d'émotion, pas de style narratif — c'est une note de continuité.
 - Répondre UNIQUEMENT en JSON valide : ${outputFormat}
 - Aucun texte en dehors du JSON`;
@@ -1248,7 +1276,10 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
         // Spectacle = +script JSON volumineux dans la réponse → +150% de tokens
         // (script avec ~10 beats narration/dialogue + 5 SFX coûte ~600 tokens
         // en plus du `texte`, donc +30% étaient insuffisants → réponse tronquée).
-        max_tokens: (scriptEnabled ? Math.round(lengthCfg.maxTokens * 2.5) : lengthCfg.maxTokens) + (story.book ? 400 : 0),
+        // V3 picture-book = +scenes[] format compact (sceneStart = 5 mots) :
+        // 3-6 panneaux × ~30 tokens = ~150-200 tokens. On budgétise 500 pour
+        // marge confortable (highlights + JSON structure).
+        max_tokens: (scriptEnabled ? Math.round(lengthCfg.maxTokens * 2.5) : lengthCfg.maxTokens) + (story.book ? 400 : 0) + 500,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),

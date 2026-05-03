@@ -5,11 +5,12 @@
 import { useState, useCallback } from 'react';
 import type { MutableRefObject, Dispatch, SetStateAction } from 'react';
 import type { VaultManager } from '../lib/vault';
-import type { BedtimeStory, StoryAudioAlignment, StoryScript } from '../lib/types';
+import type { BedtimeStory, HighlightSpan, SceneSpec, StoryAudioAlignment, StoryScenes, StoryScript } from '../lib/types';
 import { parseBedtimeStory, serializeBedtimeStory } from '../lib/parser';
 import { parseStoryScript } from '../lib/story-script';
 import { STORIES_DIR } from '../lib/stories';
 import { deleteStoryAudios } from '../lib/elevenlabs';
+import { isValidArchetype } from '../lib/story-illustrations';
 
 /** Convertit `xxx.md` en `xxx.script.json` (sidecar V2) */
 function scriptSidecarPath(mdPath: string): string {
@@ -19,6 +20,55 @@ function scriptSidecarPath(mdPath: string): string {
 /** Convertit `xxx.md` en `xxx.alignment.json` (sidecar V2.3 — alignement TTS) */
 function alignmentSidecarPath(mdPath: string): string {
   return mdPath.replace(/\.md$/, '.alignment.json');
+}
+
+/** Convertit `xxx.md` en `xxx.scenes.json` (sidecar V3 — picture-book) */
+function scenesSidecarPath(mdPath: string): string {
+  return mdPath.replace(/\.md$/, '.scenes.json');
+}
+
+/** Parse tolérant d'un sidecar scenes JSON. Retourne null si inutilisable. */
+function parseScenesSidecar(raw: string, textLength: number): StoryScenes | null {
+  try {
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return null;
+    const scenesRaw = (data as Record<string, unknown>).scenes;
+    if (!Array.isArray(scenesRaw)) return null;
+
+    const scenes: SceneSpec[] = [];
+    for (const s of scenesRaw) {
+      if (!s || typeof s !== 'object') continue;
+      const obj = s as Record<string, unknown>;
+      const panelIndex = Number(obj.panelIndex);
+      const archetype = obj.archetype;
+      const textStart = Number(obj.textStart);
+      const textEnd = Number(obj.textEnd);
+      if (!Number.isFinite(panelIndex) || panelIndex < 1) continue;
+      if (!isValidArchetype(archetype)) continue;
+      if (!Number.isFinite(textStart) || textStart < 0) continue;
+      if (!Number.isFinite(textEnd) || textEnd <= textStart || textEnd > textLength) continue;
+
+      const sceneText = textEnd - textStart;
+      const highlightsRaw = Array.isArray(obj.highlights) ? obj.highlights : [];
+      const highlights: HighlightSpan[] = [];
+      for (const h of highlightsRaw) {
+        if (!h || typeof h !== 'object') continue;
+        const hObj = h as Record<string, unknown>;
+        const startChar = Number(hObj.startChar);
+        const endChar = Number(hObj.endChar);
+        if (!Number.isFinite(startChar) || !Number.isFinite(endChar)) continue;
+        if (startChar < 0 || endChar <= startChar || endChar > sceneText) continue;
+        highlights.push({ startChar, endChar, kind: 'keyword' });
+      }
+
+      scenes.push({ panelIndex, archetype, textStart, textEnd, highlights });
+    }
+    if (scenes.length === 0) return null;
+    scenes.sort((a, b) => a.panelIndex - b.panelIndex);
+    return { version: 1, scenes };
+  } catch {
+    return null;
+  }
 }
 
 /** Parse tolérant d'un sidecar alignment JSON */
@@ -87,6 +137,13 @@ export function useVaultStories(
               } catch { /* alignment absent — fallback ratio en V2.2 */ }
             }
 
+            // V3 — scènes illustrées (best-effort, indépendant du script.json)
+            try {
+              const raw = await vault.readFile(scenesSidecarPath(relPath));
+              const scenes = parseScenesSidecar(raw, story.texte.length);
+              if (scenes) story.scenes = scenes;
+            } catch { /* scenes absent — histoire sans illustrations, fallback texte */ }
+
             allStories.push(story);
           } catch {
             // fichier illisible — ignorer
@@ -151,6 +208,19 @@ export function useVaultStories(
           if (__DEV__) console.warn('[useVaultStories] alignment sidecar failed:', e);
         }
       }
+
+      // V3 — sidecar scenes.json (mode picture-book)
+      if (story.scenes) {
+        try {
+          await vault.writeFile(
+            scenesSidecarPath(story.sourceFile),
+            JSON.stringify(story.scenes, null, 2),
+          );
+          if (__DEV__) console.log('[useVaultStories] saveStory: scenes sidecar OK');
+        } catch (e) {
+          if (__DEV__) console.warn('[useVaultStories] scenes sidecar failed:', e);
+        }
+      }
     } catch (e) {
       if (__DEV__) console.warn('[useVaultStories] vault persist failed (history still in memory):', e);
       throw e; // signale au caller pour qu'il puisse afficher un toast non-bloquant
@@ -169,6 +239,10 @@ export function useVaultStories(
     // V2.3 — supprime aussi le sidecar alignment.json si présent
     try {
       await vaultRef.current.deleteFile(alignmentSidecarPath(sourceFile));
+    } catch { /* sidecar absent — pas grave */ }
+    // V3 — supprime aussi le sidecar scenes.json si présent
+    try {
+      await vaultRef.current.deleteFile(scenesSidecarPath(sourceFile));
     } catch { /* sidecar absent — pas grave */ }
     setStories(prev => {
       const story = prev.find(s => s.sourceFile === sourceFile);

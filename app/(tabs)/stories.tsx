@@ -23,6 +23,8 @@ import { useStoryVoice } from '../../contexts/StoryVoiceContext';
 import { useAnimConfig } from '../../hooks/useAnimConfig';
 import StoryBookCard, { BOOK_WIDTH, BOOK_GAP } from '../../components/stories/StoryBookCard';
 import StoryPlayer from '../../components/stories/StoryPlayer';
+import { StoryBody } from '../../components/stories/StoryBody';
+import { FullscreenStoryReader } from '../../components/stories/FullscreenStoryReader';
 import VoiceRecorder from '../../components/stories/VoiceRecorder';
 import { AvatarIcon } from '../../components/ui/AvatarIcon';
 import { getTheme } from '../../constants/themes';
@@ -38,6 +40,7 @@ import {
 import { generateBedtimeStory } from '../../lib/ai-service';
 import { getAvailableSfxTags } from '../../lib/sfx';
 import { parseStoryScript } from '../../lib/story-script';
+import { extractScenesFromAIResponse } from '../../lib/story-scenes';
 import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
 import type { BedtimeStory, StoryUniverseId, StoryVoiceConfig, StoryVoiceEngine, StoryLength, StoryAgeRange, Profile, Memory, ChildQuote } from '../../lib/types';
 import { groupStoriesByBook, buildBookContextForPrompt, getNextChapterNumber, slugifyBookTitle, type StoryBook } from '../../lib/story-books';
@@ -843,6 +846,31 @@ export default function StoriesScreen() {
   const [step, setStep] = useState<StoryFlowStep>({ etape: 'choisir_enfant' });
   const [activeTab, setActiveTab] = useState<'nouvelle' | 'bibliotheque'>('nouvelle');
   const [selectedUniversId, setSelectedUniversId] = useState<StoryUniverseId | null>(null);
+
+  // V3 — État lecture immersive au niveau écran (le bouton 📖 vit dans le header).
+  // headerStory : histoire actuellement lisible (set par GenerationStep une fois la
+  //   frappe terminée, ou par ReplayStep au mount). Null sur les autres étapes.
+  // headerAudioReady : passe true quand le StoryPlayer a son audio prêt à jouer
+  //   (cache disque hit ou génération ElevenLabs terminée).
+  // isFullscreen : ouvre le modal FullscreenStoryReader.
+  const [headerStory, setHeaderStory] = useState<BedtimeStory | null>(null);
+  const [headerAudioReady, setHeaderAudioReady] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Reset audioReady dès que l'histoire change (nouveau player → nouvelle attente)
+  useEffect(() => {
+    setHeaderAudioReady(false);
+  }, [headerStory?.id]);
+
+  // Clear headerStory + audioReady quand on sort des étapes lisibles.
+  // Évite que le bouton 📖 reste visible sur l'écran d'accueil ou le wizard.
+  useEffect(() => {
+    if (step.etape !== 'generation' && step.etape !== 'replay') {
+      setHeaderStory(null);
+      setHeaderAudioReady(false);
+      setIsFullscreen(false);
+    }
+  }, [step.etape]);
   // Note : `detailText` est local à PersonnaliserStep (cf. fix keyboard dismiss).
   // PersonnaliserStep est une fonction nested → un keystroke dans le parent
   // recrée sa référence et React remonte le subtree → TextInput perdu, clavier
@@ -2232,6 +2260,18 @@ export default function StoriesScreen() {
     const [currentStory, setCurrentStory] = useState<BedtimeStory | null>(null);
     const [genError, setGenError] = useState<string | null>(null);
     const [showPlayer, setShowPlayer] = useState(false);
+    // V3 — Quand showPlayer passe à true, on déclare l'histoire au header
+    // pour qu'il puisse afficher le bouton 📖 Lecture immersive. Pas de
+    // cleanup ici : GenerationStep est une inner function qui se remonte à
+    // chaque render parent → un cleanup setHeaderStory(null) déclencherait
+    // une boucle. Le clear se fait au niveau screen via l'effet sur step.etape.
+    // setHeaderStory(currentStory) avec un cached.story ref-stable n'entraîne
+    // pas de re-render (React compare la référence) → pas de boucle.
+    useEffect(() => {
+      if (showPlayer && currentStory) {
+        setHeaderStory(currentStory);
+      }
+    }, [showPlayer, currentStory]);
 
     // Étoiles animées (loading)
     const star1 = useSharedValue(0);
@@ -2306,6 +2346,7 @@ export default function StoriesScreen() {
       let texte = '';
       let memorySummary = '';
       let script: import('../../lib/types').StoryScript | undefined;
+      let scenes: import('../../lib/types').StoryScenes | undefined;
       // Parsing robuste : Claude renvoie parfois du JSON avec quotes non échappées
       // (surtout en Mode Spectacle où le script ajoute beaucoup de strings).
       // 1. Tentative parse direct ; 2. tentative repair (smart quotes, trailing commas)
@@ -2322,7 +2363,13 @@ export default function StoriesScreen() {
 
       const parsed = tryParseJson(resp.text);
       if (parsed) {
-        if (typeof parsed.titre === 'string') titre = deanonymize(parsed.titre, anonMap);
+        if (typeof parsed.titre === 'string') {
+          // Claude met parfois `# Titre` (markdown) ou `**Titre**` — on strip
+          titre = deanonymize(parsed.titre, anonMap)
+            .replace(/^#+\s*/, '')
+            .replace(/^\*+|\*+$/g, '')
+            .trim();
+        }
         if (typeof parsed.texte === 'string') texte = deanonymize(parsed.texte, anonMap);
         if (typeof parsed.memorySummary === 'string') memorySummary = deanonymize(parsed.memorySummary, anonMap);
 
@@ -2374,6 +2421,33 @@ export default function StoriesScreen() {
             .trim();
           if (flat) texte = flat;
         }
+
+        // V3 — extrait les scènes illustrées (toujours produit par Claude).
+        // Désanonymisation : applique anonMap aux sceneStart/sceneText/highlights
+        // avant matching (les indices se calculent contre `texte` déjà désanonymisé).
+        if (parsed.scenes && Array.isArray(parsed.scenes) && texte) {
+          const deanonymizedScenes = (parsed.scenes as Array<Record<string, unknown>>).map(s => ({
+            ...s,
+            sceneStart: typeof s.sceneStart === 'string' ? deanonymize(s.sceneStart, anonMap) : s.sceneStart,
+            sceneText: typeof s.sceneText === 'string' ? deanonymize(s.sceneText, anonMap) : s.sceneText,
+            highlights: Array.isArray(s.highlights)
+              ? s.highlights.map(h => typeof h === 'string' ? deanonymize(h, anonMap) : h)
+              : s.highlights,
+          }));
+          const extracted = extractScenesFromAIResponse(deanonymizedScenes, texte);
+          if (extracted) {
+            scenes = extracted;
+            if (__DEV__) {
+              console.log('[stories] scenes extraites:', {
+                count: extracted.scenes.length,
+                archetypes: extracted.scenes.map(s => s.archetype),
+                highlightsTotal: extracted.scenes.reduce((acc, s) => acc + s.highlights.length, 0),
+              });
+            }
+          } else if (__DEV__) {
+            console.warn('[stories] scenes présentes mais aucune extractible — fallback texte seul');
+          }
+        }
       }
 
       // Dernier recours : on n'a pas pu parser proprement → on signale et on
@@ -2390,81 +2464,77 @@ export default function StoriesScreen() {
         return;
       }
 
+      // V3 — Plus de frappe progressive : on tient le loading "Écriture de
+      // l'histoire…" jusqu'à ce que TOUT soit prêt (texte + scenes parsées),
+      // puis on bascule d'un coup en mode picture-book complet. L'audio MP3
+      // démarre sa génération dès que le player se monte (en arrière-plan,
+      // visible via le ⏳ → 📖 du bouton header).
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const existingIds = new Set(
+        stories.filter(s => s.enfantId === enfantId).map(s => s.id),
+      );
+      const { sourceFile, id } = nextStoryFileName(enfantName, today, universId, existingIds);
+      // ─── Livre/chapitres ─────────────────────────────────────────
+      // Si book présent → chapitre N>=2 du livre existant.
+      // Sinon → 1er chapitre d'un nouveau livre potentiel (livreId généré depuis le titre).
+      const livreId = book ? book.livreId : slugifyBookTitle(titre);
+      const livreTitre = book ? book.livreTitre : titre;
+      const chapitre = book ? book.chapitre : 1;
+      const chapitreTitre = titre;
+      // Personnages : extraits des speakers de dialogue uniques (si script présent)
+      let personnages: string[] | undefined;
+      if (script) {
+        const dialogueSpeakers = script.beats
+          .filter(b => b.kind === 'dialogue')
+          .map(b => (b as { speaker: string }).speaker);
+        const unique = Array.from(new Set(dialogueSpeakers));
+        if (unique.length > 0) personnages = unique;
+      }
+
+      const story: BedtimeStory = {
+        id,
+        titre,
+        texte,
+        enfant: enfantName,
+        enfantId,
+        univers: universId,
+        detail: detail || undefined,
+        date: today,
+        duree_lecture: Math.round(texte.length / 15),
+        voice: voiceConfig,
+        length,
+        spectacle: voiceConfig.spectacle || undefined,
+        audioMode: voiceConfig.audioMode,
+        ambienceVolume: voiceConfig.ambienceVolume,
+        script: script,
+        scenes: scenes,
+        version: 1,
+        sourceFile,
+        // Livre/chapitres
+        livreId,
+        livreTitre,
+        chapitre,
+        chapitreTitre,
+        personnages,
+        memorySummary: memorySummary.trim() || undefined,
+        trancheAge,
+      };
+      generationCacheRef.current = { titre, texte, story };
+      // L'ordre importe : currentStory + showPlayer AVANT fullText pour que le
+      // body s'affiche directement en mode picture-book (et non pendant un état
+      // intermédiaire où fullText serait set sans currentStory).
       setStoryTitle(titre);
+      setCurrentStory(story);
+      setShowPlayer(true);
+      setDisplayedText(texte);
       setFullText(texte);
-
-      // Reveal progressif
-      let i = 0;
-      const timer = setInterval(() => {
-        i += 4;
-        setDisplayedText(texte.slice(0, i));
-        if (i >= texte.length) {
-          clearInterval(timer);
-          setDisplayedText(texte);
-          setShowPlayer(true);
-
-          // Sauvegarder dans le vault — calcule un id unique si une histoire
-          // avec même date+univers existe déjà (suffixe -2, -3, etc.)
-          const today = format(new Date(), 'yyyy-MM-dd');
-          const existingIds = new Set(
-            stories.filter(s => s.enfantId === enfantId).map(s => s.id),
-          );
-          const { sourceFile, id } = nextStoryFileName(enfantName, today, universId, existingIds);
-          // ─── Livre/chapitres ─────────────────────────────────────────
-          // Si book présent → chapitre N>=2 du livre existant.
-          // Sinon → 1er chapitre d'un nouveau livre potentiel (livreId généré depuis le titre).
-          const livreId = book ? book.livreId : slugifyBookTitle(titre);
-          const livreTitre = book ? book.livreTitre : titre;
-          const chapitre = book ? book.chapitre : 1;
-          const chapitreTitre = titre;
-          // Personnages : extraits des speakers de dialogue uniques (si script présent)
-          let personnages: string[] | undefined;
-          if (script) {
-            const dialogueSpeakers = script.beats
-              .filter(b => b.kind === 'dialogue')
-              .map(b => (b as { speaker: string }).speaker);
-            const unique = Array.from(new Set(dialogueSpeakers));
-            if (unique.length > 0) personnages = unique;
-          }
-
-          const story: BedtimeStory = {
-            id,
-            titre,
-            texte,
-            enfant: enfantName,
-            enfantId,
-            univers: universId,
-            detail: detail || undefined,
-            date: today,
-            duree_lecture: Math.round(texte.length / 15),
-            voice: voiceConfig,
-            length,
-            spectacle: voiceConfig.spectacle || undefined,
-            audioMode: voiceConfig.audioMode,
-            ambienceVolume: voiceConfig.ambienceVolume,
-            script: script,
-            version: 1,
-            sourceFile,
-            // Livre/chapitres
-            livreId,
-            livreTitre,
-            chapitre,
-            chapitreTitre,
-            personnages,
-            memorySummary: memorySummary.trim() || undefined,
-            trancheAge,
-          };
-          generationCacheRef.current = { titre, texte, story };
-          setCurrentStory(story);
-          // saveStory fait l'optimistic update en interne (l'histoire apparaît
-          // tout de suite dans la bibliothèque). Si la sync vault échoue,
-          // l'histoire reste utilisable pour la session — l'audio ElevenLabs
-          // est caché à part, donc rien n'est perdu côté crédits.
-          saveStory(story).catch((e) => {
-            if (__DEV__) console.warn('[stories] vault sync failed (story still in memory):', e);
-          });
-        }
-      }, 18);
+      // saveStory fait l'optimistic update en interne (l'histoire apparaît
+      // tout de suite dans la bibliothèque). Si la sync vault échoue,
+      // l'histoire reste utilisable pour la session — l'audio ElevenLabs
+      // est caché à part, donc rien n'est perdu côté crédits.
+      saveStory(story).catch((e) => {
+        if (__DEV__) console.warn('[stories] vault sync failed (story still in memory):', e);
+      });
     }, [enfantId, enfantName, universId, detail, book, trancheAge]);
 
     useEffect(() => {
@@ -2535,28 +2605,35 @@ export default function StoriesScreen() {
       );
     }
 
+    // À ce stade : fullText est non-null, currentStory est setté, showPlayer=true
+    // (les 4 setters sont batchés ensemble côté generate()). Le rendu va donc
+    // directement en mode picture-book sans état intermédiaire.
     return (
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {storyTitle ? (
-          <Text style={[styles.storyTitle, { color: colors.text }]}>{storyTitle}</Text>
-        ) : null}
-        <Text style={[styles.storyText, { color: colors.text }]}>{stripAllPerformanceTags(displayedText)}</Text>
-        {showPlayer && currentStory && (
-          <StoryPlayer
-            histoire={currentStory}
-            voiceConfig={voiceConfig}
-            elevenLabsKey={elevenLabsKey}
-            fishAudioKey={fishAudioKey}
-            onFinish={() => goTo({ etape: 'fin', histoire: currentStory })}
-            onAlignmentReady={(alignment) => {
-              // On évite setCurrentStory ici : ça déclenche un re-render du
-              // parent qui remount le StoryPlayer (GenerationStep est un
-              // composant inline) et perd son état. Le player a son cache
-              // module-level, et saveStory persiste le sidecar pour les
-              // ouvertures futures de l'histoire.
-              saveStory({ ...currentStory, alignment }).catch(() => { /* non-critique */ });
-            }}
-          />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.storyScrollContent}
+      >
+        {currentStory && (
+          <>
+            <StoryBody histoire={currentStory} />
+            <StoryPlayer
+              histoire={currentStory}
+              voiceConfig={voiceConfig}
+              elevenLabsKey={elevenLabsKey}
+              fishAudioKey={fishAudioKey}
+              onFinish={() => goTo({ etape: 'fin', histoire: currentStory })}
+              forceMute={isFullscreen}
+              onAudioReady={() => setHeaderAudioReady(true)}
+              onAlignmentReady={(alignment) => {
+                // On évite setCurrentStory ici : ça déclenche un re-render du
+                // parent qui remount le StoryPlayer (GenerationStep est un
+                // composant inline) et perd son état. Le player a son cache
+                // module-level, et saveStory persiste le sidecar pour les
+                // ouvertures futures de l'histoire.
+                saveStory({ ...currentStory, alignment }).catch(() => { /* non-critique */ });
+              }}
+            />
+          </>
         )}
       </ScrollView>
     );
@@ -2643,6 +2720,13 @@ export default function StoriesScreen() {
   // ── Étape Replay (histoire déjà générée) ──
 
   function ReplayStep({ histoire }: { histoire: BedtimeStory }) {
+    // V3 — Déclare l'histoire au header. Pas de cleanup (cf. note dans
+    // GenerationStep) — le clear se fait au niveau screen sur step.etape.
+    // `histoire` est ref-stable (vient de step.histoire) donc setHeaderStory
+    // ne déclenche un re-render qu'au tout premier appel.
+    useEffect(() => {
+      setHeaderStory(histoire);
+    }, [histoire]);
     /** Reprend le wizard chapitre suivant à partir d'une histoire ouverte depuis la bibliothèque */
     const handleWriteNextChapter = useCallback(() => {
       Haptics.selectionAsync();
@@ -2664,9 +2748,13 @@ export default function StoriesScreen() {
     }, [histoire]);
 
     return (
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={[styles.storyTitle, { color: colors.text }]}>{histoire.titre}</Text>
-        <Text style={[styles.storyText, { color: colors.text }]}>{stripAllPerformanceTags(histoire.texte)}</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.storyScrollContent}
+      >
+        {/* Mode picture-book : pages illustrées si scenes[] présent,
+            fallback texte-seul (nouveau style cream + Patrick Hand) sinon. */}
+        <StoryBody histoire={histoire} />
         <StoryPlayer
           histoire={histoire}
           voiceConfig={histoire.voice}
@@ -2678,6 +2766,8 @@ export default function StoriesScreen() {
             // activeTab reste inchangé — si 'bibliotheque', on y revient naturellement
           }}
           autoGenerate={false}
+          forceMute={isFullscreen}
+          onAudioReady={() => setHeaderAudioReady(true)}
           onAlignmentReady={(alignment) => {
             saveStory({ ...histoire, alignment }).catch(() => { /* non-critique */ });
           }}
@@ -2765,6 +2855,32 @@ export default function StoriesScreen() {
             </Pressable>
           ) : undefined
         }
+        actions={
+          // V3 — Bouton 📖 Lecture immersive : visible quand une histoire est
+          // en cours de lecture (set par GenerationStep ou ReplayStep), désactivé
+          // tant que l'audio n'est pas prêt côté player inline.
+          headerStory ? (
+            <Pressable
+              style={[
+                styles.headerImmersiveBtn,
+                { borderColor: primary },
+                !headerAudioReady && styles.headerImmersiveBtnDisabled,
+              ]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setIsFullscreen(true);
+              }}
+              disabled={!headerAudioReady}
+              accessibilityRole="button"
+              accessibilityLabel={lang === 'fr' ? 'Lecture immersive' : 'Immersive reading'}
+              hitSlop={8}
+            >
+              <Text style={[styles.headerImmersiveIcon, { color: primary }, !headerAudioReady && { opacity: 0.4 }]}>
+                {headerAudioReady ? '📖' : '⏳'}
+              </Text>
+            </Pressable>
+          ) : undefined
+        }
         bottom={
           showStoryTabs ? (
             <View style={styles.tabsWrap}>
@@ -2794,6 +2910,21 @@ export default function StoriesScreen() {
         autoStart={false}
         explosionSpeed={400}
         fallSpeed={2500}
+      />
+
+      {/* V3 — Modal Lecture immersive (rendu au niveau écran pour vivre au-dessus
+          de tous les Step components, indépendant de la navigation interne). */}
+      <FullscreenStoryReader
+        histoire={isFullscreen ? headerStory : null}
+        voiceConfig={headerStory?.voice ?? voiceConfig}
+        elevenLabsKey={elevenLabsKey}
+        fishAudioKey={fishAudioKey}
+        onClose={() => setIsFullscreen(false)}
+        onAlignmentReady={(alignment) => {
+          if (headerStory) {
+            saveStory({ ...headerStory, alignment }).catch(() => { /* non-critique */ });
+          }
+        }}
       />
 
       {/* Contenu animé */}
@@ -2952,9 +3083,23 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   backButton: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   backText: { fontSize: 30, lineHeight: 32 },
+  headerImmersiveBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerImmersiveBtnDisabled: { opacity: 0.5 },
+  headerImmersiveIcon: { fontSize: 18, lineHeight: 20 },
   tabsWrap: { paddingVertical: Spacing.xs },
   content: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['6xl'] },
+  // V3 — padding bas généreux pour clear la tab bar (~70px) + safe area + bouton
+  // "Écrire le chapitre suivant" dans ReplayStep. Sans ça le bouton est masqué et
+  // le scroll bounce avant qu'on puisse y accéder.
+  storyScrollContent: { paddingBottom: 140 },
   stepTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, marginBottom: Spacing.md },
   stepSubtitle: { fontSize: FontSize.sm, marginBottom: Spacing['4xl'] },
   bookCarousel: { marginHorizontal: -Spacing['2xl'], paddingVertical: 40, overflow: 'visible' },

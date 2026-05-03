@@ -31,6 +31,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { useFonts as useDMSerif, DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display';
 import { Caveat_400Regular, Caveat_600SemiBold } from '@expo-google-fonts/caveat';
+import { PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
 import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
@@ -170,6 +171,7 @@ function RootLayout() {
     DMSerifDisplay_400Regular,
     Caveat_400Regular,
     Caveat_600SemiBold,
+    PatrickHand_400Regular,
   });
   const fontsReady = fontsLoaded || !!fontsError;
 
