@@ -1337,11 +1337,10 @@ export function useVaultInternal(): VaultState {
       TARGETED_DOMAINS.push({
         name: 'memories',
         detect: async () => {
-          for (const name of enfantNames) {
-            const m = await vault.getFileMtime(`${MEMOIRES_DIR}/${name}/Jalons.md`);
-            if (m !== null && m > cacheSavedAtMs) return true;
-          }
-          return false;
+          const mtimes = await Promise.all(
+            enfantNames.map(name => vault.getFileMtime(`${MEMOIRES_DIR}/${name}/Jalons.md`))
+          );
+          return mtimes.some(m => m !== null && m > cacheSavedAtMs);
         },
         refresh: async () => {
           const allMemories: Memory[] = [];
@@ -1362,11 +1361,10 @@ export function useVaultInternal(): VaultState {
       TARGETED_DOMAINS.push({
         name: 'health',
         detect: async () => {
-          for (const name of enfantNames) {
-            const m = await vault.getFileMtime(`${HEALTH_DIR}/${name}/Carnet de santé.md`);
-            if (m !== null && m > cacheSavedAtMs) return true;
-          }
-          return false;
+          const mtimes = await Promise.all(
+            enfantNames.map(name => vault.getFileMtime(`${HEALTH_DIR}/${name}/Carnet de santé.md`))
+          );
+          return mtimes.some(m => m !== null && m > cacheSavedAtMs);
         },
         refresh: async () => {
           const records = (await Promise.all(enfantNames.map(async (name) => {
@@ -1384,15 +1382,15 @@ export function useVaultInternal(): VaultState {
         name: 'journal-recent',
         detect: async () => {
           const today = new Date();
-          for (let i = 0; i < 2; i++) {
+          const dates = Array.from({ length: 2 }, (_, i) => {
             const d = new Date(today); d.setDate(d.getDate() - i);
-            const dateStr = format(d, 'yyyy-MM-dd');
-            for (const name of enfantNames) {
-              const m = await vault.getFileMtime(`03 - Journal/${name}/${dateStr} ${name}.md`);
-              if (m !== null && m > cacheSavedAtMs) return true;
-            }
-          }
-          return false;
+            return format(d, 'yyyy-MM-dd');
+          });
+          const paths = enfantNames.flatMap(name =>
+            dates.map(dateStr => `03 - Journal/${name}/${dateStr} ${name}.md`)
+          );
+          const mtimes = await Promise.all(paths.map(p => vault.getFileMtime(p)));
+          return mtimes.some(m => m !== null && m > cacheSavedAtMs);
         },
         refresh: async () => {
           const today = new Date();
@@ -1418,11 +1416,10 @@ export function useVaultInternal(): VaultState {
       TARGETED_DOMAINS.push({
         name: 'photos',
         detect: async () => {
-          for (const name of enfantNames) {
-            const m = await vault.getFileMtime(`07 - Photos/${name}`);
-            if (m !== null && m > cacheSavedAtMs) return true;
-          }
-          return false;
+          const mtimes = await Promise.all(
+            enfantNames.map(name => vault.getFileMtime(`07 - Photos/${name}`))
+          );
+          return mtimes.some(m => m !== null && m > cacheSavedAtMs);
         },
         refresh: async () => {
           const photoMap: Record<string, string[]> = {};
@@ -1509,7 +1506,15 @@ export function useVaultInternal(): VaultState {
       phase2DirtyCheck = (async () => {
         if (opts?.skipPhase2Hint !== true || !cacheSavedAtMs) return [];
         const detected = await Promise.all(
-          TARGETED_DOMAINS.map(async (d) => ({ d, dirty: await d.detect() }))
+          TARGETED_DOMAINS.map(async (d) => {
+            const __t = __DEV__ ? performance.now() : 0;
+            const dirty = await d.detect();
+            if (__DEV__) {
+              const elapsed = performance.now() - __t;
+              if (elapsed > 200) console.log(`[BOOT]   detect ${d.name}: ${elapsed.toFixed(0)}ms${dirty ? ' (DIRTY)' : ''}`);
+            }
+            return { d, dirty };
+          })
         );
         return detected.filter(r => r.dirty).map(r => r.d);
       })();
