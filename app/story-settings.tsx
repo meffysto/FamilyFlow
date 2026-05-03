@@ -29,7 +29,6 @@ import * as Haptics from 'expo-haptics';
 import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useStoryVoice } from '../contexts/StoryVoiceContext';
-import { ScreenHeader } from '../components/ui/ScreenHeader';
 import VoiceRecorder from '../components/stories/VoiceRecorder';
 import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -143,19 +142,21 @@ export default function StorySettingsScreen() {
   const currentModel: ElevenLabsModel = defaults.elevenLabsModel ?? 'eleven_v3';
   const elevenLabsVoices = currentLanguage === 'fr' ? ELEVENLABS_FRENCH_VOICES : ELEVENLABS_ENGLISH_VOICES;
 
+  // Header compact custom — le modal pageSheet a déjà sa propre barre native + notch.
+  // Un ScreenHeader complet (display-size + subtitle) gâche trop d'écran ici.
+  const compactHeader = (
+    <View style={[styles.compactHeader, { borderBottomColor: colors.border }]}>
+      <Text style={[styles.compactTitle, { color: colors.text }]}>Paramètres histoires</Text>
+      <Pressable style={styles.closeBtn} onPress={() => router.back()} accessibilityLabel="Fermer">
+        <Text style={[styles.closeText, { color: primary }]}>✕</Text>
+      </Pressable>
+    </View>
+  );
+
   if (childProfiles.length === 0) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
-        <ScreenHeader
-          title="Paramètres histoires"
-          subtitle="Préférences par enfant"
-          tint="rgba(126,90,107,0.10)"
-          leading={
-            <Pressable style={styles.closeBtn} onPress={() => router.back()} accessibilityLabel="Fermer">
-              <Text style={[styles.closeText, { color: primary }]}>✕</Text>
-            </Pressable>
-          }
-        />
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+        {compactHeader}
         <View style={styles.emptyWrap}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
             Ajoute d'abord un profil enfant pour configurer ses préférences d'histoires.
@@ -166,17 +167,8 @@ export default function StorySettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
-      <ScreenHeader
-        title="Paramètres histoires"
-        subtitle="Préférences par enfant"
-        tint="rgba(126,90,107,0.10)"
-        leading={
-          <Pressable style={styles.closeBtn} onPress={() => router.back()} accessibilityLabel="Fermer">
-            <Text style={[styles.closeText, { color: primary }]}>✕</Text>
-          </Pressable>
-        }
-      />
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      {compactHeader}
 
       {/* Sélecteur enfant */}
       <View style={[styles.childrenWrap, { borderBottomColor: colors.border }]}>
@@ -656,8 +648,17 @@ export default function StorySettingsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  closeBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontSize: 22, fontWeight: FontWeight.semibold },
+  compactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  compactTitle: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
+  closeBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  closeText: { fontSize: 20, fontWeight: FontWeight.semibold },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing['3xl'] },
   emptyText: { fontSize: FontSize.body, textAlign: 'center', lineHeight: 22 },
 
