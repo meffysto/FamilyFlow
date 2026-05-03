@@ -1024,7 +1024,21 @@ export function useVaultInternal(): VaultState {
         setTimeout(() => {
           if (!busyRef.current && vaultRef.current) {
             lastVaultLoadRef.current = Date.now();
-            loadVaultData(vaultRef.current);
+            // Foreground après bg : utiliser la même stratégie qu'au mount
+            // (skipPhase2Hint si cache frais → mtime check + targeted refresh
+            // au lieu de full Phase 2 systématique). Évite le freeze 25s à
+            // chaque retour dans l'app.
+            const PHASE2_REFRESH_THRESHOLD_MS = 6 * 60 * 60 * 1000;
+            const cached = readCacheSync();
+            const cacheAgeMs = cached?.savedAt
+              ? Date.now() - new Date(cached.savedAt).getTime()
+              : Infinity;
+            const skipPhase2Hint = cached !== null
+              && cacheAgeMs < PHASE2_REFRESH_THRESHOLD_MS;
+            loadVaultData(vaultRef.current, {
+              skipPhase2Hint,
+              cacheSavedAt: cached?.savedAt,
+            });
           }
         }, 1000);
       }
