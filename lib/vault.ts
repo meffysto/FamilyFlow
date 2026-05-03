@@ -48,37 +48,6 @@ export class VaultManager {
   /** Queue d'ecritures par fichier pour prevenir les races read-modify-write */
   private _writeQueues = new Map<string, Promise<void>>();
 
-  /**
-   * Semaphore de lectures concurrentes — limite la pression sur NSFileCoordinator
-   * et le download iCloud à un nombre raisonnable de reads simultanés.
-   *
-   * NSFileCoordinator ne sérialise PAS les reads internes au même process, et
-   * iCloud Drive sature au-delà de ~6 reads parallèles (downloads concurrents
-   * sur la même bande passante). 4 simultanés = sweet spot mesuré.
-   */
-  private static readonly READ_CONCURRENCY = 4;
-  private _activeReads = 0;
-  private _readQueue: Array<() => void> = [];
-
-  private async acquireRead(): Promise<void> {
-    if (this._activeReads < VaultManager.READ_CONCURRENCY) {
-      this._activeReads++;
-      return;
-    }
-    return new Promise<void>(resolve => {
-      this._readQueue.push(() => {
-        this._activeReads++;
-        resolve();
-      });
-    });
-  }
-
-  private releaseRead(): void {
-    this._activeReads--;
-    const next = this._readQueue.shift();
-    if (next) next();
-  }
-
   constructor(vaultPath: string) {
     // Normalize: remove trailing slash
     this.vaultPath = vaultPath.replace(/\/$/, '');
@@ -122,10 +91,9 @@ export class VaultManager {
     return `file://${path}`;
   }
 
-  /** Read a file, returns content string. Limité à READ_CONCURRENCY simultanés. */
+  /** Read a file, returns content string */
   async readFile(relativePath: string): Promise<string> {
     const uri = this.uri(relativePath);
-    await this.acquireRead();
     try {
       // Try coordinated read first (required for iCloud Drive files)
       if (Platform.OS !== 'web') {
@@ -138,8 +106,6 @@ export class VaultManager {
       return content;
     } catch (e) {
       throw new Error(`VaultManager.readFile: cannot read "${relativePath}": ${e}`);
-    } finally {
-      this.releaseRead();
     }
   }
 
