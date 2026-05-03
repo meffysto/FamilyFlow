@@ -118,6 +118,7 @@ import {
   saveCache,
   stripProfileForCache,
 } from '../lib/vault-cache';
+import type { VaultCachePayload } from '../lib/vault-cache';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export { ACTIVE_PROFILE_KEY } from './useVaultProfiles';
@@ -977,7 +978,20 @@ export function useVaultInternal(): VaultState {
             if (cached) console.log(`[BOOT]   cached.vaultPath="${cached.vaultPath}" vs normalized="${normalizedVaultPath}"`);
           }
 
-          await loadVaultData(vaultRef.current);
+          // Skip Phase 2 (refresh secondaire iCloud) si le cache est encore frais.
+          // 99% des relaunches dans la journée tombent dans ce cas → boot ~700ms.
+          const PHASE2_REFRESH_THRESHOLD_MS = 6 * 60 * 60 * 1000; // 6h
+          const cacheAgeMs = cached?.savedAt
+            ? Date.now() - new Date(cached.savedAt).getTime()
+            : Infinity;
+          const skipPhase2 = cached !== null
+            && cached.vaultPath === normalizedVaultPath
+            && cacheAgeMs < PHASE2_REFRESH_THRESHOLD_MS;
+          if (__DEV__ && skipPhase2) {
+            console.log(`[BOOT] cache fresh (${(cacheAgeMs / 60000).toFixed(0)}min) → phase2 skip`);
+          }
+
+          await loadVaultData(vaultRef.current, { skipPhase2 });
           __markMount('TOTAL-mount-to-loaded', __tMount);
         }
       } catch (e) {
@@ -1083,17 +1097,17 @@ export function useVaultInternal(): VaultState {
       .forEach((n) => scheduleLoveNoteReveal(n).catch(() => {}));
   }, [loveNotesHook.loveNotes, activeProfileId]);
 
-  const loadVaultData = useCallback(async (vault: VaultManager) => {
+  const loadVaultData = useCallback(async (vault: VaultManager, opts?: { skipPhase2?: boolean }) => {
     // Guard ré-entrance : si un loadVaultData tourne déjà, skip silencieusement.
     // Sans ça, mount + AppState listener (Face ID lock screen → inactive→active)
-    // peuvent lancer 2 appels concurrents qui se concurrencent sur iCloud
-    // (bandwidth divisé par 2 → Phase 2 doublée à ~25s au lieu de ~10s).
+    // peuvent lancer 2 appels concurrents qui se concurrencent sur iCloud.
     if (busyRef.current) {
       if (__DEV__) console.log('[BOOT] loadVaultData skip (déjà en cours)');
       return;
     }
     busyRef.current = true;
     lastVaultLoadRef.current = Date.now();
+    const skipPhase2 = opts?.skipPhase2 === true;
 
     setError(null);
     const debugErrors: string[] = [];
@@ -1551,6 +1565,40 @@ export function useVaultInternal(): VaultState {
       refreshWidget(val(phase1[4], []), rdvResult, tasksResult);
       refreshJournalWidget(profiles);
       syncWidgetFeedingsToVault(vault).catch(() => {});
+
+      // Skip Phase 2 si cache récent : la donnée secondaire (photos, memories,
+      // jalons, anniversaires...) change rarement entre 2 relaunches dans la
+      // journée. Le cache hydraté au mount fournit déjà ces sections — pas
+      // besoin de retéléphoner iCloud à chaque relaunch.
+      // Conséquences :
+      //  - 99% des relaunches dans une journée : boot ~700ms total, zéro freeze
+      //  - 1× par jour (cache > 6h) : Phase 2 + family-quests refresh complet
+      //  - L'utilisateur peut forcer un refresh via pull-to-refresh (refresh())
+      if (skipPhase2) {
+        if (__DEV__) console.log('[BOOT] phase2 skipped (cache récent)');
+        // Met à jour le cache avec Phase 1 fresh + Phase 2 cached (savedAt
+        // bumpé pour étendre la fenêtre de skip).
+        const existingCache = readCacheSync();
+        if (existingCache) {
+          saveCache({
+            ...(existingCache as VaultCachePayload),
+            vaultPath: vault.vaultPath,
+            profiles: profilesSnapshot.map(stripProfileForCache),
+            tasks: tasksResult,
+            routines: val(phase1[1], []) as Routine[],
+            courses: [] as CourseItem[],
+            stock: stockResult.items,
+            stockSections: stockResult.sections,
+            meals: val(phase1[4], []) as MealItem[],
+            rdvs: rdvResult,
+            notifPrefs: val(phase1[7], getDefaultNotificationPrefs()),
+            vacationConfig: vacResult.config,
+            vacationTasks: vacResult.vacTasks,
+          });
+        }
+        __mark('TOTAL-loadVaultData', __t0);
+        return;
+      }
 
       // ═══════════════════════════════════════════════════════════════════
       // PHASE 2 — Données secondaires (historiques, en arrière-plan)
