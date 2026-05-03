@@ -37,7 +37,7 @@ export const BUILDINGS_CATALOG: BuildingCatalogEntry[] = [
   {
     id: 'boulangerie', labelFR: 'Boulangerie', palier: 300,
     sprite: require('../../assets/buildings/village/boulangerie.png'),
-    production: { itemId: 'pain_frais', itemLabel: 'Pain frais', itemEmoji: '🍞', ratePerItem: 10 },
+    production: { itemId: 'pain_frais', itemLabel: 'Pain frais', itemEmoji: '🍞', ratePerItem: 7 },
   },
   {
     id: 'marche', labelFR: 'Marché', palier: 700,
