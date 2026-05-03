@@ -217,16 +217,38 @@ export function useGarden(): UseGardenReturn {
     [profiles],
   );
 
-  /** Cible hebdomadaire — calculée dynamiquement selon le nombre de profils */
-  const currentTarget = useMemo(
-    () => computeWeekTarget(activeProfileCount),
-    [activeProfileCount],
+  /** Techs village débloquées (lues tôt pour pouvoir appliquer les bonus Harmonie) */
+  const atelierTechs = useMemo<string[]>(
+    () => gardenData.atelierTechs ?? [],
+    [gardenData],
   );
 
-  /** Nombre de contributions cette semaine */
+  /** Bonus agrégés des techs village (incl. Harmonie 1/2/3) */
+  const villageTechBonuses = useMemo<VillageTechBonuses>(
+    () => computeVillageTechBonuses(atelierTechs),
+    [atelierTechs],
+  );
+
+  /**
+   * Cible hebdomadaire — calculée dynamiquement selon le nombre de profils.
+   * Harmonie-1 : −1 contribution × profils actifs (objectiveTargetReduction).
+   */
+  const currentTarget = useMemo(
+    () => Math.max(
+      1,
+      computeWeekTarget(activeProfileCount)
+        - villageTechBonuses.objectiveTargetReduction * activeProfileCount,
+    ),
+    [activeProfileCount, villageTechBonuses],
+  );
+
+  /**
+   * Nombre de contributions cette semaine — boosté par Harmonie-2 (contributionMultiplier).
+   * Source brute conservée dans `gardenData.contributions` (1 entrée = 1 action réelle).
+   */
   const progress = useMemo(
-    () => gardenData.contributions?.length ?? 0,
-    [gardenData],
+    () => (gardenData.contributions?.length ?? 0) * villageTechBonuses.contributionMultiplier,
+    [gardenData, villageTechBonuses],
   );
 
   /** Objectif atteint si progress >= currentTarget */
@@ -266,32 +288,21 @@ export function useGarden(): UseGardenReturn {
   );
 
   /**
-   * Total contributions lifetime = semaine courante + cumul des semaines passées.
+   * Total contributions lifetime = semaine courante (boostée Harmonie-2) + cumul semaines passées.
    * Sert de base au calcul de production — monotone croissant.
+   * Harmonie-2 affecte uniquement la semaine courante (pastWeeks ont déjà figé leur total).
    */
   const lifetimeContributions = useMemo(
     () =>
-      (gardenData.contributions?.length ?? 0) +
+      (gardenData.contributions?.length ?? 0) * villageTechBonuses.contributionMultiplier +
       (gardenData.pastWeeks ?? []).reduce((sum, w) => sum + (w.total ?? 0), 0),
-    [gardenData],
+    [gardenData, villageTechBonuses],
   );
 
   /** Historique crafts atelier village */
   const atelierCrafts = useMemo<VillageAtelierCraft[]>(
     () => gardenData.atelierCrafts ?? [],
     [gardenData],
-  );
-
-  /** Techs village débloquées */
-  const atelierTechs = useMemo<string[]>(
-    () => gardenData.atelierTechs ?? [],
-    [gardenData],
-  );
-
-  /** Bonus agrégés des techs village */
-  const villageTechBonuses = useMemo<VillageTechBonuses>(
-    () => computeVillageTechBonuses(atelierTechs),
-    [atelierTechs],
   );
 
   // ---------------------------------------------------------------------------
@@ -361,6 +372,9 @@ export function useGarden(): UseGardenReturn {
         const nextThemeIndex = nextWeekIndex % OBJECTIVE_TEMPLATES.length;
 
         // Archiver la semaine passée si elle avait un objectif (D-05)
+        // Les bonus Harmonie actifs au moment de l'archivage figent leur effet :
+        //   target = cible réellement visée (Harmonie-1 réduit) ;
+        //   total  = contribs effectives (Harmonie-2 boost).
         const updatedPastWeeks: VillageWeekRecord[] = [...(freshData.pastWeeks ?? [])];
         if (freshData.currentWeekStart) {
           // Calculer les contributions par membre avant archivage (HIST-02)
@@ -368,10 +382,18 @@ export function useGarden(): UseGardenReturn {
           for (const c of freshData.contributions ?? []) {
             byMember[c.profileId] = (byMember[c.profileId] ?? 0) + c.amount;
           }
+          const archiveBonuses = computeVillageTechBonuses(freshData.atelierTechs ?? []);
+          const archivedTarget = Math.max(
+            1,
+            computeWeekTarget(activeProfileCount)
+              - archiveBonuses.objectiveTargetReduction * activeProfileCount,
+          );
+          const archivedTotal = (freshData.contributions?.length ?? 0)
+            * archiveBonuses.contributionMultiplier;
           const weekRecord: VillageWeekRecord = {
             weekStart: freshData.currentWeekStart,
-            target: computeWeekTarget(activeProfileCount),
-            total: freshData.contributions?.length ?? 0,
+            target: archivedTarget,
+            total: archivedTotal,
             claimed: freshData.rewardClaimed,
             contributionsByMember: Object.keys(byMember).length > 0 ? byMember : undefined,
           };

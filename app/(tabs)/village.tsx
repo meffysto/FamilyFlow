@@ -612,22 +612,24 @@ export default function VillageScreen() {
     const success = await claimReward(activeProfile.id);
     if (success) {
       setClaimedThisSession(true);
-      // Bonus XP + loot box — profil actif : écriture directe (son propre gami)
+      // Bonus XP + loot box — Harmonie-3 boost le claim XP (×1.5)
+      const xpReward = Math.round(25 * villageTechBonuses.claimXpMultiplier);
+      // Profil actif : écriture directe (son propre gami)
       // Autres profils : pending-reward pour éviter d'écrire dans leurs fichiers (iCloud stale)
       try {
-        await addVillageBonus(vault, activeProfile, 25, 'Objectif village atteint');
+        await addVillageBonus(vault, activeProfile, xpReward, 'Objectif village atteint');
       } catch { /* Gamification — non-critical */ }
       const otherProfiles = activeProfiles.filter(p => p.id !== activeProfile.id);
       for (const p of otherProfiles) {
         try {
-          const pending = JSON.stringify({ type: 'village', xp: 25, lootBoxes: 1, note: 'Objectif village atteint', from: activeProfile.id, at: new Date().toISOString() });
+          const pending = JSON.stringify({ type: 'village', xp: xpReward, lootBoxes: 1, note: 'Objectif village atteint', from: activeProfile.id, at: new Date().toISOString() });
           await vault.writeFile(`pending-reward-${p.id}.md`, pending);
         } catch { /* Gamification — non-critical */ }
       }
       refreshGamification();
-      showToast('+25 XP et 1 loot box pour toute la famille !', 'success');
+      showToast(`+${xpReward} XP et 1 loot box pour toute la famille !`, 'success');
     }
-  }, [activeProfile, vault, claimReward, activeProfiles, refreshGamification, showToast]);
+  }, [activeProfile, vault, claimReward, activeProfiles, refreshGamification, showToast, villageTechBonuses]);
 
   const handleMapLayout = useCallback(
     (e: any) => {
