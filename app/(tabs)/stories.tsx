@@ -1,12 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View, Text, FlatList, TextInput, ScrollView, Pressable,
-  StyleSheet, ActivityIndicator, Alert, Modal,
+  StyleSheet, Alert,
   ActionSheetIOS, Platform, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import * as Speech from 'expo-speech';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat,
   cancelAnimation, runOnJS,
@@ -25,15 +24,13 @@ import StoryBookCard, { BOOK_WIDTH, BOOK_GAP } from '../../components/stories/St
 import StoryPlayer from '../../components/stories/StoryPlayer';
 import { StoryBody } from '../../components/stories/StoryBody';
 import { FullscreenStoryReader } from '../../components/stories/FullscreenStoryReader';
-import VoiceRecorder from '../../components/stories/VoiceRecorder';
 import { AvatarIcon } from '../../components/ui/AvatarIcon';
 import { getTheme } from '../../constants/themes';
-import { getPersonalVoices } from '../../lib/personal-voice';
 import { getCachedStoryAudio, stripAllPerformanceTags } from '../../lib/elevenlabs';
 import { getCachedStoryAudioFish } from '../../lib/fish-audio';
 import { getPvcVoiceState } from '../../lib/voice-clone-pro';
 import {
-  STORY_UNIVERSES, STORY_SUGGESTIONS, ELEVENLABS_FRENCH_VOICES, ELEVENLABS_ENGLISH_VOICES,
+  STORY_UNIVERSES, STORY_SUGGESTIONS,
   STORY_LENGTHS, STORY_LENGTH_ORDER,
   nextStoryFileName, pickSurpriseUniverse,
 } from '../../lib/stories';
@@ -897,67 +894,6 @@ export default function StoriesScreen() {
   }, [SNAP_INTERVAL]);
   const confettiRef = useRef<any>(null);
 
-  // ─── États sélecteur voix (PersonnaliserStep) ────────────────────────────
-  // Onglet moteur affiché : 'expo-speech' | 'elevenlabs'
-  // Le tab "Système" expose à la fois la voix par défaut et les voix Enhanced/Premium
-  // (Audrey, Thomas, Aurélie… en FR), filtrées par langue courante.
-  const [localVoiceEngine, setLocalVoiceEngine] = useState<'expo-speech' | 'elevenlabs' | 'fish-audio'>(
-    voiceConfig.engine,
-  );
-  const [voiceSelectedParentId, setVoiceSelectedParentId] = useState<string | null>(null);
-  const [voiceSelectedPersonalVoice, setVoiceSelectedPersonalVoice] = useState<Speech.Voice | null>(null);
-  const [voicePersonalVoices, setVoicePersonalVoices] = useState<Speech.Voice[]>([]);
-  const [voicePersonalLoading, setVoicePersonalLoading] = useState(false);
-  const [voiceRecorderProfileId, setVoiceRecorderProfileId] = useState<string | null>(null);
-  // Mode de clonage choisi pour la prochaine ouverture du VoiceRecorder.
-  // 'instant' = comportement actuel (1 prise, voix prête immédiatement).
-  // 'professional' = multi-prises + training ~3-4h (qualité supérieure, plan Creator+).
-  const [voiceCloneMode, setVoiceCloneMode] = useState<'instant' | 'professional'>('instant');
-
-  // Auto-fetch des voix Enhanced/Premium à l'entrée de l'étape personnaliser
-  // et à chaque changement de langue. Re-fetch explicite via bouton "Rafraîchir".
-  useEffect(() => {
-    if (step.etape !== 'personnaliser') return;
-    if (localVoiceEngine !== 'expo-speech') return;
-    let cancelled = false;
-    setVoicePersonalLoading(true);
-    getPersonalVoices(voiceConfig.language).then(vs => {
-      if (cancelled) return;
-      setVoicePersonalVoices(vs);
-      setVoicePersonalLoading(false);
-    });
-    return () => { cancelled = true; };
-  }, [step.etape, localVoiceEngine, voiceConfig.language]);
-
-  // Mode Spectacle nécessite ElevenLabs ou Fish Audio (timestamps ou ratio script).
-  // Si on bascule vers la voix système alors qu'on est en spectacle, retombe automatiquement
-  // sur "doux" pour ne pas garder une config silencieusement incompatible.
-  useEffect(() => {
-    if (localVoiceEngine !== 'expo-speech') return;
-    const current = voiceConfig.audioMode ?? (voiceConfig.spectacle ? 'spectacle' : 'off');
-    if (current !== 'spectacle') return;
-    setVoiceConfig({ ...voiceConfig, audioMode: 'doux', spectacle: undefined });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localVoiceEngine]);
-
-  // Réhydrater la voix sélectionnée depuis le voiceIdentifier persisté
-  // une fois la liste chargée.
-  useEffect(() => {
-    if (!voiceConfig.voiceIdentifier || voicePersonalVoices.length === 0) return;
-    const match = voicePersonalVoices.find(v => v.identifier === voiceConfig.voiceIdentifier);
-    if (match && match.identifier !== voiceSelectedPersonalVoice?.identifier) {
-      setVoiceSelectedPersonalVoice(match);
-    }
-  }, [voicePersonalVoices, voiceConfig.voiceIdentifier, voiceSelectedPersonalVoice?.identifier]);
-
-  const refreshPersonalVoices = useCallback(async () => {
-    Haptics.selectionAsync();
-    setVoicePersonalLoading(true);
-    const vs = await getPersonalVoices(voiceConfig.language);
-    setVoicePersonalVoices(vs);
-    setVoicePersonalLoading(false);
-  }, [voiceConfig.language]);
-
   // ─── Sélection contexte (inclusions utilisateur dans PersonnaliserStep) ──
   // Par défaut, seul le plus récent de chaque catégorie est coché.
   // L'utilisateur peut ouvrir une catégorie pour voir et cocher d'autres éléments.
@@ -1358,12 +1294,8 @@ export default function StoriesScreen() {
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 5);
 
-    const voiceOptions = voiceConfig.language === 'fr' ? ELEVENLABS_FRENCH_VOICES : ELEVENLABS_ENGLISH_VOICES;
-
     // ── Vérification du training PVC ElevenLabs ────────────────────────
-    // Profils en status='training' : on rafraîchit l'état au mount + bouton manuel
-    const [verifyingPvcId, setVerifyingPvcId] = useState<string | null>(null);
-
+    // Profils en status='training' : on rafraîchit l'état au mount.
     const refreshPvcStatus = useCallback(async (profile: Profile) => {
       if (!profile.voiceElevenLabsId || !elevenLabsKey) return;
       try {
@@ -2527,135 +2459,6 @@ export default function StoriesScreen() {
         )}
       </Animated.View>
 
-      {/* Modal VoiceRecorder — au niveau StoriesScreen pour rester stable
-          quand PersonnaliserStep (fonction nested) se remount. Évite le
-          flicker pageSheet qu'on observait à l'ouverture du clonage. */}
-      <Modal
-        visible={voiceRecorderProfileId !== null}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setVoiceRecorderProfileId(null)}
-      >
-        <View style={{ flex: 1, backgroundColor: colors.bg }}>
-          <View style={[styles.voiceModalHeader, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.voiceModalTitle, { color: colors.text }]}>{lang === 'fr' ? 'Créer votre voix' : 'Create your voice'}</Text>
-            <Pressable onPress={() => setVoiceRecorderProfileId(null)}>
-              <Text style={[styles.voiceModalClose, { color: primary }]}>{lang === 'fr' ? 'Fermer' : 'Close'}</Text>
-            </Pressable>
-          </View>
-          {/* Sélecteur Standard/Pro — uniquement pour ElevenLabs (Fish Audio n'a pas de PVC) */}
-          {localVoiceEngine === 'elevenlabs' && (
-            <View style={[styles.cloneModeRow, { borderBottomColor: colors.border }]}>
-              <Pressable
-                style={[
-                  styles.cloneModeChip,
-                  {
-                    backgroundColor: voiceCloneMode === 'instant' ? primary : colors.card,
-                    borderColor: voiceCloneMode === 'instant' ? primary : colors.border,
-                  },
-                ]}
-                onPress={() => setVoiceCloneMode('instant')}
-              >
-                <Text style={[
-                  styles.cloneModeChipText,
-                  { color: voiceCloneMode === 'instant' ? '#fff' : colors.text },
-                ]}>
-                  {lang === 'fr' ? 'Standard · 1 prise' : 'Standard · 1 take'}
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.cloneModeChip,
-                  {
-                    backgroundColor: voiceCloneMode === 'professional' ? primary : colors.card,
-                    borderColor: voiceCloneMode === 'professional' ? primary : colors.border,
-                  },
-                ]}
-                onPress={() => setVoiceCloneMode('professional')}
-              >
-                <Text style={[
-                  styles.cloneModeChipText,
-                  { color: voiceCloneMode === 'professional' ? '#fff' : colors.text },
-                ]}>
-                  {lang === 'fr' ? 'Pro · multi-prises (~3-4h)' : 'Pro · multi-take (~3-4h)'}
-                </Text>
-              </Pressable>
-            </View>
-          )}
-          {voiceRecorderProfileId !== null && (() => {
-            const target = adultProfiles.find((p: Profile) => p.id === voiceRecorderProfileId);
-            if (!target) return null;
-            return (
-              <VoiceRecorder
-                profileId={target.id}
-                profileName={target.name}
-                apiKey={localVoiceEngine === 'fish-audio' ? fishAudioKey : elevenLabsKey}
-                cloneEngine={localVoiceEngine === 'fish-audio' ? 'fish-audio' : 'elevenlabs'}
-                language={voiceConfig.language}
-                cloneType={localVoiceEngine === 'elevenlabs' ? voiceCloneMode : 'instant'}
-                existingPvcVoiceId={
-                  localVoiceEngine === 'elevenlabs'
-                    && voiceCloneMode === 'professional'
-                    && (target.voiceTrainingStatus === 'samples' || target.voiceTrainingStatus === 'training')
-                    ? (target.voiceElevenLabsPvcId ?? target.voiceElevenLabsId)
-                    : undefined
-                }
-                onPvcSampleAdded={async (voiceId, _samplesCount) => {
-                  const update: Partial<Profile> = {
-                    voiceElevenLabsId: voiceId,
-                    voiceElevenLabsPvcId: voiceId,
-                    voiceSource: 'elevenlabs-cloned',
-                    voiceCloneType: 'professional',
-                    voiceTrainingStatus: 'samples',
-                  };
-                  try {
-                    await updateProfile(target.id, update);
-                  } catch (e) {
-                    if (__DEV__) console.warn('Persistance voice_id PVC echouee :', e);
-                  }
-                }}
-                onVoiceReady={async (voiceId, source, trainingStatus) => {
-                  try {
-                    let profileUpdate: Partial<Profile>;
-                    if (source === 'fish-audio-cloned') {
-                      profileUpdate = {
-                        voiceFishAudioId: voiceId,
-                        voiceSource: source,
-                      };
-                    } else if (source === 'elevenlabs-cloned-pro') {
-                      profileUpdate = {
-                        voiceElevenLabsId: voiceId,
-                        voiceElevenLabsPvcId: voiceId,
-                        voiceSource: 'elevenlabs-cloned',
-                        voiceCloneType: 'professional',
-                        voiceTrainingStatus: trainingStatus === 'training' ? 'training' : 'ready',
-                        voiceTrainingStartedAt: new Date().toISOString(),
-                      };
-                    } else {
-                      profileUpdate = {
-                        voiceElevenLabsId: voiceId,
-                        voiceElevenLabsIvcId: voiceId,
-                        voiceSource: source,
-                        voiceCloneType: 'instant',
-                        voiceTrainingStatus: 'ready',
-                      };
-                    }
-                    await updateProfile(target.id, profileUpdate);
-                    setVoiceSelectedParentId(target.id);
-                    setVoiceRecorderProfileId(null);
-                  } catch (e) {
-                    if (__DEV__) console.warn('updateProfile voix echoue :', e);
-                    Alert.alert(
-                      lang === 'fr' ? 'Erreur' : 'Error',
-                      lang === 'fr' ? "Impossible d'enregistrer la voix sur le profil." : 'Could not save the voice to the profile.',
-                    );
-                  }
-                }}
-              />
-            );
-          })()}
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -2834,29 +2637,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.md,
     fontStyle: 'italic',
-  },
-  voiceModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing['4xl'], borderBottomWidth: 1 },
-  voiceModalTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
-  voiceModalClose: { fontSize: FontSize.body, fontWeight: FontWeight.medium },
-  cloneModeRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing['4xl'],
-    paddingVertical: Spacing.lg,
-    borderBottomWidth: 1,
-  },
-  cloneModeChip: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  cloneModeChipText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    textAlign: 'center',
   },
   contextCard: {
     flexDirection: 'row',

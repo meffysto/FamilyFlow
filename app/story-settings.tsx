@@ -20,13 +20,17 @@ import {
   Platform,
   ActionSheetIOS,
   Switch,
+  Modal,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useStoryVoice } from '../contexts/StoryVoiceContext';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
+import VoiceRecorder from '../components/stories/VoiceRecorder';
 import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { STORY_LENGTHS, STORY_LENGTH_ORDER, ELEVENLABS_FRENCH_VOICES, ELEVENLABS_ENGLISH_VOICES } from '../lib/stories';
@@ -53,7 +57,8 @@ const AUDIO_MODE_OPTIONS: { key: StoryAudioMode; emoji: string; label: string; h
 export default function StorySettingsScreen() {
   const router = useRouter();
   const { primary, colors } = useThemeColors();
-  const { profiles, updateStoryDefaults } = useVault();
+  const { profiles, updateStoryDefaults, updateProfile } = useVault();
+  const { elevenLabsKey, fishAudioKey } = useStoryVoice();
 
   const childProfiles = useMemo(
     () => profiles.filter((p: Profile) => p.role === 'enfant' || p.role === 'ado'),
@@ -67,6 +72,12 @@ export default function StorySettingsScreen() {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(
     childProfiles[0]?.id ?? null,
   );
+
+  // Modal clonage vocal — Option A : déplacé depuis stories.tsx vers /story-settings.
+  // voiceRecorderTargetId pointe vers un profil adulte ; cloneMode choisi avant
+  // d'ouvrir le modal (Standard 1 prise vs Pro multi-prises ElevenLabs).
+  const [voiceRecorderTargetId, setVoiceRecorderTargetId] = useState<string | null>(null);
+  const [cloneMode, setCloneMode] = useState<'instant' | 'professional'>('instant');
 
   const selectedChild = useMemo(
     () => childProfiles.find(p => p.id === selectedChildId) ?? null,
@@ -253,23 +264,40 @@ export default function StorySettingsScreen() {
               </Pressable>
               {adultProfiles.map(parent => {
                 const isSelected = defaults.voiceParentId === parent.id;
+                const hasClone = !!parent.voiceElevenLabsId;
                 return (
-                  <Pressable
-                    key={parent.id}
-                    style={[
-                      styles.choiceChip,
-                      {
-                        backgroundColor: isSelected ? primary : colors.card,
-                        borderColor: isSelected ? primary : colors.border,
-                      },
-                    ]}
-                    onPress={() => persist({ voiceParentId: parent.id, elevenLabsVoiceId: undefined })}
-                  >
-                    <Text style={styles.childAvatar}>{parent.avatar}</Text>
-                    <Text style={[styles.choiceLabel, { color: isSelected ? '#fff' : colors.text }]}>
-                      {parent.name}
-                    </Text>
-                  </Pressable>
+                  <View key={parent.id} style={styles.parentChipGroup}>
+                    <Pressable
+                      style={[
+                        styles.choiceChip,
+                        {
+                          backgroundColor: isSelected ? primary : colors.card,
+                          borderColor: isSelected ? primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => persist({ voiceParentId: parent.id, elevenLabsVoiceId: undefined })}
+                    >
+                      <Text style={styles.childAvatar}>{parent.avatar}</Text>
+                      <Text style={[styles.choiceLabel, { color: isSelected ? '#fff' : colors.text }]}>
+                        {parent.name}
+                      </Text>
+                      <Text style={[styles.parentCloneBadge, { color: isSelected ? '#ffffffcc' : colors.textMuted }]}>
+                        {hasClone ? '✓' : 'auto'}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.cloneIconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setCloneMode('instant');
+                        setVoiceRecorderTargetId(parent.id);
+                      }}
+                      accessibilityLabel={`Cloner la voix de ${parent.name}`}
+                      hitSlop={6}
+                    >
+                      <Text style={styles.cloneIcon}>🎙</Text>
+                    </Pressable>
+                  </View>
                 );
               })}
             </View>
@@ -320,25 +348,44 @@ export default function StorySettingsScreen() {
                   Voix par défaut Fish
                 </Text>
               </Pressable>
-              {adultProfiles.filter(p => p.voiceFishAudioId).map(parent => {
+              {adultProfiles.map(parent => {
                 const isSelected = defaults.voiceParentId === parent.id;
+                const hasClone = !!parent.voiceFishAudioId;
                 return (
-                  <Pressable
-                    key={parent.id}
-                    style={[
-                      styles.choiceChip,
-                      {
-                        backgroundColor: isSelected ? primary : colors.card,
-                        borderColor: isSelected ? primary : colors.border,
-                      },
-                    ]}
-                    onPress={() => persist({ voiceParentId: parent.id })}
-                  >
-                    <Text style={styles.childAvatar}>{parent.avatar}</Text>
-                    <Text style={[styles.choiceLabel, { color: isSelected ? '#fff' : colors.text }]}>
-                      {parent.name}
-                    </Text>
-                  </Pressable>
+                  <View key={parent.id} style={styles.parentChipGroup}>
+                    <Pressable
+                      disabled={!hasClone}
+                      style={[
+                        styles.choiceChip,
+                        {
+                          backgroundColor: isSelected ? primary : colors.card,
+                          borderColor: isSelected ? primary : colors.border,
+                          opacity: hasClone ? 1 : 0.5,
+                        },
+                      ]}
+                      onPress={() => persist({ voiceParentId: parent.id })}
+                    >
+                      <Text style={styles.childAvatar}>{parent.avatar}</Text>
+                      <Text style={[styles.choiceLabel, { color: isSelected ? '#fff' : colors.text }]}>
+                        {parent.name}
+                      </Text>
+                      <Text style={[styles.parentCloneBadge, { color: isSelected ? '#ffffffcc' : colors.textMuted }]}>
+                        {hasClone ? '✓' : '–'}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.cloneIconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setCloneMode('instant');
+                        setVoiceRecorderTargetId(parent.id);
+                      }}
+                      accessibilityLabel={`Cloner la voix de ${parent.name}`}
+                      hitSlop={6}
+                    >
+                      <Text style={styles.cloneIcon}>🎙</Text>
+                    </Pressable>
+                  </View>
                 );
               })}
             </View>
@@ -428,6 +475,133 @@ export default function StorySettingsScreen() {
           Ces préférences préfillent le wizard. Tu pourras toujours ajuster la longueur au moment de lancer une histoire.
         </Text>
       </ScrollView>
+
+      {/* Modal clonage vocal — déclenché par les boutons 🎙 dans la section Narrateur. */}
+      <Modal
+        visible={voiceRecorderTargetId !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setVoiceRecorderTargetId(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+          <View style={[styles.voiceModalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.voiceModalTitle, { color: colors.text }]}>Créer votre voix</Text>
+            <Pressable onPress={() => setVoiceRecorderTargetId(null)}>
+              <Text style={[styles.voiceModalClose, { color: primary }]}>Fermer</Text>
+            </Pressable>
+          </View>
+          {/* Sélecteur Standard/Pro — uniquement pour ElevenLabs (Fish Audio n'a pas de PVC). */}
+          {currentEngine === 'elevenlabs' && (
+            <View style={[styles.cloneModeRow, { borderBottomColor: colors.border }]}>
+              <Pressable
+                style={[
+                  styles.cloneModeChip,
+                  {
+                    backgroundColor: cloneMode === 'instant' ? primary : colors.card,
+                    borderColor: cloneMode === 'instant' ? primary : colors.border,
+                  },
+                ]}
+                onPress={() => setCloneMode('instant')}
+              >
+                <Text style={[styles.cloneModeChipText, { color: cloneMode === 'instant' ? '#fff' : colors.text }]}>
+                  Standard · 1 prise
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.cloneModeChip,
+                  {
+                    backgroundColor: cloneMode === 'professional' ? primary : colors.card,
+                    borderColor: cloneMode === 'professional' ? primary : colors.border,
+                  },
+                ]}
+                onPress={() => setCloneMode('professional')}
+              >
+                <Text style={[styles.cloneModeChipText, { color: cloneMode === 'professional' ? '#fff' : colors.text }]}>
+                  Pro · multi-prises (~3-4h)
+                </Text>
+              </Pressable>
+            </View>
+          )}
+          {voiceRecorderTargetId !== null && (() => {
+            const target = adultProfiles.find(p => p.id === voiceRecorderTargetId);
+            if (!target) return null;
+            return (
+              <VoiceRecorder
+                profileId={target.id}
+                profileName={target.name}
+                apiKey={currentEngine === 'fish-audio' ? fishAudioKey : elevenLabsKey}
+                cloneEngine={currentEngine === 'fish-audio' ? 'fish-audio' : 'elevenlabs'}
+                language={currentLanguage}
+                cloneType={currentEngine === 'elevenlabs' ? cloneMode : 'instant'}
+                existingPvcVoiceId={
+                  currentEngine === 'elevenlabs'
+                    && cloneMode === 'professional'
+                    && (target.voiceTrainingStatus === 'samples' || target.voiceTrainingStatus === 'training')
+                    ? (target.voiceElevenLabsPvcId ?? target.voiceElevenLabsId)
+                    : undefined
+                }
+                onPvcSampleAdded={async (voiceId) => {
+                  const update: Partial<Profile> = {
+                    voiceElevenLabsId: voiceId,
+                    voiceElevenLabsPvcId: voiceId,
+                    voiceSource: 'elevenlabs-cloned',
+                    voiceCloneType: 'professional',
+                    voiceTrainingStatus: 'samples',
+                  };
+                  try {
+                    await updateProfile(target.id, update);
+                  } catch (e) {
+                    if (__DEV__) console.warn('Persistance voice_id PVC echouee :', e);
+                  }
+                }}
+                onVoiceReady={async (voiceId, source, trainingStatus) => {
+                  try {
+                    let profileUpdate: Partial<Profile>;
+                    if (source === 'fish-audio-cloned') {
+                      profileUpdate = {
+                        voiceFishAudioId: voiceId,
+                        voiceSource: source,
+                      };
+                    } else if (source === 'elevenlabs-cloned-pro') {
+                      profileUpdate = {
+                        voiceElevenLabsId: voiceId,
+                        voiceElevenLabsPvcId: voiceId,
+                        voiceSource: 'elevenlabs-cloned',
+                        voiceCloneType: 'professional',
+                        voiceTrainingStatus: trainingStatus === 'training' ? 'training' : 'ready',
+                        voiceTrainingStartedAt: new Date().toISOString(),
+                      };
+                    } else {
+                      profileUpdate = {
+                        voiceElevenLabsId: voiceId,
+                        voiceElevenLabsIvcId: voiceId,
+                        voiceSource: source,
+                        voiceCloneType: 'instant',
+                        voiceTrainingStatus: 'ready',
+                      };
+                    }
+                    await updateProfile(target.id, profileUpdate);
+                    // Auto-sélection : le parent fraîchement cloné devient narrateur
+                    // courant pour l'enfant en cours d'édition.
+                    if (selectedChild) {
+                      await updateStoryDefaults(selectedChild.id, {
+                        ...defaults,
+                        voiceParentId: target.id,
+                        elevenLabsVoiceId: undefined,
+                      });
+                    }
+                    setVoiceRecorderTargetId(null);
+                  } catch (e) {
+                    if (__DEV__) console.warn('updateProfile voix echoue :', e);
+                    Alert.alert('Erreur', "Impossible d'enregistrer la voix sur le profil.");
+                  }
+                }}
+              />
+            );
+          })()}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -544,4 +718,45 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     paddingHorizontal: Spacing.lg,
   },
+
+  // Narrateur — chip parent + bouton 🎙 jumelé
+  parentChipGroup: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  parentCloneBadge: { fontSize: FontSize.micro, marginLeft: Spacing.xs },
+  cloneIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cloneIcon: { fontSize: 16 },
+
+  // Modal clonage vocal
+  voiceModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  voiceModalTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
+  voiceModalClose: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
+  cloneModeRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  cloneModeChip: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  cloneModeChipText: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
 });
