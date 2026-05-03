@@ -106,7 +106,8 @@ import { useVaultTasks, type TaskCompleteListener } from './useVaultTasks';
 import { useVaultRecipes } from './useVaultRecipes';
 import { useVaultDefis } from './useVaultDefis';
 import { useVaultFamilyQuests } from './useVaultFamilyQuests';
-import { parseFamilyQuests, FAMILY_QUESTS_FILE } from '../lib/parser';
+import { parseFamilyQuests, FAMILY_QUESTS_FILE, LOVENOTES_DIR, NOTES_DIR } from '../lib/parser';
+import { STORIES_DIR } from '../lib/stories';
 import type { FamilyQuest } from '../lib/quest-engine';
 import { useVaultProfiles, ACTIVE_PROFILE_KEY } from './useVaultProfiles';
 import { useVaultDietary } from './useVaultDietary';
@@ -1116,111 +1117,24 @@ export function useVaultInternal(): VaultState {
     busyRef.current = true;
     lastVaultLoadRef.current = Date.now();
 
-    // Targeted domains : domaines Phase 2 single-file qu'on peut refresh
-    // INDIVIDUELLEMENT si leur fichier source a bougé sur Mac. Évite de
-    // recharger toute la Phase 2 (~25s + freeze) pour une simple modif
-    // gratitude. Closure sur les setters → tableau recréé par appel.
+    // Targeted domains : domaines Phase 2 qu'on peut détecter modifiés via
+    // mtime + refresh INDIVIDUELLEMENT. Évite de recharger toute la Phase 2
+    // (~25s + freeze) pour une simple modif d'un fichier sur autre device.
+    // Couvre single-file, per-child files, et folder-based.
+    // L'array est rempli APRÈS le chargement des profils (besoin de enfantNames).
     const targetedCacheUpdates: Partial<VaultCachePayload> = {};
-    const TARGETED_DOMAINS: Array<{ name: string; file: string; refresh: () => Promise<void> }> = [
-      {
-        name: 'gratitude',
-        file: GRATITUDE_FILE,
-        refresh: async () => {
-          const c = await vault.readFile(GRATITUDE_FILE).catch(() => '');
-          const v = parseGratitude(c);
-          setGratitudeDays(v);
-          targetedCacheUpdates.gratitudeDays = v;
-        },
-      },
-      {
-        name: 'wishlist',
-        file: WISHLIST_FILE,
-        refresh: async () => {
-          const c = await vault.readFile(WISHLIST_FILE).catch(() => '');
-          const v = parseWishlist(c);
-          setWishlistItems(v);
-          targetedCacheUpdates.wishlistItems = v;
-        },
-      },
-      {
-        name: 'anniversaires',
-        file: ANNIVERSAIRES_FILE,
-        refresh: async () => {
-          const c = await vault.readFile(ANNIVERSAIRES_FILE).catch(() => '');
-          const v = parseAnniversaries(c);
-          setAnniversaries(v);
-          targetedCacheUpdates.anniversaries = v;
-        },
-      },
-      {
-        name: 'quotes',
-        file: QUOTES_FILE,
-        refresh: async () => {
-          const c = await vault.readFile(QUOTES_FILE).catch(() => '');
-          const v = parseQuotes(c);
-          setQuotes(v);
-          targetedCacheUpdates.quotes = v;
-        },
-      },
-      {
-        name: 'moods',
-        file: MOODS_FILE,
-        refresh: async () => {
-          const c = await vault.readFile(MOODS_FILE).catch(() => '');
-          const v = parseMoods(c);
-          setMoods(v);
-          targetedCacheUpdates.moods = v;
-        },
-      },
-      {
-        name: 'secret-missions',
-        file: SECRET_MISSIONS_FILE,
-        refresh: async () => {
-          const c = await vault.readFile(SECRET_MISSIONS_FILE).catch(() => '');
-          const v = parseSecretMissions(c);
-          missionsHook.setSecretMissions(v);
-          targetedCacheUpdates.secretMissions = v;
-        },
-      },
-      {
-        name: 'garden',
-        file: VILLAGE_FILE,
-        refresh: async () => {
-          const v = await vault.readFile(VILLAGE_FILE).catch(() => '');
-          setGardenRaw(v);
-          targetedCacheUpdates.gardenRaw = v;
-        },
-      },
-      {
-        name: 'family-quests',
-        file: FAMILY_QUESTS_FILE,
-        refresh: async () => {
-          const c = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
-          const parsed = parseFamilyQuests(c);
-          const checked = await questsHook.checkAndExpireQuests(parsed);
-          questsHook.setFamilyQuests(checked);
-          targetedCacheUpdates.familyQuests = checked;
-        },
-      },
-    ];
-
-    // Mtime check parallèle : pour chaque domaine targeted, regarde si son
-    // fichier a été modifié sur Mac depuis cached.savedAt. Lecture metadata
-    // only (pas de download iCloud) → ~50ms/fichier en parallèle de Phase 1.
+    type TargetedDomain = {
+      name: string;
+      detect: () => Promise<boolean>;
+      refresh: () => Promise<void>;
+    };
+    const TARGETED_DOMAINS: TargetedDomain[] = [];
     const cacheSavedAtMs = opts?.cacheSavedAt
       ? new Date(opts.cacheSavedAt).getTime()
       : 0;
-    const phase2DirtyCheck: Promise<typeof TARGETED_DOMAINS> = (async () => {
-      if (opts?.skipPhase2Hint !== true || !cacheSavedAtMs) return [];
-      const dirty: typeof TARGETED_DOMAINS = [];
-      for (const d of TARGETED_DOMAINS) {
-        const mtime = await vault.getFileMtime(d.file);
-        if (mtime && mtime > cacheSavedAtMs) {
-          dirty.push(d);
-        }
-      }
-      return dirty;
-    })();
+    // Promise initiée APRÈS chargement profil (enfantNames disponibles pour
+    // les domaines per-child / folder). Tourne en parallèle de Phase 1.
+    let phase2DirtyCheck: Promise<TargetedDomain[]> = Promise.resolve([]);
 
     setError(null);
     const debugErrors: string[] = [];
@@ -1403,6 +1317,222 @@ export function useVaultInternal(): VaultState {
         ...enfantNames.map((name) => `01 - Enfants/${name}/Tâches récurrentes.md`),
         ...STATIC_TASK_FILES,
       ];
+
+      // ─── Targeted domains : remplir maintenant que enfantNames est dispo ───
+      // Couverture multi-iPhone : si l'autre iPhone a édité un fichier Phase 2,
+      // mtime > cached.savedAt → refresh ciblé ce domaine seulement.
+      const enfantId = (name: string) => name.toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-');
+      // Single-file domains
+      TARGETED_DOMAINS.push(
+        { name: 'gratitude', detect: async () => { const m = await vault.getFileMtime(GRATITUDE_FILE); return m !== null && m > cacheSavedAtMs; }, refresh: async () => { const c = await vault.readFile(GRATITUDE_FILE).catch(() => ''); const v = parseGratitude(c); setGratitudeDays(v); targetedCacheUpdates.gratitudeDays = v; } },
+        { name: 'wishlist', detect: async () => { const m = await vault.getFileMtime(WISHLIST_FILE); return m !== null && m > cacheSavedAtMs; }, refresh: async () => { const c = await vault.readFile(WISHLIST_FILE).catch(() => ''); const v = parseWishlist(c); setWishlistItems(v); targetedCacheUpdates.wishlistItems = v; } },
+        { name: 'anniversaires', detect: async () => { const m = await vault.getFileMtime(ANNIVERSAIRES_FILE); return m !== null && m > cacheSavedAtMs; }, refresh: async () => { const c = await vault.readFile(ANNIVERSAIRES_FILE).catch(() => ''); const v = parseAnniversaries(c); setAnniversaries(v); targetedCacheUpdates.anniversaries = v; } },
+        { name: 'quotes', detect: async () => { const m = await vault.getFileMtime(QUOTES_FILE); return m !== null && m > cacheSavedAtMs; }, refresh: async () => { const c = await vault.readFile(QUOTES_FILE).catch(() => ''); const v = parseQuotes(c); setQuotes(v); targetedCacheUpdates.quotes = v; } },
+        { name: 'moods', detect: async () => { const m = await vault.getFileMtime(MOODS_FILE); return m !== null && m > cacheSavedAtMs; }, refresh: async () => { const c = await vault.readFile(MOODS_FILE).catch(() => ''); const v = parseMoods(c); setMoods(v); targetedCacheUpdates.moods = v; } },
+        { name: 'secret-missions', detect: async () => { const m = await vault.getFileMtime(SECRET_MISSIONS_FILE); return m !== null && m > cacheSavedAtMs; }, refresh: async () => { const c = await vault.readFile(SECRET_MISSIONS_FILE).catch(() => ''); const v = parseSecretMissions(c); missionsHook.setSecretMissions(v); targetedCacheUpdates.secretMissions = v; } },
+        { name: 'garden', detect: async () => { const m = await vault.getFileMtime(VILLAGE_FILE); return m !== null && m > cacheSavedAtMs; }, refresh: async () => { const v = await vault.readFile(VILLAGE_FILE).catch(() => ''); setGardenRaw(v); targetedCacheUpdates.gardenRaw = v; } },
+        { name: 'family-quests', detect: async () => { const m = await vault.getFileMtime(FAMILY_QUESTS_FILE); return m !== null && m > cacheSavedAtMs; }, refresh: async () => { const c = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => ''); const parsed = parseFamilyQuests(c); const checked = await questsHook.checkAndExpireQuests(parsed); questsHook.setFamilyQuests(checked); targetedCacheUpdates.familyQuests = checked; } },
+      );
+      // Per-child file domains (memories, health) — bébé important
+      TARGETED_DOMAINS.push({
+        name: 'memories',
+        detect: async () => {
+          for (const name of enfantNames) {
+            const m = await vault.getFileMtime(`${MEMOIRES_DIR}/${name}/Jalons.md`);
+            if (m !== null && m > cacheSavedAtMs) return true;
+          }
+          return false;
+        },
+        refresh: async () => {
+          const allMemories: Memory[] = [];
+          await Promise.all(enfantNames.map(async (name) => {
+            try {
+              const jalonsPath = `${MEMOIRES_DIR}/${name}/Jalons.md`;
+              if (await vault.exists(jalonsPath)) {
+                const content = await vault.readFile(jalonsPath);
+                allMemories.push(...parseJalons(name, enfantId(name), content));
+              }
+            } catch (e) { warnUnexpected(`jalons-refresh(${name})`, e); }
+          }));
+          allMemories.sort((a, b) => b.date.localeCompare(a.date));
+          setMemories(allMemories);
+          targetedCacheUpdates.memories = allMemories;
+        },
+      });
+      TARGETED_DOMAINS.push({
+        name: 'health',
+        detect: async () => {
+          for (const name of enfantNames) {
+            const m = await vault.getFileMtime(`${HEALTH_DIR}/${name}/Carnet de santé.md`);
+            if (m !== null && m > cacheSavedAtMs) return true;
+          }
+          return false;
+        },
+        refresh: async () => {
+          const records = (await Promise.all(enfantNames.map(async (name) => {
+            try {
+              const content = await vault.readFile(`${HEALTH_DIR}/${name}/Carnet de santé.md`);
+              return parseHealthRecord(name, enfantId(name), content);
+            } catch (e) { warnUnexpected(`health-refresh(${name})`, e); return null; }
+          }))).filter((x): x is HealthRecord => x !== null);
+          healthHook.setHealthRecords(records);
+          targetedCacheUpdates.healthRecords = records;
+        },
+      });
+      // Journal — last 2 days × N children (matching loadVaultData strategy)
+      TARGETED_DOMAINS.push({
+        name: 'journal-recent',
+        detect: async () => {
+          const today = new Date();
+          for (let i = 0; i < 2; i++) {
+            const d = new Date(today); d.setDate(d.getDate() - i);
+            const dateStr = format(d, 'yyyy-MM-dd');
+            for (const name of enfantNames) {
+              const m = await vault.getFileMtime(`03 - Journal/${name}/${dateStr} ${name}.md`);
+              if (m !== null && m > cacheSavedAtMs) return true;
+            }
+          }
+          return false;
+        },
+        refresh: async () => {
+          const today = new Date();
+          const last2 = Array.from({ length: 2 }, (_, i) => {
+            const d = new Date(today); d.setDate(d.getDate() - i);
+            return format(d, 'yyyy-MM-dd');
+          });
+          const entries: JournalSummaryEntry[] = [];
+          await Promise.all(enfantNames.flatMap((name) =>
+            last2.map(async (dateStr) => {
+              try {
+                const path = `03 - Journal/${name}/${dateStr} ${name}.md`;
+                const content = await vault.readFile(path);
+                if (content) entries.push({ enfant: name, date: dateStr, stats: parseJournalStats(content) });
+              } catch (e) { warnUnexpected(`journal-refresh(${name}/${dateStr})`, e); }
+            })
+          ));
+          setJournalStats(entries);
+          targetedCacheUpdates.journalStats = entries;
+        },
+      });
+      // Folder-based : photos (folder mtime catch les ajouts/suppressions de photos)
+      TARGETED_DOMAINS.push({
+        name: 'photos',
+        detect: async () => {
+          for (const name of enfantNames) {
+            const m = await vault.getFileMtime(`07 - Photos/${name}`);
+            if (m !== null && m > cacheSavedAtMs) return true;
+          }
+          return false;
+        },
+        refresh: async () => {
+          const photoMap: Record<string, string[]> = {};
+          await Promise.all(enfantNames.map(async (name) => {
+            try {
+              const dates = await vault.listPhotoDates(name);
+              photoMap[enfantId(name)] = dates;
+            } catch (e) { warnUnexpected(`photos-refresh(${name})`, e); }
+          }));
+          setPhotoDates(photoMap);
+          targetedCacheUpdates.photoDates = photoMap;
+        },
+      });
+      // Folder-based : skills (listDir + per-file mtimes)
+      TARGETED_DOMAINS.push({
+        name: 'skills',
+        detect: async () => {
+          try {
+            const files = await vault.listDir(SKILLS_DIR);
+            const mds = files.filter(f => f.endsWith('.md'));
+            const mtimes = await Promise.all(mds.map(f => vault.getFileMtime(`${SKILLS_DIR}/${f}`)));
+            return mtimes.some(m => m !== null && m > cacheSavedAtMs);
+          } catch { return false; }
+        },
+        refresh: async () => {
+          try {
+            const files = await vault.listDir(SKILLS_DIR);
+            const trees = await Promise.all(
+              files.filter(f => f.endsWith('.md')).map(async (file) => {
+                const content = await vault.readFile(`${SKILLS_DIR}/${file}`);
+                return parseSkillTree(content);
+              })
+            );
+            setSkillTrees(trees);
+            targetedCacheUpdates.skillTrees = trees;
+          } catch (e) { warnUnexpected('skills-refresh', e); }
+        },
+      });
+      // Folder-based : stories (listDir per enfant + per-file mtimes)
+      TARGETED_DOMAINS.push({
+        name: 'stories',
+        detect: async () => {
+          for (const name of enfantNames) {
+            try {
+              const dir = `${STORIES_DIR}/${name}`;
+              if (!(await vault.exists(dir))) continue;
+              const files = await vault.listDir(dir);
+              const mds = files.filter(f => f.endsWith('.md'));
+              const mtimes = await Promise.all(mds.map(f => vault.getFileMtime(`${dir}/${f}`)));
+              if (mtimes.some(m => m !== null && m > cacheSavedAtMs)) return true;
+            } catch { /* skip */ }
+          }
+          return false;
+        },
+        refresh: async () => {
+          try {
+            const fresh = await storiesHook.loadStories(vault, enfantNames);
+            storiesHook.setStories(fresh);
+            targetedCacheUpdates.stories = fresh;
+          } catch (e) { warnUnexpected('stories-refresh', e); }
+        },
+      });
+      // Folder-based : love-notes
+      TARGETED_DOMAINS.push({
+        name: 'love-notes',
+        detect: async () => {
+          try {
+            const files = await vault.listFilesRecursive(LOVENOTES_DIR, '.md');
+            const mtimes = await Promise.all(files.map(f => vault.getFileMtime(f)));
+            return mtimes.some(m => m !== null && m > cacheSavedAtMs);
+          } catch { return false; }
+        },
+        refresh: async () => {
+          try {
+            const fresh = await loveNotesHook.loadLoveNotes(vault);
+            loveNotesHook.setLoveNotes(fresh);
+            targetedCacheUpdates.loveNotes = fresh;
+          } catch (e) { warnUnexpected('love-notes-refresh', e); }
+        },
+      });
+      // Folder-based : notes
+      TARGETED_DOMAINS.push({
+        name: 'notes',
+        detect: async () => {
+          try {
+            const files = await vault.listFilesRecursive(NOTES_DIR, '.md');
+            const mtimes = await Promise.all(files.map(f => vault.getFileMtime(f)));
+            return mtimes.some(m => m !== null && m > cacheSavedAtMs);
+          } catch { return false; }
+        },
+        refresh: async () => {
+          try {
+            const fresh = await notesHook.loadNotes(vault);
+            notesHook.setNotes(fresh);
+            targetedCacheUpdates.notes = fresh;
+          } catch (e) { warnUnexpected('notes-refresh', e); }
+        },
+      });
+
+      // Lance le check de TOUS les domaines en parallèle (chaque détection
+      // est elle-même parallélisée en interne). Tourne en parallèle de Phase 1.
+      // Total ~300-700ms pour scanner les ~11 domaines (mtime metadata only).
+      phase2DirtyCheck = (async () => {
+        if (opts?.skipPhase2Hint !== true || !cacheSavedAtMs) return [];
+        const detected = await Promise.all(
+          TARGETED_DOMAINS.map(async (d) => ({ d, dirty: await d.detect() }))
+        );
+        return detected.filter(r => r.dirty).map(r => r.d);
+      })();
 
       // ═══════════════════════════════════════════════════════════════════
       // PHASE 1 — Données critiques (visibles immédiatement sur le dashboard)
@@ -1683,16 +1813,13 @@ export function useVaultInternal(): VaultState {
       const dirtyDomains = await phase2DirtyCheck;
       // Decision tree :
       //  - cache frais ET aucun dirty → skip Phase 2 entière (boot ~700ms)
-      //  - cache frais ET 1-3 dirty → targeted refresh par domaine (boot ~1s)
-      //  - cache frais ET > 3 dirty (gros chantier sur Mac) → fallback full Phase 2
+      //  - cache frais ET 1+ dirty → targeted refresh par domaine
+      //    (toujours plus rapide que full Phase 2 même si tous les domaines dirty)
       //  - cache > 6h → fallback full Phase 2 (refresh régulier 1×/jour)
       //  - refresh() pull-to-refresh → fallback full Phase 2 (skipPhase2Hint=false)
-      const TARGETED_THRESHOLD = 3;
       const cacheIsFresh = opts?.skipPhase2Hint === true;
       const skipPhase2Total = cacheIsFresh && dirtyDomains.length === 0;
-      const useTargetedRefresh = cacheIsFresh
-        && dirtyDomains.length > 0
-        && dirtyDomains.length <= TARGETED_THRESHOLD;
+      const useTargetedRefresh = cacheIsFresh && dirtyDomains.length > 0;
 
       // Helper saveCache merge : cache existant + Phase 1 fresh + targeted updates
       const persistMergedCache = () => {
@@ -1738,9 +1865,7 @@ export function useVaultInternal(): VaultState {
         return;
       }
 
-      if (__DEV__ && dirtyDomains.length > TARGETED_THRESHOLD) {
-        console.log(`[BOOT] phase2 full (${dirtyDomains.length} domaines modifiés > seuil ${TARGETED_THRESHOLD})`);
-      }
+      // Sinon : full Phase 2 (cache > 6h ou pull-to-refresh)
 
       // ═══════════════════════════════════════════════════════════════════
       // PHASE 2 — Données secondaires (historiques, en arrière-plan)
