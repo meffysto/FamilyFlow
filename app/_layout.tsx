@@ -310,6 +310,10 @@ function RootLayout() {
                   <Stack.Screen name="onboarding" />
                   <Stack.Screen name="setup" />
                   <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="story-settings"
+                    options={{ presentation: 'pageSheet', gestureEnabled: true }}
+                  />
                 </Stack>
                 <VaultRedirect langReady={langReady} />
                 {(!langReady || !fontsReady) && (
