@@ -95,6 +95,10 @@ export interface Profile {
   voiceTrainingStartedAt?: string;                                            // ISO datetime du déclenchement /train
   voiceTrainingMessage?: string;                                              // dernier message d'erreur/info ElevenLabs
   voiceTrainingProgress?: number;                                             // 0..1 — dernière progression connue (mise à jour via getPvcVoiceState)
+  // ─── Préférences durables Histoires du soir (Phase B) ──────────
+  // Settings persistés par profil enfant. Préfillent le wizard à la génération
+  // et permettent de réduire le wizard quotidien à 3-4 décisions.
+  storyDefaults?: StoryDefaults;
   gardenName?: string;           // nom personnalisé du jardin (fallback "Mon jardin")
   treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
   mascotDecorations: string[];   // IDs des décorations achetées
@@ -711,6 +715,30 @@ export type StoryLength = 'courte' | 'moyenne' | 'longue' | 'tres-longue';
 export type StoryAudioMode = 'off' | 'doux' | 'spectacle';
 
 export type ElevenLabsModel = 'eleven_v3' | 'eleven_multilingual_v2' | 'eleven_turbo_v2_5' | 'eleven_flash_v2_5';
+
+/**
+ * Préférences durables Histoires du soir, stockées sur le profil enfant.
+ *
+ * Le wizard quotidien préfille `voiceConfig` à partir de ces valeurs au moment
+ * de la génération. Tout reste optionnel : champs absents → fallback aux valeurs
+ * actuelles du `voiceConfig` global (StoryVoiceContext).
+ *
+ * `voiceParentId` est la clé de résolution : pointe vers un profil adulte dont
+ * `voiceElevenLabsId` / `voiceFishAudioId` est utilisé comme narrateur.
+ */
+export interface StoryDefaults {
+  engine?: StoryVoiceEngine;
+  language?: 'fr' | 'en';
+  voiceParentId?: string;        // ID profil adulte → résout voiceElevenLabsId/voiceFishAudioId à la génération
+  elevenLabsVoiceId?: string;    // override direct ElevenLabs (sans passer par un parent)
+  fishAudioReferenceId?: string;
+  voiceIdentifier?: string;      // identifier voix iOS Premium/Enhanced (expo-speech)
+  audioMode?: StoryAudioMode;
+  ambienceVolume?: number;
+  multiVoice?: boolean;
+  defaultLength?: StoryLength;   // longueur préférée (override possible dans le wizard)
+  elevenLabsModel?: ElevenLabsModel;
+}
 
 export interface StoryVoiceConfig {
   engine: StoryVoiceEngine;

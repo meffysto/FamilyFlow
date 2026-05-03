@@ -8,11 +8,11 @@
 import { useState, useCallback, type SetStateAction, type Dispatch } from 'react';
 import type React from 'react';
 import * as SecureStore from 'expo-secure-store';
-import type { Profile, Gender, GamificationData, ProfileTheme, AgeUpgrade, AgeCategory, Task } from '../lib/types';
+import type { Profile, Gender, GamificationData, ProfileTheme, AgeUpgrade, AgeCategory, StoryDefaults, Task } from '../lib/types';
 import type { FarmProfileData } from '../lib/types';
 import type { TreeSpecies } from '../lib/mascot/types';
 import type { VaultManager } from '../lib/vault';
-import { parseFamille, parseGamification, serializeGamification, mergeProfiles, parseFarmProfile, serializeFarmProfile, parseTaskFile } from '../lib/parser';
+import { parseFamille, parseGamification, serializeGamification, mergeProfiles, parseFarmProfile, serializeFarmProfile, parseTaskFile, serializeStoryDefaults } from '../lib/parser';
 import { calculateLevel } from '../lib/gamification';
 import { DECORATIONS, INHABITANTS, TREE_STAGES } from '../lib/mascot/types';
 import { getStageIndex, getTreeStage } from '../lib/mascot/engine';
@@ -59,6 +59,7 @@ export interface UseVaultProfilesResult {
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
   unplaceMascotItem: (profileId: string, slotId: string) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender; voiceElevenLabsId?: string; voiceFishAudioId?: string; voicePersonalId?: string; voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'fish-audio-cloned' | 'expo-speech' }) => Promise<void>;
+  updateStoryDefaults: (profileId: string, defaults: StoryDefaults | null) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   applyAgeUpgrade: (upgrade: AgeUpgrade) => Promise<void>;
   dismissAgeUpgrade: (profileId: string) => void;
@@ -517,6 +518,57 @@ export function useVaultProfiles(
     }
   }, []);
 
+  // Phase B Histoires — préférences durables stockées en JSON 1-ligne dans famille.md.
+  // null = supprimer la ligne. Tolérant aux profils sans section storyDefaults.
+  const updateStoryDefaults = useCallback(async (profileId: string, defaults: StoryDefaults | null) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let sectionStart = -1;
+      let sectionEnd = lines.length;
+      let inSection = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (inSection) { sectionEnd = i; break; }
+          if (lines[i].replace('### ', '').trim() === profileId) {
+            inSection = true;
+            sectionStart = i;
+          }
+        }
+      }
+      if (sectionStart === -1) return;
+
+      const serialized = defaults ? serializeStoryDefaults(defaults) : undefined;
+
+      let existingIdx = -1;
+      let lastPropIdx = sectionStart;
+      for (let i = sectionStart + 1; i < sectionEnd; i++) {
+        if (lines[i].trim().startsWith('storyDefaults:')) existingIdx = i;
+        if (lines[i].includes(': ')) lastPropIdx = i;
+      }
+
+      if (serialized) {
+        const newLine = `storyDefaults: ${serialized}`;
+        if (existingIdx >= 0) {
+          lines[existingIdx] = newLine;
+        } else {
+          lines.splice(lastPropIdx + 1, 0, newLine);
+        }
+      } else if (existingIdx >= 0) {
+        lines.splice(existingIdx, 1);
+      }
+
+      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
+      setProfiles(prev => prev.map(p =>
+        p.id === profileId ? { ...p, storyDefaults: defaults ?? undefined } : p,
+      ));
+    } catch (e) {
+      throw new Error(`updateStoryDefaults: ${e}`);
+    }
+  }, []);
+
   const deleteProfile = useCallback(async (profileId: string) => {
     if (!vaultRef.current) return;
     try {
@@ -776,6 +828,7 @@ export function useVaultProfiles(
     placeMascotItem,
     unplaceMascotItem,
     updateProfile,
+    updateStoryDefaults,
     deleteProfile,
     applyAgeUpgrade,
     dismissAgeUpgrade,

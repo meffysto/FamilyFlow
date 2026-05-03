@@ -182,6 +182,7 @@ export interface VaultState {
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
   unplaceMascotItem: (profileId: string, slotId: string) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender; voiceElevenLabsId?: string; voiceFishAudioId?: string; voicePersonalId?: string; voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'fish-audio-cloned' | 'expo-speech' }) => Promise<void>;
+  updateStoryDefaults: (profileId: string, defaults: import('../lib/types').StoryDefaults | null) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
   addStockItem: (item: Omit<StockItem, 'lineIndex'>) => Promise<void>;
@@ -2707,6 +2708,7 @@ export function useVaultInternal(): VaultState {
     placeMascotItem: profilesHook.placeMascotItem,
     unplaceMascotItem: profilesHook.unplaceMascotItem,
     updateProfile: profilesHook.updateProfile,
+    updateStoryDefaults: profilesHook.updateStoryDefaults,
     deleteProfile: profilesHook.deleteProfile,
     updateStockQuantity: stockHook.updateStockQuantity,
     addStockItem: stockHook.addStockItem,

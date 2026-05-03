@@ -40,6 +40,7 @@ import type {
   Routine,
   SkillTreeData,
   StockItem,
+  StoryDefaults,
   Task,
   VacationConfig,
   WishlistItem,
@@ -62,8 +63,9 @@ import type { JournalSummaryEntry } from './ai-service';
 // v12: Ajout familyQuests, gardenRaw, skillTrees, stories pour que skipPhase2
 //      n'efface pas ces sections (elles n'étaient pas dans le cache avant donc
 //      le skip Phase 2 les laissait à leur état initial vide).
-const CACHE_VERSION = 12;
-const CACHE_FILENAME = 'vault-cache-v12.json';
+// v13: Phase B Histoires — Profile.storyDefaults (préférences durables wizard)
+const CACHE_VERSION = 13;
+const CACHE_FILENAME = 'vault-cache-v13.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {
@@ -86,6 +88,7 @@ export interface ProfileCacheEntry {
   voiceTrainingStatus?: Profile['voiceTrainingStatus'];
   voiceTrainingStartedAt?: string;
   voiceTrainingMessage?: string;
+  storyDefaults?: StoryDefaults;
   foodAllergies?: string[];
   foodIntolerances?: string[];
   foodRegimes?: string[];
@@ -149,6 +152,7 @@ export function stripProfileForCache(p: Profile): ProfileCacheEntry {
     voiceTrainingStatus: p.voiceTrainingStatus,
     voiceTrainingStartedAt: p.voiceTrainingStartedAt,
     voiceTrainingMessage: p.voiceTrainingMessage,
+    storyDefaults: p.storyDefaults,
     foodAllergies: p.foodAllergies,
     foodIntolerances: p.foodIntolerances,
     foodRegimes: p.foodRegimes,

@@ -51,6 +51,7 @@ import {
   BedtimeStory,
   StoryUniverseId,
   StoryVoiceConfig,
+  StoryDefaults,
   ActiveExpedition,
   ExpeditionDifficulty,
   ExpeditionOutcome,
@@ -1119,6 +1120,53 @@ export function serializeFoodCsv(items: string[]): string {
     .join(',');
 }
 
+// ─── Préférences durables Histoires (Phase B) ────────────────────────────────
+// Stockées en JSON sur une seule ligne `storyDefaults: {...}` dans famille.md.
+// Tolérant : tout champ inconnu / mal typé est silencieusement ignoré.
+
+const VALID_STORY_ENGINES = new Set(['expo-speech', 'elevenlabs', 'fish-audio']);
+const VALID_STORY_LANGS = new Set(['fr', 'en']);
+const VALID_AUDIO_MODES = new Set(['off', 'doux', 'spectacle']);
+const VALID_STORY_LENGTHS = new Set(['courte', 'moyenne', 'longue', 'tres-longue']);
+const VALID_ELEVENLABS_MODELS = new Set(['eleven_v3', 'eleven_multilingual_v2', 'eleven_turbo_v2_5', 'eleven_flash_v2_5']);
+
+export function parseStoryDefaults(raw: unknown): StoryDefaults | undefined {
+  if (!raw) return undefined;
+  let obj: Record<string, unknown> | null = null;
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed || !trimmed.startsWith('{')) return undefined;
+    try { obj = JSON.parse(trimmed); } catch { return undefined; }
+  } else if (typeof raw === 'object' && raw !== null) {
+    obj = raw as Record<string, unknown>;
+  }
+  if (!obj) return undefined;
+
+  const out: StoryDefaults = {};
+  if (typeof obj.engine === 'string' && VALID_STORY_ENGINES.has(obj.engine)) out.engine = obj.engine as StoryDefaults['engine'];
+  if (typeof obj.language === 'string' && VALID_STORY_LANGS.has(obj.language)) out.language = obj.language as StoryDefaults['language'];
+  if (typeof obj.voiceParentId === 'string' && obj.voiceParentId.trim()) out.voiceParentId = obj.voiceParentId.trim();
+  if (typeof obj.elevenLabsVoiceId === 'string' && obj.elevenLabsVoiceId.trim()) out.elevenLabsVoiceId = obj.elevenLabsVoiceId.trim();
+  if (typeof obj.fishAudioReferenceId === 'string' && obj.fishAudioReferenceId.trim()) out.fishAudioReferenceId = obj.fishAudioReferenceId.trim();
+  if (typeof obj.voiceIdentifier === 'string' && obj.voiceIdentifier.trim()) out.voiceIdentifier = obj.voiceIdentifier.trim();
+  if (typeof obj.audioMode === 'string' && VALID_AUDIO_MODES.has(obj.audioMode)) out.audioMode = obj.audioMode as StoryDefaults['audioMode'];
+  if (typeof obj.ambienceVolume === 'number' && obj.ambienceVolume >= 0 && obj.ambienceVolume <= 1) out.ambienceVolume = obj.ambienceVolume;
+  if (typeof obj.multiVoice === 'boolean') out.multiVoice = obj.multiVoice;
+  if (typeof obj.defaultLength === 'string' && VALID_STORY_LENGTHS.has(obj.defaultLength)) out.defaultLength = obj.defaultLength as StoryDefaults['defaultLength'];
+  if (typeof obj.elevenLabsModel === 'string' && VALID_ELEVENLABS_MODELS.has(obj.elevenLabsModel)) out.elevenLabsModel = obj.elevenLabsModel as StoryDefaults['elevenLabsModel'];
+
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+export function serializeStoryDefaults(defaults: StoryDefaults | undefined): string | undefined {
+  if (!defaults) return undefined;
+  const filtered = Object.fromEntries(
+    Object.entries(defaults).filter(([, v]) => v !== undefined && v !== null && v !== ''),
+  );
+  if (Object.keys(filtered).length === 0) return undefined;
+  return JSON.stringify(filtered);
+}
+
 /**
  * Parse famille.md custom format:
  *
@@ -1189,6 +1237,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         voiceTrainingProgress: currentProps.voiceTrainingProgress && !Number.isNaN(Number(currentProps.voiceTrainingProgress))
           ? Math.max(0, Math.min(1, Number(currentProps.voiceTrainingProgress)))
           : undefined,
+        // Phase B — préférences durables Histoires du soir (JSON-encodé)
+        storyDefaults: parseStoryDefaults(currentProps.storyDefaults),
         // Farm/mascot/companion fields live in farm-{profileId}.md — defaults here
         treeSpecies: undefined,
         mascotDecorations: [],
