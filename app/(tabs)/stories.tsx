@@ -1816,12 +1816,17 @@ export default function StoriesScreen() {
   // ── Étape 4 : Génération + Player ──
 
   function GenerationStep({ enfantId, enfantName, universId, detail, length, book, trancheAge }: { enfantId: string; enfantName: string; universId: StoryUniverseId; detail: string; length: StoryLength; book?: BookContext; trancheAge?: StoryAgeRange }) {
-    const [fullText, setFullText] = useState('');
-    const [displayedText, setDisplayedText] = useState('');
-    const [storyTitle, setStoryTitle] = useState('');
-    const [currentStory, setCurrentStory] = useState<BedtimeStory | null>(null);
+    // GenerationStep est un composant inline → re-render parent (setHeaderStory,
+    // setHeaderAudioReady…) le démonte/remonte. Au remount, on lit le cache dès
+    // l'initialisation des useState pour qu'aucun render ne passe par la vue
+    // loading intermédiaire (sinon flash visible).
+    const cachedAtMount = generationCacheRef.current;
+    const [fullText, setFullText] = useState(() => cachedAtMount?.texte ?? '');
+    const [displayedText, setDisplayedText] = useState(() => cachedAtMount?.texte ?? '');
+    const [storyTitle, setStoryTitle] = useState(() => cachedAtMount?.titre ?? '');
+    const [currentStory, setCurrentStory] = useState<BedtimeStory | null>(() => cachedAtMount?.story ?? null);
     const [genError, setGenError] = useState<string | null>(null);
-    const [showPlayer, setShowPlayer] = useState(false);
+    const [showPlayer, setShowPlayer] = useState(() => cachedAtMount !== null);
     // V3 — Quand showPlayer passe à true, on déclare l'histoire au header
     // pour qu'il puisse afficher le bouton 📖 Lecture immersive. Pas de
     // cleanup ici : GenerationStep est une inner function qui se remonte à
@@ -2100,23 +2105,15 @@ export default function StoriesScreen() {
     }, [enfantId, enfantName, universId, detail, book, trancheAge]);
 
     useEffect(() => {
+      // Cache présent au mount → état restauré via les useState initializers,
+      // pas besoin d'animer les étoiles ni de rappeler l'IA.
+      if (cachedAtMount) {
+        return;
+      }
+
       star1.value = withRepeat(withTiming(1, { duration: 1200 }), -1, true);
       star2.value = withRepeat(withTiming(1, { duration: 1400 }), -1, true);
       star3.value = withRepeat(withTiming(1, { duration: 1000 }), -1, true);
-
-      // Si une génération existe déjà (remontage du composant), restaurer sans rappel IA
-      if (generationCacheRef.current) {
-        const cached = generationCacheRef.current;
-        cancelAnimation(star1);
-        cancelAnimation(star2);
-        cancelAnimation(star3);
-        setStoryTitle(cached.titre);
-        setFullText(cached.texte);
-        setDisplayedText(cached.texte);
-        setCurrentStory(cached.story);
-        setShowPlayer(true);
-        return;
-      }
 
       generate();
 
