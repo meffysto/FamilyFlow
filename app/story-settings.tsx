@@ -216,8 +216,11 @@ export default function StorySettingsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Section Moteur voix */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Moteur de voix</Text>
+        {/* ───── Groupe Voix ───── */}
+        <Text style={[styles.groupHeader, styles.groupHeaderFirst, { color: primary }]}>
+          🎙  VOIX
+        </Text>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Moteur</Text>
         <Pressable
           style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={pickEngine}
@@ -311,7 +314,10 @@ export default function StorySettingsScreen() {
               })}
             </View>
             <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-              Voix ElevenLabs par défaut ({currentLanguage === 'fr' ? 'FR' : 'EN'})
+              Voix de secours ({currentLanguage === 'fr' ? 'FR' : 'EN'})
+            </Text>
+            <Text style={[styles.helperText, { color: colors.textMuted }]}>
+              Utilisée si aucun parent n'a sa voix clonée.
             </Text>
             <View style={styles.chipRowWrap}>
               {elevenLabsVoices.map(v => {
@@ -401,8 +407,57 @@ export default function StorySettingsScreen() {
           </>
         )}
 
-        {/* Mode audio */}
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Mode audio</Text>
+        {/* Modèle ElevenLabs — compromis qualité / coût (groupe Voix) */}
+        {currentEngine === 'elevenlabs' && (
+          <>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Modèle</Text>
+            <View style={styles.modelGrid}>
+              {ELEVENLABS_MODEL_OPTIONS.map(m => {
+                const isSelected = currentModel === m.key;
+                return (
+                  <Pressable
+                    key={m.key}
+                    style={[
+                      styles.modelChip,
+                      {
+                        backgroundColor: isSelected ? primary : colors.card,
+                        borderColor: isSelected ? primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => persist({ elevenLabsModel: m.key })}
+                  >
+                    <Text style={[styles.modelLabel, { color: isSelected ? '#fff' : colors.text }]}>
+                      {m.label}
+                    </Text>
+                    <Text style={[styles.modelHint, { color: isSelected ? '#ffffffcc' : colors.textMuted }]}>
+                      {m.hint}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
+
+        {/* Multi-voix — ElevenLabs uniquement (groupe Voix) */}
+        {currentEngine === 'elevenlabs' && (
+          <View style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.toggleLabelWrap}>
+              <Text style={[styles.toggleLabel, { color: colors.text }]}>Multi-voix</Text>
+              <Text style={[styles.toggleHint, { color: colors.textMuted }]}>
+                Distribue les dialogues sur des voix de personnages
+              </Text>
+            </View>
+            <Switch
+              value={defaults.multiVoice ?? false}
+              onValueChange={v => persist({ multiVoice: v })}
+              trackColor={{ false: colors.border, true: primary }}
+            />
+          </View>
+        )}
+
+        {/* ───── Groupe Ambiance ───── */}
+        <Text style={[styles.groupHeader, { color: primary }]}>🎬  AMBIANCE</Text>
         <View style={styles.audioRow}>
           {AUDIO_MODE_OPTIONS.map(m => {
             const isSelected = currentAudioMode === m.key;
@@ -433,56 +488,8 @@ export default function StorySettingsScreen() {
           })}
         </View>
 
-        {/* Multi-voix — ElevenLabs uniquement */}
-        {currentEngine === 'elevenlabs' && (
-          <View style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.toggleLabelWrap}>
-              <Text style={[styles.toggleLabel, { color: colors.text }]}>Multi-voix</Text>
-              <Text style={[styles.toggleHint, { color: colors.textMuted }]}>
-                Distribue les dialogues sur des voix de personnages
-              </Text>
-            </View>
-            <Switch
-              value={defaults.multiVoice ?? false}
-              onValueChange={v => persist({ multiVoice: v })}
-              trackColor={{ false: colors.border, true: primary }}
-            />
-          </View>
-        )}
-
-        {/* Modèle ElevenLabs — compromis qualité / coût */}
-        {currentEngine === 'elevenlabs' && (
-          <>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Modèle ElevenLabs</Text>
-            <View style={styles.modelGrid}>
-              {ELEVENLABS_MODEL_OPTIONS.map(m => {
-                const isSelected = currentModel === m.key;
-                return (
-                  <Pressable
-                    key={m.key}
-                    style={[
-                      styles.modelChip,
-                      {
-                        backgroundColor: isSelected ? primary : colors.card,
-                        borderColor: isSelected ? primary : colors.border,
-                      },
-                    ]}
-                    onPress={() => persist({ elevenLabsModel: m.key })}
-                  >
-                    <Text style={[styles.modelLabel, { color: isSelected ? '#fff' : colors.text }]}>
-                      {m.label}
-                    </Text>
-                    <Text style={[styles.modelHint, { color: isSelected ? '#ffffffcc' : colors.textMuted }]}>
-                      {m.hint}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </>
-        )}
-
-        {/* Longueur par défaut */}
+        {/* ───── Groupe Histoire ───── */}
+        <Text style={[styles.groupHeader, { color: primary }]}>📖  HISTOIRE</Text>
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Longueur préférée</Text>
         <View style={styles.lengthRow}>
           {STORY_LENGTH_ORDER.map(key => {
@@ -674,10 +681,18 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
-    marginTop: Spacing['2xl'],
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.sm,
+  },
+  groupHeader: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    marginTop: Spacing['3xl'],
     marginBottom: Spacing.md,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 0.4,
+  },
+  groupHeaderFirst: {
+    marginTop: Spacing.lg,
   },
 
   row: {
@@ -705,24 +720,29 @@ const styles = StyleSheet.create({
   choiceLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
 
   voiceOption: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: 12,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 18,
     borderWidth: 1,
-    minWidth: 160,
   },
   voiceLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.medium },
+  helperText: {
+    fontSize: FontSize.micro,
+    marginBottom: Spacing.sm,
+    marginTop: -Spacing.xs,
+    lineHeight: 16,
+  },
 
   audioRow: { flexDirection: 'row', gap: Spacing.sm },
   audioChip: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xs,
     borderRadius: 14,
     borderWidth: 1,
   },
-  audioEmoji: { fontSize: 22, marginBottom: 4 },
+  audioEmoji: { fontSize: 18, marginBottom: 4 },
   audioLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   audioHint: { fontSize: FontSize.micro, marginTop: 2 },
 
