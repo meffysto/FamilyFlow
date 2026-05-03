@@ -1084,6 +1084,17 @@ export function useVaultInternal(): VaultState {
   }, [loveNotesHook.loveNotes, activeProfileId]);
 
   const loadVaultData = useCallback(async (vault: VaultManager) => {
+    // Guard ré-entrance : si un loadVaultData tourne déjà, skip silencieusement.
+    // Sans ça, mount + AppState listener (Face ID lock screen → inactive→active)
+    // peuvent lancer 2 appels concurrents qui se concurrencent sur iCloud
+    // (bandwidth divisé par 2 → Phase 2 doublée à ~25s au lieu de ~10s).
+    if (busyRef.current) {
+      if (__DEV__) console.log('[BOOT] loadVaultData skip (déjà en cours)');
+      return;
+    }
+    busyRef.current = true;
+    lastVaultLoadRef.current = Date.now();
+
     setError(null);
     const debugErrors: string[] = [];
     const __t0 = __DEV__ ? performance.now() : 0;
@@ -1723,6 +1734,8 @@ export function useVaultInternal(): VaultState {
 
     } catch (e) {
       debugErrors.push(`global: ${e}`);
+    } finally {
+      busyRef.current = false;
     }
 
     if (debugErrors.length > 0) {
