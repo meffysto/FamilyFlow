@@ -968,6 +968,10 @@ export function useVaultInternal(): VaultState {
               setMoods(cached.moods);
               missionsHook.setSecretMissions(cached.secretMissions);
               loveNotesHook.setLoveNotes(cached.loveNotes);
+              questsHook.setFamilyQuests(cached.familyQuests);
+              setGardenRaw(cached.gardenRaw);
+              setSkillTrees(cached.skillTrees);
+              storiesHook.setStories(cached.stories);
               setIsLoading(false);
               __markMount('cache-hydrate-setState', __tHydrate);
             } catch (e) {
@@ -1112,25 +1116,110 @@ export function useVaultInternal(): VaultState {
     busyRef.current = true;
     lastVaultLoadRef.current = Date.now();
 
-    // Mtime check parallèle : si le hint dit "skip OK" (cache frais), on
-    // vérifie quand même que les fichiers Phase 2 modifiables depuis Mac
-    // n'ont pas été touchés depuis cached.savedAt. Si un fichier a bougé →
-    // on force Phase 2 (refresh visible). Lecture mtime = metadata only,
-    // pas de download iCloud → ~50ms par fichier en parallèle de Phase 1.
+    // Targeted domains : domaines Phase 2 single-file qu'on peut refresh
+    // INDIVIDUELLEMENT si leur fichier source a bougé sur Mac. Évite de
+    // recharger toute la Phase 2 (~25s + freeze) pour une simple modif
+    // gratitude. Closure sur les setters → tableau recréé par appel.
+    const targetedCacheUpdates: Partial<VaultCachePayload> = {};
+    const TARGETED_DOMAINS: Array<{ name: string; file: string; refresh: () => Promise<void> }> = [
+      {
+        name: 'gratitude',
+        file: GRATITUDE_FILE,
+        refresh: async () => {
+          const c = await vault.readFile(GRATITUDE_FILE).catch(() => '');
+          const v = parseGratitude(c);
+          setGratitudeDays(v);
+          targetedCacheUpdates.gratitudeDays = v;
+        },
+      },
+      {
+        name: 'wishlist',
+        file: WISHLIST_FILE,
+        refresh: async () => {
+          const c = await vault.readFile(WISHLIST_FILE).catch(() => '');
+          const v = parseWishlist(c);
+          setWishlistItems(v);
+          targetedCacheUpdates.wishlistItems = v;
+        },
+      },
+      {
+        name: 'anniversaires',
+        file: ANNIVERSAIRES_FILE,
+        refresh: async () => {
+          const c = await vault.readFile(ANNIVERSAIRES_FILE).catch(() => '');
+          const v = parseAnniversaries(c);
+          setAnniversaries(v);
+          targetedCacheUpdates.anniversaries = v;
+        },
+      },
+      {
+        name: 'quotes',
+        file: QUOTES_FILE,
+        refresh: async () => {
+          const c = await vault.readFile(QUOTES_FILE).catch(() => '');
+          const v = parseQuotes(c);
+          setQuotes(v);
+          targetedCacheUpdates.quotes = v;
+        },
+      },
+      {
+        name: 'moods',
+        file: MOODS_FILE,
+        refresh: async () => {
+          const c = await vault.readFile(MOODS_FILE).catch(() => '');
+          const v = parseMoods(c);
+          setMoods(v);
+          targetedCacheUpdates.moods = v;
+        },
+      },
+      {
+        name: 'secret-missions',
+        file: SECRET_MISSIONS_FILE,
+        refresh: async () => {
+          const c = await vault.readFile(SECRET_MISSIONS_FILE).catch(() => '');
+          const v = parseSecretMissions(c);
+          missionsHook.setSecretMissions(v);
+          targetedCacheUpdates.secretMissions = v;
+        },
+      },
+      {
+        name: 'garden',
+        file: VILLAGE_FILE,
+        refresh: async () => {
+          const v = await vault.readFile(VILLAGE_FILE).catch(() => '');
+          setGardenRaw(v);
+          targetedCacheUpdates.gardenRaw = v;
+        },
+      },
+      {
+        name: 'family-quests',
+        file: FAMILY_QUESTS_FILE,
+        refresh: async () => {
+          const c = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+          const parsed = parseFamilyQuests(c);
+          const checked = await questsHook.checkAndExpireQuests(parsed);
+          questsHook.setFamilyQuests(checked);
+          targetedCacheUpdates.familyQuests = checked;
+        },
+      },
+    ];
+
+    // Mtime check parallèle : pour chaque domaine targeted, regarde si son
+    // fichier a été modifié sur Mac depuis cached.savedAt. Lecture metadata
+    // only (pas de download iCloud) → ~50ms/fichier en parallèle de Phase 1.
     const cacheSavedAtMs = opts?.cacheSavedAt
       ? new Date(opts.cacheSavedAt).getTime()
       : 0;
-    const phase2DirtyCheck: Promise<boolean> = (async () => {
-      if (opts?.skipPhase2Hint !== true || !cacheSavedAtMs) return false;
-      const filesToCheck = [GRATITUDE_FILE, WISHLIST_FILE, ANNIVERSAIRES_FILE, QUOTES_FILE, MOODS_FILE];
-      for (const f of filesToCheck) {
-        const mtime = await vault.getFileMtime(f);
+    const phase2DirtyCheck: Promise<typeof TARGETED_DOMAINS> = (async () => {
+      if (opts?.skipPhase2Hint !== true || !cacheSavedAtMs) return [];
+      const dirty: typeof TARGETED_DOMAINS = [];
+      for (const d of TARGETED_DOMAINS) {
+        const mtime = await vault.getFileMtime(d.file);
         if (mtime && mtime > cacheSavedAtMs) {
-          if (__DEV__) console.log(`[BOOT] phase2 forcé — ${f} modifié sur Mac (mtime > cache)`);
-          return true;
+          dirty.push(d);
         }
       }
-      return false;
+      return dirty;
     })();
 
     setError(null);
@@ -1590,41 +1679,67 @@ export function useVaultInternal(): VaultState {
       refreshJournalWidget(profiles);
       syncWidgetFeedingsToVault(vault).catch(() => {});
 
-      // Résolution finale skipPhase2 : skipPhase2Hint (cache < 6h) ET aucun
-      // fichier Phase 2 modifié sur Mac depuis cached.savedAt.
-      const phase2Dirty = await phase2DirtyCheck;
-      const skipPhase2 = opts?.skipPhase2Hint === true && !phase2Dirty;
+      // Résolution dirty list (await mtime check qui tournait en parallèle).
+      const dirtyDomains = await phase2DirtyCheck;
+      // Decision tree :
+      //  - cache frais ET aucun dirty → skip Phase 2 entière (boot ~700ms)
+      //  - cache frais ET 1-3 dirty → targeted refresh par domaine (boot ~1s)
+      //  - cache frais ET > 3 dirty (gros chantier sur Mac) → fallback full Phase 2
+      //  - cache > 6h → fallback full Phase 2 (refresh régulier 1×/jour)
+      //  - refresh() pull-to-refresh → fallback full Phase 2 (skipPhase2Hint=false)
+      const TARGETED_THRESHOLD = 3;
+      const cacheIsFresh = opts?.skipPhase2Hint === true;
+      const skipPhase2Total = cacheIsFresh && dirtyDomains.length === 0;
+      const useTargetedRefresh = cacheIsFresh
+        && dirtyDomains.length > 0
+        && dirtyDomains.length <= TARGETED_THRESHOLD;
 
-      // Skip Phase 2 si cache récent ET aucun fichier Mac modifié.
-      // Conséquences :
-      //  - 99% des relaunches dans une journée sans modif Mac : boot ~700ms
-      //  - Modif gratitude/wishlist/anniv/quotes/moods sur Mac → refresh auto
-      //  - Cache > 6h : Phase 2 refresh complet (1× par jour)
-      //  - pull-to-refresh manuel via refresh() force toujours Phase 2 complet
-      if (skipPhase2) {
-        if (__DEV__) console.log('[BOOT] phase2 skipped (cache récent)');
-        // Met à jour le cache avec Phase 1 fresh + Phase 2 cached (savedAt
-        // bumpé pour étendre la fenêtre de skip).
+      // Helper saveCache merge : cache existant + Phase 1 fresh + targeted updates
+      const persistMergedCache = () => {
         const existingCache = readCacheSync();
-        if (existingCache) {
-          saveCache({
-            ...(existingCache as VaultCachePayload),
-            vaultPath: vault.vaultPath,
-            profiles: profilesSnapshot.map(stripProfileForCache),
-            tasks: tasksResult,
-            routines: val(phase1[1], []) as Routine[],
-            courses: [] as CourseItem[],
-            stock: stockResult.items,
-            stockSections: stockResult.sections,
-            meals: val(phase1[4], []) as MealItem[],
-            rdvs: rdvResult,
-            notifPrefs: val(phase1[7], getDefaultNotificationPrefs()),
-            vacationConfig: vacResult.config,
-            vacationTasks: vacResult.vacTasks,
-          });
-        }
+        if (!existingCache) return;
+        saveCache({
+          ...(existingCache as VaultCachePayload),
+          vaultPath: vault.vaultPath,
+          profiles: profilesSnapshot.map(stripProfileForCache),
+          // Phase 1 fresh
+          tasks: tasksResult,
+          routines: val(phase1[1], []) as Routine[],
+          courses: [] as CourseItem[],
+          stock: stockResult.items,
+          stockSections: stockResult.sections,
+          meals: val(phase1[4], []) as MealItem[],
+          rdvs: rdvResult,
+          notifPrefs: val(phase1[7], getDefaultNotificationPrefs()),
+          vacationConfig: vacResult.config,
+          vacationTasks: vacResult.vacTasks,
+          // Targeted overrides (priorité sur cached)
+          ...targetedCacheUpdates,
+        });
+      };
+
+      if (skipPhase2Total) {
+        if (__DEV__) console.log('[BOOT] phase2 skipped (cache récent, aucun fichier Mac modifié)');
+        persistMergedCache();
         __mark('TOTAL-loadVaultData', __t0);
         return;
+      }
+
+      if (useTargetedRefresh) {
+        const __t_targeted = __DEV__ ? performance.now() : 0;
+        if (__DEV__) console.log(`[BOOT] targeted refresh: ${dirtyDomains.map(d => d.name).join(', ')}`);
+        // Refresh chaque domaine modifié séquentiellement (≤ 3 reads, rapide)
+        for (const d of dirtyDomains) {
+          await d.refresh();
+        }
+        __mark('targeted-refresh', __t_targeted);
+        persistMergedCache();
+        __mark('TOTAL-loadVaultData', __t0);
+        return;
+      }
+
+      if (__DEV__ && dirtyDomains.length > TARGETED_THRESHOLD) {
+        console.log(`[BOOT] phase2 full (${dirtyDomains.length} domaines modifiés > seuil ${TARGETED_THRESHOLD})`);
       }
 
       // ═══════════════════════════════════════════════════════════════════
@@ -1801,8 +1916,12 @@ export function useVaultInternal(): VaultState {
         notes: val(phase2[7], []) as Note[],
         quotes: val(phase2[8], []) as ChildQuote[],
         moods: val(phase2[9], []) as MoodEntry[],
+        skillTrees: val(phase2[10], []) as SkillTreeData[],
         secretMissions: val(phase2[11], []) as Task[],
+        gardenRaw: val(phase2[12], '') as string,
+        stories: val(phase2[13] as PromiseSettledResult<BedtimeStory[]>, []) as BedtimeStory[],
         loveNotes: val(phase2[14] as PromiseSettledResult<LoveNote[]>, []) as LoveNote[],
+        familyQuests: loadedQuests,
       });
       __mark('save-cache', __t_save);
       __mark('TOTAL-loadVaultData', __t0);

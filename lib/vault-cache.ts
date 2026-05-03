@@ -24,6 +24,7 @@
 import { File, Paths } from 'expo-file-system';
 import type {
   Anniversary,
+  BedtimeStory,
   ChildQuote,
   CourseItem,
   GratitudeDay,
@@ -37,6 +38,7 @@ import type {
   Profile,
   RDV,
   Routine,
+  SkillTreeData,
   StockItem,
   Task,
   VacationConfig,
@@ -45,6 +47,7 @@ import type {
   Gender,
   ProfileTheme,
 } from './types';
+import type { FamilyQuest } from './quest-engine';
 import type { JournalSummaryEntry } from './ai-service';
 
 // v5 : Phase 40 — shape WagerModifier étendu (tasksCompletedToday, lastDailyResetDate, totalDays)
@@ -56,8 +59,11 @@ import type { JournalSummaryEntry } from './ai-service';
 // v9 : RDV.rappels?: string[] — rappels personnalisés par RDV (1w|3d|1d|3h|1h|30m)
 // v10: Profile.voiceTrainingProgress?: number — progression PVC ElevenLabs (0..1)
 // v11: Profile.voiceElevenLabsIvcId / voiceElevenLabsPvcId — slots IVC + PVC indépendants
-const CACHE_VERSION = 11;
-const CACHE_FILENAME = 'vault-cache-v11.json';
+// v12: Ajout familyQuests, gardenRaw, skillTrees, stories pour que skipPhase2
+//      n'efface pas ces sections (elles n'étaient pas dans le cache avant donc
+//      le skip Phase 2 les laissait à leur état initial vide).
+const CACHE_VERSION = 12;
+const CACHE_FILENAME = 'vault-cache-v12.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {
@@ -113,6 +119,10 @@ export interface VaultCacheState {
   moods: MoodEntry[];
   secretMissions: Task[];
   loveNotes: LoveNote[];
+  familyQuests: FamilyQuest[];
+  gardenRaw: string;
+  skillTrees: SkillTreeData[];
+  stories: BedtimeStory[];
 }
 
 /** Payload fourni par useVault — version et savedAt sont ajoutés lors du save. */
