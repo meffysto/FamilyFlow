@@ -978,20 +978,24 @@ export function useVaultInternal(): VaultState {
             if (cached) console.log(`[BOOT]   cached.vaultPath="${cached.vaultPath}" vs normalized="${normalizedVaultPath}"`);
           }
 
-          // Skip Phase 2 (refresh secondaire iCloud) si le cache est encore frais.
-          // 99% des relaunches dans la journée tombent dans ce cas → boot ~700ms.
+          // Skip Phase 2 (refresh secondaire iCloud) si cache frais ET aucun
+          // fichier modifié sur Mac (mtime check fait dans loadVaultData en
+          // parallèle de Phase 1). 99% des relaunches dans la journée → ~700ms.
           const PHASE2_REFRESH_THRESHOLD_MS = 6 * 60 * 60 * 1000; // 6h
           const cacheAgeMs = cached?.savedAt
             ? Date.now() - new Date(cached.savedAt).getTime()
             : Infinity;
-          const skipPhase2 = cached !== null
+          const skipPhase2Hint = cached !== null
             && cached.vaultPath === normalizedVaultPath
             && cacheAgeMs < PHASE2_REFRESH_THRESHOLD_MS;
-          if (__DEV__ && skipPhase2) {
-            console.log(`[BOOT] cache fresh (${(cacheAgeMs / 60000).toFixed(0)}min) → phase2 skip`);
+          if (__DEV__ && skipPhase2Hint) {
+            console.log(`[BOOT] cache fresh (${(cacheAgeMs / 60000).toFixed(0)}min) → phase2 candidate skip (mtime check)`);
           }
 
-          await loadVaultData(vaultRef.current, { skipPhase2 });
+          await loadVaultData(vaultRef.current, {
+            skipPhase2Hint,
+            cacheSavedAt: cached?.savedAt,
+          });
           __markMount('TOTAL-mount-to-loaded', __tMount);
         }
       } catch (e) {
@@ -1097,7 +1101,7 @@ export function useVaultInternal(): VaultState {
       .forEach((n) => scheduleLoveNoteReveal(n).catch(() => {}));
   }, [loveNotesHook.loveNotes, activeProfileId]);
 
-  const loadVaultData = useCallback(async (vault: VaultManager, opts?: { skipPhase2?: boolean }) => {
+  const loadVaultData = useCallback(async (vault: VaultManager, opts?: { skipPhase2Hint?: boolean; cacheSavedAt?: string }) => {
     // Guard ré-entrance : si un loadVaultData tourne déjà, skip silencieusement.
     // Sans ça, mount + AppState listener (Face ID lock screen → inactive→active)
     // peuvent lancer 2 appels concurrents qui se concurrencent sur iCloud.
@@ -1107,7 +1111,27 @@ export function useVaultInternal(): VaultState {
     }
     busyRef.current = true;
     lastVaultLoadRef.current = Date.now();
-    const skipPhase2 = opts?.skipPhase2 === true;
+
+    // Mtime check parallèle : si le hint dit "skip OK" (cache frais), on
+    // vérifie quand même que les fichiers Phase 2 modifiables depuis Mac
+    // n'ont pas été touchés depuis cached.savedAt. Si un fichier a bougé →
+    // on force Phase 2 (refresh visible). Lecture mtime = metadata only,
+    // pas de download iCloud → ~50ms par fichier en parallèle de Phase 1.
+    const cacheSavedAtMs = opts?.cacheSavedAt
+      ? new Date(opts.cacheSavedAt).getTime()
+      : 0;
+    const phase2DirtyCheck: Promise<boolean> = (async () => {
+      if (opts?.skipPhase2Hint !== true || !cacheSavedAtMs) return false;
+      const filesToCheck = [GRATITUDE_FILE, WISHLIST_FILE, ANNIVERSAIRES_FILE, QUOTES_FILE, MOODS_FILE];
+      for (const f of filesToCheck) {
+        const mtime = await vault.getFileMtime(f);
+        if (mtime && mtime > cacheSavedAtMs) {
+          if (__DEV__) console.log(`[BOOT] phase2 forcé — ${f} modifié sur Mac (mtime > cache)`);
+          return true;
+        }
+      }
+      return false;
+    })();
 
     setError(null);
     const debugErrors: string[] = [];
@@ -1566,14 +1590,17 @@ export function useVaultInternal(): VaultState {
       refreshJournalWidget(profiles);
       syncWidgetFeedingsToVault(vault).catch(() => {});
 
-      // Skip Phase 2 si cache récent : la donnée secondaire (photos, memories,
-      // jalons, anniversaires...) change rarement entre 2 relaunches dans la
-      // journée. Le cache hydraté au mount fournit déjà ces sections — pas
-      // besoin de retéléphoner iCloud à chaque relaunch.
+      // Résolution finale skipPhase2 : skipPhase2Hint (cache < 6h) ET aucun
+      // fichier Phase 2 modifié sur Mac depuis cached.savedAt.
+      const phase2Dirty = await phase2DirtyCheck;
+      const skipPhase2 = opts?.skipPhase2Hint === true && !phase2Dirty;
+
+      // Skip Phase 2 si cache récent ET aucun fichier Mac modifié.
       // Conséquences :
-      //  - 99% des relaunches dans une journée : boot ~700ms total, zéro freeze
-      //  - 1× par jour (cache > 6h) : Phase 2 + family-quests refresh complet
-      //  - L'utilisateur peut forcer un refresh via pull-to-refresh (refresh())
+      //  - 99% des relaunches dans une journée sans modif Mac : boot ~700ms
+      //  - Modif gratitude/wishlist/anniv/quotes/moods sur Mac → refresh auto
+      //  - Cache > 6h : Phase 2 refresh complet (1× par jour)
+      //  - pull-to-refresh manuel via refresh() force toujours Phase 2 complet
       if (skipPhase2) {
         if (__DEV__) console.log('[BOOT] phase2 skipped (cache récent)');
         // Met à jour le cache avec Phase 1 fresh + Phase 2 cached (savedAt

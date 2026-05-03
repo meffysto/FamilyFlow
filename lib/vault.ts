@@ -91,6 +91,28 @@ export class VaultManager {
     return `file://${path}`;
   }
 
+  /**
+   * Lecture rapide du mtime d'un fichier (metadata seulement, pas de download
+   * iCloud). Retourne null si le fichier n'existe pas. mtime en ms epoch.
+   *
+   * Utilisé au boot pour détecter si un fichier Phase 2 a été modifié sur
+   * Mac depuis le dernier cache.savedAt → force Phase 2 refresh malgré le
+   * skip lié à l'âge du cache.
+   */
+  async getFileMtime(relativePath: string): Promise<number | null> {
+    const uri = this.uri(relativePath);
+    try {
+      const info = await FileSystem.getInfoAsync(uri);
+      if (!info.exists) return null;
+      // FileSystem retourne modificationTime en SECONDES depuis epoch
+      return typeof info.modificationTime === 'number'
+        ? info.modificationTime * 1000
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
   /** Read a file, returns content string */
   async readFile(relativePath: string): Promise<string> {
     const uri = this.uri(relativePath);
