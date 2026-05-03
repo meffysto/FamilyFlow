@@ -2,8 +2,8 @@
 // Compagnon Mascotte — Types & constantes
 // ─────────────────────────────────────────────
 
-/** 5 espèces de compagnons disponibles */
-export type CompanionSpecies = 'chat' | 'chien' | 'lapin' | 'renard' | 'herisson';
+/** Espèces de compagnons disponibles */
+export type CompanionSpecies = 'chat' | 'chien' | 'lapin' | 'renard' | 'herisson' | 'mouton';
 
 /** 3 stades de croissance du compagnon */
 export type CompanionStage = 'bebe' | 'jeune' | 'adulte';
@@ -144,6 +144,11 @@ export const SPECIES_PERSONALITY: Record<CompanionSpecies, CompanionPersonality>
     traits: ['patient', 'réfléchi', 'bienveillant'],
     quirk: 'partage parfois de petites sagesses ou métaphores sur la vie',
   },
+  mouton: {
+    tone: 'doux, rassurant et très calme',
+    traits: ['apaisant', 'fidèle', 'rêveur'],
+    quirk: 'ramène souvent les grandes victoires à de petits moments tranquilles de la ferme',
+  },
 };
 
 /** Niveau requis pour débloquer le système compagnon */
@@ -190,6 +195,7 @@ export const COMPANION_PREFERENCES: Record<CompanionSpecies, { preferred: string
   lapin:    { preferred: 'carrot',     hated: 'corn'     }, // carotte / maïs
   renard:   { preferred: 'beetroot',   hated: 'wheat'    }, // betterave / blé
   herisson: { preferred: 'potato',     hated: 'cabbage'  }, // pomme de terre / chou
+  mouton:   { preferred: 'wheat',      hated: 'beetroot' }, // blé / betterave
 };
 
 /**
@@ -203,10 +209,10 @@ export const COMPANION_STAGES: CompanionStageInfo[] = [
 ];
 
 /**
- * Catalogue des 5 espèces de compagnons.
+ * Catalogue des espèces de compagnons.
  * chat/chien/lapin : disponibles au choix initial (per D-01 et D-03)
  * renard : rare (via lootbox)
- * herisson : épique (via lootbox)
+ * herisson/mouton : épiques (via lootbox)
  */
 export const COMPANION_SPECIES_CATALOG: CompanionSpeciesInfo[] = [
   { id: 'chat',     nameKey: 'companion.species.chat',     descriptionKey: 'companion.speciesDesc.chat',     rarity: 'initial' },
@@ -214,6 +220,7 @@ export const COMPANION_SPECIES_CATALOG: CompanionSpeciesInfo[] = [
   { id: 'lapin',    nameKey: 'companion.species.lapin',    descriptionKey: 'companion.speciesDesc.lapin',    rarity: 'initial' },
   { id: 'renard',   nameKey: 'companion.species.renard',   descriptionKey: 'companion.speciesDesc.renard',   rarity: 'rare' },
   { id: 'herisson', nameKey: 'companion.species.herisson', descriptionKey: 'companion.speciesDesc.herisson', rarity: 'epique' },
+  { id: 'mouton',   nameKey: 'companion.species.mouton',   descriptionKey: 'companion.speciesDesc.mouton',   rarity: 'epique' },
 ];
 
 // ─────────────────────────────────────────────

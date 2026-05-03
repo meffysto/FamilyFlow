@@ -104,6 +104,7 @@ export const REWARDS: Record<LootRarity, RewardDefinition[]> = {
     { emoji: '🦉', reward: 'Hibou pour ton arbre', bonusPoints: 0, rewardType: 'mascot_hab', mascotItemId: 'hibou' },
     { emoji: '🦊', reward: 'Compagnon Renard !', bonusPoints: 0, rewardType: 'companion', mascotItemId: 'renard' },
     { emoji: '🦔', reward: 'Compagnon Herisson !', bonusPoints: 0, rewardType: 'companion', mascotItemId: 'herisson' },
+    { emoji: '🐑', reward: 'Compagnon Mouton !', bonusPoints: 0, rewardType: 'companion', mascotItemId: 'mouton' },
   ],
   légendaire: [
     { emoji: '⚡⚡', reward: 'Multiplicateur ×3 (10 tâches) !', bonusPoints: 0, multiplier: 3, multiplierTasks: 10, rewardType: 'multiplier' },

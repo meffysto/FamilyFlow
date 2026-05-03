@@ -4627,14 +4627,16 @@
       "chien": "Chien",
       "lapin": "Lapin",
       "renard": "Renard",
-      "herisson": "Herisson"
+      "herisson": "Herisson",
+      "mouton": "Mouton"
     },
     "speciesDesc": {
       "chat": "Un chat calin et curieux",
       "chien": "Un chien fidele et joyeux",
       "lapin": "Un lapin doux et malicieux",
       "renard": "Un renard ruse et elegant",
-      "herisson": "Un herisson timide et attachant"
+      "herisson": "Un herisson timide et attachant",
+      "mouton": "Un mouton doux et rassurant"
     },
     "picker": {
       "title": "Choisis ton compagnon !",

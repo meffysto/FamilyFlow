@@ -39,6 +39,11 @@ const AVATAR_SPRITES: Record<CompanionSpecies, Record<CompanionStage, ImageSourc
     jeune: require('@/assets/garden/animals/herisson/jeune/idle_1.png'),
     adulte: require('@/assets/garden/animals/herisson/adulte/idle_1.png'),
   },
+  mouton: {
+    bebe: require('@/assets/garden/animals/mouton/bebe/idle_1.png'),
+    jeune: require('@/assets/garden/animals/mouton/jeune/idle_1.png'),
+    adulte: require('@/assets/garden/animals/mouton/adulte/idle_1.png'),
+  },
 };
 
 // ─── Props ───────────────────────────────────────────────────────────────────────
@@ -63,6 +68,7 @@ const SPECIES_EMOJI: Record<CompanionSpecies, string> = {
   lapin: '🐰',
   renard: '🦊',
   herisson: '🦔',
+  mouton: '🐑',
 };
 
 export const CompanionAvatarMini = React.memo(function CompanionAvatarMini({

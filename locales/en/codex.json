@@ -397,6 +397,10 @@
     "herisson": {
       "name": "Hedgehog",
       "lore": "The rarest species, classified as epic and reserved for the most generous loot boxes. Wise and philosophical, the hedgehog shares little life maxims on patience and contemplation. A thoughtful companion that rewards collectors."
+    },
+    "mouton": {
+      "name": "Sheep",
+      "lore": "An epic companion unlocked through the most generous loot boxes. Calm and reassuring, the sheep turns the farm into a soft refuge after busy days. Its presence soothes children and grown-ups alike."
     }
   },
   "loot": {

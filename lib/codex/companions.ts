@@ -20,6 +20,7 @@ const COMPANION_EMOJI: Record<CompanionSpecies, string> = {
   lapin: '🐰',
   renard: '🦊',
   herisson: '🦔',
+  mouton: '🐑',
 };
 
 const COMPANION_SPRITES: Record<CompanionSpecies, unknown> = {
@@ -28,6 +29,7 @@ const COMPANION_SPRITES: Record<CompanionSpecies, unknown> = {
   lapin:    require('../../assets/garden/animals/lapin/adulte/idle_1.png'),
   renard:   require('../../assets/garden/animals/renard/adulte/idle_1.png'),
   herisson: require('../../assets/garden/animals/herisson/adulte/idle_1.png'),
+  mouton:   require('../../assets/garden/animals/mouton/adulte/idle_1.png'),
 };
 
 export const companionEntries: CompanionEntry[] = COMPANION_SPECIES_CATALOG.map((c) => ({

@@ -336,7 +336,7 @@ describe('cache intelligent et budget', () => {
 
 describe('personnalité par espèce', () => {
   it('chaque espèce a une personnalité définie', () => {
-    const species = ['chat', 'chien', 'lapin', 'renard', 'herisson'] as const;
+    const species = ['chat', 'chien', 'lapin', 'renard', 'herisson', 'mouton'] as const;
     for (const s of species) {
       const p = SPECIES_PERSONALITY[s];
       expect(p.tone).toBeTruthy();
@@ -374,17 +374,18 @@ describe('constantes compagnon', () => {
     expect(stages).toContain('adulte');
   });
 
-  it('COMPANION_SPECIES_CATALOG a exactement 5 entrees', () => {
-    expect(COMPANION_SPECIES_CATALOG).toHaveLength(5);
+  it('COMPANION_SPECIES_CATALOG a exactement 6 entrees', () => {
+    expect(COMPANION_SPECIES_CATALOG).toHaveLength(6);
   });
 
-  it('COMPANION_SPECIES_CATALOG contient chat, chien, lapin, renard, herisson', () => {
+  it('COMPANION_SPECIES_CATALOG contient chat, chien, lapin, renard, herisson, mouton', () => {
     const ids = COMPANION_SPECIES_CATALOG.map(s => s.id);
     expect(ids).toContain('chat');
     expect(ids).toContain('chien');
     expect(ids).toContain('lapin');
     expect(ids).toContain('renard');
     expect(ids).toContain('herisson');
+    expect(ids).toContain('mouton');
   });
 
   it('MESSAGE_TEMPLATES couvre tous les evenements de base', () => {

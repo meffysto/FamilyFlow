@@ -397,6 +397,10 @@
     "herisson": {
       "name": "Hérisson",
       "lore": "L'espèce la plus rare, classée épique et réservée aux lootboxes les plus généreuses. Sage et philosophe, le hérisson distille de petites maximes sur la vie et la patience. Un compagnon contemplatif qui récompense les collectionneurs."
+    },
+    "mouton": {
+      "name": "Mouton",
+      "lore": "Un compagnon épique débloqué via les lootboxes les plus généreuses. Calme et rassurant, le mouton transforme la ferme en refuge moelleux après les journées bien remplies. Sa présence apaise les enfants comme les grands."
     }
   },
   "loot": {

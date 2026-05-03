@@ -145,6 +145,32 @@ export const COMPANION_SPRITES: Record<CompanionSpecies, Record<CompanionStage, 
       celebrating: require('../../assets/garden/animals/herisson/adulte/celebrating.png'),
     },
   },
+  mouton: {
+    bebe: {
+      idle_1:      require('../../assets/garden/animals/mouton/bebe/idle_1.png'),
+      idle_2:      require('../../assets/garden/animals/mouton/bebe/idle_2.png'),
+      happy:       require('../../assets/garden/animals/mouton/bebe/happy.png'),
+      sleeping:    require('../../assets/garden/animals/mouton/bebe/sleeping.png'),
+      eating:      require('../../assets/garden/animals/mouton/bebe/eating.png'),
+      celebrating: require('../../assets/garden/animals/mouton/bebe/celebrating.png'),
+    },
+    jeune: {
+      idle_1:      require('../../assets/garden/animals/mouton/jeune/idle_1.png'),
+      idle_2:      require('../../assets/garden/animals/mouton/jeune/idle_2.png'),
+      happy:       require('../../assets/garden/animals/mouton/jeune/happy.png'),
+      sleeping:    require('../../assets/garden/animals/mouton/jeune/sleeping.png'),
+      eating:      require('../../assets/garden/animals/mouton/jeune/eating.png'),
+      celebrating: require('../../assets/garden/animals/mouton/jeune/celebrating.png'),
+    },
+    adulte: {
+      idle_1:      require('../../assets/garden/animals/mouton/adulte/idle_1.png'),
+      idle_2:      require('../../assets/garden/animals/mouton/adulte/idle_2.png'),
+      happy:       require('../../assets/garden/animals/mouton/adulte/happy.png'),
+      sleeping:    require('../../assets/garden/animals/mouton/adulte/sleeping.png'),
+      eating:      require('../../assets/garden/animals/mouton/adulte/eating.png'),
+      celebrating: require('../../assets/garden/animals/mouton/adulte/celebrating.png'),
+    },
+  },
 };
 
 /**

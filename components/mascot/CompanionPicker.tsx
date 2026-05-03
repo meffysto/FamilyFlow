@@ -47,6 +47,7 @@ const SPECIES_PREVIEW_SPRITES: Record<CompanionSpecies, any> = {
   lapin:    require('../../assets/garden/animals/lapin/bebe/idle_1.png'),
   renard:   require('../../assets/garden/animals/renard/bebe/idle_1.png'),
   herisson: require('../../assets/garden/animals/herisson/bebe/idle_1.png'),
+  mouton:   require('../../assets/garden/animals/mouton/bebe/idle_1.png'),
 };
 
 /** Couleur par rareté */
@@ -244,7 +245,7 @@ export const CompanionPicker = React.memo(function CompanionPicker({
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-                {/* Grille des 5 espèces */}
+                {/* Grille des espèces */}
                 <View style={styles.grid}>
                   {COMPANION_SPECIES_CATALOG.map((speciesInfo, idx) => {
                     const locked = isSpeciesLocked(speciesInfo.id);

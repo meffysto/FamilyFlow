@@ -4604,14 +4604,16 @@
       "chien": "Dog",
       "lapin": "Rabbit",
       "renard": "Fox",
-      "herisson": "Hedgehog"
+      "herisson": "Hedgehog",
+      "mouton": "Sheep"
     },
     "speciesDesc": {
       "chat": "A cuddly and curious cat",
       "chien": "A loyal and happy dog",
       "lapin": "A sweet and mischievous rabbit",
       "renard": "A clever and elegant fox",
-      "herisson": "A shy and adorable hedgehog"
+      "herisson": "A shy and adorable hedgehog",
+      "mouton": "A gentle and reassuring sheep"
     },
     "picker": {
       "title": "Choose your companion!",

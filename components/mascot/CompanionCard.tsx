@@ -56,6 +56,7 @@ const SPECIES_FALLBACK_EMOJI: Record<CompanionSpecies, string> = {
   lapin: '🐰',
   renard: '🦊',
   herisson: '🦔',
+  mouton: '🐑',
 };
 
 // ── Props ─────────────────────────────────────────────
