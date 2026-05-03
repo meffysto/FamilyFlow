@@ -1266,7 +1266,14 @@ export function useVaultInternal(): VaultState {
         ...STATIC_TASK_FILES,
       ];
 
-      const results = await Promise.allSettled([
+      // ═══════════════════════════════════════════════════════════════════
+      // PHASE 1 — Données critiques (visibles immédiatement sur le dashboard)
+      // tasks, routines, courses, stock, meals, RDVs, défis, notifs, vacances.
+      // setState appliqué dès la fin de cette phase pour que les "bonnes
+      // données" du jour arrivent vite, sans attendre les domaines secondaires.
+      // ═══════════════════════════════════════════════════════════════════
+      const __t_p1 = __DEV__ ? performance.now() : 0;
+      const phase1 = await Promise.allSettled([
         // [0] Tasks — avec reset hebdo des sections récurrentes
         (async () => {
           const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -1369,7 +1376,181 @@ export function useVaultInternal(): VaultState {
           return loadedRdvs;
         })().catch((e) => { debugErrors.push(`rdv: ${e}`); return [] as RDV[]; }),
 
-        // [6] Photos
+        // [6] Défis familiaux (critique : carte dashboard active)
+        (async () => {
+          const defisContent = await vault.readFile(DEFIS_FILE);
+          const parsed = parseDefis(defisContent);
+          const todayStr = new Date().toISOString().slice(0, 10);
+          let changed = false;
+          const autoCompleted: typeof parsed = [];
+          for (const d of parsed) {
+            const hasGrace = d.type === 'daily' || d.type === 'abstinence';
+            const expiry = hasGrace ? (() => { const g = new Date(d.endDate + 'T12:00:00'); g.setDate(g.getDate() + 1); return g.toISOString().slice(0, 10); })() : d.endDate;
+            if (d.status === 'active' && expiry < todayStr) {
+              const uniqueDays = new Set(d.progress.filter((p) => p.completed).map((p) => p.date)).size;
+              if (d.type === 'abstinence') {
+                const hasFail = d.progress.some((p) => !p.completed);
+                d.status = hasFail ? 'failed' : uniqueDays >= d.targetDays ? 'completed' : 'failed';
+              } else {
+                d.status = uniqueDays >= d.targetDays ? 'completed' : 'failed';
+              }
+              changed = true;
+              if (d.status === 'completed') autoCompleted.push(d);
+            }
+          }
+          if (changed) {
+            await vault.writeFile(DEFIS_FILE, serializeDefis(parsed));
+            if (autoCompleted.length > 0 && gamiContent) {
+              try {
+                const gami = parseGamification(gamiContent);
+                const allProfileIds = parseFamille(familleContent).map((p) => p.id);
+                for (const d of autoCompleted) {
+                  const participantIds = d.participants.length > 0 ? d.participants : allProfileIds;
+                  for (const pid of participantIds) {
+                    const profile = gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
+                    if (profile) {
+                      profile.points += d.rewardPoints;
+                      profile.lootBoxesAvailable += d.rewardLootBoxes;
+                      gami.history.push({
+                        profileId: pid,
+                        action: `+${d.rewardPoints}`,
+                        points: d.rewardPoints,
+                        note: `Défi: ${d.title}`,
+                        timestamp: new Date().toISOString(),
+                      });
+                    }
+                  }
+                }
+                const allBaseProfiles = parseFamille(familleContent);
+                for (const bp of allBaseProfiles) {
+                  const file = gamiFile(bp.id);
+                  const profContent = await vault.readFile(file).catch(() => '');
+                  if (!profContent) continue;
+                  const profGami = parseGamification(profContent);
+                  const updatedProf = gami.profiles.find(p => p.id === bp.id || p.name.toLowerCase().replace(/\s+/g, '') === bp.id);
+                  const singleData: GamificationData = {
+                    profiles: updatedProf ? [updatedProf] : profGami.profiles,
+                    history: gami.history.filter(e => e.profileId === bp.id),
+                    activeRewards: (gami.activeRewards ?? []).filter(r => r.profileId === bp.id),
+                    usedLoots: (gami.usedLoots ?? []).filter(u => u.profileId === bp.id),
+                  };
+                  await vault.writeFile(file, serializeGamification(singleData));
+                }
+                const gamiStr = serializeGamification(gami);
+                setProfiles(mergeProfiles(familleContent, gamiStr));
+                setGamiData(gami);
+              } catch (e) { warnUnexpected('defis-gamification', e); }
+            }
+          }
+          return parsed;
+        })().catch((): Defi[] => []),
+
+        // [7] Notification preferences (critique : utilisé par setupAllNotifications)
+        (async () => {
+          if (await vault.exists(NOTIF_FILE)) {
+            const notifContent = await vault.readFile(NOTIF_FILE);
+            return parseNotificationPrefs(notifContent);
+          }
+          return getDefaultNotificationPrefs();
+        })().catch(() => getDefaultNotificationPrefs()),
+
+        // [8] Vacation mode (critique : affecte le filtrage des tasks)
+        (async () => {
+          const vacRaw = await SecureStore.getItemAsync(VACATION_STORE_KEY);
+          let config: VacationConfig | null = null;
+          if (vacRaw) {
+            config = JSON.parse(vacRaw);
+            const todayISO = new Date().toISOString().slice(0, 10);
+            if (config!.active && config!.endDate < todayISO) {
+              config = { ...config!, active: false };
+              await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(config));
+            }
+          }
+          let vacTasks: Task[] = [];
+          try {
+            if (await vault.exists(VACATION_FILE)) {
+              const vacContent = await vault.readFile(VACATION_FILE);
+              vacTasks = parseTaskFile(VACATION_FILE, vacContent);
+            }
+          } catch (e) { warnUnexpected('vacation-tasks', e); }
+          return { config, vacTasks };
+        })().catch(() => ({ config: null as VacationConfig | null, vacTasks: [] as Task[] })),
+      ]);
+      __mark('phase1-loaded', __t_p1);
+      const __t_p1_setState = __DEV__ ? performance.now() : 0;
+
+      // Apply Phase 1 setState — batched par React 18 → 1 seul re-render
+      const val = <T,>(r: PromiseSettledResult<T>, fallback: T): T =>
+        r.status === 'fulfilled' ? r.value : fallback;
+
+      const tasksResult = val(phase1[0], [] as Task[]);
+      tasksHook.setTasks(tasksResult);
+      setRoutines(val(phase1[1], []));
+      // Phase D : courses gérées par useVaultCourses (multi-listes) — ne pas écraser ici
+      // coursesHook.setCourses(val(phase1[2], []));
+      const stockResult = val(phase1[3], { items: [] as StockItem[], sections: [] as string[] });
+      stockHook.setStock(stockResult.items);
+      stockHook.setStockSections(stockResult.sections);
+      setMeals(val(phase1[4], []));
+      const rdvResult = val(phase1[5], [] as RDV[]);
+      setRdvs(rdvResult);
+      const newDefis: Defi[] = val(phase1[6], []);
+      const prevDefis = defisHook.defis;
+      if (prevDefis.length > 0) {
+        const prevIds = new Set(prevDefis.map(d => d.id));
+        const hasNew = newDefis.some(d => d.status === 'active' && !prevIds.has(d.id));
+        if (hasNew) {
+          loadNotifConfig().then(cfg => {
+            if (!cfg.defiEnabled) return;
+            for (const d of newDefis) {
+              if (d.status === 'active' && !prevIds.has(d.id)) {
+                Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: `${d.emoji} Nouveau défi !`,
+                    body: `${d.title} — du ${d.startDate} au ${d.endDate}. Ouvrez l'app pour participer !`,
+                    sound: 'default',
+                    data: { type: 'defi_launched', defiId: d.id },
+                  },
+                  trigger: null,
+                }).catch(() => {});
+              }
+            }
+          }).catch(() => {});
+        }
+      }
+      defisHook.setDefis(newDefis);
+      setNotifPrefs(val(phase1[7], getDefaultNotificationPrefs()));
+      const vacResult = val(phase1[8], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
+      setVacationConfig(vacResult.config);
+      setVacationTasks(vacResult.vacTasks);
+      __mark('phase1-setState', __t_p1_setState);
+
+      // Notifications, auberge, widget — fire-and-forget après Phase 1
+      setupAllNotifications({
+        rdvs: rdvResult,
+        tasks: tasksResult,
+        stock: stockResult.items,
+        hasGrossesse: profiles.some(p => p.statut === 'grossesse' && p.dateTerme),
+        lang: i18n.language,
+      }).catch(() => {});
+      const aubergeActiveId = activeProfileIdForWidgetRef.current;
+      if (aubergeActiveId && profilesSnapshot.length > 0) {
+        tickAubergeAuto(aubergeActiveId, { vault, profiles: profilesSnapshot }).catch(() => {});
+      }
+      refreshWidget(val(phase1[4], []), rdvResult, tasksResult);
+      refreshJournalWidget(profiles);
+      syncWidgetFeedingsToVault(vault).catch(() => {});
+
+      // ═══════════════════════════════════════════════════════════════════
+      // PHASE 2 — Données secondaires (historiques, en arrière-plan)
+      // photos, memories, journal, health, gratitude, wishlist, anniversaires,
+      // notes, quotes, moods, skills, missions, garden, stories, love-notes,
+      // family-quests. Le dashboard est déjà rempli avec Phase 1 — ces
+      // sections se mettent à jour silencieusement quand Phase 2 termine.
+      // ═══════════════════════════════════════════════════════════════════
+      const __t_p2 = __DEV__ ? performance.now() : 0;
+      const phase2 = await Promise.allSettled([
+        // [0] Photos
         (async () => {
           const photoMap: Record<string, string[]> = {};
           await Promise.all(enfantNames.map(async (name) => {
@@ -1433,127 +1614,25 @@ export function useVaultInternal(): VaultState {
           return entries;
         })().catch(() => [] as JournalSummaryEntry[]),
 
-        // [10] Défis familiaux
-        (async () => {
-          const defisContent = await vault.readFile(DEFIS_FILE);
-          const parsed = parseDefis(defisContent);
-          const todayStr = new Date().toISOString().slice(0, 10);
-          let changed = false;
-          const autoCompleted: typeof parsed = [];
-          for (const d of parsed) {
-            // Jour de grâce (daily/abstinence uniquement) : 1 jour après la fin pour valider
-            const hasGrace = d.type === 'daily' || d.type === 'abstinence';
-            const expiry = hasGrace ? (() => { const g = new Date(d.endDate + 'T12:00:00'); g.setDate(g.getDate() + 1); return g.toISOString().slice(0, 10); })() : d.endDate;
-            if (d.status === 'active' && expiry < todayStr) {
-              const uniqueDays = new Set(d.progress.filter((p) => p.completed).map((p) => p.date)).size;
-              if (d.type === 'abstinence') {
-                const hasFail = d.progress.some((p) => !p.completed);
-                d.status = hasFail ? 'failed' : uniqueDays >= d.targetDays ? 'completed' : 'failed';
-              } else {
-                d.status = uniqueDays >= d.targetDays ? 'completed' : 'failed';
-              }
-              changed = true;
-              if (d.status === 'completed') autoCompleted.push(d);
-            }
-          }
-          if (changed) {
-            await vault.writeFile(DEFIS_FILE, serializeDefis(parsed));
-            if (autoCompleted.length > 0 && gamiContent) {
-              try {
-                const gami = parseGamification(gamiContent);
-                const allProfileIds = parseFamille(familleContent).map((p) => p.id);
-                for (const d of autoCompleted) {
-                  const participantIds = d.participants.length > 0 ? d.participants : allProfileIds;
-                  for (const pid of participantIds) {
-                    const profile = gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
-                    if (profile) {
-                      profile.points += d.rewardPoints;
-                      profile.lootBoxesAvailable += d.rewardLootBoxes;
-                      gami.history.push({
-                        profileId: pid,
-                        action: `+${d.rewardPoints}`,
-                        points: d.rewardPoints,
-                        note: `Défi: ${d.title}`,
-                        timestamp: new Date().toISOString(),
-                      });
-                    }
-                  }
-                }
-                // Écrire per-profil
-                const allBaseProfiles = parseFamille(familleContent);
-                for (const bp of allBaseProfiles) {
-                  const file = gamiFile(bp.id);
-                  const profContent = await vault.readFile(file).catch(() => '');
-                  if (!profContent) continue;
-                  const profGami = parseGamification(profContent);
-                  const updatedProf = gami.profiles.find(p => p.id === bp.id || p.name.toLowerCase().replace(/\s+/g, '') === bp.id);
-                  const singleData: GamificationData = {
-                    profiles: updatedProf ? [updatedProf] : profGami.profiles,
-                    history: gami.history.filter(e => e.profileId === bp.id),
-                    activeRewards: (gami.activeRewards ?? []).filter(r => r.profileId === bp.id),
-                    usedLoots: (gami.usedLoots ?? []).filter(u => u.profileId === bp.id),
-                  };
-                  await vault.writeFile(file, serializeGamification(singleData));
-                }
-                const gamiStr = serializeGamification(gami);
-                setProfiles(mergeProfiles(familleContent, gamiStr));
-                setGamiData(gami);
-              } catch (e) { warnUnexpected('defis-gamification', e); }
-            }
-          }
-          return parsed;
-        })().catch((): Defi[] => []),
-
-        // [11] Gratitude
+        // [4] Gratitude
         vault.readFile(GRATITUDE_FILE).then((c) => parseGratitude(c)).catch((): GratitudeDay[] => []),
 
-        // [12] Wishlist
+        // [5] Wishlist
         vault.readFile(WISHLIST_FILE).then((c) => parseWishlist(c)).catch((): WishlistItem[] => []),
 
-        // [13] Anniversaires
+        // [6] Anniversaires
         vault.readFile(ANNIVERSAIRES_FILE).then((c) => parseAnniversaries(c)).catch(() => [] as Anniversary[]),
 
-        // [14] Notification preferences
-        (async () => {
-          if (await vault.exists(NOTIF_FILE)) {
-            const notifContent = await vault.readFile(NOTIF_FILE);
-            return parseNotificationPrefs(notifContent);
-          }
-          return getDefaultNotificationPrefs();
-        })().catch(() => getDefaultNotificationPrefs()),
-
-        // [15] Vacation mode
-        (async () => {
-          const vacRaw = await SecureStore.getItemAsync(VACATION_STORE_KEY);
-          let config: VacationConfig | null = null;
-          if (vacRaw) {
-            config = JSON.parse(vacRaw);
-            const todayISO = new Date().toISOString().slice(0, 10);
-            if (config!.active && config!.endDate < todayISO) {
-              config = { ...config!, active: false };
-              await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(config));
-            }
-          }
-          let vacTasks: Task[] = [];
-          try {
-            if (await vault.exists(VACATION_FILE)) {
-              const vacContent = await vault.readFile(VACATION_FILE);
-              vacTasks = parseTaskFile(VACATION_FILE, vacContent);
-            }
-          } catch (e) { warnUnexpected('vacation-tasks', e); }
-          return { config, vacTasks };
-        })().catch(() => ({ config: null as VacationConfig | null, vacTasks: [] as Task[] })),
-
-        // [16] Notes & Articles
+        // [7] Notes & Articles
         notesHook.loadNotes(vault),
 
-        // [17] Mots d'enfants
+        // [8] Mots d'enfants
         vault.readFile(QUOTES_FILE).then((c) => parseQuotes(c)).catch(() => [] as ChildQuote[]),
 
-        // [18] Météo des humeurs
+        // [9] Météo des humeurs
         vault.readFile(MOODS_FILE).then((c) => parseMoods(c)).catch(() => [] as MoodEntry[]),
 
-        // [19] Skill trees (compétences enfants)
+        // [10] Skill trees (compétences enfants)
         (async () => {
           try {
             const files = await vault.listDir(SKILLS_DIR);
@@ -1567,115 +1646,48 @@ export function useVaultInternal(): VaultState {
           } catch (e) { warnUnexpected('skill-trees', e); return [] as SkillTreeData[]; }
         })(),
 
-        // [20] Missions secrètes
+        // [11] Missions secrètes
         vault.readFile(SECRET_MISSIONS_FILE).then((c) => parseSecretMissions(c)).catch(() => [] as Task[]),
 
-        // [21] Village garden — fichier partagé
+        // [12] Village garden — fichier partagé
         vault.readFile(VILLAGE_FILE).catch(() => ''),
 
-        // [22] Histoires du soir
+        // [13] Histoires du soir
         storiesHook.loadStories(vault, enfantNames).catch(() => [] as BedtimeStory[]),
 
-        // [23] Love Notes — 1 fichier par note classe par destinataire (Phase 34)
+        // [14] Love Notes — 1 fichier par note classe par destinataire (Phase 34)
         loveNotesHook.loadLoveNotes(vault).catch(() => [] as LoveNote[]),
       ]);
-      const __t_settled = __DEV__ ? performance.now() : 0;
-      __mark('vault-load-allSettled', __t0);
+      __mark('phase2-loaded', __t_p2);
 
-      // Family quests : chargées séquentiellement APRÈS allSettled (évite la
-      // contention iCloud d'un 24e fichier en parallèle), MAIS avant le bloc
-      // setState pour que tous les setState restent dans un seul tick batché
-      // par React 18 (1 seul re-render au lieu de 2).
+      // Family quests : chargées séquentiellement APRÈS phase 2 (évite contention
+      // iCloud d'un fichier supplémentaire en parallèle), batché avec le bloc
+      // setState Phase 2 pour rester en 1 seul re-render.
       const loadedQuests = await (async () => {
         const c = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
         return await questsHook.checkAndExpireQuests(parseFamilyQuests(c));
       })().catch(() => [] as FamilyQuest[]);
-      __mark('family-quests', __t_settled);
-      const __t_setstate = __DEV__ ? performance.now() : 0;
+      __mark('family-quests', __t_p2);
+      const __t_p2_setState = __DEV__ ? performance.now() : 0;
 
-      // Apply results — use helper to extract settled values
-      const val = <T,>(r: PromiseSettledResult<T>, fallback: T): T =>
-        r.status === 'fulfilled' ? r.value : fallback;
-
-      const tasksResult = val(results[0], [] as Task[]);
-      tasksHook.setTasks(tasksResult);
-      setRoutines(val(results[1], []));
-      // Phase D : courses gérées par useVaultCourses (multi-listes) — ne pas écraser ici
-      // coursesHook.setCourses(val(results[2], []));
-      const stockResult = val(results[3], { items: [] as StockItem[], sections: [] as string[] });
-      stockHook.setStock(stockResult.items);
-      stockHook.setStockSections(stockResult.sections);
-      setMeals(val(results[4], []));
-      const rdvResult = val(results[5], [] as RDV[]);
-      setRdvs(rdvResult);
-      // Planifier toutes les notifications locales
-      setupAllNotifications({
-        rdvs: rdvResult,
-        tasks: tasksResult,
-        stock: stockResult.items,
-        hasGrossesse: profiles.some(p => p.statut === 'grossesse' && p.dateTerme),
-        lang: i18n.language,
-      }).catch(() => {});
-      // Phase 46 : tente un spawn Auberge auto sur le profil actif (cooldown 6h géré par le moteur)
-      const aubergeActiveId = activeProfileIdForWidgetRef.current;
-      if (aubergeActiveId && profilesSnapshot.length > 0) {
-        tickAubergeAuto(aubergeActiveId, { vault, profiles: profilesSnapshot }).catch(() => {});
-      }
-      setPhotoDates(val(results[6], {}));
-      setMemories(val(results[7], []));
-      healthHook.setHealthRecords(val(results[8], []));
-      setJournalStats(val(results[9], []));
-      const newDefis: Defi[] = val(results[10], []);
-      // Détecter les nouveaux défis actifs (arrivés via sync iCloud)
-      const prevDefis = defisHook.defis;
-      if (prevDefis.length > 0) {
-        const prevIds = new Set(prevDefis.map(d => d.id));
-        const hasNew = newDefis.some(d => d.status === 'active' && !prevIds.has(d.id));
-        if (hasNew) {
-          loadNotifConfig().then(cfg => {
-            if (!cfg.defiEnabled) return;
-            for (const d of newDefis) {
-              if (d.status === 'active' && !prevIds.has(d.id)) {
-                Notifications.scheduleNotificationAsync({
-                  content: {
-                    title: `${d.emoji} Nouveau défi !`,
-                    body: `${d.title} — du ${d.startDate} au ${d.endDate}. Ouvrez l'app pour participer !`,
-                    sound: 'default',
-                    data: { type: 'defi_launched', defiId: d.id },
-                  },
-                  trigger: null,
-                }).catch(() => {});
-              }
-            }
-          }).catch(() => {});
-        }
-      }
-      defisHook.setDefis(newDefis);
+      // Apply Phase 2 setState — batched par React 18 → 1 seul re-render
+      setPhotoDates(val(phase2[0], {}));
+      setMemories(val(phase2[1], []));
+      healthHook.setHealthRecords(val(phase2[2], []));
+      setJournalStats(val(phase2[3], []));
+      setGratitudeDays(val(phase2[4], []));
+      setWishlistItems(val(phase2[5], []));
+      setAnniversaries(val(phase2[6], []));
+      notesHook.setNotes(val(phase2[7], []));
+      setQuotes(val(phase2[8], []));
+      setMoods(val(phase2[9], []));
+      setSkillTrees(val(phase2[10], []));
+      missionsHook.setSecretMissions(val(phase2[11], []));
+      setGardenRaw(val(phase2[12], '') as string);
+      storiesHook.setStories(val(phase2[13] as PromiseSettledResult<BedtimeStory[]>, []));
+      loveNotesHook.setLoveNotes(val(phase2[14] as PromiseSettledResult<LoveNote[]>, []));
       questsHook.setFamilyQuests(loadedQuests);
-
-      setGratitudeDays(val(results[11], []));
-      setWishlistItems(val(results[12], []));
-      setAnniversaries(val(results[13], []));
-      setNotifPrefs(val(results[14], getDefaultNotificationPrefs()));
-      const vacResult = val(results[15], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
-      setVacationConfig(vacResult.config);
-      setVacationTasks(vacResult.vacTasks);
-      notesHook.setNotes(val(results[16], []));
-      setQuotes(val(results[17], []));
-      setMoods(val(results[18], []));
-      setSkillTrees(val(results[19], []));
-      missionsHook.setSecretMissions(val(results[20], []));
-      setGardenRaw(val(results[21], '') as string);
-      storiesHook.setStories(val(results[22] as PromiseSettledResult<BedtimeStory[]>, []));
-      loveNotesHook.setLoveNotes(val(results[23] as PromiseSettledResult<LoveNote[]>, []));
-
-      // Mettre à jour les widgets iOS
-      refreshWidget(val(results[4], []), rdvResult, tasksResult);
-      refreshJournalWidget(profiles);
-
-      // Sync feedings du widget vers le vault markdown (fire-and-forget)
-      syncWidgetFeedingsToVault(vault).catch(() => {});
-      __mark('setState-block', __t_setstate);
+      __mark('phase2-setState', __t_p2_setState);
       const __t_save = __DEV__ ? performance.now() : 0;
 
       // Persister un snapshot pour accélérer le prochain re-launch.
@@ -1684,27 +1696,27 @@ export function useVaultInternal(): VaultState {
         vaultPath: vault.vaultPath,
         profiles: profilesSnapshot.map(stripProfileForCache),
         tasks: tasksResult,
-        routines: val(results[1], []) as Routine[],
+        routines: val(phase1[1], []) as Routine[],
         courses: [] as CourseItem[], // Phase D : exclu du cache (multi-listes toujours frais)
         stock: stockResult.items,
         stockSections: stockResult.sections,
-        meals: val(results[4], []) as MealItem[],
+        meals: val(phase1[4], []) as MealItem[],
         rdvs: rdvResult,
-        photoDates: val(results[6], {}) as Record<string, string[]>,
-        memories: val(results[7], []) as Memory[],
-        healthRecords: val(results[8], []) as HealthRecord[],
-        journalStats: val(results[9], []) as JournalSummaryEntry[],
-        gratitudeDays: val(results[11], []) as GratitudeDay[],
-        wishlistItems: val(results[12], []) as WishlistItem[],
-        anniversaries: val(results[13], []) as Anniversary[],
-        notifPrefs: val(results[14], getDefaultNotificationPrefs()),
+        photoDates: val(phase2[0], {}) as Record<string, string[]>,
+        memories: val(phase2[1], []) as Memory[],
+        healthRecords: val(phase2[2], []) as HealthRecord[],
+        journalStats: val(phase2[3], []) as JournalSummaryEntry[],
+        gratitudeDays: val(phase2[4], []) as GratitudeDay[],
+        wishlistItems: val(phase2[5], []) as WishlistItem[],
+        anniversaries: val(phase2[6], []) as Anniversary[],
+        notifPrefs: val(phase1[7], getDefaultNotificationPrefs()),
         vacationConfig: vacResult.config,
         vacationTasks: vacResult.vacTasks,
-        notes: val(results[16], []) as Note[],
-        quotes: val(results[17], []) as ChildQuote[],
-        moods: val(results[18], []) as MoodEntry[],
-        secretMissions: val(results[20], []) as Task[],
-        loveNotes: val(results[23] as PromiseSettledResult<LoveNote[]>, []) as LoveNote[],
+        notes: val(phase2[7], []) as Note[],
+        quotes: val(phase2[8], []) as ChildQuote[],
+        moods: val(phase2[9], []) as MoodEntry[],
+        secretMissions: val(phase2[11], []) as Task[],
+        loveNotes: val(phase2[14] as PromiseSettledResult<LoveNote[]>, []) as LoveNote[],
       });
       __mark('save-cache', __t_save);
       __mark('TOTAL-loadVaultData', __t0);
