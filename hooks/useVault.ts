@@ -107,6 +107,7 @@ import { useVaultRecipes } from './useVaultRecipes';
 import { useVaultDefis } from './useVaultDefis';
 import { useVaultFamilyQuests } from './useVaultFamilyQuests';
 import { parseFamilyQuests, FAMILY_QUESTS_FILE, LOVENOTES_DIR, NOTES_DIR } from '../lib/parser';
+import { STORIES_DIR } from '../lib/stories';
 import type { FamilyQuest } from '../lib/quest-engine';
 import { useVaultProfiles, ACTIVE_PROFILE_KEY } from './useVaultProfiles';
 import { useVaultDietary } from './useVaultDietary';
@@ -1472,11 +1473,72 @@ export function useVaultInternal(): VaultState {
           } catch (e) { warnUnexpected('skills-refresh', e); }
         },
       });
-      // Stories : EXCLUS du targeted detect car
-      //  1. l'app écrit elle-même les .md de stories (génération AI) → faux
-      //     positifs à chaque relaunch même sans modif depuis l'autre iPhone
-      //  2. le refresh wakup iCloud sur les .mp3 du dossier → lent (download)
-      // Refresh stories uniquement via full Phase 2 (cache > 6h) ou pull-to-refresh.
+      // Stories : détection par COMPTAGE de fichiers (pas mtime).
+      // L'app écrit elle-même les .md de stories → mtime check faux positif.
+      // Comparer le nombre de fichiers .md actuels vs nombre cached détecte
+      // les ajouts/suppressions depuis l'autre iPhone sans faux positifs sur
+      // les éditions internes (rares car stories sont append-only).
+      TARGETED_DOMAINS.push({
+        name: 'stories',
+        detect: async () => {
+          let currentCount = 0;
+          for (const name of enfantNames) {
+            const dir = `${STORIES_DIR}/${name}`;
+            try {
+              if (!(await vault.exists(dir))) continue;
+              const files = await vault.listDir(dir);
+              currentCount += files.filter(f => f.endsWith('.md')).length;
+            } catch { /* skip */ }
+          }
+          const cachedSnapshot = readCacheSync();
+          const cachedCount = cachedSnapshot?.stories?.length ?? 0;
+          return currentCount !== cachedCount;
+        },
+        refresh: async () => {
+          try {
+            const fresh = await storiesHook.loadStories(vault, enfantNames);
+            storiesHook.setStories(fresh);
+            targetedCacheUpdates.stories = fresh;
+          } catch (e) { warnUnexpected('stories-refresh', e); }
+        },
+      });
+      // Recipes : folder-based, listFilesRecursive('.cook') + per-file mtime
+      TARGETED_DOMAINS.push({
+        name: 'recipes',
+        detect: async () => {
+          try {
+            const files = await vault.listFilesRecursive('03 - Cuisine/Recettes', '.cook');
+            const mtimes = await Promise.all(files.map(f => vault.getFileMtime(f)));
+            return mtimes.some(m => m !== null && m > cacheSavedAtMs);
+          } catch { return false; }
+        },
+        refresh: async () => {
+          try {
+            await recipesHook.loadRecipes(true);
+            // recipes pas dans le cache (volumineux + utilisé hors dashboard) →
+            // pas de targetedCacheUpdates. Le hook gère son propre state.
+          } catch (e) { warnUnexpected('recipes-refresh', e); }
+        },
+      });
+      // Budget : un fichier .md par mois (YYYY-MM.md) + config.md
+      TARGETED_DOMAINS.push({
+        name: 'budget',
+        detect: async () => {
+          const currentMonth = format(new Date(), 'yyyy-MM');
+          const paths = [
+            '05 - Budget/config.md',
+            `05 - Budget/${currentMonth}.md`,
+          ];
+          const mtimes = await Promise.all(paths.map(p => vault.getFileMtime(p)));
+          return mtimes.some(m => m !== null && m > cacheSavedAtMs);
+        },
+        refresh: async () => {
+          try {
+            await budget.loadBudgetData();
+            // budget pas dans le cache → hook gère son state
+          } catch (e) { warnUnexpected('budget-refresh', e); }
+        },
+      });
       // Folder-based : love-notes
       TARGETED_DOMAINS.push({
         name: 'love-notes',
