@@ -84,6 +84,7 @@ Status: Phase complete — ready for verification
 | 260428-k5e | Polish Courses — emojis résiduels → lucide (ShoppingCart/FolderOpen/Check/X) + i18n DashboardCourses | 2026-04-28 | 9d90e2b | [260428-k5e-polish-courses-remplacer-emojis-r-siduel](./quick/260428-k5e-polish-courses-remplacer-emojis-r-siduel/) |
 | 260428-kda | Preview/confirm modal vocal courses — VoiceCoursesReview + refactor handleVoiceResult | 2026-04-28 | 35072e8 | [260428-kda-preview-confirm-modal-pour-ajout-vocal-c](./quick/260428-kda-preview-confirm-modal-pour-ajout-vocal-c/) |
 | 260428-kqx | DictaphoneRecorder autoSubmit pour courses (skip écran édition + résumé IA) | 2026-04-28 | 6ee3919 | [260428-kqx-dictaphonerecorder-autosubmit-pour-cours](./quick/260428-kqx-dictaphonerecorder-autosubmit-pour-cours/) |
+| 260503-phase-b | Phase B Histoires — wizard slim (3-4 décisions) + écran Settings durables par enfant | 2026-05-03 | 792c207 | [260503-phase-b-stories-wizard](./quick/260503-phase-b-stories-wizard/) |
 
 ## Performance Metrics
 
