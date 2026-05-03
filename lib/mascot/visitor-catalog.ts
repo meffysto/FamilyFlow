@@ -67,7 +67,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     emoji: '🧑‍🍳',
     rarity: 'common',
     deadlineHours: 48,
-    rewardMultiplier: 1.4,
+    rewardMultiplier: 2.0,  // Solution 2 : 1.4 → 2.0 (parité craft +9%)
     minTreeStage: 'pousse',
     requestPool: [
       { weight: 3, items: [
@@ -89,7 +89,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     emoji: '👵',
     rarity: 'common',
     deadlineHours: 48,
-    rewardMultiplier: 1.4,
+    rewardMultiplier: 2.0,  // Solution 2 : 1.4 → 2.0
     minTreeStage: 'arbuste',
     requestPool: [
       { weight: 3, items: [
@@ -112,7 +112,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     emoji: '🐝',
     rarity: 'uncommon',
     deadlineHours: 60,
-    rewardMultiplier: 1.6,
+    rewardMultiplier: 1.8,  // Solution 2 : 1.6 → 1.8
     minTreeStage: 'arbuste',
     requestPool: [
       { weight: 3, items: [
@@ -134,7 +134,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     emoji: '🧙',
     rarity: 'uncommon',
     deadlineHours: 60,
-    rewardMultiplier: 1.6,
+    rewardMultiplier: 1.8,  // Solution 2 : 1.6 → 1.8
     minTreeStage: 'arbuste',
     requestPool: [
       { weight: 3, items: [
@@ -158,7 +158,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     emoji: '🪙',
     rarity: 'uncommon',
     deadlineHours: 60,
-    rewardMultiplier: 1.6,
+    rewardMultiplier: 1.8,  // Solution 2 : 1.6 → 1.8
     minTreeStage: 'arbre',
     requestPool: [
       { weight: 3, items: [
@@ -183,7 +183,7 @@ export const VISITOR_CATALOG: VisitorDefinition[] = [
     emoji: '👑',
     rarity: 'rare',
     deadlineHours: 72,
-    rewardMultiplier: 1.8,
+    rewardMultiplier: 2.0,  // Solution 2 : 1.8 → 2.0 (combiné à RARITY_BONUS rare 1.40 = 2.80 init)
     minTreeStage: 'arbre',
     unlockMinReputation: 15,
     requestPool: [

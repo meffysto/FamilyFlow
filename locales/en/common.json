@@ -4996,8 +4996,8 @@
     },
     "reward": {
       "label": "Reward",
-      "toast_with_loot": "{{name}} leaves happy! +{{coins}} 🍃 + 🎁",
-      "toast": "{{name}} leaves happy! +{{coins}} 🍃"
+      "toast_with_loot": "{{name}} leaves happy! +{{coins}} 🍃 · +{{xp}} XP + 🎁",
+      "toast": "{{name}} leaves happy! +{{coins}} 🍃 · +{{xp}} XP"
     },
     "request": {
       "items_one": "{{count}} item requested",

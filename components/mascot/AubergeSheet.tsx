@@ -361,7 +361,7 @@ const VisitorCard = React.memo(function VisitorCard({
         <View style={styles.metaCell}>
           <Text style={styles.metaLabel}>{t('auberge.reward.label')}</Text>
           <Text style={styles.metaValueReward}>
-            +{visitor.rewardCoins} 🍃{lootPct > 0 ? ` · ${lootPct}% loot` : ''}
+            +{visitor.rewardCoins} 🍃{visitor.xpReward ? ` · +${visitor.xpReward} XP` : ''}{lootPct > 0 ? ` · ${lootPct}% loot` : ''}
           </Text>
         </View>
       </View>
@@ -524,7 +524,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
           const name = def ? t(def.labelKey) : t('auberge.fallback_visitor_name');
           const toastKey = result.reward.loot ? 'auberge.reward.toast_with_loot' : 'auberge.reward.toast';
           showToast(
-            t(toastKey, { name, coins: result.reward.coins }),
+            t(toastKey, { name, coins: result.reward.coins, xp: visitor.xpReward ?? 0 }),
             'success',
           );
         } else {

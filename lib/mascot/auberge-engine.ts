@@ -49,8 +49,8 @@ const CAP_BY_STAGE: Record<TreeStage, number> = {
 /** Bonus de récompense selon la rareté du visiteur. */
 const RARITY_BONUS: Record<'common' | 'uncommon' | 'rare', number> = {
   common: 1.0,
-  uncommon: 1.10,  // équilibrage : 1.15 → 1.10 pour resserrer la courbe
-  rare: 1.25,      // équilibrage : 1.4 → 1.25 (le rewardMultiplier 1.8 fait déjà beaucoup)
+  uncommon: 1.15,  // rééquilibrage Solution 2 : 1.10 → 1.15 (contraste rareté plus marqué)
+  rare: 1.40,      // rééquilibrage Solution 2 : 1.25 → 1.40 (rare = vrai jackpot endgame)
 };
 
 /** Probabilité de drop d'un loot rare à la livraison. */
@@ -62,15 +62,15 @@ const LOOT_CHANCE: Record<'common' | 'uncommon' | 'rare', number> = {
 
 /** XP profil par livraison selon la rareté (snapshot au spawn). */
 const XP_REWARD: Record<'common' | 'uncommon' | 'rare', number> = {
-  common: 5,
-  uncommon: 10,
-  rare: 20,
+  common: 15,   // rééquilibrage Solution 2 : 5 → 15 (compense xpBonus craft 5-15)
+  uncommon: 30, // rééquilibrage Solution 2 : 10 → 30 (compense craft 15-30)
+  rare: 75,     // rééquilibrage Solution 2 : 20 → 75 (compense craft rare 35-50)
 };
 
 /** Multiplicateur de loyauté appliqué au reward selon la réputation actuelle avec le PNJ. */
 function getLoyaltyBonus(reputationLevel: number): number {
-  if (reputationLevel >= 5) return 1.20;  // ❤❤❤❤❤ : +20%
-  if (reputationLevel >= 3) return 1.10;  // ❤❤❤+ : +10%
+  if (reputationLevel >= 5) return 1.30;  // ❤❤❤❤❤ : +30% (Solution 2 : 1.20 → 1.30)
+  if (reputationLevel >= 3) return 1.15;  // ❤❤❤+ : +15% (Solution 2 : 1.10 → 1.15)
   return 1.0;
 }
 
