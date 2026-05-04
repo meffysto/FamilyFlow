@@ -41,3 +41,11 @@ export {
   escapeHtml,
 } from './html-template';
 export type { BookHtmlSpec } from './html-template';
+export { renderCoverPage } from './components/cover';
+export type { CoverPageOpts } from './components/cover';
+export { renderTitlePage } from './components/title';
+export type { TitlePageOpts } from './components/title';
+export { renderSceneDoublePage } from './components/scene-double-page';
+export type { SceneDoublePageOpts } from './components/scene-double-page';
+export { renderBackCoverPage } from './components/back-cover';
+export type { BackCoverOpts } from './components/back-cover';

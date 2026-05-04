@@ -3,7 +3,7 @@
 
 import { renderBookHtml, renderCss } from '../pdf/html-template';
 import { BOOK_PALETTE } from '../pdf/constants';
-import type { BedtimeStory } from '../types';
+import type { BedtimeStory, SceneSpec, SceneArchetype } from '../types';
 
 const FAKE_FONTS = { andikaRegular: 'AAAA', andikaBold: 'BBBB' };
 
@@ -108,5 +108,133 @@ describe('renderBookHtml', () => {
     });
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
+  });
+});
+
+// ─── Mode A — Picture-book illustré (Plan 49-02) ─────────────────────────────
+
+const ARCHETYPES: SceneArchetype[] = [
+  'paysage', 'rencontre', 'decouverte', 'vulnerable', 'echange', 'etreinte',
+];
+
+const FAKE_SCENES: SceneSpec[] = ARCHETYPES.map((archetype, i) => ({
+  panelIndex: i + 1,
+  archetype,
+  textStart: i * 100,
+  textEnd: (i + 1) * 100,
+  highlights: [],
+}));
+
+const FAKE_ILLUS = new Map<SceneArchetype, string>([
+  ['paysage', 'PAYSAGE_B64'],
+  ['rencontre', 'RENCONTRE_B64'],
+  ['decouverte', 'DECOUVERTE_B64'],
+  ['vulnerable', 'VULNERABLE_B64'],
+  ['echange', 'ECHANGE_B64'],
+  ['etreinte', 'ETREINTE_B64'],
+]);
+
+const STORY_LONG = { ...FAKE_STORY, texte: 'x'.repeat(700) };
+
+describe('renderBookHtml mode A (6 scenes)', () => {
+  it('produces exactly 16 page sections', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG,
+      scenes: FAKE_SCENES,
+      illustrations: FAKE_ILLUS,
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    const matches = html.match(/<section class="page/g) || [];
+    expect(matches.length).toBe(16);
+  });
+
+  it('cover uses paysage illustration full-bleed', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG,
+      scenes: FAKE_SCENES,
+      illustrations: FAKE_ILLUS,
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    expect(html).toContain('data:image/png;base64,PAYSAGE_B64');
+    expect(html).toMatch(/class="page cover"/);
+  });
+
+  it('title page shows tome badge when tomeBadge provided', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG,
+      scenes: FAKE_SCENES,
+      illustrations: FAKE_ILLUS,
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: { current: 2, total: 3, livreTitre: 'Le Royaume Endormi' },
+    });
+    expect(html).toContain('Tome 2 sur 3');
+    expect(html).toContain('Le Royaume Endormi');
+  });
+
+  it('title page omits tome badge when null', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG,
+      scenes: FAKE_SCENES,
+      illustrations: FAKE_ILLUS,
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    expect(html).not.toMatch(/Tome\s+\d+\s+sur/);
+  });
+
+  it('renders 6 scene double-pages with their archetypes', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG,
+      scenes: FAKE_SCENES,
+      illustrations: FAKE_ILLUS,
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    for (const arche of ARCHETYPES) {
+      expect(html).toContain(`data-archetype="${arche}"`);
+    }
+  });
+
+  it('back cover contains QR placeholder + FamilyVault label', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG,
+      scenes: FAKE_SCENES,
+      illustrations: FAKE_ILLUS,
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    expect(html).toContain('data-phase50');
+    expect(html).toContain('FamilyVault');
+  });
+
+  it('throws on scenes.length !== 6 (strict per CONTEXT D-Q2)', () => {
+    expect(() => renderBookHtml({
+      story: STORY_LONG,
+      scenes: FAKE_SCENES.slice(0, 5),
+      illustrations: FAKE_ILLUS,
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    })).toThrow(/exactement 6 scènes/);
+  });
+
+  it('mode B placeholder when scenes null (detailed in Plan 49-04)', () => {
+    const html = renderBookHtml({
+      story: FAKE_STORY,
+      scenes: null,
+      illustrations: new Map(),
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    expect(html).toContain('data-mode="fallback"');
   });
 });

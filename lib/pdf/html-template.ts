@@ -5,6 +5,13 @@
 
 import type { BedtimeStory, SceneSpec, SceneArchetype } from '../types';
 import type { BookPalette } from './types';
+// Composants page (Plan 49-02). Imports placés après l'export de escapeHtml ci-dessous —
+// les composants importent escapeHtml depuis ce module (cycle géré : escapeHtml est une
+// fonction pure définie en hoist statique, pas de dépendance d'initialisation).
+import { renderCoverPage } from './components/cover';
+import { renderTitlePage } from './components/title';
+import { renderSceneDoublePage } from './components/scene-double-page';
+import { renderBackCoverPage } from './components/back-cover';
 
 /** Spec d'entrée pour `renderBookHtml`. Mode A = scenes != null + illustrations remplies, Mode B sinon. */
 export interface BookHtmlSpec {
@@ -123,14 +130,71 @@ html, body {
 }
 
 /**
- * Stub structurel des 16 sections .page.
- * Plan 49-02 remplacera par cover/title/scene-double-page/back-cover
- * (mode A : 1 cover + 1 title + 6 doubles-pages illustrées + 1 fin + 1 back).
+ * Mode A — Picture-book illustré (univers forêt MVP).
+ * Produit 16 sections : cover (1) + title (1) + 6×scene-double-page (12) + end (1) + back-cover (1).
+ * Strict 6 scènes (CONTEXT.md D-Q2) — throw si scenes.length !== 6.
  */
-function renderPagesStub(_spec: BookHtmlSpec): string {
+function renderModeAPages(spec: BookHtmlSpec): string {
+  const scenes = spec.scenes!;
+  if (scenes.length !== 6) {
+    throw new Error("L'histoire doit avoir exactement 6 scènes pour être imprimée. Édite le sidecar .scenes.json.");
+  }
+
+  const coverImg = spec.illustrations.get('paysage') ?? null;
+  const pages: string[] = [];
+
+  // Folio 1 — Cover
+  pages.push(renderCoverPage({ story: spec.story, coverImageBase64: coverImg, palette: spec.palette }));
+
+  // Folio 2 — Page de titre
+  pages.push(renderTitlePage({ story: spec.story, palette: spec.palette, tomeBadge: spec.tomeBadge }));
+
+  // Folios 3-14 — 6 doubles-pages scènes
+  let pageNum = 3;
+  for (const scene of scenes) {
+    const illu = spec.illustrations.get(scene.archetype) ?? null;
+    pages.push(renderSceneDoublePage({
+      scene,
+      story: spec.story,
+      illustrationBase64: illu,
+      palette: spec.palette,
+      pageNumLeft: pageNum,
+      pageNumRight: pageNum + 1,
+    }));
+    pageNum += 2;
+  }
+
+  // Folio 15 — Page Fin / dédicace
+  pages.push(renderEndPage(spec));
+
+  // Folio 16 — 4ème de couverture
+  pages.push(renderBackCoverPage({ story: spec.story, palette: spec.palette }));
+
+  return pages.join('\n');
+}
+
+/** Folio 15 mode A — page "Fin." + memorySummary optionnel. */
+function renderEndPage(spec: BookHtmlSpec): string {
+  const { palette, story } = spec;
+  const memory = story.memorySummary && story.memorySummary.trim().length > 0
+    ? `<div style="font-family:'Andika', serif; font-size:12pt; line-height:1.6; color:${palette.ink}; max-width:14cm; text-align:center; margin-top:1.5cm;">${escapeHtml(story.memorySummary)}</div>`
+    : '';
+  return `<section class="page end-page">
+    <div class="safe-area" style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+      <div style="font-family:'DM Serif Display', serif; font-size:60pt; color:${palette.terracotta};">Fin.</div>
+      ${memory}
+    </div>
+  </section>`;
+}
+
+/**
+ * Mode B placeholder — détaillé Plan 49-04 (fallback texte-seul ornemental).
+ * Produit 16 sections vides identifiables via `data-mode="fallback"`.
+ */
+function renderModeBPlaceholder(_spec: BookHtmlSpec): string {
   const arr: string[] = [];
   for (let i = 0; i < 16; i++) {
-    arr.push(`<section class="page" data-page-index="${i + 1}"><div class="safe-area"></div></section>`);
+    arr.push(`<section class="page" data-mode="fallback" data-page-index="${i + 1}"><div class="safe-area"></div></section>`);
   }
   return arr.join('\n');
 }
@@ -139,10 +203,15 @@ function renderPagesStub(_spec: BookHtmlSpec): string {
  * Assemble le HTML complet du livre.
  * Squelette : DOCTYPE + html lang fr + head (meta + title + style) + body (16 .page sections).
  * Mitigation Pitfall 3 RESEARCH.md §756 : DOCTYPE en tête, sinon WKWebView rend page blanche.
+ *
+ * - `spec.scenes` non-null → mode A (picture-book) — strict 6 scènes
+ * - `spec.scenes` null → mode B placeholder (Plan 49-04 implémentera fallback ornemental)
  */
 export function renderBookHtml(spec: BookHtmlSpec): string {
   const css = renderCss(spec.palette, spec.fonts);
-  const pages = renderPagesStub(spec);
+  const pages = spec.scenes
+    ? renderModeAPages(spec)
+    : renderModeBPlaceholder(spec);
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
