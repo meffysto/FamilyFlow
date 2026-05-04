@@ -14,31 +14,30 @@ import type { VillageCell } from './types';
  */
 export const VILLAGE_GRID: VillageCell[] = [
   // Phase 25 — elements existants
-  { id: 'village_fountain', x: 0.50, y: 0.45, role: 'fountain' },
-  { id: 'village_stall_0',  x: 0.22, y: 0.65, role: 'stall' },
-  { id: 'village_stall_1',  x: 0.78, y: 0.65, role: 'stall' },
-  { id: 'village_board',    x: 0.15, y: 0.25, role: 'board' },
+  { id: 'village_fountain', x: 0.478, y: 0.346, role: 'fountain' },
+  { id: 'village_stall_0',  x: 0.22,  y: 0.65,  role: 'stall' },
+  { id: 'village_stall_1',  x: 0.78,  y: 0.65,  role: 'stall' },
+  { id: 'village_board',    x: 0.15,  y: 0.25,  role: 'board' },
 
   // Phase 29 — slots avatars compagnons (per D-04, D-06 — VILL-01)
-  { id: 'village_avatar_slot_0', x: 0.35, y: 0.40, role: 'avatar' },
-  { id: 'village_avatar_slot_1', x: 0.65, y: 0.40, role: 'avatar' },
-  { id: 'village_avatar_slot_2', x: 0.30, y: 0.55, role: 'avatar' },
-  { id: 'village_avatar_slot_3', x: 0.70, y: 0.55, role: 'avatar' },
-  { id: 'village_avatar_slot_4', x: 0.40, y: 0.72, role: 'avatar' },
-  { id: 'village_avatar_slot_5', x: 0.60, y: 0.72, role: 'avatar' },
+  { id: 'village_avatar_slot_0', x: 0.35,  y: 0.40,  role: 'avatar' },
+  { id: 'village_avatar_slot_1', x: 0.65,  y: 0.40,  role: 'avatar' },
+  { id: 'village_avatar_slot_2', x: 0.504, y: 0.449, role: 'avatar' },
+  { id: 'village_avatar_slot_3', x: 0.70,  y: 0.55,  role: 'avatar' },
+  { id: 'village_avatar_slot_4', x: 0.40,  y: 0.72,  role: 'avatar' },
+  { id: 'village_avatar_slot_5', x: 0.60,  y: 0.72,  role: 'avatar' },
 
   // Phase 29 — portail retour vers la ferme (per D-18 — VILL-11)
-  { id: 'village_portal_home', x: 0.85, y: 0.85, role: 'portal' },
+  { id: 'village_portal_home', x: 0.119, y: 0.829, role: 'portal' },
 
   // Phase 30 — slots batiments village debloquables par palier (per D-09, D-11 — VILL-04)
-  // Layout v3 (30-04) : plaza dirt agrandie → buildings tires vers l'interieur
-  // pour "contenir" la grande place. Port remonte au bord nord du lac.
-  { id: 'village_building_puits',        x: 0.10, y: 0.20, role: 'building' },
-  { id: 'village_building_marche',       x: 0.50, y: 0.15, role: 'building' },
-  { id: 'village_building_cafe',         x: 0.90, y: 0.20, role: 'building' },
-  { id: 'village_building_moulin',       x: 0.15, y: 0.42, role: 'building' },
-  { id: 'village_building_bibliotheque', x: 0.85, y: 0.42, role: 'building' },
-  { id: 'village_building_boulangerie',  x: 0.18, y: 0.72, role: 'building' },
-  { id: 'village_building_forge',        x: 0.82, y: 0.72, role: 'building' },
-  { id: 'village_building_port',         x: 0.50, y: 0.80, role: 'building' },
+  // Calibres sur la carte Pixel Forge village3.png (calib DEV).
+  { id: 'village_building_puits',        x: 0.726, y: 0.130, role: 'building' },
+  { id: 'village_building_marche',       x: 0.272, y: 0.130, role: 'building' },
+  { id: 'village_building_cafe',         x: 0.833, y: 0.364, role: 'building' },
+  { id: 'village_building_moulin',       x: 0.505, y: 0.586, role: 'building' },
+  { id: 'village_building_bibliotheque', x: 0.243, y: 0.23,  role: 'building' },
+  { id: 'village_building_boulangerie',  x: 0.165, y: 0.604, role: 'building' },
+  { id: 'village_building_forge',        x: 0.817, y: 0.611, role: 'building' },
+  { id: 'village_building_port',         x: 0.546, y: 0.883, role: 'building' },
 ];

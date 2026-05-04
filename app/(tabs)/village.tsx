@@ -82,6 +82,13 @@ import type { FarmProfileData } from '../../lib/types';
 
 // ── Constantes module ──────────────────────────────────────────────────────
 
+// ── Map Pixel Forge village ──
+// Pour rollback: passer USE_PIXEL_FORGE_VILLAGE_MAP a false → repasse au tilemap Wang.
+const USE_PIXEL_FORGE_VILLAGE_MAP = true;
+const VILLAGE_MAP_IMAGE = require('../../assets/village-map/base.png');
+const VILLAGE_MAP_NUIT_IMAGE = require('../../assets/village-map/base_nuit.png');
+const VILLAGE_MAP_ASPECT = 1847 / 852;
+
 // ── Helpers hors composant ────────────────────────────────────────────────
 
 /**
@@ -328,7 +335,10 @@ export default function VillageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width: SCREEN_W } = useWindowDimensions();
-  const MAP_HEIGHT = SCREEN_W * 2;
+  const MAP_HEIGHT = USE_PIXEL_FORGE_VILLAGE_MAP
+    ? Math.round(SCREEN_W * VILLAGE_MAP_ASPECT)
+    : SCREEN_W * 2;
+
   const { colors, isDark } = useThemeColors();
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -668,29 +678,44 @@ export default function VillageScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + Spacing['5xl'] },
+          {
+            paddingTop: insets.top + 24,
+            paddingBottom: insets.bottom + Spacing['5xl'],
+          },
         ]}
         showsVerticalScrollIndicator={false}
+        bounces={false}
+        overScrollMode="never"
       >
         {/* ── Carte TileMap village + overlay avatars ── */}
         <View
           style={[styles.mapContainer, { width: SCREEN_W, height: MAP_HEIGHT, marginHorizontal: -Spacing['2xl'] }]}
           onLayout={handleMapLayout}
         >
-          {/* Fond herbe répété — couvre toute la carte y compris zones sans tile */}
-          <Image
-            source={VILLAGE_GRASS_TILE_IMAGE}
-            style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
-            resizeMode="repeat"
-          />
-          <TileMapRenderer
-            treeStage="arbre"
-            containerWidth={SCREEN_W}
-            containerHeight={MAP_HEIGHT}
-            season={season}
-            mode="village"
-            paused={animationsPaused}
-          />
+          {USE_PIXEL_FORGE_VILLAGE_MAP ? (
+            <Image
+              source={isDark ? VILLAGE_MAP_NUIT_IMAGE : VILLAGE_MAP_IMAGE}
+              style={[StyleSheet.absoluteFill, { width: SCREEN_W, height: MAP_HEIGHT }]}
+              resizeMode="stretch"
+            />
+          ) : (
+            <>
+              {/* Fond herbe répété — couvre toute la carte y compris zones sans tile */}
+              <Image
+                source={VILLAGE_GRASS_TILE_IMAGE}
+                style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+                resizeMode="repeat"
+              />
+              <TileMapRenderer
+                treeStage="arbre"
+                containerWidth={SCREEN_W}
+                containerHeight={MAP_HEIGHT}
+                season={season}
+                mode="village"
+                paused={animationsPaused}
+              />
+            </>
+          )}
 
           {/* Fontaine centrale — sprite pixel statique sur le slot village_fountain */}
           {fountainSlot && (
@@ -788,6 +813,7 @@ export default function VillageScreen() {
               accessibilityLabel="Retour à la ferme"
             />
           )}
+
         </View>
 
         {/* ── Carte Actions — chevauche le bas de la carte comme tree.tsx ── */}
@@ -1233,6 +1259,8 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     overflow: 'hidden',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     shadowColor: '#000',

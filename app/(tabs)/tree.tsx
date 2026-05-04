@@ -172,6 +172,10 @@ const USE_PIXEL_FORGE_MAP = true;
 
 const PIXEL_FORGE_MAP_LAYERS = {
   base: require('../../assets/farm-map/base.png'),
+  baseNuit: require('../../assets/farm-map/base_nuit.png'),
+  basePrintemps: require('../../assets/farm-map/base_printemps.png'),
+  baseHiver: require('../../assets/farm-map/base_hiver.png'),
+  baseAutomne: require('../../assets/farm-map/base_automne.png'),
 } as const;
 const PIXEL_FORGE_WELL_IMAGE = require('../../assets/garden/decos/farm/well.png');
 
@@ -759,16 +763,7 @@ export default function TreeScreen() {
   const [devEventOverride, setDevEventOverride] = useState<string | null>(null);
   const [devWaterCast, setDevWaterCast] = useState(false);
   const [showDevEffects, setShowDevEffects] = useState(false);
-  const [usePixelForgeMap, setUsePixelForgeMap] = useState(USE_PIXEL_FORGE_MAP);
-  const [showPixelForgeCalibration, setShowPixelForgeCalibration] = useState(false);
-  const [pixelForgeCalibrationPoint, setPixelForgeCalibrationPoint] = useState<{
-    x: number;
-    y: number;
-    nx: number;
-    ny: number;
-    col: number;
-    row: number;
-  } | null>(null);
+  const usePixelForgeMap = USE_PIXEL_FORGE_MAP;
   const activeEventId = (__DEV__ && devEventOverride)
     ? devEventOverride
     : (eventProgressLoaded ? getVisibleEventId(eventProgressList, profile?.id ?? '', new Date()) : null);
@@ -1434,26 +1429,6 @@ export default function TreeScreen() {
   const levelsLeft = levelsUntilEvolution(level);
   const sp = SPECIES_INFO[species];
   const stageIdx = getStageIndex(level);
-  const handlePixelForgeCalibrationPress = useCallback((event: GestureResponderEvent) => {
-    const dioramaH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
-    const x = Math.round(event.nativeEvent.locationX);
-    const y = Math.round(event.nativeEvent.locationY);
-    const nx = Number((x / SCREEN_W).toFixed(4));
-    const ny = Number((y / dioramaH).toFixed(4));
-    const point = {
-      x,
-      y,
-      nx,
-      ny,
-      col: Math.floor(nx * 12),
-      row: Math.floor(ny * 20),
-    };
-    setPixelForgeCalibrationPoint(point);
-    if (__DEV__) {
-      console.log('[PixelForgeFarmCalibration]', point);
-    }
-  }, [DIORAMA_HEIGHT_BY_STAGE, SCREEN_H, SCREEN_W, stageIdx]);
-
   // XP progress vers prochain niveau
   const currentXP = profile?.points ?? 0;
   const nextLevelXP = xpForLevel(level);
@@ -2571,7 +2546,17 @@ export default function TreeScreen() {
             <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', borderRadius: 28 }]}>
               {usePixelForgeMap ? (
                 <Image
-                  source={PIXEL_FORGE_MAP_LAYERS.base}
+                  source={
+                    isDark
+                      ? PIXEL_FORGE_MAP_LAYERS.baseNuit
+                      : season === 'printemps'
+                      ? PIXEL_FORGE_MAP_LAYERS.basePrintemps
+                      : season === 'hiver'
+                      ? PIXEL_FORGE_MAP_LAYERS.baseHiver
+                      : season === 'automne'
+                      ? PIXEL_FORGE_MAP_LAYERS.baseAutomne
+                      : PIXEL_FORGE_MAP_LAYERS.base
+                  }
                   style={[StyleSheet.absoluteFill, { width: SCREEN_W, height: DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60 }]}
                   resizeMode="stretch"
                 />
@@ -2596,89 +2581,6 @@ export default function TreeScreen() {
             </View>
 
             {/* Couche 2 : Décorations sol désactivées — le terrain tileset les remplace */}
-
-            {__DEV__ && (
-              <View style={styles.mapDevControls} pointerEvents="box-none">
-                <TouchableOpacity
-                  onPress={() => setUsePixelForgeMap((value) => !value)}
-                  activeOpacity={0.78}
-                  style={[styles.mapDevButton, usePixelForgeMap && styles.mapDevButtonActive]}
-                  accessibilityRole="switch"
-                  accessibilityState={{ checked: usePixelForgeMap }}
-                  accessibilityLabel="Activer la map Pixel Forge"
-                >
-                  <Text style={styles.mapDevButtonText}>
-                    {usePixelForgeMap ? 'Pixel Forge' : 'Wang'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowPixelForgeCalibration((value) => !value)}
-                  activeOpacity={0.78}
-                  style={[styles.mapDevButton, showPixelForgeCalibration && styles.mapDevButtonActive]}
-                  accessibilityRole="button"
-                  accessibilityLabel="Activer la grille de calibration Pixel Forge"
-                >
-                  <Text style={styles.mapDevButtonText}>
-                    {showPixelForgeCalibration ? 'Calibrage' : 'Calibrer'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {__DEV__ && showPixelForgeCalibration && (
-              <Pressable
-                style={styles.mapCalibrationLayer}
-                onPress={handlePixelForgeCalibrationPress}
-                accessibilityRole="button"
-                accessibilityLabel="Zone de calibration Pixel Forge"
-              >
-                {Array.from({ length: 13 }).map((_, index) => (
-                  <View
-                    key={`cal-v-${index}`}
-                    pointerEvents="none"
-                    style={[
-                      styles.mapCalibrationLineVertical,
-                      { left: `${(index / 12) * 100}%` },
-                    ]}
-                  />
-                ))}
-                {Array.from({ length: 21 }).map((_, index) => (
-                  <View
-                    key={`cal-h-${index}`}
-                    pointerEvents="none"
-                    style={[
-                      styles.mapCalibrationLineHorizontal,
-                      { top: `${(index / 20) * 100}%` },
-                    ]}
-                  />
-                ))}
-                {pixelForgeCalibrationPoint && (
-                  <>
-                    <View
-                      pointerEvents="none"
-                      style={[
-                        styles.mapCalibrationMarker,
-                        {
-                          left: pixelForgeCalibrationPoint.x - 9,
-                          top: pixelForgeCalibrationPoint.y - 9,
-                        },
-                      ]}
-                    />
-                    <View pointerEvents="none" style={styles.mapCalibrationReadout}>
-                      <Text style={styles.mapCalibrationText}>
-                        x {pixelForgeCalibrationPoint.x} · y {pixelForgeCalibrationPoint.y}
-                      </Text>
-                      <Text style={styles.mapCalibrationText}>
-                        nx {pixelForgeCalibrationPoint.nx} · ny {pixelForgeCalibrationPoint.ny}
-                      </Text>
-                      <Text style={styles.mapCalibrationText}>
-                        col {pixelForgeCalibrationPoint.col} · row {pixelForgeCalibrationPoint.row}
-                      </Text>
-                    </View>
-                  </>
-                )}
-              </Pressable>
-            )}
 
             {/* Couche 3 : Grille monde (cultures + batiments) */}
             <WorldGridView
