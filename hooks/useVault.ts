@@ -707,6 +707,7 @@ export function useVaultInternal(): VaultState {
         nextTaskId,
         nextRdvText,
         speechBubble,
+        stageOverride: laStage,
         companionSpecies,
         companionStage,
       });
