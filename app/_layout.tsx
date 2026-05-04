@@ -32,6 +32,7 @@ import * as Notifications from 'expo-notifications';
 import { useFonts as useDMSerif, DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display';
 import { Caveat_400Regular, Caveat_600SemiBold } from '@expo-google-fonts/caveat';
 import { PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
+import { useFonts as useExpoFonts } from 'expo-font';
 import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
@@ -173,7 +174,17 @@ function RootLayout() {
     Caveat_600SemiBold,
     PatrickHand_400Regular,
   });
-  const fontsReady = fontsLoaded || !!fontsError;
+  // Charge la police Andika bundled (corps de texte des livres PDF Lulu).
+  // Andika n'est pas sur Google Fonts → utilisation d'expo-font direct avec
+  // les fichiers TTF locaux. Si la charge échoue, on continue (fallback
+  // système) — ne jamais bloquer l'app (pattern cohérent avec useDMSerif).
+  const [andikaLoaded, andikaError] = useExpoFonts({
+    'Andika-Regular': require('../assets/fonts/Andika/Andika-Regular.ttf'),
+    'Andika-Bold': require('../assets/fonts/Andika/Andika-Bold.ttf'),
+  });
+  const fontsReady =
+    (fontsLoaded || !!fontsError) &&
+    (andikaLoaded || !!andikaError);
 
   useEffect(() => {
     if (__DEV__) {
