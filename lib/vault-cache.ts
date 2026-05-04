@@ -64,6 +64,10 @@ import type { JournalSummaryEntry } from './ai-service';
 //      n'efface pas ces sections (elles n'étaient pas dans le cache avant donc
 //      le skip Phase 2 les laissait à leur état initial vide).
 // v13: Phase B Histoires — Profile.storyDefaults (préférences durables wizard)
+// Phase 48 (Export PDF Lulu) : aucun bump — manifeste impressions est un
+// nouveau domaine NON inclus dans VaultCacheState (lecture rare, volume
+// faible). Voir lib/pdf/manifest-parser.ts + .planning/phases/48-*/48-RESEARCH.md
+// section "CACHE_VERSION Decision".
 const CACHE_VERSION = 13;
 const CACHE_FILENAME = 'vault-cache-v13.json';
 
