@@ -1,7 +1,5 @@
 // lib/pdf/ — Barrel export pour le domaine export PDF (Lulu Direct).
 // Pattern cohérent avec lib/gamification/index.ts.
-// Note : MANIFESTE_FILE/parseManifeste/serializeManifeste seront ajoutés
-// par le plan 48-03 (manifeste impressions).
 
 export {
   TRIM_SIZE_CM,
@@ -18,3 +16,9 @@ export type {
   BookPalette,
   FontSlot,
 } from './types';
+
+export {
+  MANIFESTE_FILE,
+  parseManifeste,
+  serializeManifeste,
+} from './manifest-parser';
