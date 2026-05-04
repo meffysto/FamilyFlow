@@ -49,3 +49,13 @@ export { renderSceneDoublePage } from './components/scene-double-page';
 export type { SceneDoublePageOpts } from './components/scene-double-page';
 export { renderBackCoverPage } from './components/back-cover';
 export type { BackCoverOpts } from './components/back-cover';
+
+// Plan 49-03 — Pipeline génération + persistance
+export { detectTomeBadge } from './saga-detection';
+export type { TomeBadge } from './saga-detection';
+export { generateBookPdf, PAGE_SIZE_PT } from './pdf-generator';
+export type {
+  GenerateBookPdfOptions,
+  GenerateBookPdfResult,
+} from './pdf-generator';
+export { persistBookPdf } from './book-storage';
