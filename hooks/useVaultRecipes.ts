@@ -28,6 +28,12 @@ function warnUnexpected(context: string, e: unknown) {
 export interface UseVaultRecipesResult {
   recipes: Recipe[];
   setRecipes: (recipes: Recipe[]) => void;
+  /** Catégories existant sur disque mais sans recette (dossiers vides) */
+  emptyCategories: string[];
+  /** Lit le contenu brut .cook d'une recette */
+  loadRecipeRaw: (sourceFile: string) => Promise<string>;
+  /** Écrit le contenu brut .cook et met à jour la liste */
+  saveRecipeRaw: (sourceFile: string, content: string) => Promise<void>;
   loadRecipes: (force?: boolean) => Promise<void>;
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
   deleteRecipe: (sourceFile: string) => Promise<void>;
@@ -54,8 +60,30 @@ export function useVaultRecipes(
   profiles: Profile[],
 ): UseVaultRecipesResult {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [diskCategories, setDiskCategories] = useState<string[]>([]);
   const [recipeFavorites, setRecipeFavorites] = useState<Record<string, string[]>>({});
   const recipesLoadedRef = useRef(false);
+
+  // ─── Chargement catégories sur disque ───────────────────────────────────────
+
+  const loadDiskCategories = useCallback(async () => {
+    if (!vaultRef.current) return;
+    try {
+      const entries = await vaultRef.current.listDir(RECIPES_DIR);
+      // Catégories = entrées sans extension fichier connue (dossiers)
+      const cats = entries.filter(e =>
+        !e.startsWith('.') &&
+        !e.endsWith('.cook') &&
+        !e.endsWith('.jpg') &&
+        !e.endsWith('.jpeg') &&
+        !e.endsWith('.png') &&
+        !e.endsWith('.md'),
+      );
+      setDiskCategories(cats);
+    } catch (e) {
+      warnUnexpected('loadDiskCategories', e);
+    }
+  }, []);
 
   // ─── Chargement recettes ────────────────────────────────────────────────────
 
@@ -73,11 +101,12 @@ export function useVaultRecipes(
       const loaded = results.filter((r): r is Recipe => r !== null);
       loaded.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
       setRecipes(loaded);
+      await loadDiskCategories();
     } catch (e) {
       warnUnexpected('loadRecipes', e);
       setRecipes([]);
     }
-  }, []);
+  }, [loadDiskCategories]);
 
   // ─── CRUD recettes ─────────────────────────────────────────────────────────
 
@@ -91,6 +120,24 @@ export function useVaultRecipes(
     await vault.writeFile(relPath, content);
     recipesLoadedRef.current = false;
     await loadRecipes(true);
+  }, [loadRecipes]);
+
+  const loadRecipeRaw = useCallback(async (sourceFile: string): Promise<string> => {
+    if (!vaultRef.current) throw new Error('Vault non initialisé');
+    return vaultRef.current.readFile(sourceFile);
+  }, []);
+
+  const saveRecipeRaw = useCallback(async (sourceFile: string, content: string) => {
+    if (!vaultRef.current) throw new Error('Vault non initialisé');
+    await vaultRef.current.writeFile(sourceFile, content);
+    try {
+      const updated = parseRecipe(sourceFile, content);
+      setRecipes(prev => prev.map(r => r.sourceFile === sourceFile ? updated : r));
+    } catch (e) {
+      warnUnexpected('saveRecipeRaw-parse', e);
+      recipesLoadedRef.current = false;
+      await loadRecipes(true);
+    }
   }, [loadRecipes]);
 
   const deleteRecipe = useCallback(async (sourceFile: string) => {
@@ -239,12 +286,11 @@ export function useVaultRecipes(
     const clean = sanitizeCategoryName(name);
     if (!clean) throw new Error('Nom de catégorie invalide');
     await vaultRef.current.ensureDir(`${RECIPES_DIR}/${clean}`);
-    // Une catégorie vide n'a pas de recettes, donc recipeCategories ne changera
-    // pas tant qu'aucune recette n'est ajoutée dedans. On force quand même un
-    // reload pour que l'état soit cohérent si l'UI en a besoin.
-    recipesLoadedRef.current = false;
-    await loadRecipes(true);
-  }, [loadRecipes]);
+    // Catégorie vide → pas de recette à recharger, mais on rafraîchit la liste
+    // des dossiers sur disque pour que l'UI affiche immédiatement la nouvelle.
+    setDiskCategories(prev => prev.includes(clean) ? prev : [...prev, clean]);
+    await loadDiskCategories();
+  }, [loadDiskCategories]);
 
   const renameCategory = useCallback(async (oldName: string, newName: string) => {
     if (!vaultRef.current) return;
@@ -257,8 +303,12 @@ export function useVaultRecipes(
     for (const recipe of toMove) {
       await moveRecipeCategory(recipe.sourceFile, cleanNew);
     }
-    // L'ancien dossier reste vide sur disque (pas de deleteDir natif) — sans
-    // impact UX car recipeCategories est dérivé de `recipes`.
+    // L'ancien dossier reste vide sur disque (pas de deleteDir natif). On le
+    // retire de la liste affichée et on rafraîchit le disque pour cohérence.
+    setDiskCategories(prev => {
+      const filtered = prev.filter(c => c !== cleanOld);
+      return filtered.includes(cleanNew) ? filtered : [...filtered, cleanNew];
+    });
     recipesLoadedRef.current = false;
     await loadRecipes(true);
   }, [recipes, moveRecipeCategory, loadRecipes]);
@@ -279,8 +329,9 @@ export function useVaultRecipes(
         await moveRecipeCategory(recipe.sourceFile, cleanTarget);
       }
     }
-    // Le dossier vide reste sur disque (pas de deleteDir natif) — invisible
-    // côté UI car recipeCategories est dérivé de `recipes`.
+    // Le dossier vide reste sur disque (pas de deleteDir natif). On le retire
+    // de la liste affichée pour ne pas réapparaître après suppression.
+    setDiskCategories(prev => prev.filter(c => c !== clean));
     recipesLoadedRef.current = false;
     await loadRecipes(true);
   }, [recipes, moveRecipeCategory, loadRecipes]);
@@ -330,9 +381,16 @@ export function useVaultRecipes(
     recipesLoadedRef.current = false;
   }, []);
 
+  // Dossiers disque qui ne contiennent encore aucune recette.
+  const recipeCategorySet = new Set(recipes.map(r => r.category).filter(Boolean));
+  const emptyCategories = diskCategories.filter(c => !recipeCategorySet.has(c));
+
   return {
     recipes,
     setRecipes,
+    emptyCategories,
+    loadRecipeRaw,
+    saveRecipeRaw,
     loadRecipes,
     addRecipe,
     deleteRecipe,

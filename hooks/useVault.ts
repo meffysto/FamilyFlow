@@ -238,6 +238,12 @@ export interface VaultState {
   refreshFarm: (profileId: string) => Promise<void>;
   recipes: Recipe[];
   loadRecipes: (force?: boolean) => Promise<void>;
+  /** Catégories existant sur disque mais sans recette */
+  emptyCategories: string[];
+  /** Lit le contenu brut .cook d'une recette */
+  loadRecipeRaw: (sourceFile: string) => Promise<string>;
+  /** Sauvegarde le contenu brut .cook édité par l'utilisateur */
+  saveRecipeRaw: (sourceFile: string, content: string) => Promise<void>;
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
   deleteRecipe: (sourceFile: string) => Promise<void>;
   renameRecipe: (sourceFile: string, newTitle: string) => Promise<void>;
@@ -2758,6 +2764,9 @@ export function useVaultInternal(): VaultState {
     refreshFarm: profilesHook.refreshFarm,
     recipes,
     loadRecipes: recipesHook.loadRecipes,
+    emptyCategories: recipesHook.emptyCategories,
+    loadRecipeRaw: recipesHook.loadRecipeRaw,
+    saveRecipeRaw: recipesHook.saveRecipeRaw,
     addRecipe: recipesHook.addRecipe,
     deleteRecipe: recipesHook.deleteRecipe,
     renameRecipe: recipesHook.renameRecipe,

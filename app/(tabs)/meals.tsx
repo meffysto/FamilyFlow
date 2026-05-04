@@ -153,6 +153,7 @@ export default function MealsScreen() {
     saveRecipeImage, getRecipeImageUri,
     scanAllCookFiles, moveCookToRecipes, moveRecipeCategory,
     createCategory, renameCategory, deleteCategory,
+    emptyCategories, loadRecipeRaw, saveRecipeRaw,
     profiles,
     dietary,
     activeProfile,
@@ -320,6 +321,13 @@ export default function MealsScreen() {
       setEditableCookContent(importResult.data.cookContent);
     }
   }, [importResult]);
+
+  // Sync editableCookContent quand textImportResult.type=='cook' (import texte AI)
+  useEffect(() => {
+    if (textImportResult?.type === 'cook') {
+      setEditableCookContent(textImportResult.data.cookContent);
+    }
+  }, [textImportResult]);
 
   // Chargement articles fréquents au basculement vers l'onglet courses
   useEffect(() => {
@@ -1032,8 +1040,9 @@ export default function MealsScreen() {
   }, [activeProfile, getFavorites]);
 
   const recipeCategories = useMemo(() => {
-    return [...new Set(recipes.map(r => r.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-  }, [recipes]);
+    const fromRecipes = recipes.map(r => r.category).filter(Boolean);
+    return [...new Set([...fromRecipes, ...emptyCategories])].sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [recipes, emptyCategories]);
 
   const filteredRecipes = useMemo(() => {
     let result = recipes;
@@ -1293,7 +1302,7 @@ export default function MealsScreen() {
       let title: string;
 
       if (textImportResult.type === 'cook') {
-        cookContent = textImportResult.data.cookContent;
+        cookContent = editableCookContent || textImportResult.data.cookContent;
         title = textImportResult.data.title;
       } else {
         const d = textImportResult.data;
@@ -1315,10 +1324,11 @@ export default function MealsScreen() {
       setShowTextImport(false);
       setTextImportValue('');
       setTextImportResult(null);
+      setEditableCookContent('');
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [textImportResult, textImportCategory, vault, refresh, t]);
+  }, [textImportResult, textImportCategory, editableCookContent, vault, refresh, t]);
 
   // ─── Community explore logic ─────────────────────────────────────
 
@@ -2220,6 +2230,18 @@ export default function MealsScreen() {
             } : null);
           }}
           availableCategories={recipeCategories}
+          onLoadRaw={() => loadRecipeRaw(selectedRecipe.sourceFile)}
+          onSaveRaw={async (content) => {
+            await saveRecipeRaw(selectedRecipe.sourceFile, content);
+            // Refresh in-memory recipe so the viewer reflects edits
+            try {
+              const { parseRecipe } = await import('../../lib/cooklang');
+              const updated = parseRecipe(selectedRecipe.sourceFile, content);
+              setSelectedRecipe(updated);
+            } catch {
+              // Si parsing échoue, on a quand même sauvegardé le fichier brut
+            }
+          }}
         />
       )}
 
@@ -2772,11 +2794,27 @@ export default function MealsScreen() {
                     {t('meals.import.cookReadyAI')}
                   </Text>
 
-                  <View style={{ marginTop: 8, padding: 10, borderRadius: 8, backgroundColor: colors.bg }}>
-                    <Text style={{ fontSize: FontSize.caption, color: colors.textSub, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} numberOfLines={15}>
-                      {textImportResult.data.cookContent}
-                    </Text>
-                  </View>
+                  <Text style={[{ fontSize: FontSize.caption, color: colors.textMuted, marginTop: 10, marginBottom: 4 }]}>
+                    Contenu .cook (modifiable)
+                  </Text>
+                  <TextInput
+                    multiline
+                    value={editableCookContent}
+                    onChangeText={setEditableCookContent}
+                    style={{
+                      backgroundColor: colors.bg,
+                      color: colors.text,
+                      borderColor: colors.borderLight,
+                      borderWidth: 1,
+                      borderRadius: 8,
+                      padding: 12,
+                      fontSize: FontSize.sm,
+                      fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
+                      minHeight: 200,
+                      maxHeight: 400,
+                      textAlignVertical: 'top',
+                    }}
+                  />
 
                   <View style={{ marginTop: 12, gap: 6 }}>
                     <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.import.categoryLabel')}</Text>

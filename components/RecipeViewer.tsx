@@ -44,9 +44,13 @@ interface RecipeViewerProps {
   onChangeCategory?: (newCategory: string) => void;
   /** Liste des catégories existantes pour le picker */
   availableCategories?: string[];
+  /** Lit le contenu brut .cook pour édition manuelle */
+  onLoadRaw?: () => Promise<string>;
+  /** Sauvegarde le contenu brut .cook édité */
+  onSaveRaw?: (content: string) => Promise<void>;
 }
 
-export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished, imageUri, onSaveImage, onChangeCategory, availableCategories }: RecipeViewerProps) {
+export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished, imageUri, onSaveImage, onChangeCategory, availableCategories, onLoadRaw, onSaveRaw }: RecipeViewerProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { primary, tint, colors } = useThemeColors();
@@ -54,6 +58,39 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
   const [showCookingMode, setShowCookingMode] = useState(false);
   const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
+  const [rawEditorVisible, setRawEditorVisible] = useState(false);
+  const [rawDraft, setRawDraft] = useState('');
+  const [rawLoading, setRawLoading] = useState(false);
+  const [rawSaving, setRawSaving] = useState(false);
+
+  const openRawEditor = useCallback(async () => {
+    if (!onLoadRaw) return;
+    setRawLoading(true);
+    setRawEditorVisible(true);
+    try {
+      const content = await onLoadRaw();
+      setRawDraft(content);
+    } catch (e) {
+      Alert.alert(t('recipeViewer.alert.error'), String(e));
+      setRawEditorVisible(false);
+    } finally {
+      setRawLoading(false);
+    }
+  }, [onLoadRaw, t]);
+
+  const saveRawEditor = useCallback(async () => {
+    if (!onSaveRaw) return;
+    setRawSaving(true);
+    try {
+      await onSaveRaw(rawDraft);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setRawEditorVisible(false);
+    } catch (e) {
+      Alert.alert(t('recipeViewer.alert.error'), String(e));
+    } finally {
+      setRawSaving(false);
+    }
+  }, [onSaveRaw, rawDraft, t]);
 
   // ─── Détection de conflits alimentaires (PREF-08, PREF-10, PREF-11) ────────
   const { profiles, dietary } = useVault();
@@ -370,6 +407,21 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
             </View>
           )}
 
+          {/* Bouton édition brute du .cook */}
+          {onSaveRaw && onLoadRaw && (
+            <TouchableOpacity
+              style={[styles.editRawBtn, { borderColor: colors.border, backgroundColor: colors.cardAlt }]}
+              onPress={openRawEditor}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Modifier la recette"
+            >
+              <Text style={[styles.editRawText, { color: colors.textSub }]}>
+                ✏️  Modifier la recette
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Action buttons */}
           <View style={styles.actionButtons}>
             {recipe.steps.length > 0 && (
@@ -459,6 +511,62 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Éditeur brut .cook */}
+      <Modal
+        visible={rawEditorVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setRawEditorVisible(false)}
+      >
+        <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: Math.max(insets.top, 12) }]}>
+          <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
+            <TouchableOpacity onPress={() => setRawEditorVisible(false)} style={styles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+            </TouchableOpacity>
+            <View style={styles.headerCenter}>
+              <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>Modifier</Text>
+              <Text style={[styles.category, { color: colors.textMuted }]} numberOfLines={1}>{recipe.title}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={saveRawEditor}
+              style={styles.closeBtn}
+              disabled={rawSaving || rawLoading}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={[styles.closeBtnText, { color: (rawSaving || rawLoading) ? colors.textMuted : primary, fontSize: FontSize.body, fontWeight: FontWeight.semibold }]}>
+                {rawSaving ? '…' : 'OK'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {rawLoading ? (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: colors.textMuted }}>Chargement…</Text>
+            </View>
+          ) : (
+            <TextInput
+              multiline
+              value={rawDraft}
+              onChangeText={setRawDraft}
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={{
+                flex: 1,
+                margin: 16,
+                padding: 12,
+                backgroundColor: colors.cardAlt,
+                color: colors.text,
+                borderColor: colors.borderLight,
+                borderWidth: 1,
+                borderRadius: 8,
+                fontSize: FontSize.sm,
+                fontFamily: undefined,
+                textAlignVertical: 'top',
+              }}
+            />
+          )}
+        </View>
       </Modal>
 
       {/* Sélecteur convives — volatile, sans persistance (PREF-FUT-01) */}
@@ -681,6 +789,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginTop: 4,
+  },
+  editRawBtn: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 12,
+  },
+  editRawText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   addButton: {
     borderRadius: 14,

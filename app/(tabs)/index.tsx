@@ -285,6 +285,8 @@ export default function DashboardScreen() {
     isVacationActive,
     refreshGamification,
     recipes,
+    loadRecipeRaw,
+    saveRecipeRaw,
     ageUpgrades,
     applyAgeUpgrade,
     dismissAgeUpgrade,
@@ -1334,6 +1336,17 @@ export default function DashboardScreen() {
           recipe={dashboardRecipe}
           onClose={() => setDashboardRecipe(null)}
           familySize={profiles.length}
+          onLoadRaw={() => loadRecipeRaw(dashboardRecipe.sourceFile)}
+          onSaveRaw={async (content) => {
+            await saveRecipeRaw(dashboardRecipe.sourceFile, content);
+            try {
+              const { parseRecipe } = await import('../../lib/cooklang');
+              const updated = parseRecipe(dashboardRecipe.sourceFile, content);
+              setDashboardRecipe(updated);
+            } catch {
+              // Sauvegarde brute OK même si reparsing échoue
+            }
+          }}
         />
       )}
 
