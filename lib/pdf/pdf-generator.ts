@@ -121,7 +121,9 @@ export async function generateBookPdf(
     if (totalMs > 5000) {
       // eslint-disable-next-line no-console
       console.warn(
-        `[generateBookPdf] ⚠ budget perf dépassé (${totalMs}ms > 5000ms) — story=${opts.story.id}`,
+        `[generateBookPdf] PERF BUDGET DÉPASSÉ : ${totalMs}ms > 5000ms — ` +
+          `assets:${assetsMs}ms render:${renderMs}ms hash:${hashMs}ms print:${printMs}ms — ` +
+          `story=${opts.story.id} — inspecter le bottleneck dominant.`,
       );
     }
   }

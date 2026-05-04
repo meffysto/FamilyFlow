@@ -12,6 +12,8 @@ import { renderCoverPage } from './components/cover';
 import { renderTitlePage } from './components/title';
 import { renderSceneDoublePage } from './components/scene-double-page';
 import { renderBackCoverPage } from './components/back-cover';
+import { renderFallbackDoublePage } from './components/fallback-double-page';
+import { splitTextIntoSections } from './text-splitter';
 
 /** Spec d'entrée pour `renderBookHtml`. Mode A = scenes != null + illustrations remplies, Mode B sinon. */
 export interface BookHtmlSpec {
@@ -188,15 +190,53 @@ function renderEndPage(spec: BookHtmlSpec): string {
 }
 
 /**
- * Mode B placeholder — détaillé Plan 49-04 (fallback texte-seul ornemental).
- * Produit 16 sections vides identifiables via `data-mode="fallback"`.
+ * Mode B — Fallback texte-seul ornemental (CONTEXT.md §85-138).
+ * Produit 16 sections : cover (1) + title (1) + 6 doubles-pages fallback (12) + end (1) + back-cover (1).
+ * Drop caps + bordures botaniques + pull quotes + vignettes + numéros cartouchés.
  */
-function renderModeBPlaceholder(_spec: BookHtmlSpec): string {
-  const arr: string[] = [];
-  for (let i = 0; i < 16; i++) {
-    arr.push(`<section class="page" data-mode="fallback" data-page-index="${i + 1}"><div class="safe-area"></div></section>`);
+function renderModeBPages(spec: BookHtmlSpec): string {
+  const sections = splitTextIntoSections(spec.story.texte, 6);
+  const pages: string[] = [];
+
+  // Folio 1 — Cover (réutilise renderCoverPage ; coverImageBase64 null si univers non-forêt → fallback paperShadow)
+  pages.push(
+    renderCoverPage({
+      story: spec.story,
+      coverImageBase64: spec.illustrations.get('paysage') ?? null,
+      palette: spec.palette,
+    }),
+  );
+
+  // Folio 2 — Page de titre (avec tomeBadge si saga)
+  pages.push(
+    renderTitlePage({
+      story: spec.story,
+      palette: spec.palette,
+      tomeBadge: spec.tomeBadge,
+    }),
+  );
+
+  // Folios 3-14 — 6 doubles-pages fallback ornementales
+  let pageNum = 3;
+  for (let i = 0; i < 6; i++) {
+    pages.push(
+      renderFallbackDoublePage({
+        pageIndex: i + 1,
+        text: sections[i] ?? '',
+        pageNumLeft: pageNum,
+        pageNumRight: pageNum + 1,
+      }),
+    );
+    pageNum += 2;
   }
-  return arr.join('\n');
+
+  // Folio 15 — Page Fin
+  pages.push(renderEndPage(spec));
+
+  // Folio 16 — Back cover
+  pages.push(renderBackCoverPage({ story: spec.story, palette: spec.palette }));
+
+  return pages.join('\n');
 }
 
 /**
@@ -209,9 +249,7 @@ function renderModeBPlaceholder(_spec: BookHtmlSpec): string {
  */
 export function renderBookHtml(spec: BookHtmlSpec): string {
   const css = renderCss(spec.palette, spec.fonts);
-  const pages = spec.scenes
-    ? renderModeAPages(spec)
-    : renderModeBPlaceholder(spec);
+  const pages = spec.scenes ? renderModeAPages(spec) : renderModeBPages(spec);
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>

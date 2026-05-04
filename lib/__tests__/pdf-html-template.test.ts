@@ -83,7 +83,7 @@ describe('renderBookHtml', () => {
     expect(bodyIdx).toBeGreaterThan(styleIdx);
   });
 
-  it('produces stub 16 pages structure (Plan 49-02 will refine)', () => {
+  it('produces 16 pages structure in mode B (Plan 49-04)', () => {
     const html = renderBookHtml({
       story: FAKE_STORY,
       scenes: null,
@@ -92,7 +92,7 @@ describe('renderBookHtml', () => {
       palette: BOOK_PALETTE,
       tomeBadge: null,
     });
-    const pageMatches = html.match(/<section class="page"/g) || [];
+    const pageMatches = html.match(/<section class="page/g) || [];
     expect(pageMatches.length).toBe(16);
   });
 
@@ -226,7 +226,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
     })).toThrow(/exactement 6 scènes/);
   });
 
-  it('mode B placeholder when scenes null (detailed in Plan 49-04)', () => {
+  it('mode B fallback when scenes null (Plan 49-04 — drop caps + ornements)', () => {
     const html = renderBookHtml({
       story: FAKE_STORY,
       scenes: null,
@@ -236,5 +236,122 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       tomeBadge: null,
     });
     expect(html).toContain('data-mode="fallback"');
+  });
+});
+
+// ─── Mode B — Fallback texte-seul ornemental (Plan 49-04) ───────────────────
+
+describe('renderBookHtml mode B (fallback, no scenes)', () => {
+  const STORY_LONG_TEXT = {
+    ...FAKE_STORY,
+    texte:
+      'Il était une fois. Le héros marche. Il rencontre. Il découvre. Il aide. Il revient. '.repeat(
+        10,
+      ),
+  };
+
+  it('produces exactly 16 page sections', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG_TEXT,
+      scenes: null,
+      illustrations: new Map(),
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    const matches = html.match(/<section class="page/g) || [];
+    expect(matches.length).toBe(16);
+  });
+
+  it('contains 12 fallback page sections (6 doubles-pages × 2)', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG_TEXT,
+      scenes: null,
+      illustrations: new Map(),
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    const fallbackMatches = html.match(/class="page fallback-page"/g) || [];
+    expect(fallbackMatches.length).toBe(12);
+  });
+
+  it('uses ornamental palette (terracotta + sage + ivoire mode B + encre)', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG_TEXT,
+      scenes: null,
+      illustrations: new Map(),
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    expect(html).toContain('#B8593F'); // terracotta
+    expect(html).toContain('#7A8F6B'); // sauge
+    expect(html).toContain('#F4EDE2'); // ivoire ornemental (override en mode B)
+    expect(html).toContain('#2E2A26'); // encre
+  });
+
+  it('contains exactly 6 drop-cap-block (one per fallback double-page)', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG_TEXT,
+      scenes: null,
+      illustrations: new Map(),
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    expect(html.match(/drop-cap-block/g)?.length).toBe(6);
+  });
+
+  it('does not produce empty placeholder stubs anymore (Plan 49-04 replaces)', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG_TEXT,
+      scenes: null,
+      illustrations: new Map(),
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    // Le stub vide ressemblait à : <section class="page" data-mode="fallback" data-page-index="N">
+    // Le rendu réel utilise class="page fallback-page" data-page-index="X-left|right"
+    expect(html).not.toMatch(/<section class="page" data-mode="fallback" data-page-index="\d+"/);
+  });
+
+  it('mode A still works after Plan 49-04 (regression — no drop cap in mode A)', () => {
+    const SCENES: SceneSpec[] = (
+      ['paysage', 'rencontre', 'decouverte', 'vulnerable', 'echange', 'etreinte'] as SceneArchetype[]
+    ).map((a, i) => ({
+      panelIndex: i + 1,
+      archetype: a,
+      textStart: i * 10,
+      textEnd: (i + 1) * 10,
+      highlights: [],
+    }));
+    const ILLUS = new Map<SceneArchetype, string>(
+      SCENES.map((s) => [s.archetype, `B64_${s.archetype}`]),
+    );
+    const html = renderBookHtml({
+      story: { ...FAKE_STORY, texte: 'x'.repeat(700) },
+      scenes: SCENES,
+      illustrations: ILLUS,
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: null,
+    });
+    expect(html).toContain('data-archetype="paysage"');
+    expect(html).not.toContain('drop-cap-block');
+  });
+
+  it('passes tomeBadge to title page in mode B (saga wiring)', () => {
+    const html = renderBookHtml({
+      story: STORY_LONG_TEXT,
+      scenes: null,
+      illustrations: new Map(),
+      fonts: FAKE_FONTS,
+      palette: BOOK_PALETTE,
+      tomeBadge: { current: 2, total: 4, livreTitre: 'La Saga des Loups' },
+    });
+    expect(html).toContain('Tome 2 sur 4');
+    expect(html).toContain('La Saga des Loups');
   });
 });

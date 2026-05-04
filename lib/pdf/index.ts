@@ -49,6 +49,9 @@ export { renderSceneDoublePage } from './components/scene-double-page';
 export type { SceneDoublePageOpts } from './components/scene-double-page';
 export { renderBackCoverPage } from './components/back-cover';
 export type { BackCoverOpts } from './components/back-cover';
+export { renderFallbackDoublePage } from './components/fallback-double-page';
+export type { FallbackDoublePageOpts } from './components/fallback-double-page';
+export { splitTextIntoSections } from './text-splitter';
 
 // Plan 49-03 — Pipeline génération + persistance
 export { detectTomeBadge } from './saga-detection';
