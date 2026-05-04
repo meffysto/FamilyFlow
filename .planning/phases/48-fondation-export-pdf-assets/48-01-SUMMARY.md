@@ -91,6 +91,12 @@ Le boot device (`npx expo prebuild --clean && cd ios && pod install && cd .. && 
 - Pas d'erreur `Failed to load font Andika-Regular`
 - Pas d'erreur Pitfall 4 `Unable to resolve 'text-encoding'` (mitigation RESEARCH.md ligne 370 si rencontré)
 
-## Self-Check
+## Self-Check: PASSED
 
-À remplir après commit (voir section finale).
+- `assets/fonts/Andika/Andika-Regular.ttf` — FOUND (784 KB)
+- `assets/fonts/Andika/Andika-Bold.ttf` — FOUND (799 KB)
+- `assets/fonts/Andika/OFL.txt` — FOUND (4.4 KB)
+- `app/_layout.tsx` contient 4 occurrences de `Andika` (import alias + 2 require + commentaire bloc)
+- `npm list expo-print react-native-qrcode-svg` → versions 15.0.8 / 6.3.21 installées
+- `npx tsc --noEmit` → exit 0 (clean)
+- Commit : `49d631d1` (feat(48-01): deps export PDF + police Andika bundled)
