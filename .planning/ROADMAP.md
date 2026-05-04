@@ -9,7 +9,8 @@
 - ✅ **v1.4 Jardin Familial** — Phases 25-28 (shipped 2026-04-11)
 - 🟡 **v1.5 Village Vivant** — Phases 29-33 (partiel 2026-04-14, 3/5 livrées, 31-32 deferred)
 - 🟡 **v1.6 Love Notes** — Phases 34-37 (partiel 2026-04-17, 3/4 livrées, 37 deferred)
-- 🚧 **v1.7 Modifiers de plants** — Phases 38-41 (planning)
+- ✅ **v1.7 Modifiers de plants** — Phases 38-41 (shipped 2026-04-19)
+- 🚧 **v1.8 Export PDF imprimable des histoires** — Phases 48-51 (planning)
 
 ## Phases
 
@@ -408,3 +409,96 @@ Plans:
 - [x] 47-02-PLAN.md — 6 portraits PNJ (pixellab) + nouveau registry lib/mascot/visitor-sprites.ts
 - [x] 47-03-PLAN.md — Wiring sprites dans AubergeSheet/DashboardAuberge + theme colors + ActiveVisitor.lootChance snapshot
 - [x] 47-04-PLAN.md — Animation livraison Reanimated (scale + flash + particule) + microcopy polish (empty state, bios, toast, notifs)
+
+---
+
+## v1.8 Export PDF imprimable des histoires (Phases 48-51) — PLANNING
+
+**Milestone Goal:** Permettre d'exporter chaque chapitre d'histoire en PDF imprimable aux specs Lulu Direct (carré 21×21, saddle-stitch 16 pages, bleed, polices embarquées), avec QR audio en 4ème de couverture (deep link `familyvault://story/:id`), sans backend. L'utilisateur upload manuellement son PDF sur lulu.com (Option 1). Architecture pensée pour évoluer vers intégration API ultérieurement sans casser les livres déjà imprimés.
+
+### Phase 48: Fondation export PDF + assets
+
+**Goal:** Poser l'infrastructure technique : ajouter les dépendances (`expo-print`, `react-native-qrcode-svg`), bundler la police Andika, créer le module `lib/pdf/` avec types et constantes Lulu, et créer le manifeste `12 - Impressions/manifeste.md` avec parser bidirectionnel — sans aucune UI ni génération de PDF à ce stade.
+
+**Requirements:** PDF-01 (police Andika bundled), PDF-02 (module lib/pdf/), PDF-03 (deps expo-print + qrcode), PDF-04 (manifeste impressions), PDF-05 (décision cache), QA-01 (TS/Jest clean), QA-02 (tests parser manifeste)
+
+**Depends on:** —
+
+**Success criteria:**
+1. `npm list expo-print react-native-qrcode-svg` retourne les versions installées sans warnings
+2. `assets/fonts/Andika/` contient les fichiers Regular + Bold OTF/TTF, chargés via `expo-font` sans erreur au boot (testé sur device)
+3. `lib/pdf/index.ts` exporte les constantes Lulu (`TRIM_SIZE_CM = 21`, `BLEED_CM = 0.32`, `PAGE_COUNT = 16`, palette, slots polices) et les types (`BookExportSpec`, `BookManifestEntry`)
+4. Round-trip parser manifeste : écrire 3 entrées → relire → comparer égalité strict (test Jest passant)
+5. `npx tsc --noEmit` clean (hors erreurs pré-existantes), `npx jest --no-coverage` clean
+
+Plans (à détailler en `/gsd-plan-phase 48`):
+- [ ] 48-01-PLAN.md — Dépendances + police Andika bundled + chargement expo-font
+- [ ] 48-02-PLAN.md — Module lib/pdf/ (types, constantes Lulu, barrel index.ts)
+- [ ] 48-03-PLAN.md — Manifeste 12 - Impressions/manifeste.md (parser bidirectionnel + tests Jest)
+- [ ] 48-04-PLAN.md — Décision cache + bump CACHE_VERSION si applicable + non-régression
+
+### Phase 49: Layout livre + génération PDF
+
+**Goal:** Implémenter le pipeline de génération PDF complet : HTML template aux specs Lulu (16 pages structurées, bleed, polices, palette), illustrations haute résolution embarquées, fallback texte-seul pour univers sans illustrations, hash SHA-256 du PDF, sauvegarde dans le vault.
+
+**Requirements:** LAY-01 à LAY-06 (structure 16 pages, double-page, polices, bleed, fallback, cohérence saga), PDF-06 à PDF-09 (pipeline génération + hash + assets HD + perf)
+
+**Depends on:** Phase 48
+
+**Success criteria:**
+1. Génération PDF d'une histoire foret (avec scenes + illustrations bundled) produit un fichier conforme aux specs Lulu : 16 pages, 21×21cm + bleed, polices embarquées (vérifiable via `pdfinfo` ou ouverture Aperçu macOS)
+2. Fallback texte-seul produit un PDF lisible et cohérent pour une histoire sans `scenes` (V2 ou universe non-foret) — 6 doubles pages avec ornements typographiques
+3. Cover, page de titre, scènes, 4ème couverture rendues correctement avec illustrations 300 DPI minimum
+4. Génération complète d'une histoire moyenne en moins de 5 secondes sur device (mesure dans `__DEV__` console)
+5. Hash SHA-256 du PDF stocké dans le manifeste, identique pour deux générations identiques (déterminisme)
+6. `npx tsc --noEmit` clean, `npx jest --no-coverage` clean
+
+Plans (à détailler en `/gsd-plan-phase 49`):
+- [ ] 49-01-PLAN.md — HTML template + CSS @page bleed + polices embarquées base64
+- [ ] 49-02-PLAN.md — Composants layout : couverture, page titre, scène double-page, 4ème couverture
+- [ ] 49-03-PLAN.md — Pipeline expo-print + asset extraction + hash SHA-256 + sauvegarde vault
+- [ ] 49-04-PLAN.md — Fallback texte-seul + cohérence saga (badge tome) + perf
+
+### Phase 50: QR audio + deep links
+
+**Goal:** Ajouter le système de QR code audio en 4ème de couverture avec deep link `familyvault://story/:id` qui rejoue l'histoire et l'audio dans l'app. Configurer le scheme et les Universal Links, créer la route `app/story/[id].tsx`, et générer le QR SVG embarqué dans le PDF.
+
+**Requirements:** QR-01 (scheme app.json), QR-02 (route story/[id].tsx), QR-03 (handler deep link), QR-04 (génération QR PDF), QR-05 (test scan device), QA-01
+
+**Depends on:** Phase 49
+
+**Success criteria:**
+1. `app.json` contient `"scheme": "familyvault"` + `associatedDomains` placeholder pour Universal Links futur
+2. Scan d'un QR code généré ouvre l'app, navigue vers la bibliothèque stories avec l'histoire sélectionnée, et lance l'audio si disponible (testé manuellement sur device avec deep link `xcrun simctl openurl`)
+3. Fallback graceful : deep link avec id inexistant → toast "Histoire introuvable", retour à la bibliothèque sans crash
+4. QR code intégré dans le PDF en 4ème de couverture (3×3cm), encodé `familyvault://story/{storyId}`, avec légende "Scanne pour écouter l'histoire"
+5. `npx tsc --noEmit` clean, `npx jest --no-coverage` clean (test unitaire du parsing deep link)
+
+Plans (à détailler en `/gsd-plan-phase 50`):
+- [ ] 50-01-PLAN.md — Configuration scheme + Universal Links app.json
+- [ ] 50-02-PLAN.md — Route app/story/[id].tsx + handler deep link + autoplay audio
+- [ ] 50-03-PLAN.md — Génération QR code SVG haute résolution embarqué PDF
+- [ ] 50-04-PLAN.md — Test scan device + fallback graceful + non-régression
+
+### Phase 51: UX export + manuel Lulu + non-régression
+
+**Goal:** Brancher l'export PDF dans l'UX existante : bouton "Exporter le livre" dans la bibliothèque stories (long-press menu) et écran fin de génération, modal aperçu PDF, écran post-export avec actions (Sauvegarder, Voir, Commander chez Lulu), mise à jour automatique du manifeste, i18n FR complet, et docs CLAUDE.md mises à jour.
+
+**Requirements:** UX-01 à UX-06 (bouton export + modal + post-export + manifeste + i18n + haptic), QA-01, QA-02, QA-03 (docs)
+
+**Depends on:** Phase 50
+
+**Success criteria:**
+1. Bouton "Exporter le livre" accessible depuis le long-press menu sur cartes saga ET depuis l'écran fin de génération d'histoire
+2. `BookExportModal` affiche aperçu (couverture + 2-3 pages preview), récap format, bouton générer/annuler — drag-to-dismiss fonctionnel
+3. Après génération réussie, écran post-export propose 3 actions claires (Sauvegarder via expo-sharing, Voir le PDF, Commander chez Lulu avec lien externe + instructions FR)
+4. Manifeste `12 - Impressions/manifeste.md` mis à jour automatiquement avec entrée pour chaque export (id, hash, date, format, chemin)
+5. Toutes les chaînes UI en français strict, feedback haptique Medium sur succès génération
+6. CLAUDE.md mis à jour : Stack mentionne `expo-print` + `react-native-qrcode-svg`, Architecture liste `lib/pdf/`, Vault mentionne `12 - Impressions/`
+7. `npx tsc --noEmit` clean (hors erreurs pré-existantes), `npx jest --no-coverage` clean, app testée sur device sans régression
+
+Plans (à détailler en `/gsd-plan-phase 51`):
+- [ ] 51-01-PLAN.md — BookExportModal (aperçu + récap + boutons) + drag-to-dismiss
+- [ ] 51-02-PLAN.md — Wiring boutons export (long-press menu saga + écran fin génération)
+- [ ] 51-03-PLAN.md — Écran post-export (sauvegarder + voir + Lulu) + i18n FR + haptic
+- [ ] 51-04-PLAN.md — Mise à jour manifeste + docs CLAUDE.md + non-régression finale

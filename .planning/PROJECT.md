@@ -76,33 +76,38 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current Milestone: v1.7 Modifiers de plants
+## Current Milestone: v1.8 Export PDF imprimable des histoires
 
-**Goal:** Introduire des objets consommables qui modifient le comportement des plants au moment de la plantation, pour créer des décisions stratégiques au-delà du cycle plant→récolte→craft classique — transformer le jardin en terrain de décisions plutôt qu'en simple timer.
+**Goal:** Permettre d'exporter chaque chapitre d'histoire généré en PDF imprimable aux specs imprimeur (carré 21×21cm, saddle-stitch 16 pages, bleed 0.32cm, polices embarquées), avec QR code audio en 4ème de couverture pointant vers un deep link `familyvault://story/:id` qui rejoue l'audio dans l'app — sans backend, tout reste local. Architecture pensée pour évoluer vers une intégration API Lulu Direct + coffret modulaire ultérieurement, sans casser les livres déjà imprimés.
 
 **Target features:**
-- Sporée de Régularité : objet consommable appliqué à la plantation, engage un pari cumulatif bienveillant sur tâches ménagères du sealeur (prorata dérivé de la charge famille pondérée par âge), multiplier de reward à la récolte si cumul atteint
-- Pollen de Chimère (optionnel v1.7) : objet consommable pour greffer une 2e graine sur le plant principal, combine rewards (moyenne) et drop tables, règles spéciales par tier du donneur
-- Pattern "modifier" unifié (nouveau champ `FarmCrop.modifiers` JSON optionnel) — extensible pour futurs modifiers
+- Export PDF côté client avec specs Lulu Direct (format carré 21×21, bleed, 300 DPI, polices embarquées Patrick Hand titres + Andika corps lisible)
+- Layout livre 16 pages : couverture, page de garde, page de titre personnalisée, 6 scènes en double page (illustration gauche / texte droite), 4ème de couverture avec résumé + QR audio
+- QR code 3×3cm pointant vers deep link `familyvault://story/:id` — ouvre l'app, lance l'histoire et l'audio depuis le vault local
+- Universal Links / scheme `familyvault://` configurés dans app.json + route `app/story/[id].tsx` autoplay
+- Modal aperçu PDF (couverture + 2-3 pages) avant export depuis bibliothèque stories ou écran fin de génération
+- Manifeste `12 - Impressions/manifeste.md` traçant les exports (id story, hash PDF, date, format)
+- Lien manuel vers lulu.com avec instructions claires (pas d'intégration API — Option 1 du plan d'évolution)
+- Fallback gracieux pour univers sans illustrations bundled (actuellement seul foret) → mise en page texte seul cohérente
 
 **Key context:**
-- Sporée V4 spec : prorata cumulatif = `(poids_sealeur / poids_famille_active_7j) × Tasks_pending` recalculé à 23h30
-- Poids par âge : Adulte 1.0 / Ado 0.7 / Enfant 0.4 / Jeune enfant 0.15 / Bébé 0.0
-- Seules les tâches du **domaine Tasks** comptent (pas Courses, pas Repas, pas Routines)
-- Validation bienveillante : pari ne casse jamais avant récolte, Sporée perdue si pari raté (seul coût)
-- 3 durées Sporée (Chill ×1.3 / Engagé ×1.7 / Sprint ×2.5) dérivées de la taille du plant
-- Économie Sporée : drops 3/8/15% selon tier plant + 15% drop-back sur pari gagné + shop 400 feuilles (2/jour dès Arbre stade 3) + expedition 5% + cadeau 1 gratuite à stage 3, cap inventaire 10
-- Bump `CACHE_VERSION` dans `lib/vault-cache.ts:41` (shape `FarmCrop` change)
-- Zéro nouvelle dépendance npm reconduit
-- Phase 37 Love Notes (garde-parent & polish) reste Deferred — reprise ultérieure
+- Évolution future planifiée (NE PAS implémenter ici) : Option 2 = Cloudflare Worker proxy pour API Lulu Direct + Stripe paiement ; Étape 3 = coffret personnalisé "livre qui s'emboîte" + abonnement chapitres récurrents
+- PDF généré ici doit être directement réutilisable pour Option 2 (specs Lulu déjà respectées dès le départ)
+- Deep link `familyvault://` doit rester valide pour les livres déjà imprimés quand on ajoutera le hosting audio CDN
+- Audio reste 100% local dans le vault iCloud, JAMAIS uploadé vers un serveur tiers
+- Cohérence existant : scenes V3 (`lib/story-scenes.ts`), illustrations bundled (`lib/story-illustrations.ts` MVP foret), structure `BedtimeStory` (`lib/types.ts:761-797`)
+- Polices : Patrick Hand (déjà bundled) pour titres + Andika à télécharger et bundler dans `assets/fonts/` (Google Fonts, OFL)
+- Palette PDF : cream `#F5EFE0`, ink `#2C3E50`, teal `#4F9396` (cohérence visuelle avec l'app)
+- Saddle-stitch impose un multiple de 4 pages — 16 pages fixes verrouillées peu importe la longueur de l'histoire (on adapte la respiration des scènes)
 
 ## Previous State
 
-**Last shipped:** v1.6 Love Notes (partiel, 2026-04-17) — 3/4 phases livrées (fondation données, carte enveloppe + écran boîte, composition + reveal). Phase 37 garde-parent & polish différée.
-**Previously shipped:** v1.5 Village Vivant (partiel, 2026-04-14) — avatars vivants, décorations persistantes, expéditions. Phases 31-32 différées.
+**Last shipped:** v1.7 Modifiers de plants (2026-04-19) — Sporée de Régularité complète (fondation modifiers extensible, moteur prorata cumulatif famille pondérée par âge, UI seed picker + badge plant scellé, polish onboarding + codex wagerMarathonWins). Pollen de Chimère reporté v1.9.
+**Previously shipped:** v1.6 Love Notes (partiel, 2026-04-17) — 3/4 phases livrées. Phase 37 garde-parent & polish différée.
 
 ## Previous Milestones
 
+- ✅ **v1.7 Modifiers de plants** — Shipped 2026-04-19. Phases 38-41. Sporée de Régularité (pari cumulatif bienveillant), fondation `modifiers` extensible. Pollen de Chimère reporté v1.9.
 - 🟡 **v1.6 Love Notes** — Partiel (2026-04-17). Phases 34 Fondation données, 35 Carte enveloppe + écran, 36 Composition + reveal livrées. Phase 37 Garde-parent & polish deferred.
 - 🟡 **v1.5 Village Vivant** — Partiel (2026-04-14). Phases 29 Avatars, 30 Décorations, 33 Expéditions livrées. Phases 31 Ambiance dynamique + 32 Arbre familial deferred.
 - ✅ **v1.4 Jardin Familial** — Shipped 2026-04-11. Place du Village coopérative (carte tilemap, contributions auto, objectif hebdo, récompense collective IRL). Phases 25-28. Voir `.planning/milestones/v1.4-ROADMAP.md`.
@@ -161,4 +166,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-19 — Phase 41 complete — Milestone v1.7 "Modifiers de plants" shipped: tooltip onboarding Sporée one-shot + compteur wagerMarathonWins codex + TS/Jest/privacy clean*
+*Last updated: 2026-05-04 — Milestone v1.8 "Export PDF imprimable des histoires" started — phases 48+ planifiées*

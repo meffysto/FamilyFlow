@@ -1,100 +1,151 @@
-# Requirements: v1.7 Modifiers de plants
+# Requirements: v1.8 Export PDF imprimable des histoires
 
-**Milestone goal :** Introduire des objets consommables qui modifient le comportement des plants au moment de la plantation, pour créer des décisions stratégiques au-delà du cycle plant→récolte→craft classique — transformer le jardin en terrain de décisions plutôt qu'en simple timer.
+**Milestone goal :** Permettre d'exporter chaque chapitre d'histoire généré en PDF imprimable aux specs imprimeur (carré 21×21 cm, saddle-stitch 16 pages, bleed 0.32 cm, polices embarquées), avec QR code audio en 4ème de couverture pointant vers un deep link `familyvault://story/:id` qui rejoue l'audio dans l'app — sans backend, tout reste local. L'utilisateur upload manuellement le PDF sur lulu.com pour commande (Option 1 du plan d'évolution).
 
-**Scope v1.7 :** Sporée de Régularité uniquement (Chimère reportée v1.8). Fondation `modifiers` conçue extensible pour accueillir futurs modifiers sans refonte.
+**Scope v1.8 :** Export PDF côté client + QR audio + deep links + manifeste local + UX export. Pas d'intégration API Lulu (Option 2 deferred). Pas de coffret/abonnement (Étape 3 deferred).
 
-**Scope constraint (hérité CLAUDE.md) :**
-- Aucune nouvelle dépendance npm (`expo-haptics`, `react-native-reanimated`, `expo-secure-store` déjà installés)
-- Backward compat Obsidian vault obligatoire (farm CSV markdown lisible/éditable manuellement)
-- Stack inchangée : React Native + Expo SDK 54, reanimated ~4.1
-- Farm engine reste 100% synchrone et pur (patterns `farm-engine.ts` existants)
+**Scope constraint (hérité CLAUDE.md + brief milestone) :**
+- ZERO backend — tout reste dans le vault local/iCloud
+- Audio reste local, JAMAIS uploadé vers un serveur tiers
+- Stack inchangée : React Native 0.81 + Expo SDK 54 + expo-router v6
+- Cohérence avec existant : `lib/story-scenes.ts`, `lib/story-illustrations.ts`, `lib/types.ts:761-797`
 - UI/commits/commentaires en français
-- Couleurs via `useThemeColors()` — jamais de hardcoded
-- Bump `CACHE_VERSION` dans `lib/vault-cache.ts:41` car shape `FarmCrop` change
+- Couleurs via `useThemeColors()` — pas de hardcoded
+- Polices : Patrick Hand (déjà bundled) + Andika (à ajouter, OFL Google Fonts)
+- Palette PDF : cream `#F5EFE0`, ink `#2C3E50`, teal `#4F9396`
+- PDF aux specs Lulu Direct dès le départ (réutilisable Option 2 sans refonte)
+- Saddle-stitch impose un multiple de 4 pages — 16 pages fixes verrouillées
 
 ---
 
 ## v1 Requirements
 
-### Catégorie FONDATION — Infra modifiers partagée
+### Catégorie FONDATION — Infra PDF + assets
 
-- [x] **MOD-01**: User voit ses plants plantés supporter un champ optionnel `modifiers` (objet JSON extensible : `{ wager?: {...}, graftedWith?: string, ... }`) sérialisé/désérialisé en CSV markdown sans perte, backward-compatible (plants existants sans champ restent lisibles)
-- [x] **MOD-02**: User voit `CACHE_VERSION` bumpé dans `lib/vault-cache.ts:41` pour refléter le changement de shape `FarmCrop` — pas d'invalidation silencieuse au premier boot post-migration
-- [x] **MOD-03**: User voit le seed picker existant étendu avec un slot optionnel "Sceller" (apparaît uniquement si ≥ 1 Sporée en inventaire) — intégration inline, zéro nouvelle modale, pattern extensible pour futurs slots modifier
+- [ ] **PDF-01**: User voit la police Andika (Regular + Bold, OFL) téléchargée et bundled dans `assets/fonts/Andika/`, déclarée dans `app.json` plugins fonts si applicable, et chargée via `expo-font` au boot — fallback gracieux vers System si chargement échoue
+- [ ] **PDF-02**: User voit un module `lib/pdf/` créé (barrel `index.ts` exportant types + constantes Lulu specs : trim 21×21cm, bleed 0.32cm, DPI 300, page count 16, palette, slots polices) — pattern aligné avec autres modules `lib/` du projet
+- [ ] **PDF-03**: User voit `expo-print` ajouté aux dependencies (déjà compatible Expo SDK 54) et la lib QR `react-native-qrcode-svg` ajoutée — préférer une lib qui rend en SVG inline (compatible HTML→PDF via dataURL) plutôt qu'un composant natif
+- [ ] **PDF-04**: User voit un manifeste `12 - Impressions/manifeste.md` créé avec parser bidirectionnel (frontmatter + corps Markdown), traçant les exports : `id story`, `hash PDF`, `date`, `format`, `chemin local PDF` — backward-compat (fichier absent = liste vide, pas d'erreur)
+- [ ] **PDF-05**: User voit `CACHE_VERSION` bumpé dans `lib/vault-cache.ts` SI le manifeste impressions est ajouté à la liste des domaines cachés (à décider en phase planning — par défaut, on EXCLUT le manifeste du cache pour éviter le bump)
 
-### Catégorie SPORÉE — Mécanique principale
+### Catégorie LAYOUT — Mise en page livre 16 pages
 
-- [x] **SPOR-01**: User peut appliquer une Sporée à la plantation via le slot "Sceller", choisir parmi 3 durées (Chill / Engagé / Sprint) dérivées automatiquement de la taille du plant, avec multiplier de reward visible (×1.3 / ×1.7 / ×2.5) et prorata théorique affiché avant confirmation
-- [x] **SPOR-02**: User voit un badge sur le plant scellé affichant `X/Y tâches aujourd'hui • cumul Z/N` avec code couleur dérivé de la progression vs ligne de pace (vert/jaune/orange), sans animation continue lourde
-- [x] **SPOR-03**: User voit le cumul requis recalculé et mis à jour chaque soir à 23h30 (ou au boot de l'app si l'app était fermée) selon la formule `(poids_sealeur / poids_famille_active_7j) × Tasks_pending`, basé sur un snapshot matinal stable des tâches pending
-- [x] **SPOR-04**: User voit les poids par âge appliqués automatiquement aux profils actifs (Adulte 1.0 / Ado 0.7 / Enfant 0.4 / Jeune enfant 0.15 / Bébé 0.0) — dérivés de la date de naissance du profil, avec override manuel possible dans les settings profil
-- [x] **SPOR-05**: User voit seulement les profils actifs sur les 7 derniers jours glissants comptés dans le diviseur famille (au moins 1 tâche complétée dans la fenêtre) — un ado dormant n'allège pas la charge du parent sealeur
-- [x] **SPOR-06**: User voit seulement les tâches du domaine Tasks comptabilisées (pas Courses, pas Repas, pas Routines, pas Anniversaires, pas Notes, pas Moods) — filtre strict par type de source
-- [ ] **SPOR-07**: User récolte le plant scellé : si cumul atteint → reward × multiplier appliqué + toast de victoire + 15% chance de drop-back d'une Sporée, sinon reward normale sans pénalité autre que la Sporée consommée
-- [x] **SPOR-08**: User obtient des Sporées via 4 sources : drops à la récolte (3% tier 1-3, 8% rare, 15% expedition), achat shop (400 feuilles, cap 2/jour, dès Arbre stade 3), loot expedition (5% missions Pousse+), cadeau onboarding (1 gratuite au stade 3 avec tooltip explicatif)
-- [x] **SPOR-09**: User voit son inventaire de Sporées cappé à 10 — drops au-delà affichent un toast "Inventaire Sporée plein" et ne sont pas perdus silencieusement
-- [x] **SPOR-10**: User voit un tooltip one-shot au premier drop/obtention de Sporée expliquant la mécanique en 1-2 phrases + compteur codex `wager.marathonWins` incrémenté sur chaque pari gagné (récompense vanité long terme)
-- [x] **SPOR-11**: User voit un état visuel différencié sur un plant scellé qui est déjà mûr mais pas encore récolté (anneau vert "prêt à valider") pour faciliter la décision de récolter avant ou après avoir atteint le cumul
+- [ ] **LAY-01**: User voit le PDF généré respecter la structure 16 pages : p1 couverture pleine illustration + titre + N° tome / p2 page de garde cream uni / p3 page de titre personnalisée (titre + "Une histoire pour [Prénom]" + date) / p4-15 six scènes en double page (illustration gauche / texte droite) / p16 4ème couverture (résumé court + date + QR audio + logo discret)
+- [ ] **LAY-02**: User voit chaque scène en double page : illustration pleine page à gauche, texte respiré à droite avec mots-clés highlightés en teal (`#4F9396`) — réutilise les highlights existants des `StoryScene.highlights`
+- [ ] **LAY-03**: User voit les titres en Patrick Hand (40pt couverture / 28pt intérieur) et le corps de texte en Andika (16-18pt) — typographie hybride pour cohérence visuelle app + lisibilité enfant apprenant à lire
+- [ ] **LAY-04**: User voit le bleed 0.32cm respecté sur les 4 bords de chaque page (extension cream de l'arrière-plan), avec illustrations qui touchent les bords poussées jusqu'au bleed — pas de bord blanc à l'impression
+- [ ] **LAY-05**: User voit un fallback gracieux pour les histoires sans `scenes` (V2 ou texte seul) ou pour les univers sans illustrations bundled (actuellement seul `foret` est couvert) : mise en page texte seul avec ornements typographiques (puces, lettrines), 6 doubles pages adaptées par découpage du texte
+- [ ] **LAY-06**: User voit la cohérence collection assurée pour les sagas multi-chapitres : badge "Tome IV" en coin haut-droit de la couverture, même typographie et position, dos coordonné visuellement (bandeau teal en pied de couverture)
+
+### Catégorie GENERATION — Pipeline PDF
+
+- [ ] **PDF-06**: User voit `expo-print.printToFileAsync()` invoqué avec un HTML template aux specs Lulu (CSS @page avec size + bleed, polices embarquées en base64 ou via @font-face, palette appliquée) — PDF généré dans le cache app, ensuite copié dans le vault sous `12 - Impressions/PDFs/`
+- [ ] **PDF-07**: User voit le hash SHA-256 du PDF généré calculé et stocké dans le manifeste — permet de détecter les ré-générations identiques et d'éviter les doublons d'export
+- [ ] **PDF-08**: User voit le PDF généré inclure les illustrations en haute résolution (PNG bundled extraits via `Asset.fromModule().downloadAsync()` puis embarqués base64 dans le HTML) — 300 DPI minimum visuel
+- [ ] **PDF-09**: User voit la génération PDF complétée en moins de 5 secondes pour une histoire moyenne (3-5 scènes, illustrations bundled), avec indicateur de progression visuel non-bloquant (modal preview affiche "Génération du PDF...") — sinon timeout avec message d'erreur explicite
+
+### Catégorie QR — Code audio + deep links
+
+- [ ] **QR-01**: User voit le scheme `familyvault://` configuré dans `app.json` (champ `scheme`) avec Universal Links iOS (`associatedDomains` placeholder pour le futur hosting) — préparation Option 2 sans casser Option 1
+- [ ] **QR-02**: User voit une nouvelle route `app/story/[id].tsx` créée (expo-router) qui : récupère l'`id` de l'histoire depuis le vault, navigue vers la bibliothèque stories avec la story sélectionnée, et déclenche l'autoplay audio si disponible localement (via `StoryPlayer` existant avec prop `autoplay`)
+- [ ] **QR-03**: User voit le handler deep link dans `app/_layout.tsx` (ou via `expo-linking`) qui parse les URLs `familyvault://story/:id` et route vers `app/story/[id].tsx` avec le bon paramètre — fallback graceful si l'id n'existe plus dans le vault (toast "Histoire introuvable", retour bibliothèque)
+- [ ] **QR-04**: User voit un QR code 3×3cm généré en SVG (haute résolution) embarqué dans le PDF en 4ème de couverture, encodant l'URL `familyvault://story/{storyId}` — couleur ink (`#2C3E50`) sur cream, légende "Scanne pour écouter l'histoire" en Patrick Hand 14pt
+- [ ] **QR-05**: User voit le scan du QR depuis l'iPhone familial avec l'app installée ouvrir directement l'histoire et lancer l'audio (testé manuellement sur device — doc dans phase plan)
+
+### Catégorie UX — Bouton export + aperçu + manuel Lulu
+
+- [ ] **UX-01**: User voit un bouton "Exporter le livre" disponible à 2 endroits : (a) long-press menu sur les cartes de saga dans la bibliothèque stories (ajouter l'action au menu contextuel existant) ; (b) écran fin de génération d'une histoire (étape `fin` dans `app/(tabs)/stories.tsx`) — entry point optionnel selon contexte
+- [ ] **UX-02**: User voit une `BookExportModal` qui affiche : aperçu de la couverture (rendu HTML/preview), aperçu de 2-3 pages intérieures (page titre + 1 scène double page), récap du format (21×21cm, 16 pages, saddle-stitch), bouton "Générer le PDF", bouton "Annuler" — modal présentation `pageSheet` avec drag-to-dismiss (pattern projet)
+- [ ] **UX-03**: User voit après génération réussie un écran de confirmation avec : 3 actions claires — "Sauvegarder dans Fichiers" (`expo-sharing`), "Voir le PDF" (preview système), "Commander chez Lulu" (ouvre `https://www.lulu.com/create/print-books` dans Safari avec instructions courtes en français : "Format carré 21×21, papier standard mat, reliure agrafée, 16 pages")
+- [ ] **UX-04**: User voit le manifeste `12 - Impressions/manifeste.md` mis à jour automatiquement après chaque export réussi (entrée ajoutée avec id, hash, date, format, chemin) — réutilisable pour afficher l'historique des impressions par histoire
+- [ ] **UX-05**: User voit toutes les chaînes UI traduites en français (FR strict, pas d'EN) — i18n cohérent avec le reste du projet (utilise le système i18n existant si applicable, sinon strings inline FR)
+- [ ] **UX-06**: User voit un feedback haptique (`Haptics.impactAsync(Medium)`) à la fin d'une génération PDF réussie — cohérent avec les patterns existants (succès actions importantes)
 
 ### Catégorie QUALITÉ — Non-régression et tests
 
-- [x] **SPOR-12**: User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes) ni aucune régression Jest (`npx jest --no-coverage` clean) après chaque phase
-- [x] **SPOR-13**: User a des tests Jest couvrant les fonctions pures critiques : calcul du prorata, pondération famille par âge, sérialisation/désérialisation `modifiers` CSV, validation cumul à la récolte
+- [ ] **QA-01**: User ne voit aucune régression TypeScript (`npx tsc --noEmit` clean hors erreurs pré-existantes documentées dans CLAUDE.md) ni aucune régression Jest (`npx jest --no-coverage` clean) après chaque phase
+- [ ] **QA-02**: User voit des tests Jest couvrant les fonctions pures critiques : parser/sérializer manifeste impressions (round-trip), calcul hash PDF, fallback layout texte-seul (découpage 6 doubles pages), génération URL deep link
+- [ ] **QA-03**: User voit la documentation projet mise à jour : CLAUDE.md section Stack mentionne `expo-print` et `react-native-qrcode-svg`, section Architecture liste `lib/pdf/`, section Vault mentionne `12 - Impressions/`
 
 ---
 
-## Future Requirements (deferred v1.8)
+## Future Requirements (deferred v1.9+ ou Option 2/Étape 3)
 
-- **CHIM-F01**: Pollen de Chimère — objet consommable pour greffer 2 graines en 1 plant (champ `modifiers.graftedWith`), reward moyenné entre parents + drop tables cumulées + règles spéciales par tier du donneur (tier 1: -1 tâche/stade, tier 2: +10% reward, tier 3: double harvest, rare: moyenne + drop hérité, expedition: moyenne + golden garanti)
-- **CHIM-F02**: Cumul visible du Pollen + Sporée sur un même plant (les 2 slots modifier indépendants, multipliers cumulés)
-- **CHIM-F03**: Économie Pollen (drops, shop, expedition) à définir au moment du milestone v1.8 après feedback Sporée
-- **SPOR-F01**: Pari familial coopératif — le cumul compte les tâches de tous les profils actifs, pas seulement le sealeur
-- **SPOR-F02**: Streak de paris gagnés d'affilée (3/5/10) débloquant un plant spécial ou un cosmétique
-- **SPOR-F03**: Mode vacances famille qui fige les paris en cours (compteur pause, reprise au retour)
-- **MOD-F01**: Pattern de "catalyseurs" étendu à d'autres mécaniques ferme (ex: booster expédition, accélérateur craft)
+### Option 2 — Intégration API Lulu Direct
+
+- **LULU-F01**: Cloudflare Worker minimal (proxy OAuth Lulu Direct + endpoints quote/order/webhook), credentials côté serveur, pas de DB
+- **LULU-F02**: Stripe Checkout intégré (paiement direct par l'utilisateur, marge appliquée sur la commande Lulu)
+- **LULU-F03**: Adresse de livraison + récap commande dans la `BookExportModal` étendue
+- **LULU-F04**: Tracking statut commande via webhook Lulu (printing → shipped → delivered) avec push notifications
+
+### Étape 3 — Coffret modulaire et abonnements
+
+- **BOX-F01**: Coffret personnalisé (slipcase) commandé une fois avec le premier chapitre — fournisseur custom (Packlane ou artisan)
+- **BOX-F02**: Abonnement chapitres récurrents (1 chapitre imprimé/mois automatiquement, livraison 3PL)
+- **BOX-F03**: Édition collector annuelle (compilation hardcover de toutes les histoires de l'année)
+- **BOX-F04**: Tier premium avec illustrateur réel qui repasse sur les scènes IA avant impression
+
+### Audio CDN (futur)
+
+- **AUDIO-F01**: Hosting audio sur Cloudflare R2 (gratuit en egress) — permet aux personnes sans l'app de scanner le QR et d'écouter l'audio (Mamie, Papi, etc.) ; le deep link `familyvault://` reste valide via Universal Links fallback HTTPS
 
 ---
 
 ## Out of Scope
 
-- **Pénalité en feuilles sur pari perdu** — contraire à la Core Value "bien-être familial" ; seul coût reste la Sporée consommée
-- **Task-farming artificiel obligatoire** — le pari ne doit pas pousser à créer de fausses tâches ; filtrage strict domain Tasks + poids famille réalistes protègent contre ça
-- **Refonte du grid ferme ou des sprites** — les modifiers s'intègrent dans l'infra existante (badge inline, slot picker inline), pas de refonte visuelle
-- **Synchronisation cross-profile des Sporées** — chaque profil a son propre inventaire (alignement pattern gamification per-profil existant)
-- **Notifications push à 23h30** — le check est passif (au prochain boot ou via scheduled local notif silencieuse), pas de push intrusif
-- **Difficulté dynamique basée sur l'historique du joueur** — multipliers fixes pour transparence ; joueur comprend exactement ce qu'il engage
+- **Backend serveur / base de données** — l'app reste 100% locale + iCloud (cohérent avec PROJECT.md)
+- **Intégration API Lulu Direct dans v1.8** — workflow manuel uniquement (Option 1) ; user upload son PDF sur lulu.com lui-même
+- **Paiements in-app** — pas de Stripe ni d'IAP dans v1.8 (cohérent avec absence de backend)
+- **Coffret/slipcase physique** — Étape 3 deferred ; pas de gestion de stock ni de fulfillment dans v1.8
+- **Hosting audio public** — l'audio reste local dans le vault, le QR pointe vers un deep link app uniquement (Mamie sans l'app ne peut pas écouter — accepté comme privacy by design)
+- **Coloration CMYK explicite** — Lulu accepte RGB avec conversion auto ; pas de pipeline CMYK pour ne pas alourdir
+- **Génération illustrations IA pour les univers manquants** — fallback texte-seul accepté pour les 8 univers sans illustrations bundled (espace, océan, dinosaures, princesse, super-héros, pirates, robots, surprise) ; couverture illustration des autres univers = chantier séparé
+- **Format alternatif (A5, hardcover, dos carré collé)** — UN seul format verrouillé en v1.8 (carré 21×21 saddle-stitch) ; multi-format = chantier séparé si demande émerge
+- **Édition manuelle du contenu PDF** — le PDF est généré depuis l'histoire telle quelle ; pas d'éditeur WYSIWYG ni de retouches (cohérent avec la philosophie "le vault est la source")
 
 ---
 
 ## Traceability
 
-Mapping REQ-ID → Phase (v1.7 Phases 38-41).
+Mapping REQ-ID → Phase (v1.8 Phases 48-51).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOD-01 | Phase 38 | Complete |
-| MOD-02 | Phase 38 | Complete |
-| MOD-03 | Phase 40 | Complete |
-| SPOR-01 | Phase 40 | Complete |
-| SPOR-02 | Phase 40 | Complete |
-| SPOR-03 | Phase 39 | Complete |
-| SPOR-04 | Phase 39 | Complete |
-| SPOR-05 | Phase 39 | Complete |
-| SPOR-06 | Phase 39 | Complete |
-| SPOR-07 | Phase 40 | Pending |
-| SPOR-08 | Phase 38 | Complete |
-| SPOR-09 | Phase 38 | Complete |
-| SPOR-10 | Phase 41 | Complete |
-| SPOR-11 | Phase 40 | Complete |
-| SPOR-12 | Phase 41 | Complete |
-| SPOR-13 | Phase 38 + Phase 39 | Complete |
+| PDF-01 | Phase 48 | Pending |
+| PDF-02 | Phase 48 | Pending |
+| PDF-03 | Phase 48 | Pending |
+| PDF-04 | Phase 48 | Pending |
+| PDF-05 | Phase 48 | Pending |
+| LAY-01 | Phase 49 | Pending |
+| LAY-02 | Phase 49 | Pending |
+| LAY-03 | Phase 49 | Pending |
+| LAY-04 | Phase 49 | Pending |
+| LAY-05 | Phase 49 | Pending |
+| LAY-06 | Phase 49 | Pending |
+| PDF-06 | Phase 49 | Pending |
+| PDF-07 | Phase 49 | Pending |
+| PDF-08 | Phase 49 | Pending |
+| PDF-09 | Phase 49 | Pending |
+| QR-01 | Phase 50 | Pending |
+| QR-02 | Phase 50 | Pending |
+| QR-03 | Phase 50 | Pending |
+| QR-04 | Phase 50 | Pending |
+| QR-05 | Phase 50 | Pending |
+| UX-01 | Phase 51 | Pending |
+| UX-02 | Phase 51 | Pending |
+| UX-03 | Phase 51 | Pending |
+| UX-04 | Phase 51 | Pending |
+| UX-05 | Phase 51 | Pending |
+| UX-06 | Phase 51 | Pending |
+| QA-01 | Phases 48-51 | Pending |
+| QA-02 | Phases 48-51 | Pending |
+| QA-03 | Phase 51 | Pending |
 
-**Coverage check :** 16/16 REQ-IDs mappés ✓ (3 MOD + 13 SPOR). Aucun orphelin, aucune duplication (SPOR-13 couvre les tests Jest fondations en Phase 38 ET moteur en Phase 39 — deux suites distinctes).
+**Coverage check :** 29/29 REQ-IDs mappés ✓ (5 PDF-fondation + 6 LAY + 4 PDF-pipeline + 5 QR + 6 UX + 3 QA). Aucun orphelin, aucune duplication. QA-01 et QA-02 transversaux (vérifiés à chaque fin de phase).
 
 ### Phase repartition summary
 
-- **Phase 38 — Fondation modifiers + économie Sporée (5 REQ)** : MOD-01, MOD-02, SPOR-08, SPOR-09, SPOR-13 (tests fondations)
-- **Phase 39 — Moteur prorata + calcul famille (5 REQ)** : SPOR-03, SPOR-04, SPOR-05, SPOR-06, SPOR-13 (tests moteur)
-- **Phase 40 — UI Sporée (5 REQ)** : MOD-03, SPOR-01, SPOR-02, SPOR-07, SPOR-11
-- **Phase 41 — Polish onboarding + non-régression (2 REQ)** : SPOR-10, SPOR-12
+- **Phase 48 — Fondation export PDF + assets (5 REQ + QA)** : PDF-01 (Andika), PDF-02 (lib/pdf/), PDF-03 (deps expo-print + qrcode), PDF-04 (manifeste impressions), PDF-05 (cache decision)
+- **Phase 49 — Layout livre + génération PDF (10 REQ + QA)** : LAY-01 à LAY-06 (structure 16 pages), PDF-06 à PDF-09 (pipeline génération)
+- **Phase 50 — QR audio + deep links (5 REQ + QA)** : QR-01 (scheme app.json), QR-02 (route story/[id]), QR-03 (handler deep link), QR-04 (génération QR PDF), QR-05 (test scan device)
+- **Phase 51 — UX export + manuel Lulu + non-régression (6 REQ + QA)** : UX-01 à UX-06 (entry points + modal + post-export + i18n + haptic), QA-03 (docs)

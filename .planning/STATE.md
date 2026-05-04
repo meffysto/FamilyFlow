@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.7
-milestone_name: Modifiers de plants
-status: verifying
-last_updated: "2026-04-29T21:47:57.202Z"
-last_activity: 2026-04-29
+milestone: v1.8
+milestone_name: Export PDF imprimable des histoires
+status: planning
+last_updated: "2026-05-04T00:00:00.000Z"
+last_activity: 2026-05-04
 progress:
-  total_phases: 19
-  completed_phases: 13
-  total_plans: 57
-  completed_plans: 57
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,19 +20,14 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 43 — Auberge — Modèle & moteur visiteurs
+**Current focus:** Milestone v1.8 — Export PDF imprimable des histoires (defining requirements)
 
 ## Current Position
 
-Phase: 43 (Auberge — Modèle & moteur visiteurs) — EXECUTING
-Plan: 4 of 4
-Milestone: Phase 42 — Nourrir le compagnon LIVRÉE
-Last shipped: Phase 42 — Boucle feed compagnon complète (2026-04-23)
-Last activity: 2026-04-29
-
-Progress: [██████████] 100% (9/9 plans Phase 42)
-
-Status: Phase complete — ready for verification
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-04 — Milestone v1.8 started
 
 ### Quick Tasks Completed
 
