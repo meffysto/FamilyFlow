@@ -22,3 +22,22 @@ export {
   parseManifeste,
   serializeManifeste,
 } from './manifest-parser';
+
+// Phase 49 — Layout livre + génération PDF
+export {
+  loadFontsBase64,
+  loadIllustrationBase64,
+  preloadAllAssets,
+  clearAssetCache,
+} from './asset-loader';
+export {
+  PRINT_ILLUSTRATIONS,
+  getPrintIllustrationModule,
+} from './print-illustrations';
+export * as ornaments from './ornaments';
+export {
+  renderBookHtml,
+  renderCss,
+  escapeHtml,
+} from './html-template';
+export type { BookHtmlSpec } from './html-template';
