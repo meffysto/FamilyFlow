@@ -715,11 +715,8 @@ export default function DashboardScreen() {
     // Courses — masquer si toutes les listes sont vides
     if (totalRemainingAllLists === 0) hidden.add('courses');
 
-    // RDV — masquer s'il n'y a rien aujourd'hui (demain est rappelé dans l'aperçu zen)
-    const hasRdvToday = rdvs.some(
-      (r) => r.statut === 'planifié' && r.date_rdv === todayStr
-    );
-    if (!hasRdvToday) hidden.add('rdvs');
+    // RDV — masquer s'il n'y a aucun RDV à venir (passés du jour exclus)
+    if (!rdvs.some((r) => isRdvUpcoming(r))) hidden.add('rdvs');
 
     // Gratitude — masquer si toutes les gratitudes du jour sont faites
     const gratitudeProfiles = profiles.filter(
