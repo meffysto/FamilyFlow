@@ -2,7 +2,7 @@
   "expo": {
     "name": "FamilyFlow",
     "slug": "family-vault",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "scheme": "family-vault",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
