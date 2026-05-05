@@ -7,6 +7,8 @@
 - Persistance prefs: expo-secure-store
 - Build: `npx expo run:ios --device` — dev-client requis (pas Expo Go)
 - Type check: `npx tsc --noEmit` (pas de test suite)
+- Génération PDF : `expo-print` ~15.0.8 + `expo-sharing` ~14.0.8 (Share Sheet iOS)
+- QR codes : `qrcode` 1.5.4 + `expo-clipboard` ~8.0.8
 
 ## Conventions
 - Langue UI/commits/commentaires: **français**
@@ -39,7 +41,11 @@
 - `lib/gamification/` — engine XP/levels/rewards (barrel index.ts)
 - `lib/mascot/` — moteur arbre mascotte + ferme (barrel index.ts)
 - `lib/vault-cache.ts` — cache mémoire persistant pour re-launch instantané (voir section Cache)
+- `lib/pdf/` — pipeline export PDF Lulu (Phase 49+50+51) : `pdf-generator.ts` (génération expo-print + hash SHA-256), `book-storage.ts` (persistence vault + manifeste + `buildVaultPdfUri`), `manifest-parser.ts` (parser bidirectionnel), `qr-generator.ts` (QR audio deep links Phase 50), `html-template.ts` (mise en page Lulu 21×21), `saga-detection.ts`, `text-splitter.ts`, `ornaments.ts`, `print-illustrations.ts`, `asset-loader.ts`, `constants.ts`, `types.ts`
+- `app/impressions.tsx` — écran "Mes impressions" (liste manifeste + génération nouveaux livres) — Phase 51
+- `components/pdf/` — UI export (BookExportModal state machine 4 phases, PostExportView 3 actions, LuluInstructionsModal manuel FR, ExportCard memoïsé) — Phase 51
 - Vault recettes: `03 - Cuisine/Recettes/{Category}/{Name}.cook`
+- Vault impressions : `12 - Impressions/PDFs/{id}-{date}.pdf` (PDFs générés) + `12 - Impressions/manifeste.md` (index frontmatter + table 5 colonnes)
 
 ### Cache (lib/vault-cache.ts)
 Snapshot JSON des domaines stables réhydraté au boot → dashboard visible en ~50ms au re-launch.
