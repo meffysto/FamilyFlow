@@ -177,15 +177,24 @@ function renderModeAPages(spec: BookHtmlSpec): string {
   return pages.join('\n');
 }
 
-/** Folio 15 mode A — page "Fin." + memorySummary optionnel. */
+/** Folio 15 mode A — page "Fin." + memorySummary optionnel.
+ *  Tout le contenu DOIT tenir sur une seule page (21.64×21.64cm, safe-area 20×20cm).
+ *  - memorySummary tronqué à 220 chars max (sinon bord overflow → coupe sur 2 pages)
+ *  - Tailles dimensionnées pour que Fin. + summary tiennent dans 20cm de haut
+ *  - `overflow:hidden` sur la safe-area = garde-fou si le texte AI dépasse quand même
+ */
 function renderEndPage(spec: BookHtmlSpec): string {
   const { palette, story } = spec;
-  const memory = story.memorySummary && story.memorySummary.trim().length > 0
-    ? `<div style="font-family:'Andika', serif; font-size:12pt; line-height:1.6; color:${palette.ink}; max-width:14cm; text-align:center; margin-top:1.5cm;">${escapeHtml(story.memorySummary)}</div>`
+  const rawSummary = story.memorySummary?.trim() ?? '';
+  const summary = rawSummary.length > 220
+    ? rawSummary.slice(0, 219).trimEnd() + '…'
+    : rawSummary;
+  const memory = summary
+    ? `<div style="font-family:'Andika', serif; font-size:11pt; line-height:1.55; color:${palette.ink}; max-width:14cm; text-align:center; margin-top:1cm;">${escapeHtml(summary)}</div>`
     : '';
   return `<section class="page end-page">
-    <div class="safe-area" style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
-      <div style="font-family:'DM Serif Display', serif; font-size:60pt; color:${palette.terracotta};">Fin.</div>
+    <div class="safe-area" style="display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
+      <div style="font-family:'DM Serif Display', serif; font-size:54pt; line-height:1; color:${palette.terracotta};">Fin.</div>
       ${memory}
     </div>
   </section>`;
