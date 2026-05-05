@@ -20,11 +20,11 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as Print from 'expo-print';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { Plus } from 'lucide-react-native';
+import { ChevronLeft, Plus } from 'lucide-react-native';
 import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
 import {
@@ -39,6 +39,7 @@ import { FontSize, FontWeight } from '../constants/typography';
 
 export default function ImpressionsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { vault, stories } = useVault();
   const { colors, primary } = useThemeColors();
   const [entries, setEntries] = useState<BookManifestEntry[]>([]);
@@ -123,9 +124,20 @@ export default function ImpressionsScreen() {
       <View
         style={[styles.header, { borderBottomColor: colors.borderLight }]}
       >
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('impressions.screen.title', { defaultValue: 'Mes impressions' })}
-        </Text>
+        <View style={styles.headerLeft}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t('common.actions.back', { defaultValue: 'Retour' })}
+            accessibilityRole="button"
+          >
+            <ChevronLeft size={24} color={colors.text} strokeWidth={2} />
+          </Pressable>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {t('impressions.screen.title', { defaultValue: 'Mes impressions' })}
+          </Text>
+        </View>
         <Pressable
           onPress={openModal}
           style={[styles.cta, { backgroundColor: primary }]}
@@ -213,9 +225,20 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing['3xl'],
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flexShrink: 1,
+  },
+  backBtn: {
+    padding: Spacing.xs,
+    marginLeft: -Spacing.xs,
+  },
   title: {
     fontSize: FontSize.titleLg,
     fontWeight: FontWeight.bold,
+    flexShrink: 1,
   },
   cta: {
     flexDirection: 'row',
