@@ -46,7 +46,7 @@ import type { CourseItem } from '../lib/types';
 interface PriceInfo {
   price: number;
   stale: boolean;
-  confidence?: 'high' | 'low';
+  confidence?: 'high' | 'low' | 'manual';
   sampleSize?: 1 | 2 | 3;
 }
 

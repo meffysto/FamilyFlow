@@ -193,8 +193,20 @@ export interface CoursePriceInfo {
   price: number;
   daysAgo: number;
   stale: boolean;
-  confidence: 'high' | 'low';
+  /** 'manual' = saisi par l'utilisateur (pricebook), 'high'/'low' = inféré du budget */
+  confidence: 'high' | 'low' | 'manual';
   sampleSize: 1 | 2 | 3;
+}
+
+/**
+ * Pricebook clé→valeur pour le lookup manuel. Clé = canonical tokens triés et
+ * joints par espace (`canonical.slice().sort().join(' ')`). Valeur = label + prix.
+ */
+export type PriceBookMap = Map<string, { label: string; price: number }>;
+
+/** Construit la clé canonique stable (sort + join) pour un set de tokens. */
+export function priceBookKey(canonical: string[]): string {
+  return canonical.slice().sort().join(' ');
 }
 
 interface FoundEntry {
@@ -254,15 +266,33 @@ function buildInfo(found: FoundEntry[], confidence: 'high' | 'low'): CoursePrice
 }
 
 /**
- * Cherche le dernier prix connu pour un article. Algo 2 passes :
+ * Cherche le dernier prix connu pour un article. Algo en 3 passes :
+ *   0. pricebook manuel (si fourni) — match canonical set-equal, gagne sur le budget
  *   1. canonical strict (parseCanonical sur l'input user, tokenize fuzzy sur l'entrée)
  *   2. fuzzy fallback (tokenize des deux côtés, tolérance 1 miss)
  */
 export function getLastPriceFor(
   articleName: string,
   entries: BudgetEntry[],
+  priceBook?: PriceBookMap,
 ): CoursePriceInfo | null {
   const canonical = parseCanonical(articleName);
+
+  // Passe 0 — pricebook manuel (priorité absolue sur le budget)
+  if (priceBook && canonical.length > 0) {
+    const key = priceBookKey(canonical);
+    const hit = priceBook.get(key);
+    if (hit) {
+      return {
+        price: hit.price,
+        daysAgo: 0,
+        stale: false,
+        confidence: 'manual',
+        sampleSize: 1,
+      };
+    }
+  }
+
   if (canonical.length > 0) {
     const matches = findMatches(canonical, entries, true, tokenize);
     if (matches.length > 0) {
@@ -289,11 +319,12 @@ export function getLastPriceFor(
 export function computeRemainingEstimate(
   items: CourseItem[],
   entries: BudgetEntry[],
+  priceBook?: PriceBookMap,
 ): number {
   let total = 0;
   for (const item of items) {
     if (item.completed) continue;
-    const info = getLastPriceFor(item.text, entries);
+    const info = getLastPriceFor(item.text, entries, priceBook);
     if (info) total += info.price;
   }
   return total;
