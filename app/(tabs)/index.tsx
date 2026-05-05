@@ -22,7 +22,9 @@ import Animated, {
   useAnimatedStyle,
   interpolate,
   Extrapolation,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -241,8 +243,16 @@ export default function DashboardScreen() {
   // Header collapsible au scroll : 0 = repos, 1 = collapsé.
   const scrollY = useSharedValue(0);
   const SCROLL_RANGE = 80;
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   const greetingAnimStyle = useAnimatedStyle(() => {
     const t = interpolate(scrollY.value, [0, SCROLL_RANGE], [1, 0], Extrapolation.CLAMP);

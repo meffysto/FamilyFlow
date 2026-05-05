@@ -22,7 +22,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, interpolateColor, useDerivedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, interpolateColor, useDerivedValue, useAnimatedScrollHandler, runOnJS } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
@@ -236,8 +237,16 @@ export default function TasksScreen() {
 
   // Scroll partagé pour collapse du ScreenHeader
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   // Phase 41 (SPOR-10) — tooltip one-shot premier obtention Sporée (source : cadeau onboarding stade 3)
   const { hasSeenScreen } = useHelp();

@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -20,6 +21,8 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { FAB, FABAction } from '../../components/FAB';
+import { FloatingPillNav } from '../../components/FloatingPillNav';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { TabletSidebar } from '../../components/TabletSidebar';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 
@@ -36,6 +39,8 @@ import {
   ClipboardList,
   CalendarPlus,
   Camera,
+  UtensilsCrossed,
+  NotebookPen,
   type LucideIcon,
 } from 'lucide-react-native';
 
@@ -204,6 +209,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   const router = useRouter();
   const segments = useSegments();
   const { isTablet } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
   const showPicker = profiles.length > 0 && !activeProfile;
 
   // ── PIN parent pour changement de profil enfant → adulte ──
@@ -273,6 +279,9 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   const activeTab = segments[segments.length - 1];
   const showFAB = !activeTab || activeTab === '(tabs)' || (activeTab as string) === 'index';
 
+  // Reset pillule en mode plein à chaque changement d'onglet
+  useEffect(() => { setNavPillAtTop(true); }, [activeTab]);
+
   // Dernier enfant pour le journal : profil actif si enfant, sinon premier enfant
   const lastEnfant = activeProfile?.role === 'enfant'
     ? activeProfile.id
@@ -281,16 +290,31 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
 
+  // Actions complètes (mode panel — DEV) : 6 items, grille 2×3
+  // Ordre thématique : planification → quotidien → mémoire
+  const fabActionsFull: FABAction[] = [
+    { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
+    { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
+    { id: 'meal', Icon: UtensilsCrossed, label: 'Repas', onPress: () => router.push('/meals?addNew=1') },
+    { id: 'note', Icon: NotebookPen, label: 'Note', onPress: () => router.push('/notes?addNew=1') },
+    { id: 'journal', Icon: BookOpen, label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
+    { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
+  ];
+
+  // Mode speed-dial classique (PROD) : 4 actions max pour ne pas trop empiler
+  const fabActionsCompact: FABAction[] = [
+    { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
+    { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
+    { id: 'journal', Icon: BookOpen, label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
+    { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
+  ];
+
+  const useFabPanel = __DEV__ && !isTablet;
   const fabActions: FABAction[] = isChildMode
     ? [
         { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
       ]
-    : [
-        { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
-        { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
-        { id: 'journal', Icon: BookOpen, label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
-        { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
-      ];
+    : useFabPanel ? fabActionsFull : fabActionsCompact;
 
   return (
     <View style={{ flex: 1, flexDirection: isTablet ? 'row' : 'column' }}>
@@ -300,7 +324,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: isTablet
+          tabBarStyle: (isTablet || __DEV__)
             ? { display: 'none' }
             : {
               position: 'absolute',
@@ -403,7 +427,19 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="stories" options={{ href: null }} />
       </Tabs>
 
-      {showFAB && <FAB actions={fabActions} />}
+      {showFAB && (
+        <FAB
+          actions={fabActions}
+          bottom={useFabPanel ? insets.bottom + 4 : undefined}
+          variant={useFabPanel ? 'panel' : 'speed-dial'}
+        />
+      )}
+      {__DEV__ && !isTablet && (
+        <FloatingPillNav
+          activeTab={activeTab === '(tabs)' || !activeTab ? 'index' : activeTab}
+          onTabPress={(id) => router.push(id === 'index' ? '/(tabs)/' : `/(tabs)/${id}` as any)}
+        />
+      )}
       </View>
 
       {/* Profile picker modal — shown on first launch */}

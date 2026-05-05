@@ -35,6 +35,14 @@ export interface FABAction {
 
 export interface FABProps {
   actions: FABAction[];
+  /** Override `bottom` (px). Default 90 (au-dessus de la tab bar standard). */
+  bottom?: number;
+  /**
+   * Mode d'affichage :
+   *   'speed-dial' (défaut) — actions empilées verticalement à droite (PROD)
+   *   'panel'               — carte parchemin avec grille d'actions (DEV pillule)
+   */
+  variant?: 'speed-dial' | 'panel';
 }
 
 const MAIN_SIZE = 56;
@@ -44,7 +52,7 @@ const ACTION_OFFSET_RIGHT = (MAIN_SIZE - ACTION_SIZE) / 2;
 
 const TIMING_CONFIG = { duration: 200, easing: Easing.out(Easing.cubic) };
 
-function FABComponent({ actions }: FABProps) {
+function FABComponent({ actions, bottom, variant = 'speed-dial' }: FABProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -74,6 +82,18 @@ function FABComponent({ actions }: FABProps) {
     pointerEvents: progress.value > 0.01 ? 'auto' : 'none',
   }));
 
+  // Panel style (mode panel uniquement)
+  const panelStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [
+      { scale: interpolate(progress.value, [0, 1], [0.94, 1]) },
+      { translateY: interpolate(progress.value, [0, 1], [12, 0]) },
+    ],
+  }));
+
+  const fabBottom = bottom ?? 70 + Math.max(insets.bottom, 20);
+  const panelBottom = fabBottom + MAIN_SIZE + Spacing.xl;
+
   return (
     <>
       {/* Backdrop avec blur */}
@@ -82,10 +102,49 @@ function FABComponent({ actions }: FABProps) {
         <Pressable style={StyleSheet.absoluteFill} onPress={close} />
       </Animated.View>
 
+      {/* Panel parchemin (mode panel — DEV pillule) */}
+      {variant === 'panel' && (
+        <Animated.View
+          style={[
+            styles.panel,
+            panelStyle,
+            {
+              bottom: panelBottom,
+              backgroundColor: colors.brand.parchment,
+              borderColor: colors.brand.bark,
+            },
+          ]}
+          pointerEvents={open ? 'auto' : 'none'}
+        >
+          <View style={styles.panelGrid}>
+            {actions.map((action) => (
+              <TouchableOpacity
+                key={action.id}
+                style={styles.panelItem}
+                onPress={() => {
+                  close();
+                  action.onPress();
+                }}
+                activeOpacity={0.7}
+                accessibilityLabel={t('fab.addItemA11y', { label: action.label })}
+                accessibilityRole="button"
+              >
+                <View style={[styles.panelIconCircle, { backgroundColor: primary }]}>
+                  <action.Icon size={26} strokeWidth={1.75} color={colors.brand.parchment} />
+                </View>
+                <Text style={[styles.panelItemLabel, { color: colors.text }]} numberOfLines={2}>
+                  {action.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
+      )}
+
       {/* Container FAB */}
-      <View style={[styles.container, { bottom: 70 + Math.max(insets.bottom, 20) }]} pointerEvents="box-none">
-        {/* Actions speed-dial */}
-        {actions.map((action, index) => (
+      <View style={[styles.container, { bottom: fabBottom }]} pointerEvents="box-none">
+        {/* Actions speed-dial (mode speed-dial uniquement) */}
+        {variant === 'speed-dial' && actions.map((action, index) => (
           <FABActionItem
             key={action.id}
             action={action}
@@ -223,5 +282,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.md,
+  },
+  // ── Mode panel ────────────────────────────────────────────────────────────
+  panel: {
+    position: 'absolute',
+    left: Spacing['3xl'],
+    right: Spacing['3xl'],
+    paddingHorizontal: Spacing['3xl'],
+    paddingTop: Spacing['3xl'],
+    paddingBottom: Spacing.xl,
+    borderRadius: 28,
+    borderWidth: StyleSheet.hairlineWidth,
+    zIndex: 95,
+    ...Shadows.lg,
+  },
+  panelGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: Spacing.xl,
+  },
+  panelItem: {
+    width: '50%',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
+  },
+  panelIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.md,
+  },
+  panelItemLabel: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
   },
 });

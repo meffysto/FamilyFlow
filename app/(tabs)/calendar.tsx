@@ -16,7 +16,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedScrollHandler, useSharedValue, runOnJS } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { useRouter } from 'expo-router';
 import { CalendarPlus, CheckSquare } from 'lucide-react-native';
 import { format, addMonths, subMonths } from 'date-fns';
@@ -63,8 +64,16 @@ export default function CalendarScreen() {
 
   // Scroll handler pour collapse du ScreenHeader
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
 
   // Reset du scroll au changement d'onglet (évite collapse fantôme)

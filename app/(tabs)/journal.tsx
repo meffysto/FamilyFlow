@@ -22,7 +22,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedScrollHandler, useSharedValue, runOnJS } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn, isFuture } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -432,8 +433,16 @@ export default function JournalScreen() {
   const [availableDates, setAvailableDates] = useState<Set<string>>(new Set());
 
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   useEffect(() => { scrollY.value = 0; }, [selectedTab, selectedDate]);
 
