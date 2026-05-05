@@ -1,0 +1,100 @@
+{
+  "screen": {
+    "title": "Mes impressions",
+    "subtitle": "Tes livres imprimables prêts à commander",
+    "empty": {
+      "title": "Aucun livre exporté",
+      "description": "Crée ton premier livre imprimable depuis tes histoires.",
+      "cta": "Nouveau livre"
+    },
+    "newButton": "Nouveau livre"
+  },
+  "card": {
+    "format": "Format {{format}}",
+    "exportedOn": "Exporté le {{date}}",
+    "hashShort": "#{{hash}}",
+    "deletedStory": "Histoire supprimée"
+  },
+  "export": {
+    "modal": {
+      "selectTitle": "Choisis une histoire",
+      "selectSubtitle": "Sélectionne l'histoire à transformer en livre",
+      "generating": {
+        "title": "Création de ton livre…",
+        "step": {
+          "assets": "Préparation des illustrations…",
+          "render": "Mise en page…",
+          "hash": "Vérification…",
+          "print": "Génération du PDF…"
+        }
+      },
+      "ready": {
+        "title": "Ton livre est prêt !",
+        "format": "Format : {{format}}",
+        "pages": "{{count}} pages",
+        "duration": "Généré en {{ms}} ms",
+        "previewBtn": "Aperçu du PDF",
+        "continueBtn": "Continuer"
+      },
+      "buttons": {
+        "cancel": "Annuler",
+        "generate": "Générer"
+      }
+    }
+  },
+  "postExport": {
+    "title": "Et maintenant ?",
+    "subtitle": "Trois manières de profiter de ton livre :",
+    "save": {
+      "title": "Sauvegarder le PDF",
+      "description": "Dans Files, par AirDrop, par email…"
+    },
+    "preview": {
+      "title": "Voir le PDF",
+      "description": "Ouvre l'aperçu plein écran"
+    },
+    "lulu": {
+      "title": "Commander chez Lulu",
+      "description": "Imprime un vrai livre à la demande"
+    },
+    "doneBtn": "Terminé"
+  },
+  "lulu": {
+    "modalTitle": "Imprimer chez Lulu",
+    "intro": "Lulu est un service d'impression à la demande. Tu n'as qu'à uploader le PDF généré et choisir tes options. Compte environ 15 € par livre + frais d'envoi.",
+    "step1": {
+      "title": "1. Sauvegarde le PDF",
+      "body": "Avant tout, sauvegarde le PDF sur ton iPhone via le bouton « Sauvegarder » précédent. Tu peux l'envoyer dans Files, sur ton ordinateur via AirDrop, ou par email."
+    },
+    "step2": {
+      "title": "2. Va sur Lulu Studio",
+      "body": "Ouvre lulu.com sur ordinateur (l'upload PDF est plus simple sur grand écran). Crée un compte gratuit si ce n'est pas déjà fait."
+    },
+    "step3": {
+      "title": "3. Crée un nouveau projet « Print Book »",
+      "body": "Type : Photo Book (Livre photo). Taille : 8.5″ × 8.5″ (Square / Carré) — environ 21,59 × 21,59 cm. Reliure : Saddle Stitch (Piqué à cheval) pour 16 pages ou moins, Perfect Bound au-delà. Pages intérieures : 80# White Coated (papier blanc couché ~120g) — recommandé pour les illustrations. Couverture : Glossy ou Matte. Couleur : Color (couleur intégrale)."
+    },
+    "step4": {
+      "title": "4. Upload du PDF",
+      "body": "Upload le PDF généré (couverture + intérieur intégrés dans le même fichier). Lulu détectera automatiquement les pages. Vérifie l'aperçu en ligne — toutes les pages doivent être correctes."
+    },
+    "step5": {
+      "title": "5. Vérifie le bleed et commande",
+      "body": "Lulu affiche les marges de fond perdu (bleed). Tout doit être aligné. Ajoute au panier, choisis ton mode d'envoi, et passe commande."
+    },
+    "tip": "Astuce : Lulu offre régulièrement des codes promo (-15%, -20%). Cherche « Lulu coupon » avant de payer.",
+    "openButton": "Ouvrir Lulu Studio",
+    "errorTitle": "Impossible d'ouvrir le navigateur",
+    "errorOpen": "Vérifie ta connexion internet et réessaye."
+  },
+  "errors": {
+    "generationTitle": "Erreur lors de la génération",
+    "generationBody": "La création du livre a échoué. Réessaye dans un instant.",
+    "openTitle": "Impossible d'ouvrir le PDF",
+    "openBody": "Le fichier est introuvable ou corrompu.",
+    "sharingUnavailable": "Le partage n'est pas disponible sur cet appareil. Le PDF va s'ouvrir directement."
+  },
+  "share": {
+    "dialogTitle": "Partager « {{title}} »"
+  }
+}

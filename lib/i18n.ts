@@ -10,6 +10,7 @@ import frHelp from '../locales/fr/help.json';
 import frInsights from '../locales/fr/insights.json';
 import frSkills from '../locales/fr/skills.json';
 import frCodex from '../locales/fr/codex.json';
+import frImpressions from '../locales/fr/impressions.json';
 
 import enCommon from '../locales/en/common.json';
 import enGamification from '../locales/en/gamification.json';
@@ -17,6 +18,7 @@ import enHelp from '../locales/en/help.json';
 import enInsights from '../locales/en/insights.json';
 import enSkills from '../locales/en/skills.json';
 import enCodex from '../locales/en/codex.json';
+import enImpressions from '../locales/en/impressions.json';
 
 const LANGUAGE_KEY = 'app_language';
 
@@ -25,7 +27,7 @@ const deviceLocale = getLocales()[0]?.languageCode ?? 'fr';
 i18n.use(initReactI18next).init({
   lng: deviceLocale,
   fallbackLng: 'fr',
-  ns: ['common', 'gamification', 'help', 'insights', 'skills', 'codex'],
+  ns: ['common', 'gamification', 'help', 'insights', 'skills', 'codex', 'impressions'],
   defaultNS: 'common',
   resources: {
     fr: {
@@ -35,6 +37,7 @@ i18n.use(initReactI18next).init({
       insights: frInsights,
       skills: frSkills,
       codex: frCodex,
+      impressions: frImpressions,
     },
     en: {
       common: enCommon,
@@ -43,6 +46,7 @@ i18n.use(initReactI18next).init({
       insights: enInsights,
       skills: enSkills,
       codex: enCodex,
+      impressions: enImpressions,
     },
   },
   interpolation: {
