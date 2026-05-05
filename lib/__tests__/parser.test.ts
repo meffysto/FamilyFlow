@@ -15,7 +15,10 @@ import {
   serializeStockRow,
   formatDateForDisplay,
   parseDateInput,
+  parsePriceBook,
+  serializePriceBook,
 } from '../parser';
+import { parseCanonical } from '../courses-prices';
 
 // ─── parseTask ───────────────────────────────────────────────────────────────
 
@@ -591,5 +594,70 @@ describe('parseDateInput', () => {
   it('retourne null pour jour/mois hors limites', () => {
     expect(parseDateInput('32/13/2026')).toBeNull();
     expect(parseDateInput('00/01/2026')).toBeNull();
+  });
+});
+
+// ─── parsePriceBook / serializePriceBook ─────────────────────────────────────
+
+describe('parsePriceBook / serializePriceBook', () => {
+  it('parse un fichier vide (frontmatter seul)', () => {
+    const content = `---\nupdatedAt: 2026-05-05\n---\n# Prix connus\n`;
+    const result = parsePriceBook(content);
+    expect(result.updatedAt).toBe('2026-05-05');
+    expect(result.entries).toEqual([]);
+  });
+
+  it('parse les entrées avec virgule décimale FR', () => {
+    const content = `---\nupdatedAt: 2026-05-05\n---\n# Prix connus\n\n- Pain: 1,95\n- Lait demi-écrémé 1L: 0,95\n`;
+    const result = parsePriceBook(content);
+    expect(result.entries).toHaveLength(2);
+    expect(result.entries[0]).toEqual({ label: 'Pain', price: 1.95 });
+    expect(result.entries[1]).toEqual({ label: 'Lait demi-écrémé 1L', price: 0.95 });
+  });
+
+  it('tolère "Pain: 1,95 €" et "Pain : 1,95" (espace avant colon, € en suffixe)', () => {
+    const content = `---\nupdatedAt: 2026-05-05\n---\n# Prix connus\n\n- Pain: 1,95 €\n- Beurre : 2.50\n- Sucre :3,10€\n`;
+    const result = parsePriceBook(content);
+    expect(result.entries).toHaveLength(3);
+    expect(result.entries[0]).toEqual({ label: 'Pain', price: 1.95 });
+    expect(result.entries[1]).toEqual({ label: 'Beurre', price: 2.5 });
+    expect(result.entries[2]).toEqual({ label: 'Sucre', price: 3.1 });
+  });
+
+  it('roundtrip serialize → parse identité (label, price)', () => {
+    const state = {
+      updatedAt: '2026-05-05',
+      entries: [
+        { label: 'Pain', price: 1.95 },
+        { label: 'Lait demi-écrémé 1L', price: 0.95 },
+        { label: 'Yaourts nature x12', price: 3.4 },
+      ],
+    };
+    const serialized = serializePriceBook(state);
+    const parsed = parsePriceBook(serialized);
+    expect(parsed.updatedAt).toBe(state.updatedAt);
+    expect(parsed.entries).toEqual(state.entries);
+  });
+
+  it('ignore les lignes invalides sans crasher', () => {
+    const content = `---\nupdatedAt: 2026-05-05\n---\n# Prix connus\n\n- Pain: 1,95\nligne libre\n- ligne sans prix\n- : 1,00\n- Beurre: abc\n- Lait: 0,95\n`;
+    const result = parsePriceBook(content);
+    expect(result.entries).toEqual([
+      { label: 'Pain', price: 1.95 },
+      { label: 'Lait', price: 0.95 },
+    ]);
+  });
+
+  it('canonical key matche parseCanonical pour le lookup', () => {
+    const content = `---\nupdatedAt: 2026-05-05\n---\n# Prix connus\n\n- Pain: 1,95\n`;
+    const result = parsePriceBook(content);
+    const entry = result.entries[0];
+    const canonical = parseCanonical(entry.label);
+    expect(canonical).toEqual(['pain']);
+    // "2 pains" doit produire le même canonical (singularisation + strip qty)
+    expect(parseCanonical('2 pains')).toEqual(['pain']);
+    // "Pain bio" doit produire un canonical différent (token "bio" en plus)
+    const canonicalBio = parseCanonical('Pain bio');
+    expect(canonicalBio.length).toBeGreaterThan(canonical.length);
   });
 });

@@ -3707,3 +3707,92 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
     return null;
   }
 }
+
+// ─── Pricebook (Prix connus) ────────────────────────────────────────────────
+//
+// Stocke les prix manuels saisis par l'utilisateur dans
+// `04 - Budget/Prix connus.md`. Format :
+//
+//   ---
+//   updatedAt: 2026-05-05
+//   ---
+//   # Prix connus
+//
+//   - Pain: 1,95
+//   - Lait demi-écrémé 1L: 0,95
+//
+// Le prix peut être noté avec virgule FR ou point, et un `€` optionnel en suffixe.
+// Match côté lookup : `parseCanonical(label)` set-equal — ce parser stocke juste
+// le label brut, le canonical est recalculé dans courses-prices.ts.
+
+export interface PriceBookEntry {
+  /** Libellé brut tel que saisi par l'utilisateur (ex: "Pain", "Lait demi-écrémé 1L") */
+  label: string;
+  /** Prix unitaire en euros (point décimal, jamais NaN) */
+  price: number;
+}
+
+export interface PriceBookState {
+  /** YYYY-MM-DD du dernier write */
+  updatedAt: string;
+  entries: PriceBookEntry[];
+}
+
+const PRICE_LINE_REGEX = /^-\s+(.+?)\s*:\s*([0-9]+(?:[.,][0-9]+)?)\s*(?:€)?\s*$/;
+
+/**
+ * Parse le fichier pricebook. Tolérant aux erreurs : les lignes mal formées
+ * sont ignorées sans crasher. Retourne entries: [] si pas de body.
+ */
+export function parsePriceBook(content: string): PriceBookState {
+  const { data, content: body } = parseFrontmatter(content);
+
+  let updatedAt: string;
+  const raw: unknown = (data as Record<string, unknown>).updatedAt;
+  if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    updatedAt = raw;
+  } else if (raw instanceof Date) {
+    const d = raw;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    updatedAt = `${y}-${m}-${day}`;
+  } else {
+    updatedAt = '';
+  }
+
+  const entries: PriceBookEntry[] = [];
+  for (const rawLine of body.split('\n')) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const m = line.match(PRICE_LINE_REGEX);
+    if (!m) continue;
+    const label = m[1].trim();
+    const priceStr = m[2].replace(',', '.');
+    const price = parseFloat(priceStr);
+    if (!Number.isFinite(price) || price < 0) continue;
+    if (!label) continue;
+    entries.push({ label, price });
+  }
+
+  return { updatedAt, entries };
+}
+
+/**
+ * Sérialise le pricebook au format Markdown. Les prix sont écrits avec virgule FR
+ * (convention vault humain-friendly). Round-trip parse → serialize → parse stable.
+ */
+export function serializePriceBook(state: PriceBookState): string {
+  const lines: string[] = [];
+  lines.push('---');
+  lines.push(`updatedAt: ${state.updatedAt}`);
+  lines.push('---');
+  lines.push('# Prix connus');
+  lines.push('');
+  for (const entry of state.entries) {
+    const priceStr = entry.price.toFixed(2).replace('.', ',');
+    lines.push(`- ${entry.label}: ${priceStr}`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
