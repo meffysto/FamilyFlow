@@ -303,8 +303,12 @@ export function useVaultRecipes(
     for (const recipe of toMove) {
       await moveRecipeCategory(recipe.sourceFile, cleanNew);
     }
-    // L'ancien dossier reste vide sur disque (pas de deleteDir natif). On le
-    // retire de la liste affichée et on rafraîchit le disque pour cohérence.
+    // Supprimer l'ancien dossier vide sur disque pour qu'il ne réapparaisse pas.
+    try {
+      await vaultRef.current.deleteFile(`${RECIPES_DIR}/${cleanOld}`);
+    } catch (e) {
+      warnUnexpected('renameCategory-rmdir', e);
+    }
     setDiskCategories(prev => {
       const filtered = prev.filter(c => c !== cleanOld);
       return filtered.includes(cleanNew) ? filtered : [...filtered, cleanNew];
@@ -329,8 +333,12 @@ export function useVaultRecipes(
         await moveRecipeCategory(recipe.sourceFile, cleanTarget);
       }
     }
-    // Le dossier vide reste sur disque (pas de deleteDir natif). On le retire
-    // de la liste affichée pour ne pas réapparaître après suppression.
+    // Supprimer le dossier vide sur disque (sinon loadDiskCategories le remet).
+    try {
+      await vaultRef.current.deleteFile(`${RECIPES_DIR}/${clean}`);
+    } catch (e) {
+      warnUnexpected('deleteCategory-rmdir', e);
+    }
     setDiskCategories(prev => prev.filter(c => c !== clean));
     recipesLoadedRef.current = false;
     await loadRecipes(true);
