@@ -325,6 +325,7 @@ function RootLayout() {
                     name="story-settings"
                     options={{ presentation: 'pageSheet', gestureEnabled: true }}
                   />
+                  <Stack.Screen name="impressions" />
                 </Stack>
                 <VaultRedirect langReady={langReady} />
                 {(!langReady || !fontsReady) && (

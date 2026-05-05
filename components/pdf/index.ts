@@ -9,3 +9,4 @@ export type {
 } from './exportPhase';
 
 export { BookExportModal } from './BookExportModal';
+export { ExportCard } from './ExportCard';

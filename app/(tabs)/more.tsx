@@ -50,6 +50,7 @@ import {
   MessageCircle,
   HandHeart,
   BookOpen,
+  Printer,
   Sprout,
   Trees,
   Sparkles,
@@ -192,6 +193,7 @@ export default function MoreScreen() {
       { Icon: MessageCircle, label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: colors.catSouvenirs, category: 'souvenirs' as const },
       { Icon: HandHeart, label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: colors.catSouvenirs, category: 'souvenirs' as const },
       { Icon: BookOpen, label: t('menu.items.bedtimeStories'), route: '/(tabs)/stories', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { Icon: Printer, label: t('menu.items.impressions'), route: '/impressions', color: colors.catSouvenirs, category: 'souvenirs' as const },
       // Jeux & Progrès — vert
       { Icon: Sprout, label: t('menu.items.skills'), route: '/(tabs)/skills', color: colors.catJeux, category: 'jeux' as const },
       { Icon: Trees, label: activeProfile?.gardenName || t('menu.items.tree'), route: '/(tabs)/tree' as any, color: colors.catJeux, category: 'jeux' as const },
