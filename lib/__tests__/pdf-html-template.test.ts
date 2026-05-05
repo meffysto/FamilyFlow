@@ -64,6 +64,7 @@ describe('renderBookHtml', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html.startsWith('<!DOCTYPE html>')).toBe(true);
   });
@@ -76,6 +77,7 @@ describe('renderBookHtml', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const styleIdx = html.indexOf('<style>');
     const bodyIdx = html.indexOf('<body>');
@@ -91,6 +93,7 @@ describe('renderBookHtml', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const pageMatches = html.match(/<section class="page/g) || [];
     expect(pageMatches.length).toBe(16);
@@ -105,6 +108,7 @@ describe('renderBookHtml', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
@@ -145,6 +149,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const matches = html.match(/<section class="page/g) || [];
     expect(matches.length).toBe(16);
@@ -158,6 +163,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html).toContain('data:image/png;base64,PAYSAGE_B64');
     expect(html).toMatch(/class="page cover"/);
@@ -171,6 +177,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: { current: 2, total: 3, livreTitre: 'Le Royaume Endormi' },
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html).toContain('Tome 2 sur 3');
     expect(html).toContain('Le Royaume Endormi');
@@ -184,6 +191,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html).not.toMatch(/Tome\s+\d+\s+sur/);
   });
@@ -196,13 +204,14 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     for (const arche of ARCHETYPES) {
       expect(html).toContain(`data-archetype="${arche}"`);
     }
   });
 
-  it('back cover contains QR placeholder + FamilyVault label', () => {
+  it('back cover contains QR SVG injecté + légende FR + FamilyVault label (Phase 50)', () => {
     const html = renderBookHtml({
       story: STORY_LONG,
       scenes: FAKE_SCENES,
@@ -210,8 +219,12 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: '<svg data-test-qr="abc">QR</svg>',
     });
-    expect(html).toContain('data-phase50');
+    // Plus de placeholder data-phase50 — remplacé par le SVG réel + légende
+    expect(html).not.toContain('data-phase50');
+    expect(html).toContain('<svg data-test-qr="abc">QR</svg>');
+    expect(html).toContain("Scanne pour écouter l'histoire");
     expect(html).toContain('FamilyVault');
   });
 
@@ -223,6 +236,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     })).toThrow(/exactement 6 scènes/);
   });
 
@@ -234,6 +248,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html).toContain('data-mode="fallback"');
   });
@@ -258,6 +273,7 @@ describe('renderBookHtml mode B (fallback, no scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const matches = html.match(/<section class="page/g) || [];
     expect(matches.length).toBe(16);
@@ -271,6 +287,7 @@ describe('renderBookHtml mode B (fallback, no scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const fallbackMatches = html.match(/class="page fallback-page"/g) || [];
     expect(fallbackMatches.length).toBe(12);
@@ -284,6 +301,7 @@ describe('renderBookHtml mode B (fallback, no scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html).toContain('#B8593F'); // terracotta
     expect(html).toContain('#7A8F6B'); // sauge
@@ -299,6 +317,7 @@ describe('renderBookHtml mode B (fallback, no scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html.match(/drop-cap-block/g)?.length).toBe(6);
   });
@@ -311,6 +330,7 @@ describe('renderBookHtml mode B (fallback, no scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     // Le stub vide ressemblait à : <section class="page" data-mode="fallback" data-page-index="N">
     // Le rendu réel utilise class="page fallback-page" data-page-index="X-left|right"
@@ -337,6 +357,7 @@ describe('renderBookHtml mode B (fallback, no scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html).toContain('data-archetype="paysage"');
     expect(html).not.toContain('drop-cap-block');
@@ -350,6 +371,7 @@ describe('renderBookHtml mode B (fallback, no scenes)', () => {
       fonts: FAKE_FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: { current: 2, total: 4, livreTitre: 'La Saga des Loups' },
+      qrSvg: "<svg>fake</svg>",
     });
     expect(html).toContain('Tome 2 sur 4');
     expect(html).toContain('La Saga des Loups');

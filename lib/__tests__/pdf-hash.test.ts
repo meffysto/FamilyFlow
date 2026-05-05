@@ -59,6 +59,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const h2 = renderBookHtml({
       story: STORY,
@@ -67,6 +68,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(h1).toBe(h2);
     expect(sha256(h1)).toBe(sha256(h2));
@@ -81,6 +83,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const h2 = renderBookHtml({
       story: { ...STORY, titre: 'Le Renard' },
@@ -89,6 +92,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(sha256(h1)).not.toBe(sha256(h2));
   });
@@ -106,6 +110,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const h2 = renderBookHtml({
       story: STORY,
@@ -114,6 +119,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(sha256(h1)).not.toBe(sha256(h2));
   });
@@ -126,6 +132,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     const h2 = renderBookHtml({
       story: STORY,
@@ -134,6 +141,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: { current: 2, total: 3, livreTitre: 'X' },
+      qrSvg: "<svg>fake</svg>",
     });
     expect(sha256(h1)).not.toBe(sha256(h2));
   });
@@ -146,6 +154,7 @@ describe('PDF hash determinism (PDF-07)', () => {
       fonts: FONTS,
       palette: BOOK_PALETTE,
       tomeBadge: null,
+      qrSvg: "<svg>fake</svg>",
     });
     expect(h1).not.toMatch(/Date\.now/);
     expect(h1).not.toMatch(/Math\.random/);

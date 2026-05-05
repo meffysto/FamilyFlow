@@ -25,6 +25,8 @@ export interface BookHtmlSpec {
   palette: BookPalette;
   /** Badge tome saga (ex: tome 2/4). null si histoire standalone. */
   tomeBadge: { current: number; total: number; livreTitre: string } | null;
+  /** SVG inline du QR code 4ème de couverture (Phase 50, QR-04). Encode `family-vault://story/<id>`. */
+  qrSvg: string;
 }
 
 /**
@@ -170,7 +172,7 @@ function renderModeAPages(spec: BookHtmlSpec): string {
   pages.push(renderEndPage(spec));
 
   // Folio 16 — 4ème de couverture
-  pages.push(renderBackCoverPage({ story: spec.story, palette: spec.palette }));
+  pages.push(renderBackCoverPage({ story: spec.story, palette: spec.palette, qrSvg: spec.qrSvg }));
 
   return pages.join('\n');
 }
@@ -234,7 +236,7 @@ function renderModeBPages(spec: BookHtmlSpec): string {
   pages.push(renderEndPage(spec));
 
   // Folio 16 — Back cover
-  pages.push(renderBackCoverPage({ story: spec.story, palette: spec.palette }));
+  pages.push(renderBackCoverPage({ story: spec.story, palette: spec.palette, qrSvg: spec.qrSvg }));
 
   return pages.join('\n');
 }
