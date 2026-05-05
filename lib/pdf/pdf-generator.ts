@@ -70,7 +70,7 @@ export async function generateBookPdf(
   const [fonts, qrSvg, ...illuResults] = await Promise.all([
     loadFontsBase64(),
     generateStoryQrSvg(opts.story.id, BOOK_PALETTE),
-    ...ALL_ARCHETYPES.map((a) => loadIllustrationBase64(opts.story.univers, a)),
+    ...ALL_ARCHETYPES.map((a) => loadIllustrationBase64(opts.story.univers, a, opts.story.id)),
   ]);
   const illustrations = new Map<SceneArchetype, string>();
   ALL_ARCHETYPES.forEach((arche, idx) => {

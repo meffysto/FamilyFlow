@@ -29,10 +29,11 @@ export {
   loadIllustrationBase64,
   preloadAllAssets,
   clearAssetCache,
+  pickVariantIndex,
 } from './asset-loader';
 export {
   PRINT_ILLUSTRATIONS,
-  getPrintIllustrationModule,
+  getPrintIllustrationVariants,
 } from './print-illustrations';
 export * as ornaments from './ornaments';
 export {

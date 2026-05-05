@@ -2,13 +2,18 @@
 // Cache mémoire `Map<string,string>` + `cachedFonts` pour éviter la double conversion base64
 // (CONTEXT.md ligne 54 + RESEARCH.md §327-345, §858-877).
 //
-// TODO Wave 0 dette: PNG illustrations 2480x2480 sont des upscales sharp lanczos depuis WebP 800x800 (CONTEXT.md §206-212).
-// À ré-générer en AI native (Midjourney HD / DALL-E 3) post-milestone si retours qualité Lulu réelle.
+// TODO Wave 0 dette: les illustrations 2480x2480 JPEG q85 sont des upscales sharp lanczos
+// depuis WebP 800x800 (CONTEXT.md §206-212). À ré-générer en AI native (Midjourney HD)
+// post-milestone si retours qualité Lulu réelle.
+//
+// Phase A variants : sélection déterministe d'un variant par hash(storyId + archetype).
+// Garantit qu'une même histoire utilise les mêmes images à chaque réimpression
+// (requis pour le hash SHA-256 du HTML qui doit rester stable).
 
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { SceneArchetype, StoryUniverseId } from '../types';
-import { getPrintIllustrationModule } from './print-illustrations';
+import { getPrintIllustrationVariants } from './print-illustrations';
 
 // require() statique des polices Andika (alignement avec assets/fonts/Andika/).
 const ANDIKA_REGULAR_MODULE = require('../../assets/fonts/Andika/Andika-Regular.ttf');
@@ -21,6 +26,32 @@ interface FontsBase64 {
 
 let cachedFonts: FontsBase64 | null = null;
 const illustrationCache = new Map<string, string>();
+
+/**
+ * Hash FNV-1a 32-bit — petit, rapide, stable cross-platform.
+ * Pas cryptographique mais largement suffisant pour distribuer les variants.
+ */
+function hashFnv1a(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Sélection déterministe d'un variant. Même `storyId + archetype` → même index.
+ * Exporté pour tests.
+ */
+export function pickVariantIndex(
+  storyId: string,
+  archetype: SceneArchetype,
+  variantCount: number,
+): number {
+  if (variantCount <= 1) return 0;
+  return hashFnv1a(`${storyId}:${archetype}`) % variantCount;
+}
 
 /**
  * Charge un asset (police ou image) en base64 string.
@@ -53,40 +84,45 @@ export async function loadFontsBase64(): Promise<FontsBase64> {
 }
 
 /**
- * Charge une illustration print 2480×2480 en base64.
+ * Charge une illustration print 2480×2480 en base64, variant choisi par hash(storyId + archetype).
  * Retourne `null` si la combinaison (univers, archetype) n'est pas dans le catalogue print
  * (univers non-forêt MVP) — l'appelant doit alors basculer sur le mode B fallback.
  */
 export async function loadIllustrationBase64(
   univers: StoryUniverseId,
   archetype: SceneArchetype,
+  storyId: string,
 ): Promise<string | null> {
-  const key = `${univers}-${archetype}`;
-  const cached = illustrationCache.get(key);
-  if (cached !== undefined) return cached;
-
-  const moduleId = getPrintIllustrationModule(univers, archetype);
-  if (moduleId === undefined) {
+  const variants = getPrintIllustrationVariants(univers, archetype);
+  if (!variants || variants.length === 0) {
     if (__DEV__) {
-      console.warn(`[pdf/asset-loader] Illustration print absente catalogue : ${key}`);
+      console.warn(`[pdf/asset-loader] Illustration print absente catalogue : ${univers}-${archetype}`);
     }
     return null;
   }
 
-  const base64 = await loadAssetAsBase64(moduleId);
-  illustrationCache.set(key, base64);
+  const variantIndex = pickVariantIndex(storyId, archetype, variants.length);
+  const cacheKey = `${univers}-${archetype}-${variantIndex}`;
+  const cached = illustrationCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  const base64 = await loadAssetAsBase64(variants[variantIndex]);
+  illustrationCache.set(cacheKey, base64);
   return base64;
 }
 
 /**
- * Pré-charge polices + illustrations forêt en parallèle.
- * Utilisé par Plan 49-03 pour mesurer la perf optimale (fonts + 6 PNG en parallèle).
+ * Pré-charge polices + illustrations forêt en parallèle pour une histoire donnée.
+ * Utilisé par Plan 49-03 pour mesurer la perf optimale (fonts + 6 JPEG en parallèle).
  * No-op si tout est déjà cache hit.
  */
-export async function preloadAllAssets(archetypes: SceneArchetype[]): Promise<void> {
+export async function preloadAllAssets(
+  archetypes: SceneArchetype[],
+  storyId: string,
+): Promise<void> {
   await Promise.all([
     loadFontsBase64(),
-    ...archetypes.map((archetype) => loadIllustrationBase64('foret', archetype)),
+    ...archetypes.map((archetype) => loadIllustrationBase64('foret', archetype, storyId)),
   ]);
 }
 
