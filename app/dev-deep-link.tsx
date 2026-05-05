@@ -9,7 +9,36 @@
  * À supprimer ou cacher derrière un flag avant release App Store.
  */
 
-import { ScrollView, View, Text, StyleSheet, Linking, Alert } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, View, Text, StyleSheet, Linking, Alert, ActivityIndicator, Pressable, Share } from 'react-native';
+import * as Haptics from 'expo-haptics';
+
+// expo-clipboard est natif — pas dispo tant que le dev-client n'est pas rebuildé.
+// Fallback gracieux sur Share.share (toujours dispo dans React Native core).
+let ClipboardModule: typeof import('expo-clipboard') | null = null;
+try {
+  ClipboardModule = require('expo-clipboard');
+} catch {
+  ClipboardModule = null;
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  if (ClipboardModule) {
+    try {
+      await ClipboardModule.setStringAsync(text);
+      return true;
+    } catch {
+      // chute vers fallback
+    }
+  }
+  // Fallback : ouvre le share sheet iOS (l'utilisateur tape "Copier")
+  try {
+    await Share.share({ message: text });
+    return false;
+  } catch {
+    return false;
+  }
+}
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useVault } from '../contexts/VaultContext';
@@ -17,12 +46,16 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { PressableScale } from '../components/ui';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { generateBookPdf, persistBookPdf } from '../lib/pdf';
+import type { BedtimeStory } from '../lib/types';
 
 export default function DevDeepLinkScreen() {
   const router = useRouter();
   const { colors, primary } = useThemeColors();
-  const vault = useVault();
-  const stories = vault.stories ?? [];
+  const vaultCtx = useVault();
+  const stories = vaultCtx.stories ?? [];
+  const vaultManager = vaultCtx.vault;
+  const [pdfBusyId, setPdfBusyId] = useState<string | null>(null);
 
   if (!__DEV__) {
     return (
@@ -38,6 +71,37 @@ export default function DevDeepLinkScreen() {
     Linking.openURL(url).catch((err) => {
       Alert.alert('Erreur', `Impossible d'ouvrir ${url}\n\n${String(err)}`);
     });
+  };
+
+  const generatePdf = async (story: BedtimeStory) => {
+    if (!vaultManager) {
+      Alert.alert('Vault indisponible', 'Le vault n\'est pas encore prêt.');
+      return;
+    }
+    try {
+      setPdfBusyId(story.id);
+      const result = await generateBookPdf({ story, allStories: stories });
+      const persisted = await persistBookPdf(vaultManager, result.uri, result.entry);
+      Alert.alert(
+        'PDF généré ✅',
+        `Histoire : ${story.titre}\n` +
+          `Hash : ${result.hash.slice(0, 12)}…\n` +
+          `Chemin vault : ${persisted.chemin}\n` +
+          `Total : ${result.perf.totalMs}ms\n\n` +
+          `Ouvrir maintenant ?`,
+        [
+          { text: 'Plus tard', style: 'cancel' },
+          {
+            text: 'Ouvrir',
+            onPress: () => Linking.openURL(result.uri).catch(() => {}),
+          },
+        ],
+      );
+    } catch (err) {
+      Alert.alert('Erreur génération PDF', String(err));
+    } finally {
+      setPdfBusyId(null);
+    }
   };
 
   return (
@@ -60,18 +124,43 @@ export default function DevDeepLinkScreen() {
           </Text>
         ) : (
           stories.slice(0, 5).map((s) => (
-            <PressableScale
-              key={s.id}
-              onPress={() => open(`family-vault://story/${s.id}`)}
-              style={[styles.button, { backgroundColor: primary }]}
-            >
-              <Text style={[styles.buttonLabel, { color: colors.onPrimary }]} numberOfLines={1}>
-                {s.titre}
-              </Text>
-              <Text style={[styles.buttonHint, { color: colors.onPrimary }]} numberOfLines={1}>
-                family-vault://story/{s.id.slice(0, 16)}…
-              </Text>
-            </PressableScale>
+            <View key={s.id} style={styles.row}>
+              <Pressable
+                onPress={() => open(`family-vault://story/${s.id}`)}
+                onLongPress={async () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  const ok = await copyToClipboard(s.id);
+                  if (ok) Alert.alert('ID copié', s.id);
+                }}
+                delayLongPress={400}
+                style={({ pressed }) => [
+                  styles.button,
+                  styles.flex,
+                  { backgroundColor: primary, opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <Text style={[styles.buttonLabel, { color: colors.onPrimary }]} numberOfLines={1}>
+                  {s.titre}
+                </Text>
+                <Text style={[styles.buttonHint, { color: colors.onPrimary }]} numberOfLines={1}>
+                  family-vault://story/{s.id.slice(0, 16)}… — appui long pour copier
+                </Text>
+              </Pressable>
+              <PressableScale
+                onPress={() => generatePdf(s)}
+                disabled={pdfBusyId !== null}
+                style={[
+                  styles.pdfButton,
+                  { backgroundColor: colors.cardAlt, borderColor: colors.border },
+                ]}
+              >
+                {pdfBusyId === s.id ? (
+                  <ActivityIndicator color={colors.text} />
+                ) : (
+                  <Text style={[styles.buttonLabel, { color: colors.text }]}>PDF</Text>
+                )}
+              </PressableScale>
+            </View>
           ))
         )}
 
@@ -161,6 +250,21 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontStyle: 'italic',
     paddingVertical: Spacing.xl,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  flex: { flex: 1, marginBottom: 0 },
+  pdfButton: {
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    minWidth: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   button: {
     paddingVertical: Spacing.xl,
