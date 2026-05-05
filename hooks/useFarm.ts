@@ -347,6 +347,7 @@ export function useFarm(
     const bonusDrop = profileTech.bonusHarvestChance > 0 && Math.random() < profileTech.bonusHarvestChance ? 1 : 0;
     const harvestQty = baseQty + bonusDrop;
     const harvestEvent = rollHarvestEvent();
+    if (__DEV__) console.log('[harvest] event roll:', harvestEvent?.type ?? 'none');
     let finalQty = harvestEvent ? Math.max(0, Math.round(harvestQty * harvestEvent.modifier)) : harvestQty;
     // Phase 20 : Golden Harvest (EFFECTS-09) — quantite x3 si flag actif
     const wasGoldenEffect = profile.nextHarvestGolden === true;
