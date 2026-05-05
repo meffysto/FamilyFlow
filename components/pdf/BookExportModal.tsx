@@ -165,14 +165,16 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
         console.warn('[BookExportModal] generation error', err);
       }
       dispatch({ type: 'GENERATION_ERROR' });
+      const errMessage = err instanceof Error ? err.message : String(err);
       Alert.alert(
         t('impressions.errors.generationTitle', {
           defaultValue: 'Erreur de génération',
         }),
-        t('impressions.errors.generationBody', {
-          defaultValue:
-            'Impossible de générer le livre. Réessaie dans un instant.',
-        }),
+        errMessage ||
+          t('impressions.errors.generationBody', {
+            defaultValue:
+              'Impossible de générer le livre. Réessaie dans un instant.',
+          }),
       );
     }
   }, [vault, selectedStory, stories, t]);

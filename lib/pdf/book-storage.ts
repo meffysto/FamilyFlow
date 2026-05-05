@@ -30,17 +30,33 @@ export async function persistBookPdf(
   cacheUri: string,
   entry: Omit<BookManifestEntry, 'chemin'>,
 ): Promise<BookManifestEntry> {
-  const filename = `${entry.id}-${entry.date}.pdf`;
+  // Filename inclut un suffixe court du hash → unique par contenu, pas de collision
+  // sur ré-export même jour si le contenu a changé. Si le contenu est identique
+  // (hash identique), on overwrite explicitement via deleteAsync + copyAsync.
+  const hashSuffix = entry.hash.slice(0, 8);
+  const filename = `${entry.id}-${entry.date}-${hashSuffix}.pdf`;
   const relativePath = `${PDFS_DIR}/${filename}`;
 
-  // 1. Ensure dir cible
+  // 1. Ensure dir cible (via vault — gère NSFileCoordinator iCloud)
   await vault.ensureDir(PDFS_DIR);
 
-  // 2. Construire URI cible (réplique logique privée vault.uri)
-  const targetUri = buildVaultUriFromPath(vault.vaultPath, relativePath);
+  // 2. Si la cible existe (ré-export même contenu → hash identique), supprimer
+  // d'abord via vault.deleteFile (NSFileCoordinator iCloud-aware).
+  if (await vault.exists(relativePath)) {
+    try {
+      await vault.deleteFile(relativePath);
+    } catch (deleteErr) {
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.warn('[persistBookPdf] pre-copy cleanup failed', deleteErr);
+      }
+    }
+  }
 
-  // 3. Copier cache → vault (FileSystem.copyAsync OK pour binaires)
-  await FileSystem.copyAsync({ from: cacheUri, to: targetUri });
+  // 3. Copier cache → vault via vault.copyFileToVault (NSFileCoordinator iCloud).
+  // Évite l'erreur "is not writable" qu'on obtient avec FileSystem.copyAsync direct
+  // sur les chemins iCloud Drive (placeholders non-matérialisés / scope security).
+  await vault.copyFileToVault(cacheUri, relativePath);
 
   // 4. Lire manifeste existant (création paresseuse si absent)
   let entries: BookManifestEntry[] = [];
