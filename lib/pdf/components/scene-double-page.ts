@@ -33,8 +33,35 @@ export interface SceneDoublePageOpts {
 export function renderSceneDoublePage(opts: SceneDoublePageOpts): string {
   const { scene, story, illustrationBase64, palette, pageNumLeft, pageNumRight } = opts;
 
+  // Snap aux frontières de mot — défense vs sceneStart IA mid-mot ou Pass 3 fallback
+  // de findAtWordBoundary qui peut atterrir mid-mot. Garantit qu'on n'affiche jamais
+  // un mot tronqué en début/fin de scène.
+  const { start: snapStart, end: snapEnd } = snapRangeToWordBoundaries(
+    story.texte,
+    scene.textStart,
+    scene.textEnd,
+  );
+
   // Slicing déterministe — RESEARCH.md §503-509 condition #1 du hash
-  const sceneText = story.texte.slice(scene.textStart, scene.textEnd);
+  const sceneText = story.texte.slice(snapStart, snapEnd);
+
+  // Highlights : indices originaux relatifs à story.texte.slice(textStart, textEnd).
+  // On ré-aligne sur le slice snappé puis on snap chaque highlight aux frontières de mot.
+  const startShift = snapStart - scene.textStart;
+  const adjustedHighlights: HighlightSpan[] = [];
+  for (const h of scene.highlights) {
+    const startChar = h.startChar - startShift;
+    const endChar = h.endChar - startShift;
+    if (endChar <= 0 || startChar >= sceneText.length) continue;
+    const snapped = snapRangeToWordBoundaries(
+      sceneText,
+      Math.max(0, startChar),
+      Math.min(sceneText.length, endChar),
+    );
+    if (snapped.end > snapped.start) {
+      adjustedHighlights.push({ startChar: snapped.start, endChar: snapped.end, kind: h.kind });
+    }
+  }
 
   // Page paire — illustration full-bleed ou fallback paperShadow
   const illustrationBlock = illustrationBase64
@@ -47,7 +74,7 @@ export function renderSceneDoublePage(opts: SceneDoublePageOpts): string {
   </section>`;
 
   // Page impaire — texte avec highlights teal
-  const textHtml = renderTextWithHighlights(sceneText, scene.highlights);
+  const textHtml = renderTextWithHighlights(sceneText, adjustedHighlights);
 
   const rightPage = `<section class="page scene-text-page" data-archetype="${scene.archetype}">
     <div class="safe-area" style="display:flex; align-items:center;">
@@ -89,4 +116,37 @@ function renderTextWithHighlights(text: string, highlights: HighlightSpan[]): st
   }
   if (cursor < text.length) parts.push(escapeHtml(text.slice(cursor)));
   return parts.join('');
+}
+
+/**
+ * Snap [start, end) aux frontières de mot dans `text`.
+ * - Si `start` tombe au milieu d'un mot (caractère précédent ET courant non-whitespace),
+ *   avance jusqu'au début du mot suivant.
+ * - Si `end` tombe au milieu d'un mot, recule jusqu'à la fin du mot précédent.
+ * - Si la plage devient vide après snap (rare), retourne la plage originale (graceful).
+ */
+function snapRangeToWordBoundaries(
+  text: string,
+  start: number,
+  end: number,
+): { start: number; end: number } {
+  const len = text.length;
+  let s = Math.max(0, Math.min(start, len));
+  let e = Math.max(s, Math.min(end, len));
+  const isSpace = (c: string) => /\s/.test(c);
+
+  // Snap start vers l'avant si on coupe un mot
+  if (s > 0 && s < len && !isSpace(text.charAt(s - 1)) && !isSpace(text.charAt(s))) {
+    while (s < e && !isSpace(text.charAt(s))) s++;
+    while (s < e && isSpace(text.charAt(s))) s++;
+  }
+
+  // Snap end vers l'arrière si on coupe un mot
+  if (e > 0 && e < len && !isSpace(text.charAt(e - 1)) && !isSpace(text.charAt(e))) {
+    while (e > s && !isSpace(text.charAt(e - 1))) e--;
+    while (e > s && isSpace(text.charAt(e - 1))) e--;
+  }
+
+  if (e <= s) return { start, end };
+  return { start: s, end: e };
 }

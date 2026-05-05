@@ -211,7 +211,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
     }
   });
 
-  it('back cover contains QR SVG injecté + légende FR + FamilyVault label (Phase 50)', () => {
+  it('back cover contains QR SVG injecté + légende FR + FamilyFlow label (Phase 50)', () => {
     const html = renderBookHtml({
       story: STORY_LONG,
       scenes: FAKE_SCENES,
@@ -225,7 +225,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
     expect(html).not.toContain('data-phase50');
     expect(html).toContain('<svg data-test-qr="abc">QR</svg>');
     expect(html).toContain("Scanne pour écouter l'histoire");
-    expect(html).toContain('FamilyVault');
+    expect(html).toContain('FamilyFlow');
   });
 
   it('throws on scenes.length !== 6 (strict per CONTEXT D-Q2)', () => {
