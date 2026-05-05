@@ -49,7 +49,7 @@ import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngr
 import { CourseItemEditor } from '../../components/CourseItemEditor';
 import { CourseListEditor } from '../../components/CourseListEditor';
 import { renderListIcon } from '../../lib/list-icons';
-import { getLastPriceFor, computeRemainingEstimate, formatPrice, formatTotalEstimate } from '../../lib/courses-prices';
+import { getLastPriceFor, computeRemainingEstimate, formatPrice, formatTotalEstimate, parseCanonical, priceBookKey } from '../../lib/courses-prices';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, cleanCookContent, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -162,6 +162,7 @@ export default function MealsScreen() {
     loadBudgetMonths,
     toggleFavorite, isFavorite, getFavorites,
     refresh, isLoading,
+    priceBook, setPrice, removePrice,
   } = useVault();
   const { primary, tint, colors, isDark } = useThemeColors();
   const { config: aiConfig, isConfigured: aiConfigured } = useAI();
@@ -684,16 +685,16 @@ export default function MealsScreen() {
   // Phase E — prix lecture-only depuis budget (multi-mois pour couvrir
   // la fenêtre STALE_DAYS=30j même en début de mois civil).
   const courseRemainingEstimate = useMemo(
-    () => computeRemainingEstimate(courses, priceLookupEntries),
-    [courses, priceLookupEntries],
+    () => computeRemainingEstimate(courses, priceLookupEntries, priceBook),
+    [courses, priceLookupEntries, priceBook],
   );
   const coursePriceByItemId = useMemo(() => {
     const map = new Map<string, ReturnType<typeof getLastPriceFor>>();
     for (const c of courses) {
-      map.set(c.id, getLastPriceFor(c.text, priceLookupEntries));
+      map.set(c.id, getLastPriceFor(c.text, priceLookupEntries, priceBook));
     }
     return map;
-  }, [courses, priceLookupEntries]);
+  }, [courses, priceLookupEntries, priceBook]);
 
   // Suggestions cadence-based : calculées seulement quand Pré-départ est ouvert
   // (sinon coût inutile à chaque toggle d'item).
@@ -701,6 +702,57 @@ export default function MealsScreen() {
     if (!showPreDepart) return [];
     return computeCadenceSuggestions(priceLookupEntries, courses, 5);
   }, [showPreDepart, priceLookupEntries, courses]);
+
+  // Prix manuel (FAM-16) — tap sur prix → Alert.prompt iOS, fallback Android
+  const handleCoursePriceTap = useCallback((item: CourseItem) => {
+    if (Platform.OS !== 'ios') {
+      Alert.alert(t('meals.shopping.priceManualPrompt', { name: item.text }), t('meals.shopping.priceManualAndroidUnavailable'));
+      return;
+    }
+    Alert.prompt(
+      t('meals.shopping.priceManualPrompt', { name: item.text }),
+      t('meals.shopping.priceManualMessage'),
+      [
+        { text: t('meals.shopping.priceManualCancel'), style: 'cancel' },
+        {
+          text: t('meals.shopping.priceManualSave'),
+          onPress: (value?: string) => {
+            if (!value) return;
+            const cleaned = value.trim().replace(/\s*€\s*$/, '').replace(',', '.');
+            const parsed = parseFloat(cleaned);
+            if (!Number.isFinite(parsed) || parsed < 0 || parsed > 10000) {
+              Alert.alert(t('meals.shopping.priceManualInvalid'));
+              return;
+            }
+            setPrice(item.text, parsed).catch(() => {});
+          },
+        },
+      ],
+      'plain-text',
+      '',
+      'numeric',
+    );
+  }, [setPrice, t]);
+
+  const handleCoursePriceLongPress = useCallback((item: CourseItem) => {
+    const priceInfo = coursePriceByItemId.get(item.id);
+    if (!priceInfo || priceInfo.confidence !== 'manual') return;
+    const canonical = parseCanonical(item.text);
+    if (canonical.length === 0) return;
+    const key = priceBookKey(canonical);
+    Alert.alert(
+      t('meals.shopping.priceManualRemove'),
+      undefined,
+      [
+        { text: t('meals.shopping.priceManualCancel'), style: 'cancel' },
+        {
+          text: t('meals.shopping.priceManualRemoveConfirm'),
+          style: 'destructive',
+          onPress: () => { removePrice(key).catch(() => {}); },
+        },
+      ],
+    );
+  }, [coursePriceByItemId, removePrice, t]);
 
   const handleShoppingUndoLast = useCallback(async () => {
     setShoppingUndoStack(prev => {
@@ -1863,21 +1915,53 @@ export default function MealsScreen() {
                             </TouchableOpacity>
                             {(() => {
                               const priceInfo = coursePriceByItemId.get(item.id);
-                              if (!priceInfo) return null;
+                              // Slot vide tappable : "+ €" pour saisir un prix manuel
+                              if (!priceInfo) {
+                                return (
+                                  <TouchableOpacity
+                                    onPress={() => handleCoursePriceTap(item)}
+                                    activeOpacity={0.5}
+                                    accessibilityLabel={t('meals.shopping.priceManualPrompt', { name: item.text })}
+                                    accessibilityRole="button"
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.coursePrice,
+                                        { color: colors.textFaint },
+                                        item.completed && { textDecorationLine: 'line-through' },
+                                      ]}
+                                    >
+                                      {t('meals.shopping.priceAddSlot')}
+                                    </Text>
+                                  </TouchableOpacity>
+                                );
+                              }
+                              const isManual = priceInfo.confidence === 'manual';
                               const lowConf = priceInfo.confidence === 'low'
                                 || priceInfo.stale
                                 || priceInfo.sampleSize === 1;
-                              const prefix = lowConf ? '~ ' : '≈ ';
+                              const prefix = isManual ? '' : (lowConf ? '~ ' : '≈ ');
                               return (
-                                <Text
-                                  style={[
-                                    styles.coursePrice,
-                                    { color: priceInfo.stale ? colors.textFaint : colors.textMuted },
-                                    item.completed && { textDecorationLine: 'line-through' },
-                                  ]}
+                                <TouchableOpacity
+                                  onPress={() => handleCoursePriceTap(item)}
+                                  onLongPress={() => handleCoursePriceLongPress(item)}
+                                  delayLongPress={400}
+                                  activeOpacity={0.5}
+                                  accessibilityLabel={t('meals.shopping.priceManualPrompt', { name: item.text })}
+                                  accessibilityRole="button"
                                 >
-                                  {`${prefix}${formatPrice(priceInfo.price)}`}
-                                </Text>
+                                  <Text
+                                    style={[
+                                      styles.coursePrice,
+                                      isManual
+                                        ? { color: primary, fontWeight: '700' }
+                                        : { color: priceInfo.stale ? colors.textFaint : colors.textMuted },
+                                      item.completed && { textDecorationLine: 'line-through' },
+                                    ]}
+                                  >
+                                    {`${prefix}${formatPrice(priceInfo.price)}`}
+                                  </Text>
+                                </TouchableOpacity>
                               );
                             })()}
                           </View>
