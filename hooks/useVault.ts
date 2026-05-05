@@ -100,6 +100,7 @@ import { useVaultLoveNotes } from './useVaultLoveNotes';
 import { useVaultWishlist } from './useVaultWishlist';
 import { useVaultStock } from './useVaultStock';
 import { useVaultCourses } from './useVaultCourses';
+import { useVaultPriceBook } from './useVaultPriceBook';
 import { useVaultHealth } from './useVaultHealth';
 import { useVaultSecretMissions } from './useVaultSecretMissions';
 import { useVaultTasks, type TaskCompleteListener } from './useVaultTasks';
@@ -226,6 +227,10 @@ export interface VaultState {
   archiveList: (id: string, archive: boolean) => Promise<void>;
   mergeCourseIngredientsToList: (listId: string, items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
   setListParcours: (id: string, parcours: string[]) => Promise<void>;
+  // Pricebook (prix manuels FAM-16)
+  priceBook: import('../lib/courses-prices').PriceBookMap;
+  setPrice: (label: string, price: number) => Promise<void>;
+  removePrice: (canonicalKey: string) => Promise<void>;
   memories: Memory[];
   addMemory: (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
   updateMemory: (oldMemory: Memory, newMemory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
@@ -568,6 +573,9 @@ export function useVaultInternal(): VaultState {
   // vaultPath en 2e arg : déclenche migration + load quand vaultRef.current devient prêt
   const coursesHook = useVaultCourses(vaultRef, vaultPath);
   const { courses, resetCourses } = coursesHook;
+
+  // Pricebook (prix manuels) — chargé frais à chaque boot, hors VaultCacheState
+  const priceBookHook = useVaultPriceBook(vaultRef, vaultPath);
 
   // Domaine Budget délégué à useVaultBudget
   const budget = useVaultBudget(vaultRef);
@@ -2757,6 +2765,10 @@ export function useVaultInternal(): VaultState {
     archiveList: coursesHook.archiveList,
     mergeCourseIngredientsToList: coursesHook.mergeCourseIngredientsToList,
     setListParcours: coursesHook.setListParcours,
+    // Pricebook (FAM-16)
+    priceBook: priceBookHook.priceBook,
+    setPrice: priceBookHook.setPrice,
+    removePrice: priceBookHook.removePrice,
     memories,
     addMemory,
     updateMemory,
