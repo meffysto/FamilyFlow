@@ -253,9 +253,13 @@ interface Props {
    *   - expo-speech : immédiatement au mount (la voix iOS native est toujours dispo)
    *  Permet au parent (header de l'écran) d'activer le bouton "Lecture immersive". */
   onAudioReady?: () => void;
+  /** Phase 50 (deep link QR) — quand `true`, démarre la lecture automatiquement
+   *  une fois le moteur audio prêt. Une ref garde-fou empêche un double-déclenchement
+   *  après tap utilisateur ou re-render. Default `false` (comportement existant inchangé). */
+  autoplay?: boolean;
 }
 
-function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish, autoGenerate = true, onAlignmentReady, forceMute = false, onAudioReady }: Props) {
+function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', onFinish, autoGenerate = true, onAlignmentReady, forceMute = false, onAudioReady, autoplay = false }: Props) {
   const { primary, colors } = useThemeColors();
   const { vault } = useVault();
   const isElevenLabs = voiceConfig.engine === 'elevenlabs';
@@ -886,6 +890,31 @@ function StoryPlayer({ histoire, voiceConfig, elevenLabsKey, fishAudioKey = '', 
       onAudioReady();
     }
   }, [audioPath, isApiVoice, onAudioReady]);
+
+  // Phase 50 (deep link QR) — démarrage automatique quand `autoplay` est activé.
+  // Une seule exécution garantie via ref (un toggle utilisateur ultérieur ne
+  // doit pas relancer la lecture). On réutilise les fonctions de démarrage du
+  // togglePlay (startElevenLabs / startExpoSpeech) pour matcher le flow d'un tap.
+  // Si forceMute, on n'auto-démarre pas (un autre player a la priorité).
+  const autoplayTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (!autoplay) return;
+    if (autoplayTriggeredRef.current) return;
+    if (forceMute) return;
+    if (isPlaying) {
+      autoplayTriggeredRef.current = true;
+      return;
+    }
+    const ready = isApiVoice ? !!audioPath : true;
+    if (!ready) return;
+    autoplayTriggeredRef.current = true;
+    if (__DEV__) console.log('[StoryPlayer] autoplay déclenché pour', histoire.id);
+    if (isApiVoice) {
+      startElevenLabs().catch(() => { /* fallback graceful : iOS audio policy peut bloquer */ });
+    } else {
+      startExpoSpeech().catch(() => { /* fallback graceful */ });
+    }
+  }, [autoplay, forceMute, isApiVoice, audioPath, isPlaying, startElevenLabs, startExpoSpeech, histoire.id]);
 
   // ─── Changement de vitesse ────────────────────────────────────────────────
   const changeExpoSpeed = useCallback(async (newSpeed: StoryReadingSpeed) => {

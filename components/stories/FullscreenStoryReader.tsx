@@ -29,6 +29,9 @@ interface Props {
   onClose: () => void;
   /** Persisté par le parent dès que l'alignement TTS est généré côté player */
   onAlignmentReady?: (alignment: StoryAudioAlignment) => void;
+  /** Phase 50 (deep link QR) — propage à StoryPlayer pour démarrer la lecture
+   *  automatiquement à l'ouverture (UX scan QR enfant). Default `false`. */
+  autoplay?: boolean;
 }
 
 export function FullscreenStoryReader({
@@ -38,6 +41,7 @@ export function FullscreenStoryReader({
   fishAudioKey = '',
   onClose,
   onAlignmentReady,
+  autoplay = false,
 }: Props) {
   const insets = useSafeAreaInsets();
   const visible = histoire !== null;
@@ -77,8 +81,12 @@ export function FullscreenStoryReader({
                 elevenLabsKey={elevenLabsKey}
                 fishAudioKey={fishAudioKey}
                 onFinish={onClose}
-                autoGenerate={false /* le player inline a déjà généré — on hit le cache disque */}
+                // En mode autoplay (deep link QR), aucun player inline n'a généré
+                // l'audio en amont → on doit autoriser la génération ici. Sinon,
+                // on hit simplement le cache disque déjà chauffé par le player inline.
+                autoGenerate={autoplay}
                 onAlignmentReady={onAlignmentReady}
+                autoplay={autoplay}
               />
             </View>
           </ScrollView>
