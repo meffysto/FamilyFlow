@@ -1874,7 +1874,12 @@ export function useVaultInternal(): VaultState {
       if (aubergeActiveId && profilesSnapshot.length > 0) {
         tickAubergeAuto(aubergeActiveId, { vault, profiles: profilesSnapshot }).catch(() => {});
       }
-      refreshWidget(val(phase1[4], []), rdvResult, tasksResult);
+      // Important : passer par triggerWidgetRefresh (et pas refreshWidget direct)
+      // pour que le counter événementiel `tasksCompletedTodayRef` + le snapshot
+      // `tasksTotalSnapshotRef` soient utilisés. Sinon les récurrentes cochées
+      // (dueDate bumpé au lendemain) sortent de todayTasks et le fallback de
+      // widget-bridge donne done=0 → reset visuel sur foreground après sync iCloud.
+      triggerWidgetRefresh();
       refreshJournalWidget(profiles);
       syncWidgetFeedingsToVault(vault).catch(() => {});
 
