@@ -98,7 +98,7 @@ describe('renderSceneDoublePage', () => {
       pageNumRight: 4,
     });
     expect(html).toContain(BOOK_PALETTE.paperShadow); // #E8E0D0
-    expect(html).not.toContain('data:image/png;base64');
+    expect(html).not.toContain('data:image/jpeg;base64');
   });
 
   it('injecte data-archetype sur les 2 pages', () => {

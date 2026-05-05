@@ -19,7 +19,7 @@ import { splitTextIntoSections } from './text-splitter';
 export interface BookHtmlSpec {
   story: BedtimeStory;
   scenes: SceneSpec[] | null;
-  /** Map `archetype → data:image/png;base64,...` (mode A). Vide en mode B. */
+  /** Map `archetype → data:image/jpeg;base64,...` (mode A). Vide en mode B. */
   illustrations: Map<SceneArchetype, string>;
   fonts: { andikaRegular: string; andikaBold: string };
   palette: BookPalette;

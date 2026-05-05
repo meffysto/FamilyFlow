@@ -165,7 +165,7 @@ describe('renderBookHtml mode A (6 scenes)', () => {
       tomeBadge: null,
       qrSvg: "<svg>fake</svg>",
     });
-    expect(html).toContain('data:image/png;base64,PAYSAGE_B64');
+    expect(html).toContain('data:image/jpeg;base64,PAYSAGE_B64');
     expect(html).toMatch(/class="page cover"/);
   });
 

@@ -65,7 +65,7 @@ export function renderSceneDoublePage(opts: SceneDoublePageOpts): string {
 
   // Page paire — illustration full-bleed ou fallback paperShadow
   const illustrationBlock = illustrationBase64
-    ? `<img class="full-bleed scene-illustration" src="data:image/png;base64,${illustrationBase64}" alt="" />`
+    ? `<img class="full-bleed scene-illustration" src="data:image/jpeg;base64,${illustrationBase64}" alt="" />`
     : `<div class="full-bleed" style="background:${palette.paperShadow}; display:flex; align-items:center; justify-content:center; font-family:'DM Serif Display', serif; font-size:48pt; color:${palette.sage};">${escapeHtml(scene.archetype)}</div>`;
 
   const leftPage = `<section class="page scene-illustration-page" data-archetype="${scene.archetype}">

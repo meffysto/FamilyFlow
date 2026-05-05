@@ -24,7 +24,7 @@ export function renderCoverPage(opts: CoverPageOpts): string {
   const universLabel = capitalizeFirst(story.univers);
 
   const fullBleedImg = coverImageBase64
-    ? `<img class="full-bleed scene-illustration" src="data:image/png;base64,${coverImageBase64}" alt="" />`
+    ? `<img class="full-bleed scene-illustration" src="data:image/jpeg;base64,${coverImageBase64}" alt="" />`
     : `<div class="full-bleed" style="background:${palette.paperShadow};"></div>`;
 
   return `<section class="page cover">
