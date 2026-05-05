@@ -15,6 +15,7 @@ import { TRIM_SIZE_CM, BLEED_CM, BOOK_PALETTE, LULU_FORMAT_LABEL } from './const
 import { renderBookHtml } from './html-template';
 import { loadFontsBase64, loadIllustrationBase64 } from './asset-loader';
 import { detectTomeBadge } from './saga-detection';
+import { generateStoryQrSvg } from './qr-generator';
 
 const PT_PER_CM = 28.346456693;
 /** Page final size en points : 21.64cm × 28.346 = 613.4 pt (Pitfall 2 RESEARCH.md). */
@@ -64,10 +65,11 @@ export async function generateBookPdf(
 ): Promise<GenerateBookPdfResult> {
   const t0 = Date.now();
 
-  // 1. Charger assets en parallèle (fonts + 6 illustrations forêt)
+  // 1. Charger assets en parallèle (fonts + QR SVG Phase 50 + 6 illustrations forêt)
   const tA0 = Date.now();
-  const [fonts, ...illuResults] = await Promise.all([
+  const [fonts, qrSvg, ...illuResults] = await Promise.all([
     loadFontsBase64(),
+    generateStoryQrSvg(opts.story.id, BOOK_PALETTE),
     ...ALL_ARCHETYPES.map((a) => loadIllustrationBase64(opts.story.univers, a)),
   ]);
   const illustrations = new Map<SceneArchetype, string>();
@@ -89,6 +91,7 @@ export async function generateBookPdf(
     fonts,
     palette: BOOK_PALETTE,
     tomeBadge,
+    qrSvg,
   });
   const renderMs = Date.now() - tR0;
 

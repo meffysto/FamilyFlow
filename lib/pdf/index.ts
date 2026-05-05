@@ -62,3 +62,6 @@ export type {
   GenerateBookPdfResult,
 } from './pdf-generator';
 export { persistBookPdf } from './book-storage';
+
+// Plan 50-03 — QR audio + deep links
+export { generateStoryQrSvg } from './qr-generator';
