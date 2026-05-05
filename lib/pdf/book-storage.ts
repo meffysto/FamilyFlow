@@ -37,7 +37,7 @@ export async function persistBookPdf(
   await vault.ensureDir(PDFS_DIR);
 
   // 2. Construire URI cible (réplique logique privée vault.uri)
-  const targetUri = buildVaultUri(vault.vaultPath, relativePath);
+  const targetUri = buildVaultUriFromPath(vault.vaultPath, relativePath);
 
   // 3. Copier cache → vault (FileSystem.copyAsync OK pour binaires)
   await FileSystem.copyAsync({ from: cacheUri, to: targetUri });
@@ -66,10 +66,27 @@ export async function persistBookPdf(
 }
 
 /**
+ * Reconstruit l'URI absolu file:// d'un PDF déjà persisté depuis une entrée
+ * manifeste. Réutilise `buildVaultUriFromPath` (même validation path-traversal
+ * que `VaultManager.uri()` — vault.ts:74-92).
+ *
+ * Phase 51-02 : exporté publiquement pour permettre à l'écran "Mes impressions"
+ * d'ouvrir un PDF du manifeste via `Print.printAsync({ uri })` ou `Linking.openURL`.
+ *
+ * @throws Error si `entry.chemin` contient `..` ou tente une sortie du vault.
+ */
+export function buildVaultPdfUri(
+  vault: VaultManager,
+  entry: BookManifestEntry,
+): string {
+  return buildVaultUriFromPath(vault.vaultPath, entry.chemin);
+}
+
+/**
  * Réplique la logique privée `VaultManager.uri()` (vault.ts:74-92).
  * Path traversal check identique. file:// prefix sur iOS si pas déjà un URI.
  */
-function buildVaultUri(vaultPath: string, relativePath: string): string {
+function buildVaultUriFromPath(vaultPath: string, relativePath: string): string {
   if (
     relativePath.includes('..') ||
     relativePath.startsWith('/') ||
