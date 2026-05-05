@@ -42,6 +42,7 @@ import {
   INITIAL_PHASE,
   type ExportPhase,
 } from './exportPhase';
+import { PostExportView } from './PostExportView';
 
 // Constantes module — convention CLAUDE.md.
 const STEPS_DURATION = [
@@ -195,13 +196,24 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
 
   const handleContinue = useCallback(() => {
     if (phase.kind !== 'ready' || !selectedStory) return;
+    // 51-03 : on entre dans la phase post-export sans fermer la modal.
+    // onSuccess sera appelé via handleDone (bouton "Terminé") une fois
+    // l'utilisateur a profité des 3 actions (Sauvegarder / Voir / Lulu).
     dispatch({
       type: 'GO_POST_EXPORT',
       uri: phase.uri,
       storyTitle: selectedStory.titre,
     });
-    onSuccess(phase.uri, selectedStory.titre);
-  }, [phase, selectedStory, onSuccess]);
+  }, [phase, selectedStory]);
+
+  const handleDone = useCallback(() => {
+    if (phase.kind === 'post-export') {
+      // Notifie l'écran parent (refresh manifeste) puis ferme la modal.
+      onSuccess(phase.uri, phase.storyTitle);
+    }
+    dispatch({ type: 'RESET' });
+    onClose();
+  }, [phase, onSuccess, onClose]);
 
   // Drag-to-dismiss bloqué pendant `generating` (RESEARCH Pitfall 7).
   const handleRequestClose = phase.kind === 'generating' ? () => {} : onClose;
@@ -393,8 +405,14 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
           </View>
         )}
 
-        {/* Phase post-export : rendu UI ajouté par le Plan 51-03. */}
-        {phase.kind === 'post-export' && null /* TODO 51-03 : rendu post-export ici */}
+        {/* Phase post-export : 3 actions Sauvegarder / Voir / Lulu (51-03). */}
+        {phase.kind === 'post-export' && (
+          <PostExportView
+            uri={phase.uri}
+            storyTitle={phase.storyTitle}
+            onDone={handleDone}
+          />
+        )}
       </SafeAreaView>
     </Modal>
   );

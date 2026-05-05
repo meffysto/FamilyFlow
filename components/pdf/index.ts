@@ -10,3 +10,5 @@ export type {
 
 export { BookExportModal } from './BookExportModal';
 export { ExportCard } from './ExportCard';
+export { PostExportView } from './PostExportView';
+export { LuluInstructionsModal } from './LuluInstructionsModal';
