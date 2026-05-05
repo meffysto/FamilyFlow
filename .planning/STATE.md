@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 Phase: 50 — QR audio + deep links ✅ complete
 Plan: —
 Status: Phase 50 livrée (4/4 plans), prête Phase 51 (UX export + manuel Lulu)
-Last activity: 2026-05-05 — Phase 50 clôturée (deep link family-vault://story/<id> + QR PDF + autoplay validé device)
+Last activity: 2026-05-05 — Quick 260505-pcl FAM-16 prix connus livré (4 commits)
 
 ### Quick Tasks Completed
 
@@ -80,6 +80,7 @@ Last activity: 2026-05-05 — Phase 50 clôturée (deep link family-vault://stor
 | 260428-kda | Preview/confirm modal vocal courses — VoiceCoursesReview + refactor handleVoiceResult | 2026-04-28 | 35072e8 | [260428-kda-preview-confirm-modal-pour-ajout-vocal-c](./quick/260428-kda-preview-confirm-modal-pour-ajout-vocal-c/) |
 | 260428-kqx | DictaphoneRecorder autoSubmit pour courses (skip écran édition + résumé IA) | 2026-04-28 | 6ee3919 | [260428-kqx-dictaphonerecorder-autosubmit-pour-cours](./quick/260428-kqx-dictaphonerecorder-autosubmit-pour-cours/) |
 | 260503-phase-b | Phase B Histoires — wizard slim (3-4 décisions) + écran Settings durables par enfant | 2026-05-03 | 792c207 | [260503-phase-b-stories-wizard](./quick/260503-phase-b-stories-wizard/) |
+| 260505-pcl | FAM-16 Prix connus pour les listes de courses (override manuel + pricebook vault) | 2026-05-05 | 3b20ddc | [260505-pcl-prix-connus-listes-courses](./quick/260505-pcl-prix-connus-listes-courses/) |
 
 ## Performance Metrics
 
