@@ -7,3 +7,5 @@ export type {
   ExportAction,
   GeneratingStep,
 } from './exportPhase';
+
+export { BookExportModal } from './BookExportModal';
