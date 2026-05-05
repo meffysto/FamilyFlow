@@ -430,7 +430,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       {showFAB && (
         <FAB
           actions={fabActions}
-          bottom={useFabPanel ? insets.bottom + 4 : undefined}
+          bottom={useFabPanel ? Math.max(insets.bottom - 8, 4) : undefined}
           variant={useFabPanel ? 'panel' : 'speed-dial'}
         />
       )}

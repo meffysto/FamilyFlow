@@ -89,7 +89,7 @@ export function FloatingPillNav({ activeTab = 'index', onTabPress }: FloatingPil
 
   return (
     <View
-      style={[styles.container, { bottom: insets.bottom + Spacing.xs }]}
+      style={[styles.container, { bottom: Math.max(insets.bottom - Spacing.md, Spacing.xs) }]}
       pointerEvents="box-none"
     >
       {/* ── Pillule plein (centrée, taille fixe) ─────────────────────────── */}
