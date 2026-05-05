@@ -475,10 +475,12 @@ Plans (à détailler en `/gsd-plan-phase 49`):
 5. `npx tsc --noEmit` clean, `npx jest --no-coverage` clean (test unitaire du parsing deep link)
 
 Plans (à détailler en `/gsd-plan-phase 50`):
-- [ ] 50-01-PLAN.md — Configuration scheme + Universal Links app.json
-- [ ] 50-02-PLAN.md — Route app/story/[id].tsx + handler deep link + autoplay audio
-- [ ] 50-03-PLAN.md — Génération QR code SVG haute résolution embarqué PDF
-- [ ] 50-04-PLAN.md — Test scan device + fallback graceful + non-régression
+- [x] 50-01-PLAN.md — Configuration scheme + Universal Links app.json ✅ 2026-05-05
+- [x] 50-02-PLAN.md — Route app/story/[id].tsx + handler deep link + autoplay audio ✅ 2026-05-05
+- [x] 50-03-PLAN.md — Génération QR code SVG haute résolution embarqué PDF ✅ 2026-05-05
+- [x] 50-04-PLAN.md — Test scan device + fallback graceful + non-régression ✅ 2026-05-05 (scan QR papier déféré Phase 51, autoplay validé device via écran dev)
+
+**Status:** ✅ Phase 50 complete — voir `phases/50-qr-audio-deep-links/50-PHASE-SUMMARY.md`
 
 ### Phase 51: UX export + manuel Lulu + non-régression
 

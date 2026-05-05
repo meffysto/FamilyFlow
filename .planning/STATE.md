@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Export PDF imprimable des histoires
 status: planning
-last_updated: "2026-05-04T00:00:00.000Z"
-last_activity: 2026-05-04
+last_updated: "2026-05-05T00:00:00.000Z"
+last_activity: 2026-05-05
 progress:
   total_phases: 0
   completed_phases: 0
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 50 — QR audio + deep links ✅ complete
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-04 — Milestone v1.8 started
+Status: Phase 50 livrée (4/4 plans), prête Phase 51 (UX export + manuel Lulu)
+Last activity: 2026-05-05 — Phase 50 clôturée (deep link family-vault://story/<id> + QR PDF + autoplay validé device)
 
 ### Quick Tasks Completed
 
