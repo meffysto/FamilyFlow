@@ -1560,8 +1560,21 @@ export function useVaultInternal(): VaultState {
         name: 'love-notes',
         detect: async () => {
           try {
-            const files = await vault.listFilesRecursive(LOVENOTES_DIR, '.md');
-            const mtimes = await Promise.all(files.map(f => vault.getFileMtime(f)));
+            // Compter les notes réelles + placeholders iCloud (.md.icloud) non téléchargés.
+            // listFilesRecursive filtre les entrées commençant par '.' → rate les nouveaux
+            // fichiers arrivés d'un autre iPhone mais pas encore téléchargés depuis iCloud.
+            const subdirs = await vault.listDir(LOVENOTES_DIR).catch(() => [] as string[]);
+            let totalCount = 0;
+            for (const subdir of subdirs) {
+              if (subdir.startsWith('.')) continue;
+              const entries = await vault.listDir(`${LOVENOTES_DIR}/${subdir}`).catch(() => [] as string[]);
+              totalCount += entries.filter(f => f.endsWith('.md') || f.endsWith('.md.icloud')).length;
+            }
+            const cachedCount = readCacheSync()?.loveNotes?.length ?? 0;
+            if (totalCount !== cachedCount) return true;
+            // Vérifier aussi les mtimes pour changements de statut (lu/non-lu) sur fichiers déjà téléchargés
+            const downloadedFiles = await vault.listFilesRecursive(LOVENOTES_DIR, '.md');
+            const mtimes = await Promise.all(downloadedFiles.map(f => vault.getFileMtime(f)));
             return mtimes.some(m => m !== null && m > cacheSavedAtMs);
           } catch { return false; }
         },
