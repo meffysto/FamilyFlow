@@ -1101,6 +1101,24 @@ RÈGLES DE CONTINUITÉ :
   }
   const vocabLine = ageRangeRules ? `- ${ageRangeRules}` : `- Vocabulaire adapté à ${story.enfantAge}`;
 
+  // ─── Anti-redondance vocabulaire ────────────────────────────────────────
+  // Clichés détectés en audit rétrospectif (cf .planning/quick/260506-stories-eval-baseline/ANALYSIS.md) :
+  // "doucement" 4-8x/histoire, "tout doucement, tout doucement", "Un pas. Deux pas. Trois pas.",
+  // "petits pieds dans l'herbe", "cœur tout chaud" — saturent 14/20 histoires.
+  const antiRedundancyRules = `
+
+ANTI-CLICHÉS (RÈGLE CRITIQUE — les histoires précédentes sont saturées de ces formules) :
+- "doucement" : MAXIMUM 3 occurrences dans toute l'histoire — compte strictement
+- INTERDIT : la répétition immédiate "tout doucement, tout doucement"
+- INTERDIT : la formule "Un pas. Deux pas. Trois pas." — varie : "Il avance, courageux", "Petit pas après petit pas, sans hésiter", "Un, deux, trois — il marche !", "Pas après pas, il s'aventure"
+- INTERDIT : la chaîne "tout est doux, tout est calme, tout est bien" (peu importe l'ordre des adjectifs)
+- "petits pieds dans l'herbe" / "petits pieds nus" : MAX 1 occurrence par histoire
+- "cœur (tout) chaud (et fier)" : MAX 1 occurrence par histoire
+- Marqueurs d'apaisement à VARIER (n'en utilise pas 2x à la suite) : paisible, apaisé, serein, tranquille, calme, câlin, blotti, velouté, ouaté, feutré, silencieux, léger
+- Marqueurs d'amour/sécurité (chaud, doux, tendre, tendrement, chaleur) : MAX 5 occurrences cumulées dans toute l'histoire
+- "tout" intensif ("tout doucement", "tout chaud", "tout doux", "tout content") : MAX 4 occurrences cumulées
+`;
+
   // V2 Mode Spectacle : enrichit le format de sortie avec un script de bruitages
   const spectacleEnabled = story.spectacle === true && (story.availableSfxTags?.length ?? 0) > 0;
   const sfxList = spectacleEnabled
@@ -1256,7 +1274,7 @@ ${vocabLine}
 ${moodContext ? `- Adapte le ton selon l'humeur : ${moodContext}` : ''}
 ${quotesContext ? `- Intègre subtilement une expression de l'enfant : ${quotesContext}` : ''}
 ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesContext}` : ''}
-${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${performanceTagsRules}${charactersRules}${bookMemorySection}${castingLockedSection}${spectacleRules}${scenesRules}
+${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${antiRedundancyRules}${performanceTagsRules}${charactersRules}${bookMemorySection}${castingLockedSection}${spectacleRules}${scenesRules}
 - Le champ "memorySummary" doit être un résumé NEUTRE en 4-5 phrases focalisé sur ce qui pourrait revenir dans un chapitre futur (lieux, personnages introduits, objets clés, état final du héros). Pas d'émotion, pas de style narratif — c'est une note de continuité.
 - Répondre UNIQUEMENT en JSON valide : ${outputFormat}
 - Aucun texte en dehors du JSON`;
