@@ -72,7 +72,7 @@ function getActiveEvents(events: WearEvent[]): WearEvent[] {
  * @param activeEvents   - evenements existants (actifs + repares)
  * @param crops          - cultures plantees actuellement
  * @param buildings      - batiments places
- * @param totalPlots     - nombre total de parcelles deverrouillees
+ * @param unlockedPlotIndexes - plotIndex stables des parcelles débloquées
  * @param fullBuildingSince - cellId -> ISO date ou le batiment est devenu plein
  * @param now            - date courante
  * @returns nouveaux evenements a ajouter (peut etre vide)
@@ -81,7 +81,7 @@ export function checkWearEvents(
   activeEvents: WearEvent[],
   crops: PlantedCrop[],
   buildings: PlacedBuilding[],
-  totalPlots: number,
+  unlockedPlotIndexes: number[],
   fullBuildingSince: Record<string, string>,
   now: Date = new Date(),
 ): WearEvent[] {
@@ -98,7 +98,7 @@ export function checkWearEvents(
   if (remaining - newEvents.length > 0 && Math.random() < DAILY_CHANCE.broken_fence) {
     // Cible une parcelle pas deja bloquee
     const candidates: number[] = [];
-    for (let i = 0; i < totalPlots; i++) {
+    for (const i of unlockedPlotIndexes) {
       if (!activeTargets.has(`broken_fence:${i}`)) candidates.push(i);
     }
     if (candidates.length > 0) {
@@ -130,7 +130,7 @@ export function checkWearEvents(
 
   // ── Weeds (parcelle vide >48h) ──
   if (remaining - newEvents.length > 0) {
-    for (let i = 0; i < totalPlots; i++) {
+    for (const i of unlockedPlotIndexes) {
       if (remaining - newEvents.length <= 0) break;
       if (occupiedPlots.has(i)) continue;
       if (activeTargets.has(`weeds:${i}`)) continue;

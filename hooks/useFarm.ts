@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import type { ContributionType } from '../lib/village';
-import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
+import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { classifyHarvestTier, rollSporeeDropOnHarvest, tryIncrementSporeeCount, rollWagerDropBack, getLocalDateKey } from '../lib/mascot/sporee-economy';
 import { computeCumulTarget, validateWagerOnHarvest, maybeRecompute } from '../lib/mascot/wager-engine';
 import { computeWagerTotalDays, computeWagerCumul, getMultiplierForTier, ALLOWED_DURATIONS } from '../lib/mascot/wager-ui-helpers';
@@ -17,7 +17,7 @@ import type { Task } from '../lib/types';
 import { useToast } from '../contexts/ToastContext';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { FarmInventory, CraftedItem } from '../lib/mascot/types';
-import { isLargeCropPlot } from '../lib/mascot/world-grid';
+import { isLargeCropPlot, getExpandedCropCells, cellIdToStableIndex } from '../lib/mascot/world-grid';
 import { getTreeStageInfo } from '../lib/mascot/engine';
 import {
   constructBuilding,
@@ -802,8 +802,9 @@ export function useFarm(
     const buildings = profile.farmBuildings ?? [];
     const vaultProfile = profiles?.find(p => p.id === profileId);
     const treeStage = getTreeStageInfo(vaultProfile?.level ?? 1).stage;
-    const totalPlots = getUnlockedPlotCount(treeStage);
     const profileTech = getTechBonuses(profile.farmTech ?? []);
+    // Phase 53 — wear events utilisent l'index stable des parcelles (cell.id-based)
+    const unlockedPlotIndexes = getExpandedCropCells(treeStage, profileTech).map(c => cellIdToStableIndex(c.id));
     const now = new Date();
 
     // Calculer fullBuildingSince : heuristique basee sur le remplissage des batiments
@@ -845,7 +846,7 @@ export function useFarm(
       return [];
     }
 
-    const newEvents = checkWearEvents(currentEvents, crops, buildings, totalPlots, fullBuildingSince, now);
+    const newEvents = checkWearEvents(currentEvents, crops, buildings, unlockedPlotIndexes, fullBuildingSince, now);
     if (newEvents.length === 0) {
       // Juste nettoyer les anciens evenements si necessaire
       const cleaned = cleanupOldEvents(currentEvents, now);
@@ -1025,10 +1026,8 @@ export function useFarm(
     if (!cost || coins < cost) throw new Error('Pas assez de feuilles');
 
     const vaultProfile = profiles?.find(p => p.id === profileId);
-    const treeStage = getTreeStageInfo(vaultProfile?.level ?? 1).stage;
-    const maxPlots = getUnlockedPlotCount(treeStage) + 10; // marge pour extensions
-
-    const newLevels = doUpgrade(farmData.plotLevels, plotIndex, maxPlots);
+    // Phase 53 — index stable : 0..14 base + 15..19 expansions + 20 mega = 21 slots max
+    const newLevels = doUpgrade(farmData.plotLevels, plotIndex, 21);
     farmData.plotLevels = newLevels;
 
     const profileName = vaultProfile?.name ?? profileId;

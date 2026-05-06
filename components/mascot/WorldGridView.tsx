@@ -27,6 +27,7 @@ import {
   EXPANSION_CROP_CELLS,
   EXPANSION_BUILDING_CELL,
   EXPANSION_LARGE_CROP_CELL,
+  cellIdToStableIndex,
   type WorldCell,
 } from '../../lib/mascot/world-grid';
 import { type TechBonuses } from '../../lib/mascot/tech-engine';
@@ -769,8 +770,9 @@ export function WorldGridView({
     if (paused) return;
     const timer = setInterval(() => {
       const currentCrops = parseCrops(farmCropsCSVRef.current);
-      const nonMature = allCropCells.filter((_cell, idx) => {
-        const crop = currentCrops.find(c => c.plotIndex === idx);
+      const nonMature = allCropCells.filter(cell => {
+        const stableIdx = cellIdToStableIndex(cell.id);
+        const crop = currentCrops.find(c => c.plotIndex === stableIdx);
         return crop && crop.currentStage < 4;
       });
       if (nonMature.length === 0) return;
@@ -804,8 +806,8 @@ export function WorldGridView({
     <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents="box-none">
       {/* Cellules de culture debloquees */}
       {unlockedCrops.map(cell => {
-        // Mapper l'ancien plotIndex sur le cellId
-        const cellIdx = unlockedCrops.indexOf(cell);
+        // Index stable basé sur cell.id — invariant au stade d'arbre
+        const cellIdx = cellIdToStableIndex(cell.id);
         const crop = crops.find(c => c.plotIndex === cellIdx) ?? null;
         const cropDef = crop ? (CROP_CATALOG.find(c => c.id === crop.cropId) ?? null) : null;
         const isMature = !!crop && crop.currentStage >= 4;
@@ -838,8 +840,7 @@ export function WorldGridView({
 
       {/* Cellules d'expansion culture — debloquees */}
       {unlockedExpansionCrops.map(cell => {
-        const allExpandedCells = [...unlockedCrops, ...unlockedExpansionCrops];
-        const cellIdx = allExpandedCells.indexOf(cell);
+        const cellIdx = cellIdToStableIndex(cell.id);
         const crop = crops.find(c => c.plotIndex === cellIdx) ?? null;
         const cropDef = crop ? (CROP_CATALOG.find(c => c.id === crop.cropId) ?? null) : null;
         const isMature = !!crop && crop.currentStage >= 4;
@@ -883,8 +884,7 @@ export function WorldGridView({
       {/* Parcelle geante — debloquee */}
       {largeCropUnlocked && (() => {
         const cell = expansionLargeCropCell;
-        const allExpandedCells = [...unlockedCrops, ...unlockedExpansionCrops, cell];
-        const cellIdx = allExpandedCells.indexOf(cell);
+        const cellIdx = cellIdToStableIndex(cell.id);
         const crop = crops.find(c => c.plotIndex === cellIdx) ?? null;
         const cropDef = crop ? (CROP_CATALOG.find(c => c.id === crop.cropId) ?? null) : null;
         const isMature = !!crop && crop.currentStage >= 4;

@@ -60,7 +60,10 @@ import { VALID_THEMES, migrateThemeId } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
 import { parseBuildings, parseInventory, serializeBuildings, serializeInventory } from './mascot/building-engine';
 import { parseHarvestInventory, parseCraftedItems, parseRareSeeds, serializeHarvestInventory, serializeCraftedItems, serializeRareSeeds } from './mascot/craft-engine';
-import { parseWearEvents, serializeWearEvents } from './mascot/wear-engine';
+import { parseWearEvents, serializeWearEvents, type WearEvent } from './mascot/wear-engine';
+import { getTechBonuses } from './mascot/tech-engine';
+import { parseCrops as parseFarmCrops, serializeCrops as serializeFarmCrops } from './mascot/farm-engine';
+import { FIRST_EXPANSION_STABLE_INDEX, MEGA_STABLE_INDEX } from './mascot/world-grid';
 import type { CompanionData, CompanionSpecies, FeedBuff } from './mascot/companion-types';
 import { calculateLevel } from './gamification';
 import type { TreeSpecies } from './mascot/types';
@@ -917,20 +920,120 @@ export function parseFarmProfile(content: string): FarmProfileData {
     ? props.farm_tech.split(',').map((s) => s.trim()).filter(Boolean)
     : [];
 
+  // ─── Phase 53 — Migration plotIndex positionnel → stable (cell.id) ───────
+  //
+  // Avant Phase 53, plotIndex correspondait à la position dans le tableau
+  // des cellules débloquées (qui glisse quand le stade d'arbre augmente).
+  // Désormais, plotIndex est un index stable basé sur cell.id (ranks 0..14
+  // pour la base, 15..19 pour les expansions, 20 pour la mega parcelle).
+  // Migration : on déplace les valeurs des slots positionnels d'expansion/mega
+  // vers les slots stables 15..20. Les slots de base (0..baseCount-1) sont
+  // déjà alignés (CROP_CELLS est trié par unlockOrder), pas de remap.
+  const dataVersion = props.farm_data_v ? parseInt(props.farm_data_v, 10) : 1;
+  const needsMigration = dataVersion < 2;
+
+  const techBonusesForMigration = getTechBonuses(farmTech);
+  const expCount = techBonusesForMigration.extraCropCells;
+  const hasMega = techBonusesForMigration.hasLargeCropCell;
+
+  let rawPlotLevels = props.plot_levels
+    ? props.plot_levels.split(',').map(s => parseInt(s, 10) || 1)
+    : undefined;
+
+  // Heuristique : tableau d'origine = baseCount + expCount + (mega?1:0)
+  const inferredBaseCount = rawPlotLevels && rawPlotLevels.length > 0
+    ? Math.max(0, Math.min(12, rawPlotLevels.length - expCount - (hasMega ? 1 : 0)))
+    : 0;
+
+  if (needsMigration && rawPlotLevels) {
+    const trailingStart = inferredBaseCount;
+    const hasTrailing = rawPlotLevels.length > trailingStart;
+    if (hasTrailing) {
+      const migrated = Array<number>(21).fill(1);
+      // Base : 0..inferredBaseCount-1 sont déjà alignés (rank stable = rank positionnel)
+      for (let i = 0; i < inferredBaseCount && i < rawPlotLevels.length; i++) {
+        migrated[i] = rawPlotLevels[i] ?? 1;
+      }
+      // Expansions positionnelles → ranks stables 15..19
+      for (let j = 0; j < expCount; j++) {
+        const oldIdx = trailingStart + j;
+        if (oldIdx < rawPlotLevels.length) {
+          migrated[FIRST_EXPANSION_STABLE_INDEX + j] = rawPlotLevels[oldIdx] ?? 1;
+        }
+      }
+      // Mega → rank stable 20
+      if (hasMega) {
+        const oldMegaIdx = trailingStart + expCount;
+        if (oldMegaIdx < rawPlotLevels.length) {
+          migrated[MEGA_STABLE_INDEX] = rawPlotLevels[oldMegaIdx] ?? 1;
+        }
+      }
+      // Trim trailing 1s pour minimiser la taille sérialisée
+      let lastNonOne = -1;
+      for (let i = migrated.length - 1; i >= 0; i--) {
+        if (migrated[i] > 1) { lastNonOne = i; break; }
+      }
+      rawPlotLevels = lastNonOne >= 0 ? migrated.slice(0, lastNonOne + 1) : undefined;
+    }
+  }
+
+  // Migration crops : déplacer plotIndex positionnel d'expansion/mega vers stable
+  let farmCropsCSV = props.farm_crops ?? '';
+  if (needsMigration && farmCropsCSV) {
+    const crops = parseFarmCrops(farmCropsCSV);
+    let mutated = false;
+    const remapped = crops.map(c => {
+      // Index < inferredBaseCount → déjà aligné (base CROP_CELLS unlockOrder)
+      if (c.plotIndex < inferredBaseCount) return c;
+      // Trailing : expansion ou mega
+      const offset = c.plotIndex - inferredBaseCount;
+      if (offset < expCount) {
+        mutated = true;
+        return { ...c, plotIndex: FIRST_EXPANSION_STABLE_INDEX + offset };
+      }
+      if (hasMega && offset === expCount) {
+        mutated = true;
+        return { ...c, plotIndex: MEGA_STABLE_INDEX };
+      }
+      // En dehors des bornes connues → laisser tel quel
+      return c;
+    });
+    if (mutated) farmCropsCSV = serializeFarmCrops(remapped);
+  }
+
+  // Migration wearEvents : fence/weeds avec targetId numérique positionnel → stable
+  let wearEvents = parseWearEvents(props.wear_events);
+  if (needsMigration && wearEvents.length > 0) {
+    wearEvents = wearEvents.map((ev: WearEvent) => {
+      if (ev.type !== 'broken_fence' && ev.type !== 'weeds') return ev;
+      const old = parseInt(ev.targetId, 10);
+      if (isNaN(old)) return ev;
+      if (old < inferredBaseCount) return ev; // base aligné
+      const offset = old - inferredBaseCount;
+      if (offset < expCount) {
+        return { ...ev, targetId: String(FIRST_EXPANSION_STABLE_INDEX + offset) };
+      }
+      if (hasMega && offset === expCount) {
+        return { ...ev, targetId: String(MEGA_STABLE_INDEX) };
+      }
+      return ev;
+    });
+  }
+
   return {
     gardenName: props.garden_name || undefined,
     treeSpecies,
     mascotDecorations,
     mascotInhabitants,
     mascotPlacements,
-    farmCrops: props.farm_crops ?? '',
+    farmCrops: farmCropsCSV,
     farmBuildings: parseBuildings(props.farm_buildings),
     farmInventory: parseInventory(props.farm_inventory),
     harvestInventory: parseHarvestInventory(props.farm_harvest_inventory),
     craftedItems: parseCraftedItems(props.farm_crafted_items),
     farmTech,
     farmRareSeeds: parseRareSeeds(props.farm_rare_seeds),
-    wearEvents: parseWearEvents(props.wear_events),
+    wearEvents,
     companion: parseCompanion(props.companion),
     giftHistory: props.gift_history,
     giftsSentToday: props.gifts_sent_today,
@@ -948,9 +1051,7 @@ export function parseFarmProfile(content: string): FarmProfileData {
     trade_sent_today: props.trade_sent_today || undefined,
     activeExpeditions: parseActiveExpeditions(props.active_expeditions),
     expeditionPity: props.expedition_pity ? parseInt(props.expedition_pity, 10) : 0,
-    plotLevels: props.plot_levels
-      ? props.plot_levels.split(',').map(s => parseInt(s, 10) || 1)
-      : undefined,
+    plotLevels: rawPlotLevels,
     dailyDealPurchases: (() => {
       if (!props.daily_deal_purchases) return undefined;
       const parts = props.daily_deal_purchases.split('|');
@@ -1036,6 +1137,8 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   if (data.plotLevels && data.plotLevels.some(l => l > 1)) {
     lines.push(`plot_levels: ${data.plotLevels.join(',')}`);
   }
+  // Phase 53 — sentinel d'index stable pour les parcelles (cell.id-based)
+  lines.push(`farm_data_v: 2`);
   if (data.dailyDealPurchases) {
     const { dateKey, itemId, purchased } = data.dailyDealPurchases;
     lines.push(`daily_deal_purchases: ${dateKey}|${itemId}|${purchased}`);

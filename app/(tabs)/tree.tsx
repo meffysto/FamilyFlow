@@ -107,7 +107,7 @@ import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG }
 import type { GiftEntry } from '../../lib/mascot/gift-engine';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops, RARE_SEED_DROP_RULES, PLOT_LEVEL_BONUSES, getPlotLevel, getMainPlotIndex } from '../../lib/mascot/farm-engine';
 import { CROP_ICONS } from '../../lib/mascot/crop-sprites';
-import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL, CAMP_EXPLORATION_CELL } from '../../lib/mascot/world-grid';
+import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL, CAMP_EXPLORATION_CELL, stableIndexToCell, cellIdToStableIndex } from '../../lib/mascot/world-grid';
 import { useExpeditions } from '../../hooks/useExpeditions';
 import { ExpeditionsSheet } from '../../components/mascot/ExpeditionsSheet';
 import { CampExplorationCell } from '../../components/mascot/CampExplorationCell';
@@ -1391,29 +1391,28 @@ export default function TreeScreen() {
   // Crops prêtes à récolter — positions pour le compagnon
   const harvestables = useMemo(() => {
     const crops = parseCrops(profile?.farmCrops ?? '');
-    const cells = getUnlockedCropCells(stageInfo.stage);
     return crops
       .filter(c => c.currentStage >= 4)
       .map(c => {
-        const cell = cells.find(cl => cl.unlockOrder === c.plotIndex || cells.indexOf(cl) === c.plotIndex);
+        // Phase 53 — plotIndex est un index stable basé sur cell.id
+        const cell = stableIndexToCell(c.plotIndex);
         if (!cell) return null;
         const cropDef = CROP_CATALOG.find(cd => cd.id === c.cropId);
         return { fx: cell.x, fy: cell.y, cropName: cropDef?.emoji ? `${cropDef.emoji} ${t(`farm.crop.${c.cropId}`)}` : c.cropId };
       })
       .filter(Boolean) as { fx: number; fy: number; cropName: string }[];
-  }, [profile?.farmCrops, stageInfo.stage, t]);
+  }, [profile?.farmCrops, t]);
 
   // Positions Y des rangées cultivées — mémoïsé pour ne pas reset la patrouille du compagnon
   const plantedCropYs = useMemo(() => {
     const crops = parseCrops(profile?.farmCrops ?? '');
-    const allCells = getExpandedCropCells(stageInfo.stage, techBonuses);
     const ys = new Set<number>();
     crops.forEach(c => {
-      const cell = allCells[c.plotIndex];
+      const cell = stableIndexToCell(c.plotIndex);
       if (cell) ys.add(cell.y);
     });
     return [...ys];
-  }, [profile?.farmCrops, stageInfo.stage, techBonuses]);
+  }, [profile?.farmCrops]);
 
   // Positions Y des bâtiments construits — mémoïsé pour ne pas reset la patrouille du compagnon
   const builtBuildingYs = useMemo(() => {
@@ -1508,12 +1507,8 @@ export default function TreeScreen() {
   /** Tap sur une cellule de culture */
   const handleCropCellPress = useCallback((cellId: string, crop: PlantedCrop | null) => {
     if (!profile || !isOwnTree) return;
-    // Inclure les parcelles d'expansion tech dans la recherche
-    const cells = techBonuses
-      ? getExpandedCropCells(stageInfo.stage, techBonuses)
-      : getUnlockedCropCells(stageInfo.stage);
-    const cellIdx = cells.findIndex((c: any) => c.id === cellId);
-    if (cellIdx < 0) return;
+    // Phase 53 — index stable basé sur cell.id (insensible au stade d'arbre)
+    const cellIdx = cellIdToStableIndex(cellId);
 
     if (crop && crop.currentStage >= 4) {
       // Recolte → feedback unique via HarvestCardToast (carte en bas)

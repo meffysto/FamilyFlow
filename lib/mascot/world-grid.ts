@@ -114,12 +114,10 @@ export const CAMP_EXPLORATION_CELL: WorldCell = {
   id: 'camp_exp', col: 0, row: 5, x: 0.10, y: 0.90, cellType: 'any', unlockOrder: 0, size: 'large',
 };
 
-/** Verifie si un plotIndex correspond a la parcelle geante (double recolte) */
-export function isLargeCropPlot(plotIndex: number, treeStage: TreeStage, techBonuses: TechBonuses): boolean {
+/** Verifie si un plotIndex stable correspond a la parcelle geante (double recolte) */
+export function isLargeCropPlot(plotIndex: number, _treeStage: TreeStage, techBonuses: TechBonuses): boolean {
   if (!techBonuses.hasLargeCropCell) return false;
-  const cells = getExpandedCropCells(treeStage, techBonuses);
-  const cell = cells[plotIndex];
-  return cell?.id === EXPANSION_LARGE_CROP_CELL.id;
+  return plotIndex === STABLE_INDEX_BY_CELL_ID[EXPANSION_LARGE_CROP_CELL.id];
 }
 
 /** Retourne les cellules crop debloquees + les extensions tech actives */
@@ -154,3 +152,62 @@ export const CELL_SIZES = {
   small: 52,
   large: 64,
 } as const;
+
+// ── Index stable des parcelles (Phase 53) ──────────────────────────
+//
+// Les parcelles sont identifiées par un index stable indépendant du stade
+// d'arbre. Avant ce changement, plotIndex correspondait à la position dans
+// le tableau des cellules débloquées — qui glissait quand l'arbre passait
+// d'arbuste (5 parcelles de base) à arbre (7 parcelles de base), faisant
+// "voyager" les upgrades de la mega parcelle vers une autre cellule.
+//
+// Mapping : CROP_CELLS par unlockOrder (0..14) + EXPANSION_CROP_CELLS
+// (15..19) + EXPANSION_LARGE_CROP_CELL (20). Pour les parcelles de base,
+// l'ordre est identique au schéma positionnel précédent (tri par
+// unlockOrder), donc aucune migration n'est nécessaire pour les ranks
+// 0..currentBaseCount-1. Seuls les ranks d'expansion/mega ont changé.
+
+const STABLE_INDEX_BY_CELL_ID: Record<string, number> = (() => {
+  const map: Record<string, number> = {};
+  CROP_CELLS.forEach((cell, idx) => {
+    map[cell.id] = idx;
+  });
+  EXPANSION_CROP_CELLS.forEach((cell, idx) => {
+    map[cell.id] = 15 + idx;
+  });
+  map[EXPANSION_LARGE_CROP_CELL.id] = 20;
+  return map;
+})();
+
+const CELL_BY_STABLE_INDEX: Record<number, WorldCell> = (() => {
+  const map: Record<number, WorldCell> = {};
+  for (const [cellId, idx] of Object.entries(STABLE_INDEX_BY_CELL_ID)) {
+    const cell =
+      CROP_CELLS.find(c => c.id === cellId) ??
+      EXPANSION_CROP_CELLS.find(c => c.id === cellId) ??
+      (EXPANSION_LARGE_CROP_CELL.id === cellId ? EXPANSION_LARGE_CROP_CELL : undefined);
+    if (cell) map[idx] = cell;
+  }
+  return map;
+})();
+
+/** Index stable d'une cellule de culture (insensible au stade d'arbre). */
+export function cellIdToStableIndex(cellId: string): number {
+  return STABLE_INDEX_BY_CELL_ID[cellId] ?? 0;
+}
+
+/** Cellule correspondant à un index stable, ou undefined si inconnu. */
+export function stableIndexToCell(plotIndex: number): WorldCell | undefined {
+  return CELL_BY_STABLE_INDEX[plotIndex];
+}
+
+/** Vrai si l'index stable pointe vers la mega parcelle. */
+export function isStableMegaIndex(plotIndex: number): boolean {
+  return plotIndex === STABLE_INDEX_BY_CELL_ID[EXPANSION_LARGE_CROP_CELL.id];
+}
+
+/** Index stable de la mega parcelle (constante). */
+export const MEGA_STABLE_INDEX = STABLE_INDEX_BY_CELL_ID[EXPANSION_LARGE_CROP_CELL.id];
+
+/** Premier index stable des parcelles d'expansion. */
+export const FIRST_EXPANSION_STABLE_INDEX = 15;
