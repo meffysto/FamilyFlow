@@ -171,7 +171,7 @@ export default function MealsScreen() {
   const { showToast } = useToast();
   const { t } = useTranslation();
 
-  const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
+  const { tab: tabParam, addNew: addNewParam } = useLocalSearchParams<{ tab?: string; addNew?: string }>();
   const [tab, setTab] = useState<Tab>('repas');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -208,6 +208,15 @@ export default function MealsScreen() {
   useEffect(() => {
     if (tabParam === 'repas' || tabParam === 'courses' || tabParam === 'recettes') setTab(tabParam);
   }, [tabParam]);
+
+  // Focus l'input d'ajout courses quand on arrive avec ?addNew=… (FAB panel "Courses").
+  // Délai pour laisser le tab se monter avant de demander le focus.
+  useEffect(() => {
+    if (!addNewParam) return;
+    if (tab !== 'courses') return;
+    const timer = setTimeout(() => inputRef.current?.focus(), 250);
+    return () => clearTimeout(timer);
+  }, [addNewParam, tab]);
 
   // Lazy-load recettes au premier accès
   useEffect(() => { loadRecipes(); }, [loadRecipes]);

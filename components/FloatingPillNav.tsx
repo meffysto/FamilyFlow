@@ -95,7 +95,7 @@ function PillBadge({ kind, value, parchBg }: TabBadge & { parchBg: string }) {
   }
   return (
     <View style={[badgeStyles.progress, { backgroundColor: primary, borderColor: parchBg }]}>
-      <Text style={[badgeStyles.progressText, { color: colors.onPrimary }]} numberOfLines={1}>
+      <Text style={[badgeStyles.progressText, { color: colors.onPrimary }]} allowFontScaling={false}>
         {value}
       </Text>
     </View>
@@ -504,19 +504,23 @@ const badgeStyles = StyleSheet.create({
   },
   progress: {
     position: 'absolute',
-    top: -5,
-    right: -8,
+    top: -6,
+    right: -10,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 999,
-    minWidth: 16,
+    minWidth: 18,
+    height: 16,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1.5,
   },
   progressText: {
-    fontSize: 9.5,
+    fontFamily: FontFamily.handwriteSemibold,
+    fontSize: 10,
     fontWeight: '700' as const,
-    lineHeight: 11,
-    letterSpacing: 0.2,
+    lineHeight: 12,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
 });

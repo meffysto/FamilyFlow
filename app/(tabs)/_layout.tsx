@@ -41,6 +41,7 @@ import {
   Camera,
   UtensilsCrossed,
   NotebookPen,
+  ShoppingCart,
   // Icônes pour la pill compacte sur écrans profonds (cohérent avec more.tsx)
   CalendarDays,
   Package,
@@ -366,7 +367,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   const fabActionsFull: FABAction[] = [
     { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push(`/tasks?addNew=${Date.now()}`) },
     { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push(`/rdv?addNew=${Date.now()}`) },
-    { id: 'meal', Icon: UtensilsCrossed, label: 'Repas', onPress: () => router.push(`/meals?addNew=${Date.now()}`) },
+    { id: 'courses', Icon: ShoppingCart, label: 'Courses', onPress: () => router.push(`/meals?tab=courses&addNew=${Date.now()}`) },
     { id: 'note', Icon: NotebookPen, label: 'Note', onPress: () => router.push(`/notes?addNew=${Date.now()}`) },
     { id: 'journal', Icon: BookOpen, label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
     { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push(`/photos?addNew=${Date.now()}`) },
