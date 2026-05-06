@@ -974,6 +974,12 @@ export interface StoryGenerationConfig {
   elevenLabsModel?: import('./types').ElevenLabsModel;
   /** Tranche d'âge cible — règle vocabulaire/thèmes (livres/chapitres) */
   trancheAge?: '3-5' | '6-8' | '9+';
+  /** Mémoire courte cross-stories — 5 dernières histoires du même enfant (titres + incipits anonymisés) pour anti-doublons */
+  recentHistory?: {
+    titles: string[];           // titres anonymisés, ordre récent → ancien
+    incipits: string[];         // ~80 premiers chars du texte de chaque histoire, anonymisés (même ordre)
+    memoryReuseCount: number;   // sur les 5 dernières, combien réutilisent le memory courant comme pivot
+  };
   /** Contexte livre — présent uniquement pour les chapitres N>=2 d'un livre */
   book?: {
     livreId: string;
@@ -1118,6 +1124,35 @@ ANTI-CLICHÉS (RÈGLE CRITIQUE — les histoires précédentes sont saturées de
 - Marqueurs d'amour/sécurité (chaud, doux, tendre, tendrement, chaleur) : MAX 5 occurrences cumulées dans toute l'histoire
 - "tout" intensif ("tout doucement", "tout chaud", "tout doux", "tout content") : MAX 4 occurrences cumulées
 `;
+
+  // ─── Mémoire courte cross-stories (anti-doublons titres / incipits / memory) ───
+  // Cible P3 saturation memory, P5 titres dupliqués, P7 quasi-clones (audit 260506).
+  let recentHistorySection = '';
+  if (story.recentHistory && story.recentHistory.titles.length > 0) {
+    const rh = story.recentHistory;
+    const lines = rh.titles.map((t, i) => {
+      const incipit = rh.incipits[i] ?? '';
+      return `  ${i + 1}. "${t}"${incipit ? ` — incipit : « ${incipit}${incipit.length >= 80 ? '…' : ''} »` : ''}`;
+    }).join('\n');
+    const memoryWarning = rh.memoryReuseCount >= 3
+      ? `\n⚠️ ATTENTION : le souvenir-pivot fourni dans "Souvenirs récents" a DÉJÀ été utilisé comme moment-clé dans ${rh.memoryReuseCount} des 5 dernières histoires. Il est ÉPUISÉ — ne le rejoue PAS comme pivot émotionnel central. Évoque-le au plus en arrière-plan (1 ligne max) ou ignore-le complètement et invente un autre moment-clé.`
+      : '';
+    recentHistorySection = `
+
+HISTOIRES RÉCENTES de cet enfant (de la plus récente à la plus ancienne) — RÈGLE ANTI-DOUBLON :
+${lines}
+
+CONTRAINTES STRICTES :
+- Le titre que tu produis DOIT être substantiellement différent de chacun des titres ci-dessus (pas juste une variante de casse, de ponctuation ou un synonyme proche). Change le sujet, le lieu, l'objet ou l'angle narratif.
+- Le PREMIER paragraphe de ton histoire DOIT ouvrir sur un cadre/lieu/personnage clairement différent des incipits ci-dessus. Évite de réutiliser le même décor d'ouverture (ex : si 3 incipits commencent dans une forêt, change de biome).
+- Si une scène d'ouverture évidente revient (parents qui appellent, enfant qui sort de la maison, animal qui apparaît), choisis une AUTRE accroche.${memoryWarning}
+`;
+  }
+  if (__DEV__) {
+    console.log('[ai-service] recentHistory:', story.recentHistory
+      ? { titlesCount: story.recentHistory.titles.length, memoryReuseCount: story.recentHistory.memoryReuseCount }
+      : 'absent');
+  }
 
   // V2 Mode Spectacle : enrichit le format de sortie avec un script de bruitages
   const spectacleEnabled = story.spectacle === true && (story.availableSfxTags?.length ?? 0) > 0;
@@ -1274,7 +1309,7 @@ ${vocabLine}
 ${moodContext ? `- Adapte le ton selon l'humeur : ${moodContext}` : ''}
 ${quotesContext ? `- Intègre subtilement une expression de l'enfant : ${quotesContext}` : ''}
 ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesContext}` : ''}
-${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${antiRedundancyRules}${performanceTagsRules}${charactersRules}${bookMemorySection}${castingLockedSection}${spectacleRules}${scenesRules}
+${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${antiRedundancyRules}${recentHistorySection}${performanceTagsRules}${charactersRules}${bookMemorySection}${castingLockedSection}${spectacleRules}${scenesRules}
 - Le champ "memorySummary" doit être un résumé NEUTRE en 4-5 phrases focalisé sur ce qui pourrait revenir dans un chapitre futur (lieux, personnages introduits, objets clés, état final du héros). Pas d'émotion, pas de style narratif — c'est une note de continuité.
 - Répondre UNIQUEMENT en JSON valide : ${outputFormat}
 - Aucun texte en dehors du JSON`;
