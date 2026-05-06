@@ -1,0 +1,47 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "info": {
+      "en-US": {
+        "media": [
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN/01-hero.png", "order": 1 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN/02-all-in-one.png", "order": 2 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN/03-farm.png", "order": 3 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN/04-chores.png", "order": 4 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN/05-memories.png", "order": 5 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN/06-pregnancy.png", "order": 6 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN/07-dashboard.png", "order": 7 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN/08-promise.png", "order": 8 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN_iPad/01-hero.png", "order": 1 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN_iPad/02-all-in-one.png", "order": 2 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN_iPad/03-farm.png", "order": 3 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN_iPad/04-chores.png", "order": 4 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN_iPad/05-memories.png", "order": 5 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN_iPad/06-pregnancy.png", "order": 6 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN_iPad/07-dashboard.png", "order": 7 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_EN_iPad/08-promise.png", "order": 8 }
+        ]
+      },
+      "fr-FR": {
+        "media": [
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR/01-hero.png", "order": 1 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR/02-all-in-one.png", "order": 2 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR/03-farm.png", "order": 3 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR/04-chores.png", "order": 4 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR/05-memories.png", "order": 5 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR/06-pregnancy.png", "order": 6 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR/07-dashboard.png", "order": 7 },
+          { "type": "APP_IPHONE_67", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR/08-promise.png", "order": 8 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR_iPad/01-hero.png", "order": 1 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR_iPad/02-all-in-one.png", "order": 2 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR_iPad/03-farm.png", "order": 3 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR_iPad/04-chores.png", "order": 4 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR_iPad/05-memories.png", "order": 5 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR_iPad/06-pregnancy.png", "order": 6 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR_iPad/07-dashboard.png", "order": 7 },
+          { "type": "APP_IPAD_PRO_3GEN_11", "path": "/Users/gabrielwaltio/Downloads/FamilyFlow_AppStore_FR_EN/AppStore_FR_iPad/08-promise.png", "order": 8 }
+        ]
+      }
+    }
+  }
+}
