@@ -48,8 +48,11 @@ const COMPACT_RIGHT = 14;
 const FOLD_DURATION = 450;
 const FOLD_EASING = Easing.bezier(0.4, 0, 0.2, 1);
 
-const PARCH_TOP = '#FFFCF3';
-const PARCH_BOTTOM = '#FFF8EC';
+const PARCH_TOP_LIGHT = '#FFFCF3';
+const PARCH_BOTTOM_LIGHT = '#FFF8EC';
+// Dark : brun chaud profond (cardSurface) → variante un peu plus claire pour relief
+const PARCH_TOP_DARK = '#2C2620';
+const PARCH_BOTTOM_DARK = '#231F1A';
 const TERRACOTTA_TOP = '#B85C3D';
 const TERRACOTTA_BOTTOM = '#A24E33';
 
@@ -276,9 +279,12 @@ export function FloatingPillNav({
   activeIcon,
   activeLabel,
 }: FloatingPillNavProps) {
-  const { colors, primary } = useThemeColors();
+  const { colors, primary, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
   const isAtTop = useSyncExternalStore(subscribeNavPill, getNavPillAtTop, getNavPillAtTop);
+
+  const parchTop = isDark ? PARCH_TOP_DARK : PARCH_TOP_LIGHT;
+  const parchBottom = isDark ? PARCH_BOTTOM_DARK : PARCH_BOTTOM_LIGHT;
 
   const fullOpacity = useSharedValue(isAtTop ? 1 : 0);
   const compactOpacity = useSharedValue(isAtTop ? 0 : 1);
@@ -334,7 +340,7 @@ export function FloatingPillNav({
         pointerEvents={isAtTop ? 'auto' : 'none'}
       >
         <LinearGradient
-          colors={[PARCH_TOP, PARCH_BOTTOM]}
+          colors={[parchTop, parchBottom]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={[StyleSheet.absoluteFillObject, { borderRadius: PILL_R_EXTENDED }]}
@@ -351,7 +357,7 @@ export function FloatingPillNav({
               label={label}
               active={id === activeTab}
               badge={badgesById[id]}
-              parchBg={PARCH_BOTTOM}
+              parchBg={parchBottom}
               onPress={() => handleTabPress(id)}
             />
           ))}
@@ -365,7 +371,7 @@ export function FloatingPillNav({
         pointerEvents={!isAtTop ? 'auto' : 'none'}
       >
         <LinearGradient
-          colors={[PARCH_TOP, PARCH_BOTTOM]}
+          colors={[parchTop, parchBottom]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={[StyleSheet.absoluteFillObject, { borderRadius: PILL_R_EXTENDED }]}
@@ -381,7 +387,7 @@ export function FloatingPillNav({
               label={compactLabel}
               active
               badge={badgesById[activeTab]}
-              parchBg={PARCH_BOTTOM}
+              parchBg={parchBottom}
               onPress={handleCompactExpand}
             />
           </View>
