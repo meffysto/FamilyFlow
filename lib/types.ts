@@ -794,6 +794,33 @@ export interface BedtimeStory {
   memorySummary?: string;
   /** Tranche d'âge appliquée à ce chapitre — verrouillée par le livre */
   trancheAge?: StoryAgeRange;
+  // ─── Phase 52 — Pipeline d'évaluation auto (tous optionnels, rétrocompat 100%) ──
+  /** Score qualité 0-10 (moyenne pondérée du rubric déterministe). Absent si flag eval off. */
+  quality_score?: number;
+  /** Scores par dimension du rubric (1=hard fail, 2=soft warning, 3=OK). */
+  quality_dimensions?: {
+    longueur?: 1 | 2 | 3;
+    fin_paisible?: 1 | 2 | 3;
+    vocabulaire?: 1 | 2 | 3;
+    anti_clones?: 1 | 2 | 3;
+    tags_tts?: 1 | 2 | 3;
+    coherence_saga?: 1 | 2 | 3;
+  };
+  /** Raisons des soft warnings (FR, lisibles parent). */
+  quality_issues?: string[];
+  /** True si la story actuelle est issue d'un re-roll Phase 52. */
+  quality_retried?: boolean;
+  /** ISO timestamp évaluation déterministe. */
+  quality_evaluated_at?: string;
+  /** Sous-scores LLM-judge (rempli async par Plan 52-03). null tant que pas résolu. */
+  llm_judge?: {
+    rythme: number;
+    originalite: number;
+    charge_emotionnelle: number;
+    fluidite: number;
+    justification: string;
+    evaluated_at: string;
+  } | null;
 }
 
 /**

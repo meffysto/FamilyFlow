@@ -3571,6 +3571,32 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
     lines.push(`memory_summary: "${story.memorySummary.replace(/"/g, '\\"')}"`);
   }
   if (story.trancheAge) lines.push(`tranche_age: ${story.trancheAge}`);
+  // ─── Phase 52 — Pipeline d'évaluation auto (frontmatter snake_case, tous optionnels) ──
+  if (story.quality_score !== undefined) lines.push(`quality_score: ${story.quality_score}`);
+  if (story.quality_dimensions) {
+    const dimEntries = Object.entries(story.quality_dimensions).filter(([, v]) => v !== undefined);
+    if (dimEntries.length > 0) {
+      lines.push('quality_dimensions:');
+      for (const [k, v] of dimEntries) {
+        lines.push(`  ${k}: ${v}`);
+      }
+    }
+  }
+  if (story.quality_issues && story.quality_issues.length > 0) {
+    const items = story.quality_issues.map((s) => `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join(', ');
+    lines.push(`quality_issues: [${items}]`);
+  }
+  if (story.quality_retried !== undefined) lines.push(`quality_retried: ${story.quality_retried}`);
+  if (story.quality_evaluated_at) lines.push(`quality_evaluated_at: ${story.quality_evaluated_at}`);
+  if (story.llm_judge) {
+    lines.push('llm_judge:');
+    lines.push(`  rythme: ${story.llm_judge.rythme}`);
+    lines.push(`  originalite: ${story.llm_judge.originalite}`);
+    lines.push(`  charge_emotionnelle: ${story.llm_judge.charge_emotionnelle}`);
+    lines.push(`  fluidite: ${story.llm_judge.fluidite}`);
+    lines.push(`  justification: "${story.llm_judge.justification.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`);
+    lines.push(`  evaluated_at: ${story.llm_judge.evaluated_at}`);
+  }
   lines.push(
     `version: ${story.version}`,
     '---',
@@ -3585,10 +3611,23 @@ export function serializeBedtimeStory(story: BedtimeStory): string {
 
 /**
  * Parseur frontmatter minimal pour BedtimeStory — évite gray-matter qui crash
- * sous Hermes (Property 'Buffer' doesn't exist). Le format BedtimeStory est
- * strictement `key: value` ligne par ligne, sans structures imbriquées.
+ * sous Hermes (Property 'Buffer' doesn't exist).
+ *
+ * Format supporté :
+ *  - Lignes plates `key: value` (la majorité des champs).
+ *  - Blocs imbriqués type :
+ *      quality_dimensions:
+ *        longueur: 3
+ *        fin_paisible: 2
+ *    → exposés dans `nested[bloc][sub-key] = value` (Phase 52 — quality_dimensions, llm_judge).
+ *
+ * Pas d'autre niveau d'imbrication, pas de listes multi-lignes.
  */
-function parseStoryFrontmatter(content: string): { data: Record<string, string>; body: string } | null {
+function parseStoryFrontmatter(content: string): {
+  data: Record<string, string>;
+  nested: Record<string, Record<string, string>>;
+  body: string;
+} | null {
   if (!content.startsWith('---\n') && !content.startsWith('---\r\n')) return null;
   const afterFirst = content.indexOf('\n', 3) + 1;
   const endIdx = content.indexOf('\n---', afterFirst);
@@ -3600,22 +3639,52 @@ function parseStoryFrontmatter(content: string): { data: Record<string, string>;
   const body = bodyStart === -1 ? '' : content.slice(bodyStart + 1);
 
   const data: Record<string, string> = {};
-  for (const rawLine of yamlBlock.split('\n')) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const colonIdx = line.indexOf(':');
-    if (colonIdx === -1) continue;
-    const key = line.slice(0, colonIdx).trim();
-    let value = line.slice(colonIdx + 1).trim();
+  const nested: Record<string, Record<string, string>> = {};
+  let currentBlock: string | null = null;
+
+  const stripQuotes = (raw: string): string => {
+    let value = raw;
     if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
-      value = value.slice(1, -1).replace(/\\"/g, '"');
+      value = value.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
     } else if (value.startsWith("'") && value.endsWith("'") && value.length >= 2) {
       value = value.slice(1, -1).replace(/\\'/g, "'");
     }
-    data[key] = value;
+    return value;
+  };
+
+  for (const rawLine of yamlBlock.split('\n')) {
+    if (!rawLine.trim() || rawLine.trim().startsWith('#')) continue;
+
+    // Ligne indentée (2 espaces) → sub-key d'un bloc imbriqué en cours.
+    if (currentBlock && /^\s+\S/.test(rawLine)) {
+      const inner = rawLine.replace(/^\s+/, '');
+      const colon = inner.indexOf(':');
+      if (colon === -1) continue;
+      const subKey = inner.slice(0, colon).trim();
+      const subVal = stripQuotes(inner.slice(colon + 1).trim());
+      nested[currentBlock][subKey] = subVal;
+      continue;
+    }
+
+    // Ligne non indentée → on quitte le bloc courant.
+    currentBlock = null;
+    const line = rawLine.trim();
+    const colonIdx = line.indexOf(':');
+    if (colonIdx === -1) continue;
+    const key = line.slice(0, colonIdx).trim();
+    const rawValue = line.slice(colonIdx + 1).trim();
+
+    // Bloc imbriqué : `key:` sans valeur sur la ligne (et clé connue Phase 52).
+    if (rawValue === '' && (key === 'quality_dimensions' || key === 'llm_judge')) {
+      currentBlock = key;
+      nested[key] = {};
+      continue;
+    }
+
+    data[key] = stripQuotes(rawValue);
   }
 
-  return { data, body };
+  return { data, nested, body };
 }
 
 export function parseBedtimeStory(sourceFile: string, content: string): BedtimeStory | null {
@@ -3626,6 +3695,7 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
       return null;
     }
     const d = parsed.data;
+    const nested = parsed.nested;
     if (!d.title || !d.enfant || !d.univers || !d.date) {
       if (__DEV__) {
         console.warn(`[parseBedtimeStory] ${sourceFile} — champs manquants:`, {
@@ -3672,6 +3742,58 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
       const slugs = inner.split(',').map(s => s.trim()).filter(s => s.length > 0);
       personnages = slugs.length > 0 ? slugs : undefined;
     }
+    // ─── Phase 52 — Champs quality_* (rétrocompat : tous optionnels) ─────────
+    const quality_score = d.quality_score !== undefined && d.quality_score !== '' && !Number.isNaN(Number(d.quality_score))
+      ? Number(d.quality_score)
+      : undefined;
+    const quality_retried = d.quality_retried === 'true' ? true
+      : d.quality_retried === 'false' ? false
+      : undefined;
+    const quality_evaluated_at = typeof d.quality_evaluated_at === 'string' && d.quality_evaluated_at.length > 0
+      ? d.quality_evaluated_at
+      : undefined;
+    let quality_issues: string[] | undefined;
+    if (d.quality_issues) {
+      // Format inline : `["a", "b"]`
+      const trimmed = d.quality_issues.replace(/^\[/, '').replace(/\]$/, '').trim();
+      if (trimmed.length > 0) {
+        // Split sécurisé sur `","` (les éléments sont quotés). Échec → fallback split simple.
+        const items: string[] = [];
+        const re = /"((?:[^"\\]|\\.)*)"/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(trimmed)) !== null) {
+          items.push(m[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\'));
+        }
+        if (items.length > 0) quality_issues = items;
+      }
+    }
+    let quality_dimensions: BedtimeStory['quality_dimensions'];
+    if (nested.quality_dimensions) {
+      const dims: NonNullable<BedtimeStory['quality_dimensions']> = {};
+      const validKeys: Array<keyof NonNullable<BedtimeStory['quality_dimensions']>> = [
+        'longueur', 'fin_paisible', 'vocabulaire', 'anti_clones', 'tags_tts', 'coherence_saga',
+      ];
+      for (const k of validKeys) {
+        const raw = nested.quality_dimensions[k];
+        if (raw === undefined) continue;
+        const n = Number(raw);
+        if (n === 1 || n === 2 || n === 3) dims[k] = n;
+      }
+      if (Object.keys(dims).length > 0) quality_dimensions = dims;
+    }
+    let llm_judge: BedtimeStory['llm_judge'];
+    if (nested.llm_judge) {
+      const j = nested.llm_judge;
+      const rythme = Number(j.rythme);
+      const originalite = Number(j.originalite);
+      const charge_emotionnelle = Number(j.charge_emotionnelle);
+      const fluidite = Number(j.fluidite);
+      const justification = typeof j.justification === 'string' ? j.justification : '';
+      const evaluated_at = typeof j.evaluated_at === 'string' ? j.evaluated_at : '';
+      if (![rythme, originalite, charge_emotionnelle, fluidite].some(Number.isNaN)) {
+        llm_judge = { rythme, originalite, charge_emotionnelle, fluidite, justification, evaluated_at };
+      }
+    }
     return {
       id,
       titre: d.title,
@@ -3679,7 +3801,7 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
       enfantId: d.enfant_id || d.enfant.toLowerCase().replace(/\s+/g, '_'),
       univers: d.univers as StoryUniverseId,
       detail: d.detail || undefined,
-      texte: parsed.body.replace(/^#[^\n]*\n+/, '').trim(),
+      texte: parsed.body.replace(/^\s*#[^\n]*\n+/, '').trim(),
       date: d.date,
       duree_lecture: Number(d.duree_lecture || 0),
       voice: voiceConfig,
@@ -3701,6 +3823,13 @@ export function parseBedtimeStory(sourceFile: string, content: string): BedtimeS
       personnages,
       memorySummary: d.memory_summary || undefined,
       trancheAge,
+      // ─── Phase 52 — quality_* ──────────────────────────────────────────
+      quality_score,
+      quality_dimensions,
+      quality_issues,
+      quality_retried,
+      quality_evaluated_at,
+      llm_judge,
     };
   } catch (e) {
     if (__DEV__) console.warn(`[parseBedtimeStory] ${sourceFile} — exception:`, e);
