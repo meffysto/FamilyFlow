@@ -21,7 +21,8 @@ import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue, runOnJS } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -356,8 +357,16 @@ export default function HealthScreen() {
   const { refreshing, onRefresh } = useRefresh(refresh);
 
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   useEffect(() => { scrollY.value = 0; }, [activeTab, selectedEnfantId]);
 

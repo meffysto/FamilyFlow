@@ -41,10 +41,58 @@ import {
   Camera,
   UtensilsCrossed,
   NotebookPen,
+  // Icônes pour la pill compacte sur écrans profonds (cohérent avec more.tsx)
+  CalendarDays,
+  Package,
+  Gift,
+  Mail,
+  MessageCircle,
+  CloudSun,
+  HandHeart,
+  HeartPulse,
+  Wallet,
+  Cake,
+  Award,
+  Repeat,
+  Baby,
+  BarChart3,
+  Sparkles,
+  Trees,
+  Sprout,
+  Moon,
+  Settings as SettingsIcon,
   type LucideIcon,
 } from 'lucide-react-native';
 
 const SPRING_CONFIG = { damping: 10, stiffness: 180 };
+
+// Map des écrans profonds (hors NAV_ITEMS de la pill) vers leur icône + label
+// affichés dans la pill compacte. Les 5 onglets principaux sont gérés par la pill elle-même.
+const DEEP_SCREEN_META: Record<string, { Icon: LucideIcon; label: string }> = {
+  photos:        { Icon: Camera,         label: 'Photos' },
+  notes:         { Icon: NotebookPen,    label: 'Notes' },
+  rdv:           { Icon: CalendarDays,   label: 'RDV' },
+  stock:         { Icon: Package,        label: 'Stock' },
+  meals:         { Icon: UtensilsCrossed, label: 'Repas' },
+  wishlist:      { Icon: Gift,           label: 'Envies' },
+  lovenotes:     { Icon: Mail,           label: 'Love notes' },
+  quotes:        { Icon: MessageCircle,  label: 'Citations' },
+  moods:         { Icon: CloudSun,       label: 'Humeurs' },
+  gratitude:     { Icon: HandHeart,      label: 'Gratitude' },
+  health:        { Icon: HeartPulse,     label: 'Santé' },
+  budget:        { Icon: Wallet,         label: 'Budget' },
+  anniversaires: { Icon: Cake,           label: 'Anniv.' },
+  defis:         { Icon: Award,          label: 'Défis' },
+  routines:      { Icon: Repeat,         label: 'Routines' },
+  pregnancy:     { Icon: Baby,           label: 'Grossesse' },
+  stats:         { Icon: BarChart3,      label: 'Stats' },
+  loot:          { Icon: Sparkles,       label: 'Récomp.' },
+  tree:          { Icon: Trees,          label: 'Jardin' },
+  skills:        { Icon: Sprout,         label: 'Compét.' },
+  stories:       { Icon: BookOpen,       label: 'Histoires' },
+  settings:      { Icon: SettingsIcon,   label: 'Réglages' },
+  'night-mode':  { Icon: Moon,           label: 'Nuit' },
+};
 
 type TabBadgeProps = { kind: 'dot' | 'progress'; value?: string };
 
@@ -292,30 +340,50 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
+  // Action primaire de la cellule "+" selon l'onglet courant.
+  // Retourne null pour les écrans où le tap doit ouvrir le panel multi-actions
+  // (dashboard, menu, et tous les écrans secondaires sans action évidente).
+  const getPrimaryActionForTab = useCallback((tab: string): (() => void) | null => {
+    switch (tab) {
+      // Timestamp unique pour que le param change à chaque tap → useEffect re-déclenché
+      // même si on est déjà sur l'écran (évite que le FAB ne marche qu'une fois).
+      case 'tasks':         return () => router.push(`/tasks?addNew=${Date.now()}`);
+      case 'calendar':      return () => router.push(`/rdv?addNew=${Date.now()}`);
+      case 'journal':       return () => router.push(`/journal?enfant=${lastEnfant}`);
+      case 'notes':         return () => router.push(`/notes?addNew=${Date.now()}`);
+      case 'photos':        return () => router.push(`/photos?addNew=${Date.now()}`);
+      case 'wishlist':      return () => router.push(`/wishlist?addNew=${Date.now()}`);
+      case 'rdv':           return () => router.push(`/rdv?addNew=${Date.now()}`);
+      case 'stock':         return () => router.push(`/stock?addNew=${Date.now()}`);
+      case 'anniversaires': return () => router.push(`/anniversaires?addNew=${Date.now()}`);
+      default: return null;
+    }
+  }, [router, lastEnfant]);
+
 
   // Actions complètes (mode panel — DEV) : 6 items, grille 2×3
   // Ordre thématique : planification → quotidien → mémoire
   const fabActionsFull: FABAction[] = [
-    { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
-    { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
-    { id: 'meal', Icon: UtensilsCrossed, label: 'Repas', onPress: () => router.push('/meals?addNew=1') },
-    { id: 'note', Icon: NotebookPen, label: 'Note', onPress: () => router.push('/notes?addNew=1') },
+    { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push(`/tasks?addNew=${Date.now()}`) },
+    { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push(`/rdv?addNew=${Date.now()}`) },
+    { id: 'meal', Icon: UtensilsCrossed, label: 'Repas', onPress: () => router.push(`/meals?addNew=${Date.now()}`) },
+    { id: 'note', Icon: NotebookPen, label: 'Note', onPress: () => router.push(`/notes?addNew=${Date.now()}`) },
     { id: 'journal', Icon: BookOpen, label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
-    { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
+    { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push(`/photos?addNew=${Date.now()}`) },
   ];
 
   // Mode speed-dial classique (PROD) : 4 actions max pour ne pas trop empiler
   const fabActionsCompact: FABAction[] = [
-    { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
-    { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push('/rdv?addNew=1') },
+    { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push(`/tasks?addNew=${Date.now()}`) },
+    { id: 'rdv', Icon: CalendarPlus, label: t('fab.actions.rdv'), onPress: () => router.push(`/rdv?addNew=${Date.now()}`) },
     { id: 'journal', Icon: BookOpen, label: t('fab.actions.journal'), onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
-    { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push('/photos?addNew=1') },
+    { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push(`/photos?addNew=${Date.now()}`) },
   ];
 
   const useFabPanel = __DEV__ && !isTablet;
   const fabActions: FABAction[] = isChildMode
     ? [
-        { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push('/tasks?addNew=1') },
+        { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push(`/tasks?addNew=${Date.now()}`) },
       ]
     : useFabPanel ? fabActionsFull : fabActionsCompact;
 
@@ -430,7 +498,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="stories" options={{ href: null }} />
       </Tabs>
 
-      {showFAB && (
+      {(showFAB || useFabPanel) && (
         <FAB
           actions={fabActions}
           bottom={useFabPanel ? Math.max(insets.bottom + 60, 72) : undefined}
@@ -444,10 +512,21 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <FloatingPillNav
           activeTab={activeTab === '(tabs)' || !activeTab ? 'index' : activeTab}
           onTabPress={(id) => router.push(id === 'index' ? '/(tabs)/' : `/(tabs)/${id}` as any)}
-          onAddPress={() => setFabOpen((v) => !v)}
+          onAddPress={() => {
+            // Panel ouvert → re-tap ferme (le "+" est devenu "×", geste naturel).
+            if (fabOpen) { setFabOpen(false); return; }
+            // Sinon : action contextuelle de l'écran si définie, sinon ouvre le panel.
+            const tab = activeTab === '(tabs)' || !activeTab ? 'index' : activeTab;
+            const action = getPrimaryActionForTab(tab);
+            if (action) action();
+            else setFabOpen(true);
+          }}
+          onAddLongPress={() => setFabOpen((v) => !v)}
           addOpen={fabOpen}
           taskBadgeCount={taskBadgeCount}
           rdvBadgeActive={rdvBadgeActive}
+          activeIcon={DEEP_SCREEN_META[activeTab]?.Icon}
+          activeLabel={DEEP_SCREEN_META[activeTab]?.label}
         />
       )}
       </View>

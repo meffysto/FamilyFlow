@@ -16,7 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedScrollHandler, useSharedValue, runOnJS } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -127,8 +128,16 @@ export default function NotesScreen() {
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
 
   const { addNew, importUrl } = useLocalSearchParams<{ addNew?: string; importUrl?: string }>();
@@ -147,7 +156,7 @@ export default function NotesScreen() {
       setPendingImportUrl(decodeURIComponent(importUrl));
       setEditingNote(null);
       setEditorVisible(true);
-    } else if (addNew === '1') {
+    } else if (addNew) {
       setEditingNote(null);
       setEditorVisible(true);
     }

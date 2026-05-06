@@ -8,7 +8,9 @@ import { StatusBar } from 'expo-status-bar';
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import * as Haptics from 'expo-haptics';
 
 import { useVault } from '../../contexts/VaultContext';
@@ -44,8 +46,16 @@ export default function LoveNotesScreen() {
   const { colors, primary, isDark } = useThemeColors();
   const [segment, setSegment] = useState<Segment>('received');
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   useEffect(() => {
     scrollY.value = 0;

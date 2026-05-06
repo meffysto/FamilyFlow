@@ -19,7 +19,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, runOnJS } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
@@ -115,8 +116,16 @@ export default function MoodsScreen() {
   const { refreshing, onRefresh } = useRefresh(refresh);
 
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
 
   const [activeTab, setActiveTab] = useState<TabId>('aujourdhui');

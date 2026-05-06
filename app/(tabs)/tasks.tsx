@@ -261,7 +261,7 @@ export default function TasksScreen() {
 
   // FAB: ouvrir le modal d'ajout si addNew=1
   useEffect(() => {
-    if (addNew === '1') setAddModalVisible(true);
+    if (addNew) setAddModalVisible(true);
   }, [addNew]);
   const filters = useMemo<FilterDef[]>(() => {
     if (isVacationActive) {

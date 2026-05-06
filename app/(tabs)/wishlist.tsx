@@ -6,7 +6,7 @@
  * Fichier vault : 05 - Famille/Souhaits.md
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -28,7 +28,9 @@ import { StatusBar } from 'expo-status-bar';
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import * as Haptics from 'expo-haptics';
 import { ExternalLink, Lock, ShoppingCart } from 'lucide-react-native';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
@@ -72,8 +74,16 @@ export default function WishlistScreen() {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   const { showToast } = useToast();
   const {
@@ -94,8 +104,16 @@ export default function WishlistScreen() {
   const [personFilter, setPersonFilter] = useState<string>('tous');
   const [occasionFilter, setOccasionFilter] = useState<OccasionFilter>('tous');
   const editorScrollRef = useRef<ScrollView>(null);
-  const [editorVisible, setEditorVisible] = useState(params.addNew === '1');
+  const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
+
+  // FAB: ouvrir l'éditeur si addNew (truthy — timestamp unique par tap)
+  useEffect(() => {
+    if (params.addNew) {
+      setEditingItem(null);
+      setEditorVisible(true);
+    }
+  }, [params.addNew]);
 
   // Champs éditeur
   const [editText, setEditText] = useState('');

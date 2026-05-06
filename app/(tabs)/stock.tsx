@@ -28,7 +28,9 @@ import Animated, {
   useAnimatedStyle,
   useAnimatedScrollHandler,
   withTiming,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { categorizeIngredient } from '../../lib/cooklang';
@@ -163,12 +165,20 @@ export default function StockScreen() {
   const { refreshing, onRefresh } = useRefresh(refresh);
 
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
 
   const stockListRef = useRef<View>(null);
-  const params = useLocalSearchParams<{ lowOnly?: string }>();
+  const params = useLocalSearchParams<{ lowOnly?: string; addNew?: string }>();
   const [selectedEmplacement, setSelectedEmplacement] = useState<EmplacementId>('tous');
   const [search, setSearch] = useState('');
   const [showLowStockOnly, setShowLowStockOnly] = useState(params.lowOnly === '1');
@@ -178,6 +188,14 @@ export default function StockScreen() {
   }, [params.lowOnly]);
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
+
+  // FAB: ouvrir l'éditeur si addNew (truthy — timestamp unique par tap)
+  useEffect(() => {
+    if (params.addNew) {
+      setEditingItem(undefined);
+      setEditorVisible(true);
+    }
+  }, [params.addNew]);
 
   // ─── Compteur total par emplacement ──────────────────────────────────
   const countsByEmplacement = useMemo(() => {

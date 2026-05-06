@@ -37,7 +37,9 @@ import Animated, {
   FadeOutDown,
   FadeOutLeft,
   LinearTransition,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useLocalSearchParams } from 'expo-router';
 import { format, startOfWeek, addWeeks, isSameWeek } from 'date-fns';
@@ -175,8 +177,16 @@ export default function MealsScreen() {
 
   // Scroll partagé → collapse du ScreenHeader
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   // Reset au changement d'onglet (évite collapse fantôme)
   useEffect(() => {

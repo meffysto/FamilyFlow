@@ -25,6 +25,7 @@ import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { ChevronLeft, ChevronRight, Flame, Mic } from 'lucide-react-native';
 import { useRefresh } from '../../hooks/useRefresh';
@@ -218,8 +219,16 @@ export default function GratitudeScreen() {
 
   // Header collapsible : scrollY partagé entre les deux onglets, reset au switch.
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   React.useEffect(() => {
     scrollY.value = 0;

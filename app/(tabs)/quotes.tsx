@@ -25,7 +25,9 @@ import { StatusBar } from 'expo-status-bar';
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { AvatarIcon } from '../../components/ui/AvatarIcon';
 
@@ -53,8 +55,16 @@ export default function QuotesScreen() {
   const { showToast } = useToast();
   const { t } = useTranslation();
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   const { profiles, quotes, addQuote, editQuote, deleteQuote, refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);

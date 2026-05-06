@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import {
   View,
   Text,
@@ -114,6 +115,17 @@ export default function BudgetScreen() {
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
   const { isAllowed } = useParentalControls();
+
+  // pill nav fold
+  const navPillAtTopRef = useRef(true);
+  const onScrollHandler = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    if (!__DEV__) return;
+    const atTop = e.nativeEvent.contentOffset.y < 40;
+    if (atTop !== navPillAtTopRef.current) {
+      navPillAtTopRef.current = atTop;
+      setNavPillAtTop(atTop);
+    }
+  }, []);
 
   // Guard : les enfants n'ont pas accès au budget (sauf si autorisé)
   if (isChildMode && !isAllowed('budget', activeProfile!.role)) {
@@ -628,6 +640,8 @@ export default function BudgetScreen() {
           style={styles.scroll}
           contentContainerStyle={[styles.content, Layout.contentContainer]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
         >
           {/* Total */}
           <View style={[styles.totalCard, { backgroundColor: colors.card }]}>
@@ -773,6 +787,8 @@ export default function BudgetScreen() {
             keyExtractor={(item, i) => `${item.date}-${item.lineIndex}-${i}`}
             contentContainerStyle={[styles.content, Layout.contentContainer]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+            onScroll={onScrollHandler}
+            scrollEventThrottle={16}
             ListEmptyComponent={
               isFiltered ? (
                 <EmptyState
@@ -872,6 +888,8 @@ export default function BudgetScreen() {
               keyExtractor={(item, i) => `${item.label}-${i}`}
               contentContainerStyle={[styles.content, Layout.contentContainer]}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+              onScroll={onScrollHandler}
+              scrollEventThrottle={16}
               ListEmptyComponent={
                 <EmptyState
                   emoji="📊"

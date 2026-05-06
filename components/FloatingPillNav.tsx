@@ -182,9 +182,11 @@ function TabCell({
 function AddCell({
   open,
   onPress,
+  onLongPress,
 }: {
   open: boolean;
   onPress: () => void;
+  onLongPress?: () => void;
 }) {
   const pressScale = useSharedValue(1);
   const rotate = useSharedValue(open ? 1 : 0);
@@ -224,6 +226,12 @@ function AddCell({
         onPressIn={() => { pressScale.value = withTiming(0.94, { duration: 90 }); }}
         onPressOut={() => { pressScale.value = withSpring(1, { damping: 12, stiffness: 280 }); }}
         onPress={onPress}
+        onLongPress={onLongPress ? () => {
+          // Haptic plus marqué que le tap pour différencier les deux gestes.
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          onLongPress();
+        } : undefined}
+        delayLongPress={400}
         accessibilityRole="button"
         accessibilityLabel={open ? 'Fermer le menu de création' : 'Créer'}
         accessibilityState={{ expanded: open }}
@@ -243,21 +251,30 @@ export interface FloatingPillNavProps {
   onTabPress?: (id: string) => void;
   /** Toggle de la cellule "+" — pilote l'ouverture du FAB (panel/speed-dial). */
   onAddPress?: () => void;
+  /** Long-press sur "+" — ouvre toujours le panel (filet de sécurité). */
+  onAddLongPress?: () => void;
   /** État ouvert du FAB (pour rotation + → ×). */
   addOpen?: boolean;
   /** Badge sur Tâches (compteur en retard). */
   taskBadgeCount?: number;
   /** Badge dot sur Calendar (RDV ≤ 7j). */
   rdvBadgeActive?: boolean;
+  /** Icône à afficher dans la pill compacte (override pour écrans hors NAV_ITEMS). */
+  activeIcon?: typeof Home;
+  /** Label à afficher dans la pill compacte (override pour écrans hors NAV_ITEMS). */
+  activeLabel?: string;
 }
 
 export function FloatingPillNav({
   activeTab = 'index',
   onTabPress,
   onAddPress,
+  onAddLongPress,
   addOpen = false,
   taskBadgeCount = 0,
   rdvBadgeActive = false,
+  activeIcon,
+  activeLabel,
 }: FloatingPillNavProps) {
   const { colors, primary } = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -282,13 +299,19 @@ export function FloatingPillNav({
     Haptics.selectionAsync();
     onAddPress?.();
   };
+  const handleAddLongPress = () => {
+    onAddLongPress?.();
+  };
   const handleCompactExpand = () => {
     Haptics.selectionAsync();
     setNavPillAtTop(true);
   };
 
-  const activeItem = NAV_ITEMS.find((item) => item.id === activeTab) ?? NAV_ITEMS[0];
-  const ActiveIcon = activeItem.Icon;
+  // Onglet actif pour la pill compacte. Sur écran profond hors NAV_ITEMS,
+  // on prend les overrides (activeIcon/activeLabel) fournis par le parent.
+  const navItem = NAV_ITEMS.find((item) => item.id === activeTab);
+  const ActiveIcon = activeIcon ?? navItem?.Icon ?? NAV_ITEMS[0].Icon;
+  const compactLabel = activeLabel ?? navItem?.label ?? NAV_ITEMS[0].label;
 
   const taskBadge: TabBadge | undefined =
     taskBadgeCount > 0 ? { kind: 'progress', value: String(taskBadgeCount) } : undefined;
@@ -332,7 +355,7 @@ export function FloatingPillNav({
               onPress={() => handleTabPress(id)}
             />
           ))}
-          <AddCell open={addOpen} onPress={handleAddPress} />
+          <AddCell open={addOpen} onPress={handleAddPress} onLongPress={handleAddLongPress} />
         </View>
       </Animated.View>
 
@@ -355,14 +378,14 @@ export function FloatingPillNav({
           <View style={styles.compactActiveTabSlot}>
             <TabCell
               Icon={ActiveIcon}
-              label={activeItem.label}
+              label={compactLabel}
               active
               badge={badgesById[activeTab]}
               parchBg={PARCH_BOTTOM}
               onPress={handleCompactExpand}
             />
           </View>
-          <AddCell open={addOpen} onPress={handleAddPress} />
+          <AddCell open={addOpen} onPress={handleAddPress} onLongPress={handleAddLongPress} />
         </View>
       </Animated.View>
     </View>

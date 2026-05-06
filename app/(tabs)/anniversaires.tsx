@@ -5,7 +5,8 @@
  * Swipe-to-delete, tap pour éditer, import depuis contacts iCloud.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import {
   View,
   Text,
@@ -20,7 +21,9 @@ import { StatusBar } from 'expo-status-bar';
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import * as Haptics from 'expo-haptics';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 
@@ -100,8 +103,16 @@ export default function AnniversairesScreen() {
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   const { showToast } = useToast();
   const {
@@ -119,6 +130,15 @@ export default function AnniversairesScreen() {
   const [editingAnniversary, setEditingAnniversary] = useState<Anniversary | undefined>();
   const [importerVisible, setImporterVisible] = useState(false);
   const [calendarImporterVisible, setCalendarImporterVisible] = useState(false);
+
+  // FAB: ouvrir l'éditeur si addNew=1
+  const { addNew } = useLocalSearchParams<{ addNew?: string }>();
+  useEffect(() => {
+    if (addNew) {
+      setEditingAnniversary(undefined);
+      setEditorVisible(true);
+    }
+  }, [addNew]);
 
   // Grouper par mois prochain, trié par nombre de jours restants
   const sections: SectionData[] = useMemo(() => {

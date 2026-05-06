@@ -50,7 +50,9 @@ import Animated, {
   withSequence,
   withTiming,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { PhotoViewer } from '../../components/PhotoViewer';
@@ -140,8 +142,16 @@ export default function PhotosScreen() {
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory, updateMemory } = useVault();
   const { primary, tint, colors, isDark } = useThemeColors();
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
@@ -160,9 +170,14 @@ export default function PhotosScreen() {
   const [memoryEditorVisible, setMemoryEditorVisible] = useState(false);
   const [editingMemory, setEditingMemory] = useState<import('../../lib/types').Memory | null>(null);
 
-  // FAB: ouvrir l'éditeur de souvenir si addNew=1
+  // FAB pill (+) : ouvre la pop-up d'ajout de photo (camera/galerie) pour l'enfant sélectionné, à la date du jour.
   useEffect(() => {
-    if (addNew === '1') { setActiveTab('souvenirs'); setEditingMemory(null); setMemoryEditorVisible(true); }
+    if (addNew) {
+      setActiveTab('photos');
+      pickPhoto(new Date());
+    }
+    // pickPhoto est défini dans la closure et lit selectedEnfant à l'appel — pas besoin de le mettre en dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addNew]);
 
   const enfants = useMemo(
@@ -526,15 +541,7 @@ export default function PhotosScreen() {
             />
           )}
 
-          {selectedEnfant && (
-            <TouchableOpacity
-              style={[styles.fab, { backgroundColor: primary, shadowColor: primary, bottom: 70 + Math.max(insets.bottom, 20) }]}
-              onPress={() => pickPhoto(new Date())}
-              activeOpacity={0.8}
-            >
-              <Camera size={26} strokeWidth={2} color={colors.onPrimary} />
-            </TouchableOpacity>
-          )}
+          {/* FAB inline retiré — la pill (+) gère l'ajout photo (cf. useEffect addNew). */}
         </>
       ) : (
         <>

@@ -25,7 +25,9 @@ import Animated, {
   FadeInDown,
   useSharedValue,
   useAnimatedScrollHandler,
+  runOnJS,
 } from 'react-native-reanimated';
+import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { PillTabSwitcher, ScreenHeader, type PillTab } from '../../components/ui';
 import { ClipboardList, CalendarDays } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -85,8 +87,16 @@ export default function RDVScreen() {
   const { rdvs, addRDV, updateRDV, deleteRDV, activeProfile, profiles } = useVault();
   const { primary, tint, colors, isDark } = useThemeColors();
   const scrollY = useSharedValue(0);
+  const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
+    if (__DEV__) {
+      const atTop = e.contentOffset.y < 40;
+      if (atTop !== navPillLocalAtTop.value) {
+        navPillLocalAtTop.value = atTop;
+        runOnJS(setNavPillAtTop)(atTop);
+      }
+    }
   });
 
   // Taille cellule calendrier dynamique, contrainte sur tablette
@@ -101,7 +111,7 @@ export default function RDVScreen() {
 
   // FAB: ouvrir l'éditeur si addNew=1
   useEffect(() => {
-    if (addNew === '1') { setEditingRDV(undefined); setEditorVisible(true); }
+    if (addNew) { setEditingRDV(undefined); setEditorVisible(true); }
   }, [addNew]);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
   const [showPast, setShowPast] = useState(false);
