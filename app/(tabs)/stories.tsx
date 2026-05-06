@@ -1808,6 +1808,33 @@ export default function StoriesScreen() {
 
       const anonMap = buildAnonymizationMap(profiles, rdvs, healthRecords, memories, tasks);
 
+      // Mémoire courte cross-stories (anti-doublons titres/incipits/memory) — cf P3/P5/P7 audit 260506
+      const childRecentStories = stories
+        .filter(s => s.enfantId === enfantId)
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 5);
+
+      const stripMarkdownHeading = (txt: string): string => {
+        // Retire un éventuel heading "# Titre\n\n" en tête, garde le corps
+        return txt.replace(/^#+\s+.*\n+/, '').trim();
+      };
+
+      const currentMemoryTitle = childMemories[0]?.title?.trim() ?? '';
+      const memoryReuseCount = currentMemoryTitle && childRecentStories.length > 0
+        ? childRecentStories.filter(s =>
+            s.texte && s.texte.toLowerCase().includes(currentMemoryTitle.toLowerCase())
+          ).length
+        : 0;
+
+      const recentHistory = childRecentStories.length > 0 ? {
+        titles: childRecentStories.map(s => anonymize(s.titre ?? '', anonMap)),
+        incipits: childRecentStories.map(s => {
+          const body = stripMarkdownHeading(s.texte ?? '');
+          return anonymize(body.slice(0, 80), anonMap);
+        }),
+        memoryReuseCount,
+      } : undefined;
+
       const resp = await generateBedtimeStory(storyConfig ?? aiConfig, {
         enfantAnon: anonymize(enfantName, anonMap),
         enfantAge: computeAge(profile?.birthdate),
@@ -1827,6 +1854,7 @@ export default function StoriesScreen() {
           previousChapterFullText: anonymize(book.previousChapterFullText, anonMap),
         } : undefined,
         trancheAge,
+        recentHistory,
         context: {
           recentMoods: childMoods.map(m => ({ level: m.level, note: m.note ? anonymize(m.note, anonMap) : undefined, date: m.date })),
           recentQuotes: childQuotes.map(q => ({ citation: anonymize(q.citation, anonMap), contexte: q.contexte ? anonymize(q.contexte, anonMap) : undefined, date: q.date })),
