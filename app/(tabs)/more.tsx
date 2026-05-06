@@ -12,6 +12,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -23,6 +25,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { unreadForProfile } from '../../lib/lovenotes/selectors';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { PressableScale } from '../../components/ui';
+import { ModalHeader } from '../../components/ui/ModalHeader';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -66,11 +69,26 @@ import {
   Heart as HeartIcon,
   Gamepad2,
   Users as UsersIcon,
+  Search,
+  Star,
+  Check,
+  Pencil,
   type LucideIcon,
 } from 'lucide-react-native';
 
-const VIEW_PREF_KEY = 'more_view_mode';
-type ViewMode = 'list' | 'grid';
+const FAVORITES_PREF_KEY = 'more_favorites_v1';
+const MAX_FAVORITES = 4;
+
+// Clé stable basée sur route+params (pas le label traduit) pour persistance.
+const itemKey = (route: string, params?: Record<string, string>) =>
+  `${route}::${params ? JSON.stringify(params) : ''}`;
+
+const DEFAULT_FAVORITE_KEYS: string[] = [
+  itemKey('/(tabs)/meals', { tab: 'courses' }),
+  itemKey('/(tabs)/rdv'),
+  itemKey('/(tabs)/photos'),
+  itemKey('/(tabs)/meals'),
+];
 
 interface MenuItem {
   Icon: LucideIcon;
@@ -80,6 +98,15 @@ interface MenuItem {
   badge?: number;
   color: string;
   category: 'organisation' | 'sante' | 'souvenirs' | 'jeux' | 'famille' | 'systeme';
+}
+
+interface UsageShortcut {
+  key: string;
+  Icon: LucideIcon;
+  label: string;
+  badge?: number;
+  color: string;
+  onPress: () => void;
 }
 
 const CATEGORY_LABEL_KEYS = {
@@ -123,29 +150,38 @@ export default function MoreScreen() {
   const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
-    if (__DEV__) {
-      const atTop = e.contentOffset.y < 40;
-      if (atTop !== navPillLocalAtTop.value) {
-        navPillLocalAtTop.value = atTop;
-        runOnJS(setNavPillAtTop)(atTop);
-      }
+    const atTop = e.contentOffset.y < 40;
+    if (atTop !== navPillLocalAtTop.value) {
+      navPillLocalAtTop.value = atTop;
+      runOnJS(setNavPillAtTop)(atTop);
     }
   });
 
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [toolSearch, setToolSearch] = useState('');
+  const [favoriteKeys, setFavoriteKeys] = useState<string[]>(DEFAULT_FAVORITE_KEYS);
+  const [editFavoritesOpen, setEditFavoritesOpen] = useState(false);
   useEffect(() => {
-    SecureStore.getItemAsync(VIEW_PREF_KEY).then((v) => {
-      if (v === 'grid' || v === 'list') setViewMode(v);
+    SecureStore.getItemAsync(FAVORITES_PREF_KEY).then((raw) => {
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.every((k) => typeof k === 'string')) {
+          setFavoriteKeys(parsed);
+        }
+      } catch {
+        /* prefs corrompues — on ignore et garde les défauts */
+      }
     });
   }, []);
-  const toggleView = useCallback(() => {
-    setViewMode((prev) => {
-      const next = prev === 'list' ? 'grid' : 'list';
-      SecureStore.setItemAsync(VIEW_PREF_KEY, next);
+  const toggleFavorite = useCallback((key: string) => {
+    setFavoriteKeys((prev) => {
+      const next = prev.includes(key)
+        ? prev.filter((k) => k !== key)
+        : prev.length >= MAX_FAVORITES ? prev : [...prev, key];
+      SecureStore.setItemAsync(FAVORITES_PREF_KEY, JSON.stringify(next)).catch(() => {});
       return next;
     });
   }, []);
-
   const loveNoteUnreadCount = useMemo(
     () => (activeProfile ? unreadForProfile(loveNotes, activeProfile.id).length : 0),
     [loveNotes, activeProfile?.id]
@@ -221,6 +257,122 @@ export default function MoreScreen() {
     }
   }, [router]);
 
+  const makeShortcut = useCallback((item: MenuItem): UsageShortcut => ({
+    key: itemKey(item.route, item.params),
+    Icon: item.Icon,
+    label: item.label,
+    badge: item.badge,
+    color: item.color,
+    onPress: () => onItemPress(item),
+  }), [onItemPress]);
+
+  // Index pour résoudre une clé stable → MenuItem (perdu si l'item n'est plus visible).
+  const itemsByKey = useMemo(() => {
+    const map = new Map<string, MenuItem>();
+    for (const item of visibleItems) map.set(itemKey(item.route, item.params), item);
+    return map;
+  }, [visibleItems]);
+
+  const favoriteShortcuts = useMemo(() => {
+    return favoriteKeys
+      .map((key) => itemsByKey.get(key))
+      .filter((item): item is MenuItem => Boolean(item))
+      .map(makeShortcut);
+  }, [favoriteKeys, itemsByKey, makeShortcut]);
+
+  const favoriteKeysSet = useMemo(() => new Set(favoriteKeys), [favoriteKeys]);
+
+  const filteredTools = useMemo(() => {
+    const q = toolSearch.trim().toLocaleLowerCase();
+    if (!q) return visibleItems;
+    return visibleItems.filter((item) =>
+      item.label.toLocaleLowerCase().includes(q)
+      || t(CATEGORY_LABEL_KEYS[item.category]).toLocaleLowerCase().includes(q)
+    );
+  }, [t, toolSearch, visibleItems]);
+
+  const devGridItems = useMemo(() => {
+    if (toolSearch.trim()) return filteredTools;
+    return visibleItems.filter((item) => !favoriteKeysSet.has(itemKey(item.route, item.params)));
+  }, [favoriteKeysSet, filteredTools, toolSearch, visibleItems]);
+
+  const renderUsageShortcut = (shortcut: UsageShortcut) => (
+    <PressableScale
+      key={shortcut.key}
+      onPress={shortcut.onPress}
+      scaleValue={0.95}
+      style={styles.devFavoritePressable}
+    >
+      <View
+        style={[
+          styles.devFavorite,
+          {
+            backgroundColor: colors.card,
+            borderColor: withAlpha(shortcut.color, isDark ? 0.20 : 0.18),
+          },
+        ]}
+      >
+        <View style={[StyleSheet.absoluteFill, {
+          backgroundColor: withAlpha(shortcut.color, isDark ? 0.10 : 0.10),
+          borderRadius: Radius.lg,
+        }]} />
+        <View style={[styles.devFavoriteIcon, { backgroundColor: withAlpha(shortcut.color, isDark ? 0.20 : 0.20) }]}>
+          <shortcut.Icon size={20} strokeWidth={1.85} color={shortcut.color} />
+        </View>
+        <Text style={[styles.devFavoriteLabel, { color: colors.text }]} numberOfLines={1}>
+          {shortcut.label}
+        </Text>
+        {shortcut.badge ? (
+          <View style={[styles.devMiniBadge, { backgroundColor: shortcut.color }]}>
+            <Text style={[styles.devMiniBadgeText, { color: colors.onAccent }]}>{shortcut.badge > 99 ? '99+' : shortcut.badge}</Text>
+          </View>
+        ) : null}
+      </View>
+    </PressableScale>
+  );
+
+  const renderDevGridItem = (item: MenuItem) => {
+    const accentColor = item.color;
+    return (
+      <PressableScale
+        key={itemKey(item.route, item.params)}
+        onPress={() => onItemPress(item)}
+        scaleValue={0.95}
+        style={styles.devGridPressable}
+      >
+        <View
+          style={[
+            styles.devGridCard,
+            {
+              backgroundColor: colors.card,
+              borderColor: withAlpha(accentColor, isDark ? 0.16 : 0.20),
+            },
+          ]}
+          accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
+          accessibilityRole="button"
+        >
+          <View style={[StyleSheet.absoluteFill, {
+            backgroundColor: withAlpha(accentColor, isDark ? 0.08 : 0.09),
+            borderRadius: Radius.xl,
+          }]} />
+          <View style={[styles.devGridIcon, { backgroundColor: withAlpha(accentColor, isDark ? 0.18 : 0.20) }]}>
+            <item.Icon size={26} strokeWidth={1.75} color={accentColor} />
+          </View>
+          <Text style={[styles.devGridLabel, { color: colors.text }]} numberOfLines={1}>
+            {item.label}
+          </Text>
+          {item.badge ? (
+            <View style={[styles.devGridBadge, { backgroundColor: accentColor }]}>
+              <Text style={[styles.badgeText, { color: colors.onAccent }]}>{item.badge > 99 ? '99+' : item.badge}</Text>
+            </View>
+          ) : null}
+        </View>
+      </PressableScale>
+    );
+  };
+
+  const showSearchResults = toolSearch.trim().length > 0;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={[]}>
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
@@ -228,188 +380,394 @@ export default function MoreScreen() {
         <ScreenHeader
           title={t('more.title')}
           subtitle={t('more.subtitle', { count: visibleItems.length, defaultValue: `${visibleItems.length} raccourcis` })}
-          actions={
-            <PressableScale
-              onPress={toggleView}
-              style={[styles.viewToggle, {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              }]}
-              scaleValue={0.93}
-            >
-              <View style={styles.viewToggleRow}>
-                <Text style={[
-                  styles.viewToggleIcon,
-                  { color: viewMode === 'list' ? primary : colors.textFaint },
-                ]}>☰</Text>
-                <View style={[styles.viewToggleSep, { backgroundColor: colors.border }]} />
-                <Text style={[
-                  styles.viewToggleIcon,
-                  { color: viewMode === 'grid' ? primary : colors.textFaint },
-                ]}>⊞</Text>
-              </View>
-            </PressableScale>
-          }
+          tint={colors.brand.wash}
           scrollY={scrollY}
         />
       </View>
 
       <Animated.ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.content, Layout.contentContainer]}
-        onScroll={onScrollHandler}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-      >
-        {(['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'] as const).map((cat) => {
-          const catItems = visibleItems.filter((i) => i.category === cat);
-          if (catItems.length === 0) return null;
-          const accentColor = colors[CATEGORY_ACCENT_KEYS[cat]];
+          style={styles.scroll}
+          contentContainerStyle={[styles.devContent, Layout.contentContainer]}
+          onScroll={onScrollHandler}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.devSearchBox, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+            <Search size={18} strokeWidth={1.9} color={colors.textMuted} />
+            <TextInput
+              style={[styles.devSearchInput, { color: colors.text }]}
+              value={toolSearch}
+              onChangeText={setToolSearch}
+              placeholder="Que cherches-tu ?"
+              placeholderTextColor={colors.textFaint}
+              clearButtonMode="while-editing"
+              accessibilityRole="search"
+              accessibilityLabel="Rechercher un raccourci"
+            />
+          </View>
 
-          return (
-            <View key={cat} style={styles.section}>
-              {/* ── Section header simple ── */}
-              <View style={styles.sectionHeader}>
-                {(() => { const CatIcon = CATEGORY_ICONS[cat]; return <CatIcon size={16} strokeWidth={1.75} color={accentColor} />; })()}
-                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-                  {t(CATEGORY_LABEL_KEYS[cat])}
-                </Text>
+          {!showSearchResults && (
+            <View style={styles.devFavoritesBlock}>
+              <View style={styles.devFavoritesHeader}>
+                <View style={styles.devSectionTitleRow}>
+                  <Star size={15} strokeWidth={1.8} color={primary} />
+                  <Text style={[styles.devSectionTitle, { color: colors.textMuted }]}>Favoris</Text>
+                </View>
+                <PressableScale
+                  onPress={() => setEditFavoritesOpen(true)}
+                  scaleValue={0.96}
+                >
+                  <View
+                    style={styles.devFavoritesEditLink}
+                    accessibilityLabel="Modifier les favoris"
+                    accessibilityRole="button"
+                  >
+                    <Pencil size={13} strokeWidth={2} color={primary} />
+                    <Text style={[styles.devFavoritesEditLinkText, { color: primary }]}>Modifier</Text>
+                  </View>
+                </PressableScale>
               </View>
-
-              {viewMode === 'list' ? (
-                /* ── Vue liste : rows individuels avec relief ── */
-                <View style={styles.listContainer}>
-                  {catItems.map((item) => (
-                    <PressableScale
-                      key={item.label}
-                      onPress={() => onItemPress(item)}
-                      scaleValue={0.97}
-                    >
-                      <View
-                        style={[styles.row, {
-                          backgroundColor: colors.card,
-                          borderColor: withAlpha(accentColor, isDark ? 0.13 : 0.18),
-                        }]}
-                        accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
-                        accessibilityRole="button"
-                      >
-                        {/* Fond teinté catégorie (comme DashboardCard tinted) */}
-                        <View style={[StyleSheet.absoluteFill, {
-                          backgroundColor: withAlpha(accentColor, isDark ? 0.10 : 0.12),
-                          borderRadius: Radius.xl,
-                        }]} />
-
-                        {/* Icône avec teinte plus saturée */}
-                        <View style={[styles.listIcon, { backgroundColor: withAlpha(accentColor, isDark ? 0.15 : 0.20) }]}>
-                          <item.Icon size={24} strokeWidth={1.75} color={accentColor} />
-                        </View>
-
-                        {/* Label */}
-                        <View style={styles.labelContainer}>
-                          <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
-                            {item.label}
-                          </Text>
-                        </View>
-
-                        {/* Badge + chevron */}
-                        <View style={styles.rowRight}>
-                          {item.badge ? (
-                            <View style={[styles.badge, { backgroundColor: accentColor }]}>
-                              <Text style={[styles.badgeText, { color: colors.onAccent }]}>{item.badge}</Text>
-                            </View>
-                          ) : null}
-                          <Text style={[styles.chevron, { color: colors.textFaint }]}>›</Text>
-                        </View>
-                      </View>
-                    </PressableScale>
-                  ))}
-                </View>
-              ) : (
-                /* ── Vue grille ── */
-                <View style={styles.grid}>
-                  {catItems.map((item) => (
-                    <PressableScale
-                      key={item.label}
-                      onPress={() => onItemPress(item)}
-                      scaleValue={0.95}
-                      style={styles.gridPressable}
-                    >
-                      <View
-                        style={[styles.gridCard, {
-                          backgroundColor: colors.card,
-                          borderColor: colors.border,
-                        }]}
-                        accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
-                        accessibilityRole="button"
-                      >
-                        <View style={[styles.gridIcon, { backgroundColor: withAlpha(accentColor, isDark ? 0.08 : 0.16) }]}>
-                          <item.Icon size={26} strokeWidth={1.75} color={accentColor} />
-                        </View>
-                        <Text style={[styles.gridLabel, { color: colors.textSub }]}>{item.label}</Text>
-                        {item.badge ? (
-                          <View style={[styles.gridBadge, { backgroundColor: accentColor }]}>
-                            <Text style={[styles.badgeText, { color: colors.onAccent }]}>{item.badge}</Text>
-                          </View>
-                        ) : null}
-                      </View>
-                    </PressableScale>
-                  ))}
-                </View>
-              )}
+              <View style={styles.devFavoritesRow}>
+                {favoriteShortcuts.map((shortcut) => renderUsageShortcut(shortcut))}
+              </View>
             </View>
-          );
-        })}
-      </Animated.ScrollView>
+          )}
 
-      <ScreenGuide
-        screenId="more"
-        targets={[
-          { ref: headerRef, ...HELP_CONTENT.more[0] },
-        ]}
-      />
-    </SafeAreaView>
-  );
+          {showSearchResults ? (
+            <View style={styles.devSearchResultsBlock}>
+              <Text style={[styles.devSearchResultsTitle, { color: colors.text }]}>
+                {filteredTools.length} résultat{filteredTools.length > 1 ? 's' : ''}
+              </Text>
+              <View style={styles.devGrid}>
+                {devGridItems.map(renderDevGridItem)}
+              </View>
+            </View>
+          ) : (
+            <>
+              {(['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'] as const).map((cat) => {
+                const catItems = devGridItems.filter((i) => i.category === cat);
+                if (catItems.length === 0) return null;
+                const accentColor = colors[CATEGORY_ACCENT_KEYS[cat]];
+                const CatIcon = CATEGORY_ICONS[cat];
+                return (
+                  <View key={cat} style={styles.devCategory}>
+                    <View style={styles.sectionHeader}>
+                      <CatIcon size={15} strokeWidth={1.75} color={accentColor} />
+                      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                        {t(CATEGORY_LABEL_KEYS[cat])}
+                      </Text>
+                    </View>
+                    <View style={styles.devGrid}>
+                      {catItems.map(renderDevGridItem)}
+                    </View>
+                  </View>
+                );
+              })}
+            </>
+          )}
+        </Animated.ScrollView>
+
+        <ScreenGuide
+          screenId="more"
+          targets={[
+            { ref: headerRef, ...HELP_CONTENT.more[0] },
+          ]}
+        />
+
+        <Modal
+          visible={editFavoritesOpen}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setEditFavoritesOpen(false)}
+        >
+          <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+            <ModalHeader
+              title="Favoris"
+              onClose={() => setEditFavoritesOpen(false)}
+              closeLeft
+            />
+            <View style={styles.devEditHintRow}>
+              <Text style={[styles.devEditHint, { color: colors.textMuted }]}>
+                {favoriteKeys.length} / {MAX_FAVORITES} sélectionnés
+              </Text>
+            </View>
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={[styles.devEditContent, Layout.contentContainer]}
+              showsVerticalScrollIndicator={false}
+            >
+              {(['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'] as const).map((cat) => {
+                const catItems = visibleItems.filter((i) => i.category === cat);
+                if (catItems.length === 0) return null;
+                const accentColor = colors[CATEGORY_ACCENT_KEYS[cat]];
+                const CatIcon = CATEGORY_ICONS[cat];
+                return (
+                  <View key={cat} style={styles.devEditCategory}>
+                    <View style={styles.sectionHeader}>
+                      <CatIcon size={15} strokeWidth={1.75} color={accentColor} />
+                      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                        {t(CATEGORY_LABEL_KEYS[cat])}
+                      </Text>
+                    </View>
+                    {catItems.map((item) => {
+                      const key = itemKey(item.route, item.params);
+                      const selected = favoriteKeysSet.has(key);
+                      const disabled = !selected && favoriteKeys.length >= MAX_FAVORITES;
+                      return (
+                        <PressableScale
+                          key={key}
+                          onPress={() => toggleFavorite(key)}
+                          scaleValue={0.97}
+                          disabled={disabled}
+                        >
+                          <View
+                            style={[
+                              styles.devEditRow,
+                              {
+                                backgroundColor: colors.card,
+                                borderColor: selected ? withAlpha(item.color, 0.35) : colors.border,
+                                opacity: disabled ? 0.4 : 1,
+                              },
+                            ]}
+                            accessibilityRole="checkbox"
+                            accessibilityState={{ checked: selected, disabled }}
+                            accessibilityLabel={item.label}
+                          >
+                            <View style={[styles.devEditIcon, { backgroundColor: withAlpha(item.color, isDark ? 0.15 : 0.18) }]}>
+                              <item.Icon size={20} strokeWidth={1.75} color={item.color} />
+                            </View>
+                            <Text style={[styles.devEditLabel, { color: colors.text }]} numberOfLines={1}>
+                              {item.label}
+                            </Text>
+                            <View
+                              style={[
+                                styles.devEditCheck,
+                                {
+                                  backgroundColor: selected ? item.color : 'transparent',
+                                  borderColor: selected ? item.color : colors.border,
+                                },
+                              ]}
+                            >
+                              {selected ? <Check size={14} strokeWidth={2.5} color={colors.onAccent} /> : null}
+                            </View>
+                          </View>
+                        </PressableScale>
+                      );
+                    })}
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
 
-  // ── Toggle vue liste/grille ──
-  viewToggle: {
-    height: 32,
-    borderRadius: Radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: Spacing.md,
-    justifyContent: 'center',
-    ...Shadows.xs,
+  scroll: { flex: 1 },
+  devContent: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing.xs,
+    paddingBottom: 130,
   },
-  viewToggleRow: {
+  devSearchBox: {
+    minHeight: 48,
+    borderRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing['2xl'],
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing['2xl'],
   },
-  viewToggleIcon: {
-    fontSize: FontSize.lg,
-    paddingHorizontal: Spacing.sm,
+  devSearchInput: {
+    flex: 1,
+    fontSize: FontSize.body,
+    paddingVertical: Spacing.md,
+  },
+  devFavoritesBlock: {
+    marginBottom: Spacing['2xl'],
+  },
+  devFavoritesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+  },
+  devFavoritesEditLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
     paddingVertical: Spacing.xxs,
+    paddingHorizontal: Spacing.sm,
   },
-  viewToggleSep: {
-    width: StyleSheet.hairlineWidth,
+  devFavoritesEditLinkText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+  },
+  devSectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  devSectionTitle: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  devFavoritesRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: Spacing.md,
+  },
+  devFavoritePressable: {
+    flex: 1,
+  },
+  devFavorite: {
+    minHeight: 76,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    overflow: 'hidden',
+    ...Shadows.sm,
+  },
+  devFavoriteIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devFavoriteLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+  },
+  devMiniBadge: {
+    minWidth: 18,
     height: 18,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  devMiniBadgeText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.heavy,
+  },
+  devSearchResultsBlock: {
+    marginTop: Spacing.xs,
+  },
+  devSearchResultsTitle: {
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.xl,
+  },
+  devCategory: {
+    marginTop: Spacing['2xl'],
+  },
+  devGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+  },
+  devGridPressable: {
+    width: '48%',
+  },
+  devGridCard: {
+    minHeight: 104,
+    borderRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing['2xl'],
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    position: 'relative' as const,
+    overflow: 'hidden',
+    ...Shadows.md,
+  },
+  devGridIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devGridLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center' as const,
+  },
+  devGridBadge: {
+    position: 'absolute' as const,
+    top: Spacing.sm,
+    right: Spacing.sm,
+    minWidth: 21,
+    height: 21,
+    borderRadius: Radius.full,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingHorizontal: Spacing.sm,
   },
 
-  // ── Scroll ──
-  scroll: { flex: 1 },
-  content: {
+  // ── Modale édition favoris ──
+  devEditHintRow: {
     paddingHorizontal: Spacing['2xl'],
-    paddingBottom: 120,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  devEditHint: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+  },
+  devEditContent: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing['4xl'],
+  },
+  devEditCategory: {
+    marginTop: Spacing['2xl'],
+    gap: Spacing.sm,
+  },
+  devEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.lg,
+    minHeight: 56,
+  },
+  devEditIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devEditLabel: {
+    flex: 1,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  devEditCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  // ── Section ──
-  section: {
-    marginTop: Spacing['3xl'],
-  },
-
-  // ── Section header ──
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -420,99 +778,6 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-  },
-
-  // ── Vue liste : rows individuels ──
-  listContainer: {
-    gap: Spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing['2xl'],
-    borderRadius: Radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    minHeight: 64,
-    overflow: 'hidden',
-    ...Shadows.md,
-  },
-  listIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: Radius['lg+'],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing['2xl'],
-  },
-  labelContainer: {
-    flex: 1,
-    marginRight: Spacing.md,
-  },
-  rowLabel: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.semibold,
-  },
-  rowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  chevron: {
-    fontSize: FontSize.titleLg,
-    fontWeight: FontWeight.normal,
-  },
-
-  // ── Vue grille ──
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xl,
-  },
-  gridPressable: {
-    width: '47%',
-  },
-  gridCard: {
-    borderRadius: Radius.xl,
-    padding: Spacing['2xl'],
-    alignItems: 'center',
-    gap: Spacing.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    ...Shadows.md,
-    position: 'relative' as const,
-  },
-  gridIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gridLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    textAlign: 'center' as const,
-  },
-  gridBadge: {
-    position: 'absolute' as const,
-    top: Spacing.md,
-    right: Spacing.md,
-    minWidth: 22,
-    height: 22,
-    borderRadius: Radius.full,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingHorizontal: Spacing.sm,
-  },
-
-  // ── Commun ──
-  badge: {
-    minWidth: 24,
-    height: 24,
-    borderRadius: Radius.full,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingHorizontal: Spacing.sm,
   },
   badgeText: {
     fontSize: FontSize.code,
