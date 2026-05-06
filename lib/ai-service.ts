@@ -1308,7 +1308,34 @@ ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : 
       return { text: JSON.stringify({ titre: 'Histoire du soir', texte: rawText }), error: undefined };
     }
 
-    return { text: jsonMatch[0], error: undefined };
+    // Strip tags TTS (`[whispers]`, `[chuckles]`, etc.) si le moteur ne les
+    // interprète pas (P1 — voir .planning/quick/260506-stories-eval-baseline/ANALYSIS.md).
+    // Le prompt l'instruit déjà, mais Claude les laisse parfois → défense en profondeur.
+    let extractedJson = jsonMatch[0];
+    if (!tagsSupported) {
+      try {
+        const parsed = JSON.parse(extractedJson);
+        const TAG_RE = /\s*\[[a-z][a-z\s]*\]\s*/gi;
+        const stripTags = (s: string): string =>
+          s.replace(TAG_RE, ' ').replace(/\s{2,}/g, ' ').trim();
+        if (typeof parsed.texte === 'string') parsed.texte = stripTags(parsed.texte);
+        if (parsed.script?.beats && Array.isArray(parsed.script.beats)) {
+          for (const b of parsed.script.beats) {
+            if (b && typeof b.text === 'string') b.text = stripTags(b.text);
+          }
+        }
+        if (parsed.scenes && Array.isArray(parsed.scenes)) {
+          for (const s of parsed.scenes) {
+            if (s && typeof s.sceneStart === 'string') s.sceneStart = stripTags(s.sceneStart);
+          }
+        }
+        extractedJson = JSON.stringify(parsed);
+      } catch {
+        // JSON malformé — laisser passer, le caller gérera l'erreur de parsing
+      }
+    }
+
+    return { text: extractedJson, error: undefined };
   } catch (e) {
     return { text: '', error: e instanceof Error ? e.message : 'Erreur inconnue' };
   }
