@@ -591,7 +591,7 @@ function ScrollHint(){
 function PhoneMock({ accent, season, scrollProg, tweaks }){
   // cycle screens automatically
   const [screen, setScreen] = useState(0);
-  const SCREENS = ['dashboard','farm','village','tasks','pregnancy'];
+  const SCREENS = ['dashboard','farm','village','tasks','pregnancy','memories'];
   useEffect(() => {
     if (tweaks.animIntensity === 'off') return;
     const id = setInterval(() => setScreen(s => (s+1)%SCREENS.length), 4200);
@@ -639,6 +639,7 @@ function PhoneMock({ accent, season, scrollProg, tweaks }){
               {s==='village'   && <AppVillageScreen accent={accent} />}
               {s==='tasks'     && <AppTasksScreen accent={accent} />}
               {s==='pregnancy' && <AppPregnancyScreen accent={accent} />}
+              {s==='memories'  && <AppMemoriesScreen />}
             </div>
           ))}
           {/* Bottom tab bar — conforme à l'app réelle */}
@@ -752,77 +753,9 @@ function AppHeader({ title, subtitle, accent }){
 }
 
 function AppDashboard({ accent, season }){
-  // Reproduit le vrai dashboard : salutation + pills (Chercher/Récap GP/Sections),
-  // card Bébé SA, En retard, Suggestions.
   return (
-    <div style={{ height:'100%', background:'#F5F1EA', overflow:'hidden', display:'flex', flexDirection:'column', paddingTop:34 }}>
-      {/* Bandeau salutation */}
-      <div style={{ padding:'12px 14px 10px', display:'flex', alignItems:'center', gap:10,
-        background:'linear-gradient(180deg, #F0EAFF 0%, #F5F1EA 100%)' }}>
-        <div style={{ width:38, height:38, borderRadius:10, background:'#fff', border:'1px solid #E8E3D9', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🐾</div>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:10.5, color:'#6B7280', fontWeight:600 }}>Bon après-midi</div>
-          <div style={{ fontSize:13, fontWeight:800, color:'#1A1A2E' }}>Lucas · Lun. 06 avril</div>
-        </div>
-        <div style={{ display:'flex', gap:4 }}>
-          {['🔍','📓','⚙️'].map((ic,i) => (
-            <div key={i} style={{ width:28, height:28, borderRadius:8, background:'#fff', border:'1px solid #E8E3D9', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>{ic}</div>
-          ))}
-        </div>
-      </div>
-
-      {/* Bébé SA card */}
-      <div style={{ margin:'0 12px 8px', padding:'9px 11px', background:'#fff', borderRadius:12, border:'1px solid #E8E3D9', display:'flex', alignItems:'center', gap:9 }}>
-        <div style={{ fontSize:22 }}>🌽</div>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:11.5, fontWeight:800, color:'#1A1A2E' }}>Bébé — SA 22</div>
-          <div style={{ fontSize:9.5, color:'#6B7280', marginTop:1 }}>J-128 · épi de maïs · 28 cm</div>
-          <div style={{ height:3, background:'#EDE9E3', borderRadius:2, marginTop:5, overflow:'hidden' }}>
-            <div style={{ width:'55%', height:'100%', background:'#3B82F6' }}/>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ flex:1, overflow:'hidden', padding:'0 12px' }}>
-        {/* En retard */}
-        <div style={{ background:'#fff', borderRadius:12, border:'1px solid #E8E3D9', padding:'10px 11px', marginBottom:8 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
-            <span style={{ fontSize:12 }}>⚠️</span>
-            <span style={{ fontSize:12, fontWeight:800, color:'#1A1A2E' }}>En retard</span>
-            <span style={{ fontSize:9, fontWeight:800, color:'#fff', background:'#DC2626', borderRadius:999, padding:'1px 6px' }}>3</span>
-            <div style={{ flex:1 }}/>
-            <span style={{ fontSize:10, color:accent.primary, fontWeight:700 }}>Voir tout →</span>
-          </div>
-          {[
-            { t:'Laver cosy', d:'02/04/2026' },
-            { t:'Nettoyer plan de travail', d:'05/04/2026', tag:'quotidien' },
-            { t:'Laver couette', d:'31/03/2026' },
-          ].map((it,i)=>(
-            <div key={i} style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 0', borderTop: i>0 ? '1px solid #F3EFE7' : 'none' }}>
-              <div style={{ width:14, height:14, borderRadius:4, border:'1.5px solid #D0CBC3' }}/>
-              <div style={{ flex:1, fontSize:11, fontWeight:700, color:'#DC2626' }}>{it.t}</div>
-              <div style={{ fontSize:9, color:'#9CA3AF' }}>📅 {it.d}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Suggestions */}
-        <div style={{ background:'#fff', borderRadius:12, border:'1px solid #E8E3D9', padding:'10px 11px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
-            <span style={{ fontSize:12 }}>💡</span>
-            <span style={{ fontSize:12, fontWeight:800, color:'#1A1A2E' }}>Suggestions</span>
-            <span style={{ fontSize:9, fontWeight:800, color:'#fff', background:'#EC4899', borderRadius:999, padding:'1px 6px' }}>6</span>
-          </div>
-          <div style={{ display:'flex', alignItems:'flex-start', gap:8 }}>
-            <span style={{ fontSize:14 }}>🧨</span>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#1A1A2E' }}>3 tâches en retard critique</div>
-              <div style={{ fontSize:9.5, color:'#6B7280', marginTop:1 }}>Retard max : 6 jours. Pensez à les traiter.</div>
-            </div>
-            <div style={{ width:22, height:22, borderRadius:'50%', background:accent.primary, color:'#fff', fontWeight:800, fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>+</div>
-          </div>
-        </div>
-      </div>
+    <div style={{ height:'100%', position:'relative', overflow:'hidden', background:'#F5F1EA' }}>
+      <img src="dashboard.png" alt="Dashboard FamilyFlow" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top' }} />
     </div>
   );
 }
@@ -1011,103 +944,24 @@ function MiniPoussin({ style }){
 
 function AppTasksScreen({ accent }){
   return (
-    <div style={{ height:'100%', background:'#F5F1EA', paddingTop:34 }}>
-      <div style={{ padding:'10px 14px 8px', display:'flex', alignItems:'center', gap:8 }}>
-        <span style={{ fontSize:18 }}>📋</span>
-        <span style={{ fontSize:15, fontWeight:800, color:'#1A1A2E' }}>Tâches</span>
-        <div style={{ flex:1 }}/>
-        <span style={{ fontSize:10, fontWeight:700, color:'#6B7280' }}>8/14 ce jour</span>
-      </div>
-      <div style={{ padding:'0 12px', display:'flex', gap:5, marginBottom:9, overflow:'hidden' }}>
-        {[
-          { l:'Tous', a:false }, { l:'Aujourd\'hui', a:true }, { l:'Maison', a:false },
-          { l:'Lucas', a:false }, { l:'Emma', a:false },
-        ].map((m)=>(
-          <div key={m.l} style={{
-            padding:'5px 11px', borderRadius:999, fontSize:10.5, fontWeight:700,
-            background: m.a ? accent.primary : '#fff', color: m.a ? '#fff' : '#3D3D56',
-            border:`1px solid ${m.a ? 'transparent' : '#E8E3D9'}`,
-            whiteSpace:'nowrap'
-          }}>{m.l}</div>
-        ))}
-      </div>
-      <div style={{ padding:'0 12px', fontSize:9.5, fontWeight:800, color:'#6B7280', letterSpacing:'0.08em', margin:'4px 0 6px' }}>AUJOURD'HUI</div>
-      <div style={{ padding:'0 12px' }}>
-        {[
-          { t:'Vider lave-vaisselle', cat:'🍽️ Cuisine', g:3, done:true },
-          { t:'Arroser les plantes', cat:'🌿 Jardin', g:5, done:true },
-          { t:'Plier le linge', cat:'🧺 Buanderie', g:4, done:false, highlight:true },
-          { t:'Aspirateur salon', cat:'🏠 Maison', g:6, done:false },
-          { t:'Sortir les poubelles', cat:'♻️ Extérieur', g:2, done:false },
-        ].map((task,i)=>(
-          <div key={i} style={{
-            background:'#fff', padding:'9px 11px', borderRadius:12, marginBottom:6,
-            border:task.highlight ? `1.5px solid ${accent.primary}55` : '1px solid #E8E3D9',
-            display:'flex', gap:9, alignItems:'center',
-            opacity: task.done ? 0.55 : 1,
-            boxShadow: task.highlight ? `0 4px 12px ${accent.glow}` : 'none',
-            transition:'all 400ms ease'
-          }}>
-            <div style={{
-              width:20, height:20, borderRadius:6, flexShrink:0,
-              background: task.done ? '#6AAE4E' : 'transparent',
-              border: task.done ? 'none' : '1.5px solid #D0CBC3',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              color:'#fff', fontSize:12, fontWeight:800
-            }}>{task.done && '✓'}</div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'#1A1A2E', textDecoration: task.done ? 'line-through' : 'none' }}>{task.t}</div>
-              <div style={{ fontSize:9.5, color:'#9CA3AF', marginTop:1 }}>{task.cat}</div>
-            </div>
-            <div style={{
-              background:task.done ? '#F3EFE7' : '#EAF5DE', padding:'3px 7px', borderRadius:6,
-              fontSize:10, fontWeight:800, color:task.done ? '#9CA3AF' : '#4E8A3A',
-              display:'inline-flex', alignItems:'center', gap:3
-            }}>+{task.g}<span style={{ fontSize:9 }}>🌿</span></div>
-          </div>
-        ))}
-      </div>
+    <div style={{ height:'100%', position:'relative', overflow:'hidden', background:'#F5F1EA' }}>
+      <img src="chores.png" alt="Tâches FamilyFlow" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top' }} />
     </div>
   );
 }
 
 function AppPregnancyScreen({ accent }){
-  // Journal bébé — calque de la vraie app : nav date, résumé du jour, tableaux Alimentation/Couches/Sommeil
   return (
-    <div style={{ height:'100%', background:'#F5F1EA', paddingTop:34 }}>
-      <div style={{ padding:'10px 14px 8px', display:'flex', alignItems:'center', gap:8 }}>
-        <span style={{ fontSize:14, color:'#9CA3AF' }}>‹</span>
-        <div style={{ flex:1, textAlign:'center' }}>
-          <div style={{ fontSize:13, fontWeight:800, color:'#1A1A2E' }}>04/04/2026</div>
-          <div style={{ fontSize:9.5, color:'#9CA3AF', marginTop:1 }}>Samedi</div>
-        </div>
-        <span style={{ fontSize:14, color:'#9CA3AF' }}>›</span>
-        <div style={{ background:'#E0E7FF', color:'#3B82F6', fontSize:9.5, fontWeight:700, padding:'4px 9px', borderRadius:999 }}>Aujourd'hui</div>
-      </div>
+    <div style={{ height:'100%', position:'relative', overflow:'hidden', background:'#F5F1EA' }}>
+      <img src="pregnancy.png" alt="Grossesse FamilyFlow" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top' }} />
+    </div>
+  );
+}
 
-      {/* Résumé du jour */}
-      <div style={{ margin:'6px 12px 10px', background:'#EAF0FF', border:'1px solid #C7D2FE', borderLeft:'3px solid #3B82F6', borderRadius:10, padding:'9px 11px' }}>
-        <div style={{ fontSize:11, fontWeight:800, color:'#1A1A2E', marginBottom:7, display:'flex', alignItems:'center', gap:5 }}>
-          <span>📊</span><span>Résumé du jour</span>
-        </div>
-        <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
-          <ResumeChip icon="🍼" label="1 biberon (200 ml)" />
-          <ResumeChip icon="🧡" label="1 couche" />
-          <ResumeChip icon="😴" label="11h45 🌙 11h45" />
-        </div>
-      </div>
-
-      <div style={{ padding:'0 12px' }}>
-        <JournalTable title="Alimentation" cols={['Heure','Type','Détail']} rows={[
-          ['7h30','Biberon','200 ml'],
-        ]} addLabel="🍼 Ajouter" />
-        <JournalTable title="Couches" cols={['Heure','Type','Notes']} rows={[
-          ['18h00','Pipi','Bien remplie'],
-        ]} addLabel="🧡 Ajouter" />
-        <JournalTable title="Sommeil" cols={['Début','Fin','Durée']} rows={[
-          ['19h45','7h30','11h45'],
-        ]} addLabel="🌙 Ajouter" />
-      </div>
+function AppMemoriesScreen(){
+  return (
+    <div style={{ height:'100%', position:'relative', overflow:'hidden', background:'#F5F1EA' }}>
+      <img src="memories.png" alt="Souvenirs FamilyFlow" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top' }} />
     </div>
   );
 }
