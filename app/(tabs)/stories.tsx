@@ -36,6 +36,8 @@ import {
 } from '../../lib/stories';
 import { generateBedtimeStory } from '../../lib/ai-service';
 import { runRubricAndMaybeReroll } from '../../lib/eval/pipeline';
+import { evaluateStoryWithLlm } from '../../lib/eval/llm-eval';
+import { QualityBadge } from '../../components/stories/QualityBadge';
 import { getAvailableSfxTags } from '../../lib/sfx';
 import { parseStoryScript } from '../../lib/story-script';
 import { extractScenesFromAIResponse } from '../../lib/story-scenes';
@@ -241,8 +243,9 @@ const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAv
       onLongPress={onLongPress ? () => onLongPress(story) : undefined}
       delayLongPress={500}
     >
-      {/* Badges modèle (emojis) + audio dispo */}
+      {/* Badges modèle (emojis) + audio dispo + qualité (Phase 52-03) */}
       <View style={storyCardStyles.badgeRow}>
+        <QualityBadge story={story} size="sm" />
         {audioModeIcon && (
           <Text style={storyCardStyles.modelBadge}>{audioModeIcon}</Text>
         )}
@@ -2110,6 +2113,26 @@ export default function StoriesScreen() {
       saveStory(finalStory).catch((e) => {
         if (__DEV__) console.warn('[stories] vault sync failed (story still in memory):', e);
       });
+
+      // Phase 52-03 — LLM-judge async fire-and-forget (EVAL-05). NE JAMAIS await.
+      // Idempotent (G7) : evaluateStoryWithLlm skip si flag off OU si llm_judge déjà rempli.
+      // Bedtime UX critique : ce call n'a aucun impact sur la latence d'affichage.
+      if (profile) {
+        evaluateStoryWithLlm(finalStory, profile, aiConfig)
+          .then((judge) => {
+            if (!judge) return;
+            const enriched: BedtimeStory = {
+              ...finalStory,
+              llm_judge: { ...judge, evaluated_at: new Date().toISOString() },
+            };
+            saveStory(enriched).catch((e) => {
+              if (__DEV__) console.warn('[stories] LLM-judge persist failed:', e);
+            });
+          })
+          .catch((e) => {
+            if (__DEV__) console.warn('[stories] LLM-judge background failed:', e);
+          });
+      }
     }, [enfantId, enfantName, universId, detail, book, trancheAge]);
 
     useEffect(() => {
