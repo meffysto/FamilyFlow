@@ -102,6 +102,25 @@ function getStepLabel(
   });
 }
 
+/**
+ * Vérifie qu'une histoire a 6 scènes (contrainte stricte du format livre illustré
+ * — cf. lib/pdf/html-template.ts:144). Renvoie un message FR actionnable sinon.
+ */
+function getStoryPrintability(story: BedtimeStory): { ok: boolean; reason?: string } {
+  const count = story.scenes?.scenes.length ?? 0;
+  if (count === 6) return { ok: true };
+  if (count === 0) {
+    return {
+      ok: false,
+      reason: 'Aucune scène détectée — régénère avec une longueur « Longue » ou « Très longue ».',
+    };
+  }
+  return {
+    ok: false,
+    reason: `${count} scène${count > 1 ? 's' : ''} sur 6 — régénère avec une longueur « Longue » ou « Très longue ».`,
+  };
+}
+
 function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
   const { vault, stories } = useVault();
   const { colors, primary } = useThemeColors();
@@ -253,6 +272,7 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
               ) : (
                 stories.map((s) => {
                   const isSel = selectedStory?.id === s.id;
+                  const printability = getStoryPrintability(s);
                   return (
                     <Pressable
                       key={s.id}
@@ -266,6 +286,7 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
                           backgroundColor: colors.card,
                           borderColor: isSel ? primary : colors.border,
                           borderWidth: isSel ? 2 : 1,
+                          opacity: printability.ok ? 1 : 0.6,
                         },
                       ]}
                     >
@@ -275,6 +296,14 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
                       >
                         {s.titre}
                       </Text>
+                      {!printability.ok && (
+                        <Text
+                          style={[styles.storyWarning, { color: colors.textMuted }]}
+                          numberOfLines={2}
+                        >
+                          {printability.reason}
+                        </Text>
+                      )}
                     </Pressable>
                   );
                 })
@@ -284,23 +313,39 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
             <View
               style={[styles.footer, { borderTopColor: colors.border }]}
             >
-              <Pressable
-                onPress={handleGenerate}
-                disabled={!selectedStory || !vault}
-                style={[
-                  styles.cta,
-                  {
-                    backgroundColor:
-                      selectedStory && vault ? primary : colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.ctaText, { color: '#FFFFFF' }]}>
-                  {t('impressions.export.modal.generateCta', {
-                    defaultValue: 'Générer le livre',
-                  })}
-                </Text>
-              </Pressable>
+              {(() => {
+                const printability = selectedStory
+                  ? getStoryPrintability(selectedStory)
+                  : { ok: false };
+                const canGenerate = !!selectedStory && !!vault && printability.ok;
+                return (
+                  <>
+                    {selectedStory && !printability.ok && printability.reason && (
+                      <Text
+                        style={[styles.footerWarning, { color: colors.textMuted }]}
+                      >
+                        {printability.reason}
+                      </Text>
+                    )}
+                    <Pressable
+                      onPress={handleGenerate}
+                      disabled={!canGenerate}
+                      style={[
+                        styles.cta,
+                        {
+                          backgroundColor: canGenerate ? primary : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.ctaText, { color: '#FFFFFF' }]}>
+                        {t('impressions.export.modal.generateCta', {
+                          defaultValue: 'Générer le livre',
+                        })}
+                      </Text>
+                    </Pressable>
+                  </>
+                );
+              })()}
             </View>
           </View>
         )}
@@ -452,6 +497,16 @@ const styles = StyleSheet.create({
   storyTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
+  },
+  storyWarning: {
+    fontSize: FontSize.sm,
+    marginTop: Spacing.sm,
+    fontStyle: 'italic',
+  },
+  footerWarning: {
+    fontSize: FontSize.sm,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   footer: {
     padding: Spacing['2xl'],

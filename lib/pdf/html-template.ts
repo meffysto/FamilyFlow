@@ -141,7 +141,9 @@ html, body {
 function renderModeAPages(spec: BookHtmlSpec): string {
   const scenes = spec.scenes!;
   if (scenes.length !== 6) {
-    throw new Error("L'histoire doit avoir exactement 6 scènes pour être imprimée. Édite le sidecar .scenes.json.");
+    throw new Error(
+      `Cette histoire contient ${scenes.length} scène${scenes.length > 1 ? 's' : ''} au lieu des 6 requises pour le format livre illustré. Régénère-la avec une longueur « Longue » ou « Très longue » pour obtenir 6 scènes.`,
+    );
   }
 
   const coverImg = spec.illustrations.get('paysage') ?? null;
