@@ -217,6 +217,9 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
 
+  // ── État ouvert du FAB (lifté pour pilotage depuis la pillule) ──
+  const [fabOpen, setFabOpen] = useState(false);
+
   const handleProfileSelect = useCallback(async (profileId: string) => {
     const target = profiles.find((p) => p.id === profileId);
     const currentIsChild = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -430,14 +433,21 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       {showFAB && (
         <FAB
           actions={fabActions}
-          bottom={useFabPanel ? Math.max(insets.bottom - 8, 4) : undefined}
+          bottom={useFabPanel ? Math.max(insets.bottom + 60, 72) : undefined}
           variant={useFabPanel ? 'panel' : 'speed-dial'}
+          open={useFabPanel ? fabOpen : undefined}
+          onOpenChange={useFabPanel ? setFabOpen : undefined}
+          hideTrigger={useFabPanel}
         />
       )}
       {__DEV__ && !isTablet && (
         <FloatingPillNav
           activeTab={activeTab === '(tabs)' || !activeTab ? 'index' : activeTab}
           onTabPress={(id) => router.push(id === 'index' ? '/(tabs)/' : `/(tabs)/${id}` as any)}
+          onAddPress={() => setFabOpen((v) => !v)}
+          addOpen={fabOpen}
+          taskBadgeCount={taskBadgeCount}
+          rdvBadgeActive={rdvBadgeActive}
         />
       )}
       </View>

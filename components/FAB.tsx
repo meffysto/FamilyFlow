@@ -5,7 +5,7 @@
  *   <FAB actions={[{ id: 'task', emoji: '📋', label: 'Tâche', onPress: () => {} }]} />
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -43,6 +43,12 @@ export interface FABProps {
    *   'panel'               — carte parchemin avec grille d'actions (DEV pillule)
    */
   variant?: 'speed-dial' | 'panel';
+  /** État ouvert contrôlé. Si fourni, désactive l'état interne. */
+  open?: boolean;
+  /** Callback quand l'état ouvert change (clic backdrop, tap action, toggle externe). */
+  onOpenChange?: (next: boolean) => void;
+  /** Cache le bouton "+" intégré (la pill fournit son propre déclencheur). */
+  hideTrigger?: boolean;
 }
 
 const MAIN_SIZE = 56;
@@ -52,24 +58,33 @@ const ACTION_OFFSET_RIGHT = (MAIN_SIZE - ACTION_SIZE) / 2;
 
 const TIMING_CONFIG = { duration: 200, easing: Easing.out(Easing.cubic) };
 
-function FABComponent({ actions, bottom, variant = 'speed-dial' }: FABProps) {
+function FABComponent({ actions, bottom, variant = 'speed-dial', open: openProp, onOpenChange, hideTrigger }: FABProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
-  const [open, setOpen] = useState(false);
+  const [openInternal, setOpenInternal] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : openInternal;
   const progress = useSharedValue(0);
 
-  const toggle = useCallback(() => {
-    const next = !open;
-    setOpen(next);
-    progress.value = reduceMotion ? (next ? 1 : 0) : withTiming(next ? 1 : 0, TIMING_CONFIG);
+  // Sync progress avec l'état (interne ou contrôlé)
+  useEffect(() => {
+    progress.value = reduceMotion ? (open ? 1 : 0) : withTiming(open ? 1 : 0, TIMING_CONFIG);
   }, [open, progress, reduceMotion]);
+
+  const setOpen = useCallback((next: boolean) => {
+    if (!isControlled) setOpenInternal(next);
+    onOpenChange?.(next);
+  }, [isControlled, onOpenChange]);
+
+  const toggle = useCallback(() => {
+    setOpen(!open);
+  }, [open, setOpen]);
 
   const close = useCallback(() => {
     setOpen(false);
-    progress.value = reduceMotion ? 0 : withTiming(0, TIMING_CONFIG);
-  }, [progress, reduceMotion]);
+  }, [setOpen]);
 
   // Rotation animée du "+" → "×"
   const mainAnimStyle = useAnimatedStyle(() => ({
@@ -141,38 +156,40 @@ function FABComponent({ actions, bottom, variant = 'speed-dial' }: FABProps) {
         </Animated.View>
       )}
 
-      {/* Container FAB */}
-      <View style={[styles.container, { bottom: fabBottom }]} pointerEvents="box-none">
-        {/* Actions speed-dial (mode speed-dial uniquement) */}
-        {variant === 'speed-dial' && actions.map((action, index) => (
-          <FABActionItem
-            key={action.id}
-            action={action}
-            index={index}
-            progress={progress}
-            primary={primary}
-            colors={colors}
-            onPress={() => {
-              close();
-              action.onPress();
-            }}
-          />
-        ))}
+      {/* Container FAB — masqué si hideTrigger (la pill fournit son propre +) */}
+      {!hideTrigger && (
+        <View style={[styles.container, { bottom: fabBottom }]} pointerEvents="box-none">
+          {/* Actions speed-dial (mode speed-dial uniquement) */}
+          {variant === 'speed-dial' && actions.map((action, index) => (
+            <FABActionItem
+              key={action.id}
+              action={action}
+              index={index}
+              progress={progress}
+              primary={primary}
+              colors={colors}
+              onPress={() => {
+                close();
+                action.onPress();
+              }}
+            />
+          ))}
 
-        {/* Bouton principal */}
-        <TouchableOpacity
-          style={[styles.mainButton, { backgroundColor: primary }]}
-          onPress={toggle}
-          activeOpacity={0.8}
-          accessibilityLabel={open ? t('fab.closeMenuA11y') : t('fab.addA11y')}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-        >
-          <Animated.Text style={[styles.mainIcon, { color: colors.onPrimary }, mainAnimStyle]}>
-            +
-          </Animated.Text>
-        </TouchableOpacity>
-      </View>
+          {/* Bouton principal */}
+          <TouchableOpacity
+            style={[styles.mainButton, { backgroundColor: primary }]}
+            onPress={toggle}
+            activeOpacity={0.8}
+            accessibilityLabel={open ? t('fab.closeMenuA11y') : t('fab.addA11y')}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: open }}
+          >
+            <Animated.Text style={[styles.mainIcon, { color: colors.onPrimary }, mainAnimStyle]}>
+              +
+            </Animated.Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </>
   );
 }
