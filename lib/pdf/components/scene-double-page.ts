@@ -42,8 +42,13 @@ export function renderSceneDoublePage(opts: SceneDoublePageOpts): string {
     scene.textEnd,
   );
 
+  // Étend snapEnd jusqu'à la prochaine frontière de phrase ([.!?] suivi d'espace ou fin)
+  // pour éviter les coupures mid-phrase dans le PDF. Plafond 80 chars pour limiter le
+  // chevauchement avec la scène suivante.
+  const extendedEnd = extendToSentenceBoundary(story.texte, snapEnd, 80);
+
   // Slicing déterministe — RESEARCH.md §503-509 condition #1 du hash
-  const sceneText = story.texte.slice(snapStart, snapEnd);
+  const sceneText = story.texte.slice(snapStart, extendedEnd);
 
   // Highlights : indices originaux relatifs à story.texte.slice(textStart, textEnd).
   // On ré-aligne sur le slice snappé puis on snap chaque highlight aux frontières de mot.
@@ -63,6 +68,16 @@ export function renderSceneDoublePage(opts: SceneDoublePageOpts): string {
     }
   }
 
+  // Supprime le marqueur Markdown `# Titre` en début de scène (display uniquement —
+  // n'affecte pas les indices stockés). Ajuste les offsets des highlights en conséquence.
+  const { cleanText: displayText, offset: headingOffset } = stripHeadingPrefix(sceneText, story.titre);
+  const displayHighlights = headingOffset > 0
+    ? adjustedHighlights
+      .map(h => ({ ...h, startChar: h.startChar - headingOffset, endChar: h.endChar - headingOffset }))
+      .filter(h => h.endChar > 0 && h.startChar < displayText.length)
+      .map(h => ({ ...h, startChar: Math.max(0, h.startChar), endChar: Math.min(displayText.length, h.endChar) }))
+    : adjustedHighlights;
+
   // Page paire — illustration full-bleed ou fallback paperShadow
   const illustrationBlock = illustrationBase64
     ? `<img class="full-bleed scene-illustration" src="data:image/jpeg;base64,${illustrationBase64}" alt="" />`
@@ -74,7 +89,7 @@ export function renderSceneDoublePage(opts: SceneDoublePageOpts): string {
   </section>`;
 
   // Page impaire — texte avec highlights teal
-  const textHtml = renderTextWithHighlights(sceneText, adjustedHighlights);
+  const textHtml = renderTextWithHighlights(displayText, displayHighlights);
 
   const rightPage = `<section class="page scene-text-page" data-archetype="${scene.archetype}">
     <div class="safe-area" style="display:flex; align-items:center;">
@@ -149,4 +164,56 @@ function snapRangeToWordBoundaries(
 
   if (e <= s) return { start, end };
   return { start: s, end: e };
+}
+
+/**
+ * Étend `end` jusqu'à la prochaine frontière de phrase ([.!?] suivi d'espace ou fin)
+ * dans `text`, dans la limite de `maxExtend` caractères supplémentaires.
+ * Si aucune frontière n'est trouvée dans la fenêtre, retourne `end` inchangé.
+ */
+function extendToSentenceBoundary(text: string, end: number, maxExtend: number): number {
+  if (end >= text.length) return end;
+  const window = text.slice(end, Math.min(text.length, end + maxExtend));
+  const match = window.match(/[.!?](?:\s|$)/);
+  if (!match || match.index === undefined) return end;
+  return end + match.index + 1;
+}
+
+/**
+ * Supprime le marqueur Markdown `# Titre` en tête de `text` (display uniquement).
+ * Cas 1 — heading sur sa propre ligne : retire jusqu'au premier `\n` (inclus).
+ * Cas 2 — heading fusionné avec le corps sur la même ligne : retire `# ${titre} `
+ *          si `titre` est fourni et correspond, sinon retire uniquement `# `.
+ * Retourne le texte nettoyé et l'offset soustrait (pour recaler les HighlightSpans).
+ */
+function stripHeadingPrefix(
+  text: string,
+  titre?: string,
+): { cleanText: string; offset: number } {
+  if (!text.startsWith('#')) return { cleanText: text, offset: 0 };
+
+  // Cas 1 : heading sur sa propre ligne
+  const nlIdx = text.indexOf('\n');
+  if (nlIdx !== -1) {
+    let end = nlIdx + 1;
+    while (end < text.length && text[end] === '\n') end++;
+    return { cleanText: text.slice(end), offset: end };
+  }
+
+  // Cas 2 : heading fusionné avec le corps (pas de \n)
+  if (titre) {
+    const hashMatch = text.match(/^#+\s*/);
+    if (hashMatch) {
+      const afterHash = text.slice(hashMatch[0].length);
+      const titleWithSpace = titre + ' ';
+      if (afterHash.startsWith(titleWithSpace)) {
+        const offset = hashMatch[0].length + titleWithSpace.length;
+        return { cleanText: text.slice(offset), offset };
+      }
+    }
+  }
+  // Fallback : retire seulement le(s) `#` et l'espace
+  const fallback = text.match(/^#+\s*/);
+  if (fallback) return { cleanText: text.slice(fallback[0].length), offset: fallback[0].length };
+  return { cleanText: text, offset: 0 };
 }
