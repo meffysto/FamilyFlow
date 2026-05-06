@@ -89,27 +89,27 @@ describe('Phase 52 — Non-régression baseline (F1 CI gate, EVAL-04)', () => {
 });
 
 describe('Phase 52-04 — feature flag runtime override (EVAL-07)', () => {
-  it('setEvalEnabledOverride(true) active le flag en runtime', () => {
+  it('setEvalEnabledOverride(false) force off en runtime', () => {
     setEvalEnabledOverride(null);
     const { isEvalEnabled } = require('../feature-flag');
-    expect(isEvalEnabled()).toBe(false); // baseline
-    setEvalEnabledOverride(true);
-    expect(isEvalEnabled()).toBe(true);
-    setEvalEnabledOverride(null);
+    expect(isEvalEnabled()).toBe(true); // baseline activée Phase 52
+    setEvalEnabledOverride(false);
     expect(isEvalEnabled()).toBe(false);
+    setEvalEnabledOverride(null);
+    expect(isEvalEnabled()).toBe(true);
   });
 
-  it('setEvalEnabledOverride(false) force off explicitement', () => {
-    setEvalEnabledOverride(false);
+  it('setEvalEnabledOverride(true) force on explicitement', () => {
+    setEvalEnabledOverride(true);
     const { isEvalEnabled } = require('../feature-flag');
-    expect(isEvalEnabled()).toBe(false);
+    expect(isEvalEnabled()).toBe(true);
     setEvalEnabledOverride(null);
   });
 
   it('null reset retombe sur DEFAULT_FEATURE_EVAL_ENABLED', () => {
-    setEvalEnabledOverride(true);
+    setEvalEnabledOverride(false);
     setEvalEnabledOverride(null);
     const { isEvalEnabled } = require('../feature-flag');
-    expect(isEvalEnabled()).toBe(false);
+    expect(isEvalEnabled()).toBe(true);
   });
 });

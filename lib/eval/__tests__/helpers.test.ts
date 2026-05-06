@@ -133,7 +133,7 @@ describe('anonymizeStoryText', () => {
 });
 
 describe('isEvalEnabled (EVAL-07)', () => {
-  it('retourne false par défaut — flag off ⇒ baseline strict', () => {
-    expect(isEvalEnabled()).toBe(false);
+  it('retourne true par défaut — flag activé Phase 52 (rubric + re-roll + LLM-judge ON)', () => {
+    expect(isEvalEnabled()).toBe(true);
   });
 });

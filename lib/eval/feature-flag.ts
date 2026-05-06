@@ -2,21 +2,16 @@
  * lib/eval/feature-flag.ts — Phase 52 (EVAL-07)
  *
  * Feature flag pipeline d'évaluation auto des stories.
- * OFF par défaut : comportement strictement identique au commit baseline.
+ * ON par défaut depuis activation Phase 52 (rubric + re-roll + LLM-judge async).
  *
- * Activation Phase 52 (3 méthodes) :
- *   1. Modifier DEFAULT_FEATURE_EVAL_ENABLED = true ici + rebuild app
- *      (recommandé production une fois le pipeline validé sur device dev)
- *   2. Appeler setEvalEnabledOverride(true) au boot dans app/_layout.tsx
- *      (test temporaire — l'override vit en mémoire jusqu'à kill de l'app)
- *   3. Brancher un toggle dans le dev menu (more.tsx) qui appelle
- *      setEvalEnabledOverride — chantier futur, persistance expo-secure-store
+ * Désactivation runtime : setEvalEnabledOverride(false) (mémoire jusqu'à kill app).
+ * Désactivation permanente : DEFAULT_FEATURE_EVAL_ENABLED = false ici + rebuild.
  *
  * L'override mémoire est utilisé par les tests (setEvalEnabledOverride(true)
  * dans beforeAll) — pas de hack process.env, pas de magic.
  */
 
-const DEFAULT_FEATURE_EVAL_ENABLED = false;
+const DEFAULT_FEATURE_EVAL_ENABLED = true;
 
 let runtimeOverride: boolean | null = null;
 
