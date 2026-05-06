@@ -9,6 +9,7 @@
 - Type check: `npx tsc --noEmit` (pas de test suite)
 - Génération PDF : `expo-print` ~15.0.8 + `expo-sharing` ~14.0.8 (Share Sheet iOS)
 - QR codes : `qrcode` 1.5.4 + `expo-clipboard` ~8.0.8
+- Validation runtime : `zod` ^4.4.3 (validation JSON LLM-eval Phase 52)
 
 ## Conventions
 - Langue UI/commits/commentaires: **français**
@@ -41,6 +42,7 @@
 - `lib/gamification/` — engine XP/levels/rewards (barrel index.ts)
 - `lib/mascot/` — moteur arbre mascotte + ferme (barrel index.ts)
 - `lib/vault-cache.ts` — cache mémoire persistant pour re-launch instantané (voir section Cache)
+- `lib/eval/` — pipeline d'évaluation auto Phase 52 : rubric déterministe (`rubric.ts` + `rubric-helpers.ts`), pipeline orchestrateur re-roll cap 1 (`pipeline.ts`), LLM-judge async Haiku 4.5 + Zod (`llm-eval.ts`), feature flag runtime override (`feature-flag.ts`), prompts FR (`prompts.ts`), golden set 20 fixtures + tests CI (`__tests__/`)
 - `lib/pdf/` — pipeline export PDF Lulu (Phase 49+50+51) : `pdf-generator.ts` (génération expo-print + hash SHA-256), `book-storage.ts` (persistence vault + manifeste + `buildVaultPdfUri`), `manifest-parser.ts` (parser bidirectionnel), `qr-generator.ts` (QR audio deep links Phase 50), `html-template.ts` (mise en page Lulu 21×21), `saga-detection.ts`, `text-splitter.ts`, `ornaments.ts`, `print-illustrations.ts`, `asset-loader.ts`, `constants.ts`, `types.ts`
 - `app/impressions.tsx` — écran "Mes impressions" (liste manifeste + génération nouveaux livres) — Phase 51
 - `components/pdf/` — UI export (BookExportModal state machine 4 phases, PostExportView 3 actions, LuluInstructionsModal manuel FR, ExportCard memoïsé) — Phase 51
@@ -55,6 +57,7 @@ Snapshot JSON des domaines stables réhydraté au boot → dashboard visible en 
 - Ajout/retrait d'un domaine dans `VaultCacheState`
 Pas besoin de bumper pour des modifs de parsers, composants UI, ou domaines non cachés.
 Debug : `clearCache()` exporté pour forcer un reset.
+Note Phase 52 : nouveaux champs frontmatter stories (`quality_score`, `quality_dimensions`, `quality_issues`, `quality_retried`, `llm_judge`) — pas de bump `CACHE_VERSION` nécessaire car les stories sont exclues du cache.
 
 ### Hiérarchie providers (app/_layout.tsx)
 SafeAreaProvider > GestureHandler > VaultProvider > AuthProvider > ThemeProvider > AIProvider > StoryVoiceProvider > HelpProvider > ParentalControls > ToastProvider
@@ -76,6 +79,8 @@ SafeAreaProvider > GestureHandler > VaultProvider > AuthProvider > ThemeProvider
 ## Testing
 - `npx tsc --noEmit` — validation types (obligatoire avant chaque commit)
 - `npx jest --no-coverage` — tests unitaires (lib/__tests__/*.test.ts, etabli Phase 19)
+- Golden set Phase 52 : 20 fixtures dans `lib/eval/__tests__/fixtures/golden-set.json` — test de non-régression CI (`lib/eval/__tests__/non-regression-baseline.test.ts`) verrouille la distribution baseline (hardFail 14/20 ±1, tags TTS ≥ 11/20)
+- Audit prod : `npx tsx scripts/eval-dashboard.ts --vault <path>` imprime distribution flagged + score moyen LLM + top issues
 - Erreurs pré-existantes dans MemoryEditor.tsx, cooklang.ts, useVault.ts — **ignorer**
 
 <!-- GSD:project-start source:PROJECT.md -->
