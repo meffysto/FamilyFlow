@@ -980,6 +980,11 @@ export interface StoryGenerationConfig {
     incipits: string[];         // ~80 premiers chars du texte de chaque histoire, anonymisés (même ordre)
     memoryReuseCount: number;   // sur les 5 dernières, combien réutilisent le memory courant comme pivot
   };
+  /**
+   * Phase 52 — Texte additionnel appended au system prompt (re-roll hint).
+   * Optionnel, ignoré si vide. Voir lib/eval/pipeline.ts:runRubricAndMaybeReroll.
+   */
+  extraSystemPrompt?: string;
   /** Contexte livre — présent uniquement pour les chapitres N>=2 d'un livre */
   book?: {
     livreId: string;
@@ -1312,7 +1317,7 @@ ${memoriesContext ? `- Crée un écho avec un souvenir récent : ${memoriesConte
 ${hasPremiereFois ? '- Les souvenirs marqués [PREMIÈRE FOIS] sont précieux : transforme-en un en moment-clé émotionnel de l\'histoire (pas juste un clin d\'œil)' : ''}${antiRedundancyRules}${recentHistorySection}${performanceTagsRules}${charactersRules}${bookMemorySection}${castingLockedSection}${spectacleRules}${scenesRules}
 - Le champ "memorySummary" doit être un résumé NEUTRE en 4-5 phrases focalisé sur ce qui pourrait revenir dans un chapitre futur (lieux, personnages introduits, objets clés, état final du héros). Pas d'émotion, pas de style narratif — c'est une note de continuité.
 - Répondre UNIQUEMENT en JSON valide : ${outputFormat}
-- Aucun texte en dehors du JSON`;
+- Aucun texte en dehors du JSON${story.extraSystemPrompt ? story.extraSystemPrompt : ''}`;
 
   const userMessage = `Crée une histoire du soir pour ${story.enfantAnon} (${story.enfantAge}) dans l'univers "${story.universTitre}"${story.detail ? `. Détail du jour à intégrer : ${story.detail}` : ''}.`;
 

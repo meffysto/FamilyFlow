@@ -35,6 +35,7 @@ import {
   nextStoryFileName, pickSurpriseUniverse,
 } from '../../lib/stories';
 import { generateBedtimeStory } from '../../lib/ai-service';
+import { runRubricAndMaybeReroll } from '../../lib/eval/pipeline';
 import { getAvailableSfxTags } from '../../lib/sfx';
 import { parseStoryScript } from '../../lib/story-script';
 import { extractScenesFromAIResponse } from '../../lib/story-scenes';
@@ -1835,7 +1836,9 @@ export default function StoriesScreen() {
         memoryReuseCount,
       } : undefined;
 
-      const resp = await generateBedtimeStory(storyConfig ?? aiConfig, {
+      // Phase 52 — Params capturés pour pouvoir re-générer (re-roll) avec
+      // extraSystemPrompt si le rubric détecte un hardFail.
+      const genParams = {
         enfantAnon: anonymize(enfantName, anonMap),
         enfantAge: computeAge(profile?.birthdate),
         universId,
@@ -1862,7 +1865,8 @@ export default function StoriesScreen() {
           allergies: profile?.foodAllergies ?? [],
           gender: profile?.gender as 'garçon' | 'fille' | undefined,
         },
-      });
+      };
+      const resp = await generateBedtimeStory(storyConfig ?? aiConfig, genParams);
 
       if (resp.error) {
         setGenError(resp.error);
@@ -2046,20 +2050,64 @@ export default function StoriesScreen() {
         memorySummary: memorySummary.trim() || undefined,
         trancheAge,
       };
-      generationCacheRef.current = { titre, texte, story };
+      // Phase 52 — Pipeline d'évaluation auto + re-roll cap 1 (no-op si flag off, EVAL-07).
+      // Quand isEvalEnabled() === false, runRubricAndMaybeReroll retourne `story` tel quel,
+      // rubric:null, retried:false, sans appeler regenerate ni écrire de champs quality_*.
+      const evalResult = profile
+        ? await runRubricAndMaybeReroll(
+            story,
+            profile,
+            childRecentStories,
+            async (rerollHint: string) => {
+              const resp2 = await generateBedtimeStory(storyConfig ?? aiConfig, {
+                ...genParams,
+                extraSystemPrompt: rerollHint,
+              });
+              if (resp2.error) throw new Error(resp2.error);
+              const parsed2 = tryParseJson(resp2.text);
+              if (!parsed2 || typeof parsed2.texte !== 'string') {
+                throw new Error('re-roll: réponse non parseable');
+              }
+              const titre2 = typeof parsed2.titre === 'string'
+                ? deanonymize(parsed2.titre, anonMap).replace(/^#+\s*/, '').replace(/^\*+|\*+$/g, '').trim()
+                : story.titre;
+              const texte2 = deanonymize(parsed2.texte, anonMap);
+              if (!texte2) throw new Error('re-roll: texte vide');
+              // On reconstruit une story minimale — seuls texte, titre, voice, length
+              // comptent pour le rubric. Les champs lourds (script, scenes) ne sont
+              // PAS recalculés ici : si le re-roll réussit, on les perd volontairement
+              // (compromis Phase 52 — script/scenes peuvent être régénérés à la lecture).
+              return {
+                ...story,
+                titre: titre2,
+                texte: texte2,
+                duree_lecture: Math.round(texte2.length / 15),
+              };
+            },
+          )
+        : { story, rubric: null, retried: false };
+      const finalStory = evalResult.story;
+      if (__DEV__ && evalResult.retried) {
+        console.log('[stories] re-roll Phase 52 effectué', {
+          quality_score: finalStory.quality_score,
+          quality_issues: finalStory.quality_issues,
+        });
+      }
+
+      generationCacheRef.current = { titre: finalStory.titre, texte: finalStory.texte, story: finalStory };
       // L'ordre importe : currentStory + showPlayer AVANT fullText pour que le
       // body s'affiche directement en mode picture-book (et non pendant un état
       // intermédiaire où fullText serait set sans currentStory).
-      setStoryTitle(titre);
-      setCurrentStory(story);
+      setStoryTitle(finalStory.titre);
+      setCurrentStory(finalStory);
       setShowPlayer(true);
-      setDisplayedText(texte);
-      setFullText(texte);
+      setDisplayedText(finalStory.texte);
+      setFullText(finalStory.texte);
       // saveStory fait l'optimistic update en interne (l'histoire apparaît
       // tout de suite dans la bibliothèque). Si la sync vault échoue,
       // l'histoire reste utilisable pour la session — l'audio ElevenLabs
       // est caché à part, donc rien n'est perdu côté crédits.
-      saveStory(story).catch((e) => {
+      saveStory(finalStory).catch((e) => {
         if (__DEV__) console.warn('[stories] vault sync failed (story still in memory):', e);
       });
     }, [enfantId, enfantName, universId, detail, book, trancheAge]);
