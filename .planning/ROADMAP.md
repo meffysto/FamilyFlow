@@ -504,3 +504,31 @@ Plans (à détailler en `/gsd-plan-phase 51`):
 - [ ] 51-02-PLAN.md — Wiring boutons export (long-press menu saga + écran fin génération)
 - [ ] 51-03-PLAN.md — Écran post-export (sauvegarder + voir + Lulu) + i18n FR + haptic
 - [ ] 51-04-PLAN.md — Mise à jour manifeste + docs CLAUDE.md + non-régression finale
+
+## v1.9 Stories — Évaluation auto + qualité texte (Phase 52) — PLANNING
+
+Pour transformer la génération d'histoires d'une boîte noire fragile en pipeline contrôlé : pré-validation déterministe + LLM-eval optionnel + auto re-roll sur hard fail. Baseline de référence : audit 20 histoires de mai 2026 (cf `.planning/quick/260506-stories-eval-baseline/ANALYSIS.md`) avec 6 dimensions notées et 7 patterns systémiques détectés. 5 améliorations baseline déjà appliquées (strip tags TTS, anti-clichés vocab, anti-clonage historique cross-stories) — cette phase ajoute la couche d'évaluation et de re-roll.
+
+### Phase 52: Stories — Pipeline d'évaluation auto + re-roll qualité
+
+**Goal:** Construire un rubric d'évaluation client-side qui score chaque histoire générée sur les dimensions calibrées du golden set (longueur, fin paisible, vocabulaire varié, anti-clones, cohérence saga, tags TTS), bloque les hard fails avec re-roll automatique (cap 1 retry), et propose un LLM-eval async post-show pour la qualité narrative subjective. Persistance des scores dans frontmatter Markdown (`quality_score`, `quality_issues`) pour traçabilité et A/B testing futur.
+
+**Requirements:** EVAL-01 à EVAL-08 (rubric déterministe + seuils + re-roll loop + LLM-eval async + persistence frontmatter + UI score badge + A/B comparison + non-régression golden set)
+
+**Depends on:** Aucune phase planifiée — feature Stories déjà en prod, baseline `.planning/quick/260506-stories-eval-baseline/` ready
+
+**Success criteria:**
+1. Rubric déterministe code-only couvre 6 dimensions (D1-D5 + D7 tags) avec seuils du golden set, runs en <100ms après réponse Claude
+2. Hard fail détecté → re-roll automatique avec prompt augmenté (issues incluses), cap 1 retry max, fallback ship si 2ème échoue
+3. Soft warnings stockés dans frontmatter `quality_issues: [...]` sans bloquer ; score numérique 0-10 dans `quality_score`
+4. Golden set 20 histoires reproduit la notation manuelle (objectif : 14/20 flagged, 6/20 clean) — test de régression du rubric lui-même
+5. LLM-eval pass async optionnel (feature flag) : Claude Haiku 4.5 score 4 sous-dimensions narrative quality, coût <$0.005/story
+6. UI Stories liste : badge couleur (vert/ambre/rouge) selon score, tap = voir issues
+7. Aucune régression sur génération existante : si user désactive eval, comportement strictement identique au commit baseline
+8. AI-SPEC.md complet (framework, eval strategy, dataset, guardrails, monitoring), tests unitaires sur seuils et helpers, `npx tsc --noEmit` clean
+
+Plans (à détailler en `/gsd-plan-phase 52`):
+- [ ] 52-01-PLAN.md — Rubric déterministe (helpers calculs + seuils + tests unitaires golden set)
+- [ ] 52-02-PLAN.md — Auto re-roll loop avec prompt augmenté + persistence frontmatter
+- [ ] 52-03-PLAN.md — LLM-eval async + UI badge qualité + i18n FR
+- [ ] 52-04-PLAN.md — Non-régression golden set + docs + feature flag
