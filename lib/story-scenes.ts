@@ -92,6 +92,21 @@ export function extractScenesFromAIResponse(
     anchored[0].explicitEnd = null; // ré-évalué via la suivante
   }
 
+  // Pour chaque scène > 0, pousse `textStart` jusqu'à la frontière de phrase
+  // précédente la plus proche (fin du `.!?` qui précède + espace). Évite que
+  // l'image suivante coupe une phrase au milieu — l'extrémité de la scène
+  // courante (= textStart de la suivante) tombe alors sur une fin de phrase.
+  // Cap à 120 chars pour éviter de déplacer trop loin si Claude est très
+  // décalé. Pas de chevauchement : on impose textStart > précédent.
+  for (let i = 1; i < anchored.length; i++) {
+    const cur = anchored[i];
+    const prevStart = anchored[i - 1].textStart;
+    const snapped = snapToSentenceBoundary(texte, cur.textStart, 120);
+    if (snapped > prevStart && snapped < texte.length) {
+      cur.textStart = snapped;
+    }
+  }
+
   // Étape 2 : déduire textEnd pour chaque scène
   // - explicitEnd si fourni (legacy sceneText)
   // - sinon textStart de la scène suivante
@@ -162,4 +177,42 @@ function findAtWordBoundary(haystack: string, needle: string, from: number): num
   }
   // Pass 3 : fallback ultra-tolérant
   return haystack.indexOf(needle, from);
+}
+
+/**
+ * Cherche la frontière de phrase la plus proche de `pos` (recule, puis avance).
+ * Une frontière = caractère suivant un `.!?` (avec espace après ou fin de texte).
+ * Plafonné à `maxDelta` chars dans chaque direction.
+ *
+ * Retourne `pos` inchangé si aucune frontière trouvée dans la fenêtre.
+ * Retour préfère reculer (la phrase entière reste dans la scène précédente),
+ * puis avance comme fallback.
+ */
+function snapToSentenceBoundary(text: string, pos: number, maxDelta: number): number {
+  if (pos <= 0 || pos >= text.length) return pos;
+
+  // Recule : trouve le `.!?` le plus proche AVANT `pos`, puis place-toi juste après l'espace.
+  const backStart = Math.max(0, pos - maxDelta);
+  for (let i = pos - 1; i >= backStart; i--) {
+    const c = text.charAt(i);
+    if (c === '.' || c === '!' || c === '?') {
+      // Avance après ponctuation + espaces consécutifs
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text.charAt(j))) j++;
+      if (j > 0 && j <= pos) return j;
+    }
+  }
+
+  // Fallback : avance jusqu'au prochain `.!?` + espace
+  const forwardEnd = Math.min(text.length, pos + maxDelta);
+  for (let i = pos; i < forwardEnd; i++) {
+    const c = text.charAt(i);
+    if (c === '.' || c === '!' || c === '?') {
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text.charAt(j))) j++;
+      return j;
+    }
+  }
+
+  return pos;
 }
