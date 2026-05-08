@@ -231,4 +231,17 @@ describe('getNextSagaForProfile', () => {
       expect(second).toBeTruthy();
     }
   });
+
+  it('ne retourne pas la même saga deux fois d\'affilée lors du recommencement de cycle', () => {
+    const { SAGAS: realSagas } = require('../mascot/sagas-content');
+    if (realSagas.length < 2) return; // skip si catalogue trop petit
+
+    // Simuler un cycle complet : toutes les sagas ont été jouées, dans l'ordre réel
+    const allIds: string[] = realSagas.map((s: { id: string }) => s.id);
+    // La dernière du cycle est allIds[allIds.length - 1]
+    const lastOfCycle = allIds[allIds.length - 1];
+    const next = getNextSagaForProfile('test_anti_consec', allIds);
+    expect(next).not.toBeNull();
+    expect(next!.id).not.toBe(lastOfCycle);
+  });
 });

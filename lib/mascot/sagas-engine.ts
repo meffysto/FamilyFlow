@@ -233,9 +233,11 @@ export function getNextSagaForProfile(
     return remaining[hash % remaining.length];
   }
 
-  // Toutes complétées → recommencer le cycle
+  // Toutes complétées → recommencer le cycle, sans répéter la dernière saga
+  const lastId = completedSagas[completedSagas.length - 1];
+  const pool = SAGAS.length > 1 && lastId ? SAGAS.filter(s => s.id !== lastId) : SAGAS;
   const hash = simpleHash(`saga_cycle:${profileId}:${completedSagas.length}`);
-  return SAGAS[hash % SAGAS.length];
+  return pool[hash % pool.length]!;
 }
 
 /**
