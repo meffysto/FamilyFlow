@@ -940,10 +940,36 @@ export function parseFarmProfile(content: string): FarmProfileData {
     ? props.plot_levels.split(',').map(s => parseInt(s, 10) || 1)
     : undefined;
 
-  // Heuristique : tableau d'origine = baseCount + expCount + (mega?1:0)
-  const inferredBaseCount = rawPlotLevels && rawPlotLevels.length > 0
-    ? Math.max(0, Math.min(12, rawPlotLevels.length - expCount - (hasMega ? 1 : 0)))
-    : 0;
+  // Heuristique de migration Phase 53 : retrouver le baseCount d'origine.
+  //
+  // Pré-Phase 53, upgradePlot() initialisait `Array(getUnlockedPlotCount(treeStage) + 10).fill(1)`.
+  // Donc un tableau frais avait toujours length = baseCount + 10 (rembourrage 10 trailing 1s),
+  // baseCount ∈ {3, 5, 7, 9, 12} selon le stade d'arbre (graine/pousse=3, arbuste=5,
+  // arbre=7, majestueux=9, legendaire=12).
+  //
+  // Le tableau pouvait être étendu si l'arbre avait avancé après création + une expansion
+  // poussait plotIndex ≥ length initial. On distingue les deux cas :
+  //   1) Layout rembourré standard : L = baseCount + 10 → tester padCandidate = L - 10.
+  //   2) Layout étendu : utiliser l'heuristique L - expCount - hasMega comme fallback.
+  //
+  // Tie-breaker : la valeur retenue doit être ≥ minBase = maxNonOne - expCount - hasMega
+  // (impossible que des slots non-1 dépassent baseCount + expCount + hasMega pré-Phase 53).
+  const inferredBaseCount = (() => {
+    if (!rawPlotLevels || rawPlotLevels.length === 0) return 0;
+    const L = rawPlotLevels.length;
+    let maxNonOne = -1;
+    for (let i = L - 1; i >= 0; i--) {
+      if (rawPlotLevels[i] > 1) { maxNonOne = i; break; }
+    }
+    const minBase = Math.max(0, maxNonOne - expCount - (hasMega ? 1 : 0));
+    const VALID_BASES = [3, 5, 7, 9, 12];
+    const padCandidate = L - 10;
+    if (VALID_BASES.includes(padCandidate) && padCandidate >= minBase) {
+      return padCandidate;
+    }
+    // Fallback : tableau étendu (treeStage avait avancé après création initiale).
+    return Math.max(minBase, Math.min(12, L - expCount - (hasMega ? 1 : 0)));
+  })();
 
   if (needsMigration && rawPlotLevels) {
     const trailingStart = inferredBaseCount;
