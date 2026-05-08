@@ -240,12 +240,10 @@ export default function TasksScreen() {
   const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
-    if (__DEV__) {
-      const atTop = e.contentOffset.y < 40;
-      if (atTop !== navPillLocalAtTop.value) {
-        navPillLocalAtTop.value = atTop;
-        runOnJS(setNavPillAtTop)(atTop);
-      }
+    const atTop = e.contentOffset.y < 40;
+    if (atTop !== navPillLocalAtTop.value) {
+      navPillLocalAtTop.value = atTop;
+      runOnJS(setNavPillAtTop)(atTop);
     }
   });
   // Phase 41 (SPOR-10) — tooltip one-shot premier obtention Sporée (source : cadeau onboarding stade 3)

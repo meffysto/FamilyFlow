@@ -119,7 +119,6 @@ export default function BudgetScreen() {
   // pill nav fold
   const navPillAtTopRef = useRef(true);
   const onScrollHandler = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
-    if (!__DEV__) return;
     const atTop = e.nativeEvent.contentOffset.y < 40;
     if (atTop !== navPillAtTopRef.current) {
       navPillAtTopRef.current = atTop;

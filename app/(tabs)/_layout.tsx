@@ -381,7 +381,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
     { id: 'photo', Icon: Camera, label: t('fab.actions.photo'), onPress: () => router.push(`/photos?addNew=${Date.now()}`) },
   ];
 
-  const useFabPanel = __DEV__ && !isTablet;
+  const useFabPanel = !isTablet;
   const fabActions: FABAction[] = isChildMode
     ? [
         { id: 'task', Icon: ClipboardList, label: t('fab.actions.task'), onPress: () => router.push(`/tasks?addNew=${Date.now()}`) },
@@ -396,9 +396,9 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: (isTablet || __DEV__)
+          tabBarStyle: isTablet
             ? { display: 'none' }
-            : {
+            : { opacity: 0, pointerEvents: 'none' as const,
               position: 'absolute',
               backgroundColor: 'transparent',
               borderTopColor: colors.glassBorder,
@@ -509,7 +509,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
           hideTrigger={useFabPanel}
         />
       )}
-      {__DEV__ && !isTablet && (
+      {!isTablet && (
         <FloatingPillNav
           activeTab={activeTab === '(tabs)' || !activeTab ? 'index' : activeTab}
           onTabPress={(id) => router.push(id === 'index' ? '/(tabs)/' : `/(tabs)/${id}` as any)}

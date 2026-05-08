@@ -49,12 +49,10 @@ export default function LoveNotesScreen() {
   const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
-    if (__DEV__) {
-      const atTop = e.contentOffset.y < 40;
-      if (atTop !== navPillLocalAtTop.value) {
-        navPillLocalAtTop.value = atTop;
-        runOnJS(setNavPillAtTop)(atTop);
-      }
+    const atTop = e.contentOffset.y < 40;
+    if (atTop !== navPillLocalAtTop.value) {
+      navPillLocalAtTop.value = atTop;
+      runOnJS(setNavPillAtTop)(atTop);
     }
   });
   useEffect(() => {
