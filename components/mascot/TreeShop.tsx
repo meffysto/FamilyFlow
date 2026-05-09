@@ -247,7 +247,7 @@ function SporeeBuyCard({ level, stageIdx, coins, sporeeCount, sporeeShopBoughtTo
             accessibilityRole="button"
             accessibilityLabel={`Acheter 1 Sporée pour ${SPOREE_SHOP_PRICE} feuilles`}
           >
-            <Text style={[styles.costText, { color: '#FFFFFF' }]}>
+            <Text style={[styles.costText, { color: colors.onPrimary }]}>
               {buying ? '…' : `${SPOREE_SHOP_PRICE} 🍃`}
             </Text>
           </TouchableOpacity>

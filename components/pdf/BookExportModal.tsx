@@ -337,7 +337,7 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
                         },
                       ]}
                     >
-                      <Text style={[styles.ctaText, { color: '#FFFFFF' }]}>
+                      <Text style={[styles.ctaText, { color: colors.onPrimary }]}>
                         {t('impressions.export.modal.generateCta', {
                           defaultValue: 'Générer le livre',
                         })}
@@ -442,7 +442,7 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
                 onPress={handleContinue}
                 style={[styles.cta, { backgroundColor: primary }]}
               >
-                <Text style={[styles.ctaText, { color: '#FFFFFF' }]}>
+                <Text style={[styles.ctaText, { color: colors.onPrimary }]}>
                   {t('impressions.export.modal.ready.continue', {
                     defaultValue: 'Continuer',
                   })}

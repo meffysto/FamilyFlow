@@ -364,8 +364,8 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
               {profile.name}
             </Text>
             {readyCount > 0 && (
-              <View style={styles.harvestBadge}>
-                <Text style={styles.harvestBadgeText}>
+              <View style={[styles.harvestBadge, { backgroundColor: colors.success }]}>
+                <Text style={[styles.harvestBadgeText, { color: colors.onPrimary }]}>
                   {readyCount} {readyCount > 1 ? 'pretes' : 'prete'}
                 </Text>
               </View>
@@ -470,12 +470,12 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
 
                           {/* Wear badge crop */}
                           {hasBrokenFence && (
-                            <View style={[styles.wearBadge, { backgroundColor: '#ef4444' }]}>
+                            <View style={[styles.wearBadge, { backgroundColor: colors.error }]}>
                               <Text style={styles.wearBadgeEmoji}>🔨</Text>
                             </View>
                           )}
                           {hasWeeds && !hasBrokenFence && (
-                            <View style={[styles.wearBadge, { backgroundColor: '#22C55E' }]}>
+                            <View style={[styles.wearBadge, { backgroundColor: colors.success }]}>
                               <Text style={styles.wearBadgeEmoji}>🌿</Text>
                             </View>
                           )}
@@ -594,12 +594,12 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
 
                         {/* Wear badges batiment */}
                         {isDamaged && (
-                          <View style={styles.buildingWearBadge}>
+                          <View style={[styles.buildingWearBadge, { backgroundColor: colors.error, borderColor: colors.bg }]}>
                             <Text style={{ fontSize: 9 }}>🏚️</Text>
                           </View>
                         )}
                         {hasPests && !isDamaged && (
-                          <View style={styles.buildingWearBadge}>
+                          <View style={[styles.buildingWearBadge, { backgroundColor: colors.error, borderColor: colors.bg }]}>
                             <Text style={{ fontSize: 9 }}>🐛</Text>
                           </View>
                         )}
@@ -614,7 +614,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
             {activeWearCount > 0 && profile.id === activeProfile?.id && (
               <View style={styles.wearBanner}>
                 <Text style={styles.wearBannerIcon}>⚠️</Text>
-                <Text style={styles.wearBannerText}>
+                <Text style={[styles.wearBannerText, { color: colors.error }]}>
                   {activeWearCount} réparation{activeWearCount > 1 ? 's' : ''} nécessaire{activeWearCount > 1 ? 's' : ''}
                 </Text>
                 <TouchableOpacity
@@ -622,7 +622,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
                   onPress={() => router.push('/(tabs)/tree' as any)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.wearBannerActionText}>Réparer</Text>
+                  <Text style={[styles.wearBannerActionText, { color: colors.error }]}>Réparer</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -731,8 +731,8 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
             {(() => {
               const ready = parseCrops(activeProfile.farmCrops ?? '').filter(c => c.currentStage >= 4).length;
               return ready > 0 ? (
-                <View style={styles.harvestBadge}>
-                  <Text style={styles.harvestBadgeText}>{ready}</Text>
+                <View style={[styles.harvestBadge, { backgroundColor: colors.success }]}>
+                  <Text style={[styles.harvestBadgeText, { color: colors.onPrimary }]}>{ready}</Text>
                 </View>
               ) : null;
             })()}
@@ -780,8 +780,8 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
               </TouchableOpacity>
             )}
             {totalWearCount > 0 && (
-              <View style={styles.cardBadge}>
-                <Text style={styles.cardBadgeText}>{totalWearCount}</Text>
+              <View style={[styles.cardBadge, { backgroundColor: colors.error }]}>
+                <Text style={[styles.cardBadgeText, { color: colors.onPrimary }]}>{totalWearCount}</Text>
               </View>
             )}
           </View>
@@ -972,7 +972,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   cardBadge: {
-    backgroundColor: '#ef4444',
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -981,7 +980,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   cardBadgeText: {
-    color: '#fff',
     fontSize: FontSize.micro,
     fontWeight: FontWeight.bold,
   },
@@ -1010,7 +1008,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   harvestBadge: {
-    backgroundColor: '#4ADE80',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: Radius.base,
@@ -1018,7 +1015,6 @@ const styles = StyleSheet.create({
   harvestBadgeText: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.bold,
-    color: '#0a2e14',
   },
   sectionLabel: {
     fontFamily: FontFamily.serif,
@@ -1187,11 +1183,9 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#ef4444',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#1a1a2e',
     zIndex: 3,
   },
 
@@ -1216,7 +1210,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
-    color: '#ef8888',
   },
   wearBannerAction: {
     backgroundColor: 'rgba(239,68,68,0.15)',
@@ -1227,7 +1220,6 @@ const styles = StyleSheet.create({
   wearBannerActionText: {
     fontSize: 11,
     fontWeight: FontWeight.bold,
-    color: '#ef4444',
   },
 
   // ── Empty farm ─────────────────────────────

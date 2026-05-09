@@ -153,7 +153,7 @@ export function TradeReceiptModal({
             onPress={onDone}
             activeOpacity={0.7}
           >
-            <Text style={[styles.doneBtnText, { color: '#FFFFFF' }]}>
+            <Text style={[styles.doneBtnText, { color: colors.onPrimary }]}>
               Super !
             </Text>
           </TouchableOpacity>
