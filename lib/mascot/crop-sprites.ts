@@ -116,6 +116,14 @@ export const CROP_SPRITES: Record<string, Record<number, [any, any]>> = {
     3: [require('../../assets/garden/crops/fleur_celeste/stage_3_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_3_b.png')],
     4: [require('../../assets/garden/crops/fleur_celeste/stage_4_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_4_b.png')],
   },
+  // Cultures rares drop-only (pas d'animation 2-frames — sprite unique répété)
+  truffe: {
+    0: [require('../../assets/garden/crops/truffe/crop_truffe_1.png'), require('../../assets/garden/crops/truffe/crop_truffe_1.png')],
+    1: [require('../../assets/garden/crops/truffe/crop_truffe_1.png'), require('../../assets/garden/crops/truffe/crop_truffe_1.png')],
+    2: [require('../../assets/garden/crops/truffe/crop_truffe_2.png'), require('../../assets/garden/crops/truffe/crop_truffe_2.png')],
+    3: [require('../../assets/garden/crops/truffe/crop_truffe_3.png'), require('../../assets/garden/crops/truffe/crop_truffe_3.png')],
+    4: [require('../../assets/garden/crops/truffe/crop_truffe_4.png'), require('../../assets/garden/crops/truffe/crop_truffe_4.png')],
+  },
 };
 
 /** Icones cultures (pour la boutique et le codex) */
