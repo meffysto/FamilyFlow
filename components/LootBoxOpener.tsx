@@ -1,13 +1,13 @@
 /**
- * LootBoxOpener.tsx — Premium animated loot box / booster pack opening UI
+ * LootBoxOpener.tsx — Premium animated loot box opening UI
  *
  * Built with react-native-reanimated for 60fps animations.
- * Pokémon theme inspired by Pokémon TCG Pocket (booster pack ripping open,
- * golden glow ring on reveal, "INCROYABLE !" banner for high tiers).
+ * Cozy chest asset, shake suspense, golden glow ring on reveal,
+ * and "INCROYABLE !" banner for high tiers.
  *
  * Phases:
- * 1. Idle — Pack floating with subtle breathing animation + particles
- * 2. Spinning — Pack shakes intensely, light rays burst from center
+ * 1. Idle — Chest floating with subtle breathing animation + particles
+ * 2. Spinning — Chest shakes intensely, light rays burst from center
  * 3. Reveal — Card scales in, rarity glow ring, particles
  * 4. Done — Reward displayed with persistent glow for high tiers
  */
@@ -19,6 +19,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  Image,
   useWindowDimensions,
 } from 'react-native';
 import Animated, {
@@ -37,10 +38,12 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { LootBox, ProfileTheme } from '../lib/types';
 import { RARITY_COLORS, RARITY_EMOJIS, getRarityLabel, SEASONAL_EVENTS } from '../lib/gamification';
-import { getTheme, migrateThemeId } from '../constants/themes';
+import { getTheme } from '../constants/themes';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
+
+const LOOT_CHEST_IMAGE = require('../assets/ui/loot/loot-chest.png');
 
 let ConfettiCannon: any = null;
 try {
@@ -249,298 +252,6 @@ function Sparkle({ x, y, delay, color }: { x: number; y: number; delay: number; 
     </Animated.View>
   );
 }
-
-// ─── Theme Pack Designs ──────────────────────────────────────────────────────
-//
-// Each theme gets a unique booster pack design drawn in pure RN Views.
-// Structure: top seal → body (with emblem + decorations) → bottom seal
-// All packs share a common wrapper with theme-specific colors and emblems.
-
-interface PackDesign {
-  bodyColor: string;
-  sealColor: string;
-  emblem: React.ReactNode;
-  decorations?: React.ReactNode;
-  tearColor: string;
-}
-
-function getPackDesign(themeId: string): PackDesign {
-  // Migration silencieuse : ancien ID → nouvel ID
-  const resolved = migrateThemeId(themeId);
-  switch (resolved) {
-    case 'coquelicot':
-      return {
-        bodyColor: '#DC2626',
-        sealColor: '#1F2937',
-        tearColor: '#F59E0B',
-        emblem: (
-          <View style={emblemStyles.wheel}>
-            <View style={emblemStyles.wheelCenter} />
-            <View style={[emblemStyles.wheelSpoke, { transform: [{ rotate: '0deg' }] }]} />
-            <View style={[emblemStyles.wheelSpoke, { transform: [{ rotate: '60deg' }] }]} />
-            <View style={[emblemStyles.wheelSpoke, { transform: [{ rotate: '120deg' }] }]} />
-          </View>
-        ),
-        decorations: (
-          <>
-            {/* Racing stripes */}
-            <View style={[decoStyles.stripe, { top: 12, backgroundColor: '#FFFFFF' }]} />
-            <View style={[decoStyles.stripe, { top: 18, backgroundColor: '#1F2937' }]} />
-          </>
-        ),
-      };
-
-    case 'foret':
-      return {
-        bodyColor: '#4A8B6B',
-        sealColor: '#2F5C45',
-        tearColor: '#7AB394',
-        emblem: (
-          <View style={emblemStyles.leaf}>
-            <View style={emblemStyles.leafBody} />
-            <View style={emblemStyles.leafVein} />
-            <View style={emblemStyles.leafStem} />
-          </View>
-        ),
-        decorations: (
-          <>
-            <View style={[decoStyles.dot, { top: 15, left: 12, backgroundColor: '#A7F3D0' }]} />
-            <View style={[decoStyles.dot, { top: 65, right: 10, backgroundColor: '#6EE7B7', width: 5, height: 5, borderRadius: 2.5 }]} />
-            <View style={[decoStyles.dot, { bottom: 15, left: 20, backgroundColor: '#D1FAE5', width: 4, height: 4, borderRadius: 2 }]} />
-          </>
-        ),
-      };
-
-    case 'sunset':
-      return {
-        bodyColor: '#C76A3A',
-        sealColor: '#8E4A28',
-        tearColor: '#F5C26B',
-        emblem: (
-          <View style={emblemStyles.shield}>
-            <View style={emblemStyles.shieldInner}>
-              <Text style={emblemStyles.shieldCross}>✚</Text>
-            </View>
-          </View>
-        ),
-        decorations: (
-          <>
-            {/* Flame accent */}
-            <View style={[decoStyles.flame, { top: 8, right: 14 }]}>
-              <Text style={{ fontSize: 14 }}>🔥</Text>
-            </View>
-            <View style={[decoStyles.stripe, { bottom: 14, backgroundColor: '#FDE68A', height: 2 }]} />
-            <View style={[decoStyles.stripe, { bottom: 10, backgroundColor: '#FDE68A', height: 2 }]} />
-          </>
-        ),
-      };
-
-    case 'pivoine':
-      return {
-        bodyColor: '#C77199',
-        sealColor: '#9A4F77',
-        tearColor: '#E5A4C0',
-        emblem: (
-          <View style={emblemStyles.gem}>
-            <View style={emblemStyles.gemTop} />
-            <View style={emblemStyles.gemBottom} />
-            <View style={emblemStyles.gemShine} />
-          </View>
-        ),
-        decorations: (
-          <>
-            <Text style={[decoStyles.starDeco, { top: 10, left: 10 }]}>✦</Text>
-            <Text style={[decoStyles.starDeco, { top: 55, right: 8, fontSize: 10 }]}>✦</Text>
-            <Text style={[decoStyles.starDeco, { bottom: 12, left: 18, fontSize: 8, color: '#F0ABFC' }]}>✦</Text>
-            <Text style={[decoStyles.starDeco, { top: 30, right: 15, fontSize: 6, color: '#FBCFE8' }]}>✦</Text>
-          </>
-        ),
-      };
-
-    case 'ocean':
-      return {
-        bodyColor: '#2A4172',
-        sealColor: '#5577B8',
-        tearColor: '#85A4D6',
-        emblem: (
-          <View style={emblemStyles.planet}>
-            <View style={emblemStyles.planetBody} />
-            <View style={emblemStyles.planetRing} />
-          </View>
-        ),
-        decorations: (
-          <>
-            <View style={[decoStyles.star, { top: 10, left: 12 }]} />
-            <View style={[decoStyles.star, { top: 55, right: 8, width: 3, height: 3 }]} />
-            <View style={[decoStyles.star, { bottom: 15, left: 22 }]} />
-            <View style={[decoStyles.star, { top: 30, right: 20, width: 2, height: 2 }]} />
-            <View style={[decoStyles.star, { bottom: 8, right: 16, width: 3, height: 3 }]} />
-          </>
-        ),
-      };
-
-    case 'sable':
-      return {
-        bodyColor: '#A07952',
-        sealColor: '#6E5236',
-        tearColor: '#F5C26B',
-        emblem: (
-          <View style={emblemStyles.skull}>
-            <View style={emblemStyles.skullHead}>
-              <View style={emblemStyles.skullEyeRow}>
-                <View style={emblemStyles.skullEye} />
-                <View style={emblemStyles.skullEye} />
-              </View>
-              <View style={emblemStyles.skullJaw} />
-            </View>
-            <View style={emblemStyles.crossbones}>
-              <View style={[emblemStyles.bone, { transform: [{ rotate: '45deg' }] }]} />
-              <View style={[emblemStyles.bone, { transform: [{ rotate: '-45deg' }] }]} />
-            </View>
-          </View>
-        ),
-        decorations: (
-          <View style={[decoStyles.stripe, { top: 12, backgroundColor: '#FDE68A', height: 3 }]} />
-        ),
-      };
-
-    case 'lavande':
-    default:
-      return {
-        bodyColor: '#8773C2',
-        sealColor: '#5E4D8E',
-        tearColor: '#C4B5FD',
-        emblem: (
-          <View style={emblemStyles.giftStar}>
-            <Text style={emblemStyles.giftStarText}>★</Text>
-          </View>
-        ),
-        decorations: (
-          <>
-            <View style={[decoStyles.ribbon, { left: 40 }]} />
-            <View style={[decoStyles.ribbonH, { top: 45 }]} />
-          </>
-        ),
-      };
-  }
-}
-
-function ThemePack({ themeId, tearing }: { themeId: string; tearing?: boolean }) {
-  const design = getPackDesign(themeId);
-
-  return (
-    <View style={packStyles.pack}>
-      <View style={[packStyles.wrapper, { borderColor: `${design.sealColor}80` }]}>
-        {/* Top seal */}
-        <View style={[packStyles.topSeal, { backgroundColor: design.sealColor }]}>
-          <View style={packStyles.sealStripe} />
-        </View>
-        {/* Body */}
-        <View style={[packStyles.body, { backgroundColor: design.bodyColor }]}>
-          {design.decorations}
-          {design.emblem}
-          {/* Diagonal shine */}
-          <View style={packStyles.shine} />
-          {/* Tear effect */}
-          {tearing && (
-            <View style={packStyles.tear}>
-              <View style={[packStyles.tearLine, { backgroundColor: design.tearColor }]} />
-              <View style={[packStyles.tearGlow, { backgroundColor: `${design.tearColor}4D` }]} />
-            </View>
-          )}
-        </View>
-        {/* Bottom seal */}
-        <View style={[packStyles.bottomSeal, { backgroundColor: design.sealColor }]}>
-          <View style={packStyles.sealStripe} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-const packStyles = StyleSheet.create({
-  pack: { width: 90, height: 130, alignItems: 'center', justifyContent: 'center' },
-  wrapper: { width: 90, height: 130, borderRadius: 8, overflow: 'hidden', borderWidth: 1.5 },
-  topSeal: { height: 16, alignItems: 'center', justifyContent: 'center' },
-  sealStripe: { width: '80%', height: 2, backgroundColor: 'rgba(255,255,255,0.35)', borderRadius: 1 },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  shine: { position: 'absolute', top: -20, right: -10, width: 30, height: 160, backgroundColor: 'rgba(255,255,255,0.1)', transform: [{ rotate: '25deg' }] },
-  tear: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  tearLine: { width: '120%', height: 4, transform: [{ rotate: '-5deg' }] },
-  tearGlow: { position: 'absolute', width: '120%', height: 20, transform: [{ rotate: '-5deg' }] },
-  bottomSeal: { height: 16, alignItems: 'center', justifyContent: 'center' },
-});
-
-// ─── Emblem Styles (unique per theme) ───────────────────────────────────────
-
-const emblemStyles = StyleSheet.create({
-  // Pokémon — Pokéball
-  pokeball: { width: 44, height: 44, borderRadius: 22, overflow: 'hidden', borderWidth: 2.5, borderColor: '#1A1A2E' },
-  pokeballTop: { flex: 1, backgroundColor: '#FFFFFF' },
-  pokeballMid: { height: 5, backgroundColor: '#1A1A2E', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  pokeballDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#1A1A2E', marginTop: -3.5 },
-
-  // Voitures — Steering wheel
-  wheel: { width: 44, height: 44, borderRadius: 22, borderWidth: 3, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  wheelCenter: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#FFFFFF' },
-  wheelSpoke: { position: 'absolute', width: 2, height: 44, backgroundColor: '#FFFFFF' },
-
-  // Nature — Leaf
-  leaf: { width: 40, height: 48, alignItems: 'center', justifyContent: 'center' },
-  leafBody: { width: 32, height: 40, borderTopLeftRadius: 24, borderTopRightRadius: 4, borderBottomLeftRadius: 4, borderBottomRightRadius: 24, backgroundColor: '#A7F3D0', transform: [{ rotate: '-10deg' }] },
-  leafVein: { position: 'absolute', width: 2, height: 30, backgroundColor: '#065F46', transform: [{ rotate: '-10deg' }] },
-  leafStem: { position: 'absolute', bottom: 0, width: 2, height: 12, backgroundColor: '#065F46', transform: [{ rotate: '10deg' }] },
-
-  // Pompier — Shield
-  shield: { width: 40, height: 44, borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  shieldInner: { width: 32, height: 36, borderTopLeftRadius: 4, borderTopRightRadius: 4, borderBottomLeftRadius: 16, borderBottomRightRadius: 16, backgroundColor: '#B91C1C', alignItems: 'center', justifyContent: 'center' },
-  shieldCross: { color: '#FFFFFF', fontSize: FontSize.title, fontWeight: FontWeight.heavy },
-
-  // Licorne — Gem / Crystal
-  gem: { width: 36, height: 42, alignItems: 'center', justifyContent: 'center' },
-  gemTop: { width: 36, height: 16, backgroundColor: '#F0ABFC', borderTopLeftRadius: 4, borderTopRightRadius: 4, transform: [{ scaleX: 0.7 }] },
-  gemBottom: { width: 36, height: 26, backgroundColor: '#D946EF', borderBottomLeftRadius: 2, borderBottomRightRadius: 2, transform: [{ perspective: 100 }, { rotateX: '0deg' }], marginTop: -1 },
-  gemShine: { position: 'absolute', top: 4, left: 12, width: 8, height: 12, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 2, transform: [{ rotate: '-15deg' }] },
-
-  // Espace — Planet with ring
-  planet: { width: 48, height: 44, alignItems: 'center', justifyContent: 'center' },
-  planetBody: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#60A5FA' },
-  planetRing: { position: 'absolute', width: 48, height: 14, borderRadius: 7, borderWidth: 2.5, borderColor: '#DBEAFE', transform: [{ rotate: '-20deg' }] },
-
-  // Pirates — Skull & crossbones
-  skull: { width: 44, height: 48, alignItems: 'center', justifyContent: 'center' },
-  skullHead: { width: 30, height: 28, borderRadius: 15, backgroundColor: '#FDE68A', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  skullEyeRow: { flexDirection: 'row', gap: 6, marginTop: 2 },
-  skullEye: { width: 6, height: 7, borderRadius: 3, backgroundColor: '#78350F' },
-  skullJaw: { width: 16, height: 4, borderBottomLeftRadius: 4, borderBottomRightRadius: 4, backgroundColor: '#FDE68A', marginTop: 2 },
-  crossbones: { position: 'absolute', bottom: 2, width: 40, height: 12, alignItems: 'center', justifyContent: 'center' },
-  bone: { position: 'absolute', width: 36, height: 4, backgroundColor: '#FDE68A', borderRadius: 2 },
-
-  // Dinosaures — Egg
-  egg: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
-  eggShell: { width: 34, height: 42, borderTopLeftRadius: 17, borderTopRightRadius: 17, borderBottomLeftRadius: 14, borderBottomRightRadius: 14, backgroundColor: '#FEF9C3', alignItems: 'center', overflow: 'hidden' },
-  eggCrack: { position: 'absolute', top: 14, width: 28, height: 3, backgroundColor: '#D1D5DB', transform: [{ rotate: '5deg' }], zIndex: 2 },
-  eggSpot1: { position: 'absolute', top: 8, left: 6, width: 8, height: 6, borderRadius: 4, backgroundColor: '#BBF7D0' },
-  eggSpot2: { position: 'absolute', bottom: 10, right: 6, width: 6, height: 5, borderRadius: 3, backgroundColor: '#BBF7D0' },
-
-  // Default — Star
-  giftStar: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' },
-  giftStarText: { fontSize: FontSize.display, color: '#FDE68A' },
-});
-
-// ─── Decoration Styles (shared helpers) ─────────────────────────────────────
-
-const decoStyles = StyleSheet.create({
-  stripe: { position: 'absolute', left: 8, right: 8, height: 3, borderRadius: 1.5 },
-  dot: { position: 'absolute', width: 6, height: 6, borderRadius: 3, opacity: 0.6 },
-  flame: { position: 'absolute' },
-  starDeco: { position: 'absolute', fontSize: 12, color: '#FDE68A' },
-  star: { position: 'absolute', width: 4, height: 4, borderRadius: 2, backgroundColor: '#FFFFFF', opacity: 0.7 },
-  claw: { position: 'absolute', flexDirection: 'row', gap: 3 },
-  clawMark: { width: 2, height: 14, backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 1, transform: [{ rotate: '-10deg' }] },
-  ribbon: { position: 'absolute', top: 0, bottom: 0, width: 3, backgroundColor: 'rgba(255,255,255,0.15)' },
-  ribbonH: { position: 'absolute', left: 0, right: 0, height: 3, backgroundColor: 'rgba(255,255,255,0.15)' },
-});
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
@@ -1012,7 +723,7 @@ export function LootBoxOpener({
                 <View style={styles.packContainer}>
                   <View style={[styles.packGlow, { backgroundColor: theme.primary, opacity: 0.15 }]} />
                   <Animated.View style={packStyle}>
-                    <ThemePack themeId={theme.id} />
+                    <Image source={LOOT_CHEST_IMAGE} style={styles.lootChestImage} resizeMode="contain" />
                   </Animated.View>
                 </View>
                 <Text style={[styles.openText, { color: theme.primary }]}>
@@ -1036,7 +747,7 @@ export function LootBoxOpener({
                 ))}
               </View>
               <Animated.View style={packStyle}>
-                <ThemePack themeId={theme.id} tearing />
+                <Image source={LOOT_CHEST_IMAGE} style={styles.lootChestImage} resizeMode="contain" />
               </Animated.View>
               <Text style={styles.spinText}>{t('loot.opener.opening')}</Text>
             </View>
@@ -1271,10 +982,14 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   packContainer: {
-    width: 140,
-    height: 160,
+    width: 180,
+    height: 170,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  lootChestImage: {
+    width: 220,
+    height: 220,
   },
   packGlow: {
     position: 'absolute',
