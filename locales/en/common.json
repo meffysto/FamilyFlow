@@ -2141,13 +2141,13 @@
       "resetDone": "Gamification reset."
     },
     "vault": {
-      "sectionTitle": "Obsidian Vault",
-      "sectionA11y": "Obsidian Vault section",
+      "sectionTitle": "Shared folder",
+      "sectionA11y": "Shared folder section",
       "pathLabel": "📁 Path",
       "notConfigured": "Not configured",
-      "changeVault": "Change vault",
-      "compatHint": "Data is stored in standard .md files, compatible with Obsidian.",
-      "syncHint": "Multi-device sync: place the vault in a Google Drive or Dropbox folder synced locally on each phone.",
+      "changeVault": "Change folder",
+      "compatHint": "Data is stored in standard .md files, compatible with Obsidian if you want to edit by hand.",
+      "syncHint": "Family sync: place the folder in iCloud Drive (or Google Drive / Dropbox) to share it across every phone.",
       "dataSectionTitle": "Data",
       "replayBtn": "Redo onboarding",
       "replayTitle": "Redo onboarding?",
@@ -3366,7 +3366,7 @@
       "authEnabledTouch": "Enabled · Touch ID",
       "parental": "Parental controls",
       "parentalSubtitle": "Children's data visibility",
-      "vault": "Obsidian Vault",
+      "vault": "Shared folder",
       "help": "Help & discovery",
       "helpSubtitle": "Guide, tips, templates"
     },
@@ -3384,7 +3384,7 @@
       "grandparents": "Grandparents",
       "auth": "Security",
       "parental": "Parental controls",
-      "vault": "Obsidian Vault",
+      "vault": "Shared folder",
       "help": "Help & discovery"
     },
     "subtitles": {

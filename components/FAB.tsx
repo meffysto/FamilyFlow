@@ -125,8 +125,8 @@ function FABComponent({ actions, bottom, variant = 'speed-dial', open: openProp,
             panelStyle,
             {
               bottom: panelBottom,
-              backgroundColor: colors.brand.parchment,
-              borderColor: colors.brand.bark,
+              backgroundColor: isDark ? colors.card : colors.brand.parchment,
+              borderColor: isDark ? colors.border : colors.brand.bark,
             },
           ]}
           pointerEvents={open ? 'auto' : 'none'}

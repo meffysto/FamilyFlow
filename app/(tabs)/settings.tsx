@@ -490,7 +490,7 @@ export default function SettingsScreen() {
       {/* Vault Picker Modal */}
       <Modal visible={showVaultPicker} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowVaultPicker(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
-          <ModalHeader title="Changer de vault" onClose={() => setShowVaultPicker(false)} />
+          <ModalHeader title="Changer de dossier" onClose={() => setShowVaultPicker(false)} />
           <ScrollView style={styles.scroll} contentContainerStyle={styles.modalContent}>
             <VaultPicker
               currentPath={vaultPath}

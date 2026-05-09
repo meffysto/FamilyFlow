@@ -2149,13 +2149,13 @@
       "resetDone": "Gamification réinitialisée."
     },
     "vault": {
-      "sectionTitle": "Vault Obsidian",
-      "sectionA11y": "Section Vault Obsidian",
+      "sectionTitle": "Dossier partagé",
+      "sectionA11y": "Section Dossier partagé",
       "pathLabel": "📁 Chemin",
       "notConfigured": "Non configuré",
-      "changeVault": "Changer le vault",
-      "compatHint": "Les données sont stockées en fichiers .md standard, compatibles avec Obsidian.",
-      "syncHint": "Sync multi-appareils : placez le vault dans un dossier Google Drive ou Dropbox syncé localement sur chaque téléphone.",
+      "changeVault": "Changer de dossier",
+      "compatHint": "Les données sont stockées en fichiers .md standard, compatibles avec Obsidian si tu veux les éditer à la main.",
+      "syncHint": "Sync famille : placez le dossier dans iCloud Drive (ou Google Drive / Dropbox) pour le partager entre tous les téléphones.",
       "dataSectionTitle": "Données",
       "replayBtn": "Refaire l'onboarding",
       "replayTitle": "Refaire l'onboarding ?",
@@ -3374,7 +3374,7 @@
       "authEnabledTouch": "Activé · Touch ID",
       "parental": "Contrôle parental",
       "parentalSubtitle": "Visibilité données enfants",
-      "vault": "Vault Obsidian",
+      "vault": "Dossier partagé",
       "help": "Aide et découverte",
       "helpSubtitle": "Guide, astuces, modèles"
     },
@@ -3392,7 +3392,7 @@
       "grandparents": "Grands-parents",
       "auth": "Sécurité",
       "parental": "Contrôle parental",
-      "vault": "Vault Obsidian",
+      "vault": "Dossier partagé",
       "help": "Aide et découverte"
     },
     "subtitles": {
