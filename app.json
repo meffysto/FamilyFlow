@@ -27,7 +27,7 @@
         "NSFileProviderPresenceUsageDescription": "FamilyFlow utilise iCloud pour synchroniser votre vault Obsidian.",
         "NSCameraUsageDescription": "FamilyFlow utilise la caméra pour prendre la photo du jour.",
         "NSPhotoLibraryUsageDescription": "FamilyFlow accède à vos photos pour la photo du jour.",
-        "NSFaceIDUsageDescription": "Family Vault utilise Face ID pour protéger l'accès à l'application.",
+        "NSFaceIDUsageDescription": "FamilyFlow utilise Face ID pour protéger l'accès à l'application.",
         "UIFileSharingEnabled": false,
         "LSSupportsOpeningDocumentsInPlace": true,
         "NSSpeechRecognitionUsageDescription": "FamilyFlow utilise la reconnaissance vocale pour transcrire les réponses du médecin.",
@@ -96,7 +96,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Family Vault utilise Face ID pour protéger l'accès à l'application."
+          "faceIDPermission": "FamilyFlow utilise Face ID pour protéger l'accès à l'application."
         }
       ],
       [
