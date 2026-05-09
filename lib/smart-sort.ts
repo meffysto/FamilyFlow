@@ -28,6 +28,8 @@ export interface SmartSortContext {
     insightsCount?: number;   // suggestions actives
     defisActive?: number;     // défis actifs
     dayOfWeek?: number;       // 0=dimanche, 6=samedi
+    secretMissionsPending?: number; // missions secrètes en attente de validation
+    onThisDayCount?: number;  // souvenirs/photos matchant ce jour des années passées
   };
   /**
    * Zone de chaque section (today / home / farm / none).
@@ -160,6 +162,31 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
 
     case 'anniversaires':
       return hasData ? 30 : -10;
+
+    case 'secretMissions': {
+      const n = counts.secretMissionsPending ?? 0;
+      if (n === 0) return -15;
+      // Mission en attente = enfant attend un retour parent
+      // 1 mission = 60, 3+ = 80 — pression croissante mais bornée pour
+      // ne pas dépasser un RDV imminent (95) ou un retard critique (95).
+      return clamp(55 + n * 8, 60, 80);
+    }
+
+    case 'bilanSemaine':
+      // Dimanche soir = prime time pour le bilan hebdo
+      if (isSunday && isEvening) return 70;
+      if (isSunday) return 50;
+      // Samedi soir : début de fenêtre (le composant l'affiche déjà)
+      if (counts.dayOfWeek === 6 && isEvening) return 35;
+      return hasData ? 5 : -10;
+
+    case 'onThisDay': {
+      const n = counts.onThisDayCount ?? 0;
+      if (n === 0) return -15;
+      // Boost émotionnel proportionnel au nombre de souvenirs trouvés,
+      // borné pour rester sous les urgences (overdue, RDV, jardin critique).
+      return clamp(25 + n * 7, 30, 55);
+    }
 
     default:
       return 0;

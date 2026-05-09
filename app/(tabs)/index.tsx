@@ -675,6 +675,28 @@ export default function DashboardScreen() {
       }
     }
 
+    // Missions secrètes en attente de validation parent
+    const secretMissionsPending = secretMissions.filter(
+      (m) => m.secretStatus === 'pending',
+    ).length;
+
+    // Souvenirs/photos matchant ce jour des années passées
+    const mmStr = String(now.getMonth() + 1).padStart(2, '0');
+    const ddStr = String(now.getDate()).padStart(2, '0');
+    const todaySuffix = `-${mmStr}-${ddStr}`;
+    const memoriesOnThisDay = memories.filter(
+      (m) => m.date?.endsWith(todaySuffix)
+        && parseInt(m.date.substring(0, 4), 10) < now.getFullYear(),
+    ).length;
+    const photosOnThisDay = enfants.reduce((acc, e) => {
+      const matches = (photoDates[e.id] ?? []).filter(
+        (d) => d.endsWith(todaySuffix)
+          && parseInt(d.substring(0, 4), 10) < now.getFullYear(),
+      );
+      return acc + matches.length;
+    }, 0);
+    const onThisDayCount = memoriesOnThisDay + photosOnThisDay;
+
     return smartSortSections(sectionPrefs, {
       hour: now.getHours(),
       hasBaby,
@@ -691,13 +713,16 @@ export default function DashboardScreen() {
         insightsCount: insights.length,
         defisActive: defis.filter((d) => d.status === 'active').length,
         dayOfWeek: now.getDay(),
+        secretMissionsPending,
+        onThisDayCount,
       },
     });
   }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
     pendingMenage.length, todayMeals.length, totalRemainingAllLists, upcomingRdvs.length,
-    enfants.length, activeRewards.length, leaderboard.length,
+    enfants, activeRewards.length, leaderboard.length,
     weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length,
-    defis, gratitudeDays, todayStr, wishlistItems, anniversaries, rdvs, insights.length]);
+    defis, gratitudeDays, todayStr, wishlistItems, anniversaries, rdvs, insights.length,
+    secretMissions, memories, photoDates]);
 
   // === Masquage individuel des sections ===
   const sectionHidden = useMemo(() => {
