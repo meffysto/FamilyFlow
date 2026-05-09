@@ -297,7 +297,7 @@ export function FarmCodexModal({
           ]}
         >
           <Text style={[styles.marathonCounter, { color: colors.textSub }]}>
-            🍄 Paris gagnés : {profile?.wagerMarathonWins ?? 0}
+            {t('codex:footer.marathonWins', { count: profile?.wagerMarathonWins ?? 0 })}
           </Text>
           <TouchableOpacity
             onPress={handleReplayTutorial}

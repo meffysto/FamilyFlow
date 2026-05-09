@@ -612,6 +612,9 @@
   "tutorial": {
     "replay": "Replay tutorial"
   },
+  "footer": {
+    "marathonWins": "🍄 Wagers won: {{count}}"
+  },
   "stats": {
     "cost": "Cost",
     "harvestReward": "Reward",

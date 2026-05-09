@@ -7,8 +7,8 @@ export const cropEntries: CropEntry[] = CROP_CATALOG.filter(crop => !crop.expedi
   id: `crop_${crop.id}`,
   kind: 'crop' as const,
   sourceId: crop.id,
-  nameKey: `codex.crop.${crop.id}.name`,
-  loreKey: `codex.crop.${crop.id}.lore`,
+  nameKey: `codex:crop.${crop.id}.name`,
+  loreKey: `codex:crop.${crop.id}.lore`,
   iconRef: crop.emoji,
   spriteRef: CROP_ICONS[crop.id],
 }));

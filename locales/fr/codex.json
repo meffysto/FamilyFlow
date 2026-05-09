@@ -612,6 +612,9 @@
   "tutorial": {
     "replay": "Rejouer le tutoriel"
   },
+  "footer": {
+    "marathonWins": "🍄 Paris gagnés : {{count}}"
+  },
   "stats": {
     "cost": "Coût",
     "harvestReward": "Récompense",
