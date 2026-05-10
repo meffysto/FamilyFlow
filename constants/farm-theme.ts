@@ -102,9 +102,11 @@ const FarmDark: FarmPalette = {
   woodBtn: '#5C3F22',
   woodBtnShadow: '#0F0A06',
   woodBtnHighlight: '#7A5430',
-  // Doré — intact (lanterne) + texte plus chaud
+  // Doré — intact (lanterne). goldText = texte SUR fond doré → reste sombre
+  // pour contraste lisible (dans les deux modes). Pour du texte doré sur fond
+  // sombre, utiliser directement `gold`.
   gold: '#FFD700',
-  goldText: '#FFE070',
+  goldText: '#5C3D1A',
   // Orange réparation (légèrement plus chaud pour ressortir)
   orange: '#F0A050',
   orangeShadow: '#A85A1A',

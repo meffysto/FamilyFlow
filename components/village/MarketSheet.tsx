@@ -1394,7 +1394,7 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
     borderRadius: Radius.xl,
     borderWidth: 2,
     borderColor: farm.gold,
-    backgroundColor: '#FFF9E6',
+    backgroundColor: farm.parchmentDark,
     padding: Spacing.xl,
     gap: Spacing.md,
   },
@@ -1458,11 +1458,11 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   dealNewPrice: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: '#D97706',
+    color: farm.gold,
   },
   dealTimer: {
     fontSize: FontSize.label,
-    color: farm.goldText,
+    color: farm.gold,
     fontStyle: 'italic' as const,
   },
 });
