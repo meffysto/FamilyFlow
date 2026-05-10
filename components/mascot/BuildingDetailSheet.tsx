@@ -32,7 +32,9 @@ import type { TechBonuses } from '../../lib/mascot/tech-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 const SPRING_CONFIG = { damping: 12, stiffness: 180 };
 
@@ -78,28 +80,28 @@ function pluralizeResource(resourceType: string, count: number): string {
   return `${base}s`;
 }
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -116,16 +118,16 @@ interface FarmButtonProps {
   onPress?: () => void;
 }
 
-function FarmButton({ label, emoji, enabled, variant = 'primary', onPress }: FarmButtonProps) {
+function FarmButton({ label, emoji, enabled, variant = 'primary', onPress, farm, styles }: FarmButtonProps & { farm: FarmPalette; styles: Styles }) {
   const pressedY = useSharedValue(0);
 
   const palette = variant === 'warning'
-    ? { bg: Farm.orange, shadow: Farm.orangeShadow, highlight: '#F2B36A' }
-    : { bg: Farm.greenBtn, shadow: Farm.greenBtnShadow, highlight: Farm.greenBtnHighlight };
+    ? { bg: farm.orange, shadow: farm.orangeShadow, highlight: '#F2B36A' }
+    : { bg: farm.greenBtn, shadow: farm.greenBtnShadow, highlight: farm.greenBtnHighlight };
 
-  const bg = enabled ? palette.bg : Farm.parchmentDark;
+  const bg = enabled ? palette.bg : farm.parchmentDark;
   const shadow = enabled ? palette.shadow : '#D0CBC3';
-  const highlight = enabled ? palette.highlight : Farm.parchment;
+  const highlight = enabled ? palette.highlight : farm.parchment;
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: pressedY.value }],
@@ -154,7 +156,7 @@ function FarmButton({ label, emoji, enabled, variant = 'primary', onPress }: Far
           <Text style={[
             styles.farmBtnText,
             {
-              color: enabled ? '#FFFFFF' : Farm.brownTextSub,
+              color: enabled ? '#FFFFFF' : farm.brownTextSub,
               textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent',
             },
           ]}>
@@ -174,7 +176,7 @@ interface UpgradeLineProps {
   delta: string;
 }
 
-function UpgradeLine({ icon, description, fromText, toText, delta }: UpgradeLineProps) {
+function UpgradeLine({ icon, description, fromText, toText, delta, styles }: UpgradeLineProps & { styles: Styles }) {
   return (
     <View style={styles.upgradeLine}>
       <View style={styles.upgradeLineIcon}>
@@ -202,7 +204,7 @@ interface HeroProgressProps {
   isFull: boolean;
 }
 
-function HeroProgress({ ratio, isFull }: HeroProgressProps) {
+function HeroProgress({ ratio, isFull, styles }: HeroProgressProps & { styles: Styles }) {
   const widthPercent = useSharedValue(0);
 
   useEffect(() => {
@@ -248,6 +250,8 @@ export function BuildingDetailSheet({
   onOpenAuberge,
 }: BuildingDetailSheetProps) {
   const { t } = useTranslation();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
 
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return null;
@@ -316,7 +320,7 @@ export function BuildingDetailSheet({
 
         <View style={styles.woodFrame}>
           <View style={styles.woodFrameInner}>
-            <AwningStripes />
+            <AwningStripes farm={farm} styles={styles} />
 
             <View style={styles.parchment}>
               <View style={styles.handle} />
@@ -382,6 +386,8 @@ export function BuildingDetailSheet({
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                         onRepairRoof();
                       }}
+                      farm={farm}
+                      styles={styles}
                     />
                   </Animated.View>
                 )}
@@ -407,12 +413,12 @@ export function BuildingDetailSheet({
                         </View>
                       </View>
 
-                      <HeroProgress ratio={progressRatio} isFull={isFull} />
+                      <HeroProgress ratio={progressRatio} isFull={isFull} styles={styles} />
 
                       <View style={styles.progressMeta}>
                         {isFull ? (
                           <>
-                            <Text style={[styles.progressMetaLeft, { color: Farm.orange }]}>
+                            <Text style={[styles.progressMetaLeft, { color: farm.orange }]}>
                               ⚠ Stockage plein
                             </Text>
                             <Text style={styles.progressMetaRight}>
@@ -442,6 +448,8 @@ export function BuildingDetailSheet({
                         emoji={pendingCount > 0 ? resourceEmoji : undefined}
                         enabled={pendingCount > 0}
                         onPress={handleCollect}
+                        farm={farm}
+                        styles={styles}
                       />
                     </Animated.View>
                   </>
@@ -463,6 +471,8 @@ export function BuildingDetailSheet({
                           emoji="🛖"
                           enabled
                           onPress={() => onOpenAuberge?.()}
+                          farm={farm}
+                          styles={styles}
                         />
                       </>
                     ) : (
@@ -494,6 +504,7 @@ export function BuildingDetailSheet({
                               fromText={formatHours(currentCycleHours / wearMul)}
                               toText={formatHours(nextCycleHours)}
                               delta={deltaPercent(currentCycleHours / wearMul, nextCycleHours)}
+                              styles={styles}
                             />
                             <UpgradeLine
                               icon="📦"
@@ -501,6 +512,7 @@ export function BuildingDetailSheet({
                               fromText={`${currentMaxPending}`}
                               toText={`${nextMaxPending} ${pluralizeResource(def.resourceType, nextMaxPending)}`}
                               delta={`+${nextMaxPending - currentMaxPending}`}
+                              styles={styles}
                             />
                           </>
                         ) : isAuberge ? (
@@ -510,6 +522,7 @@ export function BuildingDetailSheet({
                             fromText={formatHours(Math.max(2, 6 - (building.level - 1) * (20 / 60)))}
                             toText={formatHours(Math.max(2, 6 - building.level * (20 / 60)))}
                             delta={building.level < 10 ? '−20 min' : ''}
+                            styles={styles}
                           />
                         ) : (
                           <UpgradeLine
@@ -518,6 +531,7 @@ export function BuildingDetailSheet({
                             fromText={`Niv. ${building.level}`}
                             toText={`Niv. ${building.level + 1}`}
                             delta=""
+                            styles={styles}
                           />
                         )}
                       </View>
@@ -535,6 +549,8 @@ export function BuildingDetailSheet({
                             : `Il manque ${fmtNum(missingCoins)} 🍃`}
                           enabled={canAffordUpgrade}
                           onPress={() => onUpgrade(building.cellId)}
+                          farm={farm}
+                          styles={styles}
                         />
                         <View style={styles.balanceLine}>
                           <Text style={styles.balanceLbl}>Solde disponible</Text>
@@ -561,7 +577,7 @@ export function BuildingDetailSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -575,7 +591,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing['4xl'],
     borderRadius: Radius['2xl'],
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     ...Shadows.xl,
     maxHeight: '90%',
@@ -583,7 +599,7 @@ const styles = StyleSheet.create({
   woodFrameInner: {
     borderRadius: Radius['2xl'] - 3,
     overflow: 'hidden',
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
   },
 
   awning: {
@@ -613,7 +629,7 @@ const styles = StyleSheet.create({
   },
 
   parchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     paddingBottom: Spacing['3xl'],
   },
   handle: {
@@ -623,7 +639,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
 
   header: {
@@ -637,23 +653,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.2,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     textTransform: 'uppercase',
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   titleBlock: {
@@ -668,9 +684,9 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: Radius.lg,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.sm,
@@ -687,9 +703,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -6,
     right: -6,
-    backgroundColor: Farm.gold,
+    backgroundColor: farm.gold,
     borderWidth: 2,
-    borderColor: Farm.parchment,
+    borderColor: farm.parchment,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 2,
@@ -701,7 +717,7 @@ const styles = StyleSheet.create({
   levelChipText: {
     fontSize: 11,
     fontWeight: '800',
-    color: Farm.goldText,
+    color: farm.goldText,
     letterSpacing: 0.3,
   },
   titleText: {
@@ -711,12 +727,12 @@ const styles = StyleSheet.create({
   titleH1: {
     fontSize: 24,
     fontWeight: '800',
-    color: Farm.brownText,
+    color: farm.brownText,
     letterSpacing: -0.3,
   },
   titleSub: {
     fontSize: 13,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontWeight: '500',
   },
 
@@ -727,10 +743,10 @@ const styles = StyleSheet.create({
   },
 
   heroCard: {
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     padding: Spacing.xl,
     ...Shadows.sm,
   },
@@ -749,9 +765,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: Farm.gold + '33',
+    backgroundColor: farm.gold + '33',
     borderWidth: 1,
-    borderColor: Farm.gold,
+    borderColor: farm.gold,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -761,7 +777,7 @@ const styles = StyleSheet.create({
   heroName: {
     fontSize: 15,
     fontWeight: '700',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   heroStock: {
     flexDirection: 'row',
@@ -770,31 +786,31 @@ const styles = StyleSheet.create({
   heroStockNow: {
     fontSize: 20,
     fontWeight: '800',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   heroStockNowFull: {
-    color: Farm.orange,
+    color: farm.orange,
   },
   heroStockMax: {
     fontSize: 14,
     fontWeight: '600',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   progressTrack: {
     height: 8,
-    backgroundColor: Farm.progressBg,
+    backgroundColor: farm.progressBg,
     borderRadius: 999,
     overflow: 'hidden',
     marginBottom: Spacing.sm,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Farm.progressGold,
+    backgroundColor: farm.progressGold,
     borderRadius: 999,
   },
   progressFillFull: {
-    backgroundColor: Farm.orange,
+    backgroundColor: farm.orange,
   },
 
   progressMeta: {
@@ -804,16 +820,16 @@ const styles = StyleSheet.create({
   },
   progressMetaLeft: {
     fontSize: 12,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontWeight: '500',
   },
   progressMetaRight: {
     fontSize: 12,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   progressMetaRightBold: {
     fontWeight: '800',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   btnFullWidth: {
@@ -866,9 +882,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1,
-    borderColor: Farm.orange,
+    borderColor: farm.orange,
     borderRadius: Radius.md,
     padding: Spacing.md,
   },
@@ -876,7 +892,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: Farm.orange,
+    backgroundColor: farm.orange,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -890,19 +906,19 @@ const styles = StyleSheet.create({
   bannerT1: {
     fontSize: 13,
     fontWeight: '800',
-    color: Farm.orangeShadow,
+    color: farm.orangeShadow,
   },
   bannerT2: {
     fontSize: 11,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginTop: 2,
   },
 
   upgradeSection: {
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
     ...Shadows.sm,
   },
@@ -912,20 +928,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderBottomWidth: 1,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
   },
   upgradeHeaderLabel: {
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.4,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   upgradeTarget: {
-    backgroundColor: Farm.awningGreen + '22',
+    backgroundColor: farm.awningGreen + '22',
     borderWidth: 1,
-    borderColor: Farm.awningGreen,
+    borderColor: farm.awningGreen,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -933,7 +949,7 @@ const styles = StyleSheet.create({
   upgradeTargetText: {
     fontSize: 13,
     fontWeight: '800',
-    color: Farm.awningGreen,
+    color: farm.awningGreen,
   },
 
   upgradeLines: {
@@ -949,9 +965,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -964,7 +980,7 @@ const styles = StyleSheet.create({
   },
   upgradeLineDesc: {
     fontSize: 13,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontWeight: '500',
   },
   upgradeLineRow: {
@@ -975,26 +991,26 @@ const styles = StyleSheet.create({
   },
   upgradeFrom: {
     fontSize: 15,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontWeight: '600',
     textDecorationLine: 'line-through',
   },
   upgradeArrow: {
     fontSize: 14,
-    color: Farm.awningGreen,
+    color: farm.awningGreen,
     fontWeight: '800',
   },
   upgradeTo: {
     fontSize: 17,
     fontWeight: '800',
-    color: Farm.brownText,
+    color: farm.brownText,
     letterSpacing: -0.3,
   },
   deltaBadge: {
     marginLeft: 'auto',
-    backgroundColor: Farm.awningGreen + '22',
+    backgroundColor: farm.awningGreen + '22',
     borderWidth: 1,
-    borderColor: Farm.awningGreen,
+    borderColor: farm.awningGreen,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -1002,7 +1018,7 @@ const styles = StyleSheet.create({
   deltaBadgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: Farm.awningGreen,
+    color: farm.awningGreen,
   },
 
   upgradeFooter: {
@@ -1010,8 +1026,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderTopColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     gap: Spacing.sm,
   },
   upgradeCost: {
@@ -1022,13 +1038,13 @@ const styles = StyleSheet.create({
   },
   upgradeCostLbl: {
     fontSize: 13,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontWeight: '600',
   },
   upgradeCostVal: {
     fontSize: 18,
     fontWeight: '800',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   balanceLine: {
     flexDirection: 'row',
@@ -1037,18 +1053,18 @@ const styles = StyleSheet.create({
   },
   balanceLbl: {
     fontSize: 12,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   balanceVal: {
     fontSize: 12,
     fontWeight: '700',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   maxCard: {
-    backgroundColor: Farm.gold + '22',
+    backgroundColor: farm.gold + '22',
     borderWidth: 1.5,
-    borderColor: Farm.gold,
+    borderColor: farm.gold,
     borderRadius: Radius.lg,
     padding: Spacing.xl,
     alignItems: 'center',
@@ -1061,22 +1077,22 @@ const styles = StyleSheet.create({
   maxCardT1: {
     fontSize: 14,
     fontWeight: '800',
-    color: Farm.goldText,
+    color: farm.goldText,
     letterSpacing: 0.2,
   },
   maxCardT2: {
     fontSize: 11,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginTop: 4,
     fontWeight: '600',
     textAlign: 'center',
   },
 
   nonProductiveCard: {
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     padding: Spacing.xl,
     alignItems: 'center',
     ...Shadows.sm,
@@ -1088,14 +1104,17 @@ const styles = StyleSheet.create({
   nonProductiveTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: Farm.brownText,
+    color: farm.brownText,
     marginBottom: 4,
   },
   nonProductiveBody: {
     fontSize: 13,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     textAlign: 'center',
     fontWeight: '500',
     lineHeight: 18,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

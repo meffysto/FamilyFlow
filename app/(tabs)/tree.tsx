@@ -156,7 +156,9 @@ import { Spacing, Radius, Layout } from '../../constants/spacing';
 
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 // Terrain tileset images (pré-rendues par saison)
 const TERRAIN_IMAGES: Record<Season, any> = {
@@ -375,6 +377,7 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses, plotLevels
 
 /** Banniere hint one-shot ferme — s'affiche la premiere visite, dismiss via useHelp */
 function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
+  const { farm } = useFarmTheme();
   return (
     <Animated.View
       entering={FadeInUp.delay(800).duration(500).springify()}
@@ -384,15 +387,15 @@ function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
         left: Spacing.md,
         right: Spacing.md,
         zIndex: 25,
-        backgroundColor: Farm.parchment,
+        backgroundColor: farm.parchment,
         borderRadius: Radius.lg,
         padding: Spacing.md,
         ...Shadows.sm,
         borderWidth: 1,
-        borderColor: Farm.woodHighlight,
+        borderColor: farm.woodHighlight,
       }}
     >
-      <Text style={{ fontSize: FontSize.sm, color: Farm.brownText, marginBottom: Spacing.xs, lineHeight: FontSize.sm * 1.5 }}>
+      <Text style={{ fontSize: FontSize.sm, color: farm.brownText, marginBottom: Spacing.xs, lineHeight: FontSize.sm * 1.5 }}>
         {'🌱 Complète des tâches pour faire pousser tes cultures ! Le plot avec les points bleus avance en priorité.'}
       </Text>
       <TouchableOpacity
@@ -402,13 +405,13 @@ function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
           alignSelf: 'flex-end',
           paddingVertical: Spacing.xxs,
           paddingHorizontal: Spacing.sm,
-          backgroundColor: Farm.awningGreen + '20',
+          backgroundColor: farm.awningGreen + '20',
           borderRadius: Radius.md,
           borderWidth: 1,
-          borderColor: Farm.woodHighlight,
+          borderColor: farm.woodHighlight,
         }}
       >
-        <Text style={{ fontSize: FontSize.caption, color: Farm.awningGreen, fontWeight: '600' }}>
+        <Text style={{ fontSize: FontSize.caption, color: farm.awningGreen, fontWeight: '600' }}>
           {"J'ai compris"}
         </Text>
       </TouchableOpacity>
@@ -425,6 +428,8 @@ export default function TreeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
+  const { farm } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const insets = useSafeAreaInsets();
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const TREE_SIZE = USE_PIXEL_FORGE_MAP
@@ -2004,18 +2009,18 @@ export default function TreeScreen() {
           <View style={styles.cozyContainer}>
             {/* Auvent (pattern Boutique) */}
             <View style={styles.cozyAwning}>
-              {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+              {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
                 <View
                   key={i}
                   style={[
                     styles.cozyAwningStripe,
-                    { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+                    { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
                   ]}
                 />
               ))}
               {/* Bande de festons marron — ligne de fermeture */}
               <View style={styles.cozyAwningScallop}>
-                {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+                {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
                   <View key={i} style={styles.cozyAwningScallopDot} />
                 ))}
               </View>
@@ -2064,7 +2069,7 @@ export default function TreeScreen() {
                 cat: { labelKey: string; emoji: string; rarity: string },
               ) => {
                 const isPlaced = placedItemIds.has(id);
-                const rarityColor = PICKER_RARITY_COLORS[cat.rarity] ?? Farm.brownTextSub;
+                const rarityColor = PICKER_RARITY_COLORS[cat.rarity] ?? farm.brownTextSub;
                 return (
                   <TouchableOpacity
                     key={id}
@@ -2150,12 +2155,12 @@ export default function TreeScreen() {
           <View style={styles.seedSheetContainer}>
             {/* Auvent rayé */}
             <View style={styles.seedAwning}>
-              {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+              {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
                 <View
                   key={i}
                   style={[
                     styles.seedAwningStripe,
-                    { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+                    { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
                   ]}
                 />
               ))}
@@ -2332,10 +2337,10 @@ export default function TreeScreen() {
                         </View>
                       ) : (
                         <View style={styles.seedRowInfo}>
-                          <Text style={[styles.seedRowName, { color: Farm.brownTextSub }]}>
+                          <Text style={[styles.seedRowName, { color: farm.brownTextSub }]}>
                             {t(`farm.crop.${crop.id}`)}
                           </Text>
-                          <Text style={{ color: Farm.brownTextSub, fontSize: FontSize.caption }}>
+                          <Text style={{ color: farm.brownTextSub, fontSize: FontSize.caption }}>
                             🔒 {t('farm.unlocksAt', { stage: stageName })}
                           </Text>
                         </View>
@@ -2389,7 +2394,7 @@ export default function TreeScreen() {
                       >
                         <View>
                           <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
-                          <View style={[styles.rareSeedBadge, { backgroundColor: isExpeditionOnly ? 'rgba(59,130,246,0.7)' : Farm.brownTextSub }]}>
+                          <View style={[styles.rareSeedBadge, { backgroundColor: isExpeditionOnly ? 'rgba(59,130,246,0.7)' : farm.brownTextSub }]}>
                             <Text style={styles.rareSeedBadgeText}>{isExpeditionOnly ? '🗺️' : '?'}</Text>
                           </View>
                         </View>
@@ -2405,8 +2410,8 @@ export default function TreeScreen() {
                                 </Text>
                               </View>
                             ) : (
-                              <View style={[styles.seedSeasonBadge, { backgroundColor: Farm.parchment }]}>
-                                <Text style={[styles.seedSeasonBadgeText, { color: Farm.brownTextSub }]}>
+                              <View style={[styles.seedSeasonBadge, { backgroundColor: farm.parchment }]}>
+                                <Text style={[styles.seedSeasonBadgeText, { color: farm.brownTextSub }]}>
                                   {t('farm.rare')}
                                 </Text>
                               </View>
@@ -3074,7 +3079,7 @@ export default function TreeScreen() {
                       → {t(TREE_STAGES[stageIdx + 1]?.labelKey || stageInfo.labelKey)} · {levelsLeft} niv.
                     </Text>
                   ) : (
-                    <Text style={[styles.heroGoldMetaText, { color: Farm.goldText, fontWeight: FontWeight.bold }]}>
+                    <Text style={[styles.heroGoldMetaText, { color: farm.goldText, fontWeight: FontWeight.bold }]}>
                       {t('mascot.screen.maxStage')}
                     </Text>
                   )}
@@ -3171,22 +3176,22 @@ export default function TreeScreen() {
             {/* Phase 18-04 : ref cible tutoriel étape 4 (XP/loot) */}
             <View ref={hudXpRef} style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{'🍃'}</Text>
-              <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{profile.coins ?? 0}</Text>
+              <Text style={[styles.hudValue, { color: isDark ? farm.parchmentDark : farm.brownText }]}>{profile.coins ?? 0}</Text>
             </View>
             <View style={styles.hudDivider} />
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{'🔥'}</Text>
-              <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{profile.streak ?? 0}</Text>
+              <Text style={[styles.hudValue, { color: isDark ? farm.parchmentDark : farm.brownText }]}>{profile.streak ?? 0}</Text>
             </View>
             <View style={styles.hudDivider} />
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{'🌿'}</Text>
-              <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{growingCount}</Text>
+              <Text style={[styles.hudValue, { color: isDark ? farm.parchmentDark : farm.brownText }]}>{growingCount}</Text>
             </View>
             <View style={styles.hudDivider} />
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
-              <Text style={[styles.hudValue, { color: isDark ? Farm.parchmentDark : Farm.brownText }]}>{t(seasonInfo.labelKey)}</Text>
+              <Text style={[styles.hudValue, { color: isDark ? farm.parchmentDark : farm.brownText }]}>{t(seasonInfo.labelKey)}</Text>
             </View>
           </View>
           {/* Bouton codex ferme — affordance tap distincte (Phase 17, D-12/D-13) */}
@@ -3555,7 +3560,7 @@ export default function TreeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   safe: {
     flex: 1,
   },
@@ -3700,7 +3705,7 @@ const styles = StyleSheet.create({
   hudDivider: {
     width: 1,
     height: 16,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
     opacity: 0.5,
   },
   hudItem: {
@@ -3712,9 +3717,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.full,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 2,
-    borderColor: Farm.woodDark,
+    borderColor: farm.woodDark,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: Spacing.sm,
@@ -3758,10 +3763,10 @@ const styles = StyleSheet.create({
   signpost: {
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
-    shadowColor: Farm.woodDark,
+    borderColor: farm.woodHighlight,
+    shadowColor: farm.woodDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -3775,9 +3780,9 @@ const styles = StyleSheet.create({
   signpostMore: {
     paddingVertical: 8,
     paddingHorizontal: 10,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderTopWidth: 1,
-    borderTopColor: Farm.woodHighlight,
+    borderTopColor: farm.woodHighlight,
     borderStyle: 'dashed',
     flexDirection: 'row',
     gap: 6,
@@ -3787,13 +3792,13 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: Farm.woodBtnShadow,
+    borderColor: farm.woodBtnShadow,
     paddingVertical: 8,
     paddingHorizontal: 4,
     alignItems: 'center',
     gap: 3,
-    backgroundColor: Farm.woodBtn,
-    shadowColor: Farm.woodBtnShadow,
+    backgroundColor: farm.woodBtn,
+    shadowColor: farm.woodBtnShadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 0,
@@ -3819,10 +3824,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 14,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    shadowColor: Farm.woodLight,
+    borderColor: farm.woodHighlight,
+    shadowColor: farm.woodLight,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.8,
     shadowRadius: 0,
@@ -3830,7 +3835,7 @@ const styles = StyleSheet.create({
   },
   chipCozyCompanion: {
     backgroundColor: '#FED7AA',
-    borderColor: Farm.orangeShadow,
+    borderColor: farm.orangeShadow,
   },
   chipCozySprite: {
     width: 18,
@@ -3843,22 +3848,22 @@ const styles = StyleSheet.create({
   chipCozyLabel: {
     fontSize: 11,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   // ── Hero doré (progression) ───────────────────────────────────────────────
   heroGoldOuter: {
     borderRadius: 16,
     padding: 2,
-    backgroundColor: Farm.gold,
+    backgroundColor: farm.gold,
     marginBottom: Spacing['2xl'],
-    shadowColor: Farm.woodBtnShadow,
+    shadowColor: farm.woodBtnShadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 3,
   },
   heroGoldInner: {
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderRadius: 14,
     padding: 12,
     paddingHorizontal: 14,
@@ -3884,12 +3889,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   heroGoldLevelPill: {
-    backgroundColor: Farm.orange,
+    backgroundColor: farm.orange,
     borderWidth: 1,
-    borderColor: Farm.orangeShadow,
+    borderColor: farm.orangeShadow,
     borderRadius: 11,
     paddingHorizontal: 9,
     paddingVertical: 2,
@@ -3905,14 +3910,14 @@ const styles = StyleSheet.create({
   heroGoldBar: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: Farm.progressBg,
+    backgroundColor: farm.progressBg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Farm.woodLight,
+    borderColor: farm.woodLight,
   },
   heroGoldBarFill: {
     height: '100%',
-    backgroundColor: Farm.progressGold,
+    backgroundColor: farm.progressGold,
   },
   heroGoldMeta: {
     flexDirection: 'row',
@@ -3923,7 +3928,7 @@ const styles = StyleSheet.create({
   heroGoldMetaText: {
     fontSize: 10,
     fontWeight: FontWeight.bold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     flexShrink: 1,
   },
   profileRow: {
@@ -4042,11 +4047,11 @@ const styles = StyleSheet.create({
   // ── Modal Embellir (picker cozy) ─────────────────────────────────────────
   cozyContainer: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   // Corps parchemin sous l'auvent
   cozyParchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     flex: 1,
     paddingBottom: Spacing['3xl'],
   },
@@ -4058,9 +4063,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -4068,13 +4073,13 @@ const styles = StyleSheet.create({
   cozyCloseBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
   },
   // Handle centré
   cozyHandle: {
     width: 36,
     height: 4,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
     borderRadius: Radius.full,
     alignSelf: 'center',
     marginTop: Spacing.sm,
@@ -4094,9 +4099,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.xl,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderBottomWidth: 2,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
   },
   cozyHeaderLeft: {
     flexDirection: 'row',
@@ -4112,7 +4117,7 @@ const styles = StyleSheet.create({
   cozyHeaderTitle: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
@@ -4121,7 +4126,7 @@ const styles = StyleSheet.create({
   cozyHeaderClose: {
     fontSize: 22,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   // Auvent (pattern Boutique — festons marron débordants)
   cozyAwning: {
@@ -4150,7 +4155,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
   },
   // Scroll
   cozyScroll: {
@@ -4165,7 +4170,7 @@ const styles = StyleSheet.create({
   cozySectionTitle: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
@@ -4180,17 +4185,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchment,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchment,
     gap: Spacing.md,
-    shadowColor: Farm.woodLight,
+    shadowColor: farm.woodLight,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.8,
     shadowRadius: 0,
     elevation: 1,
   },
   cozyRowPlaced: {
-    borderColor: Farm.greenBtnShadow,
+    borderColor: farm.greenBtnShadow,
     backgroundColor: '#F0EFE0',
   },
   cozyRowSprite: {
@@ -4214,7 +4219,7 @@ const styles = StyleSheet.create({
   cozyRowName: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   cozyRowMeta: {
     flexDirection: 'row',
@@ -4234,15 +4239,15 @@ const styles = StyleSheet.create({
   cozyRowChevron: {
     fontSize: 24,
     fontWeight: FontWeight.bold,
-    color: Farm.woodHighlight,
+    color: farm.woodHighlight,
   },
   cozyStatusChip: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: 10,
-    backgroundColor: Farm.greenBtn,
+    backgroundColor: farm.greenBtn,
     borderWidth: 1,
-    borderColor: Farm.greenBtnShadow,
+    borderColor: farm.greenBtnShadow,
   },
   cozyStatusChipText: {
     fontSize: FontSize.micro,
@@ -4256,18 +4261,18 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     textAlign: 'center',
     marginTop: Spacing['3xl'],
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontStyle: 'italic',
     lineHeight: 22,
   },
   // Seed picker — pageSheet cozy (auvent + parchemin)
   seedSheetContainer: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   seedParchment: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   seedAwning: {
     flexDirection: 'row',
@@ -4294,7 +4299,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
   },
   seedCloseBtn: {
     position: 'absolute',
@@ -4302,16 +4307,16 @@ const styles = StyleSheet.create({
     right: Spacing['2xl'],
     width: 32,
     height: 32,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
   },
   seedCloseBtnText: {
-    color: Farm.parchment,
+    color: farm.parchment,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     lineHeight: 16,
@@ -4323,9 +4328,9 @@ const styles = StyleSheet.create({
   },
   seedHandleBadge: {
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.xs,
@@ -4335,7 +4340,7 @@ const styles = StyleSheet.create({
   seedHandle: {
     width: 36,
     height: 4,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
     borderRadius: 2,
   },
   seedHandleCoinsRow: {
@@ -4346,7 +4351,7 @@ const styles = StyleSheet.create({
   seedHandleCoins: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
     lineHeight: FontSize.caption * 1.2,
   },
   seedHandleCoinsEmoji: {
@@ -4364,7 +4369,7 @@ const styles = StyleSheet.create({
   seedTitle: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
@@ -4380,8 +4385,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
   },
   seedSporeeToggleActive: {
     borderColor: '#8B5CF6',
@@ -4393,11 +4398,11 @@ const styles = StyleSheet.create({
   seedSporeeToggleTitle: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   seedSporeeToggleSub: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginTop: 2,
   },
   seedSporeeToggleDot: {
@@ -4405,7 +4410,7 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     backgroundColor: 'transparent',
   },
   seedSporeeToggleDotActive: {
@@ -4424,13 +4429,13 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
     marginBottom: Spacing.sm,
   },
   seedSectionTitle: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   seedStageHeader: {
     paddingTop: Spacing.xs,
@@ -4442,7 +4447,7 @@ const styles = StyleSheet.create({
   seedStageTitle: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -4452,8 +4457,8 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: Radius.xl,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     gap: Spacing.md,
   },
   seedRowSprite: {
@@ -4491,7 +4496,7 @@ const styles = StyleSheet.create({
   seedRowName: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   seedSeasonBadge: {
     backgroundColor: '#FEF3C7',
@@ -4506,7 +4511,7 @@ const styles = StyleSheet.create({
   },
   seedRowDesc: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   seedRowStats: {
     flexDirection: 'row',
@@ -4515,7 +4520,7 @@ const styles = StyleSheet.create({
   },
   seedRowStat: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   seedRowWarn: {
     fontSize: FontSize.micro,
@@ -4523,3 +4528,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);
