@@ -29,7 +29,9 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -61,28 +63,28 @@ const SPRING_CONFIG = { damping: 12, stiffness: 180 };
 
 // ── Auvent rayé ──────────────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -97,15 +99,17 @@ interface FarmButtonProps {
   label: string;
   enabled: boolean;
   onPress?: () => void;
+  farm: FarmPalette;
+  styles: Styles;
 }
 
-function FarmButton({ label, enabled, onPress }: FarmButtonProps) {
+function FarmButton({ label, enabled, onPress, farm, styles }: FarmButtonProps) {
   const pressedY = useSharedValue(0);
 
-  const bg = enabled ? Farm.greenBtn : Farm.parchmentDark;
-  const shadow = enabled ? Farm.greenBtnShadow : '#D0CBC3';
-  const highlight = enabled ? Farm.greenBtnHighlight : Farm.parchment;
-  const textColor = enabled ? '#FFFFFF' : Farm.brownTextSub;
+  const bg = enabled ? farm.greenBtn : farm.parchmentDark;
+  const shadow = enabled ? farm.greenBtnShadow : '#D0CBC3';
+  const highlight = enabled ? farm.greenBtnHighlight : farm.parchment;
+  const textColor = enabled ? '#FFFFFF' : farm.brownTextSub;
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: pressedY.value }],
@@ -173,6 +177,8 @@ export const CompanionPicker = React.memo(function CompanionPicker({
   currentName,
 }: CompanionPickerProps) {
   const { t } = useTranslation();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const [selectedSpecies, setSelectedSpecies] = useState<CompanionSpecies>(currentSpecies ?? 'chat');
   const [companionName, setCompanionName] = useState(currentName ?? '');
 
@@ -223,7 +229,7 @@ export const CompanionPicker = React.memo(function CompanionPicker({
 
         <View style={styles.woodFrame}>
           <View style={styles.woodFrameInner}>
-            <AwningStripes />
+            <AwningStripes farm={farm} styles={styles} />
 
             <View style={styles.parchment}>
               <View style={styles.handle} />
@@ -324,7 +330,7 @@ export const CompanionPicker = React.memo(function CompanionPicker({
                       companionName.length > 0 && styles.nameInputActive,
                     ]}
                     placeholder={t('companion.picker.namePlaceholder')}
-                    placeholderTextColor={Farm.brownTextSub}
+                    placeholderTextColor={farm.brownTextSub}
                     value={companionName}
                     onChangeText={text => setCompanionName(text.slice(0, 20))}
                     maxLength={20}
@@ -341,6 +347,8 @@ export const CompanionPicker = React.memo(function CompanionPicker({
                     label={t('companion.picker.confirm')}
                     enabled={canConfirm}
                     onPress={handleConfirm}
+                    farm={farm}
+                    styles={styles}
                   />
                 </View>
               </ScrollView>
@@ -364,7 +372,7 @@ export const CompanionPicker = React.memo(function CompanionPicker({
 
 // ── Styles ────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -379,16 +387,16 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing['4xl'],
     borderRadius: Radius['2xl'],
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     ...Shadows.xl,
     maxHeight: '88%',
   },
   woodFrameInner: {
     borderRadius: Radius.xl,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
     flexShrink: 1,
   },
@@ -425,7 +433,7 @@ const styles = StyleSheet.create({
 
   // ── Parchemin ──
   parchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },
@@ -436,7 +444,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
   farmTitle: {
     alignItems: 'center',
@@ -447,7 +455,7 @@ const styles = StyleSheet.create({
   farmTitleText: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
@@ -455,7 +463,7 @@ const styles = StyleSheet.create({
   farmSubtitle: {
     fontSize: FontSize.label,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     lineHeight: 18,
   },
 
@@ -477,8 +485,8 @@ const styles = StyleSheet.create({
     width: 130,
     borderRadius: Radius.xl,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     padding: Spacing.lg,
     alignItems: 'center',
     position: 'relative',
@@ -486,8 +494,8 @@ const styles = StyleSheet.create({
   },
   speciesCardSelected: {
     borderWidth: 2.5,
-    borderColor: Farm.greenBtn,
-    backgroundColor: Farm.parchment,
+    borderColor: farm.greenBtn,
+    backgroundColor: farm.parchment,
   },
   speciesCardLocked: {
     opacity: 0.5,
@@ -496,9 +504,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: Radius.full,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -525,12 +533,12 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   speciesDesc: {
     fontSize: FontSize.caption,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     lineHeight: 14,
   },
   rarityBadge: {
@@ -553,9 +561,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Farm.greenBtn,
+    backgroundColor: farm.greenBtn,
     borderWidth: 2,
-    borderColor: Farm.parchment,
+    borderColor: farm.parchment,
   },
   selectedCheck: {
     color: '#FFFFFF',
@@ -572,27 +580,27 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
     marginBottom: Spacing.sm,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   nameInput: {
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.lg,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     fontSize: FontSize.body,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   nameInputActive: {
-    borderColor: Farm.greenBtn,
+    borderColor: farm.greenBtn,
     borderWidth: 2,
   },
   charCount: {
     fontSize: FontSize.caption,
     textAlign: 'right',
     marginTop: Spacing.xs,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Confirm button ──
@@ -643,9 +651,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
@@ -653,6 +661,9 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

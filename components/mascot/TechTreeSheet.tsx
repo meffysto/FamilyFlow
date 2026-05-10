@@ -42,7 +42,9 @@ import {
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 // ── Constantes animation ──────────────────────────────────────────────────
 
@@ -73,8 +75,8 @@ const BRANCHES: { id: TechBranchId; labelKey: string; emoji: string; color: stri
 
 // ── AwningStripes ─────────────────────────────────────────────────────────
 
-function AwningStripes() {
-  const stripes = Array.from({ length: Farm.awningStripeCount });
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
+  const stripes = Array.from({ length: farm.awningStripeCount });
   return (
     <View style={styles.awning}>
       {stripes.map((_, i) => (
@@ -82,7 +84,7 @@ function AwningStripes() {
           key={i}
           style={[
             styles.awningStripe,
-            { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
           ]}
         />
       ))}
@@ -104,12 +106,14 @@ function FarmButton({
   bg,
   shadowColor,
   highlightColor,
+  styles,
 }: {
   label: string;
   onPress: () => void;
   bg: string;
   shadowColor: string;
   highlightColor: string;
+  styles: Styles;
 }) {
   const pressed = useSharedValue(0);
 
@@ -153,6 +157,8 @@ const TechNodeView = React.memo(function TechNodeView({
   coins,
   unlockedTechs,
   onPress,
+  farm,
+  styles,
 }: {
   node: TechNode;
   status: NodeStatus;
@@ -161,6 +167,8 @@ const TechNodeView = React.memo(function TechNodeView({
   coins: number;
   unlockedTechs: string[];
   onPress: () => void;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   const { t } = useTranslation();
 
@@ -193,11 +201,11 @@ const TechNodeView = React.memo(function TechNodeView({
     ? branchColor
     : status === 'unlockable'
       ? branchColor + '66'
-      : Farm.woodHighlight;
+      : farm.woodHighlight;
 
   const bgColor = status === 'unlocked'
     ? branchColor + '22'
-    : Farm.parchmentDark;
+    : farm.parchmentDark;
 
   const btnShadow = branchColor + 'CC';
   const btnHighlight = branchColor + '88';
@@ -212,7 +220,7 @@ const TechNodeView = React.memo(function TechNodeView({
         {node.order > 1 && (
           <View style={[
             styles.nodeConnector,
-            { backgroundColor: status === 'unlocked' ? branchColor : Farm.woodHighlight },
+            { backgroundColor: status === 'unlocked' ? branchColor : farm.woodHighlight },
           ]} />
         )}
 
@@ -221,7 +229,7 @@ const TechNodeView = React.memo(function TechNodeView({
           <Animated.View style={status === 'unlockable' ? pulseStyle : undefined}>
             <View style={[
               styles.nodeEmojiContainer,
-              { backgroundColor: status === 'unlocked' ? branchColor : Farm.woodHighlight },
+              { backgroundColor: status === 'unlocked' ? branchColor : farm.woodHighlight },
             ]}>
               <Text style={styles.nodeEmoji}>
                 {status === 'unlocked' ? '✅' : node.emoji}
@@ -281,6 +289,7 @@ const TechNodeView = React.memo(function TechNodeView({
               bg={branchColor}
               shadowColor={btnShadow}
               highlightColor={btnHighlight}
+              styles={styles}
             />
           ) : (
             prereqMissing ? (
@@ -296,7 +305,7 @@ const TechNodeView = React.memo(function TechNodeView({
       {!isLast && (
         <View style={[
           styles.connectorLine,
-          { backgroundColor: status === 'unlocked' ? branchColor : Farm.woodHighlight },
+          { backgroundColor: status === 'unlocked' ? branchColor : farm.woodHighlight },
         ]} />
       )}
     </View>
@@ -316,6 +325,8 @@ export function TechTreeSheet({
 }: TechTreeSheetProps) {
   const { t } = useTranslation();
   const { colors } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const [feedback, setFeedback] = useState<{ emoji: string; text: string; type: 'success' | 'info' | 'error' } | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<TechBranchId>(BRANCHES[0].id);
@@ -430,7 +441,7 @@ export function TechTreeSheet({
     >
       <View style={styles.container}>
         {/* Auvent */}
-        <AwningStripes />
+        <AwningStripes farm={farm} styles={styles} />
 
         {/* Corps parchemin */}
         <View style={styles.parchment}>
@@ -489,15 +500,15 @@ export function TechTreeSheet({
                       style={[
                         styles.chip,
                         {
-                          backgroundColor: isActive ? branch.color : Farm.parchmentDark,
-                          borderColor: isActive ? branch.color : Farm.woodHighlight,
+                          backgroundColor: isActive ? branch.color : farm.parchmentDark,
+                          borderColor: isActive ? branch.color : farm.woodHighlight,
                         },
                       ]}
                     >
                       <Text style={styles.chipEmoji}>{branch.emoji}</Text>
                       <Text style={[
                         styles.chipLabel,
-                        { color: isActive ? '#FFFFFF' : Farm.brownText },
+                        { color: isActive ? '#FFFFFF' : farm.brownText },
                       ]}>
                         {t(branch.labelKey)}
                       </Text>
@@ -522,7 +533,7 @@ export function TechTreeSheet({
                     {
                       backgroundColor: feedback.type === 'success' ? '#4ADE80'
                         : feedback.type === 'error' ? '#FCA5A5'
-                        : Farm.parchmentDark,
+                        : farm.parchmentDark,
                     },
                   ]}
                 >
@@ -533,7 +544,7 @@ export function TechTreeSheet({
                       {
                         color: feedback.type === 'success' ? '#065F46'
                           : feedback.type === 'error' ? '#7F1D1D'
-                          : Farm.brownText,
+                          : farm.brownText,
                       },
                     ]}
                     numberOfLines={2}
@@ -559,6 +570,8 @@ export function TechTreeSheet({
                     coins={coins}
                     unlockedTechs={unlockedTechs}
                     onPress={() => handleNodePress(node)}
+                    farm={farm}
+                    styles={styles}
                   />
                 ))}
               </ScrollView>
@@ -571,15 +584,15 @@ export function TechTreeSheet({
 
 // ── Styles ────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
 
   // Corps parchemin sous l'auvent
   parchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     flex: 1,
     paddingBottom: Spacing['3xl'],
   },
@@ -592,9 +605,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -602,14 +615,14 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
   },
 
   // Handle centré (pattern Boutique)
   handle: {
     width: 36,
     height: 4,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
     borderRadius: Radius.full,
     alignSelf: 'center',
     marginTop: Spacing.sm,
@@ -626,9 +639,9 @@ const styles = StyleSheet.create({
 
   // Badge coins/stats (sous le titre)
   coinsBadge: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xs,
@@ -636,7 +649,7 @@ const styles = StyleSheet.create({
   coinsText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   // Conteneur contenu principal
@@ -672,7 +685,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
   },
 
   // ── Header ─────────────────────────────────────────────────────────────
@@ -682,9 +695,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.xl,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderBottomWidth: 2,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
   },
   headerLeft: {
     flex: 1,
@@ -699,19 +712,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
   },
   headerSub: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   coinsDisplay: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
     marginLeft: Spacing.md,
   },
 
@@ -724,9 +737,9 @@ const styles = StyleSheet.create({
   globalProgressBg: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: Farm.progressBg,
+    backgroundColor: farm.progressBg,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
   },
   globalProgressFill: {
@@ -852,12 +865,12 @@ const styles = StyleSheet.create({
   nodeName: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
     lineHeight: 18,
   },
   nodeDesc: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     lineHeight: 16,
   },
   unlockedBadge: {
@@ -894,7 +907,7 @@ const styles = StyleSheet.create({
   },
   nodeRequires: {
     fontSize: FontSize.micro,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -903,7 +916,7 @@ const styles = StyleSheet.create({
   lockedLabel: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     textAlign: 'center',
     paddingVertical: Spacing.sm,
     fontStyle: 'italic',
@@ -944,3 +957,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

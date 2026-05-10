@@ -30,7 +30,9 @@ import {
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 // ── Constantes ───────────────────────────────────────────────────────────────
 
@@ -62,28 +64,28 @@ const LEVEL_DESCRIPTIONS: Record<number, string> = {
 
 // ── Sous-composant : auvent rayé ─────────────────────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -94,12 +96,12 @@ function AwningStripes() {
 
 // ── Sous-composant : bouton farm 3D ──────────────────────────────────────────
 
-function FarmButton({ label, enabled, onPress }: { label: string; enabled: boolean; onPress?: () => void }) {
+function FarmButton({ label, enabled, onPress, farm, styles }: { label: string; enabled: boolean; onPress?: () => void; farm: FarmPalette; styles: Styles }) {
   const pressedY = useSharedValue(0);
 
-  const bg = enabled ? Farm.greenBtn : Farm.parchmentDark;
-  const shadow = enabled ? Farm.greenBtnShadow : '#D0CBC3';
-  const highlight = enabled ? Farm.greenBtnHighlight : Farm.parchment;
+  const bg = enabled ? farm.greenBtn : farm.parchmentDark;
+  const shadow = enabled ? farm.greenBtnShadow : '#D0CBC3';
+  const highlight = enabled ? farm.greenBtnHighlight : farm.parchment;
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: pressedY.value }],
@@ -123,7 +125,7 @@ function FarmButton({ label, enabled, onPress }: { label: string; enabled: boole
       <Animated.View style={[styles.farmBtnShadow, { backgroundColor: shadow }, shadowStyle]} />
       <Animated.View style={[styles.farmBtnBody, { backgroundColor: bg }, btnStyle]}>
         <View style={[styles.farmBtnGloss, { backgroundColor: highlight }]} />
-        <Text style={[styles.farmBtnText, { color: enabled ? '#FFFFFF' : Farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' }]}>
+        <Text style={[styles.farmBtnText, { color: enabled ? '#FFFFFF' : farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' }]}>
           {label}
         </Text>
       </Animated.View>
@@ -154,6 +156,8 @@ export function PlotUpgradeSheet({
   onUpgrade,
   onMessage,
 }: PlotUpgradeSheetProps) {
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const currentLevel = getPlotLevel(plotLevels, plotIndex);
   const isMax = currentLevel >= MAX_PLOT_LEVEL;
   const upgradeCost = getPlotUpgradeCost(currentLevel);
@@ -186,7 +190,7 @@ export function PlotUpgradeSheet({
         {/* Panneau farm game */}
         <View style={styles.woodFrame}>
           <View style={styles.woodFrameInner}>
-            <AwningStripes />
+            <AwningStripes farm={farm} styles={styles} />
 
             <View style={styles.parchment}>
               {/* Handle */}
@@ -222,7 +226,7 @@ export function PlotUpgradeSheet({
                     <Text style={styles.arrow}>→</Text>
                     <View style={styles.previewCard}>
                       <Image source={DIRT_SPRITES[nextLevel] ?? DIRT_SPRITES[1]} style={styles.spriteImg} />
-                      <Text style={[styles.spriteName, { color: Farm.awningGreen }]}>{LEVEL_NAMES[nextLevel]}</Text>
+                      <Text style={[styles.spriteName, { color: farm.awningGreen }]}>{LEVEL_NAMES[nextLevel]}</Text>
                     </View>
                   </>
                 )}
@@ -240,8 +244,8 @@ export function PlotUpgradeSheet({
                       style={[
                         styles.progressSegment,
                         {
-                          backgroundColor: i < currentLevel ? Farm.progressGold : Farm.progressBg,
-                          borderColor: i < currentLevel ? Farm.gold : Farm.parchmentDark,
+                          backgroundColor: i < currentLevel ? farm.progressGold : farm.progressBg,
+                          borderColor: i < currentLevel ? farm.gold : farm.parchmentDark,
                         },
                       ]}
                     />
@@ -260,8 +264,8 @@ export function PlotUpgradeSheet({
                 </View>
                 {!isMax && (
                   <View style={[styles.infoRow, styles.nextBonusRow]}>
-                    <Text style={[styles.infoLabel, { color: Farm.awningGreen }]}>Prochain</Text>
-                    <Text style={[styles.infoValue, { color: Farm.awningGreen }]}>{LEVEL_DESCRIPTIONS[nextLevel]}</Text>
+                    <Text style={[styles.infoLabel, { color: farm.awningGreen }]}>Prochain</Text>
+                    <Text style={[styles.infoValue, { color: farm.awningGreen }]}>{LEVEL_DESCRIPTIONS[nextLevel]}</Text>
                   </View>
                 )}
               </Animated.View>
@@ -281,6 +285,8 @@ export function PlotUpgradeSheet({
                       label={`Améliorer — ${upgradeCost?.toLocaleString('fr-FR')} 🍃`}
                       enabled={canAfford}
                       onPress={handleUpgrade}
+                      farm={farm}
+                      styles={styles}
                     />
                     {!canAfford && (
                       <Text style={styles.insufficientText}>
@@ -304,7 +310,7 @@ export function PlotUpgradeSheet({
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   // ── Overlay ──
   overlay: {
     flex: 1,
@@ -320,7 +326,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing['4xl'],
     borderRadius: Radius['2xl'],
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     ...Shadows.xl,
     maxHeight: '82%',
@@ -328,7 +334,7 @@ const styles = StyleSheet.create({
   woodFrameInner: {
     borderRadius: Radius['2xl'] - 3,
     overflow: 'hidden',
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
   },
 
   // ── Auvent ──
@@ -360,7 +366,7 @@ const styles = StyleSheet.create({
 
   // ── Parchemin ──
   parchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     paddingBottom: Spacing['3xl'],
   },
   handle: {
@@ -370,7 +376,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
 
   // ── Titre ──
@@ -382,20 +388,20 @@ const styles = StyleSheet.create({
   farmTitleText: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   levelBadge: {
-    backgroundColor: Farm.gold + '33',
+    backgroundColor: farm.gold + '33',
     paddingHorizontal: Spacing.md,
     paddingVertical: 2,
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Farm.gold,
+    borderColor: farm.gold,
   },
   levelBadgeText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.goldText,
+    color: farm.goldText,
   },
 
   // ── Preview sprites ──
@@ -415,17 +421,17 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: Radius.md,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   spriteName: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   arrow: {
     fontSize: 22,
     fontWeight: FontWeight.bold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Barre progression ──
@@ -447,7 +453,7 @@ const styles = StyleSheet.create({
   // ── Info bonus ──
   infoSection: {
     marginHorizontal: Spacing['2xl'],
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     gap: Spacing.md,
@@ -457,18 +463,18 @@ const styles = StyleSheet.create({
   },
   nextBonusRow: {
     borderTopWidth: 1,
-    borderTopColor: Farm.parchmentDark,
+    borderTopColor: farm.parchmentDark,
     paddingTop: Spacing.md,
   },
   infoLabel: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   infoValue: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   // ── Actions ──
@@ -479,17 +485,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   maxBadge: {
-    backgroundColor: Farm.gold + '22',
+    backgroundColor: farm.gold + '22',
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing['2xl'],
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Farm.gold,
+    borderColor: farm.gold,
   },
   maxText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.goldText,
+    color: farm.goldText,
   },
   insufficientText: {
     fontSize: FontSize.caption,
@@ -497,7 +503,7 @@ const styles = StyleSheet.create({
   },
   balanceText: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Bouton farm 3D ──
@@ -537,3 +543,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);
