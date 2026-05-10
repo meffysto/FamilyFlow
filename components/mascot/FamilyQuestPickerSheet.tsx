@@ -23,7 +23,10 @@ import { getRewardLabel } from './FamilyQuestBanner';
 import { QUEST_TEMPLATES } from '../../constants/questTemplates';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
+type AwningStyles = ReturnType<typeof makeAwningStyles>;
 import type { FamilyQuestType } from '../../lib/quest-engine';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -53,8 +56,8 @@ function getTypeLabel(type: FamilyQuestType): string {
 
 // ─── Auvent (rayures + festons) ───────────────────────────────────────────────
 
-function AwningStripes() {
-  const stripes = Array.from({ length: Farm.awningStripeCount });
+function AwningStripes({ farm, awningStyles }: { farm: FarmPalette; awningStyles: AwningStyles }) {
+  const stripes = Array.from({ length: farm.awningStripeCount });
   return (
     <View style={awningStyles.container}>
       {stripes.map((_, i) => (
@@ -62,7 +65,7 @@ function AwningStripes() {
           key={i}
           style={[
             awningStyles.stripe,
-            { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
           ]}
         />
       ))}
@@ -75,7 +78,7 @@ function AwningStripes() {
   );
 }
 
-const awningStyles = StyleSheet.create({
+const makeAwningStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: 28,
@@ -100,11 +103,14 @@ const awningStyles = StyleSheet.create({
   scallop: {
     flex: 1,
     height: 8,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
 });
+
+const awningStylesLight = makeAwningStyles(Farm);
+const awningStylesDark = makeAwningStyles(FarmDarkPalette);
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -124,6 +130,9 @@ function FamilyQuestPickerSheetInner({
   onClose,
   onSelect,
 }: FamilyQuestPickerSheetProps) {
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
+  const awningStyles = isDark ? awningStylesDark : awningStylesLight;
   const handleSelect = useCallback(
     (templateId: string) => {
       Haptics.selectionAsync().catch(() => {});
@@ -142,7 +151,7 @@ function FamilyQuestPickerSheetInner({
     >
       <View style={styles.container}>
         {/* Auvent */}
-        <AwningStripes />
+        <AwningStripes farm={farm} awningStyles={awningStyles} />
 
         {/* Contenu parchemin */}
         <View style={styles.parchment}>
@@ -215,14 +224,14 @@ export const FamilyQuestPickerSheet = React.memo(FamilyQuestPickerSheetInner);
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   parchment: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
 
   // Bouton fermer (pattern CraftSheet)
@@ -232,16 +241,16 @@ const styles = StyleSheet.create({
     right: Spacing['2xl'],
     width: 32,
     height: 32,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
   },
   closeBtnText: {
-    color: Farm.parchment,
+    color: farm.parchment,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     lineHeight: 16,
@@ -251,7 +260,7 @@ const styles = StyleSheet.create({
   handle: {
     width: 36,
     height: 4,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
     borderRadius: Radius.full,
     alignSelf: 'center',
     marginTop: Spacing.sm,
@@ -268,7 +277,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
@@ -276,7 +285,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     textAlign: 'center',
   },
 
@@ -300,8 +309,8 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchment,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchment,
     alignItems: 'flex-start',
     gap: Spacing.xxs,
   },
@@ -313,19 +322,19 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
     lineHeight: FontSize.caption * 1.4,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   templateType: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
-    color: Farm.greenBtn,
+    color: farm.greenBtn,
   },
   templateTarget: {
     fontSize: FontSize.micro,
     marginTop: Spacing.xxs,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   rewardBadge: {
     paddingHorizontal: Spacing.xs,
@@ -333,12 +342,15 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xs,
     marginTop: Spacing.xs,
     width: '100%',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   rewardText: {
     fontSize: FontSize.micro,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

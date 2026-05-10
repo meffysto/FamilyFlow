@@ -28,7 +28,9 @@ import { CoachMarkOverlay } from '../help/CoachMarkOverlay';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 const SCREEN_ID = 'farm_tutorial';
 const TRIGGER_DELAY_MS = 600;
@@ -76,6 +78,8 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
 }: FarmTutorialOverlayProps) {
   const { t } = useTranslation();
   const themeColors = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const {
     hasSeenScreen,
     markScreenSeen,
@@ -198,6 +202,8 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
           onNext={handleNext}
           onSkip={handleSkip}
           treeSprite={currentStep === 0 ? resolveTreeSprite(profile) : null}
+          farm={farm}
+          styles={styles}
         />
       )}
 
@@ -235,9 +241,11 @@ interface NarrativeCardProps {
   onNext: () => void;
   onSkip: () => void;
   treeSprite: number | null;
+  farm: FarmPalette;
+  styles: Styles;
 }
 
-function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite }: NarrativeCardProps) {
+function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite, farm, styles }: NarrativeCardProps) {
   const { width: SCREEN_W } = useWindowDimensions();
   const cardMaxWidth = Math.min(340, SCREEN_W - Spacing['3xl'] * 2);
   const opacity = useSharedValue(0);
@@ -269,7 +277,7 @@ function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite }: Narrativ
         ]}
       >
         <View style={styles.woodFrameInner}>
-          <AwningStripes />
+          <AwningStripes farm={farm} styles={styles} />
 
           <View style={styles.parchment}>
             <View style={styles.handle} />
@@ -300,7 +308,7 @@ function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite }: Narrativ
               <View style={styles.rightFooter}>
                 <Text style={styles.stepIndicator}>{step + 1}/5</Text>
                 <View style={styles.nextBtnWrap}>
-                  <FarmButton label={nextLabel} onPress={onNext} />
+                  <FarmButton label={nextLabel} onPress={onNext} farm={farm} styles={styles} />
                 </View>
               </View>
             </View>
@@ -313,28 +321,28 @@ function NarrativeCard({ step, colors, t, onNext, onSkip, treeSprite }: Narrativ
 
 // ── Sous-composants visuels farm ──────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -343,7 +351,7 @@ function AwningStripes() {
   );
 }
 
-function FarmButton({ label, onPress }: { label: string; onPress?: () => void }) {
+function FarmButton({ label, onPress, farm, styles }: { label: string; onPress?: () => void; farm: FarmPalette; styles: Styles }) {
   const pressedY = useSharedValue(0);
 
   const btnStyle = useAnimatedStyle(() => ({
@@ -365,19 +373,19 @@ function FarmButton({ label, onPress }: { label: string; onPress?: () => void })
       }}
     >
       <Animated.View
-        style={[styles.farmBtnShadow, { backgroundColor: Farm.greenBtnShadow }, shadowStyle]}
+        style={[styles.farmBtnShadow, { backgroundColor: farm.greenBtnShadow }, shadowStyle]}
       />
       <Animated.View
-        style={[styles.farmBtnBody, { backgroundColor: Farm.greenBtn }, btnStyle]}
+        style={[styles.farmBtnBody, { backgroundColor: farm.greenBtn }, btnStyle]}
       >
-        <View style={[styles.farmBtnGloss, { backgroundColor: Farm.greenBtnHighlight }]} />
+        <View style={[styles.farmBtnGloss, { backgroundColor: farm.greenBtnHighlight }]} />
         <Text style={styles.farmBtnText}>{label}</Text>
       </Animated.View>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   fullscreen: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
@@ -391,13 +399,13 @@ const styles = StyleSheet.create({
   // ── Cadre bois ──
   woodFrame: {
     borderRadius: Radius['2xl'],
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
   },
   woodFrameInner: {
     borderRadius: Radius['2xl'] - 3,
     overflow: 'hidden',
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
   },
 
   // ── Auvent ──
@@ -429,7 +437,7 @@ const styles = StyleSheet.create({
 
   // ── Parchemin ──
   parchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     paddingHorizontal: Spacing['2xl'],
     paddingBottom: Spacing['2xl'],
   },
@@ -440,7 +448,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
 
   illustrationWrap: {
@@ -463,7 +471,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.md,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   body: {
     fontSize: FontSize.body,
@@ -471,7 +479,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: Spacing['2xl'],
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   footer: {
     flexDirection: 'row',
@@ -481,7 +489,7 @@ const styles = StyleSheet.create({
   skipLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     opacity: 0.75,
   },
   rightFooter: {
@@ -492,7 +500,7 @@ const styles = StyleSheet.create({
   stepIndicator: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     opacity: 0.65,
   },
   nextBtnWrap: {
@@ -536,3 +544,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

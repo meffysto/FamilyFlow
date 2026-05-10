@@ -19,7 +19,10 @@ import * as Haptics from 'expo-haptics';
 
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
+type AwningStyles = ReturnType<typeof makeAwningStyles>;
 
 import { computeWagerDurations, type WagerDurationOption } from '../../lib/mascot/wager-ui-helpers';
 import { classifyHarvestTier } from '../../lib/mascot/sporee-economy';
@@ -40,15 +43,15 @@ const DURATION_META: Record<WagerDuration, { emoji: string; labelKey: string }> 
 // Auvent rayé (cohérent avec CraftSheet)
 // ─────────────────────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, awningStyles }: { farm: FarmPalette; awningStyles: AwningStyles }) {
   return (
     <View style={awningStyles.container}>
-      {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+      {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
         <View
           key={i}
           style={[
             awningStyles.stripe,
-            { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
           ]}
         />
       ))}
@@ -61,7 +64,7 @@ function AwningStripes() {
   );
 }
 
-const awningStyles = StyleSheet.create({
+const makeAwningStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: 28,
@@ -87,11 +90,14 @@ const awningStyles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
 });
+
+const awningStylesLight = makeAwningStyles(Farm);
+const awningStylesDark = makeAwningStyles(FarmDarkPalette);
 
 // ─────────────────────────────────────────────
 // Props
@@ -131,6 +137,9 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
   sporeeCount,
   gamiHistory,
 }: WagerSealerSheetProps) {
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
+  const awningStyles = isDark ? awningStylesDark : awningStylesLight;
   // Calcul des 3 options — déterministe (crop + durée), zéro dépendance famille/backlog
   const durations = useMemo<WagerDurationOption[]>(() => {
     const tier = classifyHarvestTier(cropId);
@@ -181,7 +190,7 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
       onRequestClose={handleHeaderClose}
     >
       <View style={styles.container}>
-        <AwningStripes />
+        <AwningStripes farm={farm} awningStyles={awningStyles} />
 
         <View style={styles.parchment}>
           {/* Bouton fermer */}
@@ -236,7 +245,7 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
                   onPress={() => handleConfirmDuration(option.duration)}
                   style={({ pressed }) => [
                     styles.card,
-                    pressed && { borderColor: Farm.greenBtn, borderWidth: 2 },
+                    pressed && { borderColor: farm.greenBtn, borderWidth: 2 },
                   ]}
                   accessibilityRole="button"
                   accessibilityLabel={accessibilityLabel}
@@ -286,14 +295,14 @@ export const WagerSealerSheet = React.memo(function WagerSealerSheet({
 // Styles statiques (tokens design + Farm theme)
 // ─────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   parchment: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   closeBtn: {
     position: 'absolute',
@@ -301,16 +310,16 @@ const styles = StyleSheet.create({
     right: Spacing['2xl'],
     width: 32,
     height: 32,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
   },
   closeBtnText: {
-    color: Farm.parchment,
+    color: farm.parchment,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     lineHeight: 16,
@@ -322,9 +331,9 @@ const styles = StyleSheet.create({
   },
   handleBadge: {
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.xs,
@@ -334,7 +343,7 @@ const styles = StyleSheet.create({
   handle: {
     width: 36,
     height: 4,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
     borderRadius: 2,
   },
   handleCoinsRow: {
@@ -345,7 +354,7 @@ const styles = StyleSheet.create({
   handleCoins: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
     lineHeight: FontSize.caption * 1.2,
   },
   handleCoinsEmoji: {
@@ -363,7 +372,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
@@ -379,14 +388,14 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FontSize.sm,
     lineHeight: 20,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginBottom: Spacing.xl,
   },
   card: {
     borderRadius: Radius.xl,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.xl,
     marginBottom: Spacing.md,
@@ -400,32 +409,35 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   cardMultiplier: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.heavy,
-    color: Farm.greenBtn,
+    color: farm.greenBtn,
   },
   cardMeta: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   skipButton: {
     marginTop: Spacing.lg,
     borderRadius: Radius.md,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
   },
   skipText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   footerSpace: {
     height: Spacing['4xl'],
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);
