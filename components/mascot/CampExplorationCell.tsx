@@ -21,7 +21,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
 import { CAMP_EXPLORATION_CELL } from '../../lib/mascot/world-grid';
 
 // ── Assets ───────────────────────────────────────────────────────────────────
@@ -57,6 +57,8 @@ interface Props {
 
 export function CampExplorationCell({ activeCount, hasResult, remainingMinutes, onPress, paused = false }: Props) {
   const { colors } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
 
   const isIdle = activeCount === 0 && !hasResult;
 
@@ -149,7 +151,7 @@ export function CampExplorationCell({ activeCount, hasResult, remainingMinutes, 
         <View style={styles.timerPill}>
           {activeTimers.map((min, i) => (
             <View key={i} style={styles.timerRow}>
-              <MaterialCommunityIcons name="compass-outline" size={10} color={Farm.brownText} />
+              <MaterialCommunityIcons name="compass-outline" size={10} color={farm.brownText} />
               <Text style={styles.timerText}>{formatMinutes(min)}</Text>
             </View>
           ))}
@@ -161,7 +163,7 @@ export function CampExplorationCell({ activeCount, hasResult, remainingMinutes, 
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     width: CELL_SIZE,
     height: CELL_SIZE,
@@ -181,14 +183,14 @@ const styles = StyleSheet.create({
     height: 20,
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.full,
-    backgroundColor: Farm.gold,
+    backgroundColor: farm.gold,
     alignItems: 'center',
     justifyContent: 'center',
   },
   countBadgeText: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.bold,
-    color: Farm.goldText,
+    color: farm.goldText,
   },
   resultBadge: {
     position: 'absolute',
@@ -211,16 +213,16 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: Farm.gold,
+    backgroundColor: farm.gold,
     borderWidth: 2,
-    borderColor: Farm.goldText,
+    borderColor: farm.goldText,
     alignItems: 'center',
     justifyContent: 'center',
   },
   idleBubbleText: {
     fontSize: 13,
     fontWeight: FontWeight.heavy,
-    color: Farm.goldText,
+    color: farm.goldText,
     marginTop: -1,
   },
   idleBubbleTail: {
@@ -231,17 +233,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 5,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: Farm.goldText,
+    borderTopColor: farm.goldText,
     marginTop: -1,
   },
   timerPill: {
     position: 'absolute',
     bottom: -6,
     alignSelf: 'center',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderRadius: Radius.sm,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     gap: 1,
@@ -254,9 +256,12 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);
 
 // Export de la constante pour usage externe (positionnement dans tree.tsx)
 export { CAMP_EXPLORATION_CELL };

@@ -31,7 +31,7 @@ import {
 import { CROP_CATALOG, type CraftRecipe, type HarvestInventory } from '../../lib/mascot/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
 
 const SPRING_CONFIG = { damping: 14, stiffness: 200 };
 
@@ -54,6 +54,8 @@ export function CraftGradePicker({
 }: CraftGradePickerProps) {
   const { t } = useTranslation();
   const { primary } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const [expanded, setExpanded] = useState(false);
 
   // Ingrédients crop uniquement (les ressources bâtiment n'ont pas de grade)
@@ -103,21 +105,21 @@ export function CraftGradePicker({
       <TouchableOpacity
         style={[
           styles.headerBtn,
-          { borderColor: Farm.woodHighlight, backgroundColor: Farm.parchmentDark },
+          { borderColor: farm.woodHighlight, backgroundColor: farm.parchmentDark },
         ]}
         onPress={toggleExpand}
         activeOpacity={0.7}
       >
-        <Text style={[styles.headerLabel, { color: Farm.brownTextSub }]}>
+        <Text style={[styles.headerLabel, { color: farm.brownTextSub }]}>
           {t('craft.pickGrade')}
         </Text>
         <View style={styles.headerBadge}>
           <Text style={styles.headerBadgeEmoji}>{getGradeEmoji(outputGrade)}</Text>
-          <Text style={[styles.headerBadgeLabel, { color: Farm.brownText }]}>
+          <Text style={[styles.headerBadgeLabel, { color: farm.brownText }]}>
             {t(getGradeLabelKey(outputGrade))}
           </Text>
         </View>
-        <Animated.Text style={[styles.chevron, { color: Farm.brownTextSub }, chevronStyle]}>
+        <Animated.Text style={[styles.chevron, { color: farm.brownTextSub }, chevronStyle]}>
           ▾
         </Animated.Text>
       </TouchableOpacity>
@@ -129,10 +131,10 @@ export function CraftGradePicker({
           exiting={FadeOut.duration(120)}
           style={[
             styles.panel,
-            { borderColor: Farm.woodHighlight, backgroundColor: Farm.progressBg },
+            { borderColor: farm.woodHighlight, backgroundColor: farm.progressBg },
           ]}
         >
-          <Text style={[styles.panelHint, { color: Farm.brownTextSub }]}>
+          <Text style={[styles.panelHint, { color: farm.brownTextSub }]}>
             {t('craft.gradesGrisesHint')}
           </Text>
           {cropIngredients.map(ing => {
@@ -142,7 +144,7 @@ export function CraftGradePicker({
             const selected = selection[ing.itemId] ?? 'ordinaire';
             return (
               <View key={ing.itemId} style={styles.ingredientRow}>
-                <Text style={[styles.ingredientLabel, { color: Farm.brownText }]}>
+                <Text style={[styles.ingredientLabel, { color: farm.brownText }]}>
                   {cropDef?.emoji ?? '•'} {cropName}
                 </Text>
                 <View style={styles.chipsRow}>
@@ -159,22 +161,22 @@ export function CraftGradePicker({
                         style={[
                           styles.chip,
                           {
-                            borderColor: isSelected ? primary : Farm.woodHighlight,
+                            borderColor: isSelected ? primary : farm.woodHighlight,
                             backgroundColor: isSelected
                               ? primary + '22'
-                              : Farm.parchmentDark,
+                              : farm.parchmentDark,
                             opacity: disabled ? 0.4 : 1,
                           },
                         ]}
                       >
                         <Text style={styles.chipEmoji}>{getGradeEmoji(grade)}</Text>
-                        <Text style={[styles.chipLabel, { color: Farm.brownText }]}>
+                        <Text style={[styles.chipLabel, { color: farm.brownText }]}>
                           {t(getGradeLabelKey(grade))}
                         </Text>
                         <Text
                           style={[
                             styles.chipQty,
-                            { color: disabled ? Farm.brownTextSub : Farm.brownText },
+                            { color: disabled ? farm.brownTextSub : farm.brownText },
                           ]}
                         >
                           ×{have}
@@ -192,7 +194,7 @@ export function CraftGradePicker({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     marginBottom: Spacing.sm,
   },
@@ -270,3 +272,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

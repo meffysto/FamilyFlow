@@ -42,19 +42,21 @@ import { CodexEntryDetailModal } from './CodexEntryDetailModal';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 // ── AwningStripes ─────────────────────────────────────────────────────────
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
-          <View key={i} style={[styles.awningStripe, { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream }]} />
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
+          <View key={i} style={[styles.awningStripe, { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream }]} />
         ))}
       </View>
       <View style={styles.awningScallops}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View key={i} style={styles.awningScallopDot} />
         ))}
       </View>
@@ -90,6 +92,8 @@ export function FarmCodexModal({
 }: FarmCodexModalProps) {
   const { t } = useTranslation();
   const { colors } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const { resetScreen } = useHelp();
 
   const [activeTab, setActiveTab] = useState<CodexKind>('crop');
@@ -187,7 +191,7 @@ export function FarmCodexModal({
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        <AwningStripes />
+        <AwningStripes farm={farm} styles={styles} />
         <View style={styles.parchment}>
         {/* Bouton fermer */}
         <TouchableOpacity
@@ -324,24 +328,24 @@ export function FarmCodexModal({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Farm.parchmentDark },
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: farm.parchmentDark },
   awning: { overflow: 'hidden' },
   awningStripes: { flexDirection: 'row', height: 28 },
   awningStripe: { flex: 1 },
   awningScallops: { flexDirection: 'row', marginTop: -4, paddingHorizontal: 2 },
-  awningScallopDot: { flex: 1, height: 8, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: Farm.awningGreen, marginHorizontal: 1 },
-  parchment: { flex: 1, backgroundColor: Farm.parchmentDark },
+  awningScallopDot: { flex: 1, height: 8, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: farm.awningGreen, marginHorizontal: 1 },
+  parchment: { flex: 1, backgroundColor: farm.parchmentDark },
   farmCloseBtn: {
     position: 'absolute', top: Spacing.xl, right: Spacing['2xl'],
-    width: 32, height: 32, backgroundColor: Farm.woodDark,
-    borderWidth: 2, borderColor: Farm.woodHighlight,
+    width: 32, height: 32, backgroundColor: farm.woodDark,
+    borderWidth: 2, borderColor: farm.woodHighlight,
     borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', zIndex: 10,
   },
-  farmCloseBtnText: { color: Farm.parchment, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: Farm.woodHighlight, alignSelf: 'center', marginTop: Spacing.xl, marginBottom: Spacing.lg },
+  farmCloseBtnText: { color: farm.parchment, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: farm.woodHighlight, alignSelf: 'center', marginTop: Spacing.xl, marginBottom: Spacing.lg },
   farmHeader: { paddingHorizontal: Spacing['2xl'], marginBottom: Spacing.md, marginRight: 40 },
-  farmTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, color: Farm.brownText, textShadowColor: 'rgba(255,255,255,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
+  farmTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, color: farm.brownText, textShadowColor: 'rgba(255,255,255,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -457,3 +461,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

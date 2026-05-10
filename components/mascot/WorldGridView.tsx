@@ -39,7 +39,7 @@ import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 import { type WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { computePaceLevel, daysBetween } from '../../lib/mascot/wager-ui-helpers';
 import { getLocalDateKey } from '../../lib/mascot/sporee-economy';
@@ -122,6 +122,8 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, plotLe
   onRepairFence?: (plotIndex: number) => void;
 }) {
   const { colors } = useThemeColors();
+  const { isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const growScaleX = useSharedValue(1);
   const growScaleY = useSharedValue(1);
   const prevStage = React.useRef(crop?.currentStage ?? -1);
@@ -318,6 +320,8 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
   pendingCount: number;
   paused: boolean;
 }) {
+  const { isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const reducedMotion = useReducedMotion();
 
   // Poulailler — poule qui picore (bob vertical)
@@ -496,6 +500,8 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
   onPress: () => void;
   onRepairPest?: (cellId: string) => void;
 }) {
+  const { isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const pulse = useSharedValue(1);
   const borderPulse = useSharedValue(0.4);
   const reducedMotion = useReducedMotion();
@@ -652,6 +658,8 @@ function NextExpansionCell({ cell, containerWidth, containerHeight, paused }: {
   containerHeight: number;
   paused: boolean;
 }) {
+  const { isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const pulse = useSharedValue(0.6);
   React.useEffect(() => {
     if (paused) {
@@ -705,6 +713,8 @@ export function WorldGridView({
   paused = false,
   cellPositionOverrides,
 }: WorldGridViewProps) {
+  const { isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const unlockedCrops = useMemo(
     () => getUnlockedCropCells(treeStage).map(cell => applyCellPositionOverride(cell, cellPositionOverrides)),
     [treeStage, cellPositionOverrides],
@@ -1009,7 +1019,7 @@ const statsStyles = StyleSheet.create({
   text: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   cell: {
     flex: 1,
     justifyContent: 'center',
@@ -1052,9 +1062,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -20,
     alignSelf: 'center',
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
@@ -1063,7 +1073,7 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
     zIndex: 15,
   },
-  cropBubbleText: { fontSize: 10, textAlign: 'center' as const, color: Farm.brownText },
+  cropBubbleText: { fontSize: 10, textAlign: 'center' as const, color: farm.brownText },
   buildingCell: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -1276,3 +1286,6 @@ const styles = StyleSheet.create({
     left: 22,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

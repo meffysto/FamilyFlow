@@ -32,7 +32,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
 import type { ExpeditionOutcome } from '../../lib/types';
 import type { ExpeditionLoot } from '../../lib/mascot/expedition-engine';
 
@@ -61,11 +61,11 @@ function outcomeTitle(outcome: ExpeditionOutcome): string {
   return 'Découverte rare !';
 }
 
-function outcomeColor(outcome: ExpeditionOutcome, colors: AppColors): string {
+function outcomeColor(outcome: ExpeditionOutcome, colors: AppColors, farm: FarmPalette): string {
   if (outcome === 'success') return colors.success;
   if (outcome === 'partial') return colors.warning;
   if (outcome === 'failure') return colors.error;
-  return Farm.gold;
+  return farm.gold;
 }
 
 function outcomeEmoji(outcome: ExpeditionOutcome): string {
@@ -107,6 +107,7 @@ function Star({ delay, offsetX }: StarProps) {
 
 export function ExpeditionChest({ visible, outcome, loot, missionName, refundedCoins, refundedCrops, onClose }: Props) {
   const { colors } = useThemeColors();
+  const { farm } = useFarmTheme();
   const [opened, setOpened] = useState(false);
 
   // Reset quand le coffre devient visible
@@ -157,7 +158,7 @@ export function ExpeditionChest({ visible, outcome, loot, missionName, refundedC
     revealOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
   };
 
-  const outColor = outcomeColor(outcome, colors);
+  const outColor = outcomeColor(outcome, colors, farm);
   const isRare = outcome === 'rare_discovery';
 
   if (!visible) return null;
@@ -188,7 +189,7 @@ export function ExpeditionChest({ visible, outcome, loot, missionName, refundedC
                 <MaterialCommunityIcons
                   name="treasure-chest"
                   size={96}
-                  color={opened ? (isRare ? Farm.gold : Farm.woodMed) : Farm.woodDark}
+                  color={opened ? (isRare ? farm.gold : farm.woodMed) : farm.woodDark}
                 />
               </Animated.View>
 
@@ -219,13 +220,13 @@ export function ExpeditionChest({ visible, outcome, loot, missionName, refundedC
                 style={[
                   styles.outcomeBadge,
                   {
-                    backgroundColor: isRare ? Farm.parchmentDark : outColor + '20',
+                    backgroundColor: isRare ? farm.parchmentDark : outColor + '20',
                     borderColor: outColor,
                   },
                 ]}
               >
                 <Text style={styles.outcomeEmoji}>{outcomeEmoji(outcome)}</Text>
-                <Text style={[styles.outcomeTitle, { color: isRare ? Farm.goldText : outColor }]}>
+                <Text style={[styles.outcomeTitle, { color: isRare ? farm.goldText : outColor }]}>
                   {outcomeTitle(outcome)}
                 </Text>
               </View>
