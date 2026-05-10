@@ -13,6 +13,7 @@ import Animated, {
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as Sharing from 'expo-sharing';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
@@ -214,9 +215,10 @@ interface StoryCardProps {
   audioAvailable: boolean;
   onPress: (s: BedtimeStory) => void;
   onLongPress?: (s: BedtimeStory) => void;
+  onSharePress?: (s: BedtimeStory) => void;
 }
 
-const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAvailable, onPress, onLongPress }: StoryCardProps) {
+const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAvailable, onPress, onLongPress, onSharePress }: StoryCardProps) {
   const { primary, colors } = useThemeColors();
   // (pas de chaîne traduisible dans cette carte — date + titre/durée viennent du vault)
 
@@ -236,52 +238,91 @@ const StoryCard = React.memo(function StoryCard({ story, showEnfantName, audioAv
   const multiVoice = story.voice?.multiVoice === true;
   const premiumVoice = story.voice?.engine === 'elevenlabs' || story.voice?.engine === 'fish-audio';
 
+  // Animation scale du badge 🔊 lors du tap (feedback affordance "touchable")
+  const shareScale = useSharedValue(1);
+  const shareAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: shareScale.value }] }));
+  const handleSharePress = useCallback(() => {
+    if (!onSharePress) return;
+    shareScale.value = withSpring(0.88, { damping: 12, stiffness: 320 }, () => {
+      shareScale.value = withSpring(1, { damping: 10, stiffness: 220 });
+    });
+    Haptics.selectionAsync();
+    onSharePress(story);
+  }, [onSharePress, story, shareScale]);
+
   return (
-    <Pressable
-      style={[storyCardStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
-      onPress={() => onPress(story)}
-      onLongPress={onLongPress ? () => onLongPress(story) : undefined}
-      delayLongPress={500}
-    >
-      {/* Badges modèle (emojis) + audio dispo + qualité (Phase 52-03) */}
-      <View style={storyCardStyles.badgeRow}>
-        <QualityBadge story={story} size="sm" />
-        {audioModeIcon && (
-          <Text style={storyCardStyles.modelBadge}>{audioModeIcon}</Text>
-        )}
-        {multiVoice && (
-          <Text style={storyCardStyles.modelBadge}>👥</Text>
-        )}
-        {premiumVoice && (
-          <Text style={storyCardStyles.modelBadge}>✨</Text>
-        )}
-        {audioAvailable && (
-          <View style={[storyCardStyles.audioBadge, { backgroundColor: `${primary}20` }]}>
-            <Text style={[storyCardStyles.audioBadgeText, { color: primary }]}>🔊</Text>
+    <View style={storyCardStyles.cardWrapper}>
+      <Pressable
+        style={[storyCardStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={() => onPress(story)}
+        onLongPress={onLongPress ? () => onLongPress(story) : undefined}
+        delayLongPress={500}
+      >
+        {/* Badges modèle (emojis) + qualité (Phase 52-03) — le badge 🔊 est rendu à l'extérieur */}
+        <View style={storyCardStyles.badgeRow}>
+          <QualityBadge story={story} size="sm" />
+          {audioModeIcon && (
+            <Text style={storyCardStyles.modelBadge}>{audioModeIcon}</Text>
+          )}
+          {multiVoice && (
+            <Text style={storyCardStyles.modelBadge}>👥</Text>
+          )}
+          {premiumVoice && (
+            <Text style={storyCardStyles.modelBadge}>✨</Text>
+          )}
+          {/* Espace réservé pour le badge 🔊 (rendu en sibling absolute au-dessus) */}
+          {audioAvailable && <View style={storyCardStyles.audioBadgeSpacer} />}
+        </View>
+        {/* Titre */}
+        <Text style={[storyCardStyles.title, { color: colors.text }]} numberOfLines={2}>
+          {story.titre}
+        </Text>
+        {/* Méta : date + durée */}
+        <Text style={[storyCardStyles.meta, { color: colors.textMuted }]} numberOfLines={1}>
+          {dateFR} · {story.duree_lecture}
+        </Text>
+        {/* Chip enfant (si multi-enfants) */}
+        {showEnfantName && (
+          <View style={[storyCardStyles.enfantChip, { backgroundColor: colors.border }]}>
+            <Text style={[storyCardStyles.enfantChipText, { color: colors.textMuted }]}>
+              {story.enfant}
+            </Text>
           </View>
         )}
-      </View>
-      {/* Titre */}
-      <Text style={[storyCardStyles.title, { color: colors.text }]} numberOfLines={2}>
-        {story.titre}
-      </Text>
-      {/* Méta : date + durée */}
-      <Text style={[storyCardStyles.meta, { color: colors.textMuted }]} numberOfLines={1}>
-        {dateFR} · {story.duree_lecture}
-      </Text>
-      {/* Chip enfant (si multi-enfants) */}
-      {showEnfantName && (
-        <View style={[storyCardStyles.enfantChip, { backgroundColor: colors.border }]}>
-          <Text style={[storyCardStyles.enfantChipText, { color: colors.textMuted }]}>
-            {story.enfant}
-          </Text>
-        </View>
+      </Pressable>
+      {/* Badge 🔊 SORTI du Pressable carte — sibling pour éviter tout conflit de geste.
+          Tap = partage de l'audio (ShareSheet iOS), avec hitSlop pour atteindre 44pt. */}
+      {audioAvailable && (
+        <Animated.View style={[storyCardStyles.shareBadgePos, shareAnimStyle]}>
+          <Pressable
+            onPress={handleSharePress}
+            hitSlop={10}
+            style={[storyCardStyles.audioBadge, { backgroundColor: `${primary}20` }]}
+            accessibilityRole="button"
+            accessibilityLabel="Partager l'audio de l'histoire"
+          >
+            <Text style={[storyCardStyles.audioBadgeText, { color: primary }]}>🔊</Text>
+          </Pressable>
+        </Animated.View>
       )}
-    </Pressable>
+    </View>
   );
 });
 
 const storyCardStyles = StyleSheet.create({
+  cardWrapper: {
+    position: 'relative',
+  },
+  shareBadgePos: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    zIndex: 2,
+  },
+  audioBadgeSpacer: {
+    width: 28,
+    height: 28,
+  },
   card: {
     padding: Spacing['2xl'],
     borderRadius: Radius.md,
@@ -339,10 +380,11 @@ interface BibliothequeViewProps {
   childProfiles: Profile[];
   onStoryPress: (s: BedtimeStory) => void;
   onStoryLongPress: (s: BedtimeStory) => void;
+  onStoryShare: (s: BedtimeStory) => void;
   onCreatePress: () => void;
 }
 
-function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStoryPress, onStoryLongPress, onCreatePress }: BibliothequeViewProps) {
+function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStoryPress, onStoryLongPress, onStoryShare, onCreatePress }: BibliothequeViewProps) {
   const { primary, colors } = useThemeColors();
   const { i18n } = useTranslation();
   const lang = (i18n.language?.startsWith('en') ? 'en' : 'fr') as 'fr' | 'en';
@@ -547,6 +589,7 @@ function BibliothequeView({ stories, profiles: _profiles, childProfiles, onStory
           onToggle={() => toggleCollapse(universe.id)}
           onStoryPress={handleStoryPress}
           onStoryLongPress={onStoryLongPress}
+          onStoryShare={onStoryShare}
           colors={colors}
           primary={primary}
         />
@@ -709,11 +752,12 @@ interface UniversGroupeProps {
   onToggle: () => void;
   onStoryPress: (s: BedtimeStory) => void;
   onStoryLongPress: (s: BedtimeStory) => void;
+  onStoryShare: (s: BedtimeStory) => void;
   colors: ReturnType<typeof useThemeColors>['colors'];
   primary: string;
 }
 
-function UniversGroupe({ universe, histoires, books, collapsed, showEnfantName, audioAvailableMap, onToggle, onStoryPress, onStoryLongPress, colors, primary }: UniversGroupeProps) {
+function UniversGroupe({ universe, histoires, books, collapsed, showEnfantName, audioAvailableMap, onToggle, onStoryPress, onStoryLongPress, onStoryShare, colors, primary }: UniversGroupeProps) {
   const { t, i18n } = useTranslation();
   const lang = (i18n.language?.startsWith('en') ? 'en' : 'fr') as 'fr' | 'en';
   const universeTitle = t(`stories.universes.${universe.id}.titre`, { defaultValue: universe.titre });
@@ -771,6 +815,7 @@ function UniversGroupe({ universe, histoires, books, collapsed, showEnfantName, 
             audioAvailable={audioAvailableMap[story.id] ?? false}
             onPress={onStoryPress}
             onLongPress={onStoryLongPress}
+            onSharePress={onStoryShare}
           />
         );
       })}
@@ -1035,6 +1080,47 @@ export default function StoriesScreen() {
     Haptics.selectionAsync();
     goTo({ etape: 'replay', histoire: story });
   }, [goTo]);
+
+  const handleShareStory = useCallback(async (story: BedtimeStory) => {
+    try {
+      // Résolution du path local du MP3 (même logique que la map de disponibilité)
+      let path: string | null = null;
+      if (story.voice?.engine === 'fish-audio' && story.voice.fishAudioReferenceId) {
+        path = await getCachedStoryAudioFish(story.id, story.voice.fishAudioReferenceId);
+      } else {
+        const voiceId = story.voice?.elevenLabsVoiceId;
+        if (voiceId) path = await getCachedStoryAudio(story.id, voiceId);
+      }
+      if (!path) {
+        Alert.alert(
+          lang === 'fr' ? 'Audio indisponible' : 'Audio unavailable',
+          lang === 'fr'
+            ? "Cet audio n'est pas en cache. Lancez la lecture une fois pour le générer."
+            : 'This audio is not cached. Play the story once to generate it.',
+        );
+        return;
+      }
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        Alert.alert(
+          lang === 'fr' ? 'Partage indisponible' : 'Sharing unavailable',
+          lang === 'fr' ? "Le partage n'est pas disponible sur cet appareil." : 'Sharing is not available on this device.',
+        );
+        return;
+      }
+      await Sharing.shareAsync(path, {
+        mimeType: 'audio/mpeg',
+        UTI: 'public.mp3',
+        dialogTitle: story.titre,
+      });
+    } catch (e) {
+      if (__DEV__) console.warn('handleShareStory failed:', e);
+      Alert.alert(
+        lang === 'fr' ? 'Erreur' : 'Error',
+        lang === 'fr' ? "Impossible de partager l'audio." : 'Could not share the audio.',
+      );
+    }
+  }, [lang]);
 
   const handleDeleteStory = useCallback((story: BedtimeStory) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -2383,6 +2469,7 @@ export default function StoriesScreen() {
           childProfiles={childProfiles}
           onStoryPress={handleReplayStory}
           onStoryLongPress={handleDeleteStory}
+          onStoryShare={handleShareStory}
           onCreatePress={() => { Haptics.selectionAsync(); setActiveTab('nouvelle'); }}
         />
       );
