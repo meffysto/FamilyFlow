@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Village — Mode sombre "Soir au village"</title>
+<style>
+  :root {
+    /* CLAIR — actuel */
+    --l-parchment: #FFF8EC;
+    --l-parchmentDark: #F5E6C8;
+    --l-woodDark: #6B4226;
+    --l-woodMed: #8B6914;
+    --l-woodLight: #A0784C;
+    --l-woodHighlight: #C4A265;
+    --l-awningGreen: #6B9E4C;
+    --l-awningCream: #F5E6C8;
+    --l-brownText: #5C3D1A;
+    --l-brownTextSub: #7B5B35;
+    --l-greenBtn: #6AAE4E;
+    --l-greenBtnShadow: #4E8A3A;
+    --l-gold: #FFD700;
+    --l-goldText: #7B5300;
+    --l-progressGold: #E8C858;
+    --l-progressBg: #E8DCC8;
+
+    /* SOMBRE — "soir au village" */
+    --d-parchment: #1F2A3A;
+    --d-parchmentDark: #2A3850;
+    --d-woodDark: #0F0A06;
+    --d-woodMed: #3A2A18;
+    --d-woodLight: #5C3F22;
+    --d-woodHighlight: #7A5430;
+    --d-awningGreen: #3A6B2E;
+    --d-awningCream: #2A3850;
+    --d-brownText: #E8D4B0;
+    --d-brownTextSub: #A89070;
+    --d-greenBtn: #5A9A3E;
+    --d-greenBtnShadow: #3A6B2A;
+    --d-gold: #FFD700;
+    --d-goldText: #FFE070;
+    --d-progressGold: #F0D060;
+    --d-progressBg: #1A2030;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: -apple-system, "Helvetica Neue", sans-serif;
+    background: #2C2C2E;
+    color: #fff;
+  }
+  h1 { text-align: center; font-size: 20px; margin: 0 0 24px; }
+  .subtitle { text-align: center; color: #999; font-size: 13px; margin-bottom: 32px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .col-label {
+    text-align: center;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #999;
+    margin-bottom: 12px;
+  }
+
+  /* Modal frame */
+  .modal {
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  .modal.light {
+    background: var(--l-parchment);
+    border: 3px solid var(--l-woodDark);
+  }
+  .modal.dark {
+    background: var(--d-parchment);
+    border: 3px solid var(--d-woodDark);
+  }
+
+  /* Awning stripes (échoppe header) */
+  .awning {
+    height: 24px;
+    display: flex;
+  }
+  .awning > div { flex: 1; }
+  .light .awning > div:nth-child(odd) { background: var(--l-awningGreen); }
+  .light .awning > div:nth-child(even) { background: var(--l-awningCream); }
+  .dark .awning > div:nth-child(odd) { background: var(--d-awningGreen); }
+  .dark .awning > div:nth-child(even) { background: var(--d-awningCream); }
+
+  /* Header (wood band) */
+  .header {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
+  }
+  .light .header {
+    background: var(--l-woodLight);
+    border-bottom-color: var(--l-woodDark);
+  }
+  .dark .header {
+    background: var(--d-woodLight);
+    border-bottom-color: var(--d-woodDark);
+  }
+  .header-title { font-weight: 700; font-size: 18px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+  .header-emoji { font-size: 22px; }
+
+  /* Body */
+  .body { padding: 18px 16px; }
+
+  /* Card secondaire */
+  .card {
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-width: 1px;
+    border-style: solid;
+  }
+  .light .card {
+    background: var(--l-parchmentDark);
+    border-color: var(--l-woodHighlight);
+  }
+  .dark .card {
+    background: var(--d-parchmentDark);
+    border-color: var(--d-woodMed);
+  }
+  .card-row { display: flex; justify-content: space-between; align-items: center; }
+  .card-title { font-weight: 600; font-size: 14px; }
+  .light .card-title { color: var(--l-brownText); }
+  .dark .card-title { color: var(--d-brownText); }
+  .card-sub { font-size: 12px; margin-top: 2px; }
+  .light .card-sub { color: var(--l-brownTextSub); }
+  .dark .card-sub { color: var(--d-brownTextSub); }
+
+  /* Price/gold pill */
+  .gold-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .light .gold-pill { background: var(--l-gold); color: var(--l-goldText); }
+  .dark .gold-pill {
+    background: var(--d-gold);
+    color: var(--d-woodDark);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    margin-right: 8px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .light .btn-green {
+    background: var(--l-greenBtn);
+    box-shadow: 0 3px 0 var(--l-greenBtnShadow);
+  }
+  .dark .btn-green {
+    background: var(--d-greenBtn);
+    box-shadow: 0 3px 0 var(--d-greenBtnShadow);
+  }
+  .light .btn-wood {
+    background: var(--l-woodLight);
+    box-shadow: 0 3px 0 var(--l-woodDark);
+  }
+  .dark .btn-wood {
+    background: var(--d-woodLight);
+    box-shadow: 0 3px 0 var(--d-woodDark);
+  }
+
+  /* Progress bar */
+  .progress {
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .light .progress { background: var(--l-progressBg); }
+  .dark .progress { background: var(--d-progressBg); }
+  .progress-fill {
+    height: 100%;
+    width: 65%;
+    border-radius: 999px;
+  }
+  .light .progress-fill { background: var(--l-progressGold); }
+  .dark .progress-fill {
+    background: var(--d-progressGold);
+    box-shadow: 0 0 8px rgba(240, 208, 96, 0.5);
+  }
+
+  /* Trend (market) */
+  .trend-up { color: #22C55E; font-weight: 700; }
+  .trend-down { color: #EF4444; font-weight: 700; }
+  .dark .trend-up { color: #4ADE80; }
+  .dark .trend-down { color: #F87171; }
+
+  /* Slot atelier */
+  .slot {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    border: 2px dashed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+  .light .slot { border-color: var(--l-woodHighlight); background: var(--l-parchmentDark); }
+  .dark .slot { border-color: var(--d-woodMed); background: var(--d-parchmentDark); }
+  .slots-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+
+  /* Tech node (savoirs) */
+  .tech-node {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border-width: 1px;
+    border-style: solid;
+  }
+  .light .tech-node { background: var(--l-parchmentDark); border-color: var(--l-woodHighlight); }
+  .dark .tech-node { background: var(--d-parchmentDark); border-color: var(--d-woodMed); }
+  .tech-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .light .tech-icon { background: var(--l-gold); color: var(--l-goldText); }
+  .dark .tech-icon {
+    background: var(--d-gold); color: var(--d-woodDark);
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.5);
+  }
+  .tech-title { font-weight: 600; font-size: 14px; }
+  .light .tech-title { color: var(--l-brownText); }
+  .dark .tech-title { color: var(--d-brownText); }
+  .tech-desc { font-size: 11px; margin-top: 1px; }
+  .light .tech-desc { color: var(--l-brownTextSub); }
+  .dark .tech-desc { color: var(--d-brownTextSub); }
+
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 14px 0 8px;
+    font-weight: 700;
+  }
+  .light .section-title { color: var(--l-brownTextSub); }
+  .dark .section-title { color: var(--d-brownTextSub); }
+</style>
+</head>
+<body>
+
+<h1>🏘️ Village — Soir au village</h1>
+<p class="subtitle">Mockup palette mode sombre · 3 modals : Échoppe · Atelier · Savoirs</p>
+
+<div class="grid">
+
+  <!-- ============ COLONNE CLAIRE ============ -->
+  <div>
+    <div class="col-label">Mode clair (actuel)</div>
+
+    <!-- ÉCHOPPE -->
+    <div class="modal light">
+      <div class="awning">
+        <div></div><div></div><div></div><div></div><div></div>
+        <div></div><div></div><div></div><div></div>
+      </div>
+      <div class="header">
+        <span class="header-emoji">🏪</span>
+        <span class="header-title">Échoppe du village</span>
+      </div>
+      <div class="body">
+        <div class="card">
+          <div class="card-row">
+            <div>
+              <div class="card-title">🌾 Blé</div>
+              <div class="card-sub">Stock élevé · <span class="trend-down">▼ -8%</span></div>
+            </div>
+            <span class="gold-pill">⚡ 12</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-row">
+            <div>
+              <div class="card-title">🥕 Carotte</div>
+              <div class="card-sub">Stock bas · <span class="trend-up">▲ +15%</span></div>
+            </div>
+            <span class="gold-pill">⚡ 38</span>
+          </div>
+        </div>
+        <button class="btn btn-green">Acheter 5</button>
+        <button class="btn btn-wood">Vendre</button>
+      </div>
+    </div>
+
+    <!-- ATELIER -->
+    <div class="modal light">
+      <div class="header">
+        <span class="header-emoji">🔨</span>
+        <span class="header-title">Atelier — Forge</span>
+      </div>
+      <div class="body">
+        <div class="section-title">Recette : Pioche en fer</div>
+        <div class="slots-row">
+          <div class="slot">⛏️</div>
+          <div class="slot">🪵</div>
+          <div class="slot">+</div>
+        </div>
+        <div class="card">
+          <div class="card-row">
+            <div>
+              <div class="card-title">Progression</div>
+              <div class="card-sub">2h 34min restantes</div>
+            </div>
+            <span class="gold-pill">⚡ 50</span>
+          </div>
+          <div class="progress"><div class="progress-fill"></div></div>
+        </div>
+        <button class="btn btn-green">Lancer la fabrication</button>
+      </div>
+    </div>
+
+    <!-- SAVOIRS -->
+    <div class="modal light">
+      <div class="header">
+        <span class="header-emoji">📜</span>
+        <span class="header-title">Savoirs du village</span>
+      </div>
+      <div class="body">
+        <div class="tech-node">
+          <div class="tech-icon">⭐</div>
+          <div>
+            <div class="tech-title">Agriculture II</div>
+            <div class="tech-desc">+15% rendement champs · Débloqué</div>
+          </div>
+        </div>
+        <div class="tech-node">
+          <div class="tech-icon">🔒</div>
+          <div>
+            <div class="tech-title">Élevage avancé</div>
+            <div class="tech-desc">Requiert : 200 ⚡ + Agriculture III</div>
+          </div>
+        </div>
+        <button class="btn btn-green">Étudier (200 ⚡)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ COLONNE SOMBRE ============ -->
+  <div>
+    <div class="col-label">Mode sombre — "Soir au village"</div>
+
+    <!-- ÉCHOPPE -->
+    <div class="modal dark">
+      <div class="awning">
+        <div></div><div></div><div></div><div></div><div></div>
+        <div></div><div></div><div></div><div></div>
+      </div>
+      <div class="header">
+        <span class="header-emoji">🏪</span>
+        <span class="header-title">Échoppe du village</span>
+      </div>
+      <div class="body">
+        <div class="card">
+          <div class="card-row">
+            <div>
+              <div class="card-title">🌾 Blé</div>
+              <div class="card-sub">Stock élevé · <span class="trend-down">▼ -8%</span></div>
+            </div>
+            <span class="gold-pill">⚡ 12</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-row">
+            <div>
+              <div class="card-title">🥕 Carotte</div>
+              <div class="card-sub">Stock bas · <span class="trend-up">▲ +15%</span></div>
+            </div>
+            <span class="gold-pill">⚡ 38</span>
+          </div>
+        </div>
+        <button class="btn btn-green">Acheter 5</button>
+        <button class="btn btn-wood">Vendre</button>
+      </div>
+    </div>
+
+    <!-- ATELIER -->
+    <div class="modal dark">
+      <div class="header">
+        <span class="header-emoji">🔨</span>
+        <span class="header-title">Atelier — Forge</span>
+      </div>
+      <div class="body">
+        <div class="section-title">Recette : Pioche en fer</div>
+        <div class="slots-row">
+          <div class="slot">⛏️</div>
+          <div class="slot">🪵</div>
+          <div class="slot">+</div>
+        </div>
+        <div class="card">
+          <div class="card-row">
+            <div>
+              <div class="card-title">Progression</div>
+              <div class="card-sub">2h 34min restantes</div>
+            </div>
+            <span class="gold-pill">⚡ 50</span>
+          </div>
+          <div class="progress"><div class="progress-fill"></div></div>
+        </div>
+        <button class="btn btn-green">Lancer la fabrication</button>
+      </div>
+    </div>
+
+    <!-- SAVOIRS -->
+    <div class="modal dark">
+      <div class="header">
+        <span class="header-emoji">📜</span>
+        <span class="header-title">Savoirs du village</span>
+      </div>
+      <div class="body">
+        <div class="tech-node">
+          <div class="tech-icon">⭐</div>
+          <div>
+            <div class="tech-title">Agriculture II</div>
+            <div class="tech-desc">+15% rendement champs · Débloqué</div>
+          </div>
+        </div>
+        <div class="tech-node">
+          <div class="tech-icon">🔒</div>
+          <div>
+            <div class="tech-title">Élevage avancé</div>
+            <div class="tech-desc">Requiert : 200 ⚡ + Agriculture III</div>
+          </div>
+        </div>
+        <button class="btn btn-green">Étudier (200 ⚡)</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p style="text-align:center; margin-top: 32px; color:#666; font-size:12px;">
+  Note : les dorés (lanternes, or, tech débloquée) reçoivent un <code>box-shadow</code> doré en mode sombre pour évoquer la lueur des lanternes.
+</p>
+
+</body>
+</html>
