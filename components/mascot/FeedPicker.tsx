@@ -25,7 +25,9 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -73,12 +75,12 @@ function formatBuffDuration(seconds: number): string {
 
 type FilterKey = 'all' | CropAffinity;
 
-const FILTER_META: Record<FilterKey, { emoji: string; label: string; color: string }> = {
-  all:       { emoji: '🌾', label: 'Tous',     color: Farm.brownText },
-  preferred: { emoji: '❤️', label: 'Préférés', color: Farm.greenBtn },
-  neutral:   { emoji: '😊', label: 'Neutres',  color: Farm.brownTextSub },
+const filterMeta = (farm: FarmPalette): Record<FilterKey, { emoji: string; label: string; color: string }> => ({
+  all:       { emoji: '🌾', label: 'Tous',     color: farm.brownText },
+  preferred: { emoji: '❤️', label: 'Préférés', color: farm.greenBtn },
+  neutral:   { emoji: '😊', label: 'Neutres',  color: farm.brownTextSub },
   hated:     { emoji: '😖', label: 'Détestés', color: '#C04A3A' },
-};
+});
 
 // ─────────────────────────────────────────────
 // Types publics
@@ -109,28 +111,28 @@ interface BestChoice extends CropCard {
 
 // ── Auvent rayé ───────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -152,6 +154,9 @@ export function FeedPicker({
   onDismiss,
 }: FeedPickerProps) {
   const { t } = useTranslation();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
+  const FILTER_META = useMemo(() => filterMeta(farm), [farm]);
   const [filter, setFilter] = useState<FilterKey>('all');
   const [selectedCropId, setSelectedCropId] = useState<string | null>(null);
 
@@ -288,7 +293,7 @@ export function FeedPicker({
 
         <View style={styles.woodFrame}>
           <View style={styles.woodFrameInner}>
-            <AwningStripes />
+            <AwningStripes farm={farm} styles={styles} />
 
             <View style={styles.parchment}>
               <View style={styles.handle} />
@@ -410,10 +415,10 @@ export function FeedPicker({
                         const isHated = card.affinity === 'hated';
                         const isPreferred = card.affinity === 'preferred';
                         const borderColor = isPreferred
-                          ? Farm.greenBtn
+                          ? farm.greenBtn
                           : isHated
                             ? '#C04A3A'
-                            : Farm.woodHighlight;
+                            : farm.woodHighlight;
                         const tileXp = card.bestGrade
                           ? computeFeedXp(GRADE_FR_TO_EN[card.bestGrade], card.affinity)
                           : 0;
@@ -525,7 +530,7 @@ export function FeedPicker({
                           onPress={() => handlePickDirect(selectedCard.cropId, gradeFr)}
                           style={({ pressed }) => [
                             styles.gradeOption,
-                            pressed && { opacity: 0.8, backgroundColor: Farm.parchment },
+                            pressed && { opacity: 0.8, backgroundColor: farm.parchment },
                           ]}
                         >
                           <View style={styles.gradeOptionIconWrap}>
@@ -580,7 +585,7 @@ export function FeedPicker({
 // Styles
 // ─────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -595,16 +600,16 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing['4xl'],
     borderRadius: Radius['2xl'],
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     ...Shadows.xl,
     maxHeight: '88%',
   },
   woodFrameInner: {
     borderRadius: Radius.xl,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
     flexShrink: 1,
   },
@@ -630,7 +635,7 @@ const styles = StyleSheet.create({
 
   // ── Parchemin ──
   parchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },
@@ -641,7 +646,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
   farmTitle: {
     alignItems: 'center',
@@ -650,7 +655,7 @@ const styles = StyleSheet.create({
   farmTitleText: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
@@ -679,7 +684,7 @@ const styles = StyleSheet.create({
   bestHeaderLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -693,8 +698,8 @@ const styles = StyleSheet.create({
   bestTile: {
     borderRadius: Radius.xl,
     borderWidth: 2,
-    borderColor: Farm.greenBtn,
-    backgroundColor: Farm.parchment,
+    borderColor: farm.greenBtn,
+    backgroundColor: farm.parchment,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.sm,
     alignItems: 'center',
@@ -721,7 +726,7 @@ const styles = StyleSheet.create({
   bestTileName: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textAlign: 'center',
   },
   bestTileMeta: {
@@ -733,7 +738,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
   },
   bestTileBuff: {
-    backgroundColor: Farm.greenBtn,
+    backgroundColor: farm.greenBtn,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: Radius.full,
@@ -745,7 +750,7 @@ const styles = StyleSheet.create({
   },
   bestTileDuration: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontWeight: FontWeight.semibold,
     marginTop: 2,
   },
@@ -765,9 +770,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.xs,
     borderRadius: Radius.full,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   filterEmoji: {
     fontSize: FontSize.body,
@@ -775,7 +780,7 @@ const styles = StyleSheet.create({
   filterCount: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   // ── Grille ──
@@ -790,14 +795,14 @@ const styles = StyleSheet.create({
   tile: {
     borderRadius: Radius.xl,
     borderWidth: 2,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     padding: Spacing.md,
     alignItems: 'center',
     gap: 4,
     minHeight: 110,
   },
   tilePreferred: {
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
   },
   tileAffinity: {
     position: 'absolute',
@@ -820,7 +825,7 @@ const styles = StyleSheet.create({
   tileName: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textAlign: 'center',
   },
   tileFooter: {
@@ -832,13 +837,13 @@ const styles = StyleSheet.create({
   tileQty: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   tileGrade: {
     fontSize: FontSize.body,
   },
   tileXpBadge: {
-    backgroundColor: Farm.greenBtn,
+    backgroundColor: farm.greenBtn,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: Radius.full,
@@ -856,7 +861,7 @@ const styles = StyleSheet.create({
   },
   emptyFilterText: {
     fontSize: FontSize.body,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontStyle: 'italic',
   },
 
@@ -873,10 +878,10 @@ const styles = StyleSheet.create({
     maxWidth: 360,
   },
   gradeCardInner: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderRadius: Radius['2xl'],
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     padding: Spacing.lg,
     gap: Spacing.sm,
     ...Shadows.xl,
@@ -887,7 +892,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
   },
   gradeCardEmoji: {
     fontSize: 32,
@@ -900,25 +905,25 @@ const styles = StyleSheet.create({
   gradeCardName: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   gradeCardSub: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginTop: 2,
   },
   gradeCardClose: {
     width: 28,
     height: 28,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
   gradeCardCloseText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
   },
   gradeOption: {
     flexDirection: 'row',
@@ -928,8 +933,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
   },
   gradeOptionEmoji: {
     fontSize: 22,
@@ -949,9 +954,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -4,
     right: -6,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.full,
     width: 22,
     height: 22,
@@ -964,11 +969,11 @@ const styles = StyleSheet.create({
   gradeOptionLabel: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   gradeOptionQty: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginTop: 1,
   },
   gradeOptionBuff: {
@@ -980,8 +985,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   gradeOptionBuffPositive: {
-    backgroundColor: Farm.greenBtn,
-    borderColor: Farm.greenBtnShadow,
+    backgroundColor: farm.greenBtn,
+    borderColor: farm.greenBtnShadow,
   },
   gradeOptionBuffNone: {
     backgroundColor: 'rgba(192,74,58,0.12)',
@@ -990,7 +995,7 @@ const styles = StyleSheet.create({
   gradeOptionBuffText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   // ── Empty ──
@@ -1007,7 +1012,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     textAlign: 'center',
     lineHeight: 22,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Footer hint ──
@@ -1018,7 +1023,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     paddingHorizontal: Spacing.md,
     lineHeight: 18,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Close button ──
@@ -1029,9 +1034,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
@@ -1039,6 +1044,9 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

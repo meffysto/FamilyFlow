@@ -29,7 +29,9 @@ import { useTone } from '../../lib/mascot/tone';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { TreeView } from './TreeView';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 import {
   DECORATIONS,
@@ -112,9 +114,11 @@ interface BuyButtonProps {
   disabled: boolean;
   onPress: () => void;
   label: string;
+  farm: FarmPalette;
+  styles: Styles;
 }
 
-function BuyButton({ canAfford, disabled, onPress, label }: BuyButtonProps) {
+function BuyButton({ canAfford, disabled, onPress, label, farm, styles }: BuyButtonProps) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -130,8 +134,8 @@ function BuyButton({ canAfford, disabled, onPress, label }: BuyButtonProps) {
           style={[
             styles.buyBtnInner,
             canAfford
-              ? { backgroundColor: Farm.greenBtn }
-              : { backgroundColor: Farm.parchmentDark },
+              ? { backgroundColor: farm.greenBtn }
+              : { backgroundColor: farm.parchmentDark },
           ]}
         >
           {canAfford && (
@@ -140,7 +144,7 @@ function BuyButton({ canAfford, disabled, onPress, label }: BuyButtonProps) {
           <Text
             style={[
               styles.buyBtnText,
-              { color: canAfford ? Farm.parchment : Farm.brownTextSub },
+              { color: canAfford ? farm.parchment : farm.brownTextSub },
             ]}
           >
             {label}
@@ -149,7 +153,7 @@ function BuyButton({ canAfford, disabled, onPress, label }: BuyButtonProps) {
         <View
           style={[
             styles.buyBtnShadow,
-            { backgroundColor: canAfford ? Farm.greenBtnShadow : '#D0CBC3' },
+            { backgroundColor: canAfford ? farm.greenBtnShadow : '#D0CBC3' },
           ]}
         />
       </Animated.View>
@@ -159,8 +163,8 @@ function BuyButton({ canAfford, disabled, onPress, label }: BuyButtonProps) {
 
 // ── Awning Stripes ─────────────────────────────
 
-function AwningStripes() {
-  const stripes = Array.from({ length: Farm.awningStripeCount });
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
+  const stripes = Array.from({ length: farm.awningStripeCount });
   return (
     <View style={styles.awning}>
       {stripes.map((_, i) => (
@@ -168,7 +172,7 @@ function AwningStripes() {
           key={i}
           style={[
             styles.awningStripe,
-            { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+            { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
           ]}
         />
       ))}
@@ -195,7 +199,7 @@ interface SporeeBuyCardProps {
   onBuy: () => Promise<void>;
 }
 
-function SporeeBuyCard({ level, stageIdx, coins, sporeeCount, sporeeShopBoughtToday, sporeeShopLastResetDate, buying, onBuy }: SporeeBuyCardProps) {
+function SporeeBuyCard({ level, stageIdx, coins, sporeeCount, sporeeShopBoughtToday, sporeeShopLastResetDate, buying, onBuy, styles }: SporeeBuyCardProps & { styles: Styles }) {
   const { colors } = useThemeColors();
   const treeStage = getTreeStage(level);
   const today = getLocalDateKey();
@@ -267,6 +271,8 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
   const { t } = useTranslation();
   const tone = useTone();
   const { primary, tint, colors, isDark } = useThemeColors();
+  const { farm } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const [tab, setTab] = useState<ShopTab>('decorations');
   const [buying, setBuying] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<(MascotDecoration | MascotInhabitant) | null>(null);
@@ -437,7 +443,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
               </TouchableOpacity>
 
               {/* Awning */}
-              <AwningStripes />
+              <AwningStripes farm={farm} styles={styles} />
 
               {/* Parchment body */}
               <View style={styles.detailParchment}>
@@ -525,6 +531,8 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                             ? t('mascot.shop.buyConfirm', { cost: selectedItem.cost, context: tone })
                             : t('mascot.shop.notEnoughLeaves', { context: tone })
                         }
+                        farm={farm}
+                        styles={styles}
                       />
                     )}
                   </View>
@@ -540,7 +548,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
   return (
     <View style={styles.container}>
         {/* Awning */}
-        <AwningStripes />
+        <AwningStripes farm={farm} styles={styles} />
 
         {/* Parchment content */}
         <View style={styles.parchment}>
@@ -680,6 +688,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                 sporeeShopBoughtToday={sporeeShopBoughtToday}
                 sporeeShopLastResetDate={sporeeShopLastResetDate}
                 buying={buying === 'sporee'}
+                styles={styles}
                 onBuy={async () => {
                   if (!onBuySporee) return;
                   setBuying('sporee');
@@ -708,14 +717,14 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
 
 // ── Styles ─────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   // ── Wood frame shell ──
   woodFrame: {
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     borderRadius: Radius['2xl'],
     ...Shadows.xl,
@@ -725,9 +734,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing['4xl'],
   },
   woodFrameInner: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
     borderRadius: Radius.xl,
     flex: 1,
@@ -741,15 +750,15 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
   },
   closeBtnText: {
-    color: Farm.parchment,
+    color: farm.parchment,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
@@ -779,21 +788,21 @@ const styles = StyleSheet.create({
   scallop: {
     flex: 1,
     height: 8,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
 
   // ── Parchment body ──
   parchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     flex: 1,
     paddingBottom: Spacing['3xl'],
   },
   handle: {
     width: 36,
     height: 4,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
     borderRadius: Radius.full,
     alignSelf: 'center',
     marginTop: Spacing.sm,
@@ -810,15 +819,15 @@ const styles = StyleSheet.create({
   shopTitle: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
   },
   coinsBadge: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xs,
@@ -826,15 +835,15 @@ const styles = StyleSheet.create({
   coinsText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   // ── Tabs ──
   tabs: {
     flexDirection: 'row',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     borderRadius: Radius.lg,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
@@ -848,15 +857,15 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   tabActive: {
-    backgroundColor: Farm.woodBtn,
+    backgroundColor: farm.woodBtn,
   },
   tabText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   tabTextActive: {
-    color: Farm.parchment,
+    color: farm.parchment,
   },
 
   // ── Item list ──
@@ -872,8 +881,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.xl,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     marginBottom: Spacing.sm,
   },
   itemCardLocked: {
@@ -900,7 +909,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
     marginBottom: 2,
   },
   itemNameLocked: {
@@ -908,7 +917,7 @@ const styles = StyleSheet.create({
   },
   itemDesc: {
     fontSize: FontSize.caption,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginBottom: Spacing.xs,
   },
   itemMeta: {
@@ -928,34 +937,34 @@ const styles = StyleSheet.create({
   itemCost: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   buildingIncome: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Farm.greenBtn,
+    color: farm.greenBtn,
   },
   ownedBadge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
-    backgroundColor: Farm.gold,
+    backgroundColor: farm.gold,
   },
   ownedText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.goldText,
+    color: farm.goldText,
   },
   lockedBadge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
   },
   lockedText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontStyle: 'italic',
   },
   expeditionBadge: {
@@ -973,9 +982,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   costBadgeDim: {
     opacity: 0.6,
@@ -983,16 +992,16 @@ const styles = StyleSheet.create({
   costText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   costTextDim: {
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   chevron: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.normal,
     marginLeft: Spacing.sm,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Buy button 3D ──
@@ -1012,7 +1021,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '50%',
-    backgroundColor: Farm.greenBtnHighlight,
+    backgroundColor: farm.greenBtnHighlight,
     opacity: 0.35,
     borderTopLeftRadius: Radius.full,
     borderTopRightRadius: Radius.full,
@@ -1040,7 +1049,7 @@ const styles = StyleSheet.create({
     padding: Spacing['2xl'],
   },
   detailWoodFrame: {
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     borderRadius: Radius['2xl'],
     ...Shadows.xl,
@@ -1049,9 +1058,9 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   detailWoodInner: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
     borderRadius: Radius.xl,
     flexShrink: 1,
@@ -1063,20 +1072,20 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
   },
   detailCloseBtnText: {
-    color: Farm.parchment,
+    color: farm.parchment,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
   detailParchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     flexShrink: 1,
     paddingBottom: Spacing['3xl'],
   },
@@ -1098,7 +1107,7 @@ const styles = StyleSheet.create({
   detailName: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     marginBottom: Spacing.sm,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
@@ -1108,7 +1117,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     lineHeight: 22,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginBottom: Spacing.xl,
     paddingHorizontal: Spacing.lg,
   },
@@ -1118,7 +1127,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     paddingVertical: Spacing.lg,
     marginBottom: Spacing.xl,
     marginHorizontal: Spacing.lg,
@@ -1130,12 +1139,12 @@ const styles = StyleSheet.create({
   detailInfoDivider: {
     width: 1,
     height: 24,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
   detailInfoLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   detailPreview: {
     alignItems: 'center',
@@ -1144,9 +1153,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing['2xl'],
     marginBottom: Spacing.xl,
     marginHorizontal: Spacing.lg,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   detailPreviewImage: {
     width: 96,
@@ -1164,25 +1173,25 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
     borderRadius: Radius.full,
     alignItems: 'center',
-    backgroundColor: Farm.gold,
+    backgroundColor: farm.gold,
   },
   detailOwnedText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.goldText,
+    color: farm.goldText,
   },
   detailLockedBadge: {
     paddingVertical: Spacing.lg,
     borderRadius: Radius.full,
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   detailLockedText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     fontStyle: 'italic',
   },
   detailExpeditionBadge: {
@@ -1199,3 +1208,6 @@ const styles = StyleSheet.create({
     color: '#2563EB',
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);
