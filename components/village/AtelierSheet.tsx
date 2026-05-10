@@ -718,7 +718,7 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
     fontWeight: FontWeight.bold,
     color: farm.brownText,
     flex: 1,
-    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowColor: farm.textEmboss,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
   },

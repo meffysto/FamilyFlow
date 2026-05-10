@@ -41,6 +41,9 @@ export interface FarmPalette {
   orangeShadow: string;
   progressGold: string;
   progressBg: string;
+  /** Couleur du textShadow d'emboss (blanc60 en clair pour creuser le texte
+   * sur parchemin ; transparent en sombre pour éviter le halo blanc) */
+  textEmboss: string;
 }
 
 const FarmLight: FarmPalette = {
@@ -76,6 +79,8 @@ const FarmLight: FarmPalette = {
   // Barre progression
   progressGold: '#E8C858',
   progressBg: '#E8DCC8',
+  // Emboss texte — blanc60 creuse le texte sur parchemin clair
+  textEmboss: 'rgba(255,255,255,0.6)',
 };
 
 const FarmDark: FarmPalette = {
@@ -113,6 +118,8 @@ const FarmDark: FarmPalette = {
   // Barre progression
   progressGold: '#F0D060',
   progressBg: '#1A2030',
+  // Emboss texte — transparent en sombre (pas de halo blanc sur fond bleu nuit)
+  textEmboss: 'transparent',
 };
 
 /** Palette claire — accès direct rétrocompat (legacy `Farm.x`). */

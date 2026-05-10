@@ -456,7 +456,7 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
     color: farm.brownText,
-    textShadowColor: 'rgba(255,255,255,0.6)',
+    textShadowColor: farm.textEmboss,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
   },

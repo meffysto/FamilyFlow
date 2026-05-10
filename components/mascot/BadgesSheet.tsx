@@ -242,7 +242,7 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   farmCloseBtnText: { color: farm.parchment, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: farm.woodHighlight, alignSelf: 'center', marginTop: Spacing.xl, marginBottom: Spacing.lg },
   farmHeader: { paddingHorizontal: Spacing['2xl'], marginBottom: Spacing.md, marginRight: 40, gap: Spacing.xxs },
-  farmTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, color: farm.brownText, textShadowColor: 'rgba(255,255,255,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
+  farmTitle: { fontSize: FontSize.title, fontWeight: FontWeight.bold, color: farm.brownText, textShadowColor: farm.textEmboss, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
   farmHeaderSub: { fontSize: FontSize.label, color: farm.brownTextSub },
   list: {
     paddingHorizontal: Spacing.lg,
