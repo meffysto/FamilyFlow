@@ -48,7 +48,9 @@ import type { MarketStock, MarketTransaction } from '../../lib/village/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -95,28 +97,28 @@ const SPRING_CONFIG = { damping: 12, stiffness: 180 };
 
 // ── Sous-composant : auvent rayé ────────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -132,20 +134,24 @@ function FarmButton({
   enabled,
   variant,
   onPress,
+  farm,
+  styles,
 }: {
   label: string;
   enabled: boolean;
   variant: 'buy' | 'sell';
   onPress?: () => void;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   const pressedY = useSharedValue(0);
 
-  const btnBg = variant === 'buy' ? Farm.woodBtn : Farm.greenBtn;
-  const btnShadow = variant === 'buy' ? Farm.woodBtnShadow : Farm.greenBtnShadow;
-  const btnHighlight = variant === 'buy' ? Farm.woodBtnHighlight : Farm.greenBtnHighlight;
-  const bg = enabled ? btnBg : Farm.parchmentDark;
+  const btnBg = variant === 'buy' ? farm.woodBtn : farm.greenBtn;
+  const btnShadow = variant === 'buy' ? farm.woodBtnShadow : farm.greenBtnShadow;
+  const btnHighlight = variant === 'buy' ? farm.woodBtnHighlight : farm.greenBtnHighlight;
+  const bg = enabled ? btnBg : farm.parchmentDark;
   const shadow = enabled ? btnShadow : '#D0CBC3';
-  const highlight = enabled ? btnHighlight : Farm.parchment;
+  const highlight = enabled ? btnHighlight : farm.parchment;
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: pressedY.value }],
@@ -171,7 +177,7 @@ function FarmButton({
         <View style={[styles.farmBtnGloss, { backgroundColor: highlight }]} />
         <Text style={[
           styles.farmBtnText,
-          { color: enabled ? '#FFFFFF' : Farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' },
+          { color: enabled ? '#FFFFFF' : farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' },
         ]}>
           {label}
         </Text>
@@ -194,10 +200,14 @@ const GradeSellSubRow = React.memo(function GradeSellSubRow({
   line,
   itemId,
   onAction,
+  farm,
+  styles,
 }: {
   line: GradeSellLine;
   itemId: string;
   onAction: (itemId: string, qty: number, grade?: HarvestGrade) => void;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   const { t } = useTranslation();
   const [qty, setQty] = useState(1);
@@ -241,6 +251,8 @@ const GradeSellSubRow = React.memo(function GradeSellSubRow({
           enabled={canAct}
           variant="sell"
           onPress={handlePress}
+          farm={farm}
+          styles={styles}
         />
       </View>
     </View>
@@ -253,6 +265,8 @@ const MarketItemRow = React.memo(function MarketItemRow({
   sellableQty,
   onAction,
   sellBreakdown,
+  farm,
+  styles,
 }: {
   summary: MarketItemSummary;
   mode: MarketTab;
@@ -260,6 +274,8 @@ const MarketItemRow = React.memo(function MarketItemRow({
   onAction: (itemId: string, qty: number, grade?: HarvestGrade) => void;
   /** Phase B — breakdown par grade pour le mode vente (harvest/crafted uniquement) */
   sellBreakdown?: GradeSellLine[];
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   const { colors } = useThemeColors();
   const [qty, setQty] = useState(1);
@@ -269,8 +285,8 @@ const MarketItemRow = React.memo(function MarketItemRow({
   // Phase B — mode vente multi-grade : on affiche l'en-tête de l'item + une sous-ligne par grade possédé
   const showGradeBreakdown =
     mode === 'vendre' && sellBreakdown && sellBreakdown.length > 1;
-  const trendColor = colors.trendColors[summary.trend as keyof typeof colors.trendColors] ?? Farm.brownTextSub;
-  const stockColor = colors.stockColors[summary.stockLevel as keyof typeof colors.stockColors] ?? Farm.brownTextSub;
+  const trendColor = colors.trendColors[summary.trend as keyof typeof colors.trendColors] ?? farm.brownTextSub;
+  const stockColor = colors.stockColors[summary.stockLevel as keyof typeof colors.stockColors] ?? farm.brownTextSub;
 
   const handlePress = useCallback(() => {
     onAction(summary.def.itemId, qty);
@@ -352,6 +368,8 @@ const MarketItemRow = React.memo(function MarketItemRow({
             enabled={canAct}
             variant={mode === 'acheter' ? 'buy' : 'sell'}
             onPress={handlePress}
+            farm={farm}
+            styles={styles}
           />
         </View>
       )}
@@ -365,6 +383,8 @@ const MarketItemRow = React.memo(function MarketItemRow({
               line={line}
               itemId={summary.def.itemId}
               onAction={onAction}
+              farm={farm}
+              styles={styles}
             />
           ))}
         </View>
@@ -377,13 +397,17 @@ const MarketItemRow = React.memo(function MarketItemRow({
 
 const TransactionRow = React.memo(function TransactionRow({
   txn,
+  farm,
+  styles,
 }: {
   txn: MarketTransaction;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   const isBuy = txn.action === 'buy';
   return (
     <View style={styles.txnRow}>
-      <Text style={[styles.txnAction, { color: isBuy ? '#3B82F6' : Farm.greenBtn }]}>
+      <Text style={[styles.txnAction, { color: isBuy ? '#3B82F6' : farm.greenBtn }]}>
         {isBuy ? '📥' : '📤'}
       </Text>
       <View style={styles.txnInfo}>
@@ -410,9 +434,13 @@ function formatTime(iso: string): string {
 const DailyDealCard = React.memo(function DailyDealCard({
   deal,
   onBuy,
+  farm,
+  styles,
 }: {
   deal: DailyDeal;
   onBuy: (itemId: string, qty: number) => void;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   return (
     <Animated.View entering={FadeInDown.duration(300)} style={styles.dealCard}>
@@ -437,6 +465,8 @@ const DailyDealCard = React.memo(function DailyDealCard({
           enabled
           variant="buy"
           onPress={() => onBuy(deal.def.itemId, 1)}
+          farm={farm}
+          styles={styles}
         />
       </View>
       <Text style={styles.dealTimer}>
@@ -466,6 +496,8 @@ export function MarketSheet({
   profileDealPurchases,
 }: MarketSheetProps) {
   const { colors, primary } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const [tab, setTab] = useState<MarketTab>('acheter');
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<MarketCategoryFilter>('all');
@@ -645,7 +677,7 @@ export function MarketSheet({
         {/* Panneau farm game */}
         <View style={styles.woodFrame}>
           <View style={styles.woodFrameInner}>
-            <AwningStripes />
+            <AwningStripes farm={farm} styles={styles} />
 
             <View style={styles.parchment}>
               {/* Handle */}
@@ -711,7 +743,7 @@ export function MarketSheet({
                   <TextInput
                     style={styles.searchInput}
                     placeholder="Rechercher un item..."
-                    placeholderTextColor={Farm.brownTextSub}
+                    placeholderTextColor={farm.brownTextSub}
                     value={search}
                     onChangeText={setSearch}
                     autoCorrect={false}
@@ -758,7 +790,7 @@ export function MarketSheet({
                 )}
 
                 {tab === 'acheter' && dailyDeal && (
-                  <DailyDealCard deal={dailyDeal} onBuy={handleBuyDeal} />
+                  <DailyDealCard deal={dailyDeal} onBuy={handleBuyDeal} farm={farm} styles={styles} />
                 )}
 
                 {filteredSummaries.length === 0 ? (
@@ -786,6 +818,8 @@ export function MarketSheet({
                           ? (itemId, qty) => handleBuy(itemId, qty)
                           : (itemId, qty, grade) => handleSell(itemId, qty, grade)}
                         sellBreakdown={tab === 'vendre' ? sellBreakdownMap[s.def.itemId] : undefined}
+                        farm={farm}
+                        styles={styles}
                       />
                     </Animated.View>
                   ))
@@ -798,7 +832,7 @@ export function MarketSheet({
                       Dernières transactions
                     </Text>
                     {recentTxns.map((txn, idx) => (
-                      <TransactionRow key={`${txn.timestamp}-${idx}`} txn={txn} />
+                      <TransactionRow key={`${txn.timestamp}-${idx}`} txn={txn} farm={farm} styles={styles} />
                     ))}
                   </View>
                 )}
@@ -822,7 +856,7 @@ export function MarketSheet({
 
 // ── Styles ────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -836,16 +870,16 @@ const styles = StyleSheet.create({
   woodFrame: {
     flex: 1,
     borderRadius: Radius['2xl'],
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     ...Shadows.xl,
   },
   woodFrameInner: {
     borderRadius: Radius.xl,
     flex: 1,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
   },
 
@@ -882,7 +916,7 @@ const styles = StyleSheet.create({
   // ── Fond parchemin ──────────────────────────────
   parchment: {
     flex: 1,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     paddingBottom: Spacing['3xl'],
   },
   handle: {
@@ -892,7 +926,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
 
   // ── Header ──────────────────────────────────────
@@ -909,14 +943,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
   },
   subtitle: {
     fontSize: FontSize.sm,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginTop: 2,
   },
 
@@ -926,8 +960,8 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing['2xl'],
     borderRadius: Radius.xl,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     paddingVertical: Spacing.lg,
     marginBottom: Spacing.lg,
   },
@@ -938,16 +972,16 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   infoLabel: {
     fontSize: FontSize.label,
     marginTop: 2,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   infoDivider: {
     width: 1.5,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
 
   // ── Flash succès ────────────────────────────────
@@ -957,7 +991,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: Farm.greenBtn,
+    backgroundColor: farm.greenBtn,
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
   },
@@ -966,10 +1000,10 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     marginHorizontal: Spacing['2xl'],
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     padding: Spacing.xs,
     marginBottom: Spacing.xl,
   },
@@ -980,18 +1014,18 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   tabActive: {
-    backgroundColor: Farm.woodBtn,
+    backgroundColor: farm.woodBtn,
   },
   tabActiveSell: {
-    backgroundColor: Farm.greenBtn,
+    backgroundColor: farm.greenBtn,
   },
   tabText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   tabTextActive: {
-    color: Farm.parchment,
+    color: farm.parchment,
   },
 
   // ── Contenu ─────────────────────────────────────
@@ -1006,10 +1040,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: Spacing['2xl'],
     marginTop: Spacing.lg,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Farm.woodLight,
+    borderColor: farm.woodLight,
     paddingHorizontal: Spacing.xl,
     height: 44,
   },
@@ -1020,7 +1054,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: FontSize.body,
-    color: Farm.brownText,
+    color: farm.brownText,
     paddingVertical: 0,
   },
 
@@ -1036,18 +1070,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: Radius.full,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1.5,
-    borderColor: Farm.woodLight,
+    borderColor: farm.woodLight,
   },
   chipActive: {
-    backgroundColor: Farm.woodBtn,
-    borderColor: Farm.woodBtnShadow,
+    backgroundColor: farm.woodBtn,
+    borderColor: farm.woodBtnShadow,
   },
   chipText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   chipTextActive: {
     color: '#FFFFFF',
@@ -1064,8 +1098,8 @@ const styles = StyleSheet.create({
   limitBanner: {
     borderRadius: Radius.xl,
     borderWidth: 1.5,
-    borderColor: Farm.orange,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.orange,
+    backgroundColor: farm.parchmentDark,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.xl,
     alignItems: 'center',
@@ -1073,15 +1107,15 @@ const styles = StyleSheet.create({
   limitText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.orange,
+    color: farm.orange,
   },
 
   // ── Item row ────────────────────────────────────
   itemRow: {
     borderRadius: Radius.xl,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     padding: Spacing.xl,
     flexDirection: 'column',
     gap: Spacing.md,
@@ -1095,7 +1129,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Farm.woodHighlight,
+    borderTopColor: farm.woodHighlight,
   },
   gradeSellRow: {
     flexDirection: 'row',
@@ -1110,11 +1144,11 @@ const styles = StyleSheet.create({
   gradeSellBadge: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   gradeSellMeta: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginTop: 2,
   },
   gradeSellActions: {
@@ -1133,16 +1167,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   qtyValueSmall: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
     minWidth: 16,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   itemInfo: {
     flex: 1,
@@ -1157,9 +1191,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.full,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1172,7 +1206,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   indicatorRow: {
     flexDirection: 'row',
@@ -1193,7 +1227,7 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   priceValue: {
     fontSize: FontSize.body,
@@ -1202,11 +1236,11 @@ const styles = StyleSheet.create({
   basePrice: {
     fontSize: FontSize.label,
     textDecorationLine: 'line-through',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   stockInfo: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Action column ───────────────────────────────
@@ -1226,21 +1260,21 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   qtyBtnText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   qtyValue: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
     minWidth: 20,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   // ── Bouton farm 3D ──────────────────────────────
@@ -1294,13 +1328,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: FontSize.sm,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Transactions ────────────────────────────────
   txnSection: {
     borderTopWidth: 1.5,
-    borderTopColor: Farm.woodHighlight,
+    borderTopColor: farm.woodHighlight,
     paddingTop: Spacing.xl,
     marginTop: Spacing.xl,
   },
@@ -1308,14 +1342,14 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   txnRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
     gap: Spacing.md,
   },
   txnAction: {
@@ -1327,11 +1361,11 @@ const styles = StyleSheet.create({
   txnLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   txnMeta: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Bouton fermer ───────────────────────────────
@@ -1342,9 +1376,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
@@ -1352,21 +1386,21 @@ const styles = StyleSheet.create({
   closeBtnFarmText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
   },
 
   // ── Deal du jour ───────────────────────────────
   dealCard: {
     borderRadius: Radius.xl,
     borderWidth: 2,
-    borderColor: Farm.gold,
+    borderColor: farm.gold,
     backgroundColor: '#FFF9E6',
     padding: Spacing.xl,
     gap: Spacing.md,
   },
   dealBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: Farm.gold,
+    backgroundColor: farm.gold,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xs,
@@ -1374,7 +1408,7 @@ const styles = StyleSheet.create({
   dealBadgeText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.bold,
-    color: Farm.goldText,
+    color: farm.goldText,
     letterSpacing: 1,
   },
   dealContent: {
@@ -1393,9 +1427,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: Radius.full,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderWidth: 2,
-    borderColor: Farm.gold,
+    borderColor: farm.gold,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
@@ -1408,7 +1442,7 @@ const styles = StyleSheet.create({
   dealName: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   dealPriceRow: {
     flexDirection: 'row' as const,
@@ -1418,7 +1452,7 @@ const styles = StyleSheet.create({
   },
   dealOldPrice: {
     fontSize: FontSize.sm,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     textDecorationLine: 'line-through' as const,
   },
   dealNewPrice: {
@@ -1428,7 +1462,10 @@ const styles = StyleSheet.create({
   },
   dealTimer: {
     fontSize: FontSize.label,
-    color: Farm.goldText,
+    color: farm.goldText,
     fontStyle: 'italic' as const,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

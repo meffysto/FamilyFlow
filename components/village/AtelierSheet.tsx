@@ -25,7 +25,10 @@ import type { VillageRecipe } from '../../lib/village/atelier-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
+type FarmBtnStyles = ReturnType<typeof makeFarmBtnStyles>;
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -55,17 +58,17 @@ function formatDate(iso: string): string {
 
 // ── AwningStripes ──────────────────────────────────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm }: { farm: FarmPalette }) {
   return (
     <View>
       {/* Stripe band */}
       <View style={awningStyles.band}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               awningStyles.stripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -74,12 +77,12 @@ function AwningStripes() {
       <View style={awningStyles.shadowBar} />
       {/* Scallop dots row */}
       <View style={awningStyles.scallopRow}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               awningStyles.scallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -120,10 +123,12 @@ function FarmButton({
   label,
   canCraft,
   onPress,
+  farmBtnStyles,
 }: {
   label: string;
   canCraft: boolean;
   onPress?: () => void;
+  farmBtnStyles: FarmBtnStyles;
 }) {
   const scale = useSharedValue(1);
 
@@ -176,7 +181,7 @@ function FarmButton({
   );
 }
 
-const farmBtnStyles = StyleSheet.create({
+const makeFarmBtnStyles = (farm: FarmPalette) => StyleSheet.create({
   greenOuter: {
     borderRadius: Radius.md,
     overflow: 'visible',
@@ -187,11 +192,11 @@ const farmBtnStyles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '100%',
-    backgroundColor: Farm.greenBtnShadow,
+    backgroundColor: farm.greenBtnShadow,
     borderRadius: Radius.md,
   },
   greenFace: {
-    backgroundColor: Farm.greenBtn,
+    backgroundColor: farm.greenBtn,
     borderRadius: Radius.md,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
@@ -204,7 +209,7 @@ const farmBtnStyles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '45%',
-    backgroundColor: Farm.greenBtnHighlight,
+    backgroundColor: farm.greenBtnHighlight,
     opacity: 0.35,
     borderTopLeftRadius: Radius.md,
     borderTopRightRadius: Radius.md,
@@ -216,9 +221,9 @@ const farmBtnStyles = StyleSheet.create({
   },
   disabledOuter: {
     borderRadius: Radius.md,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
   },
@@ -226,9 +231,12 @@ const farmBtnStyles = StyleSheet.create({
   disabledText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 });
+
+const farmBtnStylesLight = makeFarmBtnStyles(Farm);
+const farmBtnStylesDark = makeFarmBtnStyles(FarmDarkPalette);
 
 // ── RecipeCard ─────────────────────────────────────────────────────────────
 
@@ -239,6 +247,9 @@ const RecipeCard = React.memo(function RecipeCard({
   onCraft,
   colors,
   primary,
+  farm,
+  styles,
+  farmBtnStyles,
 }: {
   recipe: VillageRecipe;
   inventory: VillageInventory;
@@ -246,6 +257,9 @@ const RecipeCard = React.memo(function RecipeCard({
   onCraft: (recipeId: string) => void;
   colors: ReturnType<typeof useThemeColors>['colors'];
   primary: string;
+  farm: FarmPalette;
+  styles: Styles;
+  farmBtnStyles: FarmBtnStyles;
 }) {
   const { canCraft, reason } = useMemo(
     () => canCraftVillageRecipe(recipe.id, inventory, unlockedRecipeTier),
@@ -268,7 +282,7 @@ const RecipeCard = React.memo(function RecipeCard({
     <View style={[
       styles.recipeCard,
       {
-        borderColor: canCraft ? Farm.greenBtn : Farm.woodHighlight,
+        borderColor: canCraft ? farm.greenBtn : farm.woodHighlight,
         opacity: tierLocked ? 0.5 : 1,
       },
     ]}>
@@ -292,13 +306,13 @@ const RecipeCard = React.memo(function RecipeCard({
               key={ing.itemId}
               style={[
                 styles.ingredientPill,
-                { backgroundColor: enough ? Farm.greenBtn + '22' : colors.error + '22' },
+                { backgroundColor: enough ? farm.greenBtn + '22' : colors.error + '22' },
               ]}
             >
               <Text style={styles.ingredientEmoji}>{ing.itemEmoji}</Text>
               <Text style={[
                 styles.ingredientQty,
-                { color: enough ? Farm.greenBtn : colors.error },
+                { color: enough ? farm.greenBtn : colors.error },
               ]}>
                 {stock}/{ing.quantity}
               </Text>
@@ -312,6 +326,7 @@ const RecipeCard = React.memo(function RecipeCard({
         label={craftLabel}
         canCraft={canCraft && !tierLocked}
         onPress={() => onCraft(recipe.id)}
+        farmBtnStyles={farmBtnStyles}
       />
     </View>
   );
@@ -323,10 +338,14 @@ function InventaireTab({
   inventory,
   colors,
   primary,
+  farm,
+  styles,
 }: {
   inventory: VillageInventory;
   colors: ReturnType<typeof useThemeColors>['colors'];
   primary: string;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   // Construire la liste des items connus depuis les recettes
   const knownItems = useMemo(() => {
@@ -383,12 +402,12 @@ function InventaireTab({
           style={[
             styles.inventaireCell,
             {
-              borderColor: item.qty > 0 ? Farm.woodHighlight : Farm.woodHighlight,
+              borderColor: item.qty > 0 ? farm.woodHighlight : farm.woodHighlight,
             },
           ]}
         >
           <Text style={styles.inventaireCellEmoji}>{item.emoji}</Text>
-          <Text style={[styles.inventaireCellQty, { color: item.qty > 0 ? Farm.greenBtn : Farm.brownTextSub }]}>
+          <Text style={[styles.inventaireCellQty, { color: item.qty > 0 ? farm.greenBtn : farm.brownTextSub }]}>
             {item.qty}
           </Text>
           <Text style={styles.inventaireCellLabel} numberOfLines={2}>
@@ -406,10 +425,12 @@ function CreationsTab({
   atelierCrafts,
   colors,
   primary,
+  styles,
 }: {
   atelierCrafts: VillageAtelierCraft[];
   colors: ReturnType<typeof useThemeColors>['colors'];
   primary: string;
+  styles: Styles;
 }) {
   const RECIPE_MAP = useMemo(() => {
     const map: Record<string, VillageRecipe> = {};
@@ -479,6 +500,9 @@ export function AtelierSheet({
   onClose,
 }: AtelierSheetProps) {
   const { colors, primary } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
+  const farmBtnStyles = isDark ? farmBtnStylesDark : farmBtnStylesLight;
   const [activeTab, setActiveTab] = useState<AtelierTab>('recettes');
   const [crafting, setCrafting] = useState(false);
 
@@ -522,7 +546,7 @@ export function AtelierSheet({
           {/* Wood frame inner */}
           <View style={styles.woodFrameInner}>
             {/* Awning stripes at the top */}
-            <AwningStripes />
+            <AwningStripes farm={farm} />
 
             {/* Parchment content area */}
             <View style={styles.parchment}>
@@ -557,7 +581,7 @@ export function AtelierSheet({
                       <Text style={styles.tabEmoji}>{tab.emoji}</Text>
                       <Text style={[
                         styles.tabLabel,
-                        { color: isActive ? Farm.parchment : Farm.brownTextSub },
+                        { color: isActive ? farm.parchment : farm.brownTextSub },
                         isActive && { fontWeight: FontWeight.semibold },
                       ]}>
                         {tab.label}
@@ -590,6 +614,9 @@ export function AtelierSheet({
                         onCraft={handleCraft}
                         colors={colors}
                         primary={primary}
+                        farm={farm}
+                        styles={styles}
+                        farmBtnStyles={farmBtnStyles}
                       />
                     ))}
                   </Animated.View>
@@ -601,6 +628,8 @@ export function AtelierSheet({
                       inventory={inventory}
                       colors={colors}
                       primary={primary}
+                      farm={farm}
+                      styles={styles}
                     />
                   </Animated.View>
                 )}
@@ -611,6 +640,7 @@ export function AtelierSheet({
                       atelierCrafts={atelierCrafts}
                       colors={colors}
                       primary={primary}
+                      styles={styles}
                     />
                   </Animated.View>
                 )}
@@ -625,7 +655,7 @@ export function AtelierSheet({
 
 // ── Styles ─────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -637,7 +667,7 @@ const styles = StyleSheet.create({
   // Wood frame outer
   woodFrame: {
     flex: 1,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: Spacing['2xl'],
     borderTopLeftRadius: Radius['2xl'],
     borderTopRightRadius: Radius['2xl'],
@@ -647,16 +677,16 @@ const styles = StyleSheet.create({
   // Wood frame inner
   woodFrameInner: {
     flex: 1,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
     borderRadius: Radius.xl,
   },
   // Parchment content area
   parchment: {
     flex: 1,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     paddingBottom: Spacing['3xl'],
   },
   handleRow: {
@@ -669,12 +699,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
   handleCoins: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   header: {
     flexDirection: 'row',
@@ -686,7 +716,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     flex: 1,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
@@ -696,24 +726,24 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeBtnText: {
     fontSize: FontSize.sm,
-    color: Farm.parchment,
+    color: farm.parchment,
     fontWeight: FontWeight.bold,
   },
   // Tab bar
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     marginBottom: Spacing.xl,
   },
   tab: {
@@ -725,7 +755,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
   },
   tabActive: {
-    backgroundColor: Farm.woodBtn,
+    backgroundColor: farm.woodBtn,
   },
   tabInactive: {
     backgroundColor: 'transparent',
@@ -747,12 +777,12 @@ const styles = StyleSheet.create({
   tierBanner: {
     borderRadius: Radius.md,
     padding: Spacing.xl,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   tierBannerText: {
     fontSize: FontSize.sm,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   // RecipeCard
   recipeCard: {
@@ -760,7 +790,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     padding: Spacing['2xl'],
     gap: Spacing.lg,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   recipeHeader: {
     flexDirection: 'row',
@@ -777,16 +807,16 @@ const styles = StyleSheet.create({
   recipeLabel: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   recipeTier: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   recipeXp: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.greenBtn,
+    color: farm.greenBtn,
   },
   ingredientsRow: {
     flexDirection: 'row',
@@ -818,11 +848,11 @@ const styles = StyleSheet.create({
     width: '22%',
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     padding: Spacing.md,
     alignItems: 'center',
     gap: Spacing.xs,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   inventaireCellEmoji: {
     fontSize: 28,
@@ -834,7 +864,7 @@ const styles = StyleSheet.create({
   inventaireCellLabel: {
     fontSize: FontSize.caption,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   // Créations
   creationsList: {
@@ -846,7 +876,7 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
     paddingVertical: Spacing.xl,
     borderBottomWidth: 1,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
   },
   creationEmoji: {
     fontSize: 28,
@@ -858,16 +888,16 @@ const styles = StyleSheet.create({
   creationLabel: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   creationDate: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   creationXp: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.greenBtn,
+    color: farm.greenBtn,
   },
   // États vides
   emptyState: {
@@ -881,12 +911,15 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   emptySubtitle: {
     fontSize: FontSize.sm,
     textAlign: 'center',
     lineHeight: 20,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);
