@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { useFarmTheme } from '../../constants/farm-theme';
 
 // ─── Constantes animations (identiques à RewardCardToast) ─────────────────────
 
@@ -127,6 +127,7 @@ interface ItemChipProps {
 
 function ItemChip({ item, index, isNew, pulseKey, reduceMotion, primaryColor }: ItemChipProps) {
   const { t } = useTranslation();
+  const { farm } = useFarmTheme();
   const scale = useSharedValue(isNew ? 0 : 1);
   const prevPulseKey = useRef(pulseKey);
 
@@ -168,7 +169,7 @@ function ItemChip({ item, index, isNew, pulseKey, reduceMotion, primaryColor }: 
       ]}
     >
       <Text style={styles.chipEmoji}>{item.emoji}</Text>
-      <Text style={[styles.chipQty, { color: Farm.brownText }]}>×{item.qty}</Text>
+      <Text style={[styles.chipQty, { color: farm.brownText }]}>×{item.qty}</Text>
       {item.wager?.won && (
         <View style={styles.wagerBadge}>
           <Text style={styles.wagerBadgeText}>{'🍄×'}{item.wager.multiplier}</Text>
@@ -244,6 +245,7 @@ export function HarvestCardToast({
 }: HarvestCardToastProps) {
   const insets = useSafeAreaInsets();
   const { primary } = useThemeColors();
+  const { farm } = useFarmTheme();
   const reduceMotion = useReducedMotion();
 
   const translateY = useSharedValue(200);
@@ -360,7 +362,7 @@ export function HarvestCardToast({
         style={[
           styles.card,
           {
-            backgroundColor: Farm.parchment,
+            backgroundColor: farm.parchment,
             borderColor: primary,
             shadowColor: primary,
           },
@@ -370,8 +372,8 @@ export function HarvestCardToast({
         <View style={styles.header}>
           <Text style={styles.mainEmoji}>{mainEmoji}</Text>
           <View style={styles.titleGroup}>
-            <Text style={[styles.title, { color: Farm.brownText }]}>Récolte !</Text>
-            <Text style={[styles.subtitle, { color: Farm.brownTextSub }]} numberOfLines={1}>
+            <Text style={[styles.title, { color: farm.brownText }]}>Récolte !</Text>
+            <Text style={[styles.subtitle, { color: farm.brownTextSub }]} numberOfLines={1}>
               {subtitle}
             </Text>
           </View>

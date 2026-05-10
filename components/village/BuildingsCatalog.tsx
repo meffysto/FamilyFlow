@@ -30,7 +30,9 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 import {
   BUILDINGS_CATALOG,
   type BuildingCatalogEntry,
@@ -40,33 +42,32 @@ import {
 // ── Constantes module ──────────────────────────────────────────────
 const SEEN_KEY = 'village_buildings_seen_at';
 const SPRITE_SIZE = 96;
-const BADGE_GOLD = Farm.gold;
 const SPRING_CATALOG = { damping: 12, stiffness: 180 } as const;
 
 // ── Sous-composant : auvent rayé ─────────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -93,6 +94,8 @@ export function BuildingsCatalog({
   onUnlockedBuildingPress,
 }: BuildingsCatalogProps) {
   const { colors } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const { showToast } = useToast();
   const [lastSeen, setLastSeen] = useState<Date | null>(null);
 
@@ -154,12 +157,12 @@ export function BuildingsCatalog({
             accessibilityLabel="Fermer"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MaterialCommunityIcons name="close" size={24} color={Farm.brownText} />
+            <MaterialCommunityIcons name="close" size={24} color={farm.brownText} />
           </TouchableOpacity>
         </View>
 
         {/* Bande auvent sous le header */}
-        <AwningStripes />
+        <AwningStripes farm={farm} styles={styles} />
 
         <ScrollView contentContainerStyle={styles.scroll}>
           {unlockedBuildings.length === 0 && (
@@ -193,6 +196,8 @@ export function BuildingsCatalog({
                     ? () => onUnlockedBuildingPress(unlock)
                     : undefined}
                   colors={colors}
+                  farm={farm}
+                  styles={styles}
                 />
               );
             })}
@@ -215,6 +220,8 @@ interface CatalogTileProps {
   onLockedPress: () => void;
   onUnlockedPress?: () => void;
   colors: ColorsType;
+  farm: FarmPalette;
+  styles: Styles;
 }
 
 const CatalogTile = React.memo(function CatalogTile({
@@ -225,6 +232,8 @@ const CatalogTile = React.memo(function CatalogTile({
   onLockedPress,
   onUnlockedPress,
   colors,
+  farm,
+  styles,
 }: CatalogTileProps) {
   const tileScale = useSharedValue(1);
   const badgeScale = useSharedValue(0);
@@ -276,7 +285,7 @@ const CatalogTile = React.memo(function CatalogTile({
           style={[
             styles.tileSprite,
             !isUnlocked && {
-              tintColor: Farm.brownTextSub,
+              tintColor: farm.brownTextSub,
               opacity: 0.4,
             },
           ]}
@@ -288,7 +297,7 @@ const CatalogTile = React.memo(function CatalogTile({
         <Text
           style={[
             styles.tileStatus,
-            { color: isUnlocked ? Farm.greenBtn : Farm.brownTextSub },
+            { color: isUnlocked ? farm.greenBtn : farm.brownTextSub },
           ]}
         >
           {progressLabel}
@@ -306,17 +315,17 @@ const CatalogTile = React.memo(function CatalogTile({
           pointerEvents="none"
         >
           <Text style={styles.badgeText}>Nouveau</Text>
-          <Text style={[styles.badgeStar, { color: BADGE_GOLD }]}>✨</Text>
+          <Text style={[styles.badgeStar, { color: farm.gold }]}>✨</Text>
         </Animated.View>
       )}
     </Animated.View>
   );
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
   },
   header: {
     flexDirection: 'row',
@@ -324,15 +333,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.xl,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderBottomWidth: 2,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
   },
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
     lineHeight: LineHeight.title,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
@@ -384,9 +393,9 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     minHeight: 170,
     position: 'relative',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
   },
   tileTouch: {
     alignItems: 'center',
@@ -402,7 +411,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   tileStatus: {
     marginTop: Spacing.xs,
@@ -414,7 +423,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xxs,
     fontSize: FontSize.caption,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   badge: {
     position: 'absolute',
@@ -426,12 +435,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.sm,
-    backgroundColor: Farm.gold,
+    backgroundColor: farm.gold,
   },
   badgeText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.goldText,
+    color: farm.goldText,
   },
   badgeStar: {
     fontSize: FontSize.caption,
@@ -446,11 +455,14 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
     marginBottom: Spacing.md,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   emptyBody: {
     fontSize: FontSize.caption,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

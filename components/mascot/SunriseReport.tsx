@@ -21,7 +21,9 @@ import * as Haptics from 'expo-haptics';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 // ── Constantes ──────────────────────────────────
 
@@ -55,28 +57,28 @@ interface SunriseReportProps {
 
 // ── Sous-composant : auvent rayé ────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -87,12 +89,12 @@ function AwningStripes() {
 
 // ── Sous-composant : bouton farm 3D ─────────────
 
-function FarmButton({ label, enabled, onPress }: { label: string; enabled: boolean; onPress?: () => void }) {
+function FarmButton({ label, enabled, onPress, farm, styles }: { label: string; enabled: boolean; onPress?: () => void; farm: FarmPalette; styles: Styles }) {
   const pressedY = useSharedValue(0);
 
-  const bg = enabled ? Farm.greenBtn : Farm.parchmentDark;
-  const shadow = enabled ? Farm.greenBtnShadow : '#D0CBC3';
-  const highlight = enabled ? Farm.greenBtnHighlight : Farm.parchment;
+  const bg = enabled ? farm.greenBtn : farm.parchmentDark;
+  const shadow = enabled ? farm.greenBtnShadow : '#D0CBC3';
+  const highlight = enabled ? farm.greenBtnHighlight : farm.parchment;
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: pressedY.value }],
@@ -116,7 +118,7 @@ function FarmButton({ label, enabled, onPress }: { label: string; enabled: boole
       <Animated.View style={[styles.farmBtnShadow, { backgroundColor: shadow }, shadowStyle]} />
       <Animated.View style={[styles.farmBtnBody, { backgroundColor: bg }, btnStyle]}>
         <View style={[styles.farmBtnGloss, { backgroundColor: highlight }]} />
-        <Text style={[styles.farmBtnText, { color: enabled ? '#FFFFFF' : Farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' }]}>
+        <Text style={[styles.farmBtnText, { color: enabled ? '#FFFFFF' : farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' }]}>
           {label}
         </Text>
       </Animated.View>
@@ -136,6 +138,8 @@ export function SunriseReport({
   dailyDeal,
   onDismiss,
 }: SunriseReportProps) {
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const filteredResources = useMemo(
     () => resources.filter(r => r.quantity > 0),
     [resources],
@@ -155,7 +159,7 @@ export function SunriseReport({
           <Animated.View entering={ZoomIn.duration(400).springify().damping(16).stiffness(120)} style={styles.cardWrapper}>
             <View style={styles.woodFrame}>
               <View style={styles.woodFrameInner}>
-                <AwningStripes />
+                <AwningStripes farm={farm} styles={styles} />
 
                 <View style={styles.parchment}>
                   {/* Soleil */}
@@ -219,7 +223,7 @@ export function SunriseReport({
                     entering={FadeIn.delay(600 + filteredResources.length * 150 + 500).duration(300)}
                     style={styles.actionSection}
                   >
-                    <FarmButton label="Continuer" enabled={true} onPress={onDismiss} />
+                    <FarmButton label="Continuer" enabled={true} onPress={onDismiss} farm={farm} styles={styles} />
                   </Animated.View>
                 </View>
               </View>
@@ -233,7 +237,7 @@ export function SunriseReport({
 
 // ── Styles ──────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -250,14 +254,14 @@ const styles = StyleSheet.create({
   // ── Cadre bois ──
   woodFrame: {
     borderRadius: Radius['2xl'],
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     ...Shadows.xl,
   },
   woodFrameInner: {
     borderRadius: Radius['2xl'] - 3,
     overflow: 'hidden',
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
   },
 
   // ── Auvent ──
@@ -289,7 +293,7 @@ const styles = StyleSheet.create({
 
   // ── Parchemin ──
   parchment: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     paddingVertical: Spacing['2xl'],
     paddingHorizontal: Spacing['2xl'],
     alignItems: 'center',
@@ -302,13 +306,13 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: FontSize.titleLg,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     marginBottom: Spacing.xs,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: FontSize.sm,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginBottom: Spacing.xl,
     textAlign: 'center',
   },
@@ -320,7 +324,7 @@ const styles = StyleSheet.create({
   resourceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     borderRadius: Radius.md,
@@ -333,15 +337,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   resourceQty: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   bonusBox: {
-    backgroundColor: Farm.awningGreen + '33',
+    backgroundColor: farm.awningGreen + '33',
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
@@ -351,12 +355,12 @@ const styles = StyleSheet.create({
   },
   bonusText: {
     fontSize: FontSize.sm,
-    color: Farm.awningGreen,
+    color: farm.awningGreen,
   },
   bonusHighlight: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.awningGreen,
+    color: farm.awningGreen,
   },
   totalBox: {
     marginBottom: Spacing.xl,
@@ -364,40 +368,40 @@ const styles = StyleSheet.create({
   totalText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   dealBox: {
     width: '100%',
-    backgroundColor: Farm.gold + '22',
+    backgroundColor: farm.gold + '22',
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Farm.gold,
+    borderColor: farm.gold,
   },
   dealTitle: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
     marginBottom: 2,
     letterSpacing: 0.5,
   },
   dealItem: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     marginBottom: 2,
   },
   dealPrice: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.goldText,
+    color: farm.goldText,
   },
   dealPriceOriginal: {
     fontWeight: FontWeight.normal,
-    color: Farm.goldText,
+    color: farm.goldText,
     textDecorationLine: 'line-through',
     opacity: 0.7,
   },
@@ -445,3 +449,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

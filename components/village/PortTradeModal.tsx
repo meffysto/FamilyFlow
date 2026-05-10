@@ -28,7 +28,9 @@ import { CRAFT_RECIPES } from '../../lib/mascot/craft-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 import {
   getAvailableTradeItems,
   MAX_TRADES_PER_DAY,
@@ -71,11 +73,15 @@ function FarmButton({
   onPress,
   disabled,
   style,
+  farm,
+  styles,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   style?: any;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   const translateY = React.useRef(new Animated.Value(0)).current;
 
@@ -87,9 +93,9 @@ function FarmButton({
     Animated.spring(translateY, { toValue: 0, useNativeDriver: true, ...SPRING_CONFIG }).start();
   }, [translateY]);
 
-  const shadowBg = disabled ? '#D0CBC3' : Farm.greenBtnShadow;
-  const bodyBg   = disabled ? Farm.parchmentDark : Farm.greenBtn;
-  const textColor = disabled ? Farm.brownTextSub : Farm.parchment;
+  const shadowBg = disabled ? '#D0CBC3' : farm.greenBtnShadow;
+  const bodyBg   = disabled ? farm.parchmentDark : farm.greenBtn;
+  const textColor = disabled ? farm.brownTextSub : farm.parchment;
 
   return (
     <Pressable
@@ -113,14 +119,14 @@ function FarmButton({
 
 // ── AwningStripes ─────────────────────────────────────────────────────────────
 
-function AwningStripes() {
-  const stripes = Array.from({ length: Farm.awningStripeCount });
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
+  const stripes = Array.from({ length: farm.awningStripeCount });
   return (
     <View style={styles.awningRow}>
       {stripes.map((_, i) => {
         const isGreen = i % 2 === 0;
         return (
-          <View key={i} style={[styles.awningStripe, { backgroundColor: isGreen ? Farm.awningGreen : Farm.awningCream }]}>
+          <View key={i} style={[styles.awningStripe, { backgroundColor: isGreen ? farm.awningGreen : farm.awningCream }]}>
             <View style={styles.awningScallop} />
           </View>
         );
@@ -144,6 +150,8 @@ export function PortTradeModal({
   sendsRemaining,
 }: PortTradeModalProps) {
   const { colors, primary, tint } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const { t } = useTranslation();
 
   // ── State onglets ───────────────────────────────────────────────────────────
@@ -294,7 +302,7 @@ export function PortTradeModal({
           {/* Wood frame inner */}
           <View style={styles.woodFrameInner}>
             {/* Awning */}
-            <AwningStripes />
+            <AwningStripes farm={farm} styles={styles} />
 
             {/* Parchment content area */}
             <View style={styles.parchment}>
@@ -323,7 +331,7 @@ export function PortTradeModal({
                   >
                     <Text style={[
                       styles.tabText,
-                      { color: activeTab === tab ? Farm.parchment : Farm.brownTextSub },
+                      { color: activeTab === tab ? farm.parchment : farm.brownTextSub },
                     ]}>
                       {tab === 'envoyer' ? '📤 Envoyer' : '📥 Recevoir'}
                     </Text>
@@ -357,6 +365,8 @@ export function PortTradeModal({
                     isSending={isSending}
                     onSend={handleSend}
                     onShare={handleShare}
+                    farm={farm}
+                    styles={styles}
                   />
                 ) : (
                   <RecevoirTab
@@ -365,6 +375,8 @@ export function PortTradeModal({
                     receiveError={receiveError}
                     isReceiving={isReceiving}
                     onReceive={handleReceive}
+                    farm={farm}
+                    styles={styles}
                   />
                 )}
               </ScrollView>
@@ -386,6 +398,7 @@ function EnvoiTab({
   generatedCode,
   canSendToday, sendsRemaining,
   isSending, onSend, onShare,
+  farm, styles,
 }: {
   colors: AppColors; primary: string; tint: string;
   categories: { id: TradeCategory; label: string; emoji: string }[];
@@ -402,6 +415,8 @@ function EnvoiTab({
   isSending: boolean;
   onSend: () => void;
   onShare: () => void;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   return (
     <>
@@ -428,7 +443,7 @@ function EnvoiTab({
             activeOpacity={0.7}
           >
             <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-            <Text style={[styles.categoryLabel, { color: selectedCategory === cat.id ? Farm.brownText : Farm.brownTextSub }]}>
+            <Text style={[styles.categoryLabel, { color: selectedCategory === cat.id ? farm.brownText : farm.brownTextSub }]}>
               {cat.label}
             </Text>
           </TouchableOpacity>
@@ -482,7 +497,7 @@ function EnvoiTab({
               activeOpacity={0.7}
               disabled={quantity <= 1}
             >
-              <Text style={[styles.stepperBtnText, { color: quantity <= 1 ? Farm.brownTextSub : Farm.brownText }]}>−</Text>
+              <Text style={[styles.stepperBtnText, { color: quantity <= 1 ? farm.brownTextSub : farm.brownText }]}>−</Text>
             </TouchableOpacity>
             <Text style={styles.stepperValue}>{quantity}</Text>
             <TouchableOpacity
@@ -491,7 +506,7 @@ function EnvoiTab({
               activeOpacity={0.7}
               disabled={quantity >= selectedItem.available}
             >
-              <Text style={[styles.stepperBtnText, { color: quantity >= selectedItem.available ? Farm.brownTextSub : Farm.brownText }]}>+</Text>
+              <Text style={[styles.stepperBtnText, { color: quantity >= selectedItem.available ? farm.brownTextSub : farm.brownText }]}>+</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -502,7 +517,7 @@ function EnvoiTab({
         <View style={styles.codeBox}>
           <Text style={styles.codeLabel}>Code du colis</Text>
           <Text style={styles.codeText} selectable>{generatedCode}</Text>
-          <FarmButton label="📤 Partager le code" onPress={onShare} />
+          <FarmButton label="📤 Partager le code" onPress={onShare} farm={farm} styles={styles} />
         </View>
       ) : selectedItem && (
         <FarmButton
@@ -510,6 +525,8 @@ function EnvoiTab({
           onPress={onSend}
           disabled={isSending || !canSendToday}
           style={styles.actionBtnFull}
+          farm={farm}
+          styles={styles}
         />
       )}
     </>
@@ -518,11 +535,13 @@ function EnvoiTab({
 
 // ── Onglet Recevoir ───────────────────────────────────────────────────────────
 
-function RecevoirTab({ colors, primary, receiveError, isReceiving, onReceive }: {
+function RecevoirTab({ colors, primary, receiveError, isReceiving, onReceive, farm, styles }: {
   colors: AppColors; primary: string;
   receiveError: string | null;
   isReceiving: boolean;
   onReceive: (code: string) => void;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   const handlePrompt = useCallback(() => {
     if (Platform.OS === 'ios') {
@@ -569,6 +588,8 @@ function RecevoirTab({ colors, primary, receiveError, isReceiving, onReceive }: 
         onPress={handlePrompt}
         disabled={isReceiving}
         style={styles.actionBtnFull}
+        farm={farm}
+        styles={styles}
       />
     </>
   );
@@ -576,7 +597,7 @@ function RecevoirTab({ colors, primary, receiveError, isReceiving, onReceive }: 
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -589,15 +610,15 @@ const styles = StyleSheet.create({
   // Wood frame
   woodFrame: {
     flex: 1,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: Spacing['lg'],
     borderRadius: Radius['2xl'],
     ...Shadows.xl,
   },
   woodFrameInner: {
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
     flex: 1,
     borderRadius: Radius.xl,
@@ -631,7 +652,7 @@ const styles = StyleSheet.create({
   // Parchment area
   parchment: {
     flex: 1,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     paddingBottom: Spacing['3xl'],
   },
 
@@ -639,7 +660,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
     alignSelf: 'center',
     marginTop: Spacing.xl,
     marginBottom: Spacing.lg,
@@ -654,7 +675,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     flex: 1,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
@@ -664,15 +685,15 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeBtnText: {
     fontSize: FontSize.sm,
-    color: Farm.parchment,
+    color: farm.parchment,
     fontWeight: FontWeight.bold,
   },
 
@@ -683,8 +704,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.xs,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     marginBottom: Spacing['2xl'],
   },
   tab: {
@@ -694,7 +715,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   tabActive: {
-    backgroundColor: Farm.woodBtn,
+    backgroundColor: farm.woodBtn,
   },
   tabText: {
     fontSize: FontSize.sm,
@@ -713,18 +734,18 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing['2xl'],
     alignSelf: 'flex-start',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   badgeText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
-    color: Farm.greenBtn,
+    color: farm.greenBtn,
   },
 
   sectionLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     marginBottom: -Spacing.sm,
   },
 
@@ -740,12 +761,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1.5,
     gap: Spacing.xs,
-    backgroundColor: Farm.parchmentDark,
-    borderColor: Farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
+    borderColor: farm.woodHighlight,
   },
   categoryBtnSelected: {
-    borderColor: Farm.greenBtn,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.greenBtn,
+    backgroundColor: farm.parchmentDark,
   },
   categoryEmoji: {
     fontSize: 24,
@@ -761,13 +782,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing['2xl'],
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
-    borderColor: Farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
+    borderColor: farm.woodHighlight,
   },
   emptyText: {
     fontSize: FontSize.sm,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // Item grid
@@ -785,11 +806,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     gap: Spacing.xs,
     position: 'relative',
-    backgroundColor: Farm.parchmentDark,
-    borderColor: Farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
+    borderColor: farm.woodHighlight,
   },
   itemCardSelected: {
-    borderColor: Farm.greenBtn,
+    borderColor: farm.greenBtn,
   },
   itemEmoji: {
     fontSize: 28,
@@ -801,7 +822,7 @@ const styles = StyleSheet.create({
   itemLabel: {
     fontSize: FontSize.label,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   itemBadge: {
     position: 'absolute',
@@ -812,11 +833,11 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     minWidth: 20,
     alignItems: 'center',
-    backgroundColor: Farm.greenBtn,
+    backgroundColor: farm.greenBtn,
   },
   itemBadgeText: {
     fontSize: FontSize.micro,
-    color: Farm.parchment,
+    color: farm.parchment,
     fontWeight: FontWeight.bold,
   },
 
@@ -834,8 +855,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Farm.parchmentDark,
-    borderColor: Farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
+    borderColor: farm.woodHighlight,
   },
   stepperBtnText: {
     fontSize: FontSize.title,
@@ -846,7 +867,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     minWidth: 40,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   // Code box
@@ -856,19 +877,19 @@ const styles = StyleSheet.create({
     padding: Spacing['2xl'],
     alignItems: 'center',
     gap: Spacing.xl,
-    backgroundColor: Farm.parchmentDark,
-    borderColor: Farm.greenBtn,
+    backgroundColor: farm.parchmentDark,
+    borderColor: farm.greenBtn,
   },
   codeLabel: {
     fontSize: FontSize.sm,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   codeText: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.bold,
     letterSpacing: 2,
     textAlign: 'center',
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   // Action button full width helper
@@ -931,7 +952,7 @@ const styles = StyleSheet.create({
   receiveTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   errorText: {
     fontSize: FontSize.sm,
@@ -943,6 +964,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginTop: Spacing.md,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

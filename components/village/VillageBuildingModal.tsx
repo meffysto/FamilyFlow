@@ -27,7 +27,9 @@ import type { UnlockedBuilding, VillageInventory, BuildingProductionState } from
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 import type { ImageSourcePropType } from 'react-native';
 
 // ── Constantes farm game ────────────────────────────────────────
@@ -52,16 +54,16 @@ interface VillageBuildingModalProps {
 
 // ── Sous-composant : auvent rayé ────────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -70,12 +72,12 @@ function AwningStripes() {
       <View style={styles.awningShadow} />
       {/* Bord scalloped simulé — petits demi-cercles */}
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -93,16 +95,16 @@ interface FarmButtonProps {
   onPress?: () => void;
 }
 
-function FarmButton({ label, enabled, variant, onPress }: FarmButtonProps) {
+function FarmButton({ label, enabled, variant, onPress, farm, styles }: FarmButtonProps & { farm: FarmPalette; styles: Styles }) {
   const pressedY = useSharedValue(0);
 
   const btnColors = variant === 'green'
-    ? { bg: Farm.greenBtn, shadow: Farm.greenBtnShadow, highlight: Farm.greenBtnHighlight }
-    : { bg: Farm.woodBtn, shadow: Farm.woodBtnShadow, highlight: Farm.woodBtnHighlight };
+    ? { bg: farm.greenBtn, shadow: farm.greenBtnShadow, highlight: farm.greenBtnHighlight }
+    : { bg: farm.woodBtn, shadow: farm.woodBtnShadow, highlight: farm.woodBtnHighlight };
 
-  const bg = enabled ? btnColors.bg : Farm.parchmentDark;
+  const bg = enabled ? btnColors.bg : farm.parchmentDark;
   const shadow = enabled ? btnColors.shadow : '#D0CBC3';
-  const highlight = enabled ? btnColors.highlight : Farm.parchment;
+  const highlight = enabled ? btnColors.highlight : farm.parchment;
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: pressedY.value }],
@@ -140,7 +142,7 @@ function FarmButton({ label, enabled, variant, onPress }: FarmButtonProps) {
         <View style={[styles.farmBtnGloss, { backgroundColor: highlight }]} />
         <Text style={[
           styles.farmBtnText,
-          { color: enabled ? '#FFFFFF' : Farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' },
+          { color: enabled ? '#FFFFFF' : farm.brownTextSub, textShadowColor: enabled ? 'rgba(0,0,0,0.25)' : 'transparent' },
         ]}>
           {label}
         </Text>
@@ -164,6 +166,8 @@ export function VillageBuildingModal({
 }: VillageBuildingModalProps) {
   // kept for potential theme-aware overrides in future
   const { colors } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
 
   const entry = useMemo(
     () => BUILDINGS_CATALOG.find(b => b.id === building.buildingId),
@@ -202,7 +206,7 @@ export function VillageBuildingModal({
           {/* Bordure bois intérieure */}
           <View style={styles.woodFrameInner}>
             {/* Auvent rayé */}
-            <AwningStripes />
+            <AwningStripes farm={farm} styles={styles} />
 
             {/* Fond parchemin */}
             <View style={styles.parchment}>
@@ -284,6 +288,8 @@ export function VillageBuildingModal({
                     enabled={pendingItems > 0}
                     variant="green"
                     onPress={handleCollect}
+                    farm={farm}
+                    styles={styles}
                   />
                 </Animated.View>
 
@@ -299,7 +305,7 @@ export function VillageBuildingModal({
                       <Text style={styles.sectionDetail}>{production.itemLabel}</Text>
                       <Text style={[
                         styles.inventoryQty,
-                        { color: currentStock > 0 ? Farm.greenBtn : Farm.brownTextSub },
+                        { color: currentStock > 0 ? farm.greenBtn : farm.brownTextSub },
                       ]}>
                         {currentStock} en stock
                       </Text>
@@ -315,6 +321,8 @@ export function VillageBuildingModal({
                       enabled={true}
                       variant="wood"
                       onPress={onOpenTrade}
+                      farm={farm}
+                      styles={styles}
                     />
                   </Animated.View>
                 )}
@@ -343,7 +351,7 @@ export function VillageBuildingModal({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -357,16 +365,16 @@ const styles = StyleSheet.create({
   woodFrame: {
     flex: 1,
     borderRadius: Radius['2xl'],
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     padding: 5,
     ...Shadows.xl,
   },
   woodFrameInner: {
     flex: 1,
     borderRadius: Radius.xl,
-    backgroundColor: Farm.woodLight,
+    backgroundColor: farm.woodLight,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
   },
 
@@ -403,7 +411,7 @@ const styles = StyleSheet.create({
   // ── Fond parchemin ──────────────────────────────
   parchment: {
     flex: 1,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     paddingBottom: Spacing['3xl'],
   },
   handle: {
@@ -413,7 +421,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
-    backgroundColor: Farm.woodHighlight,
+    backgroundColor: farm.woodHighlight,
   },
 
   // ── Titre farm ──────────────────────────────────
@@ -424,7 +432,7 @@ const styles = StyleSheet.create({
   farmTitleText: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
@@ -450,28 +458,28 @@ const styles = StyleSheet.create({
 
   // ── Sections ────────────────────────────────────
   section: {
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderRadius: Radius.xl,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     padding: Spacing['2xl'],
     gap: Spacing.md,
   },
   sectionHighlighted: {
-    borderColor: Farm.greenBtn,
+    borderColor: farm.greenBtn,
   },
   sectionTitle: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   sectionDetail: {
     fontSize: FontSize.sm,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   sectionDetailMuted: {
     fontSize: FontSize.sm,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     opacity: 0.8,
   },
 
@@ -479,15 +487,15 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 14,
     borderRadius: 7,
-    backgroundColor: Farm.progressBg,
+    backgroundColor: farm.progressBg,
     borderWidth: 1.5,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 7,
-    backgroundColor: Farm.progressGold,
+    backgroundColor: farm.progressGold,
     overflow: 'hidden',
   },
   progressGloss: {
@@ -525,7 +533,7 @@ const styles = StyleSheet.create({
   },
   palierText: {
     fontSize: FontSize.label,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
     opacity: 0.75,
   },
 
@@ -577,9 +585,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Farm.woodDark,
+    backgroundColor: farm.woodDark,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
@@ -587,6 +595,9 @@ const styles = StyleSheet.create({
   closeBtnFarmText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);
