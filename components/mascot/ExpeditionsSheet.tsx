@@ -34,7 +34,9 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 import {
   getExpeditionRemainingMinutes,
   isExpeditionComplete,
@@ -64,28 +66,28 @@ const TAB_WIDTH = 120;
 
 // ── Sous-composant : auvent rayé (copie exacte de BuildingsCatalog) ───────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -121,11 +123,11 @@ function outcomeLabel(outcome: ExpeditionOutcome): string {
   return 'Découverte rare !';
 }
 
-function outcomeColor(outcome: ExpeditionOutcome, colors: AppColors): string {
+function outcomeColor(outcome: ExpeditionOutcome, colors: AppColors, farm: FarmPalette): string {
   if (outcome === 'success') return colors.success;
   if (outcome === 'partial') return colors.warning;
   if (outcome === 'failure') return colors.error;
-  return Farm.gold;
+  return farm.gold;
 }
 
 function formatRemaining(minutes: number): string {
@@ -178,6 +180,8 @@ export function ExpeditionsSheet({
   onDismiss,
 }: Props) {
   const { primary, colors } = useThemeColors();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>('catalogue');
   const [launchingMission, setLaunchingMission] = useState<ExpeditionMission | null>(null);
@@ -248,7 +252,7 @@ export function ExpeditionsSheet({
         {/* En-tête parchemin */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <MaterialCommunityIcons name="compass-outline" size={22} color={Farm.brownText} />
+            <MaterialCommunityIcons name="compass-outline" size={22} color={farm.brownText} />
             <Text style={styles.title}>Expéditions</Text>
           </View>
           <TouchableOpacity
@@ -257,12 +261,12 @@ export function ExpeditionsSheet({
             accessibilityLabel="Fermer"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MaterialCommunityIcons name="close" size={24} color={Farm.brownText} />
+            <MaterialCommunityIcons name="close" size={24} color={farm.brownText} />
           </TouchableOpacity>
         </View>
 
         {/* Bande auvent */}
-        <AwningStripes />
+        <AwningStripes farm={farm} styles={styles} />
 
         {/* Tab row */}
         <View style={styles.tabRow}>
@@ -317,9 +321,9 @@ export function ExpeditionsSheet({
           {activeTab === 'catalogue' && (
             <>
               {/* Compteur renouvellement quotidien */}
-              <View style={[styles.resetBanner, { backgroundColor: Farm.parchmentDark, borderColor: Farm.woodHighlight }]}>
-                <MaterialCommunityIcons name="clock-outline" size={14} color={Farm.brownText} />
-                <Text style={[styles.resetBannerText, { color: Farm.brownText }]}>
+              <View style={[styles.resetBanner, { backgroundColor: farm.parchmentDark, borderColor: farm.woodHighlight }]}>
+                <MaterialCommunityIcons name="clock-outline" size={14} color={farm.brownText} />
+                <Text style={[styles.resetBannerText, { color: farm.brownText }]}>
                   {`Nouvelles expéditions dans `}
                   <Text style={styles.resetBannerTime}>
                     {formatRemaining(getMinutesUntilMidnight())}
@@ -346,6 +350,8 @@ export function ExpeditionsSheet({
                     primary={primary}
                     harvestInventory={harvestInventory}
                     t={t}
+                    farm={farm}
+                    styles={styles}
                   />
                 ))
               )}
@@ -369,6 +375,8 @@ export function ExpeditionsSheet({
                     colors={colors}
                     primary={primary}
                     tick={tick}
+                    farm={farm}
+                    styles={styles}
                   />
                 ))
               )}
@@ -390,6 +398,8 @@ export function ExpeditionsSheet({
                     mission={EXPEDITION_CATALOG.find(m => m.id === exp.missionId)}
                     onDismiss={() => onDismiss(exp.missionId)}
                     colors={colors}
+                    farm={farm}
+                    styles={styles}
                   />
                 ))
               )}
@@ -399,7 +409,7 @@ export function ExpeditionsSheet({
 
         {/* Overlay animation de lancement */}
         {launchingMission && (
-          <LaunchAnimationOverlay mission={launchingMission} />
+          <LaunchAnimationOverlay mission={launchingMission} farm={farm} styles={styles} />
         )}
 
         {/* Modal confirmation Farm-style */}
@@ -411,6 +421,8 @@ export function ExpeditionsSheet({
             primary={primary}
             colors={colors}
             t={t}
+            farm={farm}
+            styles={styles}
           />
         )}
       </View>
@@ -420,13 +432,15 @@ export function ExpeditionsSheet({
 
 // ── ConfirmLaunchModal ────────────────────────────────────────────────────────
 
-function ConfirmLaunchModal({ mission, onCancel, onConfirm, primary, colors, t }: {
+function ConfirmLaunchModal({ mission, onCancel, onConfirm, primary, colors, t, farm, styles }: {
   mission: ExpeditionMission;
   onCancel: () => void;
   onConfirm: () => void;
   primary: string;
   colors: AppColors;
   t: (key: string) => string;
+  farm: FarmPalette;
+  styles: Styles;
 }) {
   const cardScale = useSharedValue(0.85);
   const backdropOpacity = useSharedValue(0);
@@ -455,7 +469,7 @@ function ConfirmLaunchModal({ mission, onCancel, onConfirm, primary, colors, t }
       />
       <Animated.View style={[styles.confirmCard, cardStyle]}>
         {/* Auvent décoratif */}
-        <AwningStripes />
+        <AwningStripes farm={farm} styles={styles} />
 
         <View style={styles.confirmBody}>
           <Text style={styles.confirmEmoji}>{mission.emoji}</Text>
@@ -473,8 +487,8 @@ function ConfirmLaunchModal({ mission, onCancel, onConfirm, primary, colors, t }
 
           {/* Mise */}
           <View style={styles.confirmCostRow}>
-            <View style={[styles.chip, { backgroundColor: Farm.parchmentDark }]}>
-              <Text style={[styles.chipText, { color: Farm.goldText }]}>
+            <View style={[styles.chip, { backgroundColor: farm.parchmentDark }]}>
+              <Text style={[styles.chipText, { color: farm.goldText }]}>
                 {`${mission.costCoins} 🍃`}
               </Text>
             </View>
@@ -527,7 +541,7 @@ function ConfirmLaunchModal({ mission, onCancel, onConfirm, primary, colors, t }
 
 // ── LaunchAnimationOverlay ────────────────────────────────────────────────────
 
-function LaunchAnimationOverlay({ mission }: { mission: ExpeditionMission }) {
+function LaunchAnimationOverlay({ mission, farm, styles }: { mission: ExpeditionMission; farm: FarmPalette; styles: Styles }) {
   const emojiScale = useSharedValue(0);
   const emojiTranslateY = useSharedValue(0);
   const emojiRotate = useSharedValue(0);
@@ -638,10 +652,12 @@ interface CardProps {
   primary: string;
   harvestInventory: HarvestInventory;
   t: (key: string) => string;
+  farm: FarmPalette;
+  styles: Styles;
 }
 
 const ExpeditionCard = React.memo(function ExpeditionCard({
-  mission, canLaunch, onLaunch, colors, primary, harvestInventory, t,
+  mission, canLaunch, onLaunch, colors, primary, harvestInventory, t, farm, styles,
 }: CardProps) {
   const cardScale = useSharedValue(1);
   const cardAnim = useAnimatedStyle(() => ({
@@ -661,15 +677,15 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
   const failurePct = Math.round(failureRate * 100);
 
   return (
-    <Animated.View style={[styles.card, { backgroundColor: Farm.parchment, borderColor: Farm.woodHighlight }, cardAnim]}>
+    <Animated.View style={[styles.card, { backgroundColor: farm.parchment, borderColor: farm.woodHighlight }, cardAnim]}>
       {/* Row principale : emoji + info + badge difficulté */}
       <View style={styles.cardRow}>
         <Text style={styles.missionEmoji}>{mission.emoji}</Text>
         <View style={styles.cardInfo}>
-          <Text style={[styles.missionName, { color: Farm.brownText }]} numberOfLines={1}>
+          <Text style={[styles.missionName, { color: farm.brownText }]} numberOfLines={1}>
             {mission.name}
           </Text>
-          <Text style={[styles.missionDuration, { color: Farm.brownTextSub }]}>
+          <Text style={[styles.missionDuration, { color: farm.brownTextSub }]}>
             {`${mission.durationHours}h · ${mission.description.slice(0, 50)}...`}
           </Text>
         </View>
@@ -687,8 +703,8 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
 
       {/* Row coûts */}
       <View style={styles.costRow}>
-        <View style={[styles.chip, { backgroundColor: Farm.parchmentDark }]}>
-          <Text style={[styles.chipText, { color: Farm.goldText }]}>
+        <View style={[styles.chip, { backgroundColor: farm.parchmentDark }]}>
+          <Text style={[styles.chipText, { color: farm.goldText }]}>
             {`${mission.costCoins} 🍃`}
           </Text>
         </View>
@@ -720,7 +736,7 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
 
       {/* Gains possibles */}
       <View style={styles.lootRow}>
-        <Text style={[styles.lootLabel, { color: Farm.brownTextSub }]}>1 gain au sort parmi :</Text>
+        <Text style={[styles.lootLabel, { color: farm.brownTextSub }]}>1 gain au sort parmi :</Text>
         <View style={styles.lootChips}>
           {EXPEDITION_LOOT_TABLE[mission.difficulty].map((item) => (
             <View key={item.itemId} style={[styles.lootChip, { backgroundColor: colors.catJeux + '18', borderColor: colors.catJeux + '44' }]}>
@@ -738,12 +754,12 @@ const ExpeditionCard = React.memo(function ExpeditionCard({
         style={[
           styles.launchBtn,
           canLaunch
-            ? { backgroundColor: Farm.greenBtn, shadowColor: Farm.greenBtnShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 0 }
-            : { backgroundColor: Farm.parchmentDark, borderWidth: 1, borderColor: Farm.woodHighlight, opacity: 0.6 },
+            ? { backgroundColor: farm.greenBtn, shadowColor: farm.greenBtnShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 0 }
+            : { backgroundColor: farm.parchmentDark, borderWidth: 1, borderColor: farm.woodHighlight, opacity: 0.6 },
         ]}
         activeOpacity={0.8}
       >
-        <Text style={[styles.launchBtnText, { color: canLaunch ? '#FFFFFF' : Farm.brownTextSub }]}>
+        <Text style={[styles.launchBtnText, { color: canLaunch ? '#FFFFFF' : farm.brownTextSub }]}>
           {canLaunch ? "Lancer l'expédition" : 'Complet'}
         </Text>
       </TouchableOpacity>
@@ -760,10 +776,12 @@ interface ActiveRowProps {
   colors: AppColors;
   primary: string;
   tick: number;
+  farm: FarmPalette;
+  styles: Styles;
 }
 
 const ActiveExpeditionRow = React.memo(function ActiveExpeditionRow({
-  expedition, mission, onCollect, colors, primary, tick: _tick,
+  expedition, mission, onCollect, colors, primary, tick: _tick, farm, styles,
 }: ActiveRowProps) {
   const remaining = getExpeditionRemainingMinutes(expedition);
   const isReady = remaining === 0;
@@ -771,10 +789,10 @@ const ActiveExpeditionRow = React.memo(function ActiveExpeditionRow({
   const diffColor = difficultyColor(expedition.difficulty, colors);
 
   return (
-    <View style={[styles.activeRow, { backgroundColor: Farm.parchment, borderColor: Farm.woodHighlight }]}>
+    <View style={[styles.activeRow, { backgroundColor: farm.parchment, borderColor: farm.woodHighlight }]}>
       <Text style={styles.rowEmoji}>{mission?.emoji ?? '🗺️'}</Text>
       <View style={styles.rowInfo}>
-        <Text style={[styles.rowName, { color: Farm.brownText }]} numberOfLines={1}>
+        <Text style={[styles.rowName, { color: farm.brownText }]} numberOfLines={1}>
           {mission?.name ?? expedition.missionId}
         </Text>
         <View style={styles.rowMeta}>
@@ -797,7 +815,7 @@ const ActiveExpeditionRow = React.memo(function ActiveExpeditionRow({
       {isReady && (
         <TouchableOpacity
           onPress={onCollect}
-          style={[styles.collectBtn, { backgroundColor: Farm.greenBtn, shadowColor: Farm.greenBtnShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 0 }]}
+          style={[styles.collectBtn, { backgroundColor: farm.greenBtn, shadowColor: farm.greenBtnShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 0 }]}
           activeOpacity={0.8}
         >
           <Text style={[styles.collectBtnText, { color: '#FFFFFF' }]}>{'Collecter'}</Text>
@@ -814,13 +832,15 @@ interface ResultRowProps {
   mission: ExpeditionMission | undefined;
   onDismiss: () => void;
   colors: AppColors;
+  farm: FarmPalette;
+  styles: Styles;
 }
 
 const ResultRow = React.memo(function ResultRow({
-  expedition, mission, onDismiss, colors,
+  expedition, mission, onDismiss, colors, farm, styles,
 }: ResultRowProps) {
   const outcome = expedition.result!;
-  const outColor = outcomeColor(outcome, colors);
+  const outColor = outcomeColor(outcome, colors, farm);
 
   // Résoudre le loot lisible depuis l'itemId stocké
   const lootDisplay = expedition.lootItemId
@@ -828,10 +848,10 @@ const ResultRow = React.memo(function ResultRow({
     : null;
 
   return (
-    <View style={[styles.resultRow, { backgroundColor: Farm.parchment, borderColor: Farm.woodHighlight }]}>
+    <View style={[styles.resultRow, { backgroundColor: farm.parchment, borderColor: farm.woodHighlight }]}>
       <Text style={styles.rowEmoji}>{mission?.emoji ?? '🗺️'}</Text>
       <View style={styles.rowInfo}>
-        <Text style={[styles.rowName, { color: Farm.brownText }]} numberOfLines={1}>
+        <Text style={[styles.rowName, { color: farm.brownText }]} numberOfLines={1}>
           {mission?.name ?? expedition.missionId}
         </Text>
         <View style={[styles.outcomeBadge, { backgroundColor: outColor + '22', borderColor: outColor }]}>
@@ -867,7 +887,7 @@ const ResultRow = React.memo(function ResultRow({
         activeOpacity={0.7}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Text style={[styles.dismissText, { color: Farm.brownTextSub }]}>{'Supprimer'}</Text>
+        <Text style={[styles.dismissText, { color: farm.brownTextSub }]}>{'Supprimer'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -875,10 +895,10 @@ const ResultRow = React.memo(function ResultRow({
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
   },
   // ── Launch overlay ──
   launchOverlay: {
@@ -900,7 +920,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: Farm.goldText,
+    borderColor: farm.goldText,
   },
   launchEmoji: {
     fontSize: 72,
@@ -909,13 +929,13 @@ const styles = StyleSheet.create({
   launchSparkle: {
     position: 'absolute',
     fontSize: 26,
-    color: Farm.goldText,
+    color: farm.goldText,
   },
   launchTitle: {
     marginTop: Spacing.xl,
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
@@ -925,7 +945,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     fontSize: FontSize.subtitle,
     fontWeight: FontWeight.semibold,
-    color: Farm.goldText,
+    color: farm.goldText,
     textAlign: 'center',
   },
   // ── Confirm modal ──
@@ -940,10 +960,10 @@ const styles = StyleSheet.create({
   confirmCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     borderRadius: Radius.lg,
     borderWidth: 2,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -963,7 +983,7 @@ const styles = StyleSheet.create({
   confirmTitle: {
     fontSize: FontSize.subtitle,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textAlign: 'center',
   },
   confirmMissionName: {
@@ -987,9 +1007,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     padding: Spacing.md,
     borderRadius: Radius.md,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderWidth: 1,
-    borderColor: Farm.woodHighlight,
+    borderColor: farm.woodHighlight,
     width: '100%',
     gap: Spacing.xs,
   },
@@ -1033,14 +1053,14 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: Farm.woodHighlight,
-    backgroundColor: Farm.parchmentDark,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
     alignItems: 'center',
   },
   devTestBtnText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   header: {
     flexDirection: 'row',
@@ -1048,9 +1068,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.xl,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     borderBottomWidth: 2,
-    borderBottomColor: Farm.woodHighlight,
+    borderBottomColor: farm.woodHighlight,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -1060,7 +1080,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textShadowColor: 'rgba(255,255,255,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
@@ -1097,7 +1117,7 @@ const styles = StyleSheet.create({
   // ── Tabs ─────────────────────────────────────────
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     position: 'relative',
     paddingBottom: 2,
   },
@@ -1398,3 +1418,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);

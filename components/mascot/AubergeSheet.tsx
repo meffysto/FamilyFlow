@@ -93,7 +93,9 @@ import { SectionErrorBoundary } from '../SectionErrorBoundary';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { Farm } from '../../constants/farm-theme';
+import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+
+type Styles = ReturnType<typeof makeStyles>;
 
 // ─── Couleurs sémantiques (seules constantes non-Farm) ──────────────────
 const COLOR_ERROR = '#E74C3C';
@@ -108,11 +110,11 @@ function formatRemaining(minutes: number, expiredLabel: string): string {
   return `${h}h ${String(m).padStart(2, '0')}min`;
 }
 
-function timerColor(minutes: number): string {
+function timerColor(minutes: number, farm: FarmPalette): string {
   if (minutes <= 0) return COLOR_ERROR;
   if (minutes < 60) return COLOR_ERROR;
   if (minutes < 360) return '#E8943A';
-  return Farm.brownTextSub;
+  return farm.brownTextSub;
 }
 
 function getVisitorDef(visitorId: string): VisitorDefinition | undefined {
@@ -175,28 +177,28 @@ function itemLabel(item: VisitorRequestItem, t: (key: string, opts?: any) => str
 
 // ─── Sous-composant : auvent rayé ────────────────────────────────────────
 
-function AwningStripes() {
+function AwningStripes({ farm, styles }: { farm: FarmPalette; styles: Styles }) {
   return (
     <View style={styles.awning}>
       <View style={styles.awningStripes}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningStripe,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
       </View>
       <View style={styles.awningShadow} />
       <View style={styles.awningScallop}>
-        {Array.from({ length: Farm.awningStripeCount }).map((_, i) => (
+        {Array.from({ length: farm.awningStripeCount }).map((_, i) => (
           <View
             key={i}
             style={[
               styles.awningScallopDot,
-              { backgroundColor: i % 2 === 0 ? Farm.awningGreen : Farm.awningCream },
+              { backgroundColor: i % 2 === 0 ? farm.awningGreen : farm.awningCream },
             ]}
           />
         ))}
@@ -215,6 +217,8 @@ interface VisitorCardProps {
   onDismiss: (visitor: ActiveVisitor) => void;
   index: number;
   deliverTrigger: number;
+  farm: FarmPalette;
+  styles: Styles;
 }
 
 const VisitorCard = React.memo(function VisitorCard({
@@ -225,6 +229,8 @@ const VisitorCard = React.memo(function VisitorCard({
   onDismiss,
   index,
   deliverTrigger,
+  farm,
+  styles,
 }: VisitorCardProps) {
   const { t } = useTranslation();
   const def = getVisitorDef(visitor.visitorId);
@@ -233,7 +239,7 @@ const VisitorCard = React.memo(function VisitorCard({
   const bio = def ? t(def.descriptionKey) : '';
 
   const minutes = getRemainingMinutes(visitor, new Date());
-  const tColor = timerColor(minutes);
+  const tColor = timerColor(minutes, farm);
 
   const lootPct = def?.preferredLoot && def.preferredLoot.length > 0
     ? Math.round((visitor.lootChance ?? 0.18) * 100)
@@ -327,7 +333,7 @@ const VisitorCard = React.memo(function VisitorCard({
               key={`${item.itemId}-${i}`}
               style={[
                 styles.requestItem,
-                { borderColor: ok ? Farm.awningGreen : COLOR_ERROR },
+                { borderColor: ok ? farm.awningGreen : COLOR_ERROR },
               ]}
             >
               <View style={styles.requestItemTop}>
@@ -373,12 +379,12 @@ const VisitorCard = React.memo(function VisitorCard({
           disabled={!canDeliverOk}
           style={[
             styles.ctaPrimary,
-            { backgroundColor: canDeliverOk ? Farm.greenBtn : Farm.parchmentDark },
+            { backgroundColor: canDeliverOk ? farm.greenBtn : farm.parchmentDark },
           ]}
           accessibilityLabel={t('auberge.cta.deliver')}
           accessibilityRole="button"
         >
-          <Text style={[styles.ctaPrimaryText, { color: canDeliverOk ? '#FFFFFF' : Farm.brownTextSub }]}>
+          <Text style={[styles.ctaPrimaryText, { color: canDeliverOk ? '#FFFFFF' : farm.brownTextSub }]}>
             {t('auberge.cta.deliver')}
           </Text>
         </Pressable>
@@ -402,11 +408,13 @@ const VisitorCard = React.memo(function VisitorCard({
 interface ReputationRowProps {
   visitorDef: VisitorDefinition;
   reputation: VisitorReputation | undefined;
+  styles: Styles;
 }
 
 const ReputationRow = React.memo(function ReputationRow({
   visitorDef,
   reputation,
+  styles,
 }: ReputationRowProps) {
   const { t } = useTranslation();
   const name = t(visitorDef.labelKey);
@@ -449,6 +457,8 @@ interface AubergeSheetProps {
 
 function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
   const { t } = useTranslation();
+  const { farm, isDark } = useFarmTheme();
+  const styles = isDark ? stylesDark : stylesLight;
   const { activeProfile } = useVault();
   const { showToast } = useToast();
   const {
@@ -597,7 +607,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
 
         <View style={styles.sheet}>
           {/* Auvent rayé — doit être en premier pour coller au bord arrondi */}
-          <AwningStripes />
+          <AwningStripes farm={farm} styles={styles} />
 
           {/* Grabber */}
           <View style={styles.grabber} />
@@ -652,6 +662,8 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
                       onDismiss={handleDismiss}
                       index={idx}
                       deliverTrigger={deliveryTriggers[v.instanceId] ?? 0}
+                      farm={farm}
+                      styles={styles}
                     />
                   );
                 })
@@ -677,6 +689,7 @@ function AubergeSheetInner({ visible, onClose }: AubergeSheetProps) {
                           key={def.id}
                           visitorDef={def}
                           reputation={rebuilt}
+                          styles={styles}
                         />
                       );
                     })}
@@ -709,7 +722,7 @@ export const AubergeSheet = React.memo(AubergeSheetInner);
 
 // ─── Styles ─────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -723,7 +736,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: 'hidden',
-    backgroundColor: Farm.parchment,
+    backgroundColor: farm.parchment,
     ...Shadows.xl,
   },
   grabber: {
@@ -732,7 +745,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignSelf: 'center',
     marginTop: Spacing.lg,
-    backgroundColor: Farm.woodMed,
+    backgroundColor: farm.woodMed,
   },
 
   // ── Auvent ──
@@ -778,12 +791,12 @@ const styles = StyleSheet.create({
     fontSize: FontSize.title,
     fontWeight: FontWeight.heavy,
     letterSpacing: -0.3,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   headerSubtitle: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   closeBtn: {
     width: 32,
@@ -791,12 +804,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   closeBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   body: {
     paddingHorizontal: Spacing['3xl'],
@@ -816,21 +829,21 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.heavy,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   emptyBody: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.medium,
     textAlign: 'center',
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Visitor card ──
   card: {
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Farm.parchmentDark,
-    backgroundColor: Farm.parchment,
+    borderColor: farm.parchmentDark,
+    backgroundColor: farm.parchment,
     padding: Spacing['2xl'],
     gap: Spacing.lg,
     overflow: 'hidden',
@@ -845,7 +858,7 @@ const styles = StyleSheet.create({
   particleText: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.heavy,
-    color: Farm.awningGreen,
+    color: farm.awningGreen,
   },
   cardRow: {
     flexDirection: 'row',
@@ -858,7 +871,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   portraitEmoji: {
     fontSize: 56,
@@ -875,13 +888,13 @@ const styles = StyleSheet.create({
     fontSize: FontSize.lg,
     fontWeight: FontWeight.heavy,
     letterSpacing: -0.2,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   bio: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
     lineHeight: 18,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   requestGrid: {
@@ -897,7 +910,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     borderWidth: 1.5,
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
     minWidth: 72,
   },
   requestItemTop: {
@@ -908,7 +921,7 @@ const styles = StyleSheet.create({
   requestItemName: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
     textAlign: 'center',
     maxWidth: 90,
   },
@@ -922,11 +935,11 @@ const styles = StyleSheet.create({
   requestQty: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   requestStatus: {
     fontSize: FontSize.sm,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   metaRow: {
@@ -942,7 +955,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
   metaValue: {
     fontSize: FontSize.body,
@@ -952,7 +965,7 @@ const styles = StyleSheet.create({
   metaValueReward: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.heavy,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
 
   ctaRow: {
@@ -978,13 +991,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    backgroundColor: Farm.woodBtn,
-    borderColor: Farm.woodBtnShadow,
+    backgroundColor: farm.woodBtn,
+    borderColor: farm.woodBtnShadow,
   },
   ctaSecondaryText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: Farm.parchment,
+    color: farm.parchment,
   },
 
   // ── Reputation section ──
@@ -995,8 +1008,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: Farm.parchment,
-    borderColor: Farm.parchmentDark,
+    backgroundColor: farm.parchment,
+    borderColor: farm.parchmentDark,
   },
   repRow: {
     flexDirection: 'row',
@@ -1005,7 +1018,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Farm.parchmentDark,
+    borderBottomColor: farm.parchmentDark,
   },
   repPortrait: {
     width: 36,
@@ -1013,7 +1026,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
+    backgroundColor: farm.parchmentDark,
   },
   repSprite: {
     width: 32,
@@ -1026,12 +1039,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownText,
+    color: farm.brownText,
   },
   repHearts: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 
   // ── Dev button ──
@@ -1042,12 +1055,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
     alignItems: 'center',
-    backgroundColor: Farm.parchmentDark,
-    borderColor: Farm.woodLight,
+    backgroundColor: farm.parchmentDark,
+    borderColor: farm.woodLight,
   },
   devBtnText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
-    color: Farm.brownTextSub,
+    color: farm.brownTextSub,
   },
 });
+
+const stylesLight = makeStyles(Farm);
+const stylesDark = makeStyles(FarmDarkPalette);
