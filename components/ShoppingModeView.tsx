@@ -107,39 +107,49 @@ export function ShoppingModeView({
     return [...ordered, ...tail];
   }, [rawSections, parcours]);
 
-  const { doneCount, totalCount, nextItems, moreCount } = useMemo(() => {
-    let done = 0;
-    let total = 0;
-    const remaining: string[] = [];
+  const { remainingCount, nextItems, moreCount } = useMemo(() => {
+    let remaining = 0;
+    const remainingTexts: string[] = [];
     for (const s of sections) {
       const items = itemsBySection[s] ?? [];
-      total += items.length;
+      remaining += items.length;
       for (const it of items) {
-        if (it.completed) done++;
-        else remaining.push(it.text);
+        if (!it.completed) remainingTexts.push(it.text);
       }
     }
     return {
-      doneCount: done,
-      totalCount: total,
-      nextItems: remaining.slice(0, 3),
-      moreCount: Math.max(0, remaining.length - 3),
+      remainingCount: remaining,
+      nextItems: remainingTexts.slice(0, 3),
+      moreCount: Math.max(0, remainingTexts.length - 3),
     };
   }, [sections, itemsBySection]);
 
-  const allDone = totalCount > 0 && doneCount === totalCount;
-  const pct = totalCount > 0 ? doneCount / totalCount : 0;
+  // Items cochés = supprimés de la liste → comptés via undoStack
+  const checkedCount = undoStack?.length ?? 0;
+  const totalCount = remainingCount + checkedCount;
+  const allDone = totalCount > 0 && checkedCount === totalCount;
+  const pct = totalCount > 0 ? checkedCount / totalCount : 0;
+
+  // Nb items cochés (supprimés) par rayon, via undoStack
+  const checkedBySectionFromUndo = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const u of (undoStack ?? [])) {
+      map[u.section] = (map[u.section] ?? 0) + 1;
+    }
+    return map;
+  }, [undoStack]);
 
   // Etat par rayon — done/total + flag "tout coché"
   const sectionStats = useMemo(() => {
     return sections
       .map((s) => {
         const items = itemsBySection[s] ?? [];
-        const done = items.filter((i) => i.completed).length;
-        return { section: s, total: items.length, done, all: items.length > 0 && done === items.length };
+        const doneInSection = checkedBySectionFromUndo[s] ?? 0;
+        const totalInSection = items.length + doneInSection;
+        return { section: s, total: totalInSection, done: doneInSection, all: totalInSection > 0 && doneInSection === totalInSection };
       })
       .filter((s) => s.total > 0);
-  }, [sections, itemsBySection]);
+  }, [sections, itemsBySection, checkedBySectionFromUndo]);
 
   // Rayon courant = premier rayon non-terminé (ordre du parcours)
   const currentSection = useMemo(
@@ -176,6 +186,9 @@ export function ShoppingModeView({
   const progressBarStyle = useAnimatedStyle(() => ({
     width: `${progressWidth.value * 100}%`,
   }));
+
+  // Prix total capturé au montage (avant que les items soient supprimés)
+  const initialTotalEstimateRef = useRef<number | undefined>(remainingEstimate);
 
   // Haptic célébration au passage à 100 %
   const wasAllDoneRef = useRef(false);
@@ -284,20 +297,25 @@ export function ShoppingModeView({
         <View style={styles.progressBlock}>
           <View style={styles.progressNumbers}>
             <Text style={[styles.progressDone, { color: primary }]}>
-              {doneCount}
+              {checkedCount}
             </Text>
             <Text style={[styles.progressTotal, { color: colors.textMuted }]}>
               / {totalCount}
             </Text>
-            {remainingEstimate !== undefined &&
-              remainingEstimate > 0 && (
-                <Text
-                  style={[styles.progressEstimate, { color: colors.text }]}
-                  numberOfLines={1}
-                >
-                  {`${(formatTotalEstimate ?? ((n: number) => `≈ ${Math.round(n)} €`))(remainingEstimate)} restants`}
-                </Text>
-              )}
+            {!allDone && initialTotalEstimateRef.current !== undefined &&
+              initialTotalEstimateRef.current > 0 && (() => {
+                const fmt = formatTotalEstimate ?? ((n: number) => `≈ ${Math.round(n)} €`);
+                const totalEst = initialTotalEstimateRef.current!;
+                const restEst = remainingEstimate ?? 0;
+                return (
+                  <Text
+                    style={[styles.progressEstimate, { color: colors.text }]}
+                    numberOfLines={1}
+                  >
+                    {restEst > 0 ? `${fmt(restEst)} restants · ` : ''}{fmt(totalEst)} total
+                  </Text>
+                );
+              })()}
           </View>
 
           <View
@@ -427,9 +445,11 @@ export function ShoppingModeView({
       >
         {sections.map((section) => {
           const items = itemsBySection[section];
-          if (!items || items.length === 0) return null;
-          const sectionDone = items.filter((i) => i.completed).length;
-          const sectionAllDone = sectionDone === items.length;
+          const sectionChecked = checkedBySectionFromUndo[section] ?? 0;
+          const sectionTotal = (items?.length ?? 0) + sectionChecked;
+          if (sectionTotal === 0) return null;
+          const sectionDone = sectionChecked;
+          const sectionAllDone = sectionTotal > 0 && sectionDone === sectionTotal;
           const isCurrent = section === currentSection;
           const collapsed = isCollapsed(section, sectionAllDone);
           return (
@@ -454,7 +474,7 @@ export function ShoppingModeView({
                 activeOpacity={0.7}
                 style={styles.sectionHead}
                 accessibilityRole="button"
-                accessibilityLabel={`${section}, ${sectionDone} sur ${items.length}, ${collapsed ? 'replié' : 'déplié'}`}
+                accessibilityLabel={`${section}, ${sectionDone} sur ${sectionTotal}, ${collapsed ? 'replié' : 'déplié'}`}
               >
                 <Text
                   style={[styles.sectionTitle, { color: colors.text }]}
@@ -468,13 +488,13 @@ export function ShoppingModeView({
                     { color: sectionAllDone ? primary : colors.textMuted },
                   ]}
                 >
-                  {sectionDone}/{items.length}
+                  {sectionDone}/{sectionTotal}
                 </Text>
                 <ChevronCaret collapsed={collapsed} color={colors.textMuted} />
               </TouchableOpacity>
               {collapsed
                 ? null
-                : items.map((item) => {
+                : (items ?? []).map((item) => {
                 const priceInfo = priceByItemId?.get(item.id);
                 return (
                   <Animated.View
