@@ -157,6 +157,8 @@ import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { Farm, FarmDarkPalette, useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 
 type Styles = ReturnType<typeof makeStyles>;
 
@@ -453,6 +455,7 @@ export default function TreeScreen() {
   const plantationRef = useRef<View>(null);
   const harvestRef = useRef<View>(null);
   const hudXpRef = useRef<View>(null);
+  const screenRef = useRef<View>(null);
   // Stabiliser l'objet targetRefs pour éviter de re-invalider measureForStep à chaque render de tree.tsx
   const farmTutorialTargetRefs = useMemo(
     () => ({ plantation: plantationRef, harvest: harvestRef, hudXp: hudXpRef }),
@@ -488,6 +491,10 @@ export default function TreeScreen() {
   const screenOpacity = useSharedValue(1);
   const fadeStyle = useAnimatedStyle(() => ({ opacity: screenOpacity.value }));
 
+  // Opacité HUD pour masquer l'interface pendant la capture screenshot
+  const hudOpacity = useSharedValue(1);
+  const hudAnimStyle = useAnimatedStyle(() => ({ opacity: hudOpacity.value }));
+
   // Handler de navigation portail avec fade 400ms
   const handlePortalPress = useCallback(() => {
     screenOpacity.value = withTiming(
@@ -498,6 +505,24 @@ export default function TreeScreen() {
       },
     );
   }, [screenOpacity, router]);
+
+  const captureAndShare = useCallback(async () => {
+    try {
+      const uri = await captureRef(screenRef, { format: 'jpg', quality: 0.95 });
+      hudOpacity.value = withTiming(1, { duration: 300 });
+      await Sharing.shareAsync(uri, { mimeType: 'image/jpeg', dialogTitle: 'Partager la ferme' });
+    } catch {
+      hudOpacity.value = withTiming(1, { duration: 300 });
+    }
+  }, [hudOpacity]);
+
+  const handleScreenshot = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hudOpacity.value = withTiming(0, { duration: 150 }, (finished) => {
+      'worklet';
+      if (finished) runOnJS(captureAndShare)();
+    });
+  }, [hudOpacity, captureAndShare]);
 
   // Reset opacity quand l'écran regagne le focus (retour depuis le village)
   useFocusEffect(useCallback(() => {
@@ -1956,7 +1981,7 @@ export default function TreeScreen() {
   if (!profile) return null;
 
   return (
-    <View style={[styles.safe, { backgroundColor: colors.bg }]} onTouchStart={pokeActivity}>
+    <View ref={screenRef} style={[styles.safe, { backgroundColor: colors.bg }]} onTouchStart={pokeActivity}>
       <ScrollView
         contentContainerStyle={[styles.scroll, Layout.contentContainer, { paddingTop: insets.top + 30 }]}
         showsVerticalScrollIndicator={false}
@@ -3158,8 +3183,9 @@ export default function TreeScreen() {
       </ScrollView>
 
       {/* HUD ferme — flottant par-dessus le diorama, style parchemin translucide */}
-      <View style={[
+      <Animated.View style={[
         styles.farmHud,
+        hudAnimStyle,
         {
           position: 'absolute',
           top: insets.top,
@@ -3203,8 +3229,17 @@ export default function TreeScreen() {
           >
             <Text style={styles.hudEmoji}>{'📖'}</Text>
           </TouchableOpacity>
+          {/* Capture d'écran sans HUD → partage iOS */}
+          <TouchableOpacity
+            style={styles.hudCodexButton}
+            onPress={handleScreenshot}
+            accessibilityLabel="Capture d'écran"
+            accessibilityRole="button"
+          >
+            <Text style={styles.hudEmoji}>{'📷'}</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Modal sélecteur d'espèce */}
       <Modal
