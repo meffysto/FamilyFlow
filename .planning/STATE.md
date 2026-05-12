@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 Phase: 52 (stories-pipeline-d-valuation-auto-re-roll-qualit) — EXECUTING
 Plan: 1 of 4
 Status: Executing Phase 52
-Last activity: 2026-05-06 -- Phase 52 execution started
+Last activity: 2026-05-12 -- Completed quick task 260512-ezj: FAM-24 fix saga voyageur_argent stalker + reset versionné
 
 ### Quick Tasks Completed
 
@@ -82,6 +82,7 @@ Last activity: 2026-05-06 -- Phase 52 execution started
 | 260503-phase-b | Phase B Histoires — wizard slim (3-4 décisions) + écran Settings durables par enfant | 2026-05-03 | 792c207 | [260503-phase-b-stories-wizard](./quick/260503-phase-b-stories-wizard/) |
 | 260505-pcl | FAM-16 Prix connus pour les listes de courses (override manuel + pricebook vault) | 2026-05-05 | 3b20ddc | [260505-pcl-prix-connus-listes-courses](./quick/260505-pcl-prix-connus-listes-courses/) |
 | 260506-pnl | Injection historique cross-stories dans le prompt (anti-clonage P3+P5+P7) | 2026-05-06 | ade46ee | [260506-pnl-injection-historique-cross-stories-dans-](./quick/260506-pnl-injection-historique-cross-stories-dans-/) |
+| 260512-ezj | FAM-24 Fix saga voyageur_argent stalker + reset versionné | 2026-05-12 | d909742c | [260512-ezj-fam-24-fix-saga-voyageur-argent-stalker-](./quick/260512-ezj-fam-24-fix-saga-voyageur-argent-stalker-/) |
 
 ## Performance Metrics
 
