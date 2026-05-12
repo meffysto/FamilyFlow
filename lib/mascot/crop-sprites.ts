@@ -116,6 +116,21 @@ export const CROP_SPRITES: Record<string, Record<number, [any, any]>> = {
     3: [require('../../assets/garden/crops/fleur_celeste/stage_3_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_3_b.png')],
     4: [require('../../assets/garden/crops/fleur_celeste/stage_4_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_4_b.png')],
   },
+  // Graines épiques drop-only — sprite unique répété sur tous les stades
+  etoile_berger: {
+    0: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
+    1: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
+    2: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
+    3: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
+    4: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
+  },
+  larme_phenix: {
+    0: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
+    1: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
+    2: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
+    3: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
+    4: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
+  },
   // Cultures rares drop-only (pas d'animation 2-frames — sprite unique répété)
   truffe: {
     0: [require('../../assets/garden/crops/truffe/crop_truffe_1.png'), require('../../assets/garden/crops/truffe/crop_truffe_1.png')],
@@ -150,4 +165,7 @@ export const CROP_ICONS: Record<string, any> = {
   mousse_etoile:  require('../../assets/garden/crops/mousse_etoile/icon.png'),
   racine_geante:  require('../../assets/garden/crops/racine_geante/icon.png'),
   fleur_celeste:  require('../../assets/garden/crops/fleur_celeste/icon.png'),
+  // Graines épiques (drop-only) — cascade de drops sur expéditions
+  etoile_berger:  require('../../assets/garden/crops/etoile_berger/icon.png'),
+  larme_phenix:   require('../../assets/garden/crops/larme_phenix/icon.png'),
 };

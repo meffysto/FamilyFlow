@@ -335,8 +335,15 @@ interface SeedDropRule {
   chance: number;  // probabilite (0.04 = 4%)
 }
 
-/** Table de drop des graines rares */
+/** Table de drop des graines rares.
+ * Ordre = priorité : un drop épique tente avant un drop commun.
+ * Cascade : commune → rare expedition → épique → légendaire.
+ */
 export const RARE_SEED_DROP_RULES: SeedDropRule[] = [
+  // ⭐ Larme du Phénix (1%) — drop ultra-rare des graines expedition légendaires
+  { sourceCropIds: ['fleur_lave', 'cristal_noir', 'mousse_etoile', 'racine_geante', 'fleur_celeste'], seedId: 'larme_phenix', chance: 0.01 },
+  // ⭐ Étoile du Berger (2%) — drop épique des expéditions majestueuses+
+  { sourceCropIds: ['cristal_noir', 'racine_geante', 'fleur_celeste'], seedId: 'etoile_berger', chance: 0.02 },
   // Recolte arbuste+ → orchidee (4%)
   { sourceCropIds: ['tomato', 'cabbage', 'cucumber', 'corn', 'strawberry', 'pumpkin', 'sunflower'], seedId: 'orchidee', chance: 0.04 },
   // Recolte arbre+ → rose doree (4%)
@@ -354,9 +361,14 @@ export function rollSeedDrop(harvestedCropId: string): RareSeedDrop | null {
   for (const rule of RARE_SEED_DROP_RULES) {
     // Verifier si la culture source est eligible
     if (rule.sourceCropIds !== '*' && !rule.sourceCropIds.includes(harvestedCropId)) continue;
-    // Ne pas dropper une graine rare a partir d'une culture rare elle-meme
-    const harvestedDef = CROP_CATALOG.find(c => c.id === harvestedCropId);
-    if (harvestedDef?.dropOnly) continue;
+    // Pour les regles wildcard '*', exclure les recoltes de cultures rares
+    // (evite par ex. dropper orchidee en recoltant orchidee).
+    // Les regles avec sourceCropIds explicite peuvent inclure des cultures rares
+    // (ex. cascade epique : recolter fleur_celeste -> chance larme_phenix).
+    if (rule.sourceCropIds === '*') {
+      const harvestedDef = CROP_CATALOG.find(c => c.id === harvestedCropId);
+      if (harvestedDef?.dropOnly) continue;
+    }
     // Lancer le de
     if (Math.random() < rule.chance) {
       const seedDef = CROP_CATALOG.find(c => c.id === rule.seedId);

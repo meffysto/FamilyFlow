@@ -396,6 +396,9 @@ export const CROP_CATALOG: CropDefinition[] = [
   { id: 'mousse_etoile',  labelKey: 'farm.crop.mousse_etoile',  emoji: '🌟', tasksPerStage: 3, harvestReward: 350, minTreeStage: 'pousse',     cost: 0, dropOnly: true, expeditionExclusive: true },
   { id: 'racine_geante',  labelKey: 'farm.crop.racine_geante',  emoji: '🌿', tasksPerStage: 5, harvestReward: 1000, minTreeStage: 'majestueux', cost: 0, dropOnly: true, expeditionExclusive: true },
   { id: 'fleur_celeste',  labelKey: 'farm.crop.fleur_celeste',  emoji: '🌸', tasksPerStage: 6, harvestReward: 1500, minTreeStage: 'legendaire', cost: 0, dropOnly: true, expeditionExclusive: true },
+  // Graines épiques — cascade de drops sur expéditions (Phase épique)
+  { id: 'etoile_berger',  labelKey: 'farm.crop.etoile_berger',  emoji: '⭐', tasksPerStage: 6, harvestReward: 2500, minTreeStage: 'majestueux', cost: 0, dropOnly: true },
+  { id: 'larme_phenix',   labelKey: 'farm.crop.larme_phenix',   emoji: '🔥', tasksPerStage: 7, harvestReward: 3500, minTreeStage: 'legendaire', cost: 0, dropOnly: true },
 ];
 
 // ─────────────────────────────────────────────

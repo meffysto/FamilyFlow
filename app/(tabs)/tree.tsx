@@ -542,6 +542,8 @@ export default function TreeScreen() {
     tasksPerStage: number;
   } | null>(null);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
+  // Quantité de plantation en lot — applique au prochain tap sur une graine
+  const [seedPickerQuantity, setSeedPickerQuantity] = useState(1);
   const [harvestEvent, setHarvestEvent] = useState<HarvestEvent | null>(null);
   const [seedDropEvent, setSeedDropEvent] = useState<RareSeedDrop | null>(null);
   // Phase 41 (SPOR-10) — tooltip one-shot premier drop Sporée
@@ -1618,7 +1620,25 @@ export default function TreeScreen() {
     }
   }, [profile, isOwnTree, harvest, level, stageIdx, techBonuses, stageInfo.stage, triggerActionMsg]);
 
-  /** Planter une graine sur la parcelle selectionnee.
+  /** Calcule la liste ordonnée de parcelles disponibles pour planter en lot.
+   *  Commence par selectedPlotIndex puis les autres parcelles vides débloquées,
+   *  filtrant celles occupées ou bloquées par usure. */
+  const computeAvailablePlotsForBatch = useCallback((startPlotIndex: number, max: number): number[] => {
+    if (!profile) return [];
+    const unlocked = getExpandedCropCells(stageInfo.stage, techBonuses).map(c => cellIdToStableIndex(c.id));
+    const planted = parseCrops(profile.farmCrops ?? '').map(c => c.plotIndex);
+    const wear = getWearEffects(profile.id);
+    const blocked = wear?.blockedPlots ?? [];
+    const empty = unlocked.filter(idx => !planted.includes(idx) && !blocked.includes(idx));
+    // Ordonne : startPlotIndex en premier (s'il est libre), puis les autres
+    const ordered = [
+      ...empty.filter(i => i === startPlotIndex),
+      ...empty.filter(i => i !== startPlotIndex),
+    ];
+    return ordered.slice(0, Math.max(1, max));
+  }, [profile, stageInfo.stage, techBonuses, getWearEffects]);
+
+  /** Planter une graine sur la parcelle selectionnee (ou plusieurs en mode lot).
    *  Si l'utilisateur a armé le pari Sporée via le bouton du picker et que
    *  les conditions sont réunies → ouvre WagerSealerSheet (pageSheet empilé
    *  300ms delay anti-collision iOS). Sinon plantation directe. */
@@ -1626,6 +1646,7 @@ export default function TreeScreen() {
     if (!profile || selectedPlotIndex === null) return;
 
     // Gate armement manuel — sealer Sporée si bouton cliqué, inventaire ≥1 et profil autorisé
+    // Note : le pari Sporée reste single-plot (la batch ignore le pari)
     const sporeeCount = profile.sporeeCount ?? 0;
     if (sporeeWagerArmed && sporeeCount >= 1) {
       const check = canSealWager({
@@ -1645,18 +1666,41 @@ export default function TreeScreen() {
       }
     }
 
-    // Plantation directe — comportement historique préservé
+    // Multi-plant : borne la quantité par le stock (graines rares) ou les feuilles (graines normales)
+    const cropDef = CROP_CATALOG.find(c => c.id === cropId);
+    const isRare = cropDef?.dropOnly === true;
+    const rareStock = profile.farmRareSeeds?.[cropId] ?? 0;
+    const coins = profile.coins ?? 0;
+    const maxByResource = isRare
+      ? rareStock
+      : (cropDef && cropDef.cost > 0 ? Math.floor(coins / cropDef.cost) : seedPickerQuantity);
+    const targetPlots = computeAvailablePlotsForBatch(selectedPlotIndex, Math.min(seedPickerQuantity, maxByResource));
+    const plantedCount = targetPlots.length;
+
+    if (plantedCount === 0) {
+      showToast(t('common.error'), 'error');
+      setShowSeedPicker(false);
+      setSelectedPlotIndex(null);
+      setSeedPickerQuantity(1);
+      return;
+    }
+
     try {
-      await plant(profile.id, selectedPlotIndex, cropId);
-      const cropDef = CROP_CATALOG.find(c => c.id === cropId);
-      showToast(`${cropDef?.emoji ?? '🌱'} ${t('farm.planted')}`);
+      for (const plotIdx of targetPlots) {
+        await plant(profile.id, plotIdx, cropId);
+      }
+      const emoji = cropDef?.emoji ?? '🌱';
+      showToast(plantedCount > 1
+        ? `${emoji} ${plantedCount}× ${t('farm.planted')}`
+        : `${emoji} ${t('farm.planted')}`);
     } catch {
       showToast(t('common.error'), 'error');
     }
     setShowSeedPicker(false);
     setSelectedPlotIndex(null);
     setSporeeWagerArmed(false);
-  }, [profile, profiles, selectedPlotIndex, plant, showToast, t, sporeeWagerArmed]);
+    setSeedPickerQuantity(1);
+  }, [profile, profiles, selectedPlotIndex, plant, showToast, t, sporeeWagerArmed, seedPickerQuantity, computeAvailablePlotsForBatch]);
 
   // Phase 40 — handlers WagerSealerSheet (confirm seal / skip)
   const handleWagerSealConfirm = useCallback(async (duration: WagerDuration) => {
@@ -2183,7 +2227,7 @@ export default function TreeScreen() {
           visible={showSeedPicker}
           animationType="slide"
           presentationStyle="pageSheet"
-          onRequestClose={() => { setShowSeedPicker(false); setSporeeWagerArmed(false); }}
+          onRequestClose={() => { setShowSeedPicker(false); setSporeeWagerArmed(false); setSeedPickerQuantity(1); }}
         >
           <View style={styles.seedSheetContainer}>
             {/* Auvent rayé */}
@@ -2208,7 +2252,7 @@ export default function TreeScreen() {
               {/* Bouton fermer bois */}
               <TouchableOpacity
                 style={styles.seedCloseBtn}
-                onPress={() => { setShowSeedPicker(false); setSporeeWagerArmed(false); }}
+                onPress={() => { setShowSeedPicker(false); setSporeeWagerArmed(false); setSeedPickerQuantity(1); }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 activeOpacity={0.8}
               >
@@ -2233,6 +2277,71 @@ export default function TreeScreen() {
                 </Text>
                 <View style={{ width: 36 }} />
               </View>
+
+              {/* Stepper quantité — plante N fois la graine choisie (skip si pari Sporée armé) */}
+              {!sporeeWagerArmed && (() => {
+                const emptyCount = selectedPlotIndex !== null
+                  ? computeAvailablePlotsForBatch(selectedPlotIndex, 99).length
+                  : 0;
+                const maxQty = Math.max(1, emptyCount);
+                const presets = [1, 5, maxQty > 5 ? maxQty : 0].filter(n => n > 0 && n <= maxQty);
+                const uniquePresets = Array.from(new Set(presets));
+                return (
+                  <View style={styles.seedQtyRow}>
+                    <Text style={styles.seedQtyLabel}>
+                      {`🪴 Planter ${seedPickerQuantity}×`}
+                      <Text style={styles.seedQtyHint}>{`  (${emptyCount} parcelle${emptyCount > 1 ? 's' : ''} libre${emptyCount > 1 ? 's' : ''})`}</Text>
+                    </Text>
+                    <View style={styles.seedQtyChips}>
+                      <TouchableOpacity
+                        style={[styles.seedQtyStepper, seedPickerQuantity <= 1 && styles.seedQtyStepperDisabled]}
+                        onPress={() => {
+                          if (seedPickerQuantity > 1) {
+                            Haptics.selectionAsync().catch(() => {});
+                            setSeedPickerQuantity(q => Math.max(1, q - 1));
+                          }
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.seedQtyStepperText}>−</Text>
+                      </TouchableOpacity>
+                      {uniquePresets.map(n => (
+                        <TouchableOpacity
+                          key={n}
+                          style={[
+                            styles.seedQtyChip,
+                            seedPickerQuantity === n && styles.seedQtyChipActive,
+                          ]}
+                          onPress={() => {
+                            Haptics.selectionAsync().catch(() => {});
+                            setSeedPickerQuantity(n);
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[
+                            styles.seedQtyChipText,
+                            seedPickerQuantity === n && styles.seedQtyChipTextActive,
+                          ]}>
+                            {n === maxQty && maxQty > 5 ? `MAX (${n})` : `${n}×`}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                      <TouchableOpacity
+                        style={[styles.seedQtyStepper, seedPickerQuantity >= maxQty && styles.seedQtyStepperDisabled]}
+                        onPress={() => {
+                          if (seedPickerQuantity < maxQty) {
+                            Haptics.selectionAsync().catch(() => {});
+                            setSeedPickerQuantity(q => Math.min(maxQty, q + 1));
+                          }
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.seedQtyStepperText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })()}
 
               {/* Bouton armement Sporée — n'apparait que si inventaire ≥1 */}
               {(() => {
@@ -4416,6 +4525,74 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
     textShadowColor: farm.textEmboss,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
+  },
+  seedQtyRow: {
+    flexDirection: 'column',
+    gap: Spacing.xs,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchmentDark,
+  },
+  seedQtyLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: farm.brownText,
+  },
+  seedQtyHint: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.normal,
+    color: farm.brownTextSub,
+  },
+  seedQtyChips: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    flexWrap: 'wrap',
+  },
+  seedQtyChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchment,
+  },
+  seedQtyChipActive: {
+    borderColor: '#16A34A',
+    backgroundColor: '#DCFCE7',
+  },
+  seedQtyChipText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: farm.brownText,
+  },
+  seedQtyChipTextActive: {
+    color: '#15803D',
+  },
+  seedQtyStepper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: farm.woodHighlight,
+    backgroundColor: farm.parchment,
+  },
+  seedQtyStepperDisabled: {
+    opacity: 0.35,
+  },
+  seedQtyStepperText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    color: farm.brownText,
+    lineHeight: FontSize.lg * 1.1,
   },
   seedSporeeToggle: {
     flexDirection: 'row',

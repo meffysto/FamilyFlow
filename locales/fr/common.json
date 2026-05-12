@@ -4406,7 +4406,11 @@
       "racine_geante": "Racine géante",
       "racine_geante_desc": "Racine ancestrale gorgée de sève. Exclusive aux expéditions les plus profondes.",
       "fleur_celeste": "Fleur céleste",
-      "fleur_celeste_desc": "Pétales d'étoiles et parfum d'aurore. Trésor ultime des expéditions."
+      "fleur_celeste_desc": "Pétales d'étoiles et parfum d'aurore. Trésor ultime des expéditions.",
+      "etoile_berger": "Étoile du Berger",
+      "etoile_berger_desc": "Étoile filante captée dans un pétale. Sa lumière apaise les nuits les plus sombres.",
+      "larme_phenix": "Larme du Phénix",
+      "larme_phenix_desc": "Larme cristallisée d'un phénix endormi. Brûle d'une flamme éternelle. Mythique."
     },
     "building": {
       "poulailler": "Poulailler",

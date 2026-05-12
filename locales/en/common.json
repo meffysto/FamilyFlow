@@ -4392,7 +4392,11 @@
       "racine_geante": "Giant Root",
       "racine_geante_desc": "An ancient root bursting with sap. Exclusive to the deepest expeditions.",
       "fleur_celeste": "Celestial Flower",
-      "fleur_celeste_desc": "Petals of stars and the scent of dawn. The ultimate expedition treasure."
+      "fleur_celeste_desc": "Petals of stars and the scent of dawn. The ultimate expedition treasure.",
+      "etoile_berger": "Shepherd's Star",
+      "etoile_berger_desc": "A shooting star caught in a petal. Its light soothes the darkest nights.",
+      "larme_phenix": "Phoenix Tear",
+      "larme_phenix_desc": "A crystallized tear from a sleeping phoenix. Burns with an eternal flame. Mythic."
     },
     "building": {
       "poulailler": "Chicken Coop",
