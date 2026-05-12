@@ -361,7 +361,7 @@ export function BuildingDetailSheet({
                 contentContainerStyle={styles.body}
                 showsVerticalScrollIndicator={false}
               >
-                {isProductive && isDamaged && onRepairRoof && (
+                {isDamaged && onRepairRoof && (
                   <Animated.View
                     entering={FadeIn.delay(60).springify().damping(12).stiffness(180)}
                   >
@@ -372,7 +372,9 @@ export function BuildingDetailSheet({
                       <View style={styles.bannerText}>
                         <Text style={styles.bannerT1}>Toit endommagé</Text>
                         <Text style={styles.bannerT2}>
-                          La production est divisée par 2 jusqu'à réparation
+                          {isProductive
+                            ? `La production est divisée par 2 jusqu'à réparation`
+                            : `Le bâtiment a besoin d'être réparé`}
                         </Text>
                       </View>
                     </View>
