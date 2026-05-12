@@ -4488,6 +4488,7 @@
     "inventaire": "Inventory",
     "crafter": "Craft",
     "vendre": "Sell",
+    "sellAll": "💰 Sell all — {{count}} items for {{amount}} 🍃",
     "ingredients": "Ingredients",
     "manque": "Missing",
     "disponible": "Available",

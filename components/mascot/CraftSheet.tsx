@@ -277,10 +277,12 @@ export function CraftSheet({
   const [sellQty, setSellQty] = useState<Record<string, number>>({});
 
   const getSellQty = useCallback((id: string) => sellQty[id] ?? 1, [sellQty]);
-  const adjustSellQty = useCallback((id: string, delta: number, max: number) => {
+  // Min 0 pour les créations (autorise la désélection avec '−' jusqu'à 0).
+  // Récoltes brutes : min 1 (comportement historique).
+  const adjustSellQty = useCallback((id: string, delta: number, max: number, allowZero = false) => {
     setSellQty(prev => {
       const current = prev[id] ?? 1;
-      const next = Math.max(1, Math.min(max, current + delta));
+      const next = Math.max(allowZero ? 0 : 1, Math.min(max, current + delta));
       return { ...prev, [id]: next };
     });
     if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -322,6 +324,34 @@ export function CraftSheet({
     }
     setSelling(null);
   }, [onSellCrafted, showFeedback, t, sellQty]);
+
+  /** Vendre tout : itère sur chaque groupe sélectionné (sellQty > 0) et vend la qty.
+   *  Le snapshot des groupes est pris avant la boucle pour éviter les courses avec
+   *  les refresh d'inventaire entre chaque vente. */
+  const handleSellAllCrafted = useCallback(async (groups: Array<{ recipeId: string; grade: HarvestGrade; qty: number; count: number }>) => {
+    const toSell = groups
+      .map(g => ({ ...g, qty: Math.min(g.qty, g.count) }))
+      .filter(g => g.qty > 0);
+    if (toSell.length === 0) return;
+    setSelling('__ALL__');
+    let totalAmount = 0;
+    try {
+      for (const g of toSell) {
+        const amount = await onSellCrafted(g.recipeId, g.qty, g.grade);
+        if (amount > 0) totalAmount += amount;
+      }
+      if (totalAmount > 0) {
+        if (Platform.OS !== 'web') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
+        showFeedback('💰', t('craft.venteReussie', { amount: totalAmount }), 'success');
+        setSellQty({});
+      }
+    } catch {
+      showFeedback('⚠️', t('common.error'), 'error');
+    }
+    setSelling(null);
+  }, [onSellCrafted, showFeedback, t]);
 
   // ── Compteur recettes craftables ──────────────
 
@@ -953,6 +983,43 @@ export function CraftSheet({
     });
   }, [craftedItems]);
 
+  // Pré-sélection automatique à l'ouverture de l'onglet 'créations' :
+  // chaque groupe non encore dans sellQty est initialisé à son count.
+  // L'utilisateur peut ensuite réduire (jusqu'à 0 = désélectionné) avant 'Tout vendre'.
+  React.useEffect(() => {
+    if (tab !== 'creations' || craftedGroups.length === 0) return;
+    setSellQty(prev => {
+      let changed = false;
+      const next = { ...prev };
+      for (const { recipe, grade, count } of craftedGroups) {
+        const key = `${recipe.id}::${grade}`;
+        if (next[key] === undefined) {
+          next[key] = count;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [tab, craftedGroups]);
+
+  // Résumé sélection pour le bouton "Tout vendre"
+  const sellAllSummary = useMemo(() => {
+    let totalQty = 0;
+    let totalLeaves = 0;
+    const items: Array<{ recipeId: string; grade: HarvestGrade; qty: number; count: number }> = [];
+    for (const { recipe, grade, count } of craftedGroups) {
+      const key = `${recipe.id}::${grade}`;
+      const qty = Math.min(sellQty[key] ?? count, count);
+      if (qty > 0) {
+        const unitPrice = Math.round(recipe.sellValue * gradeSellMultiplier(grade));
+        totalQty += qty;
+        totalLeaves += unitPrice * qty;
+        items.push({ recipeId: recipe.id, grade, qty, count });
+      }
+    }
+    return { totalQty, totalLeaves, items };
+  }, [craftedGroups, sellQty]);
+
   const renderCreations = () => (
     <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
       {craftedGroups.length === 0 && (
@@ -965,12 +1032,13 @@ export function CraftSheet({
         const groupKey = `${recipe.id}::${grade}`;
         const currentQty = getSellQty(groupKey);
         const clampedQty = Math.min(currentQty, count);
+        const deselected = clampedQty === 0;
         const mult = gradeSellMultiplier(grade);
         const unitPrice = Math.round(recipe.sellValue * mult);
         const showGradeBadge = grade !== 'ordinaire';
         return (
           <Animated.View key={groupKey} entering={FadeInDown.delay(idx * 60).duration(300)}>
-            <View style={styles.inventoryRow}>
+            <View style={[styles.inventoryRow, deselected && { opacity: 0.45 }]}>
               {recipe.sprite ? (
                 <Image source={recipe.sprite} style={styles.inventorySprite} />
               ) : (
@@ -991,24 +1059,22 @@ export function CraftSheet({
               >
                 <Text style={styles.giftBtnText}>{'🎁'}</Text>
               </TouchableOpacity>
-              {count > 1 && (
-                <View style={styles.qtySelector}>
-                  <TouchableOpacity onPress={() => adjustSellQty(groupKey, -1, count)} style={styles.qtyBtn} activeOpacity={0.7}>
-                    <Text style={[styles.qtyBtnText, clampedQty <= 1 && { opacity: 0.3 }]}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.qtyValue}>{clampedQty}</Text>
-                  <TouchableOpacity onPress={() => adjustSellQty(groupKey, 1, count)} style={styles.qtyBtn} activeOpacity={0.7}>
-                    <Text style={[styles.qtyBtnText, clampedQty >= count && { opacity: 0.3 }]}>+</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+              <View style={styles.qtySelector}>
+                <TouchableOpacity onPress={() => adjustSellQty(groupKey, -1, count, true)} style={styles.qtyBtn} activeOpacity={0.7}>
+                  <Text style={[styles.qtyBtnText, clampedQty <= 0 && { opacity: 0.3 }]}>−</Text>
+                </TouchableOpacity>
+                <Text style={styles.qtyValue}>{clampedQty}</Text>
+                <TouchableOpacity onPress={() => adjustSellQty(groupKey, 1, count, true)} style={styles.qtyBtn} activeOpacity={0.7}>
+                  <Text style={[styles.qtyBtnText, clampedQty >= count && { opacity: 0.3 }]}>+</Text>
+                </TouchableOpacity>
+              </View>
               <TouchableOpacity
                 style={[
                   styles.sellBtn,
-                  selling === groupKey && { opacity: 0.5 },
+                  (selling === groupKey || deselected) && { opacity: 0.5 },
                 ]}
                 onPress={() => handleSellCrafted(recipe.id, grade)}
-                disabled={selling === groupKey}
+                disabled={selling === groupKey || deselected}
                 activeOpacity={0.7}
               >
                 <Text style={styles.sellBtnText}>
@@ -1019,6 +1085,23 @@ export function CraftSheet({
           </Animated.View>
         );
       })}
+      {/* Bouton sticky 'Tout vendre' — vend chaque groupe avec qty>0 */}
+      {craftedGroups.length > 0 && sellAllSummary.totalQty > 0 && (
+        <TouchableOpacity
+          style={[styles.sellAllBtn, selling === '__ALL__' && { opacity: 0.5 }]}
+          onPress={() => handleSellAllCrafted(sellAllSummary.items)}
+          disabled={selling === '__ALL__'}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.sellAllBtnText}>
+            {t('craft.sellAll', {
+              count: sellAllSummary.totalQty,
+              amount: sellAllSummary.totalLeaves,
+              defaultValue: `💰 Tout vendre — ${sellAllSummary.totalQty} items pour ${sellAllSummary.totalLeaves} 🍃`,
+            })}
+          </Text>
+        </TouchableOpacity>
+      )}
       <View style={{ height: Spacing['3xl'] }} />
     </ScrollView>
   );
@@ -1645,6 +1728,21 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
     borderWidth: 1.5,
     borderColor: farm.woodHighlight,
     backgroundColor: farm.parchmentDark,
+  },
+  sellAllBtn: {
+    marginTop: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing['2xl'],
+    borderRadius: Radius.lg,
+    borderWidth: 2,
+    borderColor: '#16A34A',
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+  },
+  sellAllBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: '#15803D',
   },
   sellBtnText: {
     fontSize: FontSize.sm,
