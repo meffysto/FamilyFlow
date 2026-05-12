@@ -344,8 +344,8 @@ interface SeedDropRule {
  * uniquement des expéditions (1/jour max).
  */
 export const RARE_SEED_DROP_RULES: SeedDropRule[] = [
-  // 🔥 Larme du Phénix (4%) — sources rares légendaires + drops endgame
-  { sourceCropIds: ['fruit_dragon', 'cristal_noir', 'racine_geante', 'fleur_celeste'], seedId: 'larme_phenix', chance: 0.04 },
+  // 🔥 Larme du Phénix (4%) — mêmes sources qu'Étoile du Berger
+  { sourceCropIds: ['rose_doree', 'truffe', 'fruit_dragon', 'cristal_noir', 'racine_geante'], seedId: 'larme_phenix', chance: 0.04 },
   // ⭐ Étoile du Berger (8%) — sources rares mid+endgame
   { sourceCropIds: ['rose_doree', 'truffe', 'fruit_dragon', 'cristal_noir', 'racine_geante'], seedId: 'etoile_berger', chance: 0.08 },
   // Recolte arbuste+ → orchidee (4%)
