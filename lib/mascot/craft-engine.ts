@@ -512,6 +512,32 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     sellValue: 3900, // (900+800+80) x 2.2
     minTreeStage: 'majestueux',
   },
+  // ── Recettes épiques — graines à drop cascade ──
+  {
+    id: 'liqueur_etoiles',
+    labelKey: 'craft.recipe.liqueur_etoiles',
+    emoji: '✨',
+    ingredients: [
+      { itemId: 'etoile_berger', quantity: 1, source: 'crop' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 150,
+    sellValue: 6500, // (2500 + 120) × 2.5
+    minTreeStage: 'majestueux',
+  },
+  {
+    id: 'feu_eternel',
+    labelKey: 'craft.recipe.feu_eternel',
+    emoji: '🔥',
+    ingredients: [
+      { itemId: 'larme_phenix', quantity: 1, source: 'crop' },
+      { itemId: 'cristal_noir', quantity: 1, source: 'crop' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 250,
+    sellValue: 12000, // (3500 + 900 + 120) × 2.7 — recette ultime
+    minTreeStage: 'legendaire',
+  },
   // ── Recettes déverrouillables (quêtes coopératives) ──
   {
     id: 'galette_royale',

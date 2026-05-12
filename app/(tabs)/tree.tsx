@@ -2501,18 +2501,39 @@ export default function TreeScreen() {
                   // Couleur épique : violet doré
                   const EPIC_COLOR = '#9333EA';
                   const EPIC_BG = '#F3E8FF';
-                  // Hint dynamique : sources des règles de drop pour CE seedId
-                  const getEpicDropHint = (seedId: string): string => {
+                  // Hint dynamique avec sprites — rendu inline
+                  const renderEpicDropHint = (seedId: string): React.ReactNode => {
                     const rule = RARE_SEED_DROP_RULES.find(r => r.seedId === seedId);
-                    if (!rule || rule.sourceCropIds === '*') return t('farm.rareSeedDropHintAny');
-                    const sourceNames = rule.sourceCropIds
-                      .map(id => {
-                        const def = CROP_CATALOG.find(c => c.id === id);
-                        return def ? `${def.emoji} ${t(`farm.crop.${def.id}`)}` : id;
-                      })
-                      .join(', ');
+                    if (!rule || rule.sourceCropIds === '*') {
+                      return (
+                        <Text style={[styles.seedRowDesc, { color: EPIC_COLOR }]}>
+                          {t('farm.rareSeedDropHintAny')}
+                        </Text>
+                      );
+                    }
                     const pct = (rule.chance * 100).toFixed(rule.chance < 0.02 ? 1 : 0);
-                    return t('farm.epicDropHint', { sources: sourceNames, pct });
+                    return (
+                      <View style={styles.epicHintRow}>
+                        <Text style={[styles.seedRowDesc, { color: EPIC_COLOR }]}>
+                          {t('farm.epicDropHintPrefix') + ' '}
+                        </Text>
+                        {rule.sourceCropIds.map((id, i) => {
+                          const sprite = CROP_ICONS[id];
+                          const last = i === rule.sourceCropIds.length - 1;
+                          return (
+                            <View key={id} style={styles.epicHintChip}>
+                              {sprite && <Image source={sprite} style={styles.epicHintSprite} />}
+                              <Text style={[styles.seedRowDesc, { color: EPIC_COLOR }]}>
+                                {t(`farm.crop.${id}`)}{last ? '' : ', '}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                        <Text style={[styles.seedRowDesc, { color: EPIC_COLOR }]}>
+                          {` (${pct}%)`}
+                        </Text>
+                      </View>
+                    );
                   };
                   return (
                     <>
@@ -2555,9 +2576,13 @@ export default function TreeScreen() {
                                   </Text>
                                 </View>
                               </View>
-                              <Text style={[styles.seedRowDesc, !owned && { color: EPIC_COLOR }]} numberOfLines={2}>
-                                {owned ? t(`farm.crop.${crop.id}_desc`) : getEpicDropHint(crop.id)}
-                              </Text>
+                              {owned ? (
+                                <Text style={[styles.seedRowDesc, { color: EPIC_COLOR }]} numberOfLines={2}>
+                                  {t(`farm.crop.${crop.id}_desc`)}
+                                </Text>
+                              ) : (
+                                renderEpicDropHint(crop.id)
+                              )}
                               <View style={styles.seedRowStats}>
                                 <Text style={styles.seedRowStat}>
                                   {t('farm.taskCount', { count: totalTasks })}
@@ -4627,6 +4652,22 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
     textShadowColor: farm.textEmboss,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 0,
+  },
+  epicHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 2,
+  },
+  epicHintChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  epicHintSprite: {
+    width: 18,
+    height: 18,
+    marginRight: 2,
   },
   seedQtyRow: {
     flexDirection: 'column',

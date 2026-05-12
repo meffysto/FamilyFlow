@@ -4455,6 +4455,7 @@
     "epic": "Epic",
     "epicCascadeGroup": "Expedition cascade",
     "epicDropHint": "Ultra-rare drop when harvesting: {{sources}} ({{pct}}%)",
+    "epicDropHintPrefix": "Ultra-rare drop when harvesting:",
     "rare": "Rare",
     "rareFree": "Free",
     "regularSeeds": "Regular seeds",
@@ -4546,7 +4547,9 @@
       "gratin_hiver": "Winter Gratin",
       "mijote_hiver": "Winter Stew",
       "omelette_etoilee": "Starry Omelette",
-      "infusion_celeste": "Celestial Infusion"
+      "infusion_celeste": "Celestial Infusion",
+      "liqueur_etoiles": "Star Liqueur",
+      "feu_eternel": "Eternal Flame"
     }
   },
   "badges": {

@@ -4471,6 +4471,7 @@
     "epic": "Épique",
     "epicCascadeGroup": "Cascade des expéditions",
     "epicDropHint": "Drop ultra-rare en récoltant : {{sources}} ({{pct}}%)",
+    "epicDropHintPrefix": "Drop ultra-rare en récoltant :",
     "rare": "Rare",
     "rareFree": "Gratuit",
     "regularSeeds": "Graines classiques",
@@ -4562,7 +4563,9 @@
       "gratin_hiver": "Gratin d'hiver",
       "mijote_hiver": "Mijoté d'hiver",
       "omelette_etoilee": "Omelette Étoilée",
-      "infusion_celeste": "Infusion Céleste"
+      "infusion_celeste": "Infusion Céleste",
+      "liqueur_etoiles": "Liqueur des Étoiles",
+      "feu_eternel": "Feu Éternel"
     }
   },
   "badges": {
