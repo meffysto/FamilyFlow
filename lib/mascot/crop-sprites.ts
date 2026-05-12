@@ -116,20 +116,21 @@ export const CROP_SPRITES: Record<string, Record<number, [any, any]>> = {
     3: [require('../../assets/garden/crops/fleur_celeste/stage_3_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_3_b.png')],
     4: [require('../../assets/garden/crops/fleur_celeste/stage_4_a.png'), require('../../assets/garden/crops/fleur_celeste/stage_4_b.png')],
   },
-  // Graines épiques drop-only — sprite unique répété sur tous les stades
+  // Graines épiques drop-only — 5 stades distincts (Pixellab vary_object)
+  // Stage 4 = icon.png (bloom mature). Pas d'animation 2-frames (sprite unique).
   etoile_berger: {
-    0: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
-    1: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
-    2: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
-    3: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
-    4: [require('../../assets/garden/crops/etoile_berger/icon.png'), require('../../assets/garden/crops/etoile_berger/icon.png')],
+    0: [require('../../assets/garden/crops/etoile_berger/stage_0.png'), require('../../assets/garden/crops/etoile_berger/stage_0.png')],
+    1: [require('../../assets/garden/crops/etoile_berger/stage_1.png'), require('../../assets/garden/crops/etoile_berger/stage_1.png')],
+    2: [require('../../assets/garden/crops/etoile_berger/stage_2.png'), require('../../assets/garden/crops/etoile_berger/stage_2.png')],
+    3: [require('../../assets/garden/crops/etoile_berger/stage_3.png'), require('../../assets/garden/crops/etoile_berger/stage_3.png')],
+    4: [require('../../assets/garden/crops/etoile_berger/icon.png'),    require('../../assets/garden/crops/etoile_berger/icon.png')],
   },
   larme_phenix: {
-    0: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
-    1: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
-    2: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
-    3: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
-    4: [require('../../assets/garden/crops/larme_phenix/icon.png'), require('../../assets/garden/crops/larme_phenix/icon.png')],
+    0: [require('../../assets/garden/crops/larme_phenix/stage_0.png'), require('../../assets/garden/crops/larme_phenix/stage_0.png')],
+    1: [require('../../assets/garden/crops/larme_phenix/stage_1.png'), require('../../assets/garden/crops/larme_phenix/stage_1.png')],
+    2: [require('../../assets/garden/crops/larme_phenix/stage_2.png'), require('../../assets/garden/crops/larme_phenix/stage_2.png')],
+    3: [require('../../assets/garden/crops/larme_phenix/stage_3.png'), require('../../assets/garden/crops/larme_phenix/stage_3.png')],
+    4: [require('../../assets/garden/crops/larme_phenix/icon.png'),    require('../../assets/garden/crops/larme_phenix/icon.png')],
   },
   // Cultures rares drop-only (pas d'animation 2-frames — sprite unique répété)
   truffe: {
