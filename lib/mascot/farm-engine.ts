@@ -337,13 +337,17 @@ interface SeedDropRule {
 
 /** Table de drop des graines rares.
  * Ordre = priorité : un drop épique tente avant un drop commun.
- * Cascade : commune → rare expedition → épique → légendaire.
+ * Cascade : commune → rare drop → rare expedition → épique → légendaire.
+ *
+ * Design épique : sources élargies aux drops rares (rose_doree, truffe,
+ * fruit_dragon) pour rendre l'objectif atteignable sans nécessiter
+ * uniquement des expéditions (1/jour max).
  */
 export const RARE_SEED_DROP_RULES: SeedDropRule[] = [
-  // ⭐ Larme du Phénix (1%) — drop ultra-rare des graines expedition légendaires
-  { sourceCropIds: ['fleur_lave', 'cristal_noir', 'mousse_etoile', 'racine_geante', 'fleur_celeste'], seedId: 'larme_phenix', chance: 0.01 },
-  // ⭐ Étoile du Berger (2%) — drop épique des expéditions majestueuses+
-  { sourceCropIds: ['cristal_noir', 'racine_geante', 'fleur_celeste'], seedId: 'etoile_berger', chance: 0.02 },
+  // 🔥 Larme du Phénix (4%) — sources rares légendaires + drops endgame
+  { sourceCropIds: ['fruit_dragon', 'cristal_noir', 'racine_geante', 'fleur_celeste'], seedId: 'larme_phenix', chance: 0.04 },
+  // ⭐ Étoile du Berger (8%) — sources rares mid+endgame
+  { sourceCropIds: ['rose_doree', 'truffe', 'fruit_dragon', 'cristal_noir', 'racine_geante'], seedId: 'etoile_berger', chance: 0.08 },
   // Recolte arbuste+ → orchidee (4%)
   { sourceCropIds: ['tomato', 'cabbage', 'cucumber', 'corn', 'strawberry', 'pumpkin', 'sunflower'], seedId: 'orchidee', chance: 0.04 },
   // Recolte arbre+ → rose doree (4%)
