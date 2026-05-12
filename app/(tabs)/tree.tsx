@@ -2493,13 +2493,95 @@ export default function TreeScreen() {
                     </React.Fragment>
                   ));
                 })()}
+                {/* ── Graines épiques (tier au-dessus des rares) ── */}
+                {(() => {
+                  const epicSeeds = CROP_CATALOG.filter(c => c.epic);
+                  if (epicSeeds.length === 0) return null;
+                  const rareSeeds = profile?.farmRareSeeds ?? {};
+                  // Couleur épique : violet doré
+                  const EPIC_COLOR = '#9333EA';
+                  const EPIC_BG = '#F3E8FF';
+                  // Hint dynamique : sources des règles de drop pour CE seedId
+                  const getEpicDropHint = (seedId: string): string => {
+                    const rule = RARE_SEED_DROP_RULES.find(r => r.seedId === seedId);
+                    if (!rule || rule.sourceCropIds === '*') return t('farm.rareSeedDropHintAny');
+                    const sourceNames = rule.sourceCropIds
+                      .map(id => {
+                        const def = CROP_CATALOG.find(c => c.id === id);
+                        return def ? `${def.emoji} ${t(`farm.crop.${def.id}`)}` : id;
+                      })
+                      .join(', ');
+                    const pct = (rule.chance * 100).toFixed(rule.chance < 0.02 ? 1 : 0);
+                    return t('farm.epicDropHint', { sources: sourceNames, pct });
+                  };
+                  return (
+                    <>
+                      <View style={[styles.seedSectionHeader, { marginTop: Spacing.md, borderBottomColor: EPIC_COLOR }]}>
+                        <Text style={[styles.seedSectionTitle, { color: EPIC_COLOR }]}>
+                          {t('farm.epicSeedsTitle')} ⭐
+                        </Text>
+                      </View>
+                      {epicSeeds.map(crop => {
+                        const qty = rareSeeds[crop.id] ?? 0;
+                        const owned = qty > 0;
+                        const effectiveTasksPerStage = Math.max(1, crop.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+                        const totalTasks = effectiveTasksPerStage * 4;
+                        const RowComp: React.ComponentType<any> = owned ? TouchableOpacity : View;
+                        return (
+                          <RowComp
+                            key={crop.id}
+                            onPress={owned ? () => handleSeedSelect(crop.id) : undefined}
+                            activeOpacity={0.7}
+                            style={[
+                              styles.seedRow,
+                              { borderColor: EPIC_COLOR, borderWidth: 2, backgroundColor: owned ? EPIC_BG : 'rgba(147,51,234,0.06)' },
+                              !owned && { opacity: 0.75 },
+                            ]}
+                          >
+                            <View>
+                              <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
+                              <View style={[styles.rareSeedBadge, { backgroundColor: EPIC_COLOR }]}>
+                                <Text style={styles.rareSeedBadgeText}>{owned ? `x${qty}` : '⭐'}</Text>
+                              </View>
+                            </View>
+                            <View style={styles.seedRowInfo}>
+                              <View style={styles.seedRowHeader}>
+                                <Text style={styles.seedRowName}>
+                                  {t(`farm.crop.${crop.id}`)}
+                                </Text>
+                                <View style={[styles.seedSeasonBadge, { backgroundColor: EPIC_COLOR + '22', borderColor: EPIC_COLOR, borderWidth: 1 }]}>
+                                  <Text style={[styles.seedSeasonBadgeText, { color: EPIC_COLOR }]}>
+                                    {t('farm.epic')}
+                                  </Text>
+                                </View>
+                              </View>
+                              <Text style={[styles.seedRowDesc, !owned && { color: EPIC_COLOR }]} numberOfLines={2}>
+                                {owned ? t(`farm.crop.${crop.id}_desc`) : getEpicDropHint(crop.id)}
+                              </Text>
+                              <View style={styles.seedRowStats}>
+                                <Text style={styles.seedRowStat}>
+                                  {t('farm.taskCount', { count: totalTasks })}
+                                </Text>
+                                <Text style={styles.seedRowStat}>
+                                  {t('farm.rareFree')} → {crop.harvestReward} 🍃
+                                </Text>
+                              </View>
+                            </View>
+                          </RowComp>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
+
                 {/* ── Graines rares (possedees + decouverte) — affichées en dernier ── */}
                 {(() => {
                   const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'] as const;
                   const byStage = <T extends { minTreeStage: typeof stageOrder[number] }>(list: T[]): T[] =>
                     [...list].sort((a, b) => stageOrder.indexOf(a.minTreeStage) - stageOrder.indexOf(b.minTreeStage));
                   const rareSeeds = profile?.farmRareSeeds ?? {};
-                  const allRare = CROP_CATALOG.filter(c => c.dropOnly);
+                  // Filtre les épiques (rendues dans leur propre section au-dessus)
+                  const allRare = CROP_CATALOG.filter(c => c.dropOnly && !c.epic);
                   const ownedRare = byStage(allRare.filter(c => (rareSeeds[c.id] ?? 0) > 0));
                   const lockedHarvest = byStage(allRare.filter(c => (rareSeeds[c.id] ?? 0) === 0 && !c.expeditionExclusive));
                   const lockedExpedition = byStage(allRare.filter(c => (rareSeeds[c.id] ?? 0) === 0 && c.expeditionExclusive));

@@ -309,6 +309,7 @@ export interface CropDefinition {
   techRequired?: string;   // id du noeud tech requis pour debloquer (optionnel)
   dropOnly?: boolean;      // true = graine rare, obtenue uniquement par drop (pas achetable)
   expeditionExclusive?: boolean; // true = graine obtenue uniquement via expédition (Phase 33)
+  epic?: boolean;          // true = tier épique, drop en cascade des graines expedition
 }
 
 /** Durées possibles d'une Sporée de Régularité (Phase 38 — v1.7) */
@@ -397,8 +398,8 @@ export const CROP_CATALOG: CropDefinition[] = [
   { id: 'racine_geante',  labelKey: 'farm.crop.racine_geante',  emoji: '🌿', tasksPerStage: 5, harvestReward: 1000, minTreeStage: 'majestueux', cost: 0, dropOnly: true, expeditionExclusive: true },
   { id: 'fleur_celeste',  labelKey: 'farm.crop.fleur_celeste',  emoji: '🌸', tasksPerStage: 6, harvestReward: 1500, minTreeStage: 'legendaire', cost: 0, dropOnly: true, expeditionExclusive: true },
   // Graines épiques — cascade de drops sur expéditions (Phase épique)
-  { id: 'etoile_berger',  labelKey: 'farm.crop.etoile_berger',  emoji: '⭐', tasksPerStage: 6, harvestReward: 2500, minTreeStage: 'majestueux', cost: 0, dropOnly: true },
-  { id: 'larme_phenix',   labelKey: 'farm.crop.larme_phenix',   emoji: '🔥', tasksPerStage: 7, harvestReward: 3500, minTreeStage: 'legendaire', cost: 0, dropOnly: true },
+  { id: 'etoile_berger',  labelKey: 'farm.crop.etoile_berger',  emoji: '⭐', tasksPerStage: 6, harvestReward: 2500, minTreeStage: 'majestueux', cost: 0, dropOnly: true, epic: true },
+  { id: 'larme_phenix',   labelKey: 'farm.crop.larme_phenix',   emoji: '🔥', tasksPerStage: 7, harvestReward: 3500, minTreeStage: 'legendaire', cost: 0, dropOnly: true, epic: true },
 ];
 
 // ─────────────────────────────────────────────
