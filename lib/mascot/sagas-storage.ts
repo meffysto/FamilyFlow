@@ -119,3 +119,32 @@ export async function resetAllSagaState(profileId: string): Promise<void> {
     // Silently fail
   }
 }
+
+// ─────────────────────────────────────────────
+// Migration versionnée (FAM-24)
+// ─────────────────────────────────────────────
+
+// Bumper cette constante force un reset des sagas pour TOUS les profils
+// à la prochaine ouverture de l'app. Utile quand le contenu des sagas change
+// ou qu'un bug de rotation a pu emprisonner les profils sur une saga unique.
+const SAGA_RESET_VERSION = 'v2-fam24';
+const SAGA_RESET_VERSION_KEY = 'saga_reset_version';
+
+/**
+ * Réinitialise l'état saga de tous les profils si la version stockée diffère
+ * de SAGA_RESET_VERSION. Idempotent — safe à appeler à chaque boot.
+ * Retourne true si un reset a effectivement été appliqué.
+ */
+export async function maybeResetSagasForVersion(
+  profileIds: string[],
+): Promise<boolean> {
+  try {
+    const stored = await SecureStore.getItemAsync(SAGA_RESET_VERSION_KEY);
+    if (stored === SAGA_RESET_VERSION) return false;
+    await Promise.all(profileIds.map(id => resetAllSagaState(id)));
+    await SecureStore.setItemAsync(SAGA_RESET_VERSION_KEY, SAGA_RESET_VERSION);
+    return true;
+  } catch {
+    return false;
+  }
+}

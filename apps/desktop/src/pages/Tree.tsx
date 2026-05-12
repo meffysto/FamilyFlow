@@ -1822,6 +1822,52 @@ function clearSagaProgressLocal(profileId: string): void {
   }
 }
 
+// FAM-24 — Liste des sagas complétées (source unique côté desktop).
+// L'ancien `activeProfile.completedSagas` venant du vault n'était jamais
+// écrit → la rotation déterministe restait coincée sur voyageur_argent.
+function completedSagasKey(profileId: string): string {
+  return `saga_completed_${profileId}`;
+}
+
+function loadCompletedSagasLocal(profileId: string): string[] {
+  try {
+    const raw = localStorage.getItem(completedSagasKey(profileId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCompletedSagasLocal(profileId: string, ids: string[]): void {
+  try {
+    localStorage.setItem(completedSagasKey(profileId), JSON.stringify(ids));
+  } catch {
+    /* non-critical */
+  }
+}
+
+// FAM-24 — Reset versionné au boot. Bumper `SAGA_RESET_VERSION_DESKTOP`
+// force le wipe de saga_progress / saga_completed pour tous les profils.
+const SAGA_RESET_VERSION_DESKTOP = 'v2-fam24';
+const SAGA_RESET_VERSION_KEY_DESKTOP = 'saga_reset_version';
+
+function maybeResetSagasForVersionDesktop(profileIds: string[]): boolean {
+  try {
+    const stored = localStorage.getItem(SAGA_RESET_VERSION_KEY_DESKTOP);
+    if (stored === SAGA_RESET_VERSION_DESKTOP) return false;
+    for (const id of profileIds) {
+      localStorage.removeItem(sagaStorageKey(id));
+      localStorage.removeItem(completedSagasKey(id));
+    }
+    localStorage.setItem(SAGA_RESET_VERSION_KEY_DESKTOP, SAGA_RESET_VERSION_DESKTOP);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Seasonal event helpers (desktop — based on current season + mock progress)
 // ---------------------------------------------------------------------------
@@ -1927,10 +1973,9 @@ const CompanionCard = memo(function CompanionCard({ onOpenPicker }: CompanionCar
 
 interface SagasPanelProps {
   profileId: string;
-  completedSagas: string[];
 }
 
-const SagasPanel = memo(function SagasPanel({ profileId, completedSagas }: SagasPanelProps) {
+const SagasPanel = memo(function SagasPanel({ profileId }: SagasPanelProps) {
   const { t } = useTranslation('gamification');
   const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
   const [activeSaga, setActiveSaga] = useState<Saga | null>(null);
@@ -1941,12 +1986,15 @@ const SagasPanel = memo(function SagasPanel({ profileId, completedSagas }: Sagas
     const progress = loadSagaProgressLocal(profileId);
     setSagaProgress(progress);
 
+    // FAM-24 : lire completedSagas depuis localStorage (source unique desktop)
+    const completed = loadCompletedSagasLocal(profileId);
+
     if (progress && progress.status === 'active') {
       const saga = SAGAS.find(s => s.id === progress.sagaId);
       setActiveSaga(saga ?? null);
     } else {
       // Check if we should start a new saga
-      const { start, sagaId } = shouldStartSaga(profileId, completedSagas, null);
+      const { start, sagaId } = shouldStartSaga(profileId, completed, null);
       if (start && sagaId) {
         const saga = SAGAS.find(s => s.id === sagaId);
         setActiveSaga(saga ?? null);
@@ -1954,7 +2002,7 @@ const SagasPanel = memo(function SagasPanel({ profileId, completedSagas }: Sagas
         setSagaProgress(null);
       }
     }
-  }, [profileId, completedSagas]);
+  }, [profileId]);
 
   const handleStartSaga = useCallback(() => {
     if (!activeSaga) return;
@@ -1994,6 +2042,13 @@ const SagasPanel = memo(function SagasPanel({ profileId, completedSagas }: Sagas
     setShowChoices(false);
 
     if (isLastChapter) {
+      // FAM-24 : persister l'ID complété pour que la prochaine saga soit
+      // bien différente — sans ça, la rotation déterministe restait coincée
+      // sur la même saga.
+      const already = loadCompletedSagasLocal(profileId);
+      if (!already.includes(activeSaga.id)) {
+        saveCompletedSagasLocal(profileId, [...already, activeSaga.id]);
+      }
       clearSagaProgressLocal(profileId);
       setSagaProgress(null);
       setActiveSaga(null);
@@ -2229,9 +2284,15 @@ function NoProfile() {
 
 function Tree() {
   const { t } = useTranslation('gamification');
-  const { activeProfile, readFile, writeFile, refresh } = useVault();
+  const { activeProfile, profiles, readFile, writeFile, refresh } = useVault();
   const { message: toastMsg, show: showToast } = useToast();
   const [busy, setBusy] = useState(false);
+
+  // FAM-24 : reset versionné saga au boot (cf. SAGA_RESET_VERSION_DESKTOP)
+  useEffect(() => {
+    if (!profiles || profiles.length === 0) return;
+    maybeResetSagasForVersionDesktop(profiles.map(p => p.id));
+  }, [profiles]);
 
   // Companion picker
   const [companionPickerOpen, setCompanionPickerOpen] = useState(false);
@@ -2496,10 +2557,7 @@ function Tree() {
           <>
             <ProfileTreeCard profile={activeProfile} stage={stage} />
             <CompanionCard onOpenPicker={() => setCompanionPickerOpen(true)} />
-            <SagasPanel
-              profileId={activeProfile.id}
-              completedSagas={activeProfile.completedSagas ?? []}
-            />
+            <SagasPanel profileId={activeProfile.id} />
             <SeasonalEventPanel season={season} profileId={activeProfile.id} />
             <FarmStatusCard crops={crops} plotCount={plotCount} buildings={buildings} />
             <InhabitantsCard inhabitants={activeProfile.mascotInhabitants ?? []} />

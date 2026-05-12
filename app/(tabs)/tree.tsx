@@ -141,7 +141,7 @@ import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS
 import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
 import { createEmptySagaProgress, type SagaProgress, type SagaTrait } from '../../lib/mascot/sagas-types';
 import { getSagaById, getSagaCompletionResult, getNextSagaForProfile, shouldStartSaga } from '../../lib/mascot/sagas-engine';
-import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion, clearSagaProgress, loadLastSagaCompletion, loadCompletedSagas, saveCompletedSagas, resetAllSagaState } from '../../lib/mascot/sagas-storage';
+import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion, clearSagaProgress, loadLastSagaCompletion, loadCompletedSagas, saveCompletedSagas, resetAllSagaState, maybeResetSagasForVersion } from '../../lib/mascot/sagas-storage';
 import { formatDateStr } from '../../lib/mascot/utils';
 import type { SeasonalEventProgress } from '../../lib/mascot/seasonal-events-types';
 import { getVisibleEventId, buildSeasonalEventAsSaga, drawGuaranteedSeasonalReward, SEASONAL_EVENT_BONUS_XP } from '../../lib/mascot/seasonal-events-engine';
@@ -739,6 +739,14 @@ export default function TreeScreen() {
 
   // Combinaison : pauser si app en background OU onglet pas visible OU utilisateur inactif
   const animationsPaused = !isAppActive || !isScreenFocused || !isUserActive;
+
+  // FAM-24 : reset versionné des sagas au boot — vide l'état saga de tous
+  // les profils quand SAGA_RESET_VERSION change. Idempotent (no-op si déjà
+  // appliqué). Fait avant initSaga pour éviter de partir d'un état stale.
+  useEffect(() => {
+    if (!profiles || profiles.length === 0) return;
+    maybeResetSagasForVersion(profiles.map((p: Profile) => p.id));
+  }, [profiles]);
 
   useEffect(() => {
     if (!profile?.id) return;

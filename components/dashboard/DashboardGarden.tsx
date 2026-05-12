@@ -49,6 +49,7 @@ import {
   loadSagaProgress,
   saveSagaProgress,
   loadLastSagaCompletion,
+  loadCompletedSagas,
 } from '../../lib/mascot/sagas-storage';
 import type { DashboardSectionProps } from './types';
 import type { Profile } from '../../lib/types';
@@ -195,7 +196,17 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
 
   const profileId = activeProfile?.id ?? '';
   const today = formatDateStr();
-  const completedSagas = activeProfile?.completedSagas ?? [];
+  // FAM-24 : source unique SecureStore (cohérent avec app/(tabs)/tree.tsx).
+  // L'ancien `activeProfile.completedSagas` du vault n'était jamais écrit
+  // par completeSagaChapter → coincait la rotation sur voyageur_argent.
+  const [completedSagas, setCompletedSagas] = useState<string[]>([]);
+  useEffect(() => {
+    if (!profileId) {
+      setCompletedSagas([]);
+      return;
+    }
+    loadCompletedSagas(profileId).then(setCompletedSagas);
+  }, [profileId]);
 
   // ── Family Toggle ────────────────────────────────────────────
   const [familyMode, setFamilyMode] = useState(false);
