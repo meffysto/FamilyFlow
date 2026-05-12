@@ -3131,6 +3131,26 @@ export default function TreeScreen() {
               )}
               {__DEV__ && (
                 <TouchableOpacity
+                  style={styles.chipCozy}
+                  onPress={() => {
+                    // Force ouverture du picker même sans parcelle vide.
+                    // Utilise la première parcelle débloquée (occupée ou non) pour que
+                    // le picker rende correctement. La plantation échouera silencieusement
+                    // si toutes les parcelles sont occupées (computeAvailablePlotsForBatch → []).
+                    const firstUnlocked = getExpandedCropCells(stageInfo.stage, techBonuses)[0];
+                    if (firstUnlocked) {
+                      setSelectedPlotIndex(cellIdToStableIndex(firstUnlocked.id));
+                      setShowSeedPicker(true);
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.chipCozyEmoji}>{'🌱'}</Text>
+                  <Text style={styles.chipCozyLabel}>{'Picker'}</Text>
+                </TouchableOpacity>
+              )}
+              {__DEV__ && (
+                <TouchableOpacity
                   style={[styles.chipCozy, devWaterCast && { borderColor: '#60B4D0', borderWidth: 1.5 }]}
                   onPress={() => setDevWaterCast(v => !v)}
                   activeOpacity={0.7}
