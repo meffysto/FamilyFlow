@@ -37,7 +37,7 @@ import { FontWeight, FontFamily } from '../constants/typography';
 import { Spacing, Radius } from '../constants/spacing';
 
 // ── Dimensions (handoff Direction 7) ───────────────────────────────
-const PILL_H = 64;
+const PILL_H = 56;
 const PILL_R_EXTENDED = 28;
 const CELL_R = 22;
 const PILL_PADDING = 5;
@@ -463,8 +463,8 @@ const tabStyles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
-    gap: 3,
+    paddingVertical: 6,
+    gap: 2,
     borderRadius: CELL_R,
     position: 'relative',
   },
