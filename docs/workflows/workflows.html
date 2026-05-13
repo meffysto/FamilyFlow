@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FamilyFlow — Workflows</title>
+<script src="https://unpkg.com/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #121833;
+    --panel: #161d3d;
+    --panel-2: #1e2750;
+    --border: #2a3464;
+    --text: #e6eaff;
+    --text-dim: #8a92c4;
+    --accent: #7aa2ff;
+    --warn: #ffb86b;
+    --ok: #6bf2c0;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: radial-gradient(1200px 800px at 20% 0%, #1a2350 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+    font-size: 14px;
+    display: grid;
+    grid-template-columns: 280px 1fr 380px;
+    grid-template-rows: 56px 1fr;
+    grid-template-areas: "header header header" "flows graph steps";
+    overflow: hidden;
+  }
+  header {
+    grid-area: header;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(11,16,32,.85);
+    backdrop-filter: blur(12px);
+  }
+  header h1 {
+    margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .3px;
+  }
+  header h1 .sub {
+    color: var(--text-dim); font-weight: 400; margin-left: 8px;
+  }
+  header .controls { display: flex; gap: 8px; align-items: center; }
+  button {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; font: inherit; cursor: pointer;
+    transition: background .15s;
+  }
+  button:hover { background: var(--panel-2); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: var(--accent); color: #0b1020; border-color: var(--accent); font-weight: 600; }
+  input[type=range] { accent-color: var(--accent); }
+
+  aside.flows {
+    grid-area: flows;
+    border-right: 1px solid var(--border);
+    background: rgba(18,24,51,.5);
+    overflow-y: auto;
+    padding: 14px 12px;
+  }
+  aside.flows h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-dim); margin: 4px 4px 10px; }
+  .flow-btn {
+    width: 100%; text-align: left; padding: 12px 12px;
+    margin-bottom: 6px;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 10px; color: var(--text);
+    cursor: pointer; font: inherit;
+    display: flex; align-items: flex-start; gap: 10px;
+    transition: background .15s, border-color .15s;
+  }
+  .flow-btn:hover { background: var(--panel); }
+  .flow-btn.active { background: var(--panel-2); border-color: var(--accent); }
+  .flow-btn .ico { font-size: 18px; line-height: 1; }
+  .flow-btn .meta { flex: 1; min-width: 0; }
+  .flow-btn .meta .label { font-weight: 600; font-size: 13px; }
+  .flow-btn .meta .count { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+
+  main.graph { grid-area: graph; position: relative; }
+  #cy { position: absolute; inset: 0; }
+  .legend {
+    position: absolute; bottom: 12px; left: 12px;
+    background: rgba(18,24,51,.85); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 10px; font-size: 11px;
+    display: grid; gap: 4px; pointer-events: none;
+    backdrop-filter: blur(6px);
+  }
+  .legend .row { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .empty-state {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--text-dim); font-style: italic;
+  }
+
+  aside.steps {
+    grid-area: steps;
+    border-left: 1px solid var(--border);
+    background: rgba(18,24,51,.5);
+    overflow-y: auto;
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  aside.steps .title { font-size: 16px; font-weight: 700; }
+  aside.steps .summary { color: var(--text-dim); font-size: 12.5px; line-height: 1.5; }
+  .player {
+    display: flex; gap: 6px; align-items: center;
+    padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel);
+  }
+  .player .spacer { flex: 1; }
+  .player label { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
+  .step-list { display: flex; flex-direction: column; gap: 6px; }
+  .step {
+    padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--panel);
+    font-size: 12.5px; line-height: 1.45;
+    transition: background .2s, border-color .2s, transform .2s;
+    cursor: pointer;
+  }
+  .step:hover { background: var(--panel-2); }
+  .step.active {
+    border-color: var(--accent); background: var(--panel-2);
+    box-shadow: 0 0 0 1px var(--accent), 0 8px 24px rgba(122,162,255,.15);
+    transform: translateX(2px);
+  }
+  .step .head { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+  .step .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--bg-2); color: var(--text-dim);
+    font-size: 11px; font-weight: 600; flex-shrink: 0;
+  }
+  .step.active .num { background: var(--accent); color: #0b1020; }
+  .step .arrow { color: var(--text-dim); }
+  .step .from, .step .to { font-weight: 600; }
+  .step .call { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--accent); margin-top: 4px; word-break: break-word; }
+  .step .payload { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--warn); margin-top: 2px; word-break: break-word; }
+  .step .note { color: var(--text-dim); margin-top: 4px; font-size: 11.5px; }
+
+  .err-box {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px;
+  }
+  .err-box .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px 28px; max-width: 520px;
+    color: var(--text); font-size: 13px; line-height: 1.55;
+  }
+  .err-box code {
+    background: var(--bg-2); padding: 2px 6px; border-radius: 4px;
+    font-family: ui-monospace, monospace; color: var(--warn);
+  }
+
+  /* Edge tooltip */
+  .edge-tooltip {
+    position: absolute; pointer-events: none;
+    background: rgba(11,16,32,.95);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 11.5px;
+    border-radius: 8px;
+    max-width: 280px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    opacity: 0; transition: opacity .2s;
+    z-index: 10;
+  }
+  .edge-tooltip.show { opacity: 1; }
+  .edge-tooltip .call { color: var(--accent); font-family: ui-monospace, monospace; font-size: 11px; }
+  .edge-tooltip .payload { color: var(--warn); font-family: ui-monospace, monospace; font-size: 10.5px; margin-top: 2px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>FamilyFlow — Workflows<span class="sub">cliquez sur un flow pour l'animer</span></h1>
+    <div class="controls">
+      <button id="fit-btn" title="Recadrer">Recadrer</button>
+      <button id="reset-btn" title="Réinitialiser la sélection">Réinitialiser</button>
+    </div>
+  </header>
+
+  <aside class="flows">
+    <h2>Flows</h2>
+    <div id="flow-list"></div>
+  </aside>
+
+  <main class="graph">
+    <div id="cy"></div>
+    <div id="edge-tooltip" class="edge-tooltip"></div>
+    <div class="legend" id="legend"></div>
+    <div class="empty-state" id="empty-state">Sélectionne un flow à gauche pour l'animer.</div>
+  </main>
+
+  <aside class="steps">
+    <div class="title" id="flow-title">Aucun flow sélectionné</div>
+    <div class="summary" id="flow-summary">Choisis un workflow dans la colonne de gauche pour voir le détail étape par étape.</div>
+    <div class="player" id="player" style="display:none">
+      <button id="play-btn" class="primary">▶︎ Jouer</button>
+      <button id="prev-btn">←</button>
+      <button id="next-btn">→</button>
+      <div class="spacer"></div>
+      <label>Vitesse <input id="speed" type="range" min="400" max="3000" step="100" value="1400" /></label>
+    </div>
+    <div class="step-list" id="step-list"></div>
+  </aside>
+
+<script>
+/* ------------------------------------------------------------------ */
+/* Load workflows.json — fallback to embedded copy if fetch fails.     */
+/* ------------------------------------------------------------------ */
+async function loadData() {
+  try {
+    const res = await fetch('./workflows.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.warn('fetch workflows.json a échoué — sers le dossier via HTTP (ex: `python3 -m http.server 8000` puis http://localhost:8000/docs/workflows/workflows.html)', e);
+    document.querySelector('main.graph').innerHTML = `
+      <div class="err-box"><div class="card">
+        <strong>Impossible de charger <code>workflows.json</code>.</strong><br><br>
+        Les navigateurs bloquent <code>fetch()</code> sur <code>file://</code>.<br>
+        Sers le dossier via un mini serveur HTTP&nbsp;:<br><br>
+        <code>cd ${location.pathname.replace(/\/[^/]+$/, '')}</code><br>
+        <code>python3 -m http.server 8000</code><br><br>
+        Puis ouvre&nbsp;<code>http://localhost:8000/workflows.html</code>.
+      </div></div>`;
+    throw e;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Build cytoscape graph from JSON                                     */
+/* ------------------------------------------------------------------ */
+function buildGraph(data) {
+  // Position nodes: each group is a horizontal band; within a band, nodes are spread left→right.
+  const groups = data.groups;
+  const nodesByGroup = {};
+  data.nodes.forEach(n => {
+    nodesByGroup[n.group] ||= [];
+    nodesByGroup[n.group].push(n);
+  });
+
+  const ROW_HEIGHT = 150;
+  const X_STEP = 180;
+  const X_PAD = 90;
+
+  const elements = [];
+  Object.entries(groups).forEach(([gid, g]) => {
+    elements.push({
+      data: { id: 'grp_' + gid, label: g.label, isGroup: true, color: g.color }
+    });
+    (nodesByGroup[gid] || []).forEach((n, i) => {
+      elements.push({
+        data: {
+          id: n.id, label: n.label, path: n.path,
+          group: n.group, color: g.color,
+          parent: 'grp_' + gid
+        },
+        position: { x: X_PAD + i * X_STEP, y: 80 + g.row * ROW_HEIGHT }
+      });
+    });
+  });
+
+  // Build edges from union of all flow steps (so the graph is the full topology).
+  const edgeSet = new Map();
+  data.flows.forEach(flow => {
+    flow.steps.forEach(s => {
+      if (s.from === s.to) return; // self-call: rendered as side annotation, not edge
+      const key = s.from + '->' + s.to;
+      if (!edgeSet.has(key)) {
+        edgeSet.set(key, { id: 'e_' + key, source: s.from, target: s.to, flows: new Set() });
+      }
+      edgeSet.get(key).flows.add(flow.id);
+    });
+  });
+  edgeSet.forEach(e => {
+    elements.push({ data: { id: e.id, source: e.source, target: e.target, flows: [...e.flows].join(',') }, classes: 'base-edge' });
+  });
+
+  const cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements,
+    wheelSensitivity: 0.2,
+    layout: { name: 'preset' },
+    style: [
+      {
+        selector: 'node[isGroup]',
+        style: {
+          'background-color': 'data(color)',
+          'background-opacity': 0.06,
+          'border-color': 'data(color)',
+          'border-width': 1,
+          'border-opacity': 0.5,
+          'shape': 'round-rectangle',
+          'label': 'data(label)',
+          'text-valign': 'top',
+          'text-halign': 'center',
+          'text-margin-y': -6,
+          'font-size': 10,
+          'font-weight': 600,
+          'color': 'data(color)',
+          'padding': 18,
+          'corner-radius': '12',
+          'text-transform': 'uppercase',
+          'letter-spacing': 2
+        }
+      },
+      {
+        selector: 'node:childless',
+        style: {
+          'background-color': 'data(color)',
+          'background-opacity': 0.18,
+          'border-color': 'data(color)',
+          'border-width': 1.5,
+          'shape': 'round-rectangle',
+          'label': 'data(label)',
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'font-size': 11,
+          'font-weight': 600,
+          'color': '#e6eaff',
+          'width': 'label',
+          'height': 32,
+          'padding': '10px',
+          'corner-radius': '8',
+          'text-wrap': 'wrap',
+          'text-max-width': 130,
+          'transition-property': 'background-opacity, border-width, opacity',
+          'transition-duration': 250
+        }
+      },
+      {
+        selector: 'node.dim',
+        style: { 'opacity': 0.18 }
+      },
+      {
+        selector: 'node.flow-node',
+        style: {
+          'background-opacity': 0.5,
+          'border-width': 2.5,
+          'border-color': '#7aa2ff'
+        }
+      },
+      {
+        selector: 'node.flow-node.current',
+        style: {
+          'background-opacity': 0.85,
+          'border-width': 3,
+          'border-color': '#ffffff'
+        }
+      },
+      {
+        selector: 'edge',
+        style: {
+          'curve-style': 'bezier',
+          'control-point-step-size': 60,
+          'line-color': '#2a3464',
+          'width': 1.2,
+          'target-arrow-shape': 'triangle',
+          'target-arrow-color': '#2a3464',
+          'arrow-scale': 1,
+          'opacity': 0.55,
+          'transition-property': 'line-color, target-arrow-color, width, opacity',
+          'transition-duration': 250
+        }
+      },
+      {
+        selector: 'edge.dim',
+        style: { 'opacity': 0.05 }
+      },
+      {
+        selector: 'edge.flow-edge',
+        style: {
+          'line-color': '#7aa2ff',
+          'target-arrow-color': '#7aa2ff',
+          'width': 2,
+          'opacity': 0.6
+        }
+      },
+      {
+        selector: 'edge.flow-edge.active',
+        style: {
+          'line-color': '#ffffff',
+          'target-arrow-color': '#ffffff',
+          'width': 3.5,
+          'opacity': 1
+        }
+      }
+    ]
+  });
+
+  // Hover tooltip on edges: show last known annotation if available
+  cy.on('mouseover', 'node:childless', (evt) => {
+    const n = evt.target;
+    const p = n.data('path');
+    if (p) {
+      showTooltip(evt.renderedPosition || evt.position, `<strong>${n.data('label')}</strong><br><span style="color:#8a92c4">${p}</span>`);
+    }
+  });
+  cy.on('mouseout', 'node:childless', hideTooltip);
+
+  return cy;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tooltip                                                              */
+/* ------------------------------------------------------------------ */
+const tooltipEl = document.getElementById('edge-tooltip');
+function showTooltip(pos, html) {
+  tooltipEl.innerHTML = html;
+  tooltipEl.classList.add('show');
+  // pos is renderedPosition (relative to cy container)
+  const cyBox = document.getElementById('cy').getBoundingClientRect();
+  const mainBox = document.querySelector('main.graph').getBoundingClientRect();
+  tooltipEl.style.left = (cyBox.left - mainBox.left + pos.x + 14) + 'px';
+  tooltipEl.style.top  = (cyBox.top  - mainBox.top  + pos.y + 14) + 'px';
+}
+function hideTooltip() { tooltipEl.classList.remove('show'); }
+
+/* ------------------------------------------------------------------ */
+/* Flow runtime                                                         */
+/* ------------------------------------------------------------------ */
+const state = {
+  cy: null,
+  data: null,
+  currentFlow: null,
+  currentStep: -1,
+  playing: false,
+  timer: null,
+  speed: 1400,
+};
+
+function renderFlowList() {
+  const list = document.getElementById('flow-list');
+  list.innerHTML = '';
+  state.data.flows.forEach(flow => {
+    const btn = document.createElement('button');
+    btn.className = 'flow-btn';
+    btn.dataset.id = flow.id;
+    btn.innerHTML = `
+      <span class="ico">${flow.icon || '•'}</span>
+      <span class="meta">
+        <div class="label">${flow.label}</div>
+        <div class="count">${flow.steps.length} étapes</div>
+      </span>`;
+    btn.addEventListener('click', () => selectFlow(flow.id));
+    list.appendChild(btn);
+  });
+}
+
+function renderLegend() {
+  const el = document.getElementById('legend');
+  el.innerHTML = '';
+  Object.values(state.data.groups).forEach(g => {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<span class="swatch" style="background:${g.color}"></span> ${g.label}`;
+    el.appendChild(row);
+  });
+}
+
+function selectFlow(id) {
+  pause();
+  const flow = state.data.flows.find(f => f.id === id);
+  if (!flow) return;
+  state.currentFlow = flow;
+  state.currentStep = -1;
+
+  document.querySelectorAll('.flow-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('player').style.display = 'flex';
+  document.getElementById('flow-title').textContent = (flow.icon || '') + ' ' + flow.label;
+  document.getElementById('flow-summary').textContent = flow.summary || '';
+
+  renderSteps();
+  highlightFlowTopology();
+  fitFlow();
+  // Pre-light step 0 without playing
+  setStep(0, /*animate*/ false);
+}
+
+function renderSteps() {
+  const wrap = document.getElementById('step-list');
+  wrap.innerHTML = '';
+  state.currentFlow.steps.forEach((s, i) => {
+    const fromNode = state.data.nodes.find(n => n.id === s.from);
+    const toNode = state.data.nodes.find(n => n.id === s.to);
+    const div = document.createElement('div');
+    div.className = 'step'; div.dataset.idx = i;
+    div.innerHTML = `
+      <div class="head">
+        <span class="num">${i+1}</span>
+        <span class="from">${fromNode ? fromNode.label : s.from}</span>
+        <span class="arrow">→</span>
+        <span class="to">${toNode ? toNode.label : s.to}</span>
+      </div>
+      <div class="call">${escapeHtml(s.call)}</div>
+      ${s.payload ? `<div class="payload">payload: ${escapeHtml(s.payload)}</div>` : ''}
+      ${s.note ? `<div class="note">${escapeHtml(s.note)}</div>` : ''}
+    `;
+    div.addEventListener('click', () => { pause(); setStep(i, true); });
+    wrap.appendChild(div);
+  });
+}
+
+function highlightFlowTopology() {
+  const cy = state.cy;
+  const flow = state.currentFlow;
+  const nodeIds = new Set();
+  const edgeIds = new Set();
+  flow.steps.forEach(s => {
+    nodeIds.add(s.from); nodeIds.add(s.to);
+    if (s.from !== s.to) edgeIds.add('e_' + s.from + '->' + s.to);
+  });
+
+  cy.batch(() => {
+    cy.nodes().forEach(n => {
+      if (n.data('isGroup')) return;
+      const inFlow = nodeIds.has(n.id());
+      n.toggleClass('dim', !inFlow);
+      n.toggleClass('flow-node', inFlow);
+      n.removeClass('current');
+    });
+    cy.edges().forEach(e => {
+      const inFlow = edgeIds.has(e.id());
+      e.toggleClass('dim', !inFlow);
+      e.toggleClass('flow-edge', inFlow);
+      e.removeClass('active');
+    });
+  });
+}
+
+function fitFlow() {
+  const cy = state.cy;
+  const flow = state.currentFlow;
+  const ids = new Set();
+  flow.steps.forEach(s => { ids.add(s.from); ids.add(s.to); });
+  const eles = cy.collection();
+  cy.nodes().forEach(n => { if (ids.has(n.id())) eles.merge(n); });
+  cy.animate({ fit: { eles, padding: 80 }, duration: 500, easing: 'ease-in-out' });
+}
+
+function setStep(idx, animate) {
+  if (!state.currentFlow) return;
+  const steps = state.currentFlow.steps;
+  if (idx < 0 || idx >= steps.length) return;
+  state.currentStep = idx;
+  const step = steps[idx];
+
+  // Side panel highlight
+  document.querySelectorAll('.step').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+    if (i === idx) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  const cy = state.cy;
+  cy.batch(() => {
+    cy.edges('.active').removeClass('active');
+    cy.nodes('.current').removeClass('current');
+    if (step.from !== step.to) {
+      const edge = cy.getElementById('e_' + step.from + '->' + step.to);
+      if (edge && edge.length) edge.addClass('active');
+    }
+    cy.getElementById(step.to).addClass('current');
+  });
+
+  // Edge tooltip
+  if (step.from !== step.to) {
+    const edge = cy.getElementById('e_' + step.from + '->' + step.to);
+    if (edge && edge.length) {
+      const mid = edge.midpoint();
+      const renderedMid = { x: mid.x * cy.zoom() + cy.pan().x, y: mid.y * cy.zoom() + cy.pan().y };
+      showTooltip(renderedMid, `
+        <div class="call">${escapeHtml(step.call)}</div>
+        ${step.payload ? `<div class="payload">${escapeHtml(step.payload)}</div>` : ''}
+        ${step.note ? `<div style="color:#8a92c4;margin-top:4px">${escapeHtml(step.note)}</div>` : ''}
+      `);
+    }
+  } else {
+    hideTooltip();
+  }
+}
+
+function play() {
+  if (!state.currentFlow) return;
+  state.playing = true;
+  document.getElementById('play-btn').textContent = '❚❚ Pause';
+  // If we're at last step, restart
+  if (state.currentStep >= state.currentFlow.steps.length - 1) state.currentStep = -1;
+  const tick = () => {
+    if (!state.playing) return;
+    const next = state.currentStep + 1;
+    if (next >= state.currentFlow.steps.length) { pause(); return; }
+    setStep(next, true);
+    state.timer = setTimeout(tick, state.speed);
+  };
+  tick();
+}
+function pause() {
+  state.playing = false;
+  clearTimeout(state.timer);
+  document.getElementById('play-btn').textContent = '▶︎ Jouer';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+}
+
+/* ------------------------------------------------------------------ */
+/* Wire up                                                              */
+/* ------------------------------------------------------------------ */
+async function init() {
+  const data = await loadData();
+  state.data = data;
+  state.cy = buildGraph(data);
+  renderFlowList();
+  renderLegend();
+  state.cy.fit(undefined, 60);
+
+  document.getElementById('play-btn').addEventListener('click', () => {
+    if (state.playing) pause(); else play();
+  });
+  document.getElementById('prev-btn').addEventListener('click', () => {
+    pause(); setStep(Math.max(0, state.currentStep - 1), true);
+  });
+  document.getElementById('next-btn').addEventListener('click', () => {
+    pause();
+    if (state.currentFlow) setStep(Math.min(state.currentFlow.steps.length - 1, state.currentStep + 1), true);
+  });
+  document.getElementById('speed').addEventListener('input', e => { state.speed = +e.target.value; });
+  document.getElementById('fit-btn').addEventListener('click', () => {
+    if (state.currentFlow) fitFlow(); else state.cy.animate({ fit: { padding: 60 }, duration: 400 });
+  });
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    pause();
+    state.currentFlow = null; state.currentStep = -1;
+    document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('empty-state').style.display = 'flex';
+    document.getElementById('player').style.display = 'none';
+    document.getElementById('flow-title').textContent = 'Aucun flow sélectionné';
+    document.getElementById('flow-summary').textContent = 'Choisis un workflow dans la colonne de gauche pour voir le détail étape par étape.';
+    document.getElementById('step-list').innerHTML = '';
+    hideTooltip();
+    state.cy.batch(() => {
+      state.cy.elements().removeClass('dim flow-node flow-edge active current');
+    });
+    state.cy.animate({ fit: { padding: 60 }, duration: 400 });
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === ' ') { e.preventDefault(); state.playing ? pause() : play(); }
+    if (e.key === 'ArrowRight') document.getElementById('next-btn').click();
+    if (e.key === 'ArrowLeft')  document.getElementById('prev-btn').click();
+  });
+}
+
+init().catch(e => console.error(e));
+</script>
+</body>
+</html>

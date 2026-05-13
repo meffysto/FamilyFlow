@@ -1,0 +1,178 @@
+{
+  "$schema": "FamilyFlow workflow map. Edit this file to add/modify flows — workflows.html will pick up changes on reload.",
+  "groups": {
+    "ui":       { "label": "UI / Écrans",       "color": "#7C3AED", "row": 0 },
+    "context":  { "label": "Contexts",          "color": "#0EA5E9", "row": 1 },
+    "hooks":    { "label": "Hooks",             "color": "#06B6D4", "row": 2 },
+    "lib_core": { "label": "Lib — Core",        "color": "#10B981", "row": 3 },
+    "lib_pdf":  { "label": "Lib — PDF",         "color": "#F59E0B", "row": 3 },
+    "lib_eval": { "label": "Lib — Eval / AI",   "color": "#EC4899", "row": 3 },
+    "lib_gami": { "label": "Lib — Gamification","color": "#EF4444", "row": 3 },
+    "external": { "label": "APIs natives",      "color": "#64748B", "row": 4 },
+    "vault":    { "label": "Vault (Markdown)",  "color": "#1F2937", "row": 5 }
+  },
+  "nodes": [
+    { "id": "ui_book_export",    "label": "BookExportModal",    "group": "ui",       "path": "components/pdf/BookExportModal.tsx" },
+    { "id": "ui_layout",         "label": "_layout (root)",      "group": "ui",       "path": "app/_layout.tsx" },
+    { "id": "ui_story_gen",      "label": "Écran génération histoire", "group": "ui","path": "app/story/* (StoryEditor)" },
+    { "id": "ui_recipe_editor",  "label": "RecipeEditor",        "group": "ui",       "path": "app/recipe/[id].tsx" },
+    { "id": "ui_dashboard_task", "label": "Dashboard — input tâche", "group": "ui",  "path": "components/dashboard/TasksSection.tsx" },
+    { "id": "ui_task_checkbox",  "label": "Checkbox tâche",      "group": "ui",       "path": "components/dashboard/TaskItem.tsx" },
+
+    { "id": "ctx_vault",         "label": "VaultProvider",        "group": "context", "path": "contexts/VaultContext.tsx" },
+
+    { "id": "hook_vault",        "label": "useVaultInternal",     "group": "hooks",   "path": "hooks/useVault.ts" },
+    { "id": "hook_recipes",      "label": "useVaultRecipes",      "group": "hooks",   "path": "hooks/useVault.ts" },
+    { "id": "hook_tasks",        "label": "useVaultTasks",        "group": "hooks",   "path": "hooks/useVault.ts" },
+    { "id": "hook_stories",      "label": "useVaultStories",      "group": "hooks",   "path": "hooks/useVault.ts" },
+    { "id": "hook_gami",         "label": "useGamification",      "group": "hooks",   "path": "hooks/useVault.ts" },
+
+    { "id": "lib_parser",        "label": "parser.ts",            "group": "lib_core","path": "lib/parser.ts" },
+    { "id": "lib_cooklang",      "label": "cooklang.ts",          "group": "lib_core","path": "lib/cooklang.ts" },
+    { "id": "lib_cache",         "label": "vault-cache.ts",       "group": "lib_core","path": "lib/vault-cache.ts" },
+    { "id": "lib_vault_mgr",     "label": "VaultManager",         "group": "lib_core","path": "lib/vault.ts" },
+
+    { "id": "lib_pdf_gen",       "label": "pdf-generator",        "group": "lib_pdf", "path": "lib/pdf/pdf-generator.ts" },
+    { "id": "lib_pdf_assets",    "label": "asset-loader",         "group": "lib_pdf", "path": "lib/pdf/asset-loader.ts" },
+    { "id": "lib_pdf_html",      "label": "html-template",        "group": "lib_pdf", "path": "lib/pdf/html-template.ts" },
+    { "id": "lib_pdf_qr",        "label": "qr-generator",         "group": "lib_pdf", "path": "lib/pdf/qr-generator.ts" },
+    { "id": "lib_pdf_saga",      "label": "saga-detection",       "group": "lib_pdf", "path": "lib/pdf/saga-detection.ts" },
+    { "id": "lib_pdf_storage",   "label": "book-storage",         "group": "lib_pdf", "path": "lib/pdf/book-storage.ts" },
+    { "id": "lib_pdf_manifest",  "label": "manifest-parser",      "group": "lib_pdf", "path": "lib/pdf/manifest-parser.ts" },
+
+    { "id": "lib_ai",            "label": "ai-service",           "group": "lib_eval","path": "lib/ai-service.ts" },
+    { "id": "lib_eval_pipeline", "label": "eval/pipeline",        "group": "lib_eval","path": "lib/eval/pipeline.ts" },
+    { "id": "lib_eval_rubric",   "label": "eval/rubric",          "group": "lib_eval","path": "lib/eval/rubric.ts" },
+    { "id": "lib_eval_llm",      "label": "eval/llm-eval",        "group": "lib_eval","path": "lib/eval/llm-eval.ts" },
+
+    { "id": "lib_gami_engine",   "label": "gamification/engine",  "group": "lib_gami","path": "lib/gamification/engine.ts" },
+    { "id": "lib_companion",     "label": "mascot/companion",     "group": "lib_gami","path": "lib/mascot/companion-engine.ts" },
+
+    { "id": "ext_expo_print",    "label": "expo-print",           "group": "external","path": "Print.printToFileAsync()" },
+    { "id": "ext_expo_sharing",  "label": "expo-sharing",         "group": "external","path": "Sharing.shareAsync()" },
+    { "id": "ext_crypto",        "label": "expo-crypto",          "group": "external","path": "Crypto.digestStringAsync()" },
+    { "id": "ext_claude",        "label": "Claude API",           "group": "external","path": "Anthropic SDK (Sonnet + Haiku)" },
+    { "id": "ext_icloud",        "label": "iCloud / FS",          "group": "external","path": "expo-file-system + iCloud coord." },
+
+    { "id": "vault_pdfs",        "label": "12 - Impressions/PDFs/", "group": "vault", "path": "{id}-{date}-{hash8}.pdf" },
+    { "id": "vault_manifeste",   "label": "12 - Impressions/manifeste.md", "group": "vault", "path": "frontmatter + table 5 colonnes" },
+    { "id": "vault_stories",     "label": "09 - Histoires/{enfant}/", "group": "vault", "path": "{storyId}.md + quality_*" },
+    { "id": "vault_recipes",     "label": "03 - Cuisine/Recettes/", "group": "vault", "path": "{cat}/{name}.cook" },
+    { "id": "vault_tasks",       "label": "Tâches récurrentes.md", "group": "vault",  "path": "01-Enfants ou 02-Maison" },
+    { "id": "vault_gami",        "label": "gami-{profileId}.md",   "group": "vault",  "path": "frontmatter XP + historique" },
+    { "id": "vault_cache_file",  "label": "vault-cache-v13.json",  "group": "vault",  "path": "snapshot SecureStore" }
+  ],
+  "flows": [
+    {
+      "id": "pdf-export",
+      "label": "Export PDF (livre Lulu)",
+      "icon": "📕",
+      "summary": "L'utilisateur exporte une histoire en PDF imprimable (Lulu 21×21). Pipeline: HTML→PDF→hash→copie vault→màj manifeste.",
+      "steps": [
+        { "from": "ui_book_export",    "to": "lib_pdf_gen",      "call": "generateBookPdf(opts)",                "payload": "{ story: BedtimeStory, allStories: BedtimeStory[] }", "note": "Tap 'Exporter PDF' dans la modale histoire" },
+        { "from": "lib_pdf_gen",       "to": "lib_pdf_assets",   "call": "loadFontsBase64() + loadIllustrationBase64()", "payload": "univers, archetype, storyId", "note": "Polices + illustrations encodées base64 pour inlining" },
+        { "from": "lib_pdf_gen",       "to": "lib_pdf_saga",     "call": "detectTomeBadge(story, allStories)",   "payload": "BedtimeStory[]", "note": "Détecte si tome d'une saga (badge Tome N)" },
+        { "from": "lib_pdf_gen",       "to": "lib_pdf_qr",       "call": "generateQrSvg(deepLink)",              "payload": "familyflow://story/{id} ", "note": "QR audio (Phase 50) pointe vers la lecture TTS" },
+        { "from": "lib_pdf_gen",       "to": "lib_pdf_html",     "call": "renderBookHtml(config)",               "payload": "{ story, scenes, illustrations, fonts, palette, tomeBadge, qrSvg }", "note": "Mise en page 21×21cm, marges Lulu" },
+        { "from": "lib_pdf_gen",       "to": "ext_crypto",       "call": "Crypto.digestStringAsync(SHA256, html)","payload": "html: string", "note": "Hash pour idempotence du nom de fichier" },
+        { "from": "lib_pdf_gen",       "to": "ext_expo_print",   "call": "Print.printToFileAsync({ html, width, height, margins })", "payload": "Print options", "note": "Rendu natif WebKit → PDF dans cache iOS" },
+        { "from": "ui_book_export",    "to": "lib_pdf_storage",  "call": "persistBookPdf(vault, cacheUri, entry)","payload": "{ id, hash, date, format }", "note": "Phase post-print: déplacer du cache vers le vault" },
+        { "from": "lib_pdf_storage",   "to": "lib_vault_mgr",    "call": "copyFileToVault(cacheUri, relPath)",   "payload": "PDF binary",   "note": "Coordination iCloud (download si besoin)" },
+        { "from": "lib_vault_mgr",     "to": "vault_pdfs",       "call": "write",                                "payload": "PDF binaire", "note": "12 - Impressions/PDFs/{storyId}-{date}-{hash8}.pdf" },
+        { "from": "lib_pdf_storage",   "to": "lib_pdf_manifest", "call": "parseManifeste() + serializeManifeste()","payload": "BookManifestEntry[]", "note": "Lecture + insertion entrée + sérialisation" },
+        { "from": "lib_pdf_manifest",  "to": "vault_manifeste",  "call": "vault.writeFile()",                    "payload": "Markdown manifeste", "note": "Frontmatter + table 5 colonnes" },
+        { "from": "ui_book_export",    "to": "ext_expo_sharing", "call": "Sharing.shareAsync(pdfUri)",           "payload": "URI fichier vault", "note": "Share Sheet iOS → AirDrop, Lulu, Files…" }
+      ]
+    },
+
+    {
+      "id": "boot",
+      "label": "App boot + cache rehydration",
+      "icon": "🚀",
+      "summary": "Au démarrage, le snapshot cache rehydrate les domaines stables en ~50ms, puis le vault est lu en arrière-plan pour rafraîchir l'état.",
+      "steps": [
+        { "from": "ui_layout",        "to": "ctx_vault",      "call": "<VaultProvider>",                       "payload": "children",     "note": "Provider racine wrappant l'app" },
+        { "from": "ctx_vault",        "to": "hook_vault",     "call": "useVaultInternal()",                    "payload": "—",            "note": "Hook orchestrateur monte tous les domaines" },
+        { "from": "hook_vault",       "to": "lib_cache",      "call": "readCacheSync()",                       "payload": "—",            "note": "Lecture sync du snapshot (SecureStore-like)" },
+        { "from": "lib_cache",        "to": "vault_cache_file","call": "File.readSync()",                      "payload": "JSON",         "note": "Snapshot vault-cache-v13.json (Phase 19)" },
+        { "from": "hook_vault",       "to": "lib_vault_mgr",  "call": "readFile(relPath)  ×N domaines",        "payload": "chemin relatif", "note": "Lecture async des fichiers vault après mount" },
+        { "from": "lib_vault_mgr",    "to": "ext_icloud",     "call": "coordinatedReadFile(uri)",              "payload": "URI",          "note": "Téléchargement iCloud à la demande si fichier non local" },
+        { "from": "lib_vault_mgr",    "to": "lib_parser",     "call": "parseTaskFile / parseRecipe / parseFamille / …", "payload": "string", "note": "Chaque domaine a sa paire parse/serialize" },
+        { "from": "lib_parser",       "to": "hook_vault",     "call": "setTasks / setRecipes / setProfiles …", "payload": "Task[] etc.",  "note": "État React mis à jour" },
+        { "from": "hook_vault",       "to": "lib_cache",      "call": "saveCache(payload)",                    "payload": "VaultCachePayload", "note": "Re-sérialise le snapshot après chaque save" },
+        { "from": "hook_vault",       "to": "ui_layout",      "call": "context value",                         "payload": "VaultState",   "note": "Le dashboard rend à partir du contexte" }
+      ]
+    },
+
+    {
+      "id": "story-eval",
+      "label": "Génération histoire + LLM eval",
+      "icon": "📖",
+      "summary": "Phase 52 — l'histoire générée passe par un rubric déterministe (hard-fail → re-roll cap 1), puis un LLM-judge Haiku scoré async.",
+      "steps": [
+        { "from": "ui_story_gen",      "to": "lib_ai",            "call": "generateStory(prompt, child)",          "payload": "{ child: Profile, theme, length }", "note": "Tap 'Générer une histoire'" },
+        { "from": "lib_ai",            "to": "ext_claude",        "call": "messages.create({ model: 'sonnet' })",  "payload": "system + user FR", "note": "Sonnet 4.6 pour la génération créative" },
+        { "from": "ext_claude",        "to": "lib_ai",            "call": "→ return",                              "payload": "BedtimeStory brut",  "note": "Texte + métadonnées (scenes, archetype, univers)" },
+        { "from": "lib_ai",            "to": "lib_eval_pipeline", "call": "runRubricAndMaybeReroll(story, child, recent, regenerate)", "payload": "{ story, child, recentStories, regenerate }", "note": "Pipeline avec callback de regen si hard-fail" },
+        { "from": "lib_eval_pipeline", "to": "lib_eval_rubric",   "call": "evaluateStoryDeterministic()",          "payload": "BedtimeStory",      "note": "Scoring déterministe — longueur, tags TTS, répétitions, sécurité" },
+        { "from": "lib_eval_rubric",   "to": "lib_eval_pipeline", "call": "→ return",                              "payload": "RubricResult { score, dims, hardFail, hint }", "note": "Si hardFail=true → re-roll demandé" },
+        { "from": "lib_eval_pipeline", "to": "lib_ai",            "call": "regenerate(hint)  [si hard-fail, cap 1]","payload": "hint: string",      "note": "Second appel Sonnet avec correction" },
+        { "from": "lib_eval_pipeline", "to": "lib_eval_llm",      "call": "evaluateWithLlmJudge(story, child)  [async]", "payload": "BedtimeStory", "note": "Haiku 4.5 + Zod, non-bloquant, écrit le score plus tard" },
+        { "from": "lib_eval_llm",      "to": "ext_claude",        "call": "messages.create({ model: 'haiku-4-5' })","payload": "rubric prompt FR", "note": "Réponse JSON validée Zod" },
+        { "from": "lib_eval_pipeline", "to": "hook_stories",      "call": "applyRubricToStory + saveStory()",      "payload": "story + quality_*", "note": "Merge des champs quality_score, quality_dimensions, quality_retried" },
+        { "from": "hook_stories",      "to": "lib_parser",        "call": "serializeBedtimeStory()",               "payload": "BedtimeStory",      "note": "Frontmatter + corps Markdown" },
+        { "from": "lib_parser",        "to": "lib_vault_mgr",     "call": "writeFile(sourceFile, content)",        "payload": "string",            "note": "—" },
+        { "from": "lib_vault_mgr",     "to": "vault_stories",     "call": "write",                                 "payload": "Markdown",          "note": "09 - Histoires/{enfant}/{storyId}.md" }
+      ]
+    },
+
+    {
+      "id": "recipe-create",
+      "label": "Créer / éditer une recette",
+      "icon": "🍳",
+      "summary": "Édition d'une recette CookLang persistée dans le vault, puis re-parsée pour MAJ in-memory.",
+      "steps": [
+        { "from": "ui_recipe_editor", "to": "hook_recipes",   "call": "addRecipe(category, data)",       "payload": "{ title, ingredients, steps, servings, prepTime, cookTime, tags }", "note": "Soumission du formulaire" },
+        { "from": "hook_recipes",     "to": "lib_cooklang",   "call": "generateCookFile(data)",          "payload": "RecipeData",     "note": "Sérialisation au format CookLang (-- Ingredient, etc.)" },
+        { "from": "hook_recipes",     "to": "lib_vault_mgr",  "call": "ensureDir() + writeFile()",       "payload": "chemin + UTF-8", "note": "Crée le dossier catégorie si besoin" },
+        { "from": "lib_vault_mgr",    "to": "vault_recipes",  "call": "write",                            "payload": ".cook",          "note": "03 - Cuisine/Recettes/{cat}/{name}.cook" },
+        { "from": "hook_recipes",     "to": "lib_cooklang",   "call": "parseRecipe(sourceFile, content)","payload": "string",         "note": "Re-parse pour MAJ in-memory" },
+        { "from": "lib_cooklang",     "to": "hook_recipes",   "call": "setRecipes([...])",               "payload": "Recipe[]",       "note": "Liste actualisée pour la liste UI" }
+      ]
+    },
+
+    {
+      "id": "task-add",
+      "label": "Ajouter une tâche depuis le dashboard",
+      "icon": "✅",
+      "summary": "Append d'une ligne markdown dans le fichier 'Tâches récurrentes', avec marqueurs emoji pour récurrence/date/rappel.",
+      "steps": [
+        { "from": "ui_dashboard_task", "to": "hook_tasks",     "call": "addTask(text, targetFile, dueDate?, recurrence?, reminderTime?)", "payload": "{ text, targetFile, dueDate?, recurrence?, reminder? }", "note": "Tap '+' dans la section Tâches" },
+        { "from": "hook_tasks",        "to": "lib_vault_mgr",  "call": "readFile(targetFile)",          "payload": "chemin",       "note": "Lit le fichier markdown existant" },
+        { "from": "lib_vault_mgr",     "to": "lib_parser",     "call": "parseTaskFile(content)",        "payload": "string",       "note": "Pour insertion ordonnée" },
+        { "from": "hook_tasks",        "to": "hook_tasks",     "call": "buildLine(text, markers)",      "payload": "🔁 récurrence, 📅 date, ⏰ rappel", "note": "Construction de la nouvelle ligne markdown" },
+        { "from": "hook_tasks",        "to": "lib_vault_mgr",  "call": "writeFile(targetFile, content)","payload": "Markdown MAJ", "note": "Réécriture complète du fichier" },
+        { "from": "lib_vault_mgr",     "to": "vault_tasks",    "call": "write",                          "payload": "Markdown",     "note": "01 - Enfants/{enfant}/ ou 02 - Maison/" },
+        { "from": "lib_vault_mgr",     "to": "hook_tasks",     "call": "setTasks(parsed)",              "payload": "Task[]",       "note": "MAJ optimiste de l'état" }
+      ]
+    },
+
+    {
+      "id": "gami-xp",
+      "label": "Tâche complétée → XP / gamification",
+      "icon": "⭐",
+      "summary": "Le check d'une tâche déclenche un event listener qui attribue XP/coins via le moteur de gamification et persiste le profil.",
+      "steps": [
+        { "from": "ui_task_checkbox",  "to": "hook_tasks",      "call": "toggleTask(task, completed=true)",    "payload": "Task",            "note": "Coche dans la liste" },
+        { "from": "hook_tasks",        "to": "hook_gami",       "call": "subscribeTaskComplete listener fires","payload": "Task",            "note": "Pattern listener — découplage Tasks/Gami" },
+        { "from": "hook_gami",         "to": "lib_gami_engine", "call": "awardTaskCompletion(profile, note)",  "payload": "{ profile, taskNote, xpOverride? }", "note": "Calcule base XP selon type de tâche" },
+        { "from": "lib_gami_engine",   "to": "lib_gami_engine", "call": "addPoints(profile, base, activeRewards?)", "payload": "points + multiplier", "note": "Applique multiplier, calcule level-up" },
+        { "from": "lib_gami_engine",   "to": "lib_gami_engine", "call": "drawLoot()  [si seuil atteint]",      "payload": "—",               "note": "Drop probabiliste lootbox" },
+        { "from": "lib_gami_engine",   "to": "lib_companion",   "call": "feedCompanion(companion, cropId)  [optionnel]", "payload": "—",     "note": "Si récolte ferme déclenche la mascotte" },
+        { "from": "hook_gami",         "to": "lib_parser",      "call": "serializeGamification(data)",         "payload": "GamificationData","note": "Frontmatter + historique markdown" },
+        { "from": "lib_parser",        "to": "lib_vault_mgr",   "call": "writeFile('gami-{id}.md', content)",  "payload": "string",          "note": "—" },
+        { "from": "lib_vault_mgr",     "to": "vault_gami",      "call": "write",                                "payload": "Markdown",       "note": "Profil + historique XP" }
+      ]
+    }
+  ]
+}
