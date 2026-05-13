@@ -323,6 +323,65 @@ export function useFarm(
     }
   }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification, onQuestProgress]);
 
+  /** Planter plusieurs cultures en une seule passe fichier (batch) */
+  const plantBatch = useCallback(async (profileId: string, plotIndexes: number[], cropId: string): Promise<number> => {
+    if (!vault || plotIndexes.length === 0) return 0;
+    const profile = profiles?.find(p => p.id === profileId);
+    if (!profile) return 0;
+
+    const cropDef = CROP_CATALOG.find(c => c.id === cropId);
+    if (!cropDef) return 0;
+
+    const isRareSeed = cropDef.dropOnly === true;
+
+    if (isRareSeed) {
+      const rareSeeds = profile.farmRareSeeds ?? {};
+      if ((rareSeeds[cropId] ?? 0) < plotIndexes.length) throw new Error('Stock de graines insuffisant');
+    } else {
+      const coins = profile.coins ?? 0;
+      if (coins < cropDef.cost * plotIndexes.length) throw new Error('Pas assez de feuilles');
+    }
+
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const freshFarm = parseFarmProfile(content);
+    const blockedPlots = getActiveWearEffects(freshFarm.wearEvents ?? []).blockedPlots;
+
+    let crops = parseCrops(freshFarm.farmCrops ?? '');
+    let actualCount = 0;
+    for (const plotIndex of plotIndexes) {
+      if (blockedPlots.includes(plotIndex)) continue;
+      const next = plantCrop(crops, plotIndex, cropId);
+      if (next.length > crops.length) {
+        crops = next;
+        actualCount++;
+      }
+    }
+
+    if (actualCount === 0) return 0;
+
+    if (isRareSeed) {
+      const currentRareSeeds = freshFarm.farmRareSeeds ?? {};
+      const updatedRareSeeds = { ...currentRareSeeds };
+      updatedRareSeeds[cropId] = (updatedRareSeeds[cropId] ?? 0) - actualCount;
+      await writeProfileFields(profileId, {
+        farm_crops: serializeCrops(crops),
+        farm_rare_seeds: serializeRareSeeds(updatedRareSeeds),
+      });
+    } else {
+      await writeProfileField(profileId, 'farm_crops', serializeCrops(crops));
+      await deductCoins(profileId, cropDef.cost * actualCount, `🌱 Graines : ${cropId} ×${actualCount}`);
+    }
+
+    await refreshFarm(profileId);
+    await refreshGamification();
+
+    if (onQuestProgress) {
+      try { await onQuestProgress(profileId, 'plant', actualCount); } catch { /* Quest — non-critical */ }
+    }
+
+    return actualCount;
+  }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification, onQuestProgress]);
+
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
   const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null; qty: number; wager?: { won: boolean; multiplier: number; dropBack: boolean; cumulCurrent: number; cumulTarget: number }; sporeeFirstObtained?: boolean; grade?: HarvestGrade; gradeBonusCoins?: number } | null> => {
     if (!vault) return null;
@@ -1211,6 +1270,7 @@ export function useFarm(
   return {
     plant,
     harvest,
+    plantBatch,
     startWager,
     incrementWagerCumul,
     buyBuilding,

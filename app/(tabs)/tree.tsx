@@ -530,7 +530,7 @@ export default function TreeScreen() {
   }, [screenOpacity]));
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager } = useFarm(contributeFamilyQuest, addContribution);
+  const { plant, plantBatch, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager } = useFarm(contributeFamilyQuest, addContribution);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [rareExpanded, setRareExpanded] = useState(false);
   const [epicExpanded, setEpicExpanded] = useState(false);
@@ -1701,12 +1701,12 @@ export default function TreeScreen() {
     }
 
     try {
-      for (const plotIdx of targetPlots) {
-        await plant(profile.id, plotIdx, cropId);
-      }
+      const actualCount = targetPlots.length === 1
+        ? (await plant(profile.id, targetPlots[0], cropId), 1)
+        : await plantBatch(profile.id, targetPlots, cropId);
       const emoji = cropDef?.emoji ?? '🌱';
-      showToast(plantedCount > 1
-        ? `${emoji} ${plantedCount}× ${t('farm.planted')}`
+      showToast(actualCount > 1
+        ? `${emoji} ${actualCount}× ${t('farm.planted')}`
         : `${emoji} ${t('farm.planted')}`);
     } catch {
       showToast(t('common.error'), 'error');
@@ -1715,7 +1715,7 @@ export default function TreeScreen() {
     setSelectedPlotIndex(null);
     setSporeeWagerArmed(false);
     setSeedPickerQuantity(1);
-  }, [profile, profiles, selectedPlotIndex, plant, showToast, t, sporeeWagerArmed, seedPickerQuantity, computeAvailablePlotsForBatch]);
+  }, [profile, profiles, selectedPlotIndex, plant, plantBatch, showToast, t, sporeeWagerArmed, seedPickerQuantity, computeAvailablePlotsForBatch]);
 
   // Phase 40 — handlers WagerSealerSheet (confirm seal / skip)
   const handleWagerSealConfirm = useCallback(async (duration: WagerDuration) => {
