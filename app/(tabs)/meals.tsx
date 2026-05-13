@@ -1484,7 +1484,6 @@ export default function MealsScreen() {
         <ScreenHeader
           title={headerTitle}
           subtitle={headerStats}
-          tint="rgba(255,244,218,0.55)"
           actions={
             tab === 'courses' && courses.length > 0 ? (
               <TouchableOpacity
