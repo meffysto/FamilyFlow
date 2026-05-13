@@ -492,6 +492,8 @@ const RARE_SEED_SPRITES: Record<string, number> = {
   rose_doree: require('../../assets/garden/crops/rose_doree/icon.png'),
   truffe: require('../../assets/garden/crops/truffe/icon.png'),
   fruit_dragon: require('../../assets/garden/crops/fruit_dragon/icon.png'),
+  etoile_berger: require('../../assets/garden/crops/etoile_berger/icon.png'),
+  larme_phenix: require('../../assets/garden/crops/larme_phenix/icon.png'),
 };
 
 interface SeedDropOverlayProps {
@@ -537,11 +539,15 @@ export function SeedDropOverlay({ seedDrop, onDismiss }: SeedDropOverlayProps) {
 
   if (!seedDrop) return null;
 
+  const isEpic = seedDrop.epic === true;
+  const overlayBg = isEpic ? 'rgba(50, 10, 80, 0.93)' : 'rgba(15, 40, 15, 0.90)';
+  const titleText = isEpic ? '✨ Graine épique trouvée !' : '🌟 Graine rare trouvée !';
+
   return (
     <Animated.View
       entering={FadeIn.duration(150)}
       exiting={FadeOut.duration(300)}
-      style={[styles.overlay, { backgroundColor: 'rgba(15, 40, 15, 0.90)' }]}
+      style={[styles.overlay, { backgroundColor: overlayBg }]}
     >
       {sparkles.map(s => <SeedSparkle key={s.id} x={s.x} y={s.y} delay={s.delay} />)}
       <View style={styles.centerLabel}>
@@ -557,7 +563,7 @@ export function SeedDropOverlay({ seedDrop, onDismiss }: SeedDropOverlayProps) {
           )}
         </Animated.View>
         <Animated.View style={textStyle}>
-          <Text style={styles.seedTitle}>🌟 Graine rare trouvée !</Text>
+          <Text style={styles.seedTitle}>{titleText}</Text>
         </Animated.View>
       </View>
     </Animated.View>

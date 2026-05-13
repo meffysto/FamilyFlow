@@ -96,7 +96,7 @@ Application mobile familiale (React Native / Expo) qui centralise la vie quotidi
 
 - **Stack**: React Native + Expo SDK 54 — pas de migration majeure
 - **Données**: Vault Obsidian Markdown — compatibilité bidirectionnelle obligatoire
-- **Stabilité**: App sur TestFlight — chaque phase doit être non-cassante
+- **Stabilité**: App publiée sur l'App Store — chaque phase doit être non-cassante
 - **Solo dev**: Un seul développeur — phases incrémentales, pas de big bang
 - **Animations**: react-native-reanimated obligatoire (pas RN Animated)
 <!-- GSD:project-end -->

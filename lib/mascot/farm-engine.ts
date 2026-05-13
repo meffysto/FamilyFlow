@@ -326,6 +326,7 @@ export interface RareSeedDrop {
   seedId: string;   // id de la culture rare obtenue
   emoji: string;    // emoji pour l'affichage
   labelKey: string; // cle i18n
+  epic?: boolean;   // true pour etoile_berger / larme_phenix
 }
 
 /** Regle de drop : quelles recoltes peuvent donner quelle graine rare */
@@ -381,6 +382,7 @@ export function rollSeedDrop(harvestedCropId: string): RareSeedDrop | null {
         seedId: rule.seedId,
         emoji: seedDef.emoji,
         labelKey: seedDef.labelKey,
+        epic: seedDef.epic ?? false,
       };
     }
   }
