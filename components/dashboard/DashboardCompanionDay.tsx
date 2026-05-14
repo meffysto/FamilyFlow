@@ -410,7 +410,7 @@ function DashboardCompanionDayInner(_props: DashboardSectionProps) {
         nextTaskId: todayData.nextTaskId,
         nextRdvText: todayData.nextRdvText,
         speechBubble,
-        stageOverride: todayData.stage.key as MascotteStageOverride,
+        stageOverride: null,
         companionSpecies: companion?.activeSpecies ?? null,
         companionStage,
       });

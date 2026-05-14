@@ -110,34 +110,53 @@ enum MascotteStage {
         }
     }
 
-    func subtitle(state: MascotteActivityAttributes.ContentState) -> String {
+    /// Info concrète importante à afficher (RDV imminent, repas planifié,
+    /// progression des tâches, stats récap…). Retourne nil si aucune donnée
+    /// concrète n'est disponible → la `speechBubble` peut alors prendre la
+    /// main, et à défaut on retombe sur `fallbackSubtitle`.
+    func importantSubtitle(state: MascotteActivityAttributes.ContentState) -> String? {
         let meal = state.currentMeal ?? ""
         switch self {
         case .reveil:
-            return "Bonjour 🌅 · Prête pour la journée"
+            return nil
         case .travail:
-            if state.tasksTotal > 0 {
-                return "Tâches du matin : \(state.tasksDone)/\(state.tasksTotal)"
-            }
-            return "Prête à coopérer avec ta famille"
+            return state.tasksTotal > 0
+                ? "Tâches du matin : \(state.tasksDone)/\(state.tasksTotal)"
+                : nil
         case .midi:
             if let rdv = state.nextRdvText, !rdv.isEmpty {
                 return "RDV : \(rdv)"
             }
-            return meal.isEmpty ? "Au menu : à planifier 🍴" : "Au menu : \(meal) 🍝"
+            return meal.isEmpty ? nil : "Au menu : \(meal) 🍝"
         case .jeu:
-            if state.tasksTotal > 0 {
-                return "Tâches : \(state.tasksDone)/\(state.tasksTotal) · +\(state.xpGained) XP"
-            }
-            return "Temps libre dans la clairière"
+            return state.tasksTotal > 0
+                ? "Tâches : \(state.tasksDone)/\(state.tasksTotal) · +\(state.xpGained) XP"
+                : nil
         case .routine:
-            return meal.isEmpty
-                ? "Douche → Pyjama → Dents"
-                : "Dîner : \(meal) · Puis routine 🛁"
+            return meal.isEmpty ? nil : "Dîner : \(meal) · Puis routine 🛁"
         case .dodo:
-            return "Une petite histoire avant de dormir ?"
+            return nil
         case .recap:
-            return recapLine(state: state)
+            // recapLine retourne "Repose-toi bien 💚" si pas de stats → considéré
+            // comme fallback. On ne renvoie ici que les vraies stats.
+            if state.tasksTotal > 0 || state.tasksDone > 0 || state.xpGained > 0 || (state.bonusText?.isEmpty == false) {
+                return recapLine(state: state)
+            }
+            return nil
+        }
+    }
+
+    /// Narratif générique affiché quand ni info concrète ni bulle ne sont
+    /// disponibles. Jamais vide.
+    func fallbackSubtitle() -> String {
+        switch self {
+        case .reveil: return "Bonjour 🌅 · Prête pour la journée"
+        case .travail: return "Prête à coopérer avec ta famille"
+        case .midi: return "Au menu : à planifier 🍴"
+        case .jeu: return "Temps libre dans la clairière"
+        case .routine: return "Douche → Pyjama → Dents"
+        case .dodo: return "Une petite histoire avant de dormir ?"
+        case .recap: return "Repose-toi bien 💚"
         }
     }
 
@@ -185,6 +204,21 @@ private func shouldShowNextTask(stage: MascotteStage) -> Bool {
     }
 }
 
+/// Pose dérivée du stage narratif courant — miroir Swift de `derivePoseFromStage`
+/// côté JS (lib/mascotte-live-activity.ts). Doit être recalculée au rendu pour
+/// que la pose suive la rotation horaire automatique (BGTask / staleDate) sans
+/// dépendre d'un Activity.update() qui réécrirait `state.pose`.
+@available(iOS 16.2, *)
+private func derivedPose(stage: MascotteStage, state: MascotteActivityAttributes.ContentState) -> String {
+    switch stage {
+    case .dodo: return "sleeping"
+    case .midi: return "eating"
+    case .recap:
+        return (state.tasksTotal > 0 && state.tasksDone >= state.tasksTotal) ? "celebrating" : "idle"
+    default: return "idle"
+    }
+}
+
 /// Sprite pixel-art du compagnon pour la DI compact (leading + minimal).
 /// Phase 260425-0qf : lit companion-sprite-{pose}.png depuis l'App Group.
 /// Fallback sur l'emoji de stage si le fichier est absent ou non lisible.
@@ -193,9 +227,10 @@ private func shouldShowNextTask(stage: MascotteStage) -> Bool {
 @ViewBuilder
 private func companionCompactView(
     state: MascotteActivityAttributes.ContentState,
+    stage: MascotteStage,
     fallbackEmoji: String
 ) -> some View {
-    let pose = state.pose ?? "idle"
+    let pose = derivedPose(stage: stage, state: state)
     if let uiImage = CompanionSpriteCache.image(for: pose) {
         Image(uiImage: uiImage)
             .interpolation(.none)
@@ -319,19 +354,17 @@ struct MascotteLiveActivity: Widget {
             let now = Date()
             let stage = MascotteStage.resolve(date: now, override: context.state.stageOverride)
             let title = stage.title(name: context.attributes.mascotteName)
-            let subtitle: String = {
-                if let bubble = context.state.speechBubble, !bubble.isEmpty {
-                    return bubble
-                }
-                return stage.subtitle(state: context.state)
-            }()
+            // Priorité : info concrète (RDV/repas/tâches/stats) → bulle compagnon
+                // → fallback narratif. La bulle ne masque jamais une donnée utile.
+            let bubble = context.state.speechBubble?.isEmpty == false ? context.state.speechBubble : nil
+            let subtitle = stage.importantSubtitle(state: context.state) ?? bubble ?? stage.fallbackSubtitle()
             let headEmoji = stage.emoji
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     // Phase 260425-0qf — sprite pose au lieu de l'emoji pur ; taille
                     // adaptée à la région DI expanded leading (~40pt pour matcher
                     // l'ancien rendu emoji 32pt avec marge pixel art).
-                    let pose = context.state.pose ?? "idle"
+                    let pose = derivedPose(stage: stage, state: context.state)
                     if let uiImage = CompanionSpriteCache.image(for: pose) {
                         Image(uiImage: uiImage)
                             .interpolation(.none)
@@ -433,11 +466,11 @@ struct MascotteLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                companionCompactView(state: context.state, fallbackEmoji: headEmoji)
+                companionCompactView(state: context.state, stage: stage, fallbackEmoji: headEmoji)
             } compactTrailing: {
                 compactTrailingView(state: context.state, stage: stage)
             } minimal: {
-                companionCompactView(state: context.state, fallbackEmoji: headEmoji)
+                companionCompactView(state: context.state, stage: stage, fallbackEmoji: headEmoji)
             }
             .widgetURL(MascotteDeepLink.tree.url)
         }
@@ -455,7 +488,7 @@ struct MascotteLockScreenView: View {
         let stage = MascotteStage.resolve(date: Date(), override: context.state.stageOverride)
         let isRecap = stage == .recap
         return HStack(spacing: 14) {
-                companionAvatar(fallbackEmoji: stage.emoji)
+                companionAvatar(stage: stage, fallbackEmoji: stage.emoji)
                     .frame(width: 72, height: 72)
                     .background(WarmPalette.chipFill)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -511,14 +544,20 @@ struct MascotteLockScreenView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(WarmPalette.parchemin)
                             .lineLimit(1)
-                        if let bubble = context.state.speechBubble, !bubble.isEmpty {
+                        // Priorité : donnée concrète → bulle → fallback narratif.
+                        if let important = stage.importantSubtitle(state: context.state) {
+                            Text(important)
+                                .font(.caption2)
+                                .foregroundColor(WarmPalette.soilPale)
+                                .lineLimit(1)
+                        } else if let bubble = context.state.speechBubble, !bubble.isEmpty {
                             Text("\u{201C}\(bubble)\u{201D}")
                                 .font(.caption2)
                                 .italic()
                                 .foregroundColor(WarmPalette.parcheminMuted)
                                 .lineLimit(2)
                         } else {
-                            Text(stage.subtitle(state: context.state))
+                            Text(stage.fallbackSubtitle())
                                 .font(.caption2)
                                 .foregroundColor(WarmPalette.soilPale)
                                 .lineLimit(1)
@@ -611,9 +650,9 @@ struct MascotteLockScreenView: View {
     /// Phase 260425-0qf : lit companion-sprite-{pose}.png — plus de companionSpriteToken.
     /// Fallback sur l'emoji du stage narratif si le fichier est absent.
     @ViewBuilder
-    private func companionAvatar(fallbackEmoji: String) -> some View {
+    private func companionAvatar(stage: MascotteStage, fallbackEmoji: String) -> some View {
         let label = "Compagnon \(context.attributes.mascotteName)"
-        let pose = context.state.pose ?? "idle"
+        let pose = derivedPose(stage: stage, state: context.state)
         if let uiImage = CompanionSpriteCache.image(for: pose) {
             Image(uiImage: uiImage)
                 .interpolation(.none)

@@ -678,6 +678,10 @@ export function useVaultInternal(): VaultState {
         : nowHour < 20 ? 'routine'
         : nowHour < 22 ? 'dodo'
         : 'recap';
+      // NB : laStage est utilisé uniquement pour générer la bulle FR localement.
+      // On ne le propage PAS comme stageOverride au widget — sinon il fige le
+      // stage côté natif et empêche la rotation horaire automatique pilotée
+      // par MascotteStage.for(date:) au prochain re-render (BGTask / staleDate).
       const speechBubble = pickLABubbleShort(laStage);
       // XP "effort quotidien" du profil actif (tâches, saga, défis, quêtes…)
       // Exclut les gains d'économie ferme (ventes, bonus craft) qui gonflent artificiellement
@@ -721,7 +725,7 @@ export function useVaultInternal(): VaultState {
         nextTaskId,
         nextRdvText,
         speechBubble,
-        stageOverride: laStage,
+        stageOverride: null,
         companionSpecies,
         companionStage,
       });
