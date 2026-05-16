@@ -569,7 +569,7 @@ export default function OnboardingScreen() {
 
   /** Écran 1 — Welcome */
   const renderWelcome = () => (
-    <Animated.View entering={FadeIn.duration(500)} style={s.stepContent}>
+    <ScrollView contentContainerStyle={s.stepContent} showsVerticalScrollIndicator={false}>
       {/* Hero gradient */}
       <LinearGradient
         colors={[primary + '33', 'transparent']}
@@ -633,7 +633,7 @@ export default function OnboardingScreen() {
           <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.welcome.cta')}</Text>
         </TouchableOpacity>
       </Animated.View>
-    </Animated.View>
+    </ScrollView>
   );
 
   /** Écran 2 — Goal question */
@@ -953,7 +953,7 @@ export default function OnboardingScreen() {
   const renderPermCamera = () => {
     const bullets = t('onboarding.permCamera.bullets', { returnObjects: true }) as string[];
     return (
-      <Animated.View entering={FadeIn.duration(500)} style={[s.stepContent, s.permissionCenter]}>
+      <ScrollView contentContainerStyle={[s.stepContent, s.permissionCenter]} showsVerticalScrollIndicator={false}>
         <Animated.Text entering={FadeInDown.delay(150).duration(400)} style={s.permissionEmoji}>
           📸
         </Animated.Text>
@@ -982,7 +982,7 @@ export default function OnboardingScreen() {
             <Text style={[s.ctaSecondaryText, { color: colors.textMuted }]}>{t('onboarding.permCamera.skip')}</Text>
           </TouchableOpacity>
         </Animated.View>
-      </Animated.View>
+      </ScrollView>
     );
   };
 
@@ -995,7 +995,7 @@ export default function OnboardingScreen() {
   const renderPermCalendar = () => {
     const bullets = t('onboarding.permCalendar.bullets', { returnObjects: true }) as string[];
     return (
-      <Animated.View entering={FadeIn.duration(500)} style={[s.stepContent, s.permissionCenter]}>
+      <ScrollView contentContainerStyle={[s.stepContent, s.permissionCenter]} showsVerticalScrollIndicator={false}>
         <Animated.Text entering={FadeInDown.delay(150).duration(400)} style={s.permissionEmoji}>
           📅
         </Animated.Text>
@@ -1024,7 +1024,7 @@ export default function OnboardingScreen() {
             <Text style={[s.ctaSecondaryText, { color: colors.textMuted }]}>{t('onboarding.permCalendar.skip')}</Text>
           </TouchableOpacity>
         </Animated.View>
-      </Animated.View>
+      </ScrollView>
     );
   };
 
