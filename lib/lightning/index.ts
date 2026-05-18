@@ -98,3 +98,11 @@ export type {
   PayoutFailedEvent,
   PayoutFailedReason,
 } from './lightning-events';
+
+// Phase 53 Plan 02 — orchestrateurs runtime (consommés par hooks/useVault.ts)
+export { processTaskCompletionForLightning } from './process-task-completion';
+export type { ProcessTaskDeps } from './process-task-completion';
+export { executePayout, isNetworkError } from './payout-executor';
+export type { ExecutePayoutInput } from './payout-executor';
+export { flushOfflineQueue } from './flush-queue';
+export type { FlushQueueDeps, FlushQueueResult } from './flush-queue';
