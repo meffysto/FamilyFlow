@@ -113,14 +113,33 @@ export class LnbitsClient {
    * POST /api/v1/payments — crée une invoice entrante
    * @param amountSats montant en satoshis
    * @param memo description visible dans le wallet payeur
+   * @param extra champ optionnel arbitraire injecté dans le body LNbits.
+   *   Phase 53 — utilisé comme idempotency tag REQ-6 (taskId + completedDate
+   *   + profileId). LNbits accepte un objet arbitraire ; côté client, on
+   *   garde aussi un audit local (`findPaidEntry`) pour faire la décision
+   *   finale d'idempotence (combinaison ceinture+bretelles).
    */
   async createInvoice(
     amountSats: number,
     memo: string,
+    extra?: Record<string, string | number>,
   ): Promise<CreateInvoiceResult> {
     if (!Number.isInteger(amountSats) || amountSats <= 0) {
       throw new LnbitsError('amountSats doit être un entier positif');
     }
+    const body: {
+      out: false;
+      amount: number;
+      unit: 'sat';
+      memo: string;
+      extra?: Record<string, string | number>;
+    } = {
+      out: false,
+      amount: amountSats,
+      unit: 'sat',
+      memo,
+    };
+    if (extra) body.extra = extra;
     const raw = await this.request<{
       payment_hash: string;
       bolt11?: string;
@@ -128,14 +147,10 @@ export class LnbitsClient {
       checking_id?: string;
     }>('/api/v1/payments', {
       method: 'POST',
-      body: JSON.stringify({
-        out: false,
-        amount: amountSats,
-        unit: 'sat',
-        memo,
-      }),
+      body: JSON.stringify(body),
     });
 
+    // Pitfall #4 — double fallback bolt11 / payment_request conservé.
     const bolt11 = raw.bolt11 ?? raw.payment_request;
     if (!raw.payment_hash || !bolt11) {
       throw new LnbitsError('Réponse LNbits incomplète (payment_hash/bolt11 manquant)');

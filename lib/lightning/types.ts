@@ -54,19 +54,30 @@ export class LnbitsError extends Error {
 }
 
 /**
- * Configuration multi-wallet famille — spike 004.
+ * Configuration multi-wallet famille — Phase 53.
  *
  * Modèle : le parent crée manuellement N+1 wallets dans son instance LNbits
- * (1 famille + N enfants). L'app consomme les keys.
+ * (1 famille + N membres). L'app consomme les keys.
  *
  * - `family.adminKey` : nécessaire UNIQUEMENT pour le pay-out (envoi).
  *   Gardée derrière un gate biométrique (`biometric-gate.ts`).
  * - `family.invoiceKey` : lecture balance famille.
- * - `children[].invoiceKey` : lecture balance enfant + création invoice
+ * - `members[].invoiceKey` : lecture balance membre + création invoice
  *   entrante (la famille paye cette invoice).
+ * - `members[].adminKey?` : OPTIONNELLE — si fournie, permet l'encaissement
+ *   out depuis le wallet du membre (REQ-10). Gated FaceID en prod.
  *
- * Les enfants n'ont PAS d'admin key dans l'app — par construction ils ne
- * peuvent pas envoyer, seulement recevoir et lire leur solde.
+ * Sans admin key, le membre ne peut que recevoir.
+ *
+ * Phase 53 — REQ-3 / REQ-4 :
+ * - `triggerMode` : mode de déclenchement du pay-out auto (default 'instant').
+ * - `dailyCapPerMember` : plafond quotidien par membre, clampé 100-10000
+ *   (default 1000). Le check du cap est in-process atomic AVANT tout appel
+ *   réseau (SPEC Constraint #6 — plafonnage par construction).
+ *
+ * REQ-12 : le rename `Child*` → `Member*` est effectif. La rétro-compat
+ * pour les utilisateurs déjà configurés se fait au niveau du PARSER
+ * (`loadFamilyConfig`) qui accepte les deux shapes en lecture.
  */
 export interface FamilyLightningConfig {
   /** URL d'instance LNbits partagée par tous les wallets famille */
@@ -76,14 +87,25 @@ export interface FamilyLightningConfig {
     invoiceKey: string;
     adminKey: string;
   };
-  children: ChildWalletMapping[];
+  members: MemberWalletMapping[];
+  /** Mode de déclenchement du pay-out auto (REQ-3) */
+  triggerMode: 'instant' | 'daily-review' | 'hybrid';
+  /** Plafond quotidien par membre en sats (REQ-4, clamp 100-10000) */
+  dailyCapPerMember: number;
 }
 
-export interface ChildWalletMapping {
+export interface MemberWalletMapping {
   /** ID du profil dans le vault (correspond à profile.id) */
   profileId: string;
   /** Nom affiché — copié du profil, peut diverger si renommé */
   displayName: string;
-  /** Invoice/read key du wallet enfant */
+  /** Invoice/read key du wallet membre */
   invoiceKey: string;
+  /**
+   * REQ-10 — Admin key OPTIONNELLE du wallet membre.
+   * Sans valeur : encaissement out désactivé pour ce membre.
+   * Avec valeur : encaissement out disponible derrière FaceID.
+   * Jamais loggée même en `__DEV__`.
+   */
+  adminKey?: string;
 }

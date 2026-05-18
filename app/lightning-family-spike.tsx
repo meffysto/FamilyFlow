@@ -53,9 +53,13 @@ import {
   LnbitsError,
   loadFamilyConfig,
   saveFamilyConfig,
-  type ChildWalletMapping,
+  type MemberWalletMapping,
   type FamilyLightningConfig,
 } from '../lib/lightning';
+
+// Phase 53 — playground spike conservé pendant la migration UI (suppression Plan 04).
+// Le rename Child→Member s'applique aussi ici pour garder TSC clean.
+type ChildWalletMapping = MemberWalletMapping;
 
 const TASK_REWARD_SATS = 100;
 
@@ -146,7 +150,7 @@ export default function LightningFamilySpikeScreen() {
 
   const refreshAll = useCallback(() => {
     refreshFamilyBalance();
-    config?.children.forEach(refreshChildBalance);
+    config?.members.forEach(refreshChildBalance);
   }, [config, refreshFamilyBalance, refreshChildBalance]);
 
   useEffect(() => {
@@ -308,19 +312,19 @@ export default function LightningFamilySpikeScreen() {
           </View>
         </View>
 
-        {/* Sub-wallets enfants */}
+        {/* Sub-wallets membres */}
         <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
-          Wallets enfants ({config.children.length})
+          Wallets membres ({config.members.length})
         </Text>
 
-        {config.children.length === 0 ? (
+        {config.members.length === 0 ? (
           <View style={[styles.emptyCard, Shadows.sm, { backgroundColor: colors.card }]}>
             <Text style={[styles.emptyText, { color: colors.textSub }]}>
-              Aucun enfant configuré. Tape « Modifier la config » pour en ajouter.
+              Aucun membre configuré. Tape « Modifier la config » pour en ajouter.
             </Text>
           </View>
         ) : (
-          config.children.map((child) => {
+          config.members.map((child) => {
             const profile = profiles.find((p) => p.id === child.profileId);
             const bal = childBalances[child.profileId];
             const isPaying = paying[child.profileId];
@@ -439,7 +443,7 @@ function SetupModal({ visible, onClose, profiles, existingConfig, onSave }: Setu
       setFamilyName(existingConfig.family.name);
       setFamilyInvoice(existingConfig.family.invoiceKey);
       setFamilyAdmin(existingConfig.family.adminKey);
-      setChildren(existingConfig.children);
+      setChildren(existingConfig.members);
     } else {
       setBaseUrl('https://demo.lnbits.com');
       setFamilyName('Famille');
@@ -492,9 +496,11 @@ function SetupModal({ visible, onClose, profiles, existingConfig, onSave }: Setu
     await onSave({
       baseUrl,
       family: { name: familyName, invoiceKey: familyInvoice, adminKey: familyAdmin },
-      children,
+      members: children,
+      triggerMode: existingConfig?.triggerMode ?? 'instant',
+      dailyCapPerMember: existingConfig?.dailyCapPerMember ?? 1000,
     });
-  }, [baseUrl, familyName, familyInvoice, familyAdmin, children, onSave]);
+  }, [baseUrl, familyName, familyInvoice, familyAdmin, children, existingConfig, onSave]);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>

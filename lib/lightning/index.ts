@@ -28,6 +28,6 @@ export type {
   PaymentStatus,
   PaymentStatusValue,
   FamilyLightningConfig,
-  ChildWalletMapping,
+  MemberWalletMapping,
 } from './types';
 export { LnbitsError } from './types';
