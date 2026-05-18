@@ -9,16 +9,47 @@
  *
  * Idempotence : appeler migrateSingleToFamily() 2 fois d'affilée doit
  * produire le même état final.
+ *
+ * Plan 04 — `lib/lightning/credentials.ts` a été supprimé. Le test seed/lit
+ * désormais la clé `lightning_lnbits_config_v1` en direct via SecureStore
+ * (`saveSingleLegacy` / `loadSingleLegacy` locaux ci-dessous).
  */
 
 import * as SecureStore from 'expo-secure-store';
 import { migrateSingleToFamily } from '../migration';
 import { loadFamilyConfig, saveFamilyConfig } from '../family-credentials';
-import { saveLnbitsConfig, loadLnbitsConfig } from '../credentials';
 import type { FamilyLightningConfig } from '../types';
 
 const SINGLE_KEY = 'lightning_lnbits_config_v1';
 const FAMILY_KEY = 'lightning_family_config_v1';
+
+/** Helper test : écrit la clé legacy single-wallet directement dans SecureStore.
+ *  Reproduit le shape historique du module `credentials.ts` (supprimé Plan 04)
+ *  avant migration vers family — trim baseUrl + invoiceKey. */
+async function saveSingleLegacy(cfg: { baseUrl: string; invoiceKey: string }): Promise<void> {
+  await SecureStore.setItemAsync(
+    SINGLE_KEY,
+    JSON.stringify({
+      baseUrl: cfg.baseUrl.trim().replace(/\/+$/, ''),
+      invoiceKey: cfg.invoiceKey.trim(),
+    }),
+  );
+}
+
+/** Helper test : lit la clé legacy single-wallet. Retourne null si absent
+ *  ou JSON corrompu. Validation défensive light (les tests seedent toujours
+ *  du JSON valide via `saveSingleLegacy`). */
+async function loadSingleLegacy(): Promise<{ baseUrl: string; invoiceKey: string } | null> {
+  const raw = await SecureStore.getItemAsync(SINGLE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { baseUrl?: unknown; invoiceKey?: unknown };
+    if (typeof parsed.baseUrl !== 'string' || typeof parsed.invoiceKey !== 'string') return null;
+    return { baseUrl: parsed.baseUrl, invoiceKey: parsed.invoiceKey };
+  } catch {
+    return null;
+  }
+}
 
 beforeEach(async () => {
   await SecureStore.deleteItemAsync(SINGLE_KEY);
@@ -40,7 +71,7 @@ function familyFixture(overrides: Partial<FamilyLightningConfig> = {}): FamilyLi
 
 describe('migrateSingleToFamily — Cas A : single seul', () => {
   it('crée family minimale, supprime single, retourne migrated', async () => {
-    await saveLnbitsConfig({ baseUrl: 'https://single.example', invoiceKey: 'single-inv' });
+    await saveSingleLegacy({ baseUrl: 'https://single.example', invoiceKey: 'single-inv' });
 
     const result = await migrateSingleToFamily();
 
@@ -56,7 +87,7 @@ describe('migrateSingleToFamily — Cas A : single seul', () => {
     expect(family!.triggerMode).toBe('instant');
     expect(family!.dailyCapPerMember).toBe(1000);
 
-    expect(await loadLnbitsConfig()).toBeNull();
+    expect(await loadSingleLegacy()).toBeNull();
   });
 });
 
@@ -81,7 +112,7 @@ describe('migrateSingleToFamily — Cas C : single + family (Pitfall #9)', () =>
   it("conserve family intacte, supprime single, retourne 'family_exists'", async () => {
     const original = familyFixture({ baseUrl: 'https://kept.example' });
     await saveFamilyConfig(original);
-    await saveLnbitsConfig({ baseUrl: 'https://attacker.example', invoiceKey: 'rogue-inv' });
+    await saveSingleLegacy({ baseUrl: 'https://attacker.example', invoiceKey: 'rogue-inv' });
 
     const result = await migrateSingleToFamily();
 
@@ -95,7 +126,7 @@ describe('migrateSingleToFamily — Cas C : single + family (Pitfall #9)', () =>
     expect(family!.members[0].profileId).toBe('lucas');
 
     // Single supprimé (cleanup).
-    expect(await loadLnbitsConfig()).toBeNull();
+    expect(await loadSingleLegacy()).toBeNull();
   });
 });
 
@@ -107,13 +138,13 @@ describe('migrateSingleToFamily — Cas D : ni single ni family', () => {
     expect(result.reason).toBe('no_single');
 
     expect(await loadFamilyConfig()).toBeNull();
-    expect(await loadLnbitsConfig()).toBeNull();
+    expect(await loadSingleLegacy()).toBeNull();
   });
 });
 
 describe('migrateSingleToFamily — idempotence', () => {
   it('Cas A puis 2ᵉ appel → family_exists au 2ᵉ tour, single bien parti', async () => {
-    await saveLnbitsConfig({ baseUrl: 'https://x', invoiceKey: 'k' });
+    await saveSingleLegacy({ baseUrl: 'https://x', invoiceKey: 'k' });
 
     const r1 = await migrateSingleToFamily();
     expect(r1.reason).toBe('migrated');

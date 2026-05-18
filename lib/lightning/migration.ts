@@ -22,9 +22,10 @@
  *        dailyCapPerMember=1000. On supprime ensuite le single. Return
  *        `migrated`.
  *
- * Le legacy `loadLnbitsConfig` / `clearLnbitsConfig` vit encore dans
- * `./credentials.ts` ; ce fichier sera supprimé en Plan 04. La migration
- * dépend de ces fonctions pendant la transition.
+ * Plan 04 — Le module `./credentials.ts` a été supprimé (cleanup REQ-12).
+ * La migration lit/écrit directement via `expo-secure-store` sur la clé
+ * legacy `lightning_lnbits_config_v1`. Helpers `readSingleLegacy` et
+ * `clearSingleLegacy` privés au fichier — pas d'export public.
  *
  * Threat T-53-01-06 : on garantit qu'un attaquant qui ré-injecterait
  * un single dans SecureStore ne peut PAS retirer les members d'une family
@@ -33,31 +34,65 @@
  * Errors silencieuses + logs `__DEV__` only.
  */
 
-import { clearLnbitsConfig, loadLnbitsConfig } from './credentials';
-import {
-  clearFamilyConfig as _clearFamilyConfig, // pas utilisé mais déclaré pour cohérence
-  loadFamilyConfig,
-  saveFamilyConfig,
-} from './family-credentials';
+import * as SecureStore from 'expo-secure-store';
+import { loadFamilyConfig, saveFamilyConfig } from './family-credentials';
 import type { FamilyLightningConfig } from './types';
 
 export type MigrationOutcome =
   | { migrated: true; reason: 'migrated' }
   | { migrated: false; reason: 'no_single' | 'family_exists' };
 
-void _clearFamilyConfig; // référence pour ESLint — supprimable une fois Plan 04 livré
+/** Clé SecureStore single-wallet legacy (Phase < 53). Conservée verbatim
+ *  pour que les utilisateurs avec un single existant déclenchent la
+ *  migration au prochain boot. Plan 04 — le fichier credentials.ts qui
+ *  utilisait cette clé a été supprimé ; on lit/écrit ici en direct. */
+const SINGLE_KEY = 'lightning_lnbits_config_v1';
+
+interface SingleLegacyShape {
+  baseUrl: string;
+  invoiceKey: string;
+}
+
+async function readSingleLegacy(): Promise<SingleLegacyShape | null> {
+  try {
+    const raw = await SecureStore.getItemAsync(SINGLE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SingleLegacyShape>;
+    if (
+      typeof parsed.baseUrl !== 'string' ||
+      typeof parsed.invoiceKey !== 'string'
+    ) {
+      return null;
+    }
+    if (!parsed.baseUrl.trim() || !parsed.invoiceKey.trim()) {
+      return null;
+    }
+    return { baseUrl: parsed.baseUrl, invoiceKey: parsed.invoiceKey };
+  } catch (err) {
+    if (__DEV__) console.warn('[lightning] readSingleLegacy failed:', err);
+    return null;
+  }
+}
+
+async function clearSingleLegacy(): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(SINGLE_KEY);
+  } catch (err) {
+    if (__DEV__) console.warn('[lightning] clearSingleLegacy failed:', err);
+  }
+}
 
 export async function migrateSingleToFamily(): Promise<MigrationOutcome> {
   try {
     // Cas A : family existe déjà → cleanup single (idempotent) sans toucher family.
     const family = await loadFamilyConfig();
     if (family !== null) {
-      await clearLnbitsConfig();
+      await clearSingleLegacy();
       return { migrated: false, reason: 'family_exists' };
     }
 
     // Cas B : pas de family, pas de single → no-op.
-    const single = await loadLnbitsConfig();
+    const single = await readSingleLegacy();
     if (single === null) {
       return { migrated: false, reason: 'no_single' };
     }
@@ -75,7 +110,7 @@ export async function migrateSingleToFamily(): Promise<MigrationOutcome> {
       dailyCapPerMember: 1000,
     };
     await saveFamilyConfig(newFamily);
-    await clearLnbitsConfig();
+    await clearSingleLegacy();
     return { migrated: true, reason: 'migrated' };
   } catch (err) {
     if (__DEV__) console.warn('[lightning] migrateSingleToFamily failed:', err);

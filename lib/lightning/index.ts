@@ -1,21 +1,17 @@
 /**
  * lib/lightning — barrel
  *
- * Phase 53 — module pur Lightning (Plan 01).
- * Le `lib/lightning/credentials.ts` legacy et les playgrounds spike sont
- * retirés en Plan 04 ; ils restent exportés temporairement pour permettre
- * à la migration (Plan 02) et au playground existant de compiler.
+ * Phase 53 Plan 04 (FINAL) — module Lightning family-only.
+ * Le legacy single-wallet et les 2 playgrounds dev de la phase ont été
+ * supprimés (REQ-12 acceptance). La migration `migrateSingleToFamily`
+ * lit/écrit la clé legacy `lightning_lnbits_config_v1` directement via
+ * SecureStore — voir `lib/lightning/migration.ts`.
  */
 
 // Client REST + helpers unités
 export { LnbitsClient, msatToSat, satToMsat } from './lnbits-client';
 
-// Persistance creds (legacy + family)
-export {
-  loadLnbitsConfig,
-  saveLnbitsConfig,
-  clearLnbitsConfig,
-} from './credentials';
+// Persistance creds family-only (Phase 53)
 export {
   loadFamilyConfig,
   saveFamilyConfig,
