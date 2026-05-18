@@ -68,8 +68,11 @@ import type { JournalSummaryEntry } from './ai-service';
 // nouveau domaine NON inclus dans VaultCacheState (lecture rare, volume
 // faible). Voir lib/pdf/manifest-parser.ts + .planning/phases/48-*/48-RESEARCH.md
 // section "CACHE_VERSION Decision".
-const CACHE_VERSION = 13;
-const CACHE_FILENAME = 'vault-cache-v13.json';
+// v14: Phase quick-260516-oj6 — Task.timeSlot? ('matin'|'midi'|'aprem'|'soir')
+//      ajouté au parser (nouveau champ optionnel). Bump pour éviter shape
+//      desync entre cache v13 (sans timeSlot) et runtime v14.
+const CACHE_VERSION = 14;
+const CACHE_FILENAME = 'vault-cache-v14.json';
 
 /** Profil allégé : uniquement les champs stables (nom, avatar, thème, diététique). */
 export interface ProfileCacheEntry {
