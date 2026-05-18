@@ -100,5 +100,27 @@ export function fileToSlot(sourceFile: string): SlotId | null {
   return null;
 }
 
+/**
+ * Détecte un slot depuis le titre d'une tâche via mots-clés temporels STRICTS.
+ * Retourne null si aucun keyword reconnu.
+ *
+ * Volontairement conservateur : seuls les mots qui désignent EXPLICITEMENT un
+ * moment de la journée sont matchés. Pas d'inférence sémantique du type
+ * "courses → aprem" ou "bain → soir" — trop magique, risque de surprise.
+ *
+ * Ordre de test : soir d'abord (intercepte "biberon soir" avant que "matin"
+ * apparaissant ailleurs ne se déclenche), puis matin, midi, aprem.
+ */
+export function titleToSlot(text: string): SlotId | null {
+  if (!text) return null;
+  // Soir d'abord (priorité quand un titre porte plusieurs moments — rare)
+  if (/\bsoir(ée|ee)?\b|\bd[iîîe]ner\b|\bcoucher\b|\bdodo\b|\bnuit\b/i.test(text)) return 'soir';
+  if (/\bmatin(al)?\b|\br[ée]veil\b|\bpetit[\s-]?d[ée]j/i.test(text)) return 'matin';
+  // Aprem AVANT midi sinon `\bmidi\b` capterait "midi" dans "après-midi"
+  if (/\baprem\b|\bapr[èe]s[\s-]?midi\b|\bgo[uû]ter\b/i.test(text)) return 'aprem';
+  if (/\bmidi\b|\bd[ée]jeuner\b/i.test(text)) return 'midi';
+  return null;
+}
+
 /** Durée estimée d'une tâche en minutes (défaut 15 si pas d'info). */
 export const DEFAULT_TASK_DURATION_MIN = 15;
