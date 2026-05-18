@@ -532,3 +532,23 @@ Plans (à détailler en `/gsd-plan-phase 52`):
 - [ ] 52-02-PLAN.md — Auto re-roll loop avec prompt augmenté + persistence frontmatter
 - [ ] 52-03-PLAN.md — LLM-eval async + UI badge qualité + i18n FR
 - [ ] 52-04-PLAN.md — Non-régression golden set + docs + feature flag
+
+### Phase 53: Lightning Family Wallet — 1 tâche = 100 sats (Labo)
+
+**Goal :** Promouvoir le spike Lightning multi-wallet (branche `feat/lightning-farm`, spikes 001–004 ✓) en feature intégrée derrière le flag `LIGHTNING_ENABLED` et la section Labo : une tâche complétée par un enfant déclenche un pay-out automatique de 100 sats du wallet famille (LNbits BYO) vers le sub-wallet de l'enfant, avec gate FaceID, plafond quotidien, audit log local et UX enfant pour voir sa cagnotte. Ferme classique offline-first préservée, branche jamais mergée sur main sans décision explicite (cf. spike 003 App Store posture).
+
+**Depends on :** Branche `feat/lightning-farm` (spikes 001 VALIDATED, 002 VALIDATED, 003 PARTIAL, 004 VALIDATED). Module `lib/lightning/` (client REST, SecureStore creds, biometric-gate). Système tâches existant (`contexts/VaultContext.tsx`, hooks dans `lib/parser.ts`).
+
+**Requirements :** Détaillés en `.planning/phases/53-lightning-family-wallet/53-SPEC.md` (à générer via `/gsd-spec-phase 53`).
+
+**Success criteria** (locked par SPEC.md) :
+1. Pay-out auto fonctionnel sur completion de tâche par un enfant
+2. Plafond quotidien respecté (par enfant + global)
+3. Audit log local persistant des pay-outs
+4. UX enfant : voir cagnotte + encaisser vers wallet externe
+5. Comportement offline gracieux (queue + retry OU refus clair)
+6. Cleanup spike playgrounds : code spike consolidé en feature production-grade
+7. App Store : feature invisible dans metadata/screenshots, accessible uniquement Réglages → Labo
+8. `npx tsc --noEmit` clean, ferme/tâches non régressées
+
+Plans (à détailler en `/gsd-plan-phase 53`).
