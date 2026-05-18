@@ -82,8 +82,20 @@ const XP_OVERRIDE_REGEX = /⭐\s*(\d+)/;
 const TAG_REGEX = /#([a-zA-ZÀ-ÿ0-9_-]+)/g;
 const MENTION_REGEX = /@([a-zA-ZÀ-ÿ0-9_-]+)/g;
 
+// Emojis slot reconnus EN DÉBUT de label (Phase quick-260516-oj6 — time-blocking)
+// ☀️ matin (U+2600 U+FE0F) / 🍽️ midi (U+1F37D U+FE0F) / ☕ aprem (U+2615) / 🌙 soir (U+1F319)
+// Regex anchored au début — éviter de matcher un emoji slot au milieu du texte.
+const SLOT_EMOJI_REGEX = /^(\s*)(☀️|🍽️|☕|🌙)\s+/;
+const SLOT_EMOJI_TO_ID: Record<string, NonNullable<Task['timeSlot']>> = {
+  '☀️': 'matin',
+  '🍽️': 'midi',
+  '☕': 'aprem',
+  '🌙': 'soir',
+};
+
 function stripEmoji(text: string): string {
   return text
+    .replace(/^(☀️|🍽️|☕|🌙)\s+/, '')  // emoji slot en début de label (Phase quick-260516-oj6)
     .replace(/📅\s*\d{4}-\d{2}-\d{2}/g, '')
     .replace(/🔁\s*every\s+(?:\d+\s+)?(?:day|week|month)s?/g, '')
     .replace(/✅\s*\d{4}-\d{2}-\d{2}/g, '')
@@ -111,6 +123,14 @@ export function parseTask(
   const reminderMatch = rawText.match(REMINDER_TIME_REGEX);
   const xpOverrideMatch = rawText.match(XP_OVERRIDE_REGEX);
 
+  // Phase quick-260516-oj6 — Time-blocking : extraction du slot via emoji marker
+  // en début de label (regex anchored — pas de match au milieu du texte).
+  let timeSlot: Task['timeSlot'] | undefined;
+  const slotMatch = rawText.match(SLOT_EMOJI_REGEX);
+  if (slotMatch) {
+    timeSlot = SLOT_EMOJI_TO_ID[slotMatch[2]];
+  }
+
   const tags: string[] = [];
   let m: RegExpExecArray | null;
   while ((m = TAG_REGEX.exec(rawText)) !== null) tags.push(m[1]);
@@ -129,6 +149,7 @@ export function parseTask(
     recurrence: recurrenceMatch?.[1],
     reminderTime: reminderMatch?.[1],
     xpOverride: xpOverrideMatch ? parseInt(xpOverrideMatch[1], 10) : undefined,
+    timeSlot,
     tags,
     mentions,
     sourceFile,

@@ -22,7 +22,15 @@ export interface Task {
   targetProfileId?: string;                   // profil ciblé par la mission
   secretStatus?: 'active' | 'pending' | 'validated'; // statut de la mission secrète
   xpOverride?: number;                        // XP personnalisé (⭐ N) — remplace POINTS_PER_TASK
+  /** Slot temporel verrouillé par l'utilisateur (parsé depuis emoji marker
+   *  en début de label : ☀️ matin / 🍽️ midi / ☕ aprem / 🌙 soir).
+   *  Absent = auto-placement par computeAutoSlot en mode Journée.
+   *  Phase quick-260516-oj6 — Time-blocking mode Journée. */
+  timeSlot?: 'matin' | 'midi' | 'aprem' | 'soir';
 }
+
+/** Alias pour un slot temporel non-nul (Phase quick-260516-oj6). */
+export type SlotId = NonNullable<Task['timeSlot']>;
 
 export interface RDV {
   title: string;
