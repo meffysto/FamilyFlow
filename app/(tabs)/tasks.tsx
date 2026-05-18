@@ -45,6 +45,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { ArrowUpDown, ListTodo, Clock, Home, Sun, User, Baby, List as ListIcon, Sunrise, Sunset, Moon } from 'lucide-react-native';
 import { FreeTimeBand } from '../../components/time-blocking/FreeTimeBand';
 import { SummaryPill } from '../../components/time-blocking/SummaryPill';
+import { SlotPickerSheet } from '../../components/time-blocking/SlotPickerSheet';
 import {
   computeAutoSlot,
   estimateTaskDuration,
@@ -250,7 +251,7 @@ function buildTargetFiles(profiles: Profile[], t: (key: string) => string) {
 }
 
 export default function TasksScreen() {
-  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission, contributeFamilyQuest } = useVault();
+  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, setTaskSlot, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission, contributeFamilyQuest } = useVault();
   const { addContribution } = useGarden();
   const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest, onContribution: addContribution });
   const { primary, tint, colors, isDark } = useThemeColors();
@@ -343,6 +344,7 @@ export default function TasksScreen() {
   const [dayFilter, setDayFilter] = useState<DayFilter>('aujourdhui');
   const [selectedDay, setSelectedDay] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [completionHistory, setCompletionHistory] = useState<CompletionHistory>({});
+  const [pickerTask, setPickerTask] = useState<Task | null>(null);
 
   useEffect(() => {
     SecureStore.getItemAsync(VIEW_MODE_KEY)
@@ -755,19 +757,46 @@ export default function TasksScreen() {
   const keyExtractor = useCallback((item: Task) => item.id, []);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: Task; index: number }) => (
-      <Animated.View entering={index < 10 ? FadeInDown.delay(index * 30) : undefined}>
-        <SwipeToDelete
-          onDelete={() => handleDeleteTask(item)}
-          skipConfirm
-          disabled={item.completed}
-          hintId="tasks"
-        >
-          <TaskCard task={item} onToggle={handleTaskToggle} onSkip={handleTaskSkip} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
-        </SwipeToDelete>
-      </Animated.View>
-    ),
-    [handleDeleteTask, handleTaskToggle, handleTaskSkip, handleOpenEdit, isChildMode],
+    ({ item, index, section }: { item: Task & { _isAutoSlot?: boolean }; index: number; section: TaskSection }) => {
+      // Phase quick-260516-oj6 — Slot badge en mode Journée
+      const slotBadge = viewMode === 'journee' && section.slotId
+        ? {
+            slot: section.slotId,
+            isAuto: item._isAutoSlot ?? false,
+            onPress: () => setPickerTask(item),
+            onLongPress: async () => {
+              try {
+                await setTaskSlot(item, null);
+                showToast('Tâche renvoyée au backlog', 'success');
+              } catch {
+                Alert.alert('Erreur', 'Impossible de modifier le créneau.');
+              }
+            },
+          }
+        : undefined;
+
+      return (
+        <Animated.View entering={index < 10 ? FadeInDown.delay(index * 30) : undefined}>
+          <SwipeToDelete
+            onDelete={() => handleDeleteTask(item)}
+            skipConfirm
+            disabled={item.completed}
+            hintId="tasks"
+          >
+            <TaskCard
+              task={item}
+              onToggle={handleTaskToggle}
+              onSkip={handleTaskSkip}
+              onLongPress={() => handleOpenEdit(item)}
+              showSource={viewMode === 'liste'}
+              pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined}
+              slotBadge={slotBadge}
+            />
+          </SwipeToDelete>
+        </Animated.View>
+      );
+    },
+    [handleDeleteTask, handleTaskToggle, handleTaskSkip, handleOpenEdit, isChildMode, viewMode, setTaskSlot, showToast],
   );
 
   const renderSectionHeader = useCallback(
@@ -1380,6 +1409,22 @@ export default function TasksScreen() {
       <SporeeOnboardingTooltip
         visible={showSporeeTooltip}
         onDismiss={() => setShowSporeeTooltip(false)}
+      />
+
+      {/* Phase quick-260516-oj6 — Slot picker (mode Journée) */}
+      <SlotPickerSheet
+        visible={pickerTask !== null}
+        currentSlot={pickerTask?.timeSlot ?? null}
+        onClose={() => setPickerTask(null)}
+        onSelect={async (slot) => {
+          const target = pickerTask;
+          if (!target) return;
+          try {
+            await setTaskSlot(target, slot);
+          } catch {
+            Alert.alert('Erreur', 'Impossible de définir le créneau.');
+          }
+        }}
       />
     </SafeAreaView>
   );

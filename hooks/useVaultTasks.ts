@@ -7,11 +7,19 @@
 
 import { useState, useCallback, useRef, useEffect, type SetStateAction, type Dispatch } from 'react';
 import type React from 'react';
-import type { Task } from '../lib/types';
+import type { Task, SlotId } from '../lib/types';
 import type { VaultManager } from '../lib/vault';
 import { parseTaskFile } from '../lib/parser';
 import { nextOccurrence } from '../lib/recurrence';
 import { format, addDays, parseISO } from 'date-fns';
+
+// Phase quick-260516-oj6 — Time-blocking : emoji marker par slot
+const SLOT_EMOJI: Record<SlotId, string> = {
+  matin: '☀️',
+  midi: '🍽️',
+  aprem: '☕',
+  soir: '🌙',
+};
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -37,6 +45,9 @@ export interface UseVaultTasksResult {
   addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string, reminderTime?: string) => Promise<void>;
   editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string; xpOverride?: number | null }) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
+  /** Phase quick-260516-oj6 — Verrouille (ou efface) le slot temporel d'une tâche.
+   *  Réécrit la ligne markdown avec/sans emoji marker (☀️🍽️☕🌙) en début de label. */
+  setTaskSlot: (task: Task, slot: SlotId | null) => Promise<void>;
   resetTasks: () => void;
   /** Phase 40 — Souscrit un listener au complete d'une tâche (pattern event-driven,
    *  consommé par useFarm.incrementWagerCumul). Retourne une fonction unsubscribe. */
@@ -111,6 +122,17 @@ export function useVaultTasks(
           if (__DEV__) console.warn('[useVaultTasks] taskComplete listener sync error:', e);
         }
       }
+
+      // Phase quick-260516-oj6 — mise à jour completionHistory (silent, non-critique)
+      // Import dynamique pour éviter cycles et alléger le bundle.
+      (async () => {
+        try {
+          const { computeAutoSlot, loadHistory, saveCompletion } = await import('../lib/time-blocking');
+          const history = await loadHistory();
+          const result = computeAutoSlot(task, [], history);
+          saveCompletion(task.text, result.slot).catch(() => { /* silent */ });
+        } catch { /* time-blocking — non-critical */ }
+      })();
     }
   }, [triggerWidgetRefresh, vacationTasksSetter]);
 
@@ -195,6 +217,9 @@ export function useVaultTasks(
     if (newDueDate) taskLine += ` \u{1F4C5} ${newDueDate}`;
     if (newReminderTime) taskLine += ` \u23F0 ${newReminderTime}`;
     if (newXpOverride !== undefined) taskLine += ` ⭐ ${newXpOverride}`;
+    // Phase quick-260516-oj6 — Préserver l'emoji slot existant en début de label
+    // si la tâche avait un timeSlot verrouillé (sinon l'edit le retirerait par accident).
+    if (task.timeSlot) taskLine = `${SLOT_EMOJI[task.timeSlot]} ${taskLine}`;
     const fullLine = `- [${task.completed ? 'x' : ' '}] ${taskLine}`;
 
     const fileChanged = newTargetFile !== task.sourceFile;
@@ -239,6 +264,37 @@ export function useVaultTasks(
     setTimeout(triggerWidgetRefresh, 0);
   }, [triggerWidgetRefresh]);
 
+  // ─── setTaskSlot (Phase quick-260516-oj6) ────────────────────────────────
+
+  const setTaskSlot = useCallback(async (task: Task, slot: SlotId | null) => {
+    if (!vaultRef.current) return;
+
+    // Reconstituer la queue d'emojis existants (récurrence, dueDate, etc.)
+    let taskLine = task.text;
+    if (task.recurrence) taskLine += ` \u{1F501} ${task.recurrence}`;
+    if (task.dueDate) taskLine += ` \u{1F4C5} ${task.dueDate}`;
+    if (task.reminderTime) taskLine += ` ⏰ ${task.reminderTime}`;
+    if (task.xpOverride !== undefined) taskLine += ` ⭐ ${task.xpOverride}`;
+
+    // Préfixer l'emoji slot UNIQUEMENT si slot défini (vault reste vierge sinon)
+    if (slot) taskLine = `${SLOT_EMOJI[slot]} ${taskLine}`;
+
+    const fullLine = `- [${task.completed ? 'x' : ' '}] ${taskLine}`;
+
+    const content = await vaultRef.current.readFile(task.sourceFile);
+    const lines = content.split('\n');
+    if (task.lineIndex >= 0 && task.lineIndex < lines.length) {
+      lines[task.lineIndex] = fullLine;
+      await vaultRef.current.writeFile(task.sourceFile, lines.join('\n'));
+    }
+
+    setTasks(prev => prev.map(t => {
+      if (t.sourceFile !== task.sourceFile || t.lineIndex !== task.lineIndex) return t;
+      return { ...t, timeSlot: slot ?? undefined };
+    }));
+    setTimeout(triggerWidgetRefresh, 0);
+  }, [triggerWidgetRefresh]);
+
   // ─── deleteTask ──────────────────────────────────────────────────────────
 
   const deleteTask = useCallback(async (sourceFile: string, lineIndex: number) => {
@@ -267,6 +323,7 @@ export function useVaultTasks(
     addTask,
     editTask,
     deleteTask,
+    setTaskSlot,
     resetTasks,
     subscribeTaskComplete,
   };
