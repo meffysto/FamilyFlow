@@ -28,7 +28,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bitcoin, ExternalLink, Lightbulb, Zap } from 'lucide-react-native';
+import { Bitcoin, ExternalLink, Lightbulb, Users, Zap } from 'lucide-react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { SectionHeader } from '../ui/SectionHeader';
@@ -158,6 +158,10 @@ export function SettingsLightning() {
     router.push('/lightning-spike' as any);
   }, [router]);
 
+  const handleOpenFamily = useCallback(() => {
+    router.push('/lightning-family-spike' as any);
+  }, [router]);
+
   return (
     <View>
       <SectionHeader
@@ -260,24 +264,48 @@ export function SettingsLightning() {
         )}
       </View>
 
-      {/* Lien vers le playground */}
-      {savedConfigured && enabled && (
-        <TouchableOpacity
-          style={[styles.card, Shadows.sm, { backgroundColor: colors.card, marginTop: Spacing.xl }]}
-          onPress={handleOpenSpike}
-          accessibilityRole="link"
-          accessibilityLabel="Ouvrir l'écran de test Lightning"
-        >
-          <View style={styles.rowBetween}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>Écran de test Lightning</Text>
-              <Text style={[styles.rowSub, { color: colors.textSub }]}>
-                Balance live + génération d'invoice 100 sats + QR + statut paiement
-              </Text>
+      {/* Liens vers les playgrounds */}
+      {enabled && (
+        <>
+          {savedConfigured && (
+            <TouchableOpacity
+              style={[styles.card, Shadows.sm, { backgroundColor: colors.card, marginTop: Spacing.xl }]}
+              onPress={handleOpenSpike}
+              accessibilityRole="link"
+              accessibilityLabel="Ouvrir l'écran de test Lightning"
+            >
+              <View style={styles.rowBetween}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>Écran de test (1 wallet)</Text>
+                  <Text style={[styles.rowSub, { color: colors.textSub }]}>
+                    Balance + génération invoice 100 sats + QR + polling statut
+                  </Text>
+                </View>
+                <ExternalLink size={18} color={primary} />
+              </View>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[styles.card, Shadows.sm, { backgroundColor: colors.card, marginTop: Spacing.md }]}
+            onPress={handleOpenFamily}
+            accessibilityRole="link"
+            accessibilityLabel="Ouvrir le mode famille (multi-wallet)"
+          >
+            <View style={styles.rowBetween}>
+              <View style={styles.row}>
+                <Users size={18} color={primary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>Mode famille (multi-wallet)</Text>
+                  <Text style={[styles.rowSub, { color: colors.textSub }]}>
+                    Wallet famille + sub-wallet par enfant · 1 tâche = 100 sats
+                  </Text>
+                </View>
+              </View>
+              <ExternalLink size={18} color={primary} />
             </View>
-            <ExternalLink size={18} color={primary} />
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </>
       )}
 
       <View style={[styles.tip, { backgroundColor: colors.cardAlt, borderColor: colors.border, marginTop: Spacing.xl }]}>
