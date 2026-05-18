@@ -6,8 +6,10 @@
  * Ordre de priorité (court-circuit dès qu'une source répond) :
  *   1. explicit  : task.timeSlot est défini (verrou utilisateur)
  *   2. time      : task.reminderTime ou dueDate avec heure ISO
+ *   2.5 override : déplacement manuel répété (>= 2 fois sur le même slot)
  *   3. history   : slot dominant statistique (>= 2 entrées)
  *   4. file      : pattern Routine matin/soir dans sourceFile
+ *   4.5 title    : mot-clé temporel dans le titre
  *   5. nextfit   : premier slot <= 75% chargé (fallback : 'soir')
  *
  * Module pur — la décision est calculée en mémoire à chaque render.
@@ -27,8 +29,9 @@ import {
 } from './slot-mapping';
 import { getDominantSlot, type CompletionHistory } from './completion-history';
 import { titleToEffort, type EffortType } from './effort';
+import { getOverride, type SlotOverrideStore } from './slot-override';
 
-export type AutoPlacementSource = 'explicit' | 'time' | 'history' | 'file' | 'title' | 'nextfit';
+export type AutoPlacementSource = 'explicit' | 'time' | 'override' | 'history' | 'file' | 'title' | 'nextfit';
 
 export interface AutoPlacementResult {
   slot: SlotId;
@@ -46,6 +49,7 @@ export function computeAutoSlot(
   task: Task,
   dayTasks: Task[],
   history: CompletionHistory,
+  overrides: SlotOverrideStore = {},
 ): AutoPlacementResult {
   // 1. Explicit : timeSlot verrouillé par l'utilisateur
   if (task.timeSlot) {
@@ -61,6 +65,14 @@ export function computeAutoSlot(
     if (timePart && /^\d{2}:\d{2}/.test(timePart)) {
       return { slot: timeToSlot(timePart), source: 'time' };
     }
+  }
+
+  // 2.5 Override : déplacement manuel répété (>= 2 fois sur le même slot)
+  // Prend priorité sur history car corriger explicitement est un signal plus
+  // fort qu'observer indirectement (complétions).
+  const overrideSlot = getOverride(task.text, overrides);
+  if (overrideSlot) {
+    return { slot: overrideSlot, source: 'override' };
   }
 
   // 3. History : slot dominant statistique (>= 2 entrées)
@@ -141,13 +153,14 @@ export function computeDayPlacement(
   dayTasks: Task[],
   history: CompletionHistory,
   occupiedBlocks: OccupiedBlock[] = [],
+  overrides: SlotOverrideStore = {},
 ): PlacedTask[] {
   const placed: PlacedTask[] = [];
   const needsNextfit: Task[] = [];
 
   // Pass 1 — signal fort, pas de nextfit
   for (const task of dayTasks) {
-    const result = computeAutoSlotSignalOnly(task, history);
+    const result = computeAutoSlotSignalOnly(task, history, overrides);
     if (result) {
       placed.push({ task, slot: result.slot, source: result.source });
     } else {
@@ -176,12 +189,13 @@ export function computeDayPlacement(
 }
 
 /**
- * Variante de computeAutoSlot qui s'arrête avant le nextfit (sources 1-4 uniquement).
+ * Variante de computeAutoSlot qui s'arrête avant le nextfit (sources 1-4.5 uniquement).
  * Retourne null si aucun signal n'est trouvé.
  */
 function computeAutoSlotSignalOnly(
   task: Task,
   history: CompletionHistory,
+  overrides: SlotOverrideStore = {},
 ): AutoPlacementResult | null {
   if (task.timeSlot) {
     return { slot: task.timeSlot, source: 'explicit' };
@@ -194,6 +208,10 @@ function computeAutoSlotSignalOnly(
     if (timePart && /^\d{2}:\d{2}/.test(timePart)) {
       return { slot: timeToSlot(timePart), source: 'time' };
     }
+  }
+  const overrideSlot = getOverride(task.text, overrides);
+  if (overrideSlot) {
+    return { slot: overrideSlot, source: 'override' };
   }
   const dominant = getDominantSlot(task.text, history);
   if (dominant) {

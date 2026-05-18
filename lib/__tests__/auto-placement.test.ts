@@ -25,6 +25,7 @@ import {
   type CompletionHistory,
 } from '../time-blocking/completion-history';
 import { titleToEffort } from '../time-blocking/effort';
+import type { SlotOverrideStore } from '../time-blocking/slot-override';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -509,5 +510,33 @@ describe('computeDayPlacement — chronotype', () => {
     const socialTask = makeTask({ id: 't1', text: 'Appeler maman' });
     const placed = computeDayPlacement([socialTask], {});
     expect(placed[0].slot).toBe('soir');
+  });
+});
+
+// ─── computeAutoSlot — source override ───────────────────────────────────────
+
+describe('computeAutoSlot — source override', () => {
+  it('override avec count >= 2 prend priorité sur history', () => {
+    const task = makeTask({ text: 'Lessive' });
+    const history: CompletionHistory = {
+      Lessive: [
+        { slot: 'matin', timestamp: '2026-05-01T10:00:00Z' },
+        { slot: 'matin', timestamp: '2026-05-02T10:00:00Z' },
+      ],
+    };
+    const overrides: SlotOverrideStore = {
+      Lessive: { slot: 'soir', count: 2, lastUpdate: '2026-05-15T20:00:00Z' },
+    };
+    const result = computeAutoSlot(task, [], history, overrides);
+    expect(result.slot).toBe('soir');
+    expect(result.source).toBe('override');
+  });
+  it('override avec count=1 ignoré', () => {
+    const task = makeTask({ text: 'Lessive' });
+    const overrides: SlotOverrideStore = {
+      Lessive: { slot: 'soir', count: 1, lastUpdate: '2026-05-15T20:00:00Z' },
+    };
+    const result = computeAutoSlot(task, [], {}, overrides);
+    expect(result.source).not.toBe('override');
   });
 });
