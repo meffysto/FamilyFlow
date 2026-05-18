@@ -9,3 +9,4 @@
 export * from './slot-mapping';
 export * from './auto-placement';
 export * from './completion-history';
+export type { SlotId } from '../types';

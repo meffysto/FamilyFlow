@@ -42,7 +42,18 @@ import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { ArrowUpDown, ListTodo, Clock, Home, Sun, User, Baby } from 'lucide-react-native';
+import { ArrowUpDown, ListTodo, Clock, Home, Sun, User, Baby, List as ListIcon, Sunrise, Sunset, Moon } from 'lucide-react-native';
+import { FreeTimeBand } from '../../components/time-blocking/FreeTimeBand';
+import { SummaryPill } from '../../components/time-blocking/SummaryPill';
+import {
+  computeAutoSlot,
+  estimateTaskDuration,
+  SLOT_IDS,
+  SLOT_DEFINITIONS,
+  loadHistory,
+  type CompletionHistory,
+} from '../../lib/time-blocking';
+import type { SlotId } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { EmptyState } from '../../components/EmptyState';
@@ -214,6 +225,17 @@ interface TaskSection {
   title: string;
   sourceFile: string;
   data: Task[];
+  /** Présent en mode Journée — identifie le slot temporel (Phase quick-260516-oj6). */
+  slotId?: SlotId;
+}
+
+// Phase quick-260516-oj6 — Time-blocking mode Journée
+type ViewMode = 'liste' | 'journee';
+type DayFilter = 'hier' | 'aujourdhui' | 'demain' | 'semaine';
+const VIEW_MODE_KEY = 'tasks.viewMode';
+
+function formatDateOffset(days: number): string {
+  return new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 }
 
 function buildTargetFiles(profiles: Profile[], t: (key: string) => string) {
@@ -315,6 +337,28 @@ export default function TasksScreen() {
   const SECTION_ORDER_KEY = 'tasks_section_order';
   const [sectionOrder, setSectionOrder] = useState<string[]>([]);
   const [orderModalVisible, setOrderModalVisible] = useState(false);
+
+  // Phase quick-260516-oj6 — Time-blocking mode Journée
+  const [viewMode, setViewMode] = useState<ViewMode>('liste');
+  const [dayFilter, setDayFilter] = useState<DayFilter>('aujourdhui');
+  const [selectedDay, setSelectedDay] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [completionHistory, setCompletionHistory] = useState<CompletionHistory>({});
+
+  useEffect(() => {
+    SecureStore.getItemAsync(VIEW_MODE_KEY)
+      .then(v => { if (v === 'journee') setViewMode('journee'); })
+      .catch(() => { /* silent */ });
+  }, []);
+
+  useEffect(() => {
+    loadHistory().then(setCompletionHistory).catch(() => { /* silent */ });
+  }, []);
+
+  const handleSetViewMode = useCallback((next: ViewMode) => {
+    Haptics.selectionAsync();
+    setViewMode(next);
+    SecureStore.setItemAsync(VIEW_MODE_KEY, next).catch(() => { /* silent */ });
+  }, []);
 
   useEffect(() => {
     SecureStore.getItemAsync(SECTION_ORDER_KEY).then((v) => {
@@ -601,8 +645,39 @@ export default function TasksScreen() {
     return { activeTasks: active, completedTasks: completed };
   }, [tasks, vacationTasks, isVacationActive, filter, search, activeProfile]);
 
-  // Group by source file
+  // Group by source file (mode Liste) ou par slot (mode Journée — Phase quick-260516-oj6)
   const sections: TaskSection[] = useMemo(() => {
+    if (viewMode === 'journee') {
+      // Filtrer les tâches du jour sélectionné
+      const dayTasks = activeTasks.filter(t => {
+        if (t.dueDate && t.dueDate.slice(0, 10) === selectedDay) return true;
+        // Récurrentes : on les inclut si selectedDay correspond à une occurrence
+        if (t.recurrence && (!t.dueDate || t.dueDate.slice(0, 10) <= selectedDay)) return true;
+        return false;
+      });
+
+      // Calcul du placement pour chaque tâche (chaîne de décision)
+      const placedTasks = dayTasks.map(t => {
+        const result = computeAutoSlot(t, dayTasks, completionHistory);
+        return { task: t, slot: result.slot, isAuto: result.source !== 'explicit' };
+      });
+
+      // 4 sections fixes (toujours présentes, même vides)
+      return SLOT_IDS.map(slotId => {
+        const def = SLOT_DEFINITIONS[slotId];
+        const slotTasks = placedTasks
+          .filter(p => p.slot === slotId)
+          .map(p => Object.assign({}, p.task, { _isAutoSlot: p.isAuto }) as Task & { _isAutoSlot?: boolean });
+        return {
+          title: def.label,
+          sourceFile: `slot:${slotId}`, // clé unique distincte des fichiers vault
+          slotId,
+          data: slotTasks,
+        };
+      });
+    }
+
+    // Mode Liste — comportement actuel inchangé
     const groups: Record<string, Task[]> = {};
     for (const task of activeTasks) {
       const key = task.sourceFile;
@@ -639,7 +714,7 @@ export default function TasksScreen() {
     }
 
     return unsorted;
-  }, [activeTasks, sectionOrder, t]);
+  }, [viewMode, selectedDay, completionHistory, activeTasks, sectionOrder, t]);
 
   // Sections terminées groupées par fichier
   const completedSections: TaskSection[] = useMemo(() => {
@@ -696,13 +771,45 @@ export default function TasksScreen() {
   );
 
   const renderSectionHeader = useCallback(
-    ({ section }: { section: { title: string; data: Task[] } }) => (
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
-        <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.data.length}</Text>
-      </View>
-    ),
-    [colors.textMuted, colors.textFaint],
+    ({ section }: { section: TaskSection }) => {
+      if (viewMode === 'journee' && section.slotId) {
+        const def = SLOT_DEFINITIONS[section.slotId];
+        const IconComponent = { Sunrise, Sun, Sunset, Moon }[def.iconName];
+        return (
+          <View style={styles.slotHeader}>
+            <IconComponent size={18} color={colors.brand.soil} strokeWidth={2} />
+            <Text style={[styles.slotHeaderLabel, { color: colors.text }]}>{def.label}</Text>
+            <Text style={[styles.slotHeaderRange, { color: colors.textMuted }]}>{def.timeRangeLabel}</Text>
+            <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.data.length}</Text>
+          </View>
+        );
+      }
+      return (
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
+          <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.data.length}</Text>
+        </View>
+      );
+    },
+    [viewMode, colors.textMuted, colors.textFaint, colors.brand.soil, colors.text],
+  );
+
+  // Phase quick-260516-oj6 — Rendu de la free time band sous chaque section slot
+  const renderSectionFooter = useCallback(
+    ({ section }: { section: TaskSection }) => {
+      if (viewMode !== 'journee' || !section.slotId) return null;
+      const def = SLOT_DEFINITIONS[section.slotId];
+      const usedMin = section.data.reduce((sum, ti) => sum + estimateTaskDuration(ti), 0);
+      const freeMin = def.capacityMinutes - usedMin;
+      if (freeMin < 60) return null; // bande affichée si reste >= 1h
+      // Soirée couple : slot soir + parent + au moins 2 adultes
+      const isCouple = section.slotId === 'soir'
+        && activeProfile?.role === 'adulte'
+        && profiles.filter(p => p.role === 'adulte').length >= 2;
+      const sublabel = isCouple ? 'SOIRÉE COUPLE' : def.freeTimeLabel;
+      return <FreeTimeBand slot={section.slotId} freeMinutes={freeMin} sublabel={sublabel} isCouple={isCouple} />;
+    },
+    [viewMode, activeProfile, profiles],
   );
 
   // ── Réorganisation des catégories (modal) ──
@@ -735,7 +842,34 @@ export default function TasksScreen() {
           }
           actions={
             <>
-              {showReorderBtn && (
+              {/* Phase quick-260516-oj6 — Toggle Liste/Journée */}
+              {!isVacationActive && (
+                <View style={[styles.modeToggle, { borderColor: colors.border }]}>
+                  <TouchableOpacity
+                    onPress={() => handleSetViewMode('liste')}
+                    style={[
+                      styles.modeToggleSegment,
+                      { backgroundColor: viewMode === 'liste' ? colors.brand.soil : 'transparent' },
+                    ]}
+                    hitSlop={ICON_BTN_HITSLOP}
+                    accessibilityLabel="Mode liste"
+                  >
+                    <ListIcon size={14} color={viewMode === 'liste' ? colors.bg : colors.textSub} strokeWidth={2.5} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleSetViewMode('journee')}
+                    style={[
+                      styles.modeToggleSegment,
+                      { backgroundColor: viewMode === 'journee' ? colors.brand.soil : 'transparent' },
+                    ]}
+                    hitSlop={ICON_BTN_HITSLOP}
+                    accessibilityLabel="Mode journée"
+                  >
+                    <Clock size={14} color={viewMode === 'journee' ? colors.bg : colors.textSub} strokeWidth={2.5} />
+                  </TouchableOpacity>
+                </View>
+              )}
+              {showReorderBtn && viewMode === 'liste' && (
                 <TouchableOpacity
                   onPress={() => setOrderModalVisible(true)}
                   style={[styles.headerIconBtn, { backgroundColor: colors.card }]}
@@ -776,24 +910,73 @@ export default function TasksScreen() {
                 />
               </View>
               <View ref={filterRef}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.filterScroll}
-                  directionalLockEnabled
-                >
-                  {filters.map((f) => (
+                {viewMode === 'journee' ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.filterScroll}
+                    directionalLockEnabled
+                  >
                     <Chip
-                      key={f.id}
-                      label={f.label}
-                      emoji={f.emoji}
-                      iconFactory={f.iconFactory}
-                      selected={filter === f.id}
-                      onPress={() => setFilter(f.id)}
+                      label="Hier"
+                      selected={dayFilter === 'hier'}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setDayFilter('hier');
+                        setSelectedDay(formatDateOffset(-1));
+                      }}
                       size="sm"
                     />
-                  ))}
-                </ScrollView>
+                    <Chip
+                      label="Aujourd'hui"
+                      selected={dayFilter === 'aujourdhui'}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setDayFilter('aujourdhui');
+                        setSelectedDay(new Date().toISOString().slice(0, 10));
+                      }}
+                      size="sm"
+                    />
+                    <Chip
+                      label="Demain"
+                      selected={dayFilter === 'demain'}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setDayFilter('demain');
+                        setSelectedDay(formatDateOffset(1));
+                      }}
+                      size="sm"
+                    />
+                    <Chip
+                      label="Semaine"
+                      selected={dayFilter === 'semaine'}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        Alert.alert('Bientôt', 'La vue Semaine arrive dans une prochaine mise à jour.');
+                      }}
+                      size="sm"
+                    />
+                  </ScrollView>
+                ) : (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.filterScroll}
+                    directionalLockEnabled
+                  >
+                    {filters.map((f) => (
+                      <Chip
+                        key={f.id}
+                        label={f.label}
+                        emoji={f.emoji}
+                        iconFactory={f.iconFactory}
+                        selected={filter === f.id}
+                        onPress={() => setFilter(f.id)}
+                        size="sm"
+                      />
+                    ))}
+                  </ScrollView>
+                )}
               </View>
             </View>
           }
@@ -822,11 +1005,30 @@ export default function TasksScreen() {
         keyExtractor={keyExtractor as any}
         renderItem={renderItem as any}
         renderSectionHeader={renderSectionHeader as any}
+        renderSectionFooter={renderSectionFooter as any}
         onScroll={onScrollHandler}
         scrollEventThrottle={16}
         ListHeaderComponent={
           <>
-            {sections.length > 0 && (
+            {/* Phase quick-260516-oj6 — Summary pill mode Journée */}
+            {viewMode === 'journee' && (
+              <SummaryPill
+                totalFreeMinutes={sections.reduce((sum, s) => {
+                  if (!s.slotId) return sum;
+                  const def = SLOT_DEFINITIONS[s.slotId];
+                  const used = s.data.reduce((acc, ti) => acc + estimateTaskDuration(ti), 0);
+                  return sum + Math.max(0, def.capacityMinutes - used);
+                }, 0)}
+                placedCount={sections.reduce((sum, s) => sum + s.data.length, 0)}
+                dayLabel={
+                  dayFilter === 'aujourdhui' ? "aujourd'hui"
+                    : dayFilter === 'hier' ? 'hier'
+                    : dayFilter === 'demain' ? 'demain'
+                    : 'cette semaine'
+                }
+              />
+            )}
+            {viewMode === 'liste' && sections.length > 0 && (
               <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
                 <Text style={[styles.deleteTipText, { color: colors.warningText }]}>{t('tasks.hint')}</Text>
               </View>
@@ -1288,6 +1490,36 @@ const styles = StyleSheet.create({
   sectionCount: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
+  },
+  // Phase quick-260516-oj6 — Time-blocking mode Journée
+  modeToggle: {
+    flexDirection: 'row',
+    borderRadius: Radius.full,
+    padding: 2,
+    gap: 2,
+    borderWidth: 1,
+  },
+  modeToggleSegment: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+  },
+  slotHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.xl,
+    paddingHorizontal: Spacing.xs,
+  },
+  slotHeaderLabel: {
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
+  },
+  slotHeaderRange: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+    flex: 1,
   },
   modalSafe: { flex: 1 },
   dragHandle: { width: 36, height: 4, borderRadius: Radius.xxs, alignSelf: 'center', marginTop: Spacing.md, marginBottom: Spacing.xs },
