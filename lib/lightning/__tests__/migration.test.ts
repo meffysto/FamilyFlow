@@ -65,6 +65,7 @@ function familyFixture(overrides: Partial<FamilyLightningConfig> = {}): FamilyLi
     ],
     triggerMode: 'instant',
     dailyCapPerMember: 1000,
+    hybridThresholdSats: 500,
     ...overrides,
   };
 }

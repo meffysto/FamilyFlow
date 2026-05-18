@@ -186,6 +186,7 @@ describe('saveFamilyConfig — toujours écrire `members` (REQ-12)', () => {
       members: [{ profileId: 'lucas', displayName: 'Lucas', invoiceKey: 'k' }],
       triggerMode: 'instant',
       dailyCapPerMember: 1000,
+      hybridThresholdSats: 500,
     };
     await saveFamilyConfig(cfg);
     const raw = await SecureStore.getItemAsync(FAMILY_KEY);
@@ -202,6 +203,7 @@ describe('saveFamilyConfig — toujours écrire `members` (REQ-12)', () => {
       members: [],
       triggerMode: 'instant',
       dailyCapPerMember: 1000,
+      hybridThresholdSats: 500,
     };
     await saveFamilyConfig(cfg);
     const parsed = JSON.parse((await SecureStore.getItemAsync(FAMILY_KEY))!);
@@ -236,6 +238,7 @@ describe('saveFamilyConfig — toujours écrire `members` (REQ-12)', () => {
       ],
       triggerMode: 'instant',
       dailyCapPerMember: 1000,
+      hybridThresholdSats: 500,
     };
     await saveFamilyConfig(cfg);
     const parsed = JSON.parse((await SecureStore.getItemAsync(FAMILY_KEY))!);

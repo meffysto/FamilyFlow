@@ -137,9 +137,14 @@ export async function processTaskCompletionForLightning(
     return;
   }
 
-  // 6. Dispatch trigger (REQ-3 — instant / queue / hybrid seuil 100 strict).
+  // 6. Dispatch trigger (REQ-3 — instant / queue / hybrid seuil configurable).
   const cumul = getCumulSatsToday(recipient.profileId, audit);
-  const decision = dispatchTrigger(cumul, config.triggerMode, PAYOUT_SATS);
+  const decision = dispatchTrigger(
+    cumul,
+    config.triggerMode,
+    PAYOUT_SATS,
+    config.hybridThresholdSats,
+  );
 
   if (decision === 'queue') {
     await enqueuePayout(

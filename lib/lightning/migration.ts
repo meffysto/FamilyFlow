@@ -108,6 +108,7 @@ export async function migrateSingleToFamily(): Promise<MigrationOutcome> {
       members: [],
       triggerMode: 'instant',
       dailyCapPerMember: 1000,
+      hybridThresholdSats: 500,
     };
     await saveFamilyConfig(newFamily);
     await clearSingleLegacy();

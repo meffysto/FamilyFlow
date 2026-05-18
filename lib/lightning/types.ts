@@ -92,6 +92,12 @@ export interface FamilyLightningConfig {
   triggerMode: 'instant' | 'daily-review' | 'hybrid';
   /** Plafond quotidien par membre en sats (REQ-4, clamp 100-10000) */
   dailyCapPerMember: number;
+  /**
+   * Seuil hybrid configurable (REQ-3, sats cumulés/jour à partir duquel hybrid
+   * bascule de `instant` vers `queue`). Strict (`<`). Clamp [100, dailyCapPerMember].
+   * Défaut 500 sats si absent. Ignoré hors mode `hybrid`.
+   */
+  hybridThresholdSats: number;
 }
 
 export interface MemberWalletMapping {

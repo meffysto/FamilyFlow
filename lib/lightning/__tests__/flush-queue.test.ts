@@ -52,6 +52,7 @@ const VALID_CONFIG: FamilyLightningConfig = {
   ],
   triggerMode: 'instant',
   dailyCapPerMember: 1000,
+  hybridThresholdSats: 500,
 };
 
 const PROFILES: Profile[] = [{ id: 'lucas', name: 'Lucas' } as Profile];

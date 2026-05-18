@@ -59,7 +59,12 @@ export type { AuditEntry, AuditStatus } from './audit-log';
 export { checkDailyCap, getCumulSatsToday } from './daily-cap';
 
 // Phase 53 — trigger mode
-export { dispatchTrigger, HYBRID_THRESHOLD_SATS } from './trigger-mode';
+export {
+  DEFAULT_HYBRID_THRESHOLD_SATS,
+  dispatchTrigger,
+  HYBRID_THRESHOLD_MIN_SATS,
+  HYBRID_THRESHOLD_SATS,
+} from './trigger-mode';
 export type { TriggerMode, TriggerDispatch } from './trigger-mode';
 
 // Phase 53 — payout queue

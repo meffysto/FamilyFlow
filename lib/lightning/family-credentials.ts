@@ -28,6 +28,10 @@
  */
 
 import * as SecureStore from 'expo-secure-store';
+import {
+  DEFAULT_HYBRID_THRESHOLD_SATS,
+  HYBRID_THRESHOLD_MIN_SATS,
+} from './trigger-mode';
 import type { FamilyLightningConfig, MemberWalletMapping } from './types';
 
 const FAMILY_KEY = 'lightning_family_config_v1';
@@ -44,6 +48,18 @@ function parseTriggerMode(value: unknown): FamilyLightningConfig['triggerMode'] 
 function parseDailyCap(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return DEFAULT_DAILY_CAP;
   return Math.max(DAILY_CAP_MIN, Math.min(DAILY_CAP_MAX, Math.floor(value)));
+}
+
+/**
+ * Parse + clamp le seuil hybrid. Min 100 sats, max = plafond quotidien
+ * (un seuil > plafond n'a aucun sens — la bascule arriverait après le cap).
+ * Défaut `DEFAULT_HYBRID_THRESHOLD_SATS` (500) si absent ou non numérique.
+ */
+function parseHybridThreshold(value: unknown, dailyCap: number): number {
+  const raw = typeof value === 'number' && Number.isFinite(value)
+    ? Math.floor(value)
+    : DEFAULT_HYBRID_THRESHOLD_SATS;
+  return Math.max(HYBRID_THRESHOLD_MIN_SATS, Math.min(dailyCap, raw));
 }
 
 export async function loadFamilyConfig(): Promise<FamilyLightningConfig | null> {
@@ -94,6 +110,7 @@ export async function loadFamilyConfig(): Promise<FamilyLightningConfig | null> 
         };
       });
 
+    const dailyCap = parseDailyCap(parsed.dailyCapPerMember);
     return {
       baseUrl: parsed.baseUrl,
       family: {
@@ -103,7 +120,8 @@ export async function loadFamilyConfig(): Promise<FamilyLightningConfig | null> 
       },
       members,
       triggerMode: parseTriggerMode(parsed.triggerMode),
-      dailyCapPerMember: parseDailyCap(parsed.dailyCapPerMember),
+      dailyCapPerMember: dailyCap,
+      hybridThresholdSats: parseHybridThreshold(parsed.hybridThresholdSats, dailyCap),
     };
   } catch (err) {
     if (__DEV__) console.warn('[lightning] loadFamilyConfig failed:', err);
@@ -112,6 +130,7 @@ export async function loadFamilyConfig(): Promise<FamilyLightningConfig | null> 
 }
 
 export async function saveFamilyConfig(config: FamilyLightningConfig): Promise<void> {
+  const dailyCap = parseDailyCap(config.dailyCapPerMember);
   const normalized: FamilyLightningConfig = {
     baseUrl: config.baseUrl.trim().replace(/\/+$/, ''),
     family: {
@@ -129,7 +148,8 @@ export async function saveFamilyConfig(config: FamilyLightningConfig): Promise<v
       };
     }),
     triggerMode: parseTriggerMode(config.triggerMode),
-    dailyCapPerMember: parseDailyCap(config.dailyCapPerMember),
+    dailyCapPerMember: dailyCap,
+    hybridThresholdSats: parseHybridThreshold(config.hybridThresholdSats, dailyCap),
   };
   await SecureStore.setItemAsync(FAMILY_KEY, JSON.stringify(normalized));
 }

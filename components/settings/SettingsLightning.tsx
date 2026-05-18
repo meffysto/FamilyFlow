@@ -33,6 +33,8 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import {
+  DEFAULT_HYBRID_THRESHOLD_SATS,
+  HYBRID_THRESHOLD_MIN_SATS,
   LnbitsClient,
   isLightningEnabled,
   loadFamilyConfig,
@@ -54,6 +56,11 @@ function clampDailyCap(value: number): number {
   return Math.max(DAILY_CAP_MIN, Math.min(DAILY_CAP_MAX, Math.floor(value)));
 }
 
+function clampHybridThreshold(value: number, dailyCap: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_HYBRID_THRESHOLD_SATS;
+  return Math.max(HYBRID_THRESHOLD_MIN_SATS, Math.min(dailyCap, Math.floor(value)));
+}
+
 type MemberFormEntry = { invoiceKey: string; adminKey: string };
 
 function makeEmptyMemberForm(): Record<string, MemberFormEntry> {
@@ -70,6 +77,9 @@ export function SettingsLightning() {
   const [familyConfig, setFamilyConfig] = useState<FamilyLightningConfig | null>(null);
   const [triggerMode, setTriggerMode] = useState<TriggerMode>('instant');
   const [dailyCapInput, setDailyCapInput] = useState<string>(String(DAILY_CAP_DEFAULT));
+  const [hybridThresholdInput, setHybridThresholdInput] = useState<string>(
+    String(DEFAULT_HYBRID_THRESHOLD_SATS),
+  );
   const [pendingCount, setPendingCount] = useState(0);
   const [showQueueModal, setShowQueueModal] = useState(false);
 
@@ -111,6 +121,7 @@ export function SettingsLightning() {
         setFamilyConfig(family);
         setTriggerMode(family.triggerMode);
         setDailyCapInput(String(family.dailyCapPerMember));
+        setHybridThresholdInput(String(family.hybridThresholdSats));
       }
       await refreshQueueCount();
     })();
@@ -231,12 +242,17 @@ export function SettingsLightning() {
 
     setSaving(true);
     try {
+      const nextDailyCap = familyConfig?.dailyCapPerMember ?? DAILY_CAP_DEFAULT;
       const config: FamilyLightningConfig = {
         baseUrl,
         family: { name: familyName, invoiceKey: familyInvoiceKey, adminKey: familyAdminKey },
         members,
         triggerMode: familyConfig?.triggerMode ?? 'instant',
-        dailyCapPerMember: familyConfig?.dailyCapPerMember ?? DAILY_CAP_DEFAULT,
+        dailyCapPerMember: nextDailyCap,
+        hybridThresholdSats: clampHybridThreshold(
+          familyConfig?.hybridThresholdSats ?? DEFAULT_HYBRID_THRESHOLD_SATS,
+          nextDailyCap,
+        ),
       };
       await saveFamilyConfig(config);
       setFamilyConfig(config);
@@ -278,13 +294,36 @@ export function SettingsLightning() {
     const num = parseInt(dailyCapInput, 10);
     const clamped = clampDailyCap(num);
     setDailyCapInput(String(clamped));
+    // Si le nouveau plafond est < seuil hybrid actuel, on re-clamp aussi le seuil.
+    const reclampedThreshold = clampHybridThreshold(
+      familyConfig.hybridThresholdSats,
+      clamped,
+    );
+    if (reclampedThreshold !== familyConfig.hybridThresholdSats) {
+      setHybridThresholdInput(String(reclampedThreshold));
+    }
     const updated: FamilyLightningConfig = {
       ...familyConfig,
       dailyCapPerMember: clamped,
+      hybridThresholdSats: reclampedThreshold,
     };
     await saveFamilyConfig(updated);
     setFamilyConfig(updated);
   }, [familyConfig, dailyCapInput]);
+
+  // Seuil hybrid configurable (post-Phase-53 fix — défaut 100 inutilisable).
+  const handleSaveHybridThreshold = useCallback(async () => {
+    if (!familyConfig) return;
+    const num = parseInt(hybridThresholdInput, 10);
+    const clamped = clampHybridThreshold(num, familyConfig.dailyCapPerMember);
+    setHybridThresholdInput(String(clamped));
+    const updated: FamilyLightningConfig = {
+      ...familyConfig,
+      hybridThresholdSats: clamped,
+    };
+    await saveFamilyConfig(updated);
+    setFamilyConfig(updated);
+  }, [familyConfig, hybridThresholdInput]);
 
   const handleOpenQueue = useCallback(() => {
     setShowQueueModal(true);
@@ -639,6 +678,47 @@ export function SettingsLightning() {
               />
             </View>
           </View>
+
+          {/* Seuil hybrid configurable — visible uniquement en mode hybrid */}
+          {triggerMode === 'hybrid' && (
+            <View
+              style={[
+                styles.card,
+                Shadows.sm,
+                { backgroundColor: colors.card, marginTop: Spacing.md },
+              ]}
+            >
+              <Text style={[styles.cardTitle, { color: colors.text }]}>
+                Seuil hybrid (sats)
+              </Text>
+              <Text style={[styles.rowSub, { color: colors.textSub }]}>
+                Au-delà de ce cumul journalier, les pay-outs basculent en queue.
+                Plage : {HYBRID_THRESHOLD_MIN_SATS}–{familyConfig.dailyCapPerMember}.
+                Défaut {DEFAULT_HYBRID_THRESHOLD_SATS}.
+              </Text>
+              <View style={styles.dailyCapRow}>
+                <TextInput
+                  style={[
+                    styles.dailyCapInput,
+                    {
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                      backgroundColor: colors.inputBg,
+                    },
+                  ]}
+                  value={hybridThresholdInput}
+                  onChangeText={setHybridThresholdInput}
+                  onBlur={handleSaveHybridThreshold}
+                  keyboardType="number-pad"
+                  placeholder={String(DEFAULT_HYBRID_THRESHOLD_SATS)}
+                  placeholderTextColor={colors.textFaint}
+                  accessibilityLabel="Seuil hybrid en sats"
+                  returnKeyType="done"
+                  onSubmitEditing={handleSaveHybridThreshold}
+                />
+              </View>
+            </View>
+          )}
 
           {/* Phase 53 — Entrée Pay-outs en attente (D-06) — conditionnelle */}
           {pendingCount > 0 && (
