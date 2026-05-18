@@ -52,7 +52,9 @@ import {
   SLOT_IDS,
   SLOT_DEFINITIONS,
   loadHistory,
+  timeToSlot,
   type CompletionHistory,
+  type OccupiedBlock,
 } from '../../lib/time-blocking';
 import type { SlotId } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -251,7 +253,7 @@ function buildTargetFiles(profiles: Profile[], t: (key: string) => string) {
 }
 
 export default function TasksScreen() {
-  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, setTaskSlot, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission, contributeFamilyQuest } = useVault();
+  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, setTaskSlot, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission, contributeFamilyQuest, rdvs } = useVault();
   const { addContribution } = useGarden();
   const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest, onContribution: addContribution });
   const { primary, tint, colors, isDark } = useThemeColors();
@@ -647,6 +649,17 @@ export default function TasksScreen() {
     return { activeTasks: active, completedTasks: completed };
   }, [tasks, vacationTasks, isVacationActive, filter, search, activeProfile]);
 
+  // Time-blocking v2 — blocs occupés par les RDV du jour (pour réserver la
+  // capacité du slot correspondant et éviter l'overflow par-dessus un RDV).
+  const occupiedBlocks = useMemo<OccupiedBlock[]>(() => {
+    if (viewMode !== 'journee') return [];
+    const dayRdvs = rdvs.filter(r => r.date_rdv === selectedDay && r.statut === 'planifié');
+    return dayRdvs.map(r => ({
+      slot: timeToSlot(r.heure),
+      minutes: 30, // RDV n'expose pas de durée → défaut 30min
+    }));
+  }, [viewMode, rdvs, selectedDay]);
+
   // Group by source file (mode Liste) ou par slot (mode Journée — Phase quick-260516-oj6)
   const sections: TaskSection[] = useMemo(() => {
     if (viewMode === 'journee') {
@@ -660,8 +673,9 @@ export default function TasksScreen() {
 
       // Calcul du placement de toutes les tâches du jour avec charge cumulée
       // (évite le bug "tout en matin" : computeDayPlacement gère les deux passes
-      //  signal-fort puis nextfit-cumulatif)
-      const placedTasks = computeDayPlacement(dayTasks, completionHistory).map(p => ({
+      //  signal-fort puis nextfit-cumulatif). Les RDV du jour réservent leur
+      //  charge en amont via occupiedBlocks.
+      const placedTasks = computeDayPlacement(dayTasks, completionHistory, occupiedBlocks).map(p => ({
         task: p.task,
         slot: p.slot,
         isAuto: p.source !== 'explicit',
@@ -719,7 +733,7 @@ export default function TasksScreen() {
     }
 
     return unsorted;
-  }, [viewMode, selectedDay, completionHistory, activeTasks, sectionOrder, t]);
+  }, [viewMode, selectedDay, completionHistory, activeTasks, sectionOrder, t, occupiedBlocks]);
 
   // Sections terminées groupées par fichier
   const completedSections: TaskSection[] = useMemo(() => {

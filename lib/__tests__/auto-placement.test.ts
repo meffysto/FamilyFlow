@@ -452,6 +452,29 @@ describe('computeDayPlacement', () => {
   });
 });
 
+// ─── computeDayPlacement — RDV-aware ─────────────────────────────────────────
+
+describe('computeDayPlacement — RDV-aware', () => {
+  it('réserve la capacité matin si RDV de 60min en matin', () => {
+    // Capacité matin = 270*0.75 = 202.5min. Avec un RDV de 60min, il reste
+    // 142.5min disponibles → 9 tâches de 15min maximum dans matin.
+    const tasks = Array.from({ length: 14 }, (_, i) =>
+      makeTask({ id: `t${i}`, text: `Tâche ${i}` })
+    );
+    const occupiedBlocks = [{ slot: 'matin' as const, minutes: 60 }];
+    const placed = computeDayPlacement(tasks, {}, occupiedBlocks);
+    const matinCount = placed.filter(p => p.slot === 'matin').length;
+    expect(matinCount).toBeLessThanOrEqual(10); // ~142min / 15 ≈ 9
+  });
+  it('ne reçoit pas de RDV → comportement v1 préservé', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) =>
+      makeTask({ id: `t${i}`, text: `T${i}` })
+    );
+    const placed = computeDayPlacement(tasks, {});
+    expect(placed).toHaveLength(5);
+  });
+});
+
 // ─── titleToEffort — classification d'effort ─────────────────────────────────
 
 describe('titleToEffort', () => {
