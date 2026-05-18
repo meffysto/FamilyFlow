@@ -95,6 +95,14 @@ import { getCompanionStage } from '../lib/mascot/companion-engine';
 import { pickLABubbleShort, type LAStage } from '../lib/mascot/la-bubbles';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { tickAubergeAuto } from '../lib/auberge/auto-tick';
+// Phase 53 — orchestrateurs Lightning (consommés en 3 useEffects ci-dessous,
+// après le subscriber Phase 46 Auberge). Le module est gardé OFF par flag :
+// processTaskCompletionForLightning early-return si isLightningEnabled() === false.
+import {
+  flushOfflineQueue,
+  migrateSingleToFamily,
+  processTaskCompletionForLightning,
+} from '../lib/lightning';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultLoveNotes } from './useVaultLoveNotes';
 import { useVaultWishlist } from './useVaultWishlist';
@@ -843,6 +851,67 @@ export function useVaultInternal(): VaultState {
     });
     return unsub;
   }, [tasksHook]);
+
+  // ─── Phase 53 : 3ᵉ subscriber Lightning (pay-out auto) ──────────────────
+  // Pattern verbatim Phase 46 (refs live + errors silencieuses). Le module
+  // Lightning gate strictement sur `isLightningEnabled()` en interne — si
+  // le flag est OFF, processTaskCompletionForLightning early-return AVANT
+  // tout appel réseau (SPEC Constraint #1).
+  const profilesRefForLightning = useRef(profiles);
+  profilesRefForLightning.current = profiles;
+  const activeProfileIdRefForLightning = useRef<string | null>(activeProfileId ?? null);
+  activeProfileIdRefForLightning.current = activeProfileId ?? null;
+  useEffect(() => {
+    const unsub = tasksHook.subscribeTaskComplete((task) => {
+      processTaskCompletionForLightning(task, {
+        profiles: profilesRefForLightning.current,
+        activeProfileId: activeProfileIdRefForLightning.current,
+      }).catch(() => {
+        /* Lightning — non-critical, vault domain unaffected */
+      });
+    });
+    return unsub;
+  }, [tasksHook]);
+
+  // ─── Phase 53 : migration single→family au boot (idempotente, 1×/process) ─
+  const lightningMigrationRanRef = useRef(false);
+  useEffect(() => {
+    if (lightningMigrationRanRef.current) return;
+    lightningMigrationRanRef.current = true;
+    migrateSingleToFamily()
+      .then((result) => {
+        if (__DEV__) console.warn('[lightning] migration result:', result.reason);
+      })
+      .catch(() => {
+        /* Lightning — non-critical */
+      });
+  }, []);
+
+  // ─── Phase 53 : flush queue offline au boot + sur AppState 'active' ─────
+  // Boot : tente un flush 1s après mount (laisse le réseau se réveiller).
+  // Foreground : retente le drain dès que l'app revient au premier plan.
+  // Edge case "mode avion levé sans backgrounding" non couvert MVP (WARNING #5
+  // RESEARCH Q2) — l'utilisateur doit minimiser puis rouvrir l'app.
+  useEffect(() => {
+    const bootTimeout = setTimeout(() => {
+      flushOfflineQueue({ profiles: profilesRefForLightning.current }).catch(() => {
+        /* Lightning — non-critical */
+      });
+    }, 1000);
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        flushOfflineQueue({ profiles: profilesRefForLightning.current }).catch(() => {
+          /* Lightning — non-critical */
+        });
+      }
+    });
+
+    return () => {
+      clearTimeout(bootTimeout);
+      sub.remove();
+    };
+  }, []);
 
   // ─── Backup consolidé : flush gamiData → gamification.md (1×/jour) ─────────
   const lastGamiBackupDate = useRef<string | null>(null);
