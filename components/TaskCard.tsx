@@ -19,12 +19,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { FloatingPoints } from './FloatingPoints';
 import * as Haptics from 'expo-haptics';
-import { Task, Profile } from '../lib/types';
+import { Task, Profile, SlotId } from '../lib/types';
 import { formatDateShort } from '../lib/date-locale';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { useTranslation } from 'react-i18next';
+import { SlotBadge } from './time-blocking/SlotBadge';
 
 interface TaskCardProps {
   task: Task;
@@ -38,6 +39,13 @@ interface TaskCardProps {
   profiles?: Profile[];
   /** Points à afficher en animation flottante quand la tâche est complétée */
   pointsOnComplete?: number;
+  /** Phase quick-260516-oj6 — Badge slot affiché en mode Journée. */
+  slotBadge?: {
+    slot: SlotId;
+    isAuto: boolean;
+    onPress: () => void;
+    onLongPress: () => void;
+  };
 }
 
 /** Mappe un nom de tag vers une clé sémantique de couleur (cf. colors.tagColors) */
@@ -72,6 +80,7 @@ export const TaskCard = React.memo(function TaskCard({
   compact = false,
   profiles,
   pointsOnComplete,
+  slotBadge,
 }: TaskCardProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
@@ -174,6 +183,14 @@ export const TaskCard = React.memo(function TaskCard({
             <Text style={[styles.inlineDue, { color: isOverdue ? colors.error : colors.textMuted }, compact && { fontSize: FontSize.micro }]}>
               {formatDateShort(task.dueDate)}
             </Text>
+          )}
+          {slotBadge && (
+            <SlotBadge
+              slot={slotBadge.slot}
+              isAuto={slotBadge.isAuto}
+              onPress={slotBadge.onPress}
+              onLongPress={slotBadge.onLongPress}
+            />
           )}
         </View>
 

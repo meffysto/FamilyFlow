@@ -208,6 +208,8 @@ export interface VaultState {
   addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string, reminderTime?: string) => Promise<void>;
   editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string; xpOverride?: number | null }) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
+  /** Phase quick-260516-oj6 — Verrouille (ou efface) le slot temporel d'une tâche. */
+  setTaskSlot: (task: Task, slot: import('../lib/types').SlotId | null) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
   mergeCourseIngredients: (items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
   toggleCourseItem: (item: CourseItem, completed: boolean) => Promise<void>;
@@ -2763,6 +2765,7 @@ export function useVaultInternal(): VaultState {
     addTask: tasksHook.addTask,
     editTask: tasksHook.editTask,
     deleteTask: tasksHook.deleteTask,
+    setTaskSlot: tasksHook.setTaskSlot,
     addCourseItem: coursesHook.addCourseItem,
     mergeCourseIngredients: coursesHook.mergeCourseIngredients,
     toggleCourseItem: coursesHook.toggleCourseItem,
