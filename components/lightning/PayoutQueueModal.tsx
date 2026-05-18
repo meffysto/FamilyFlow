@@ -137,13 +137,18 @@ export function PayoutQueueModal({
 
       // Reconstruire un Task minimal pour le payload executePayout (le réel
       // a été oublié au moment de l'enqueue — seuls taskId/sats/profileId
-      // sont persistés en queue).
-      const fakeTask: Task = {
+      // sont persistés en queue). On utilise les champs requis par executePayout
+      // uniquement (id + text + completed + mentions) ; le cast contourne les
+      // champs additionnels du shape Task complet (sourceFile, lineIndex, tags).
+      const fakeTask = {
         id: item.taskId,
         text: '(validation batch)',
         completed: true,
-        mentions: [],
-      } as Task;
+        mentions: [] as string[],
+        tags: [] as string[],
+        sourceFile: '',
+        lineIndex: 0,
+      } satisfies Pick<Task, 'id' | 'text' | 'completed' | 'mentions' | 'tags' | 'sourceFile' | 'lineIndex'> as Task;
 
       try {
         await executePayout({
