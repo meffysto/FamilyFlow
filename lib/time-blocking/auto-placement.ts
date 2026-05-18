@@ -112,6 +112,16 @@ export interface PlacedTask {
 }
 
 /**
+ * Bloc occupé par un événement non-tâche (RDV, événement calendrier).
+ * Sa charge est ajoutée à la capacité du slot avant le calcul nextfit
+ * pour éviter de saturer un slot déjà occupé par un RDV.
+ */
+export interface OccupiedBlock {
+  slot: SlotId;
+  minutes: number;
+}
+
+/**
  * Calcule le placement de TOUTES les tâches d'une journée en cumulant la charge.
  *
  * Différence cruciale avec un appel naïf de `computeAutoSlot` par tâche :
@@ -122,10 +132,15 @@ export interface PlacedTask {
  * Sans ce two-pass, 22 tâches sans signal finiraient toutes en matin
  * (le nextfit ne voit aucune charge accumulée car les autres tâches
  *  volatiles n'ont pas de timeSlot écrit dans le vault).
+ *
+ * `occupiedBlocks` permet de réserver la capacité utilisée par les RDV du jour
+ * pour qu'ils soient pris en compte dans le bilan de charge (un slot avec
+ * RDV de 60min commence avec 60min de charge initiale).
  */
 export function computeDayPlacement(
   dayTasks: Task[],
   history: CompletionHistory,
+  occupiedBlocks: OccupiedBlock[] = [],
 ): PlacedTask[] {
   const placed: PlacedTask[] = [];
   const needsNextfit: Task[] = [];
@@ -140,11 +155,16 @@ export function computeDayPlacement(
     }
   }
 
-  // Pass 2 — nextfit avec charge cumulée
+  // Charge initiale : blocs RDV + tâches déjà placées par signal fort
   const used: Record<SlotId, number> = { matin: 0, midi: 0, aprem: 0, soir: 0 };
+  for (const block of occupiedBlocks) {
+    used[block.slot] += block.minutes;
+  }
   for (const p of placed) {
     used[p.slot] += estimateTaskDuration(p.task);
   }
+
+  // Pass 2 — nextfit avec charge cumulée (RDV-aware)
   for (const task of needsNextfit) {
     const effort = titleToEffort(task.text);
     const slot = pickNextFit(used, effort);
