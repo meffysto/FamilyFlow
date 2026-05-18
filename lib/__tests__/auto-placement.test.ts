@@ -24,6 +24,7 @@ import {
   loadHistory,
   type CompletionHistory,
 } from '../time-blocking/completion-history';
+import { titleToEffort } from '../time-blocking/effort';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -448,5 +449,42 @@ describe('computeDayPlacement', () => {
     const matinCount = placed.filter(p => p.slot === 'matin').length;
     // Ne dépasse pas la capacité raisonnable
     expect(matinCount).toBeLessThanOrEqual(13);
+  });
+});
+
+// ─── titleToEffort — classification d'effort ─────────────────────────────────
+
+describe('titleToEffort', () => {
+  it('détecte admin (appeler/email/RDV/payer)', () => {
+    expect(titleToEffort('Appeler dentiste')).toBe('admin');
+    expect(titleToEffort('Envoyer email maîtresse')).toBe('admin');
+    expect(titleToEffort('Payer facture EDF')).toBe('admin');
+  });
+  it('détecte physical (ranger/nettoyer/courses)', () => {
+    expect(titleToEffort('Ranger garage')).toBe('physical');
+    expect(titleToEffort('Faire les courses')).toBe('physical');
+  });
+  it('détecte social (famille/amis/anniv)', () => {
+    expect(titleToEffort('Appeler maman')).toBe('social');
+    expect(titleToEffort('Visite famille')).toBe('social');
+  });
+  it('retourne null sans keyword (= focus implicite)', () => {
+    expect(titleToEffort('Préparer présentation')).toBeNull();
+    expect(titleToEffort('')).toBeNull();
+  });
+});
+
+// ─── computeDayPlacement — chronotype ────────────────────────────────────────
+
+describe('computeDayPlacement — chronotype', () => {
+  it("place une tâche admin en aprem (affinité) plutôt qu'en matin", () => {
+    const adminTask = makeTask({ id: 't1', text: 'Appeler dentiste' });
+    const placed = computeDayPlacement([adminTask], {});
+    expect(placed[0].slot).toBe('aprem');
+  });
+  it('place une tâche social en soir', () => {
+    const socialTask = makeTask({ id: 't1', text: 'Appeler maman' });
+    const placed = computeDayPlacement([socialTask], {});
+    expect(placed[0].slot).toBe('soir');
   });
 });

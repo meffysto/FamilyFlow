@@ -124,3 +124,21 @@ export function titleToSlot(text: string): SlotId | null {
 
 /** Durée estimée d'une tâche en minutes (défaut 15 si pas d'info). */
 export const DEFAULT_TASK_DURATION_MIN = 15;
+
+import type { EffortType } from './effort';
+
+/**
+ * Affinité chronotype par slot (Pink, "When") :
+ * - Matin : pic cognitif → focus
+ * - Midi : transition → pas d'affinité
+ * - Aprem : trough → admin (low-stakes, répétitif)
+ * - Soir : détente → social
+ *
+ * physical n'a pas d'affinité forte (peut tomber partout selon la charge).
+ */
+export const SLOT_AFFINITY: Record<SlotId, EffortType | null> = {
+  matin: 'focus',
+  midi: null,
+  aprem: 'admin',
+  soir: 'social',
+};

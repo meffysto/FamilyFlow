@@ -19,12 +19,14 @@ import type { Task, SlotId } from '../types';
 import {
   SLOT_IDS,
   SLOT_DEFINITIONS,
+  SLOT_AFFINITY,
   timeToSlot,
   fileToSlot,
   titleToSlot,
   DEFAULT_TASK_DURATION_MIN,
 } from './slot-mapping';
 import { getDominantSlot, type CompletionHistory } from './completion-history';
+import { titleToEffort, type EffortType } from './effort';
 
 export type AutoPlacementSource = 'explicit' | 'time' | 'history' | 'file' | 'title' | 'nextfit';
 
@@ -86,13 +88,9 @@ export function computeAutoSlot(
     if (!placed) continue; // ne compte que les tâches déjà placées (évite récursion)
     used[placed] += estimateTaskDuration(t);
   }
-  for (const slot of SLOT_IDS) {
-    if (used[slot] < 0.75 * SLOT_DEFINITIONS[slot].capacityMinutes) {
-      return { slot, source: 'nextfit' };
-    }
-  }
-  // Tout est plein → fallback dernier slot
-  return { slot: 'soir', source: 'nextfit' };
+  // Pour computeAutoSlot (appel unitaire), on garde le comportement v1 (effort=null).
+  // computeDayPlacement passe l'effort calculé via titleToEffort dans la Pass 2.
+  return { slot: pickNextFit(used, null), source: 'nextfit' };
 }
 
 /**
@@ -148,7 +146,8 @@ export function computeDayPlacement(
     used[p.slot] += estimateTaskDuration(p.task);
   }
   for (const task of needsNextfit) {
-    const slot = pickNextFit(used);
+    const effort = titleToEffort(task.text);
+    const slot = pickNextFit(used, effort);
     placed.push({ task, slot, source: 'nextfit' });
     used[slot] += estimateTaskDuration(task);
   }
@@ -191,14 +190,31 @@ function computeAutoSlotSignalOnly(
   return null;
 }
 
-/** Renvoie le premier slot dont la charge cumulée est ≤ 75% capacité. */
-function pickNextFit(used: Record<SlotId, number>): SlotId {
+/**
+ * Renvoie le premier slot adapté pour la tâche.
+ *
+ * 1. Si un effort est fourni : priorité aux slots dont l'affinité chronotype
+ *    correspond ET qui ont encore de la capacité (< 75% chargé).
+ * 2. Fallback : premier slot avec capacité (comportement v1).
+ * 3. Tous saturés : slot le moins chargé.
+ */
+function pickNextFit(used: Record<SlotId, number>, effort: EffortType | null): SlotId {
+  // 1. Slot avec capacité ET affinité matching (préférence chronotype)
+  if (effort) {
+    for (const slot of SLOT_IDS) {
+      const def = SLOT_DEFINITIONS[slot];
+      if (used[slot] < 0.75 * def.capacityMinutes && SLOT_AFFINITY[slot] === effort) {
+        return slot;
+      }
+    }
+  }
+  // 2. Fallback : premier slot avec capacité (comportement v1)
   for (const slot of SLOT_IDS) {
     if (used[slot] < 0.75 * SLOT_DEFINITIONS[slot].capacityMinutes) {
       return slot;
     }
   }
-  // Tous saturés → on retombe sur le slot le moins chargé pour ne jamais
+  // 3. Tous saturés → on retombe sur le slot le moins chargé pour ne jamais
   // empiler 100% dans le premier (évite le "tout matin" en cas de surcharge).
   let bestSlot: SlotId = 'soir';
   let bestUsed = used[bestSlot];
