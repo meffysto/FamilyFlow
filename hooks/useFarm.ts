@@ -1119,6 +1119,12 @@ export function useFarm(
     const cropDef = CROP_CATALOG.find(c => c.id === cropId);
     if (!cropDef) throw new Error('Culture inconnue');
 
+    // Guard stock graines rares/épiques (dropOnly) — sceller un pari consomme la graine
+    if (cropDef.dropOnly) {
+      const stock = (farmData.farmRareSeeds ?? {})[cropId] ?? 0;
+      if (stock <= 0) throw new Error('Pas de graine rare disponible');
+    }
+
     // Check usure (clôture cassée) — pattern plant
     const wearEffects = getActiveWearEffects(farmData.wearEvents ?? []);
     if (wearEffects.blockedPlots.includes(plotIndex)) {
@@ -1164,9 +1170,14 @@ export function useFarm(
       planted.modifiers = { ...(planted.modifiers ?? {}), wager };
     }
 
-    // Mutation in-place + 1 unique writeFile (farmCrops + sporeeCount)
+    // Mutation in-place + 1 unique writeFile (farmCrops + sporeeCount + farmRareSeeds si dropOnly)
     farmData.farmCrops = serializeCrops(newCrops);
     farmData.sporeeCount = currentSporee - 1;
+    if (cropDef.dropOnly) {
+      const updatedRareSeeds = { ...(farmData.farmRareSeeds ?? {}) };
+      updatedRareSeeds[cropId] = (updatedRareSeeds[cropId] ?? 0) - 1;
+      farmData.farmRareSeeds = updatedRareSeeds;
+    }
 
     const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
     await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, farmData));
