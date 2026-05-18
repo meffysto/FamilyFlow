@@ -215,7 +215,16 @@ export function ShoppingModeView({
   };
 
   // Déclenchement Bilan : quand allDone passe à true → délai 700 ms → onComplete
+  // Les refs évitent que les re-renders parent (vault refresh, gamification XP/coins)
+  // ne re-déclenchent l'effet et n'annulent le timer avant les 700 ms.
   const completedFiredRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  const sectionsRef = useRef(sections);
+  const itemsBySectionRef = useRef(itemsBySection);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+  useEffect(() => { sectionsRef.current = sections; }, [sections]);
+  useEffect(() => { itemsBySectionRef.current = itemsBySection; }, [itemsBySection]);
+
   useEffect(() => {
     if (!allDone) {
       completedFiredRef.current = false;
@@ -227,9 +236,11 @@ export function ShoppingModeView({
     const timer = setTimeout(() => {
       // Déduit l'ordre observé des rayons à partir des checkedAt timestamps :
       // pour chaque section, on prend le timestamp min de ses items, puis tri.
+      const currentSections = sectionsRef.current;
+      const currentItemsBySection = itemsBySectionRef.current;
       const sectionFirstTime = new Map<string, number>();
-      for (const s of sections) {
-        const items = itemsBySection[s] ?? [];
+      for (const s of currentSections) {
+        const items = currentItemsBySection[s] ?? [];
         let min = Infinity;
         for (const it of items) {
           const t = checkedAtRef.current.get(it.id);
@@ -242,12 +253,12 @@ export function ShoppingModeView({
         .map(([s]) => s);
       // Sections sans timestamp (cochées avant le mode magasin) → en queue
       const observedSet = new Set(observed);
-      const tail = sections.filter(s => !observedSet.has(s) && (itemsBySection[s] ?? []).length > 0);
-      onComplete?.([...observed, ...tail]);
+      const tail = currentSections.filter(s => !observedSet.has(s) && (currentItemsBySection[s] ?? []).length > 0);
+      onCompleteRef.current?.([...observed, ...tail]);
     }, 700);
 
     return () => clearTimeout(timer);
-  }, [allDone, sections, itemsBySection, onComplete]);
+  }, [allDone]);
 
   const handleClose = () => {
     Haptics.selectionAsync().catch(() => {});
