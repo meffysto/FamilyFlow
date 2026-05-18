@@ -1,20 +1,23 @@
 /**
  * SettingsLightning — Configuration du wallet Lightning (LNbits BYO)
  *
- * Spike feat/lightning-farm — voir .planning/spikes/001-lnbits-end-to-end/README.md
+ * Phase 53 Plan 03b — étendu avec :
+ *   - TriggerModeSelector (3 modes — REQ-3)
+ *   - Input dailyCapPerMember (clamp 100-10000 — REQ-4)
+ *   - Entrée conditionnelle "Pay-outs en attente (N)" → PayoutQueueModal (D-06)
+ *   - Liens vers /lightning-spike + /lightning-family-spike RETIRÉS (Pitfall #10)
  *
- * UX :
+ * UX (existant conservé) :
  *   - Toggle « Activer Lightning » (par défaut OFF).
  *   - Form baseUrl + invoice key (placeholder demo.lnbits.com).
  *   - Bouton « Préremplir demo.lnbits.com » pour tester sans node perso.
  *   - Bouton « Tester la connexion » → tente GET /api/v1/wallet, affiche balance.
  *   - Bouton « Sauvegarder » → SecureStore + active le flag.
- *   - Lien « Ouvrir l'écran de test » → /lightning-spike pour invoice end-to-end.
  *
  * Garanties :
  *   - Aucun appel réseau LN si l'interrupteur est OFF.
  *   - Creds vivent en SecureStore, JAMAIS dans le vault Markdown.
- *   - Invoice key suffit (pas l'admin key) — surface réduite.
+ *   - Invoice key suffit pour le form legacy (pas l'admin key — surface réduite).
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -27,9 +30,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Bitcoin, ExternalLink, Lightbulb, Users, Zap } from 'lucide-react-native';
+import { Bitcoin, Clock, Lightbulb, Zap } from 'lucide-react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useVault } from '../../contexts/VaultContext';
 import { Button } from '../ui/Button';
 import { SectionHeader } from '../ui/SectionHeader';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -40,17 +43,31 @@ import {
   isLightningEnabled,
   LnbitsClient,
   LnbitsError,
+  loadFamilyConfig,
   loadLnbitsConfig,
+  loadQueue,
+  saveFamilyConfig,
   saveLnbitsConfig,
   setLightningEnabled,
+  type FamilyLightningConfig,
   type WalletInfo,
 } from '../../lib/lightning';
+import { TriggerModeSelector, type TriggerMode } from '../lightning/TriggerModeSelector';
+import { PayoutQueueModal } from '../lightning/PayoutQueueModal';
 
 const DEMO_URL = 'https://demo.lnbits.com';
+const DAILY_CAP_MIN = 100;
+const DAILY_CAP_MAX = 10000;
+const DAILY_CAP_DEFAULT = 1000;
+
+function clampDailyCap(value: number): number {
+  if (!Number.isFinite(value)) return DAILY_CAP_DEFAULT;
+  return Math.max(DAILY_CAP_MIN, Math.min(DAILY_CAP_MAX, Math.floor(value)));
+}
 
 export function SettingsLightning() {
-  const router = useRouter();
   const { primary, colors } = useThemeColors();
+  const { profiles, tasks } = useVault();
 
   const [enabled, setEnabled] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
@@ -61,11 +78,28 @@ export function SettingsLightning() {
   const [testResult, setTestResult] = useState<WalletInfo | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
 
+  // Phase 53 — TriggerMode + dailyCap + queue entry
+  const [familyConfig, setFamilyConfig] = useState<FamilyLightningConfig | null>(null);
+  const [triggerMode, setTriggerMode] = useState<TriggerMode>('instant');
+  const [dailyCapInput, setDailyCapInput] = useState<string>(String(DAILY_CAP_DEFAULT));
+  const [pendingCount, setPendingCount] = useState(0);
+  const [showQueueModal, setShowQueueModal] = useState(false);
+
+  const refreshQueueCount = useCallback(async () => {
+    try {
+      const queue = await loadQueue();
+      setPendingCount(queue.filter((i) => i.reason === 'review').length);
+    } catch {
+      setPendingCount(0);
+    }
+  }, []);
+
   useEffect(() => {
     (async () => {
-      const [flag, cfg] = await Promise.all([
+      const [flag, cfg, family] = await Promise.all([
         isLightningEnabled(),
         loadLnbitsConfig(),
+        loadFamilyConfig(),
       ]);
       setEnabled(flag);
       if (cfg) {
@@ -73,8 +107,14 @@ export function SettingsLightning() {
         setInvoiceKey(cfg.invoiceKey);
         setSavedConfigured(true);
       }
+      if (family) {
+        setFamilyConfig(family);
+        setTriggerMode(family.triggerMode);
+        setDailyCapInput(String(family.dailyCapPerMember));
+      }
+      await refreshQueueCount();
     })();
-  }, []);
+  }, [refreshQueueCount]);
 
   const handleToggle = useCallback(async (value: boolean) => {
     if (value && !savedConfigured) {
@@ -133,7 +173,7 @@ export function SettingsLightning() {
   const handleClear = useCallback(() => {
     Alert.alert(
       'Effacer la configuration ?',
-      'Supprime l\'URL et l\'invoice key. Lightning sera désactivé.',
+      'Supprime l\'URL, les clés et désactive Lightning.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -154,13 +194,40 @@ export function SettingsLightning() {
     );
   }, []);
 
-  const handleOpenSpike = useCallback(() => {
-    router.push('/lightning-spike' as any);
-  }, [router]);
+  // Phase 53 — persist triggerMode (REQ-3).
+  const handleChangeTriggerMode = useCallback(
+    async (mode: TriggerMode) => {
+      setTriggerMode(mode);
+      if (!familyConfig) return;
+      const updated: FamilyLightningConfig = { ...familyConfig, triggerMode: mode };
+      await saveFamilyConfig(updated);
+      setFamilyConfig(updated);
+    },
+    [familyConfig],
+  );
 
-  const handleOpenFamily = useCallback(() => {
-    router.push('/lightning-family-spike' as any);
-  }, [router]);
+  // Phase 53 — persist dailyCapPerMember (REQ-4).
+  const handleSaveDailyCap = useCallback(async () => {
+    if (!familyConfig) return;
+    const num = parseInt(dailyCapInput, 10);
+    const clamped = clampDailyCap(num);
+    setDailyCapInput(String(clamped));
+    const updated: FamilyLightningConfig = {
+      ...familyConfig,
+      dailyCapPerMember: clamped,
+    };
+    await saveFamilyConfig(updated);
+    setFamilyConfig(updated);
+  }, [familyConfig, dailyCapInput]);
+
+  const handleOpenQueue = useCallback(() => {
+    setShowQueueModal(true);
+  }, []);
+
+  const handleCloseQueue = useCallback(() => {
+    setShowQueueModal(false);
+    refreshQueueCount();
+  }, [refreshQueueCount]);
 
   return (
     <View>
@@ -264,57 +331,111 @@ export function SettingsLightning() {
         )}
       </View>
 
-      {/* Liens vers les playgrounds */}
-      {enabled && (
+      {/* Phase 53 — Mode de déclenchement (REQ-3, UI-SPEC Surface 6) */}
+      {familyConfig && (
         <>
-          {savedConfigured && (
+          <View style={{ marginTop: Spacing['2xl'] }}>
+            <SectionHeader
+              title="Déclenchement des pay-outs"
+              icon={<Clock size={16} strokeWidth={1.75} color={primary} />}
+              flush
+            />
+            <TriggerModeSelector value={triggerMode} onChange={handleChangeTriggerMode} />
+          </View>
+
+          {/* Phase 53 — Plafond quotidien par membre (REQ-4) */}
+          <View
+            style={[
+              styles.card,
+              Shadows.sm,
+              { backgroundColor: colors.card, marginTop: Spacing.xl },
+            ]}
+          >
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Plafond quotidien (sats)
+            </Text>
+            <Text style={[styles.rowSub, { color: colors.textSub }]}>
+              Par défaut 1000. Plage : 100–10 000.
+            </Text>
+            <View style={styles.dailyCapRow}>
+              <TextInput
+                style={[
+                  styles.dailyCapInput,
+                  {
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                    backgroundColor: colors.inputBg,
+                  },
+                ]}
+                value={dailyCapInput}
+                onChangeText={setDailyCapInput}
+                onBlur={handleSaveDailyCap}
+                keyboardType="number-pad"
+                placeholder={String(DAILY_CAP_DEFAULT)}
+                placeholderTextColor={colors.textFaint}
+                accessibilityLabel="Plafond quotidien en sats"
+                returnKeyType="done"
+                onSubmitEditing={handleSaveDailyCap}
+              />
+            </View>
+          </View>
+
+          {/* Phase 53 — Entrée Pay-outs en attente (D-06) — conditionnelle */}
+          {pendingCount > 0 && (
             <TouchableOpacity
-              style={[styles.card, Shadows.sm, { backgroundColor: colors.card, marginTop: Spacing.xl }]}
-              onPress={handleOpenSpike}
-              accessibilityRole="link"
-              accessibilityLabel="Ouvrir l'écran de test Lightning"
+              style={[
+                styles.card,
+                Shadows.sm,
+                { backgroundColor: colors.card, marginTop: Spacing.md },
+              ]}
+              onPress={handleOpenQueue}
+              accessibilityRole="button"
+              accessibilityLabel={`Pay-outs en attente, ${pendingCount} paiement${pendingCount > 1 ? 's' : ''} à valider`}
             >
               <View style={styles.rowBetween}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.cardTitle, { color: colors.text }]}>Écran de test (1 wallet)</Text>
-                  <Text style={[styles.rowSub, { color: colors.textSub }]}>
-                    Balance + génération invoice 100 sats + QR + polling statut
-                  </Text>
+                <View style={styles.row}>
+                  <Clock size={18} strokeWidth={1.75} color={primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.cardTitle, { color: colors.text }]}>
+                      Pay-outs en attente
+                    </Text>
+                    <Text style={[styles.rowSub, { color: colors.textSub }]}>
+                      {`${pendingCount} pay-out${pendingCount > 1 ? 's' : ''} à valider · ${pendingCount * 100} sats`}
+                    </Text>
+                  </View>
                 </View>
-                <ExternalLink size={18} color={primary} />
               </View>
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={[styles.card, Shadows.sm, { backgroundColor: colors.card, marginTop: Spacing.md }]}
-            onPress={handleOpenFamily}
-            accessibilityRole="link"
-            accessibilityLabel="Ouvrir le mode famille (multi-wallet)"
-          >
-            <View style={styles.rowBetween}>
-              <View style={styles.row}>
-                <Users size={18} color={primary} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.cardTitle, { color: colors.text }]}>Mode famille (multi-wallet)</Text>
-                  <Text style={[styles.rowSub, { color: colors.textSub }]}>
-                    Wallet famille + sub-wallet par enfant · 1 tâche = 100 sats
-                  </Text>
-                </View>
-              </View>
-              <ExternalLink size={18} color={primary} />
-            </View>
-          </TouchableOpacity>
         </>
       )}
 
-      <View style={[styles.tip, { backgroundColor: colors.cardAlt, borderColor: colors.border, marginTop: Spacing.xl }]}>
+      <View
+        style={[
+          styles.tip,
+          {
+            backgroundColor: colors.cardAlt,
+            borderColor: colors.border,
+            marginTop: Spacing.xl,
+          },
+        ]}
+      >
         <Lightbulb size={14} strokeWidth={1.75} color={colors.textSub} style={{ marginTop: 2 }} />
         <Text style={[styles.tipText, { color: colors.textSub, flex: 1 }]}>
-          <Text style={styles.bold}>Spike — Labo.</Text> Feature expérimentale, désactivée par défaut.
-          Ton instance LNbits = ta garde de tes sats. FamilyFlow n'héberge rien et ne voit aucune clé privée.
+          <Text style={styles.bold}>Labo.</Text> Feature expérimentale, désactivée par défaut.
+          Ton instance LNbits = ta garde de tes sats. FamilyFlow n'héberge rien et ne voit
+          aucune clé privée.
         </Text>
       </View>
+
+      {/* Modal PayoutQueueModal — Plan 03b */}
+      <PayoutQueueModal
+        visible={showQueueModal}
+        profiles={profiles}
+        tasks={tasks}
+        onClose={handleCloseQueue}
+        onBatchComplete={refreshQueueCount}
+      />
     </View>
   );
 }
@@ -353,4 +474,18 @@ const styles = StyleSheet.create({
   btnRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg },
   clearBtn: { alignSelf: 'center', paddingVertical: Spacing.md },
   clearText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  dailyCapRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginTop: Spacing.md,
+  },
+  dailyCapInput: {
+    width: 120,
+    height: 40,
+    borderWidth: 1.5,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.lg,
+    fontSize: FontSize.body,
+    textAlign: 'center',
+  },
 });
