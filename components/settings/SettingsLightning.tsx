@@ -1,23 +1,20 @@
 /**
- * SettingsLightning — Configuration du wallet Lightning (LNbits BYO)
+ * SettingsLightning — Configuration du wallet Lightning (LNbits BYO, family-only)
  *
- * Phase 53 Plan 03b — étendu avec :
+ * Phase 53 Plan 04 — Final shape :
+ *   - Toggle « Activer Lightning » (par défaut OFF, gate sur `familyConfig !== null`)
  *   - TriggerModeSelector (3 modes — REQ-3)
  *   - Input dailyCapPerMember (clamp 100-10000 — REQ-4)
  *   - Entrée conditionnelle "Pay-outs en attente (N)" → PayoutQueueModal (D-06)
- *   - Liens vers /lightning-spike + /lightning-family-spike RETIRÉS (Pitfall #10)
- *
- * UX (existant conservé) :
- *   - Toggle « Activer Lightning » (par défaut OFF).
- *   - Form baseUrl + invoice key (placeholder demo.lnbits.com).
- *   - Bouton « Préremplir demo.lnbits.com » pour tester sans node perso.
- *   - Bouton « Tester la connexion » → tente GET /api/v1/wallet, affiche balance.
- *   - Bouton « Sauvegarder » → SecureStore + active le flag.
+ *   - Form legacy single-wallet (baseUrl + invoiceKey + test/save/clear) RETIRÉ —
+ *     la config family se fait via le playground ou un futur wizard family. La
+ *     surface single-wallet est obsolète depuis le rename Member (Plan 01) +
+ *     family-credentials.ts (Plan 01).
  *
  * Garanties :
- *   - Aucun appel réseau LN si l'interrupteur est OFF.
- *   - Creds vivent en SecureStore, JAMAIS dans le vault Markdown.
- *   - Invoice key suffit pour le form legacy (pas l'admin key — surface réduite).
+ *   - Aucun appel réseau LN si l'interrupteur est OFF (SPEC Constraint #1).
+ *   - Creds vivent en SecureStore via `lightning_family_config_v1`,
+ *     JAMAIS dans le vault Markdown.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -30,32 +27,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Bitcoin, Clock, Lightbulb, Zap } from 'lucide-react-native';
+import { Clock, Lightbulb, Zap } from 'lucide-react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useVault } from '../../contexts/VaultContext';
-import { Button } from '../ui/Button';
 import { SectionHeader } from '../ui/SectionHeader';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import {
-  clearLnbitsConfig,
   isLightningEnabled,
-  LnbitsClient,
-  LnbitsError,
   loadFamilyConfig,
-  loadLnbitsConfig,
   loadQueue,
   saveFamilyConfig,
-  saveLnbitsConfig,
   setLightningEnabled,
   type FamilyLightningConfig,
-  type WalletInfo,
 } from '../../lib/lightning';
 import { TriggerModeSelector, type TriggerMode } from '../lightning/TriggerModeSelector';
 import { PayoutQueueModal } from '../lightning/PayoutQueueModal';
 
-const DEMO_URL = 'https://demo.lnbits.com';
 const DAILY_CAP_MIN = 100;
 const DAILY_CAP_MAX = 10000;
 const DAILY_CAP_DEFAULT = 1000;
@@ -70,13 +59,6 @@ export function SettingsLightning() {
   const { profiles, tasks } = useVault();
 
   const [enabled, setEnabled] = useState(false);
-  const [baseUrl, setBaseUrl] = useState('');
-  const [invoiceKey, setInvoiceKey] = useState('');
-  const [savedConfigured, setSavedConfigured] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [testResult, setTestResult] = useState<WalletInfo | null>(null);
-  const [testError, setTestError] = useState<string | null>(null);
 
   // Phase 53 — TriggerMode + dailyCap + queue entry
   const [familyConfig, setFamilyConfig] = useState<FamilyLightningConfig | null>(null);
@@ -96,17 +78,11 @@ export function SettingsLightning() {
 
   useEffect(() => {
     (async () => {
-      const [flag, cfg, family] = await Promise.all([
+      const [flag, family] = await Promise.all([
         isLightningEnabled(),
-        loadLnbitsConfig(),
         loadFamilyConfig(),
       ]);
       setEnabled(flag);
-      if (cfg) {
-        setBaseUrl(cfg.baseUrl);
-        setInvoiceKey(cfg.invoiceKey);
-        setSavedConfigured(true);
-      }
       if (family) {
         setFamilyConfig(family);
         setTriggerMode(family.triggerMode);
@@ -117,82 +93,16 @@ export function SettingsLightning() {
   }, [refreshQueueCount]);
 
   const handleToggle = useCallback(async (value: boolean) => {
-    if (value && !savedConfigured) {
+    if (value && familyConfig === null) {
       Alert.alert(
         'Configurer d\'abord',
-        'Renseigne l\'URL et l\'invoice key, puis sauvegarde avant d\'activer Lightning.',
+        'Aucune configuration family Lightning détectée. La configuration se fait depuis un build dev (config wallets membres + family + adminKey).',
       );
       return;
     }
     setEnabled(value);
     await setLightningEnabled(value);
-  }, [savedConfigured]);
-
-  const handlePrefillDemo = useCallback(() => {
-    setBaseUrl(DEMO_URL);
-  }, []);
-
-  const handleTest = useCallback(async () => {
-    if (!baseUrl.trim() || !invoiceKey.trim()) {
-      Alert.alert('Champs manquants', 'URL et invoice key sont requis pour tester.');
-      return;
-    }
-    setTesting(true);
-    setTestError(null);
-    setTestResult(null);
-    try {
-      const client = new LnbitsClient({ baseUrl, invoiceKey });
-      const wallet = await client.getWallet();
-      setTestResult(wallet);
-    } catch (err) {
-      const msg = err instanceof LnbitsError ? err.message : 'Erreur inconnue';
-      setTestError(msg);
-    } finally {
-      setTesting(false);
-    }
-  }, [baseUrl, invoiceKey]);
-
-  const handleSave = useCallback(async () => {
-    if (!baseUrl.trim() || !invoiceKey.trim()) {
-      Alert.alert('Champs manquants', 'URL et invoice key sont requis.');
-      return;
-    }
-    setSaving(true);
-    try {
-      await saveLnbitsConfig({ baseUrl, invoiceKey });
-      setSavedConfigured(true);
-      Alert.alert(
-        'Sauvegardé',
-        'Configuration LNbits enregistrée dans le coffre sécurisé du téléphone. Active maintenant l\'interrupteur si tu veux utiliser Lightning.',
-      );
-    } finally {
-      setSaving(false);
-    }
-  }, [baseUrl, invoiceKey]);
-
-  const handleClear = useCallback(() => {
-    Alert.alert(
-      'Effacer la configuration ?',
-      'Supprime l\'URL, les clés et désactive Lightning.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Effacer',
-          style: 'destructive',
-          onPress: async () => {
-            await clearLnbitsConfig();
-            await setLightningEnabled(false);
-            setEnabled(false);
-            setBaseUrl('');
-            setInvoiceKey('');
-            setSavedConfigured(false);
-            setTestResult(null);
-            setTestError(null);
-          },
-        },
-      ],
-    );
-  }, []);
+  }, [familyConfig]);
 
   // Phase 53 — persist triggerMode (REQ-3).
   const handleChangeTriggerMode = useCallback(
@@ -243,11 +153,11 @@ export function SettingsLightning() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>Activer Lightning</Text>
             <Text style={[styles.rowSub, { color: colors.textSub }]}>
-              {savedConfigured
+              {familyConfig !== null
                 ? enabled
-                  ? 'Actif — appels réseau autorisés vers ton instance LNbits.'
-                  : 'Configuré mais désactivé — aucun appel réseau.'
-                : 'Non configuré. Renseigne l\'URL et la clé ci-dessous.'}
+                  ? 'Actif — appels réseau autorisés vers ton instance LNbits family.'
+                  : 'Family config présente mais désactivée — aucun appel réseau.'
+                : 'Aucune config family détectée. Configure les wallets membres + family depuis un build dev avant d\'activer.'}
             </Text>
           </View>
           <Switch
@@ -257,78 +167,6 @@ export function SettingsLightning() {
             accessibilityLabel="Activer Lightning"
           />
         </View>
-      </View>
-
-      {/* Form connexion */}
-      <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card, marginTop: Spacing.xl }]}>
-        <View style={styles.rowBetween}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>Connexion LNbits</Text>
-          <TouchableOpacity onPress={handlePrefillDemo} accessibilityLabel="Préremplir demo.lnbits.com">
-            <Text style={[styles.linkText, { color: primary }]}>Utiliser demo.lnbits.com</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={[styles.inputLabel, { color: colors.textSub }]}>URL de l'instance</Text>
-        <TextInput
-          style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-          value={baseUrl}
-          onChangeText={setBaseUrl}
-          placeholder="https://demo.lnbits.com"
-          placeholderTextColor={colors.textFaint}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-        />
-
-        <Text style={[styles.inputLabel, { color: colors.textSub }]}>Invoice / Read key</Text>
-        <TextInput
-          style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-          value={invoiceKey}
-          onChangeText={setInvoiceKey}
-          placeholder="abcdef0123456789..."
-          placeholderTextColor={colors.textFaint}
-          autoCapitalize="none"
-          autoCorrect={false}
-          secureTextEntry
-        />
-
-        <View style={[styles.tip, { backgroundColor: colors.warningBg, borderColor: colors.warning }]}>
-          <Lightbulb size={14} strokeWidth={1.75} color={colors.warningText} style={{ marginTop: 2 }} />
-          <Text style={[styles.tipText, { color: colors.warningText, flex: 1 }]}>
-            Utilise <Text style={styles.bold}>l'invoice/read key</Text> (création d'invoice + lecture balance).
-            <Text style={styles.bold}> Jamais l'admin key.</Text> Visible dans LNbits → Wallet → API info.
-          </Text>
-        </View>
-
-        {/* Résultats du test */}
-        {testResult && (
-          <View style={[styles.resultCard, { backgroundColor: colors.successBg, borderColor: colors.success }]}>
-            <Bitcoin size={16} color={colors.success} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.resultTitle, { color: colors.success }]}>Connexion OK</Text>
-              <Text style={[styles.resultText, { color: colors.text }]}>
-                Wallet « {testResult.name} » · balance {testResult.balanceSats} sats
-              </Text>
-            </View>
-          </View>
-        )}
-        {testError && (
-          <View style={[styles.resultCard, { backgroundColor: colors.errorBg, borderColor: colors.error }]}>
-            <Text style={[styles.resultTitle, { color: colors.error }]}>Erreur</Text>
-            <Text style={[styles.resultText, { color: colors.text, flex: 1 }]}>{testError}</Text>
-          </View>
-        )}
-
-        <View style={styles.btnRow}>
-          <Button label={testing ? '...' : 'Tester'} onPress={handleTest} variant="secondary" size="md" disabled={testing} />
-          <Button label={saving ? '...' : 'Sauvegarder'} onPress={handleSave} variant="primary" size="md" disabled={saving} />
-        </View>
-
-        {savedConfigured && (
-          <TouchableOpacity onPress={handleClear} style={styles.clearBtn} accessibilityLabel="Effacer la configuration">
-            <Text style={[styles.clearText, { color: colors.error }]}>Effacer la configuration</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* Phase 53 — Mode de déclenchement (REQ-3, UI-SPEC Surface 6) */}
@@ -447,9 +285,6 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
   rowSub: { fontSize: FontSize.sm, lineHeight: 20, marginTop: 2 },
   cardTitle: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
-  linkText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
-  inputLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, marginTop: Spacing.md },
-  input: { borderWidth: 1.5, borderRadius: Radius.base, padding: Spacing.xl, fontSize: FontSize.body },
   tip: {
     padding: Spacing.lg,
     borderRadius: Radius.md,
@@ -460,20 +295,6 @@ const styles = StyleSheet.create({
   },
   tipText: { fontSize: FontSize.label, lineHeight: 18 },
   bold: { fontWeight: FontWeight.bold },
-  resultCard: {
-    padding: Spacing.lg,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.md,
-    marginTop: Spacing.md,
-  },
-  resultTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  resultText: { fontSize: FontSize.label, lineHeight: 18, marginTop: 2 },
-  btnRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg },
-  clearBtn: { alignSelf: 'center', paddingVertical: Spacing.md },
-  clearText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   dailyCapRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
