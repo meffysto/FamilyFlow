@@ -95,11 +95,16 @@ import { getCompanionStage } from '../lib/mascot/companion-engine';
 import { pickLABubbleShort, type LAStage } from '../lib/mascot/la-bubbles';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { tickAubergeAuto } from '../lib/auberge/auto-tick';
-// Phase 53 — orchestrateurs Lightning (consommés en 3 useEffects ci-dessous,
+// Phase 53 — orchestrateurs Lightning (consommés en 4 useEffects ci-dessous,
 // après le subscriber Phase 46 Auberge). Le module est gardé OFF par flag :
 // processTaskCompletionForLightning early-return si isLightningEnabled() === false.
+// Plan 04 — 4ᵉ useEffect ajoute REQ-6 'undone' audit via subscribeTaskUncomplete.
 import {
+  appendAudit,
+  findPaidEntry,
   flushOfflineQueue,
+  isLightningEnabled,
+  loadAudit,
   migrateSingleToFamily,
   processTaskCompletionForLightning,
 } from '../lib/lightning';
@@ -111,7 +116,7 @@ import { useVaultCourses } from './useVaultCourses';
 import { useVaultPriceBook } from './useVaultPriceBook';
 import { useVaultHealth } from './useVaultHealth';
 import { useVaultSecretMissions } from './useVaultSecretMissions';
-import { useVaultTasks, type TaskCompleteListener } from './useVaultTasks';
+import { useVaultTasks, type TaskCompleteListener, type TaskUncompleteListener } from './useVaultTasks';
 import { useVaultRecipes } from './useVaultRecipes';
 import { useVaultDefis } from './useVaultDefis';
 import { useVaultFamilyQuests } from './useVaultFamilyQuests';
@@ -204,6 +209,10 @@ export interface VaultState {
    *  Pattern event-driven consommé par useFarm.incrementWagerCumul (câblage Sporée).
    *  Retourne une fonction unsubscribe à appeler au cleanup. */
   subscribeTaskComplete: (listener: TaskCompleteListener) => () => void;
+  /** Phase 53 Plan 04 — Souscrit un listener appelé sur transition true→false d'une
+   *  tâche (dé-cochage user). Consommé par le 2ᵉ useEffect Lightning pour appender
+   *  un audit `undone` SI un `paid` existe pour ce taskId+date (REQ-6 SPEC #6). */
+  subscribeTaskUncomplete: (listener: TaskUncompleteListener) => () => void;
   /** Handler complet (toggle + gamification + reward) pour tâches cochées depuis
    *  la Live Activity. Setté par un bridge component qui a accès à
    *  `useGamification`. Si null → fallback sur toggleTask seul (pas de XP). */
@@ -869,6 +878,42 @@ export function useVaultInternal(): VaultState {
       }).catch(() => {
         /* Lightning — non-critical, vault domain unaffected */
       });
+    });
+    return unsub;
+  }, [tasksHook]);
+
+  // ─── Phase 53 Plan 04 : 4ᵉ subscriber Lightning — REQ-6 'undone' audit ──
+  // Quand une tâche est dé-cochée (transition true→false), si un audit `paid`
+  // existe pour ce taskId à la date de complétion locale, on append une entrée
+  // `status:'undone'` pour la traçabilité SPEC #6. Pas de remboursement LN
+  // (les sats sont déjà partis — pas de reverse semantics). Pas de
+  // décrément du quota daily-cap (cumul=sats spent, informationnel).
+  // Gate strict : `isLightningEnabled()` AVANT toute lecture audit pour
+  // respecter SPEC Constraint #1 (zéro side-effect Lightning si flag OFF).
+  useEffect(() => {
+    const unsub = tasksHook.subscribeTaskUncomplete((task) => {
+      (async () => {
+        try {
+          if (!(await isLightningEnabled())) return;
+          const audit = await loadAudit();
+          const completedDate =
+            task.completedDate ?? new Date().toISOString().slice(0, 10);
+          if (!findPaidEntry(audit, task.id, completedDate)) return;
+          await appendAudit({
+            ts: new Date().toISOString(),
+            profileId: '', // résolution post-toggle non triviale (mentions
+            // pas re-resolvées ici) ; on garde le slot pour audit
+            // traçable, profileId vide = "non re-résolu". Le couple
+            // taskId+date suffit pour matcher avec l'entrée `paid`.
+            taskId: task.id,
+            sats: 0,
+            status: 'undone',
+          });
+        } catch (e) {
+          if (__DEV__) console.warn('[lightning] undone audit failed:', e);
+          /* Lightning — non-critical, vault domain unaffected */
+        }
+      })();
     });
     return unsub;
   }, [tasksHook]);
@@ -2826,6 +2871,7 @@ export function useVaultInternal(): VaultState {
     toggleTask: tasksHook.toggleTask,
     skipTask: tasksHook.skipTask,
     subscribeTaskComplete: tasksHook.subscribeTaskComplete,
+    subscribeTaskUncomplete: tasksHook.subscribeTaskUncomplete,
     liveActivityTaskCompleteRef,
     tasksCompletedToday,
     addRDV,
