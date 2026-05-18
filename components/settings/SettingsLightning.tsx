@@ -6,10 +6,8 @@
  *   - TriggerModeSelector (3 modes — REQ-3)
  *   - Input dailyCapPerMember (clamp 100-10000 — REQ-4)
  *   - Entrée conditionnelle "Pay-outs en attente (N)" → PayoutQueueModal (D-06)
- *   - Form legacy single-wallet (baseUrl + invoiceKey + test/save/clear) RETIRÉ —
- *     la config family se fait via le playground ou un futur wizard family. La
- *     surface single-wallet est obsolète depuis le rename Member (Plan 01) +
- *     family-credentials.ts (Plan 01).
+ *   - Wizard inline (baseUrl + family wallet + map members) — la config family
+ *     n'a plus besoin d'un playground externe, tout se fait depuis cet écran.
  *
  * Garanties :
  *   - Aucun appel réseau LN si l'interrupteur est OFF (SPEC Constraint #1).
@@ -17,7 +15,7 @@
  *     JAMAIS dans le vault Markdown.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   StyleSheet,
@@ -27,7 +25,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Clock, Lightbulb, Zap } from 'lucide-react-native';
+import { Clock, Lightbulb, Settings as SettingsIcon, Zap } from 'lucide-react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useVault } from '../../contexts/VaultContext';
 import { SectionHeader } from '../ui/SectionHeader';
@@ -35,12 +33,14 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import {
+  LnbitsClient,
   isLightningEnabled,
   loadFamilyConfig,
   loadQueue,
   saveFamilyConfig,
   setLightningEnabled,
   type FamilyLightningConfig,
+  type MemberWalletMapping,
 } from '../../lib/lightning';
 import { TriggerModeSelector, type TriggerMode } from '../lightning/TriggerModeSelector';
 import { PayoutQueueModal } from '../lightning/PayoutQueueModal';
@@ -52,6 +52,12 @@ const DAILY_CAP_DEFAULT = 1000;
 function clampDailyCap(value: number): number {
   if (!Number.isFinite(value)) return DAILY_CAP_DEFAULT;
   return Math.max(DAILY_CAP_MIN, Math.min(DAILY_CAP_MAX, Math.floor(value)));
+}
+
+type MemberFormEntry = { invoiceKey: string; adminKey: string };
+
+function makeEmptyMemberForm(): Record<string, MemberFormEntry> {
+  return {};
 }
 
 export function SettingsLightning() {
@@ -66,6 +72,24 @@ export function SettingsLightning() {
   const [dailyCapInput, setDailyCapInput] = useState<string>(String(DAILY_CAP_DEFAULT));
   const [pendingCount, setPendingCount] = useState(0);
   const [showQueueModal, setShowQueueModal] = useState(false);
+
+  // Wizard inline — saisie config family LNbits
+  const [editing, setEditing] = useState(false);
+  const [formBaseUrl, setFormBaseUrl] = useState('');
+  const [formFamilyName, setFormFamilyName] = useState('Famille');
+  const [formFamilyInvoiceKey, setFormFamilyInvoiceKey] = useState('');
+  const [formFamilyAdminKey, setFormFamilyAdminKey] = useState('');
+  const [formMembers, setFormMembers] = useState<Record<string, MemberFormEntry>>(
+    makeEmptyMemberForm(),
+  );
+  const [testing, setTesting] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Membres éligibles : tous les profils famille (enfant, ado, adulte)
+  const eligibleProfiles = useMemo(
+    () => profiles.filter((p) => p.role === 'enfant' || p.role === 'ado' || p.role === 'adulte'),
+    [profiles],
+  );
 
   const refreshQueueCount = useCallback(async () => {
     try {
@@ -96,13 +120,145 @@ export function SettingsLightning() {
     if (value && familyConfig === null) {
       Alert.alert(
         'Configurer d\'abord',
-        'Aucune configuration family Lightning détectée. La configuration se fait depuis un build dev (config wallets membres + family + adminKey).',
+        'Aucune configuration family Lightning détectée. Tape « Configurer maintenant » pour saisir ton instance LNbits et tes wallets famille.',
       );
       return;
     }
     setEnabled(value);
     await setLightningEnabled(value);
   }, [familyConfig]);
+
+  // Wizard — ouvre le formulaire (pré-rempli avec config existante si présente)
+  const handleStartEdit = useCallback(() => {
+    if (familyConfig) {
+      setFormBaseUrl(familyConfig.baseUrl);
+      setFormFamilyName(familyConfig.family.name);
+      setFormFamilyInvoiceKey(familyConfig.family.invoiceKey);
+      setFormFamilyAdminKey(familyConfig.family.adminKey);
+      const map: Record<string, MemberFormEntry> = {};
+      for (const m of familyConfig.members) {
+        map[m.profileId] = { invoiceKey: m.invoiceKey, adminKey: m.adminKey ?? '' };
+      }
+      setFormMembers(map);
+    } else {
+      setFormBaseUrl('');
+      setFormFamilyName('Famille');
+      setFormFamilyInvoiceKey('');
+      setFormFamilyAdminKey('');
+      setFormMembers(makeEmptyMemberForm());
+    }
+    setEditing(true);
+  }, [familyConfig]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditing(false);
+  }, []);
+
+  const handleUpdateMember = useCallback(
+    (profileId: string, patch: Partial<MemberFormEntry>) => {
+      setFormMembers((prev) => ({
+        ...prev,
+        [profileId]: {
+          invoiceKey: patch.invoiceKey ?? prev[profileId]?.invoiceKey ?? '',
+          adminKey: patch.adminKey ?? prev[profileId]?.adminKey ?? '',
+        },
+      }));
+    },
+    [],
+  );
+
+  const handleTestConnection = useCallback(async () => {
+    const baseUrl = formBaseUrl.trim();
+    const invoiceKey = formFamilyInvoiceKey.trim();
+    if (!baseUrl || !invoiceKey) {
+      Alert.alert('Champs requis', 'Renseigne au moins l\'URL LNbits et la clé invoice family.');
+      return;
+    }
+    setTesting(true);
+    try {
+      const client = new LnbitsClient({ baseUrl, invoiceKey });
+      const info = await client.getWallet();
+      Alert.alert(
+        'Connexion OK',
+        `Wallet : ${info.name}\nSolde : ${info.balanceSats} sats`,
+      );
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'Erreur inconnue';
+      Alert.alert('Connexion échouée', reason);
+    } finally {
+      setTesting(false);
+    }
+  }, [formBaseUrl, formFamilyInvoiceKey]);
+
+  const handleSaveConfig = useCallback(async () => {
+    const baseUrl = formBaseUrl.trim();
+    const familyName = formFamilyName.trim() || 'Famille';
+    const familyInvoiceKey = formFamilyInvoiceKey.trim();
+    const familyAdminKey = formFamilyAdminKey.trim();
+    if (!baseUrl) {
+      Alert.alert('URL LNbits requise', 'Saisis l\'URL de ton instance LNbits.');
+      return;
+    }
+    if (!familyInvoiceKey || !familyAdminKey) {
+      Alert.alert(
+        'Clés family requises',
+        'Saisis la clé invoice ET la clé admin du wallet family (les deux sont disponibles dans la page wallet LNbits).',
+      );
+      return;
+    }
+    const members: MemberWalletMapping[] = eligibleProfiles
+      .map((p) => {
+        const entry = formMembers[p.id];
+        const invoice = entry?.invoiceKey.trim() ?? '';
+        const admin = entry?.adminKey.trim() ?? '';
+        if (!invoice) return null;
+        return {
+          profileId: p.id,
+          displayName: p.name,
+          invoiceKey: invoice,
+          ...(admin ? { adminKey: admin } : {}),
+        } satisfies MemberWalletMapping;
+      })
+      .filter((m): m is MemberWalletMapping => m !== null);
+
+    if (members.length === 0) {
+      Alert.alert(
+        'Au moins un membre',
+        'Configure la clé invoice d\'au moins un membre famille pour recevoir des sats.',
+      );
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const config: FamilyLightningConfig = {
+        baseUrl,
+        family: { name: familyName, invoiceKey: familyInvoiceKey, adminKey: familyAdminKey },
+        members,
+        triggerMode: familyConfig?.triggerMode ?? 'instant',
+        dailyCapPerMember: familyConfig?.dailyCapPerMember ?? DAILY_CAP_DEFAULT,
+      };
+      await saveFamilyConfig(config);
+      setFamilyConfig(config);
+      setTriggerMode(config.triggerMode);
+      setDailyCapInput(String(config.dailyCapPerMember));
+      setEditing(false);
+      Alert.alert('Config enregistrée', `${members.length} wallet${members.length > 1 ? 's' : ''} membre configuré${members.length > 1 ? 's' : ''}.`);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'Erreur inconnue';
+      Alert.alert('Sauvegarde échouée', reason);
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    formBaseUrl,
+    formFamilyName,
+    formFamilyInvoiceKey,
+    formFamilyAdminKey,
+    formMembers,
+    eligibleProfiles,
+    familyConfig,
+  ]);
 
   // Phase 53 — persist triggerMode (REQ-3).
   const handleChangeTriggerMode = useCallback(
@@ -139,6 +295,246 @@ export function SettingsLightning() {
     refreshQueueCount();
   }, [refreshQueueCount]);
 
+  if (editing) {
+    return (
+      <View>
+        <SectionHeader
+          title="Configurer le wallet Lightning"
+          icon={<SettingsIcon size={16} strokeWidth={1.75} color={primary} />}
+          flush
+        />
+
+        {/* URL LNbits */}
+        <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Serveur LNbits</Text>
+          <Text style={[styles.rowSub, { color: colors.textSub }]}>
+            URL complète de ton instance (ex : https://demo.lnbits.com).
+          </Text>
+          <TextInput
+            style={[
+              styles.fieldInput,
+              {
+                borderColor: colors.inputBorder,
+                color: colors.text,
+                backgroundColor: colors.inputBg,
+              },
+            ]}
+            value={formBaseUrl}
+            onChangeText={setFormBaseUrl}
+            placeholder="https://..."
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            accessibilityLabel="URL serveur LNbits"
+          />
+        </View>
+
+        {/* Wallet famille */}
+        <View
+          style={[
+            styles.card,
+            Shadows.sm,
+            { backgroundColor: colors.card, marginTop: Spacing.lg },
+          ]}
+        >
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Wallet famille</Text>
+          <Text style={[styles.rowSub, { color: colors.textSub }]}>
+            Le wallet qui paie. Sa clé admin déclenche les pay-outs vers les membres.
+          </Text>
+          <TextInput
+            style={[
+              styles.fieldInput,
+              {
+                borderColor: colors.inputBorder,
+                color: colors.text,
+                backgroundColor: colors.inputBg,
+                marginTop: Spacing.md,
+              },
+            ]}
+            value={formFamilyName}
+            onChangeText={setFormFamilyName}
+            placeholder="Nom du wallet (ex: Famille)"
+            placeholderTextColor={colors.textFaint}
+            autoCorrect={false}
+            accessibilityLabel="Nom wallet famille"
+          />
+          <TextInput
+            style={[
+              styles.fieldInput,
+              {
+                borderColor: colors.inputBorder,
+                color: colors.text,
+                backgroundColor: colors.inputBg,
+                marginTop: Spacing.md,
+              },
+            ]}
+            value={formFamilyInvoiceKey}
+            onChangeText={setFormFamilyInvoiceKey}
+            placeholder="Clé invoice/read family"
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="none"
+            autoCorrect={false}
+            accessibilityLabel="Clé invoice family"
+          />
+          <TextInput
+            style={[
+              styles.fieldInput,
+              {
+                borderColor: colors.inputBorder,
+                color: colors.text,
+                backgroundColor: colors.inputBg,
+                marginTop: Spacing.md,
+              },
+            ]}
+            value={formFamilyAdminKey}
+            onChangeText={setFormFamilyAdminKey}
+            placeholder="Clé admin family"
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry
+            accessibilityLabel="Clé admin family"
+          />
+          <TouchableOpacity
+            style={[
+              styles.testBtn,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.cardAlt,
+                opacity: testing ? 0.5 : 1,
+              },
+            ]}
+            onPress={handleTestConnection}
+            disabled={testing}
+            accessibilityRole="button"
+            accessibilityLabel="Tester la connexion LNbits"
+          >
+            <Text style={[styles.testBtnText, { color: colors.text }]}>
+              {testing ? 'Test en cours…' : 'Tester la connexion'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Map members */}
+        <View
+          style={[
+            styles.card,
+            Shadows.sm,
+            { backgroundColor: colors.card, marginTop: Spacing.lg },
+          ]}
+        >
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Wallets membres</Text>
+          <Text style={[styles.rowSub, { color: colors.textSub }]}>
+            Pour chaque membre, saisis la clé invoice de son sub-wallet LNbits. La clé admin est
+            optionnelle — elle débloque l'encaissement vers un wallet externe.
+          </Text>
+          {eligibleProfiles.length === 0 ? (
+            <Text style={[styles.rowSub, { color: colors.textSub, marginTop: Spacing.md }]}>
+              Aucun profil famille détecté.
+            </Text>
+          ) : (
+            eligibleProfiles.map((p) => {
+              const entry = formMembers[p.id] ?? { invoiceKey: '', adminKey: '' };
+              return (
+                <View key={p.id} style={{ marginTop: Spacing.md, gap: Spacing.xs }}>
+                  <Text style={[styles.memberLabel, { color: colors.text }]}>
+                    {p.avatar} {p.name}
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.fieldInput,
+                      {
+                        borderColor: colors.inputBorder,
+                        color: colors.text,
+                        backgroundColor: colors.inputBg,
+                      },
+                    ]}
+                    value={entry.invoiceKey}
+                    onChangeText={(v) => handleUpdateMember(p.id, { invoiceKey: v })}
+                    placeholder="Clé invoice"
+                    placeholderTextColor={colors.textFaint}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    accessibilityLabel={`Clé invoice de ${p.name}`}
+                  />
+                  <TextInput
+                    style={[
+                      styles.fieldInput,
+                      {
+                        borderColor: colors.inputBorder,
+                        color: colors.text,
+                        backgroundColor: colors.inputBg,
+                      },
+                    ]}
+                    value={entry.adminKey}
+                    onChangeText={(v) => handleUpdateMember(p.id, { adminKey: v })}
+                    placeholder="Clé admin (optionnel)"
+                    placeholderTextColor={colors.textFaint}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    secureTextEntry
+                    accessibilityLabel={`Clé admin optionnelle de ${p.name}`}
+                  />
+                </View>
+              );
+            })
+          )}
+        </View>
+
+        {/* Actions */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[
+              styles.actionBtn,
+              { borderColor: colors.border, backgroundColor: colors.cardAlt },
+            ]}
+            onPress={handleCancelEdit}
+            accessibilityRole="button"
+            accessibilityLabel="Annuler la configuration"
+          >
+            <Text style={[styles.actionBtnText, { color: colors.text }]}>Annuler</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.actionBtn,
+              {
+                backgroundColor: primary,
+                borderColor: primary,
+                opacity: saving ? 0.5 : 1,
+              },
+            ]}
+            onPress={handleSaveConfig}
+            disabled={saving}
+            accessibilityRole="button"
+            accessibilityLabel="Enregistrer la configuration"
+          >
+            <Text style={[styles.actionBtnText, { color: colors.onPrimary ?? '#fff' }]}>
+              {saving ? 'Enregistrement…' : 'Enregistrer'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View
+          style={[
+            styles.tip,
+            {
+              backgroundColor: colors.cardAlt,
+              borderColor: colors.border,
+              marginTop: Spacing.xl,
+            },
+          ]}
+        >
+          <Lightbulb size={14} strokeWidth={1.75} color={colors.textSub} style={{ marginTop: 2 }} />
+          <Text style={[styles.tipText, { color: colors.textSub, flex: 1 }]}>
+            <Text style={styles.bold}>Stockage local sécurisé.</Text> Les clés vivent dans
+            SecureStore iOS, jamais dans le vault Markdown. Personne hors de ton iPhone ne les voit.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View>
       <SectionHeader
@@ -157,7 +553,7 @@ export function SettingsLightning() {
                 ? enabled
                   ? 'Actif — appels réseau autorisés vers ton instance LNbits family.'
                   : 'Family config présente mais désactivée — aucun appel réseau.'
-                : 'Aucune config family détectée. Configure les wallets membres + family depuis un build dev avant d\'activer.'}
+                : 'Aucune config family détectée. Tape « Configurer maintenant » pour saisir ton instance LNbits.'}
             </Text>
           </View>
           <Switch
@@ -168,6 +564,32 @@ export function SettingsLightning() {
           />
         </View>
       </View>
+
+      {/* Bouton Configurer / Modifier */}
+      <TouchableOpacity
+        style={[
+          styles.card,
+          Shadows.sm,
+          { backgroundColor: colors.card, marginTop: Spacing.md },
+        ]}
+        onPress={handleStartEdit}
+        accessibilityRole="button"
+        accessibilityLabel={familyConfig ? 'Modifier la configuration' : 'Configurer le wallet'}
+      >
+        <View style={styles.row}>
+          <SettingsIcon size={18} strokeWidth={1.75} color={primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              {familyConfig ? 'Modifier la configuration' : 'Configurer maintenant'}
+            </Text>
+            <Text style={[styles.rowSub, { color: colors.textSub }]}>
+              {familyConfig
+                ? `${familyConfig.members.length} wallet${familyConfig.members.length > 1 ? 's' : ''} membre · ${familyConfig.baseUrl}`
+                : 'URL LNbits + wallet famille + sub-wallets membres'}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
 
       {/* Phase 53 — Mode de déclenchement (REQ-3, UI-SPEC Surface 6) */}
       {familyConfig && (
@@ -308,5 +730,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     fontSize: FontSize.body,
     textAlign: 'center',
+  },
+  fieldInput: {
+    height: 44,
+    borderWidth: 1.5,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.lg,
+    fontSize: FontSize.body,
+  },
+  testBtn: {
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    alignItems: 'center',
+  },
+  testBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  memberLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+  },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    alignItems: 'center',
+  },
+  actionBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
 });
