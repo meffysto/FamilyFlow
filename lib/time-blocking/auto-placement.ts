@@ -21,11 +21,12 @@ import {
   SLOT_DEFINITIONS,
   timeToSlot,
   fileToSlot,
+  titleToSlot,
   DEFAULT_TASK_DURATION_MIN,
 } from './slot-mapping';
 import { getDominantSlot, type CompletionHistory } from './completion-history';
 
-export type AutoPlacementSource = 'explicit' | 'time' | 'history' | 'file' | 'nextfit';
+export type AutoPlacementSource = 'explicit' | 'time' | 'history' | 'file' | 'title' | 'nextfit';
 
 export interface AutoPlacementResult {
   slot: SlotId;
@@ -70,6 +71,12 @@ export function computeAutoSlot(
   const fromFile = fileToSlot(task.sourceFile);
   if (fromFile) {
     return { slot: fromFile, source: 'file' };
+  }
+
+  // 4.5 Title : mot-clé temporel strict dans le titre ("biberon soir", "table matin")
+  const fromTitle = titleToSlot(task.text);
+  if (fromTitle) {
+    return { slot: fromTitle, source: 'title' };
   }
 
   // 5. Next-fit : premier slot <= 75% chargé
@@ -176,6 +183,10 @@ function computeAutoSlotSignalOnly(
   const fromFile = fileToSlot(task.sourceFile);
   if (fromFile) {
     return { slot: fromFile, source: 'file' };
+  }
+  const fromTitle = titleToSlot(task.text);
+  if (fromTitle) {
+    return { slot: fromTitle, source: 'title' };
   }
   return null;
 }

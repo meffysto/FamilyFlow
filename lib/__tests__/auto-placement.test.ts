@@ -15,6 +15,7 @@ import {
 } from '../time-blocking/auto-placement';
 import {
   timeToSlot,
+  titleToSlot,
   SLOT_DEFINITIONS,
 } from '../time-blocking/slot-mapping';
 import {
@@ -332,6 +333,62 @@ describe('estimateTaskDuration', () => {
   it('SLOT_DEFINITIONS exposées (sanity check)', () => {
     expect(SLOT_DEFINITIONS.matin.capacityMinutes).toBe(270);
     expect(SLOT_DEFINITIONS.midi.capacityMinutes).toBe(90);
+  });
+});
+
+// ─── titleToSlot — heuristique mots-clés temporels ─────────────────────────
+
+describe('titleToSlot', () => {
+  it('détecte "matin" dans le titre', () => {
+    expect(titleToSlot('Nettoyer la table matin')).toBe('matin');
+  });
+  it('détecte "soir" dans le titre', () => {
+    expect(titleToSlot('Préparer biberon soir')).toBe('soir');
+  });
+  it('détecte "midi" / "déjeuner"', () => {
+    expect(titleToSlot('Préparer midi')).toBe('midi');
+    expect(titleToSlot('Faire le déjeuner')).toBe('midi');
+  });
+  it('détecte "aprem" / "après-midi" / "goûter"', () => {
+    expect(titleToSlot('Sortie aprem')).toBe('aprem');
+    expect(titleToSlot('Rdv après-midi')).toBe('aprem');
+    expect(titleToSlot('Préparer le goûter')).toBe('aprem');
+  });
+  it('détecte variantes soir (dîner, coucher, dodo, nuit)', () => {
+    expect(titleToSlot('Préparer dîner')).toBe('soir');
+    expect(titleToSlot('Brosser dents avant coucher')).toBe('soir');
+    expect(titleToSlot('Histoire dodo')).toBe('soir');
+  });
+  it('retourne null sans mot-clé temporel', () => {
+    expect(titleToSlot('Stériliser biberons')).toBeNull();
+    expect(titleToSlot('Faire les courses')).toBeNull();
+    expect(titleToSlot('Vider la poubelle')).toBeNull();
+    expect(titleToSlot('')).toBeNull();
+  });
+  it('soir prioritaire si plusieurs moments mentionnés', () => {
+    // "biberon soir à préparer le matin" → soir gagne (signal le plus spécifique)
+    expect(titleToSlot('biberon soir')).toBe('soir');
+  });
+});
+
+describe('computeAutoSlot — source title', () => {
+  it('utilise title quand pas d\'autre signal', () => {
+    const task = makeTask({ text: 'Nettoyer la table matin' });
+    const result = computeAutoSlot(task, [], {});
+    expect(result.slot).toBe('matin');
+    expect(result.source).toBe('title');
+  });
+  it('title respecte la priorité history > title', () => {
+    const task = makeTask({ text: 'Nettoyer la table matin' });
+    const history: CompletionHistory = {
+      'Nettoyer la table matin': [
+        { slot: 'soir', timestamp: new Date().toISOString() },
+        { slot: 'soir', timestamp: new Date().toISOString() },
+      ],
+    };
+    const result = computeAutoSlot(task, [], history);
+    expect(result.slot).toBe('soir');
+    expect(result.source).toBe('history');
   });
 });
 
