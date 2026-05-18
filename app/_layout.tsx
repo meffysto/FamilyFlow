@@ -326,6 +326,10 @@ function RootLayout() {
                     options={{ presentation: 'pageSheet', gestureEnabled: true }}
                   />
                   <Stack.Screen name="impressions" />
+                  {/* Phase 53 — Lightning wallet (hors tabs, route accessible
+                      depuis bouton HUD ⚡ ferme uniquement quand le flag est ON
+                      et qu'un wallet membre est configuré pour le profil actif). */}
+                  <Stack.Screen name="lightning-wallet" />
                 </Stack>
                 <VaultRedirect langReady={langReady} />
                 {(!langReady || !fontsReady) && (
