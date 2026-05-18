@@ -6,19 +6,19 @@
  * Trois options (REQ-3) :
  *   - 'instant'       : pay-out immédiat à chaque tâche
  *   - 'daily-review'  : validation parentale en batch 1×/jour
- *   - 'hybrid'        : instantané jusqu'à 100 sats/jour, puis en attente
+ *   - 'hybrid'        : instantané jusqu'au seuil configuré, puis en attente
+ *
+ * Le seuil hybrid s'affiche dynamiquement via la prop `hybridThresholdSats`
+ * (défaut 500). Si la prop est absente, le subtitle reste neutre sans nombre.
  *
  * Visuel sélectionné (UI-SPEC) : borderColor primary borderWidth 1.5 + dot
  * blanc 8px centré sur disque primary 20×20.
- *
- * Visuel non sélectionné : borderColor colors.border borderWidth 1 + disque
- * 20×20 bg colors.cardAlt + border colors.border (creux).
  *
  * Accessibilité : `accessibilityRole="radio"` + `accessibilityState.checked`
  * sur chaque option (UI-SPEC Accessibility).
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -31,6 +31,11 @@ export type TriggerMode = 'instant' | 'daily-review' | 'hybrid';
 interface TriggerModeSelectorProps {
   value: TriggerMode;
   onChange: (mode: TriggerMode) => void;
+  /**
+   * Seuil sats/jour pour la bascule hybrid → queue. Si fourni, le subtitle
+   * de l'option hybride affiche la valeur exacte. Sinon, fallback générique.
+   */
+  hybridThresholdSats?: number;
 }
 
 interface ModeOption {
@@ -39,27 +44,37 @@ interface ModeOption {
   subtitle: string;
 }
 
-// Wording verbatim UI-SPEC Copywriting Contract.
-const OPTIONS: readonly ModeOption[] = [
-  {
-    id: 'instant',
-    title: 'Instantané',
-    subtitle: 'Chaque tâche déclenche un pay-out immédiat',
-  },
-  {
-    id: 'daily-review',
-    title: 'Validation parentale',
-    subtitle: 'Tu valides les pay-outs en batch une fois par jour',
-  },
-  {
-    id: 'hybrid',
-    title: 'Hybride',
-    subtitle: "Instantané jusqu'à 100 sats/jour, puis en attente",
-  },
-] as const;
+function buildOptions(hybridThresholdSats?: number): readonly ModeOption[] {
+  const hybridSubtitle =
+    typeof hybridThresholdSats === 'number' && Number.isFinite(hybridThresholdSats)
+      ? `Instantané jusqu'à ${hybridThresholdSats} sats/jour, puis en attente`
+      : "Instantané jusqu'au seuil configuré, puis en attente";
+  return [
+    {
+      id: 'instant',
+      title: 'Instantané',
+      subtitle: 'Chaque tâche déclenche un pay-out immédiat',
+    },
+    {
+      id: 'daily-review',
+      title: 'Validation parentale',
+      subtitle: 'Tu valides les pay-outs en batch une fois par jour',
+    },
+    {
+      id: 'hybrid',
+      title: 'Hybride',
+      subtitle: hybridSubtitle,
+    },
+  ] as const;
+}
 
-export function TriggerModeSelector({ value, onChange }: TriggerModeSelectorProps) {
+export function TriggerModeSelector({
+  value,
+  onChange,
+  hybridThresholdSats,
+}: TriggerModeSelectorProps) {
   const { colors, primary } = useThemeColors();
+  const options = useMemo(() => buildOptions(hybridThresholdSats), [hybridThresholdSats]);
 
   return (
     <View
@@ -67,7 +82,7 @@ export function TriggerModeSelector({ value, onChange }: TriggerModeSelectorProp
       accessibilityRole="radiogroup"
       accessibilityLabel="Mode de déclenchement des pay-outs"
     >
-      {OPTIONS.map((option) => {
+      {options.map((option) => {
         const isSelected = value === option.id;
         return (
           <TouchableOpacity

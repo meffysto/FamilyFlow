@@ -639,7 +639,11 @@ export function SettingsLightning() {
               icon={<Clock size={16} strokeWidth={1.75} color={primary} />}
               flush
             />
-            <TriggerModeSelector value={triggerMode} onChange={handleChangeTriggerMode} />
+            <TriggerModeSelector
+              value={triggerMode}
+              onChange={handleChangeTriggerMode}
+              hybridThresholdSats={familyConfig.hybridThresholdSats}
+            />
           </View>
 
           {/* Phase 53 — Plafond quotidien par membre (REQ-4) */}
