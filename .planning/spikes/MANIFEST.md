@@ -14,7 +14,9 @@ Décisions actées qui contraignent le build futur :
 - **Feature flag `LIGHTNING_ENABLED`** : off par défaut, build prod ne ship pas la feature tant que le flag dev n'est pas validé.
 - **Offline-first respecté** : la ferme classique doit rester 100 % fonctionnelle sans réseau et sans creds LN. Aucun appel LN si flag off.
 - **API officielle** : github.com/lnbits/lnbits, endpoints REST v1 (`/api/v1/wallet`, `/api/v1/payments`, `/api/v1/payments/:hash`).
-- **Invoice key, pas admin key** : le spike utilise la clé read+invoice (lecture balance + génération invoice), jamais l'admin key — minimise la surface de risque en cas de fuite.
+- **Invoice key, pas admin key (spikes 001/002)** : le spike 001 utilise uniquement la clé read+invoice. Le spike 004 ajoute l'admin key famille pour les pay-outs, isolée par un gate biométrique systématique.
+- **Multi-wallet modèle famille (spike 004)** : 1 wallet famille parent avec admin key + N wallets enfants avec invoice key uniquement. Création manuelle dans LNbits UI, l'app consomme les keys (pas de provisioning programmatique super-user).
+- **1 tâche = 100 sats** : convention de récompense fixe pour le spike. Pay-out automatique du wallet famille vers le sub-wallet de l'enfant ayant complété la tâche.
 - **Branche dédiée** : `feat/lightning-farm`. Pas de merge dans `main` tant que tous les spikes ne sont pas verts ET App Store tranché.
 
 ## Spikes
@@ -24,3 +26,4 @@ Décisions actées qui contraignent le build futur :
 | 001 | lnbits-end-to-end | standard | Given URL+invoice key, when connect→balance→invoice 100 sats→poll statut, then balance + bolt11+QR + bascule pending→paid en live | ✓ VALIDATED | lightning, lnbits, network, qr, secure-store |
 | 002 | settings-labo-flag | standard | Given LIGHTNING_ENABLED off, when relance app, then ferme 100% offline + zéro appel LN ; on → form connexion + test | ✓ VALIDATED (par construction) | feature-flag, settings, ui |
 | 003 | appstore-posture | research | Documente posture "remote-node client" (cf. Zeus, BlueWallet, Phoenix) + checklist metadata App Store | ⚠ PARTIAL (technique OK, décision release à prendre) | research, appstore, compliance |
+| 004 | family-multi-wallet | standard | Given wallet famille + N sub-wallets enfants (créés manuellement dans LNbits), when « Tâche complétée par X », then 100 sats payés famille→enfant via admin key FaceID-gated, balances rafraîchies | PENDING (test manuel requis) | lightning, lnbits, multi-wallet, family, biometric, pay-out, admin-key |
