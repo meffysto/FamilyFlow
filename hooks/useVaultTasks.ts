@@ -124,13 +124,16 @@ export function useVaultTasks(
       }
 
       // Phase quick-260516-oj6 — mise à jour completionHistory (silent, non-critique)
-      // Import dynamique pour éviter cycles et alléger le bundle.
+      // On enregistre le slot DÉRIVÉ DE L'HEURE RÉELLE de complétion (signal réel)
+      // plutôt que le slot calculé par computeAutoSlot (qui tomberait sur nextfit
+      // → toujours matin par défaut, corromprait l'apprentissage dès J1).
       (async () => {
         try {
-          const { computeAutoSlot, loadHistory, saveCompletion } = await import('../lib/time-blocking');
-          const history = await loadHistory();
-          const result = computeAutoSlot(task, [], history);
-          saveCompletion(task.text, result.slot).catch(() => { /* silent */ });
+          const { timeToSlot, saveCompletion } = await import('../lib/time-blocking');
+          const now = new Date();
+          const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          const slot = timeToSlot(hhmm);
+          if (slot) saveCompletion(task.text, slot).catch(() => { /* silent */ });
         } catch { /* time-blocking — non-critical */ }
       })();
     }
