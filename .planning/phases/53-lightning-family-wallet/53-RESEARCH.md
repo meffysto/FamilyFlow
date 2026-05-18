@@ -710,32 +710,38 @@ export function HudLightningButton({ onPress }: { onPress: () => void }) {
 
 **Si cette table est vide :** non — 9 assomptions à valider/confirmer par le planner ou le user en discuss complémentaire.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **AsyncStorage vs SecureStore pour l'audit log 90 j ?**
    - What we know : SecureStore limite 2 KB / clé. Audit 90 j × 4 membres × 3/j = ~1080 entrées soit ~160 KB.
    - What's unclear : préférence du user — confidentialité audit log (qui voit quoi quand) vs simplicité.
    - Recommendation : **AsyncStorage** pour l'audit (pas un secret — un audit est consultable sur la blockchain LN), **SecureStore** pour creds + queue + flag (queue reste petite ~5-10 items). Le planner doit confirmer.
+   - **RESOLVED: AsyncStorage** — l'audit log est non-secret (paymentHash retrouvable on-chain) et atteint ~160 KB en régime, dépassant largement la limite SecureStore iOS de ~2 KB par clé. AsyncStorage est ajouté via `npx expo install @react-native-async-storage/async-storage` au Plan 01 (dépendance neuve — `vault-cache.ts` utilise `expo-file-system`, pas AsyncStorage).
 
 2. **Reachability listener strict (NetInfo) ou fallback AppState seul ?**
    - What we know : SPEC #5 dit "retry au foreground app + reachability change". AppState seul couvre ~80 % des cas. NetInfo = +1 dépendance.
    - What's unclear : tolérance du user à l'edge case "mode avion → désactivé sans backgrounding".
    - Recommendation : **NetInfo** (la dépendance est légère + Expo SDK 54 la ship via autolinking), mais si le user refuse strictement les nouvelles deps → fallback AppState avec retry périodique limité (toutes les 30 s tant que app foreground avec queue non vide).
+   - **RESOLVED: AppState seul** — REQ-5 acceptance "retry au foreground" est couvert par `AppState.addEventListener('change')` + boot flush. NetInfo deferred v2. L'edge case "mode avion levé sans backgrounding" est une limitation acceptée MVP : la queue se vide au prochain foreground transition (la majorité des cas — l'utilisateur revient sur l'app après avoir levé le mode avion). Documenté en limitation accepted dans le SUMMARY Plan 02.
 
 3. **Décodage bolt11 côté client pour afficher le montant pré-FaceID ?**
    - What we know : SPEC ne le mentionne pas. UX-SPEC dit "La transaction Lightning est définitive. Vérifiez l'invoice avant de confirmer." → invite à vérifier visuellement.
    - What's unclear : sans décodage, l'utilisateur ne SAIT pas combien il envoie tant qu'il n'a pas confirmé.
    - Recommendation : **MVP sans décodage** (LNbits remontera une erreur si invalide ou amount > balance). v2 : ajouter `light-bolt11-decoder` (npm, 25 KB) pour afficher montant + memo extraits.
+   - **RESOLVED: deferred v2** — FaceID gate obligatoire + disclaimer prominent dans `CashOutModal` + LNbits qui rejette les invoices malformés/invalides (toast erreur) suffisent au MVP. Décodage bolt11 = enhancement v2 si feedback TestFlight indique besoin.
 
 4. **Cleanup playgrounds = dernier commit OU plan 4 dédié ?**
    - What we know : Claude Discretion dit "1 commit final après que tout le reste fonctionne".
    - What's unclear : si "1 commit" = "1 plan dédié" (granularité Phase 53) ou juste "1 commit dans le dernier plan".
    - Recommendation : **Plan 4 dédié au cleanup** (suppression + renommage + tsc clean + grep verification). Permet de tester avant cleanup que tout marche, puis cleanup atomique. Couvre REQ-12 acceptance criterion explicite.
+   - **RESOLVED: Plan dédié (renuméroté Plan 04, Wave 5)** — cleanup atomique + checkpoint device pour valider non-régression ferme/Auberge/widget avant suppression irréversible des fichiers legacy. Pitfall #10 (ordre cleanup critique) respecté : Plan 03b retire d'abord les consommateurs (liens TouchableOpacity dans SettingsLightning), Plan 04 supprime les fichiers.
 
 5. **Si LNbits demo instance est down pendant test → comment certifier la phase ?**
    - What we know : Tous les tests fonctionnels sont contre `demo.lnbits.com` (BYO). Si demo est down, on ne peut pas tester end-to-end.
    - What's unclear : politique de fallback (mock LNbits ? jest-msw ? attendre que demo soit up ?).
    - Recommendation : **mock LNbits dans les tests Jest unitaires** (msw ou simple fetch mock), test manuel end-to-end facultatif si demo down (à reporter sur build TestFlight ultérieur).
+   - **RESOLVED: tests Jest mockés suffisent CI** — `lib/lightning/__tests__/*` mockent `LnbitsClient` via `jest.mock('../lnbits-client', ...)` (Plan 02). Le test device manuel sur LNbits BYO (`demo.lnbits.com` ou instance perso) reste facultatif post-merge si la demo est dispo (checkpoint Plan 03b + Plan 04). Si demo down → la phase peut être livrée avec tests Jest verts ; les flows réseau sont validés au prochain accès LNbits.
+
 
 ## Environment Availability
 

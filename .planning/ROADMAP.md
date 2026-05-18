@@ -551,4 +551,20 @@ Plans (à détailler en `/gsd-plan-phase 52`):
 7. App Store : feature invisible dans metadata/screenshots, accessible uniquement Réglages → Labo
 8. `npx tsc --noEmit` clean, ferme/tâches non régressées
 
-Plans (à détailler en `/gsd-plan-phase 53`).
+**Plans:** 5 plans
+
+Plans:
+**Wave 1**
+- [ ] 53-01-PLAN.md — Module pur Lightning (types étendus + 8 modules + 7 tests Jest + expo-camera + AsyncStorage installés) (REQ-2, REQ-3, REQ-4, REQ-5, REQ-6, REQ-7, REQ-11, REQ-12)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 53-02-PLAN.md — Listener + intégration useVault.ts (3ᵉ subscribeTaskComplete + FaceID gate per pay-out + migration bootstrap + AppState flush queue) (REQ-1, REQ-2, REQ-3, REQ-4, REQ-5, REQ-6, REQ-7, REQ-11)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 53-03a-PLAN.md — Composants visuels purs Lightning (HudLightningButton + BalanceCard + AuditLogItem + PayoutQueueItem + TriggerModeSelector) (REQ-1, REQ-8, REQ-3, REQ-4)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 53-03b-PLAN.md — Modals + écran + intégration (CashOutModal + PayoutQueueModal + QrScannerOverlay + /lightning-wallet + tree.tsx HUD + SettingsLightning étendu + checkpoint device) (REQ-1, REQ-8, REQ-9, REQ-10, REQ-3, REQ-4, REQ-12)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 53-04-PLAN.md — REQ-6 'undone' audit entry + cleanup playgrounds + non-régression + App Store posture (REQ-12, REQ-6)
