@@ -47,6 +47,16 @@ export interface ExecutePayoutInput {
   config: FamilyLightningConfig;
   /** Source de l'appel — pour décider du comportement d'enqueue en cas de network error. */
   source?: 'listener' | 'flush-offline' | 'flush-review';
+  /**
+   * D-08 (Plan 03b) — si `true`, SKIPPE le gate FaceID interne car le caller
+   * (PayoutQueueModal lors d'une validation batch) a déjà gate UNE SEULE FOIS
+   * avant la boucle for…of. Default `false` : tous les appels listener +
+   * flush-offline + flush-review individuel passent par leur propre FaceID.
+   *
+   * Sécurité : ce flag est UNIQUEMENT propagé depuis PayoutQueueModal. Les
+   * callers listener (instant) et flush-offline ne le passent JAMAIS.
+   */
+  bypassBiometric?: boolean;
 }
 
 function localTodayISO(now: Date = new Date()): string {
@@ -94,7 +104,7 @@ export async function executePayout(input: ExecutePayoutInput): Promise<void> {
 }
 
 async function doExecute(input: ExecutePayoutInput, dateKey: string): Promise<void> {
-  const { task, recipient, config, source = 'listener' } = input;
+  const { task, recipient, config, source = 'listener', bypassBiometric = false } = input;
 
   // 1. FaceID gate AVANT toute opération réseau (SPEC Constraint #4).
   //    `disableDeviceFallback: !__DEV__` → strict en prod (FaceID/TouchID
@@ -103,25 +113,34 @@ async function doExecute(input: ExecutePayoutInput, dateKey: string): Promise<vo
   //    Note : `biometric-gate.ts` utilise un param nommé `allowDevicePasscode`
   //    (inverse logique de `disableDeviceFallback`). On passe `__DEV__` qui
   //    équivaut à `allowDevicePasscode: __DEV__`, soit `disableDeviceFallback: !__DEV__`.
-  const auth = await authenticatePayOut({
-    reason: `Pay-out Lightning automatique → ${recipient.profile.name}`,
-    allowDevicePasscode: __DEV__,
-  });
-  if (!auth.success) {
-    await appendAudit({
-      ts: new Date().toISOString(),
-      profileId: recipient.profileId,
-      taskId: task.id,
-      sats: PAYOUT_SATS,
-      status: 'failed',
-      error: 'auth_cancelled',
+  //
+  // D-08 (Plan 03b) — si `bypassBiometric === true`, le caller (PayoutQueueModal
+  // batch) a déjà gate FaceID UNE SEULE FOIS avant la boucle for…of. On
+  // SKIPPE le gate interne pour éviter N prompts FaceID dans la boucle.
+  // Sécurité : ce bypass est UNIQUEMENT autorisé depuis le batch (1 consentement
+  // explicite pour N pay-outs simultanés). Le listener (instant) et le flush
+  // offline ne propagent JAMAIS bypassBiometric.
+  if (!bypassBiometric) {
+    const auth = await authenticatePayOut({
+      reason: `Pay-out Lightning automatique → ${recipient.profile.name}`,
+      allowDevicePasscode: __DEV__,
     });
-    emitPayoutFailed({
-      profileId: recipient.profileId,
-      taskId: task.id,
-      reason: 'biometric',
-    });
-    return; // PAS d'enqueue — l'utilisateur a explicitement refusé l'auth.
+    if (!auth.success) {
+      await appendAudit({
+        ts: new Date().toISOString(),
+        profileId: recipient.profileId,
+        taskId: task.id,
+        sats: PAYOUT_SATS,
+        status: 'failed',
+        error: 'auth_cancelled',
+      });
+      emitPayoutFailed({
+        profileId: recipient.profileId,
+        taskId: task.id,
+        reason: 'biometric',
+      });
+      return; // PAS d'enqueue — l'utilisateur a explicitement refusé l'auth.
+    }
   }
 
   // 2. createInvoice côté MEMBER avec idempotency tag (REQ-6 ceinture+bretelles).
