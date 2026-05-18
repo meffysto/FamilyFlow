@@ -71,6 +71,8 @@ Tokens projet établis (constants/typography.ts) — réutilisés tels quels.
 | Serif (chaleureux) | `FontFamily.serif` | `FontSize.subtitle` (17px) | 400 | `LineHeight.loose` (26) | Titre toast "+100 sats ⚡" (style ToastSeal existant) |
 | Caption | `FontSize.caption` | 12px | `FontWeight.normal` (400) | `LineHeight.tight` (18) | Tooltip "Admin key requise", micro-infos |
 
+**Exception typographie — échelle projet :** Les tailles `FontSize.*` (caption 12, label 13, sm 14, body 15, subtitle 17, heading 18, title 20, display 24) sont des tokens projet établis pré-existants (cf. `constants/typography.ts`), réutilisés tels quels pour cohérence avec les 52 phases précédentes. Aucune nouvelle taille n'est introduite par cette phase. La hiérarchie visuelle s'appuie sur la taille (pas le poids — 2 poids seulement, cf. ci-dessus).
+
 Source : constants/typography.ts (déclaration), ToastContext.tsx:595 (pattern ToastSeal), SettingsRow.tsx (pattern label/subtitle)
 
 ---
@@ -333,7 +335,7 @@ ScrollView (KeyboardAvoidingView behavior="padding")
 **Écran scan QR (expo-camera) :**
 - Modal plein écran (pas pageSheet) par-dessus la modal encaissement
 - Fond noir, cadre de scan centré (overlay carré 240×240pt, bordure 2px `colors.brand.or`)
-- Bouton fermeture en haut à droite : ✕ blanc sur fond `rgba(0,0,0,0.5)`, 44×44pt
+- Bouton fermeture en haut à droite : ✕ blanc sur fond `colors.overlay` (token projet existant — scrim modal plein, cf. `constants/colors.ts:54`), 44×44pt
 - Feedback au scan réussi : `Haptics.notificationAsync(NotificationFeedbackType.Success)` + fermeture automatique + paste dans le textarea
 
 ---
