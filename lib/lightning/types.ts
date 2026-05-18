@@ -52,3 +52,38 @@ export class LnbitsError extends Error {
     this.name = 'LnbitsError';
   }
 }
+
+/**
+ * Configuration multi-wallet famille — spike 004.
+ *
+ * Modèle : le parent crée manuellement N+1 wallets dans son instance LNbits
+ * (1 famille + N enfants). L'app consomme les keys.
+ *
+ * - `family.adminKey` : nécessaire UNIQUEMENT pour le pay-out (envoi).
+ *   Gardée derrière un gate biométrique (`biometric-gate.ts`).
+ * - `family.invoiceKey` : lecture balance famille.
+ * - `children[].invoiceKey` : lecture balance enfant + création invoice
+ *   entrante (la famille paye cette invoice).
+ *
+ * Les enfants n'ont PAS d'admin key dans l'app — par construction ils ne
+ * peuvent pas envoyer, seulement recevoir et lire leur solde.
+ */
+export interface FamilyLightningConfig {
+  /** URL d'instance LNbits partagée par tous les wallets famille */
+  baseUrl: string;
+  family: {
+    name: string;
+    invoiceKey: string;
+    adminKey: string;
+  };
+  children: ChildWalletMapping[];
+}
+
+export interface ChildWalletMapping {
+  /** ID du profil dans le vault (correspond à profile.id) */
+  profileId: string;
+  /** Nom affiché — copié du profil, peut diverger si renommé */
+  displayName: string;
+  /** Invoice/read key du wallet enfant */
+  invoiceKey: string;
+}

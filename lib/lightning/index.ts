@@ -10,15 +10,24 @@ export {
   clearLnbitsConfig,
 } from './credentials';
 export {
+  loadFamilyConfig,
+  saveFamilyConfig,
+  clearFamilyConfig,
+} from './family-credentials';
+export {
   isLightningEnabled,
   setLightningEnabled,
   resetLightningFlagCache,
 } from './feature-flag';
+export { authenticatePayOut } from './biometric-gate';
+export type { AuthGateOptions, AuthGateResult } from './biometric-gate';
 export type {
   LnbitsConfig,
   WalletInfo,
   CreateInvoiceResult,
   PaymentStatus,
   PaymentStatusValue,
+  FamilyLightningConfig,
+  ChildWalletMapping,
 } from './types';
 export { LnbitsError } from './types';

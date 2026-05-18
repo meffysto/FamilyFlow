@@ -147,6 +147,50 @@ export class LnbitsClient {
     };
   }
 
+  /**
+   * POST /api/v1/payments avec out:true — paye une invoice bolt11.
+   *
+   * Nécessite l'admin key (passée en override car le client est instancié
+   * avec l'invoice key par défaut, surface réduite). Cette méthode doit
+   * être appelée derrière un gate biométrique pour le wallet famille.
+   */
+  async payInvoice(bolt11: string, adminKey: string): Promise<{ paymentHash: string }> {
+    if (!bolt11) throw new LnbitsError('bolt11 requis');
+    if (!adminKey) throw new LnbitsError('adminKey requis pour pay-out');
+    const url = `${this.baseUrl}/api/v1/payments`;
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(
+        url,
+        {
+          method: 'POST',
+          headers: {
+            'X-Api-Key': adminKey.trim(),
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({ out: true, bolt11 }),
+        },
+        DEFAULT_TIMEOUT_MS,
+      );
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      throw new LnbitsError(`Réseau indisponible (${reason})`);
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new LnbitsError(
+        `Pay-out LNbits ${res.status} — ${res.statusText || 'erreur'}`,
+        { httpStatus: res.status, body },
+      );
+    }
+    const raw = await res.json() as { payment_hash: string };
+    if (!raw.payment_hash) {
+      throw new LnbitsError('Réponse pay-out incomplète (payment_hash manquant)');
+    }
+    return { paymentHash: raw.payment_hash };
+  }
+
   /** GET /api/v1/payments/{hash} — statut de l'invoice */
   async getPaymentStatus(paymentHash: string): Promise<PaymentStatus> {
     if (!paymentHash) {
