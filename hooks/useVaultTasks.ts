@@ -296,6 +296,14 @@ export function useVaultTasks(
       return { ...t, timeSlot: slot ?? undefined };
     }));
     setTimeout(triggerWidgetRefresh, 0);
+
+    // Time-blocking v2 — apprend du déplacement manuel (fire-and-forget).
+    // 2 tap sur le même slot pour le même titre → override l'auto-placement.
+    if (slot) {
+      import('../lib/time-blocking').then(({ recordOverride }) => {
+        recordOverride(task.text, slot).catch(() => { /* silent */ });
+      }).catch(() => { /* silent */ });
+    }
   }, [triggerWidgetRefresh]);
 
   // ─── deleteTask ──────────────────────────────────────────────────────────

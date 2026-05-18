@@ -52,9 +52,11 @@ import {
   SLOT_IDS,
   SLOT_DEFINITIONS,
   loadHistory,
+  loadOverrides,
   timeToSlot,
   type CompletionHistory,
   type OccupiedBlock,
+  type SlotOverrideStore,
 } from '../../lib/time-blocking';
 import type { SlotId } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -346,6 +348,7 @@ export default function TasksScreen() {
   const [dayFilter, setDayFilter] = useState<DayFilter>('aujourdhui');
   const [selectedDay, setSelectedDay] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [completionHistory, setCompletionHistory] = useState<CompletionHistory>({});
+  const [overrides, setOverrides] = useState<SlotOverrideStore>({});
   const [pickerTask, setPickerTask] = useState<Task | null>(null);
 
   useEffect(() => {
@@ -357,6 +360,14 @@ export default function TasksScreen() {
   useEffect(() => {
     loadHistory().then(setCompletionHistory).catch(() => { /* silent */ });
   }, []);
+
+  // Time-blocking v2 — charge les overrides au mount + à chaque entrée
+  // dans le mode Journée (rafraîchit après un déplacement manuel).
+  useEffect(() => {
+    if (viewMode === 'journee') {
+      loadOverrides().then(setOverrides).catch(() => { /* silent */ });
+    }
+  }, [viewMode]);
 
   const handleSetViewMode = useCallback((next: ViewMode) => {
     Haptics.selectionAsync();
@@ -675,7 +686,7 @@ export default function TasksScreen() {
       // (évite le bug "tout en matin" : computeDayPlacement gère les deux passes
       //  signal-fort puis nextfit-cumulatif). Les RDV du jour réservent leur
       //  charge en amont via occupiedBlocks.
-      const placedTasks = computeDayPlacement(dayTasks, completionHistory, occupiedBlocks).map(p => ({
+      const placedTasks = computeDayPlacement(dayTasks, completionHistory, occupiedBlocks, overrides).map(p => ({
         task: p.task,
         slot: p.slot,
         isAuto: p.source !== 'explicit',
@@ -733,7 +744,7 @@ export default function TasksScreen() {
     }
 
     return unsorted;
-  }, [viewMode, selectedDay, completionHistory, activeTasks, sectionOrder, t, occupiedBlocks]);
+  }, [viewMode, selectedDay, completionHistory, activeTasks, sectionOrder, t, occupiedBlocks, overrides]);
 
   // Sections terminées groupées par fichier
   const completedSections: TaskSection[] = useMemo(() => {
