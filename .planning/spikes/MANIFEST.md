@@ -21,6 +21,6 @@ Décisions actées qui contraignent le build futur :
 
 | # | Name | Type | Validates | Verdict | Tags |
 |---|------|------|-----------|---------|------|
-| 001 | lnbits-end-to-end | standard | Given URL+invoice key, when connect→balance→invoice 100 sats→poll statut, then balance + bolt11+QR + bascule pending→paid en live | PENDING (test manuel requis) | lightning, lnbits, network, qr, secure-store |
+| 001 | lnbits-end-to-end | standard | Given URL+invoice key, when connect→balance→invoice 100 sats→poll statut, then balance + bolt11+QR + bascule pending→paid en live | ✓ VALIDATED | lightning, lnbits, network, qr, secure-store |
 | 002 | settings-labo-flag | standard | Given LIGHTNING_ENABLED off, when relance app, then ferme 100% offline + zéro appel LN ; on → form connexion + test | ✓ VALIDATED (par construction) | feature-flag, settings, ui |
 | 003 | appstore-posture | research | Documente posture "remote-node client" (cf. Zeus, BlueWallet, Phoenix) + checklist metadata App Store | ⚠ PARTIAL (technique OK, décision release à prendre) | research, appstore, compliance |

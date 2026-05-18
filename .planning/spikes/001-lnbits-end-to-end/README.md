@@ -3,7 +3,7 @@ spike: 001
 name: lnbits-end-to-end
 type: standard
 validates: "Given URL + invoice key d'une instance LNbits BYO, when on connecte → fetch balance → POST invoice 100 sats → poll statut, then balance + bolt11+QR + bascule pending→paid en live, le tout depuis RN/Expo sans crash réseau ni faille de stockage"
-verdict: PENDING
+verdict: VALIDATED
 related: []
 tags: [lightning, lnbits, network, bitcoin, secure-store, qr]
 ---
@@ -121,7 +121,7 @@ Pas de forensic log layer pour ce spike — l'expérience visuelle (balance + QR
 
 ## Results
 
-**Verdict : PENDING — nécessite test manuel** (voir checkpoint dans la conversation).
+**Verdict : ✓ VALIDATED** — testé manuellement contre `demo.lnbits.com` : balance affichée, invoice 100 sats générée, QR scannable, bascule pending→paid détectée par le polling, balance rafraîchie automatiquement.
 
 ### Code livré sur la branche `feat/lightning-farm`
 
