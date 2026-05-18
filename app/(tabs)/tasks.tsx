@@ -47,7 +47,7 @@ import { FreeTimeBand } from '../../components/time-blocking/FreeTimeBand';
 import { SummaryPill } from '../../components/time-blocking/SummaryPill';
 import { SlotPickerSheet } from '../../components/time-blocking/SlotPickerSheet';
 import {
-  computeAutoSlot,
+  computeDayPlacement,
   estimateTaskDuration,
   SLOT_IDS,
   SLOT_DEFINITIONS,
@@ -658,11 +658,14 @@ export default function TasksScreen() {
         return false;
       });
 
-      // Calcul du placement pour chaque tâche (chaîne de décision)
-      const placedTasks = dayTasks.map(t => {
-        const result = computeAutoSlot(t, dayTasks, completionHistory);
-        return { task: t, slot: result.slot, isAuto: result.source !== 'explicit' };
-      });
+      // Calcul du placement de toutes les tâches du jour avec charge cumulée
+      // (évite le bug "tout en matin" : computeDayPlacement gère les deux passes
+      //  signal-fort puis nextfit-cumulatif)
+      const placedTasks = computeDayPlacement(dayTasks, completionHistory).map(p => ({
+        task: p.task,
+        slot: p.slot,
+        isAuto: p.source !== 'explicit',
+      }));
 
       // 4 sections fixes (toujours présentes, même vides)
       return SLOT_IDS.map(slotId => {

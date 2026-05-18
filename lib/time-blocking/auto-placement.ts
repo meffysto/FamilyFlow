@@ -99,3 +99,103 @@ export function estimateTaskDuration(task: Task): number {
   }
   return DEFAULT_TASK_DURATION_MIN;
 }
+
+export interface PlacedTask {
+  task: Task;
+  slot: SlotId;
+  source: AutoPlacementSource;
+}
+
+/**
+ * Calcule le placement de TOUTES les tâches d'une journée en cumulant la charge.
+ *
+ * Différence cruciale avec un appel naïf de `computeAutoSlot` par tâche :
+ * - Pass 1 : place les tâches à signal fort (explicit, time, history, file)
+ * - Pass 2 : place les tâches sans signal via nextfit, en CUMULANT la charge
+ *   au fur et à mesure pour qu'elles se répartissent dans les 4 slots
+ *
+ * Sans ce two-pass, 22 tâches sans signal finiraient toutes en matin
+ * (le nextfit ne voit aucune charge accumulée car les autres tâches
+ *  volatiles n'ont pas de timeSlot écrit dans le vault).
+ */
+export function computeDayPlacement(
+  dayTasks: Task[],
+  history: CompletionHistory,
+): PlacedTask[] {
+  const placed: PlacedTask[] = [];
+  const needsNextfit: Task[] = [];
+
+  // Pass 1 — signal fort, pas de nextfit
+  for (const task of dayTasks) {
+    const result = computeAutoSlotSignalOnly(task, history);
+    if (result) {
+      placed.push({ task, slot: result.slot, source: result.source });
+    } else {
+      needsNextfit.push(task);
+    }
+  }
+
+  // Pass 2 — nextfit avec charge cumulée
+  const used: Record<SlotId, number> = { matin: 0, midi: 0, aprem: 0, soir: 0 };
+  for (const p of placed) {
+    used[p.slot] += estimateTaskDuration(p.task);
+  }
+  for (const task of needsNextfit) {
+    const slot = pickNextFit(used);
+    placed.push({ task, slot, source: 'nextfit' });
+    used[slot] += estimateTaskDuration(task);
+  }
+
+  return placed;
+}
+
+/**
+ * Variante de computeAutoSlot qui s'arrête avant le nextfit (sources 1-4 uniquement).
+ * Retourne null si aucun signal n'est trouvé.
+ */
+function computeAutoSlotSignalOnly(
+  task: Task,
+  history: CompletionHistory,
+): AutoPlacementResult | null {
+  if (task.timeSlot) {
+    return { slot: task.timeSlot, source: 'explicit' };
+  }
+  if (task.reminderTime) {
+    return { slot: timeToSlot(task.reminderTime), source: 'time' };
+  }
+  if (task.dueDate && task.dueDate.includes('T')) {
+    const timePart = task.dueDate.split('T')[1];
+    if (timePart && /^\d{2}:\d{2}/.test(timePart)) {
+      return { slot: timeToSlot(timePart), source: 'time' };
+    }
+  }
+  const dominant = getDominantSlot(task.text, history);
+  if (dominant) {
+    return { slot: dominant, source: 'history' };
+  }
+  const fromFile = fileToSlot(task.sourceFile);
+  if (fromFile) {
+    return { slot: fromFile, source: 'file' };
+  }
+  return null;
+}
+
+/** Renvoie le premier slot dont la charge cumulée est ≤ 75% capacité. */
+function pickNextFit(used: Record<SlotId, number>): SlotId {
+  for (const slot of SLOT_IDS) {
+    if (used[slot] < 0.75 * SLOT_DEFINITIONS[slot].capacityMinutes) {
+      return slot;
+    }
+  }
+  // Tous saturés → on retombe sur le slot le moins chargé pour ne jamais
+  // empiler 100% dans le premier (évite le "tout matin" en cas de surcharge).
+  let bestSlot: SlotId = 'soir';
+  let bestUsed = used[bestSlot];
+  for (const slot of SLOT_IDS) {
+    if (used[slot] < bestUsed) {
+      bestSlot = slot;
+      bestUsed = used[slot];
+    }
+  }
+  return bestSlot;
+}

@@ -10,6 +10,7 @@
 import type { Task } from '../types';
 import {
   computeAutoSlot,
+  computeDayPlacement,
   estimateTaskDuration,
 } from '../time-blocking/auto-placement';
 import {
@@ -331,5 +332,64 @@ describe('estimateTaskDuration', () => {
   it('SLOT_DEFINITIONS exposées (sanity check)', () => {
     expect(SLOT_DEFINITIONS.matin.capacityMinutes).toBe(270);
     expect(SLOT_DEFINITIONS.midi.capacityMinutes).toBe(90);
+  });
+});
+
+// ─── computeDayPlacement — répartition cumulative ──────────────────────────
+
+describe('computeDayPlacement', () => {
+  const emptyHistory: CompletionHistory = {};
+
+  it('22 tâches sans signal se répartissent dans les 4 slots (anti-régression "tout matin")', () => {
+    const tasks = Array.from({ length: 22 }, (_, i) =>
+      makeTask({ id: `t${i}`, text: `Tâche ${i}` })
+    );
+    const placed = computeDayPlacement(tasks, emptyHistory);
+
+    const bySlot = placed.reduce<Record<string, number>>((acc, p) => {
+      acc[p.slot] = (acc[p.slot] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    expect(placed).toHaveLength(22);
+    // Matin doit saturer à ~18 tâches (270*0.75/15 = 13.5 → 14 tâches puis on passe)
+    // En tout cas pas 22 dans le même slot.
+    expect(bySlot.matin ?? 0).toBeLessThan(22);
+    // Au moins 2 slots distincts utilisés
+    expect(Object.keys(bySlot).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('tâche explicit garde son slot, indépendamment du cumul', () => {
+    const t1 = makeTask({ id: 't1', text: 'Lessive', timeSlot: 'soir' });
+    const t2 = makeTask({ id: 't2', text: 'Vague' });
+    const placed = computeDayPlacement([t1, t2], emptyHistory);
+    expect(placed.find(p => p.task.id === 't1')?.slot).toBe('soir');
+    expect(placed.find(p => p.task.id === 't1')?.source).toBe('explicit');
+  });
+
+  it('tâche avec reminderTime placée par "time"', () => {
+    const t = makeTask({ id: 't1', text: 'RDV', reminderTime: '14:30' });
+    const placed = computeDayPlacement([t], emptyHistory);
+    expect(placed[0].slot).toBe('aprem');
+    expect(placed[0].source).toBe('time');
+  });
+
+  it('cumul respecte les tâches à signal fort déjà placées', () => {
+    // 1 tâche explicit matin 30min + 17 tâches sans signal de 15min
+    // Capacité matin = 270*0.75 = 202.5min disponibles
+    // 1*30 (explicit) + 11*15 = 195min → 12 dans matin total, le reste passe à midi/aprem
+    const explicitMatin = makeTask({
+      id: 'exp',
+      text: 'Lessive',
+      timeSlot: 'matin',
+      reminderTime: '07:00 · 30min',
+    });
+    const vagues = Array.from({ length: 17 }, (_, i) =>
+      makeTask({ id: `v${i}`, text: `Tâche vague ${i}` })
+    );
+    const placed = computeDayPlacement([explicitMatin, ...vagues], emptyHistory);
+    const matinCount = placed.filter(p => p.slot === 'matin').length;
+    // Ne dépasse pas la capacité raisonnable
+    expect(matinCount).toBeLessThanOrEqual(13);
   });
 });
