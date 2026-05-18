@@ -50,11 +50,15 @@ Source : CLAUDE.md (conventions), constants/ (tokens), tree.tsx:3470-3526 (patte
 
 Exceptions : tap targets bouton HUD ⚡ minimum 44×44pt (iOS HIG) — conforme à `styles.hudCodexButton` existant (pattern tree.tsx:3508-3524).
 
+**Exception spacing — Spacing.lg (10px) :** Token projet établi pré-existant (cf. `constants/spacing.ts`). Utilisé pour le padding vertical des items liste validation pour cohérence avec les patterns de listes existants ailleurs dans l'app (cf. `components/settings/SettingsRow.tsx`). Ne PAS introduire de nouveau token 10px — réutiliser `Spacing.lg`. Toutes les autres valeurs d'espacement de cette phase respectent la grille 4px.
+
 ---
 
 ## Typography
 
-Tokens projet établis (constants/typography.ts) — réutilisés tels quels :
+Tokens projet établis (constants/typography.ts) — réutilisés tels quels.
+
+**Poids déclarés : 2 uniquement — `FontWeight.normal` (400) et `FontWeight.semibold` (600).**
 
 | Rôle | Token | Taille | Poids | Line Height | Usage Phase 53 |
 |------|-------|--------|-------|-------------|----------------|
@@ -63,7 +67,7 @@ Tokens projet établis (constants/typography.ts) — réutilisés tels quels :
 | Body semibold | `FontSize.body` | 15px | `FontWeight.semibold` (600) | `LineHeight.body` (22) | Nom profil dans liste validation, libellé config trigger mode |
 | Heading | `FontSize.heading` | 18px | `FontWeight.semibold` (600) | `LineHeight.title` (28) | Titre section "Ma cagnotte", titre modal "Pay-outs en attente" |
 | Title | `FontSize.title` | 20px | `FontWeight.semibold` (600) | `LineHeight.title` (28) | Balance affichée en sats (ex : "3 200 sats") |
-| Display balance | `FontSize.display` | 24px | `FontWeight.bold` (700) | `LineHeight.title` (28) | Chiffre balance hero en haut de `/lightning-wallet` |
+| Display balance | `FontSize.display` | 24px | `FontWeight.semibold` (600) | `LineHeight.title` (28) | Chiffre balance hero en haut de `/lightning-wallet` — hiérarchie visuelle assurée par la taille (24px), pas le poids |
 | Serif (chaleureux) | `FontFamily.serif` | `FontSize.subtitle` (17px) | 400 | `LineHeight.loose` (26) | Titre toast "+100 sats ⚡" (style ToastSeal existant) |
 | Caption | `FontSize.caption` | 12px | `FontWeight.normal` (400) | `LineHeight.tight` (18) | Tooltip "Admin key requise", micro-infos |
 
@@ -83,7 +87,7 @@ Palette gérée exclusivement via `useThemeColors()`. Aucune couleur hardcodée 
 | Success | `colors.success` / `colors.successBg` | Statut `paid` dans audit log (icône + fond chip), toast batch réussi |
 | Warning | `colors.warning` / `colors.warningBg` | Statut `queued` / `pending` dans audit (icône + fond chip), toast "en attente de réseau" |
 | Error | `colors.error` / `colors.errorBg` | Statut `failed` / `capped` dans audit (icône + fond chip), état erreur batch mi-parcours |
-| Or brand | `colors.brand.or` (#E8C858) | Icône ⚡ emoji seul (pas de couleur custom — emoji natif iOS) |
+| Or brand | `colors.brand.or` | Bordure cadre QR scan (Surface 5) — token projet uniquement, pas de valeur hex inline |
 | Texte principal | `colors.text` | Balance sats, titres, libellés boutons |
 | Texte secondaire | `colors.textSub` | Timestamps, noms tâches dans audit |
 | Texte muted | `colors.textMuted` | Labels config, hints formulaire |
@@ -184,18 +188,18 @@ showToast('Aucun pay-out n\'a abouti — tous en attente', 'error');
 #### Section 1 — Balance hero
 ```
 ┌─────────────────────────────────────┐
-│  ⚡  [balance] sats                  │  ← FontSize.display (24px) bold, colors.text
+│  ⚡  [balance] sats                  │  ← FontSize.display (24px) semibold, colors.text
 │  Mis à jour il y a [N] min          │  ← FontSize.caption (12px) colors.textMuted
 │  [Bouton Encaisser]                  │
 └─────────────────────────────────────┘
 ```
 Card : `colors.card`, `Shadows.md`, `Radius.xl`, padding `Spacing['3xl']`.
-Balance : `FontSize.display` (24px), `FontWeight.bold` (700), `colors.text`.
+Balance : `FontSize.display` (24px), `FontWeight.semibold` (600), `colors.text`. Hiérarchie visuelle assurée par la taille (24px display).
 Timestamp : `FontSize.caption` (12px), `colors.textMuted`, format "Mis à jour il y a X min" (pas de format clock).
 Bouton "Encaisser" : composant `Button` existant, variante primaire, disabled si `!memberWallet.adminKey` (voir état disabled ci-dessous).
 
 **État balance loading :** placeholder animé — 2 rectangles `colors.cardAlt` (skeleton), `Radius.sm`, largeur 120px + 80px, hauteur 28px + 16px, opacity 0.6.
-**État balance error :** texte "—" à la place du chiffre + icône `AlertTriangle` 16px `colors.warning`.
+**État balance error :** texte "—" à la place du chiffre + icône `AlertTriangle` 16px `colors.warning`. Sous le "—" : texte `lightning.balance.error` = "Solde indisponible — vérifiez votre connexion." (`FontSize.caption` 12px, `FontWeight.normal` 400, `colors.warning`).
 
 #### Section 2 — Historique (10 dernières entrées audit)
 
@@ -210,7 +214,7 @@ Chaque item audit :
 ```
 - Icône statut (24×24pt, `Radius.full`) : voir tableau statuts ci-dessous
 - Titre tâche : `FontSize.body` (15px), `FontWeight.semibold` (600), `colors.text`, 1 ligne max
-- Sats : `FontSize.sm` (14px), `FontWeight.bold`, `colors.text`
+- Sats : `FontSize.sm` (14px), `FontWeight.semibold` (600), `colors.text`
 - Prénom + date : `FontSize.caption` (12px), `colors.textSub`, format JJ/MM/AAAA
 - Chip statut : `Chip` existant (voir tableau statuts)
 - Séparateur : `StyleSheet.hairlineWidth`, `colors.separator`
@@ -237,6 +241,8 @@ Texte seul, `FontSize.label` (13px), `colors.error`, centré, margin top `Spacin
 
 **Présentation :** `Modal` + `presentationStyle="pageSheet"` + `animationType="slide"`. `ModalHeader` existant avec titre "Pay-outs en attente" + bouton fermeture (drag-to-dismiss activé).
 
+**Focal point :** Bouton batch "Valider les N pay-outs (N×100 sats)" en bas pleine largeur (52pt, `FontSize.subtitle` 17px semibold, `colors.primary` background). C'est l'ancre visuelle primaire — le parent voit le commitment total avant FaceID. La liste verticale au-dessus est le contexte secondaire.
+
 **Anatomie :**
 
 ```
@@ -253,7 +259,7 @@ ScrollView
 ```
 ┌─────────────────────────────────────────┐
 │  [Avatar emoji profil, 36×36, Radius.full]  │
-│  [Prénom]                    100 sats   │  ← FontSize.body semibold + FontSize.body bold
+│  [Prénom]                    100 sats   │  ← FontSize.body semibold + FontSize.body semibold
 │  [Titre tâche]               [JJ/MM]    │  ← FontSize.label + FontSize.label colors.textMuted
 └─────────────────────────────────────────┘
 ```
@@ -461,6 +467,7 @@ Tap targets : minimum 44×44pt sur toutes les zones interactives. Le bouton HUD 
 | Empty state wallet (corps) | "Les pay-outs apparaîtront ici au fil des tâches." |
 | Tooltip encaisser disabled | "Admin key requise pour encaisser" |
 | Label balance loading | "—" (tiret cadratin, pas de spinner texte) |
+| Balance error (`lightning.balance.error`) | "Solde indisponible — vérifiez votre connexion." |
 | Disclaimer bolt11 | "La transaction Lightning est définitive. Vérifiez l'invoice avant de confirmer." |
 | Effacer historique (bouton) | "Effacer l'historique" |
 | Effacer historique (confirmation titre) | "Effacer l'historique ?" |
