@@ -32,12 +32,12 @@ export const BUILDINGS_CATALOG: BuildingCatalogEntry[] = [
   {
     id: 'puits', labelFR: 'Puits', palier: 100,
     sprite: require('../../assets/buildings/village/puits.png'),
-    production: { itemId: 'eau_fraiche', itemLabel: 'Eau fraîche', itemEmoji: '💧', ratePerItem: 6 },
+    production: { itemId: 'eau_fraiche', itemLabel: 'Eau fraîche', itemEmoji: '💧', ratePerItem: 8 },
   },
   {
     id: 'boulangerie', labelFR: 'Boulangerie', palier: 300,
     sprite: require('../../assets/buildings/village/boulangerie.png'),
-    production: { itemId: 'pain_frais', itemLabel: 'Pain frais', itemEmoji: '🍞', ratePerItem: 7 },
+    production: { itemId: 'pain_frais', itemLabel: 'Pain frais', itemEmoji: '🍞', ratePerItem: 8 },
   },
   {
     id: 'marche', labelFR: 'Marché', palier: 700,
@@ -47,27 +47,27 @@ export const BUILDINGS_CATALOG: BuildingCatalogEntry[] = [
   {
     id: 'cafe', labelFR: 'Café', palier: 1500,
     sprite: require('../../assets/buildings/village/cafe.png'),
-    production: { itemId: 'cafe_matin', itemLabel: 'Café du matin', itemEmoji: '☕', ratePerItem: 20 },
+    production: { itemId: 'cafe_matin', itemLabel: 'Café du matin', itemEmoji: '☕', ratePerItem: 12 },
   },
   {
     id: 'forge', labelFR: 'Forge', palier: 3000,
     sprite: require('../../assets/buildings/village/forge.png'),
-    production: { itemId: 'outil_forge', itemLabel: 'Outil forgé', itemEmoji: '🔨', ratePerItem: 40 },
+    production: { itemId: 'outil_forge', itemLabel: 'Outil forgé', itemEmoji: '🔨', ratePerItem: 18 },
   },
   {
     id: 'moulin', labelFR: 'Moulin', palier: 6000,
     sprite: require('../../assets/buildings/village/moulin.png'),
-    production: { itemId: 'farine_moulee', itemLabel: 'Farine moulue', itemEmoji: '🌾', ratePerItem: 30 },
+    production: { itemId: 'farine_moulee', itemLabel: 'Farine moulue', itemEmoji: '🌾', ratePerItem: 15 },
   },
   {
     id: 'port', labelFR: 'Port', palier: 8000,
     sprite: require('../../assets/buildings/village/port.png'),
-    production: { itemId: 'coffre_maritime', itemLabel: 'Coffre maritime', itemEmoji: '⚓', ratePerItem: 60 },
+    production: { itemId: 'coffre_maritime', itemLabel: 'Coffre maritime', itemEmoji: '⚓', ratePerItem: 25 },
   },
   {
     id: 'bibliotheque', labelFR: 'Bibliothèque', palier: 25000,
     sprite: require('../../assets/buildings/village/bibliotheque.png'),
-    production: { itemId: 'parchemin', itemLabel: 'Parchemin', itemEmoji: '📚', ratePerItem: 80 },
+    production: { itemId: 'parchemin', itemLabel: 'Parchemin', itemEmoji: '📚', ratePerItem: 30 },
   },
 ];
 

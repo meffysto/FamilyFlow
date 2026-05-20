@@ -513,7 +513,9 @@ export function useGarden(): UseGardenReturn {
       if (pending === 0) return;
 
       const consumed = productionState[buildingId] ?? 0;
-      const newConsumed = consumed + pending * entry.production.ratePerItem;
+      const multiplier = villageTechBonuses.productionRateMultiplier[buildingId] ?? 1;
+      const effectiveRate = Math.max(1, Math.floor(entry.production.ratePerItem * multiplier));
+      const newConsumed = consumed + pending * effectiveRate;
       const { itemId } = entry.production;
       const currentQty = inventory[itemId] ?? 0;
 
@@ -527,7 +529,7 @@ export function useGarden(): UseGardenReturn {
       await vault.writeFile(VILLAGE_FILE, newContent);
       setGardenRaw(newContent);
     },
-    [vault, gardenData, inventory, productionState, getPendingItems, setGardenRaw],
+    [vault, gardenData, inventory, productionState, getPendingItems, setGardenRaw, villageTechBonuses],
   );
 
   // ---------------------------------------------------------------------------

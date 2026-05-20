@@ -246,7 +246,7 @@ export function VillageBuildingModal({
                 >
                   <Text style={styles.sectionTitle}>Production</Text>
                   <Text style={styles.sectionDetail}>
-                    {production.itemEmoji} {production.itemLabel} — 1 par {production.ratePerItem} contribution{production.ratePerItem > 1 ? 's' : ''}
+                    {production.itemEmoji} {production.itemLabel} — 1 par {effectiveRate} contribution{effectiveRate > 1 ? 's' : ''}
                   </Text>
                   {pendingItems === 0 && (
                     <>
