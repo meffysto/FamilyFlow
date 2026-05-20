@@ -35,12 +35,42 @@ import { useTranslation } from 'react-i18next';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, FontFamily, LineHeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
-import { Users, Baby, FolderOpen, Package, Check } from 'lucide-react-native';
+import {
+  Users,
+  Baby,
+  FolderOpen,
+  Package,
+  Check,
+  Sparkles,
+  UtensilsCrossed,
+  ShoppingCart,
+  Wallet,
+  Cake,
+  Sprout,
+  Brush,
+  Stethoscope,
+  Settings,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { AvatarIcon } from '../components/ui/AvatarIcon';
 
 const PARENT_AVATARS = ['user', 'user-circle', 'user-round', 'briefcase', 'crown', 'leaf', 'sun', 'star'];
 const CHILD_AVATARS = ['baby', 'smile', 'rabbit', 'cat', 'dog', 'bird', 'star', 'rocket'];
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
+
+/** Mapping pack id → icône Lucide */
+const PACK_ICONS: Record<string, LucideIcon> = {
+  'courses-essentielles': ShoppingCart,
+  'repas-semaine': UtensilsCrossed,
+  'menage-organise': Brush,
+  'suivi-medical': Stethoscope,
+  'routines-enfants': Baby,
+  'budget-familial': Wallet,
+  'anniversaires': Cake,
+  'vie-de-famille': Sprout,
+};
+
+type TemplateMode = 'preset' | 'empty';
 
 /** Mapping onboarding pain IDs → template pack IDs */
 const ONBOARDING_PAIN_TO_PACKS: Record<string, string[]> = {
@@ -88,9 +118,9 @@ export default function SetupScreen() {
   const [isCreating, setIsCreating] = useState(false);
   const [recapProgress, setRecapProgress] = useState(-1); // -1 = pas encore commencé
 
-  // Animation séquentielle du recap quand on arrive à l'étape 4
+  // Animation séquentielle du recap quand on arrive à l'étape 5
   useEffect(() => {
-    if (step !== 4) { setRecapProgress(-1); return; }
+    if (step !== 5) { setRecapProgress(-1); return; }
     const totalItems = 3; // famille, emplacement, modèles
     let i = 0;
     setRecapProgress(0);
@@ -117,7 +147,25 @@ export default function SetupScreen() {
   const [vaultPath, setVaultPathLocal] = useState('');
 
   // Step 4 — Templates
+  const [templateMode, setTemplateMode] = useState<TemplateMode>('preset');
   const [selectedPacks, setSelectedPacks] = useState<Set<string>>(new Set(DEFAULT_SELECTED_PACKS));
+
+  const togglePack = useCallback((packId: string) => {
+    setSelectedPacks((prev) => {
+      const next = new Set(prev);
+      if (next.has(packId)) next.delete(packId);
+      else next.add(packId);
+      return next;
+    });
+  }, []);
+
+  const deselectAllPacks = useCallback(() => {
+    setSelectedPacks(new Set());
+  }, []);
+
+  const selectAllPacks = useCallback(() => {
+    setSelectedPacks(new Set(TEMPLATE_PACKS.map((p) => p.id)));
+  }, []);
 
   // Pré-remplir le nom du premier parent depuis l'onboarding
   useEffect(() => {
@@ -212,6 +260,7 @@ export default function SetupScreen() {
     if (step === 1) return parents.every((p) => p.name.trim().length > 0);
     if (step === 2) return childCount === 0 || children.every((c) => c.name.trim().length > 0 && isValidBirthdate(c.birthdate));
     if (step === 3) return vaultPath.length > 0;
+    if (step === 4) return templateMode === 'empty' || selectedPacks.size > 0;
     return true;
   };
 
@@ -238,8 +287,8 @@ export default function SetupScreen() {
 
       await vault.scaffoldVault(parentData, childData);
 
-      // Installer les templates sélectionnés
-      if (selectedPacks.size > 0) {
+      // Installer les templates sélectionnés (uniquement en mode "preset")
+      if (templateMode === 'preset' && selectedPacks.size > 0) {
         const packIds = Array.from(selectedPacks);
         await vault.installTemplates(packIds, parentData, childData);
         // Marquer chaque pack comme installé dans SecureStore
@@ -259,7 +308,7 @@ export default function SetupScreen() {
     } finally {
       setIsCreating(false);
     }
-  }, [vaultPath, parents, children, selectedPacks, setVaultPath, router, markTemplateInstalled]);
+  }, [vaultPath, parents, children, selectedPacks, templateMode, setVaultPath, router, markTemplateInstalled, t]);
 
   // --- Render steps ---
 
@@ -424,17 +473,151 @@ export default function SetupScreen() {
           </View>
         );
 
-      case 4: {
+      case 4:
+        return (
+          <View style={s.stepContent}>
+            <View style={s.stepTitleRow}>
+              <Package size={26} strokeWidth={1.75} color={colors.brand.soil} />
+              <Text style={ds.stepTitle}>{t('setup.templateChoice.title')}</Text>
+            </View>
+            <Text style={ds.stepSubtitle}>{t('setup.templateChoice.subtitle')}</Text>
+
+            {/* Segmented control */}
+            <View style={[s.segmented, { backgroundColor: colors.border }]}>
+              <TouchableOpacity
+                style={[s.seg, templateMode === 'preset' && { backgroundColor: colors.card, ...Shadows.sm }]}
+                onPress={() => setTemplateMode('preset')}
+                activeOpacity={0.8}
+              >
+                <View style={[s.recommendedTag, { backgroundColor: colors.success }]}>
+                  <Text style={[s.recommendedTagText, { color: colors.onPrimary }]}>
+                    {t('setup.templateChoice.recommendedBadge')}
+                  </Text>
+                </View>
+                <Text style={[s.segText, { color: templateMode === 'preset' ? colors.text : colors.textMuted }]}>
+                  {t('setup.templateChoice.modePreset')}
+                </Text>
+                <Text style={[s.segSub, { color: templateMode === 'preset' ? primary : colors.textFaint }]}>
+                  {t('setup.templateChoice.modePresetSub', { count: selectedPacks.size })}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.seg, templateMode === 'empty' && { backgroundColor: colors.card, ...Shadows.sm }]}
+                onPress={() => setTemplateMode('empty')}
+                activeOpacity={0.8}
+              >
+                <Text style={[s.segText, { color: templateMode === 'empty' ? colors.text : colors.textMuted }]}>
+                  {t('setup.templateChoice.modeEmpty')}
+                </Text>
+                <Text style={[s.segSub, { color: templateMode === 'empty' ? primary : colors.textFaint }]}>
+                  {t('setup.templateChoice.modeEmptySub')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {templateMode === 'preset' ? (
+              <>
+                <View style={[s.suggestion, { backgroundColor: colors.brand.wash, borderColor: colors.border, borderLeftColor: colors.brand.bark }]}>
+                  <Sparkles size={16} strokeWidth={1.75} color={colors.brand.soil} />
+                  <Text style={[s.suggestionText, { color: colors.textSub }]}>
+                    {t('setup.templateChoice.suggestion')}{' '}
+                    <Text style={{ color: colors.text, fontWeight: FontWeight.semibold }}>
+                      {t('setup.templateChoice.suggestionAction')}
+                    </Text>
+                  </Text>
+                </View>
+
+                <View style={s.packList}>
+                  {TEMPLATE_PACKS.map((pack) => {
+                    const Icon = PACK_ICONS[pack.id] ?? Package;
+                    const isSelected = selectedPacks.has(pack.id);
+                    return (
+                      <TouchableOpacity
+                        key={pack.id}
+                        style={[
+                          s.pack,
+                          { backgroundColor: colors.card, borderColor: colors.border },
+                          isSelected && { borderColor: primary, backgroundColor: colors.brand.wash },
+                        ]}
+                        onPress={() => togglePack(pack.id)}
+                        activeOpacity={0.8}
+                      >
+                        <View style={[s.packIcon, { backgroundColor: isSelected ? tint : colors.bg }]}>
+                          <Icon size={22} strokeWidth={1.75} color={isSelected ? primary : colors.textSub} />
+                        </View>
+                        <View style={s.packBody}>
+                          <Text style={[s.packName, { color: colors.text }]}>
+                            {t(`setup.templatePacks.${pack.id}.name`, { defaultValue: pack.name })}
+                          </Text>
+                          <Text style={[s.packDesc, { color: colors.textMuted }]} numberOfLines={2}>
+                            {t(`setup.templatePacks.${pack.id}.description`, { defaultValue: pack.description })}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            s.check,
+                            { borderColor: colors.separator, backgroundColor: colors.card },
+                            isSelected && { borderColor: primary, backgroundColor: primary },
+                          ]}
+                        >
+                          {isSelected && <Check size={14} strokeWidth={3} color={colors.onPrimary} />}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <TouchableOpacity
+                  style={s.toggleAll}
+                  onPress={selectedPacks.size > 0 ? deselectAllPacks : selectAllPacks}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[s.toggleAllText, { color: primary, borderBottomColor: primary }]}>
+                    {selectedPacks.size > 0
+                      ? t('setup.templateChoice.deselectAll')
+                      : t('setup.templateChoice.selectAll')}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={[s.emptyState, { backgroundColor: colors.brand.wash }]}>
+                <View style={[s.emptyHero, { backgroundColor: tint }]}>
+                  <Sprout size={36} strokeWidth={1.5} color={primary} />
+                </View>
+                <Text style={[s.emptyTitle, { color: colors.text }]}>
+                  {t('setup.templateChoice.emptyTitle')}
+                </Text>
+                <Text style={[s.emptyText, { color: colors.textSub }]}>
+                  {t('setup.templateChoice.emptyDesc')}
+                </Text>
+                <View style={[s.emptyHint, { borderTopColor: colors.separator }]}>
+                  <Settings size={12} strokeWidth={1.75} color={colors.textFaint} />
+                  <Text style={[s.emptyHintText, { color: colors.textFaint }]}>
+                    {t('setup.templateChoice.emptyHint')}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        );
+
+      case 5: {
         const familySummary = `${parents.length} parent${parents.length > 1 ? 's' : ''}`
           + (children.length > 0 ? `, ${children.length} enfant${children.length > 1 ? 's' : ''}` : '');
         const templateNames = TEMPLATE_PACKS
           .filter((p) => selectedPacks.has(p.id))
           .map((p) => t(`setup.templatePacks.${p.id}.name`, { defaultValue: p.name }))
           .join(', ');
+        const templatesRow =
+          templateMode === 'empty'
+            ? { Icon: Sprout, label: t('setup.recap.models'), sub: t('setup.templateChoice.modeEmpty') }
+            : selectedPacks.size > 0
+              ? { Icon: Package, label: t('setup.recap.models'), sub: templateNames }
+              : null;
         const checkItems = [
           { Icon: Users, label: t('setup.recap.parents'), sub: familySummary },
           { Icon: FolderOpen, label: t('setup.recap.vault'), sub: undefined },
-          ...(selectedPacks.size > 0 ? [{ Icon: Package, label: t('setup.recap.models'), sub: templateNames }] : []),
+          ...(templatesRow ? [templatesRow] : []),
         ];
         const allDone = recapProgress >= checkItems.length;
         return (
@@ -547,7 +730,13 @@ export default function SetupScreen() {
               disabled={!canGoNext()}
             >
               <Text style={ds.navNextText}>
-                {t('setup.nav.next')}
+                {step === 4
+                  ? templateMode === 'empty'
+                    ? t('setup.templateChoice.ctaEmpty')
+                    : selectedPacks.size > 0
+                      ? t('setup.templateChoice.ctaPreset', { count: selectedPacks.size })
+                      : t('setup.templateChoice.ctaPresetNone')
+                  : t('setup.nav.next')}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -1140,4 +1329,143 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   navDisabled: { opacity: 0.5 },
+
+  // Step 4 — Template choice
+  segmented: {
+    flexDirection: 'row',
+    borderRadius: Radius['lg+'],
+    padding: 5,
+    gap: 4,
+  },
+  seg: {
+    flex: 1,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  segText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  segSub: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+    marginTop: 2,
+    letterSpacing: 0.2,
+  },
+  recommendedTag: {
+    position: 'absolute',
+    top: -7,
+    right: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: Radius.sm,
+  },
+  recommendedTagText: {
+    fontSize: 9,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  suggestion: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+    borderWidth: 1,
+    borderLeftWidth: 3,
+    borderRadius: Radius.md,
+    padding: Spacing.lg,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: FontSize.label,
+    lineHeight: LineHeight.tight,
+  },
+  packList: {
+    gap: Spacing.md,
+  },
+  pack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.lg,
+    borderWidth: 2,
+    borderRadius: Radius['lg+'],
+    padding: Spacing.xl,
+  },
+  packIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  packBody: { flex: 1, gap: 2 },
+  packName: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  packDesc: {
+    fontSize: FontSize.caption,
+    lineHeight: LineHeight.tight,
+  },
+  check: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleAll: {
+    alignSelf: 'center',
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  toggleAllText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    borderBottomWidth: 1,
+    borderStyle: 'dotted',
+  },
+  emptyState: {
+    borderRadius: Radius.xl,
+    padding: Spacing['3xl'],
+    alignItems: 'center',
+  },
+  emptyHero: {
+    width: 64,
+    height: 64,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.lg,
+  },
+  emptyTitle: {
+    fontFamily: FontFamily.serif,
+    fontSize: FontSize.title,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  emptyText: {
+    fontSize: FontSize.label,
+    lineHeight: LineHeight.body,
+    textAlign: 'center',
+    marginBottom: Spacing.xl,
+  },
+  emptyHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingTop: Spacing.lg,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+  },
+  emptyHintText: {
+    fontSize: FontSize.caption,
+    fontStyle: 'italic',
+    flexShrink: 1,
+  },
 });

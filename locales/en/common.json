@@ -209,6 +209,27 @@
       "subtitle": "Choose which templates to install. You can add more later in the settings.",
       "selectAll": "Select all"
     },
+    "templateChoice": {
+      "title": "How do you want to start?",
+      "subtitle": "Pick a few ready-made templates, or start from a blank slate.",
+      "modePreset": "Pre-filled",
+      "modePresetSub_one": "{{count}} template",
+      "modePresetSub_other": "{{count}} templates",
+      "modeEmpty": "Blank slate",
+      "modeEmptySub": "Nothing inside",
+      "recommendedBadge": "Recommended",
+      "suggestion": "Based on your answers, we picked these templates.",
+      "suggestionAction": "Uncheck any you don't want.",
+      "deselectAll": "Uncheck all",
+      "selectAll": "Select all",
+      "emptyTitle": "You're starting from a blank slate",
+      "emptyDesc": "You'll only get the family profiles and the base structure. No tasks, no lists, no sample recipes.",
+      "emptyHint": "You can always add templates later from Settings → Templates",
+      "ctaPreset_one": "Continue · {{count}} template",
+      "ctaPreset_other": "Continue · {{count}} templates",
+      "ctaEmpty": "Continue · blank slate",
+      "ctaPresetNone": "Pick at least one template"
+    },
     "templatePacks": {
       "courses-essentielles": {
         "name": "Essential groceries",

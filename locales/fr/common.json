@@ -209,6 +209,27 @@
       "subtitle": "Choisissez les modèles à installer. Vous pourrez en ajouter d'autres plus tard dans les réglages.",
       "selectAll": "Tout sélectionner"
     },
+    "templateChoice": {
+      "title": "Comment veux-tu commencer ?",
+      "subtitle": "Choisis quelques modèles prêts à l'emploi, ou repars d'une page blanche.",
+      "modePreset": "Pré-rempli",
+      "modePresetSub_one": "{{count}} modèle",
+      "modePresetSub_other": "{{count}} modèles",
+      "modeEmpty": "Page blanche",
+      "modeEmptySub": "Tout vierge",
+      "recommendedBadge": "Conseillé",
+      "suggestion": "D'après tes réponses, on a sélectionné ces modèles.",
+      "suggestionAction": "Décoche ceux qui ne t'intéressent pas.",
+      "deselectAll": "Tout décocher",
+      "selectAll": "Tout sélectionner",
+      "emptyTitle": "Tu pars d'une page blanche",
+      "emptyDesc": "Tu auras uniquement les profils famille et la structure de base. Aucune tâche, aucune liste, aucune recette d'exemple.",
+      "emptyHint": "Tu pourras toujours ajouter des modèles depuis Réglages → Modèles",
+      "ctaPreset_one": "Continuer · {{count}} modèle",
+      "ctaPreset_other": "Continuer · {{count}} modèles",
+      "ctaEmpty": "Continuer · page blanche",
+      "ctaPresetNone": "Sélectionne au moins un modèle"
+    },
     "templatePacks": {
       "courses-essentielles": {
         "name": "Courses essentielles",
