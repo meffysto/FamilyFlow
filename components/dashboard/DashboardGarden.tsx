@@ -347,7 +347,20 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
     const buildings: PlacedBuilding[] = Array.isArray(profile.farmBuildings) ? profile.farmBuildings : [];
     const wearEvents = Array.isArray(profile.wearEvents) ? profile.wearEvents : [];
     const wearEffects = getActiveWearEffects(wearEvents);
-    const activeWearCount = wearEvents.filter(e => !e.repairedAt).length;
+    const activeWearEvents = wearEvents.filter(e => !e.repairedAt);
+    const activeWearCount = activeWearEvents.length;
+    const wearCountByType = {
+      damaged_roof: activeWearEvents.filter(e => e.type === 'damaged_roof').length,
+      broken_fence: activeWearEvents.filter(e => e.type === 'broken_fence').length,
+      weeds: activeWearEvents.filter(e => e.type === 'weeds').length,
+      pests: activeWearEvents.filter(e => e.type === 'pests').length,
+    };
+    const wearLabelParts: string[] = [];
+    if (wearCountByType.damaged_roof > 0) wearLabelParts.push(`${wearCountByType.damaged_roof} toit${wearCountByType.damaged_roof > 1 ? 's' : ''} endommagé${wearCountByType.damaged_roof > 1 ? 's' : ''}`);
+    if (wearCountByType.broken_fence > 0) wearLabelParts.push(`${wearCountByType.broken_fence} clôture${wearCountByType.broken_fence > 1 ? 's' : ''} cassée${wearCountByType.broken_fence > 1 ? 's' : ''}`);
+    if (wearCountByType.pests > 0) wearLabelParts.push(`${wearCountByType.pests} nuisible${wearCountByType.pests > 1 ? 's' : ''}`);
+    if (wearCountByType.weeds > 0) wearLabelParts.push(`${wearCountByType.weeds} mauvaise${wearCountByType.weeds > 1 ? 's' : ''} herbe${wearCountByType.weeds > 1 ? 's' : ''}`);
+    const wearLabel = wearLabelParts.length > 0 ? wearLabelParts.join(' · ') : `${activeWearCount} réparation${activeWearCount > 1 ? 's' : ''}`;
     const readyCount = crops.filter(c => c.currentStage >= 4).length;
     const hasFarm = crops.length > 0 || buildings.length > 0;
     const mainPlotIdx = getMainPlotIndex(crops);
@@ -626,7 +639,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
               <View style={styles.wearBanner}>
                 <Text style={styles.wearBannerIcon}>⚠️</Text>
                 <Text style={[styles.wearBannerText, { color: colors.error }]}>
-                  {activeWearCount} réparation{activeWearCount > 1 ? 's' : ''} nécessaire{activeWearCount > 1 ? 's' : ''}
+                  {wearLabel}
                 </Text>
                 <TouchableOpacity
                   style={styles.wearBannerAction}
