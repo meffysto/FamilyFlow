@@ -577,22 +577,15 @@ export default function TreeScreen() {
     };
   }, [activeProfile?.id]);
 
-  // Phase 53 — Subscribe au bus onPayoutSuccess (Plan 01) pour déclencher
-  // pulse + toast event-driven (D-04). Le pulse est piloté par la ref
-  // HudLightningButtonRef.triggerPulse() (Plan 03a). Le toast utilise la
-  // variante ToastSeal V2 via { icon + subtitle }.
+  // Phase 53 — Subscribe au bus onPayoutSuccess pour le pulse local du HUD ⚡.
+  // Le toast "+N sats ⚡" vit dans LightningPayoutToastBridge (root layout),
+  // pour qu'il s'affiche aussi quand la tâche est validée hors ferme.
   useEffect(() => {
-    const unsub = onPayoutSuccess((evt) => {
+    const unsub = onPayoutSuccess(() => {
       hudLightningRef.current?.triggerPulse();
-      showToast(
-        `+${evt.sats} sats ⚡`,
-        'success',
-        undefined,
-        { icon: '⚡', subtitle: evt.profileName },
-      );
     });
     return unsub;
-  }, [showToast]);
+  }, []);
 
   // Ferme
   const { plant, plantBatch, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager } = useFarm(contributeFamilyQuest, addContribution);

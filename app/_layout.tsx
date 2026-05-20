@@ -43,6 +43,7 @@ import { HelpProvider } from '../contexts/HelpContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LockScreen } from '../components/LockScreen';
 import { LiveActivityGamificationBridge } from '../components/LiveActivityGamificationBridge';
+import { LightningPayoutToastBridge } from '../components/LightningPayoutToastBridge';
 import i18n, { loadSavedLanguage } from '../lib/i18n';
 import { LightColors, DarkColors } from '../constants/colors';
 import * as SecureStore from 'expo-secure-store';
@@ -315,6 +316,7 @@ function RootLayout() {
               <ParentalControlsProvider>
               <ToastProvider>
                 <LiveActivityGamificationBridge />
+                <LightningPayoutToastBridge />
                 <MascotteForegroundReconciler />
                 <StatusBar style="auto" />
                 <Stack screenOptions={{ headerShown: false }}>
