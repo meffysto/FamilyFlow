@@ -27,5 +27,6 @@ module.exports = {
     '^expo-crypto$': '<rootDir>/lib/__tests__/__mocks__/expo-crypto.ts',
     '^expo-file-system/legacy$': '<rootDir>/lib/__tests__/__mocks__/expo-file-system-legacy.ts',
     '^expo-file-system$': '<rootDir>/lib/__tests__/__mocks__/expo-file-system-legacy.ts',
+    '^@react-native-async-storage/async-storage$': '<rootDir>/lib/__tests__/__mocks__/async-storage.ts',
   },
 };

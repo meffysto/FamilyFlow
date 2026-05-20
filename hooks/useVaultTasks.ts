@@ -36,6 +36,13 @@ function warnUnexpected(context: string, e: unknown) {
  *  (ex: filterTasksForWager) + attribution profil (mentions/sourceFile). */
 export type TaskCompleteListener = (task: Task) => void | Promise<void>;
 
+/** Phase 53 Plan 04 — Listener appelé sur transition true→false (dé-cochage)
+ *  d'une tâche. Pattern strict mirror de `TaskCompleteListener` (Set + fire
+ *  silencieux). Consommé par le 2ᵉ useEffect Lightning de `hooks/useVault.ts`
+ *  pour enregistrer un audit `undone` SI un `paid` existe pour ce taskId+date
+ *  (REQ-6 SPEC #6 acceptance). */
+export type TaskUncompleteListener = (task: Task) => void | Promise<void>;
+
 export interface UseVaultTasksResult {
   tasks: Task[];
   setTasks: Dispatch<SetStateAction<Task[]>>;
@@ -52,6 +59,11 @@ export interface UseVaultTasksResult {
   /** Phase 40 — Souscrit un listener au complete d'une tâche (pattern event-driven,
    *  consommé par useFarm.incrementWagerCumul). Retourne une fonction unsubscribe. */
   subscribeTaskComplete: (listener: TaskCompleteListener) => () => void;
+  /** Phase 53 Plan 04 — Souscrit un listener au uncomplete d'une tâche (transition
+   *  true→false). Mirror exact de `subscribeTaskComplete`. Consommé par le 2ᵉ
+   *  useEffect Lightning de `hooks/useVault.ts` (REQ-6 'undone' audit). Retourne
+   *  une fonction unsubscribe. */
+  subscribeTaskUncomplete: (listener: TaskUncompleteListener) => () => void;
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -81,6 +93,19 @@ export function useVaultTasks(
     };
   }, []);
 
+  // ─── Phase 53 Plan 04 : Subscription event-driven task UNcomplete ─────
+  // Mirror exact de subscribeTaskComplete (Set + add/delete sur cleanup).
+  // Fire sur transition true→false uniquement (cf. toggleTask l.114).
+  // Consommé par le 2ᵉ useEffect Lightning de hooks/useVault.ts pour
+  // enregistrer un audit `undone` (REQ-6 SPEC #6).
+  const taskUncompleteListenersRef = useRef<Set<TaskUncompleteListener>>(new Set());
+  const subscribeTaskUncomplete = useCallback((listener: TaskUncompleteListener) => {
+    taskUncompleteListenersRef.current.add(listener);
+    return () => {
+      taskUncompleteListenersRef.current.delete(listener);
+    };
+  }, []);
+
   const resetTasks = useCallback(() => {
     setTasks([]);
   }, []);
@@ -103,6 +128,29 @@ export function useVaultTasks(
     setTasks(prev => prev.map(updateTask));
     vacationTasksSetter(prev => prev.map(updateTask));
     setTimeout(triggerWidgetRefresh, 0);
+
+    // Phase 53 Plan 04 : émettre event transition true→false (dé-cochage user
+    // explicite). PAS fire si la transition vient d'un reset récurrence — celui-ci
+    // passe par le branch `if (completed && t.recurrence)` au-dessus et n'invoque
+    // pas vraiment "dé-cocher" côté UX. On gate STRICT sur (completed === false &&
+    // wasCompleted === true). Le consommateur Lightning (REQ-6) appendAudit
+    // `status:'undone'` SI un `paid` existe pour ce taskId+date — voir
+    // hooks/useVault.ts 2ᵉ useEffect Lightning.
+    if (!completed && wasCompleted) {
+      const uncompleteListeners = Array.from(taskUncompleteListenersRef.current);
+      for (const listener of uncompleteListeners) {
+        try {
+          const maybePromise = listener(task);
+          if (maybePromise && typeof (maybePromise as Promise<void>).catch === 'function') {
+            (maybePromise as Promise<void>).catch(e => {
+              if (__DEV__) console.warn('[useVaultTasks] taskUncomplete listener error:', e);
+            });
+          }
+        } catch (e) {
+          if (__DEV__) console.warn('[useVaultTasks] taskUncomplete listener sync error:', e);
+        }
+      }
+    }
 
     // Phase 40 : émettre event transition false→true uniquement (un-check ignoré,
     // récurrence qui reset completed=false côté updateTask : toujours compté comme
@@ -337,5 +385,6 @@ export function useVaultTasks(
     setTaskSlot,
     resetTasks,
     subscribeTaskComplete,
+    subscribeTaskUncomplete,
   };
 }

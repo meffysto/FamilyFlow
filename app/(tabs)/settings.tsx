@@ -43,6 +43,7 @@ import { SettingsGamiAdmin, HarvestCardTest } from '../../components/settings/Se
 import { SettingsCoupling } from '../../components/settings/SettingsCoupling';
 import { SettingsElevenLabs } from '../../components/settings/SettingsElevenLabs';
 import { SettingsFishAudio } from '../../components/settings/SettingsFishAudio';
+import { SettingsLightning } from '../../components/settings/SettingsLightning';
 import { useStoryVoice } from '../../contexts/StoryVoiceContext';
 import { useTranslation } from 'react-i18next';
 import {
@@ -50,6 +51,7 @@ import {
   Bot, Mic, Fish, Send, Users as UsersIcon,
   ShieldCheck, Lock, FolderOpen, Lightbulb,
   Wrench, RefreshCw, Settings as SettingsIcon, Gift, Sprout, MessageCircle,
+  Bitcoin,
 } from 'lucide-react-native';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
@@ -61,6 +63,7 @@ type SectionId =
   | 'notifications' | 'zen' | 'vacation' | 'gamification' | 'coupling' | 'automations'
   | 'ai' | 'elevenlabs' | 'fish-audio' | 'telegram' | 'grandparents'
   | 'auth' | 'parental' | 'vault' | 'help'
+  | 'lightning'
   | 'gami-admin' | 'harvest-test';
 
 export default function SettingsScreen() {
@@ -149,6 +152,7 @@ export default function SettingsScreen() {
     parental: t('settingsScreen.modalTitles.parental'),
     vault: t('settingsScreen.modalTitles.vault'),
     help: t('settingsScreen.modalTitles.help'),
+    lightning: 'Lightning Wallet (Labo)',
     'gami-admin': 'Admin Gamification',
     'harvest-test': 'Tester Harvest Card',
   };
@@ -264,6 +268,21 @@ export default function SettingsScreen() {
               title={t('settingsScreen.rows.grandparents')}
               subtitle={t('settingsScreen.rows.grandparentsSubtitle')}
               onPress={() => setActiveSection('grandparents')}
+              isLast
+            />
+          </>
+        )}
+
+        {/* ── LABO (adultes) — features expérimentales ── */}
+        {!isChildMode && (
+          <>
+            <SettingsSectionHeader label="Labo" />
+            <SettingsRow
+              icon={Bitcoin}
+              title="Lightning Wallet (BYO)"
+              subtitle="Wallet Bitcoin Lightning via LNbits — expérimental"
+              onPress={() => setActiveSection('lightning')}
+              isFirst
               isLast
             />
           </>
@@ -479,6 +498,7 @@ export default function SettingsScreen() {
               }} />
             )}
             {activeSection === 'help' && <SettingsHelp />}
+            {activeSection === 'lightning' && <SettingsLightning />}
             {activeSection === 'gami-admin' && (
               <SettingsGamiAdmin vault={vault} profiles={profiles} gamiData={gamiData} refresh={refresh} />
             )}

@@ -6,7 +6,7 @@
  * - Manual call to refresh()
  *
  * Data sources (relative paths from vault root):
- * - 01 - Enfants/Maxence/Tâches récurrentes.md
+ * - 01 - Enfants/Lucas/Tâches récurrentes.md
  * - 01 - Enfants/Enfant 2/Tâches récurrentes.md
  * - 02 - Maison/Tâches récurrentes.md
  * - 02 - Maison/Liste de courses.md
@@ -95,6 +95,19 @@ import { getCompanionStage } from '../lib/mascot/companion-engine';
 import { pickLABubbleShort, type LAStage } from '../lib/mascot/la-bubbles';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { tickAubergeAuto } from '../lib/auberge/auto-tick';
+// Phase 53 — orchestrateurs Lightning (consommés en 4 useEffects ci-dessous,
+// après le subscriber Phase 46 Auberge). Le module est gardé OFF par flag :
+// processTaskCompletionForLightning early-return si isLightningEnabled() === false.
+// Plan 04 — 4ᵉ useEffect ajoute REQ-6 'undone' audit via subscribeTaskUncomplete.
+import {
+  appendAudit,
+  findPaidEntry,
+  flushOfflineQueue,
+  isLightningEnabled,
+  loadAudit,
+  migrateSingleToFamily,
+  processTaskCompletionForLightning,
+} from '../lib/lightning';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultLoveNotes } from './useVaultLoveNotes';
 import { useVaultWishlist } from './useVaultWishlist';
@@ -103,7 +116,7 @@ import { useVaultCourses } from './useVaultCourses';
 import { useVaultPriceBook } from './useVaultPriceBook';
 import { useVaultHealth } from './useVaultHealth';
 import { useVaultSecretMissions } from './useVaultSecretMissions';
-import { useVaultTasks, type TaskCompleteListener } from './useVaultTasks';
+import { useVaultTasks, type TaskCompleteListener, type TaskUncompleteListener } from './useVaultTasks';
 import { useVaultRecipes } from './useVaultRecipes';
 import { useVaultDefis } from './useVaultDefis';
 import { useVaultFamilyQuests } from './useVaultFamilyQuests';
@@ -196,6 +209,10 @@ export interface VaultState {
    *  Pattern event-driven consommé par useFarm.incrementWagerCumul (câblage Sporée).
    *  Retourne une fonction unsubscribe à appeler au cleanup. */
   subscribeTaskComplete: (listener: TaskCompleteListener) => () => void;
+  /** Phase 53 Plan 04 — Souscrit un listener appelé sur transition true→false d'une
+   *  tâche (dé-cochage user). Consommé par le 2ᵉ useEffect Lightning pour appender
+   *  un audit `undone` SI un `paid` existe pour ce taskId+date (REQ-6 SPEC #6). */
+  subscribeTaskUncomplete: (listener: TaskUncompleteListener) => () => void;
   /** Handler complet (toggle + gamification + reward) pour tâches cochées depuis
    *  la Live Activity. Setté par un bridge component qui a accès à
    *  `useGamification`. Si null → fallback sur toggleTask seul (pas de XP). */
@@ -843,6 +860,103 @@ export function useVaultInternal(): VaultState {
     });
     return unsub;
   }, [tasksHook]);
+
+  // ─── Phase 53 : 3ᵉ subscriber Lightning (pay-out auto) ──────────────────
+  // Pattern verbatim Phase 46 (refs live + errors silencieuses). Le module
+  // Lightning gate strictement sur `isLightningEnabled()` en interne — si
+  // le flag est OFF, processTaskCompletionForLightning early-return AVANT
+  // tout appel réseau (SPEC Constraint #1).
+  const profilesRefForLightning = useRef(profiles);
+  profilesRefForLightning.current = profiles;
+  const activeProfileIdRefForLightning = useRef<string | null>(activeProfileId ?? null);
+  activeProfileIdRefForLightning.current = activeProfileId ?? null;
+  useEffect(() => {
+    const unsub = tasksHook.subscribeTaskComplete((task) => {
+      processTaskCompletionForLightning(task, {
+        profiles: profilesRefForLightning.current,
+        activeProfileId: activeProfileIdRefForLightning.current,
+      }).catch(() => {
+        /* Lightning — non-critical, vault domain unaffected */
+      });
+    });
+    return unsub;
+  }, [tasksHook]);
+
+  // ─── Phase 53 Plan 04 : 4ᵉ subscriber Lightning — REQ-6 'undone' audit ──
+  // Quand une tâche est dé-cochée (transition true→false), si un audit `paid`
+  // existe pour ce taskId à la date de complétion locale, on append une entrée
+  // `status:'undone'` pour la traçabilité SPEC #6. Pas de remboursement LN
+  // (les sats sont déjà partis — pas de reverse semantics). Pas de
+  // décrément du quota daily-cap (cumul=sats spent, informationnel).
+  // Gate strict : `isLightningEnabled()` AVANT toute lecture audit pour
+  // respecter SPEC Constraint #1 (zéro side-effect Lightning si flag OFF).
+  useEffect(() => {
+    const unsub = tasksHook.subscribeTaskUncomplete((task) => {
+      (async () => {
+        try {
+          if (!(await isLightningEnabled())) return;
+          const audit = await loadAudit();
+          const completedDate =
+            task.completedDate ?? new Date().toISOString().slice(0, 10);
+          if (!findPaidEntry(audit, task.id, completedDate)) return;
+          await appendAudit({
+            ts: new Date().toISOString(),
+            profileId: '', // résolution post-toggle non triviale (mentions
+            // pas re-resolvées ici) ; on garde le slot pour audit
+            // traçable, profileId vide = "non re-résolu". Le couple
+            // taskId+date suffit pour matcher avec l'entrée `paid`.
+            taskId: task.id,
+            sats: 0,
+            status: 'undone',
+          });
+        } catch (e) {
+          if (__DEV__) console.warn('[lightning] undone audit failed:', e);
+          /* Lightning — non-critical, vault domain unaffected */
+        }
+      })();
+    });
+    return unsub;
+  }, [tasksHook]);
+
+  // ─── Phase 53 : migration single→family au boot (idempotente, 1×/process) ─
+  const lightningMigrationRanRef = useRef(false);
+  useEffect(() => {
+    if (lightningMigrationRanRef.current) return;
+    lightningMigrationRanRef.current = true;
+    migrateSingleToFamily()
+      .then((result) => {
+        if (__DEV__) console.warn('[lightning] migration result:', result.reason);
+      })
+      .catch(() => {
+        /* Lightning — non-critical */
+      });
+  }, []);
+
+  // ─── Phase 53 : flush queue offline au boot + sur AppState 'active' ─────
+  // Boot : tente un flush 1s après mount (laisse le réseau se réveiller).
+  // Foreground : retente le drain dès que l'app revient au premier plan.
+  // Edge case "mode avion levé sans backgrounding" non couvert MVP (WARNING #5
+  // RESEARCH Q2) — l'utilisateur doit minimiser puis rouvrir l'app.
+  useEffect(() => {
+    const bootTimeout = setTimeout(() => {
+      flushOfflineQueue({ profiles: profilesRefForLightning.current }).catch(() => {
+        /* Lightning — non-critical */
+      });
+    }, 1000);
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        flushOfflineQueue({ profiles: profilesRefForLightning.current }).catch(() => {
+          /* Lightning — non-critical */
+        });
+      }
+    });
+
+    return () => {
+      clearTimeout(bootTimeout);
+      sub.remove();
+    };
+  }, []);
 
   // ─── Backup consolidé : flush gamiData → gamification.md (1×/jour) ─────────
   const lastGamiBackupDate = useRef<string | null>(null);
@@ -2757,6 +2871,7 @@ export function useVaultInternal(): VaultState {
     toggleTask: tasksHook.toggleTask,
     skipTask: tasksHook.skipTask,
     subscribeTaskComplete: tasksHook.subscribeTaskComplete,
+    subscribeTaskUncomplete: tasksHook.subscribeTaskUncomplete,
     liveActivityTaskCompleteRef,
     tasksCompletedToday,
     addRDV,

@@ -25,7 +25,7 @@
       "infoPlist": {
         "NSDocumentsFolderUsageDescription": "FamilyFlow a besoin d'accéder à vos documents pour lire et modifier votre vault Obsidian.",
         "NSFileProviderPresenceUsageDescription": "FamilyFlow utilise iCloud pour synchroniser votre vault Obsidian.",
-        "NSCameraUsageDescription": "FamilyFlow utilise la caméra pour prendre la photo du jour.",
+        "NSCameraUsageDescription": "FamilyFlow utilise la caméra pour prendre la photo du jour et scanner les QR codes des invoices Lightning.",
         "NSPhotoLibraryUsageDescription": "FamilyFlow accède à vos photos pour la photo du jour.",
         "NSFaceIDUsageDescription": "FamilyFlow utilise Face ID pour protéger l'accès à l'application.",
         "UIFileSharingEnabled": false,
@@ -110,6 +110,12 @@
         {
           "photosPermission": "FamilyFlow accède à vos photos pour la photo du jour.",
           "cameraPermission": "FamilyFlow utilise la caméra pour prendre la photo du jour."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permet à FamilyFlow de scanner les QR codes des invoices Lightning."
         }
       ],
       [

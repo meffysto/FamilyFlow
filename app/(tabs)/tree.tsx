@@ -147,6 +147,21 @@ import type { SeasonalEventProgress } from '../../lib/mascot/seasonal-events-typ
 import { getVisibleEventId, buildSeasonalEventAsSaga, drawGuaranteedSeasonalReward, SEASONAL_EVENT_BONUS_XP } from '../../lib/mascot/seasonal-events-engine';
 import { loadEventProgressList, saveEventProgress } from '../../lib/mascot/seasonal-events-storage';
 import { getEventContent } from '../../lib/mascot/seasonal-events-content';
+
+// Phase 53 — Lightning Family Wallet (Plan 03b)
+// Le bouton HUD ⚡ apparait dans le HUD ferme conditionnellement (flag ON
+// + wallet membre configuré pour le profil actif). Subscribe au bus
+// onPayoutSuccess (Plan 01) pour triggerPulse + toast event-driven (D-04).
+import {
+  isLightningEnabled,
+  loadFamilyConfig,
+  onPayoutSuccess,
+  type MemberWalletMapping,
+} from '../../lib/lightning';
+import {
+  HudLightningButton,
+  type HudLightningButtonRef,
+} from '../../components/lightning/HudLightningButton';
 import { getActiveEvent } from '../../lib/gamification/seasonal';
 import { SagaWorldEvent } from '../../components/mascot/SagaWorldEvent';
 import { VisitorSlot } from '../../components/mascot/VisitorSlot';
@@ -478,6 +493,13 @@ export default function TreeScreen() {
   const [placingItem, setPlacingItem] = useState<string | null>(null);
   const [showItemPicker, setShowItemPicker] = useState(false);
 
+  // Phase 53 — Lightning HUD button visibility + pulse ref.
+  // Visible UNIQUEMENT si LIGHTNING_ENABLED ON et un wallet est mappé au
+  // profil actif (D-01 + D-02 + REQ-8). Sinon return null (pas de rendu).
+  const [lightningVisible, setLightningVisible] = useState(false);
+  const [lightningMember, setLightningMember] = useState<MemberWalletMapping | null>(null);
+  const hudLightningRef = useRef<HudLightningButtonRef>(null);
+
   // Village / Portail (Phase 28 — MAP-03)
   const { addContribution, getPendingItems, unlockedBuildings, marketStock } = useGarden();
 
@@ -528,6 +550,42 @@ export default function TreeScreen() {
   useFocusEffect(useCallback(() => {
     screenOpacity.value = 1;
   }, [screenOpacity]));
+
+  // Phase 53 — Charger flag + wallet member pour conditionner l'affichage du
+  // bouton HUD ⚡ (REQ-8 + D-01 + D-02). Re-évalué à chaque changement de
+  // profil actif (le wallet est mappé par profileId).
+  useEffect(() => {
+    let alive = true;
+    Promise.all([isLightningEnabled(), loadFamilyConfig()])
+      .then(([flag, config]) => {
+        if (!alive) return;
+        if (!flag || !config || !activeProfile) {
+          setLightningVisible(false);
+          setLightningMember(null);
+          return;
+        }
+        const m = config.members.find((mm) => mm.profileId === activeProfile.id);
+        setLightningMember(m ?? null);
+        setLightningVisible(!!m);
+      })
+      .catch(() => {
+        setLightningVisible(false);
+        setLightningMember(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [activeProfile?.id]);
+
+  // Phase 53 — Subscribe au bus onPayoutSuccess pour le pulse local du HUD ⚡.
+  // Le toast "+N sats ⚡" vit dans LightningPayoutToastBridge (root layout),
+  // pour qu'il s'affiche aussi quand la tâche est validée hors ferme.
+  useEffect(() => {
+    const unsub = onPayoutSuccess(() => {
+      hudLightningRef.current?.triggerPulse();
+    });
+    return unsub;
+  }, []);
 
   // Ferme
   const { plant, plantBatch, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts, upgradePlotAction, startWager } = useFarm(contributeFamilyQuest, addContribution);
@@ -3522,6 +3580,16 @@ export default function TreeScreen() {
           >
             <Text style={styles.hudEmoji}>{'📷'}</Text>
           </TouchableOpacity>
+          {/* Phase 53 — Bouton HUD ⚡ Lightning Family Wallet (UI-SPEC Surface 1)
+              Visibilité conditionnelle : LIGHTNING_ENABLED + wallet mappé au
+              profil actif (D-01 + D-02 + REQ-8). Le ref est branché au bus
+              onPayoutSuccess plus haut pour triggerPulse() + toast (D-04). */}
+          {lightningVisible && lightningMember && (
+            <HudLightningButton
+              ref={hudLightningRef}
+              onPress={() => router.push('/lightning-wallet' as any)}
+            />
+          )}
         </View>
       </Animated.View>
 

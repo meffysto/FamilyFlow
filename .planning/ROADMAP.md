@@ -532,3 +532,39 @@ Plans (à détailler en `/gsd-plan-phase 52`):
 - [ ] 52-02-PLAN.md — Auto re-roll loop avec prompt augmenté + persistence frontmatter
 - [ ] 52-03-PLAN.md — LLM-eval async + UI badge qualité + i18n FR
 - [ ] 52-04-PLAN.md — Non-régression golden set + docs + feature flag
+
+### Phase 53: Lightning Family Wallet — 1 tâche = 100 sats (Labo)
+
+**Goal :** Promouvoir le spike Lightning multi-wallet (branche `feat/lightning-farm`, spikes 001–004 ✓) en feature intégrée derrière le flag `LIGHTNING_ENABLED` et la section Labo : une tâche complétée par un enfant déclenche un pay-out automatique de 100 sats du wallet famille (LNbits BYO) vers le sub-wallet de l'enfant, avec gate FaceID, plafond quotidien, audit log local et UX enfant pour voir sa cagnotte. Ferme classique offline-first préservée, branche jamais mergée sur main sans décision explicite (cf. spike 003 App Store posture).
+
+**Depends on :** Branche `feat/lightning-farm` (spikes 001 VALIDATED, 002 VALIDATED, 003 PARTIAL, 004 VALIDATED). Module `lib/lightning/` (client REST, SecureStore creds, biometric-gate). Système tâches existant (`contexts/VaultContext.tsx`, hooks dans `lib/parser.ts`).
+
+**Requirements :** Détaillés en `.planning/phases/53-lightning-family-wallet/53-SPEC.md` (à générer via `/gsd-spec-phase 53`).
+
+**Success criteria** (locked par SPEC.md) :
+1. Pay-out auto fonctionnel sur completion de tâche par un enfant
+2. Plafond quotidien respecté (par enfant + global)
+3. Audit log local persistant des pay-outs
+4. UX enfant : voir cagnotte + encaisser vers wallet externe
+5. Comportement offline gracieux (queue + retry OU refus clair)
+6. Cleanup spike playgrounds : code spike consolidé en feature production-grade
+7. App Store : feature invisible dans metadata/screenshots, accessible uniquement Réglages → Labo
+8. `npx tsc --noEmit` clean, ferme/tâches non régressées
+
+**Plans:** 5 plans
+
+Plans:
+**Wave 1**
+- [ ] 53-01-PLAN.md — Module pur Lightning (types étendus + 8 modules + 7 tests Jest + expo-camera + AsyncStorage installés) (REQ-2, REQ-3, REQ-4, REQ-5, REQ-6, REQ-7, REQ-11, REQ-12)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 53-02-PLAN.md — Listener + intégration useVault.ts (3ᵉ subscribeTaskComplete + FaceID gate per pay-out + migration bootstrap + AppState flush queue) (REQ-1, REQ-2, REQ-3, REQ-4, REQ-5, REQ-6, REQ-7, REQ-11)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 53-03a-PLAN.md — Composants visuels purs Lightning (HudLightningButton + BalanceCard + AuditLogItem + PayoutQueueItem + TriggerModeSelector) (REQ-1, REQ-8, REQ-3, REQ-4)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 53-03b-PLAN.md — Modals + écran + intégration (CashOutModal + PayoutQueueModal + QrScannerOverlay + /lightning-wallet + tree.tsx HUD + SettingsLightning étendu + checkpoint device) (REQ-1, REQ-8, REQ-9, REQ-10, REQ-3, REQ-4, REQ-12)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 53-04-PLAN.md — REQ-6 'undone' audit entry + cleanup playgrounds + non-régression + App Store posture (REQ-12, REQ-6)
