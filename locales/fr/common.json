@@ -478,7 +478,7 @@
       "skip": "Passer",
       "next": "Suivant →",
       "start": "Commencer",
-      "create": "C'est parti ! 🚀",
+      "create": "C'est parti !",
       "step": "Étape {{current}}/{{total}}"
     },
     "error": {

@@ -478,7 +478,7 @@
       "skip": "Skip",
       "next": "Next →",
       "start": "Get started",
-      "create": "Let's go! 🚀",
+      "create": "Let's go!",
       "step": "Step {{current}}/{{total}}"
     },
     "error": {
