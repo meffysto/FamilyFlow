@@ -36,12 +36,14 @@ describe('exportPhaseReducer', () => {
     const next = exportPhaseReducer(state, {
       type: 'GENERATION_DONE',
       uri: 'file:///cache/book.pdf',
+      coverUri: 'file:///cache/cover.pdf',
       perfMs: 4200,
       entry: FIXTURE_ENTRY,
     });
     expect(next).toEqual({
       kind: 'ready',
       uri: 'file:///cache/book.pdf',
+      coverUri: 'file:///cache/cover.pdf',
       perfMs: 4200,
       entry: FIXTURE_ENTRY,
     });
@@ -51,17 +53,20 @@ describe('exportPhaseReducer', () => {
     const state: ExportPhase = {
       kind: 'ready',
       uri: 'file:///cache/book.pdf',
+      coverUri: 'file:///cache/cover.pdf',
       perfMs: 4200,
       entry: FIXTURE_ENTRY,
     };
     const next = exportPhaseReducer(state, {
       type: 'GO_POST_EXPORT',
       uri: 'file:///cache/book.pdf',
+      coverUri: 'file:///cache/cover.pdf',
       storyTitle: 'Le voyage de Lucas',
     });
     expect(next).toEqual({
       kind: 'post-export',
       uri: 'file:///cache/book.pdf',
+      coverUri: 'file:///cache/cover.pdf',
       storyTitle: 'Le voyage de Lucas',
     });
   });
@@ -70,6 +75,7 @@ describe('exportPhaseReducer', () => {
     const state: ExportPhase = {
       kind: 'post-export',
       uri: 'file:///cache/book.pdf',
+      coverUri: 'file:///cache/cover.pdf',
       storyTitle: 'Le voyage de Lucas',
     };
     const next = exportPhaseReducer(state, { type: 'RESET' });

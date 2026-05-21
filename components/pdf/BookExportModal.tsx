@@ -175,6 +175,7 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
       dispatch({
         type: 'GENERATION_DONE',
         uri: result.uri,
+        coverUri: result.coverUri,
         perfMs: result.perf.totalMs,
         entry: persisted,
       });
@@ -223,6 +224,7 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
     dispatch({
       type: 'GO_POST_EXPORT',
       uri: phase.uri,
+      coverUri: phase.coverUri,
       storyTitle: selectedStory.titre,
     });
   }, [phase, selectedStory]);
@@ -456,6 +458,7 @@ function BookExportModalImpl({ visible, onClose, story, onSuccess }: Props) {
         {phase.kind === 'post-export' && (
           <PostExportView
             uri={phase.uri}
+            coverUri={phase.coverUri}
             storyTitle={phase.storyTitle}
             onDone={handleDone}
           />

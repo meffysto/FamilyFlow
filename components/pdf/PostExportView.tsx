@@ -20,7 +20,7 @@ import {
 import * as Print from 'expo-print';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { Save, Eye, Printer } from 'lucide-react-native';
+import { Save, Eye, Printer, BookOpen } from 'lucide-react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
@@ -28,11 +28,12 @@ import { LuluInstructionsModal } from './LuluInstructionsModal';
 
 interface Props {
   uri: string;
+  coverUri: string;
   storyTitle: string;
   onDone: () => void;
 }
 
-function PostExportViewImpl({ uri, storyTitle, onDone }: Props) {
+function PostExportViewImpl({ uri, coverUri, storyTitle, onDone }: Props) {
   const { t } = useTranslation();
   const { colors, primary } = useThemeColors();
   const [luluOpen, setLuluOpen] = useState(false);
@@ -42,36 +43,44 @@ function PostExportViewImpl({ uri, storyTitle, onDone }: Props) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, []);
 
+  const sharePdf = useCallback(
+    async (pdfUri: string) => {
+      try {
+        const Sharing = await import('expo-sharing');
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(pdfUri, {
+            mimeType: 'application/pdf',
+            UTI: 'com.adobe.pdf',
+            dialogTitle: t('impressions:share.dialogTitle', { title: storyTitle }),
+          });
+        } else {
+          Alert.alert(t('impressions:errors.sharingUnavailable'));
+          await Linking.openURL(pdfUri);
+        }
+      } catch (err) {
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.warn('[PostExportView] share error', err);
+        }
+        try {
+          await Linking.openURL(pdfUri);
+        } catch {
+          /* silent */
+        }
+      }
+    },
+    [storyTitle, t],
+  );
+
   const handleSave = useCallback(async () => {
     Haptics.selectionAsync();
-    try {
-      // Lazy import pour résilience si dev-client pas rebuild — RESEARCH Pitfall 1
-      const Sharing = await import('expo-sharing');
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'application/pdf',
-          UTI: 'com.adobe.pdf',
-          dialogTitle: t('impressions:share.dialogTitle', {
-            title: storyTitle,
-          }),
-        });
-      } else {
-        Alert.alert(t('impressions:errors.sharingUnavailable'));
-        await Linking.openURL(uri);
-      }
-    } catch (err) {
-      if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.warn('[PostExportView] save error', err);
-      }
-      // Fallback gracieux : tenter d'ouvrir le PDF directement.
-      try {
-        await Linking.openURL(uri);
-      } catch {
-        /* silent — l'utilisateur peut retenter */
-      }
-    }
-  }, [uri, storyTitle, t]);
+    await sharePdf(uri);
+  }, [uri, sharePdf]);
+
+  const handleSaveCover = useCallback(async () => {
+    Haptics.selectionAsync();
+    await sharePdf(coverUri);
+  }, [coverUri, sharePdf]);
 
   const handlePreview = useCallback(async () => {
     Haptics.selectionAsync();
@@ -108,6 +117,17 @@ function PostExportViewImpl({ uri, storyTitle, onDone }: Props) {
         title={t('impressions:postExport.save.title')}
         description={t('impressions:postExport.save.description')}
         onPress={handleSave}
+        bg={colors.card}
+        border={colors.border}
+        textColor={colors.text}
+        mutedColor={colors.textMuted}
+        primary={primary}
+      />
+      <ActionButton
+        Icon={BookOpen}
+        title={t('impressions:postExport.cover.title')}
+        description={t('impressions:postExport.cover.description')}
+        onPress={handleSaveCover}
         bg={colors.card}
         border={colors.border}
         textColor={colors.text}

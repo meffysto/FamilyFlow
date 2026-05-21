@@ -12,7 +12,8 @@ import * as Crypto from 'expo-crypto';
 import type { BedtimeStory, SceneArchetype } from '../types';
 import type { BookManifestEntry } from './types';
 import { TRIM_SIZE_CM, BLEED_CM, BOOK_PALETTE, LULU_FORMAT_LABEL } from './constants';
-import { renderBookHtml } from './html-template';
+import { renderBookHtml, renderCss } from './html-template';
+import { renderCoverPage } from './components/cover';
 import { loadFontsBase64, loadIllustrationBase64 } from './asset-loader';
 import { detectTomeBadge } from './saga-detection';
 import { generateStoryQrSvg } from './qr-generator';
@@ -38,6 +39,8 @@ export interface GenerateBookPdfOptions {
 export interface GenerateBookPdfResult {
   /** URI cache app du PDF généré (à passer à `persistBookPdf`). */
   uri: string;
+  /** URI cache du PDF couverture séparé (1 page recto, publication Lulu). */
+  coverUri: string;
   /** SHA-256 hex du HTML source (déterministe). */
   hash: string;
   /** Entrée manifeste prête à persister (sans `chemin`, rempli par persistBookPdf). */
@@ -111,6 +114,19 @@ export async function generateBookPdf(
     height: PAGE_SIZE_PT,
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
   });
+
+  // PDF couverture séparé pour publication Lulu (1 page recto, mêmes assets)
+  const coverHtml = renderCoverOnlyHtml({
+    story: opts.story,
+    coverImageBase64: illustrations.get('paysage') ?? null,
+    fonts,
+  });
+  const coverResult = await Print.printToFileAsync({
+    html: coverHtml,
+    width: PAGE_SIZE_PT,
+    height: PAGE_SIZE_PT,
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
+  });
   const printMs = Date.now() - tP0;
 
   const totalMs = Date.now() - t0;
@@ -140,11 +156,37 @@ export async function generateBookPdf(
 
   return {
     uri: result.uri,
+    coverUri: coverResult.uri,
     hash,
     entry,
     html,
     perf: { totalMs, assetsMs, renderMs, hashMs, printMs },
   };
+}
+
+/** HTML autonome contenant uniquement la couverture (1 page recto). */
+function renderCoverOnlyHtml(opts: {
+  story: import('../types').BedtimeStory;
+  coverImageBase64: string | null;
+  fonts: { andikaRegular: string; andikaBold: string };
+}): string {
+  const css = renderCss(BOOK_PALETTE, opts.fonts);
+  const page = renderCoverPage({
+    story: opts.story,
+    coverImageBase64: opts.coverImageBase64,
+    palette: BOOK_PALETTE,
+  });
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>${opts.story.titre}</title>
+<style>${css}</style>
+</head>
+<body>
+${page}
+</body>
+</html>`;
 }
 
 // Exposer constantes utilitaires pour tests / debug

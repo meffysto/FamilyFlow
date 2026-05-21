@@ -11,8 +11,8 @@ export type GeneratingStep = 'assets' | 'render' | 'hash' | 'print';
 export type ExportPhase =
   | { kind: 'select' }
   | { kind: 'generating'; step: GeneratingStep }
-  | { kind: 'ready'; uri: string; perfMs: number; entry: BookManifestEntry }
-  | { kind: 'post-export'; uri: string; storyTitle: string };
+  | { kind: 'ready'; uri: string; coverUri: string; perfMs: number; entry: BookManifestEntry }
+  | { kind: 'post-export'; uri: string; coverUri: string; storyTitle: string };
 
 /** Actions du reducer. */
 export type ExportAction =
@@ -21,11 +21,12 @@ export type ExportAction =
   | {
       type: 'GENERATION_DONE';
       uri: string;
+      coverUri: string;
       perfMs: number;
       entry: BookManifestEntry;
     }
   | { type: 'GENERATION_ERROR' }
-  | { type: 'GO_POST_EXPORT'; uri: string; storyTitle: string }
+  | { type: 'GO_POST_EXPORT'; uri: string; coverUri: string; storyTitle: string }
   | { type: 'RESET' };
 
 /** Phase initiale au mount du modal. */
@@ -59,6 +60,7 @@ export function exportPhaseReducer(
         return {
           kind: 'ready',
           uri: action.uri,
+          coverUri: action.coverUri,
           perfMs: action.perfMs,
           entry: action.entry,
         };
@@ -73,6 +75,7 @@ export function exportPhaseReducer(
         return {
           kind: 'post-export',
           uri: action.uri,
+          coverUri: action.coverUri,
           storyTitle: action.storyTitle,
         };
       }

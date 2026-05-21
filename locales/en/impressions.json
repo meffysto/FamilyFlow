@@ -49,6 +49,10 @@
       "title": "Sauvegarder le PDF",
       "description": "Dans Files, par AirDrop, par email…"
     },
+    "cover": {
+      "title": "Sauvegarder la couverture",
+      "description": "Fichier séparé requis par Lulu pour la publication"
+    },
     "preview": {
       "title": "Voir le PDF",
       "description": "Ouvre l'aperçu plein écran"

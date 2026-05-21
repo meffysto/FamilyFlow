@@ -93,7 +93,7 @@ html, body {
 
 .page:last-child { page-break-after: auto; }
 
-.safe-area { position: absolute; inset: 0.82cm; }
+.safe-area { position: absolute; inset: 1.27cm; }
 .full-bleed { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 .scene-illustration { width: 100%; height: 100%; object-fit: cover; display: block; }
