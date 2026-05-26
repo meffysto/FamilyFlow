@@ -644,9 +644,10 @@ export default function JournalScreen() {
         lines.splice(sIdx + 1, sEnd - sIdx - 1, '', ...newRows, ...(nonBqContent.length ? ['', ...nonBqContent] : []));
       } else if (NUMBERED_LIST_TYPES.includes(modal.type)) {
         if (modal.mode === 'edit' && modal.lineIndex !== undefined) {
+          // FAM-31 — normalise les retours à la ligne pour ne pas casser l'item de liste markdown
           const rowContent = modal.type === 'DouleurAdulte'
             ? buildRowFromFields(modal.type, modal.fields, now)
-            : modal.fields.text?.trim() || '';
+            : (modal.fields.text?.replace(/\s*\n\s*/g, ' ').trim() || '');
           if (rowContent) {
             const existingLine = lines[modal.lineIndex];
             const numMatch = existingLine.match(/^(\d+)\.\s*/);
@@ -663,9 +664,10 @@ export default function JournalScreen() {
             const numMatch = lines[i].match(/^(\d+)\./);
             if (numMatch) { lastNum = parseInt(numMatch[1], 10); insertAt = i + 1; }
           }
+          // FAM-31 — normalise les retours à la ligne pour ne pas casser l'item de liste markdown
           const rowContent = modal.type === 'DouleurAdulte'
             ? buildRowFromFields(modal.type, modal.fields, now)
-            : modal.fields.text?.trim() || '';
+            : (modal.fields.text?.replace(/\s*\n\s*/g, ' ').trim() || '');
           if (rowContent) lines.splice(insertAt, 0, `${lastNum + 1}. ${rowContent}`);
         }
       } else {
