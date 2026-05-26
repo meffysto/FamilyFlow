@@ -186,7 +186,7 @@ export interface UseGardenReturn {
  */
 export function useGarden(): UseGardenReturn {
   // Consommation useVault (per D-01 — pas de nouveau provider)
-  const { vault, gardenRaw, setGardenRaw, profiles, awardProfileXP, refreshGamification, refreshFarm } = useVault();
+  const { vault, gardenRaw, setGardenRaw, profiles, awardProfileXP, awardProfileCoins, refreshGamification, refreshFarm } = useVault();
 
   // État local chargement
   const [isLoading, setIsLoading] = useState(false);
@@ -900,18 +900,24 @@ export function useGarden(): UseGardenReturn {
       setGardenRaw(newContent);
 
       const recipe = VILLAGE_RECIPES.find((r) => r.id === recipeId);
-      if (recipe && recipe.xpBonus > 0) {
+      if (recipe && (recipe.xpBonus > 0 || (recipe.coinBonus ?? 0) > 0)) {
         const activeProfiles = profiles.filter((p) => p.statut !== 'grossesse');
         for (const p of activeProfiles) {
           try {
-            await awardProfileXP(p.id, recipe.xpBonus, `Craft: ${recipe.id}`);
+            if (recipe.xpBonus > 0) {
+              await awardProfileXP(p.id, recipe.xpBonus, `Craft: ${recipe.id}`);
+            }
+            // Cadeau bonus (capstone) : feuilles 🍃 EN PLUS de l'XP partagée.
+            if ((recipe.coinBonus ?? 0) > 0) {
+              await awardProfileCoins(p.id, recipe.coinBonus!, `Cadeau: ${recipe.id}`);
+            }
           } catch { /* Gamification — non-critical */ }
         }
       }
 
       return true;
     },
-    [vault, gardenData, inventory, villageTechBonuses, setGardenRaw, profiles, awardProfileXP],
+    [vault, gardenData, inventory, villageTechBonuses, setGardenRaw, profiles, awardProfileXP, awardProfileCoins],
   );
 
   // ---------------------------------------------------------------------------

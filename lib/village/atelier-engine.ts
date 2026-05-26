@@ -46,6 +46,7 @@ export interface VillageRecipe {
   resultLabel: string;
   ingredients: VillageIngredient[];
   xpBonus: number;          // XP partagé à tous les membres actifs
+  coinBonus?: number;       // 🍃 feuilles bonus EN PLUS de l'XP, partagées à tous (capstone uniquement)
   minAtelierTier: number;   // 0 = toujours disponible, 1/2/3 = nécessite atelier-1/2/3
 }
 
@@ -196,7 +197,9 @@ export const VILLAGE_TECH_TREE: VillageTechNode[] = [
  *   Tier 0 : 15-25 XP (~10 % d'une journée d'XP)
  *   Tier 1 : 50-75 XP (~20-30 %)
  *   Tier 2 : 120-140 XP (~50 %)
- *   Tier 3 : 250-400 XP (1-2 jours d'XP — célébration)
+ *   Tier 3 : 400-600 XP (1-2 jours d'XP — célébration)
+ *           Le Grand Festin est le capstone : 600 XP + 200 🍃 bonus (le seul craft
+ *           qui donne des feuilles en plus de l'XP).
  */
 export const VILLAGE_RECIPES: VillageRecipe[] = [
   // Palier 0 — toujours disponibles
@@ -289,7 +292,9 @@ export const VILLAGE_RECIPES: VillageRecipe[] = [
       { itemId: 'eau_fraiche', itemEmoji: '💧', quantity: 20 },
       { itemId: 'farine_moulee', itemEmoji: '🌾', quantity: 12 },
     ],
-    xpBonus: 250, minAtelierTier: 3,
+    // Capstone du village : la recette la plus chère doit être la plus généreuse.
+    // Plus gros XP de tous + un vrai cadeau bonus en 🍃 (le 🎁 tient sa promesse).
+    xpBonus: 600, coinBonus: 200, minAtelierTier: 3,
   },
 ];
 

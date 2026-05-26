@@ -75,7 +75,7 @@ import { CROP_CATALOG } from '../lib/mascot/types';
 import type { HarvestGrade as FarmHarvestGrade } from '../lib/mascot/grade-engine';
 import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot, BedtimeStory, LoveNote, LoveNoteStatus } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, GamificationEntry, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot, BedtimeStory, LoveNote, LoveNoteStatus } from '../lib/types';
 import { useVaultBudget } from './useVaultBudget';
 import {
   parseNotificationPrefs,
@@ -359,6 +359,7 @@ export interface VaultState {
   completeSagaChapter: (profileId: string, points: number, sagaNote: string, rewardItem?: { id: string; type: 'decoration' | 'inhabitant' }, bonusCropId?: string) => Promise<void>;
   markLootUsed: (loot: UsedLoot) => Promise<void>;
   awardProfileXP: (profileId: string, xp: number, note: string) => Promise<void>;
+  awardProfileCoins: (profileId: string, coins: number, note: string) => Promise<void>;
   setCompanion: (profileId: string, companion: CompanionData) => Promise<void>;
   unlockCompanion: (profileId: string, speciesId: CompanionSpecies) => Promise<void>;
   feedCompanion: (profileId: string, cropId: string, grade: CompanionHarvestGrade) => Promise<FeedResult | null>;
@@ -2827,6 +2828,45 @@ export function useVaultInternal(): VaultState {
     await vaultRef.current.writeFile(file, serializeGamification(singleData));
   }, [gamiData]);
 
+  // ─── Feuilles bonus (cadeau Grand Festin, etc.) ──────────────────────────
+  // Ajoute des 🍃 SANS toucher aux points/niveau — réservé aux bonus tangibles
+  // (ex. le cadeau du capstone village, en plus de l'XP partagée).
+  const awardProfileCoins = useCallback(async (profileId: string, coins: number, note: string) => {
+    if (!vaultRef.current || !gamiData || coins <= 0) return;
+    const profile = gamiData.profiles.find((p) => p.id === profileId);
+    if (!profile) return;
+    const updated: Profile = { ...profile, coins: (profile.coins ?? 0) + coins };
+    const entry: GamificationEntry = {
+      profileId,
+      action: `+${coins}`,
+      points: 0, // bonus en feuilles uniquement — pas d'XP/niveau
+      note,
+      timestamp: new Date().toISOString(),
+    };
+    setGamiData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        profiles: prev.profiles.map((p) => p.id === profileId ? updated : p),
+        history: [...prev.history, entry],
+      };
+    });
+    const file = gamiFile(profileId);
+    const existingContent = await vaultRef.current.readFile(file).catch(() => '');
+    const existingGami = parseGamification(existingContent);
+    const existingProfile = existingGami.profiles.find(p => p.id === profileId);
+    const safeProfiles = existingProfile
+      ? existingGami.profiles.map(p => p.id === profileId ? updated : p)
+      : [updated]; // fallback : profil en mémoire si fichier vide
+    const singleData: GamificationData = {
+      profiles: safeProfiles,
+      history: [...existingGami.history, entry],
+      activeRewards: existingGami.activeRewards ?? [],
+      usedLoots: existingGami.usedLoots ?? [],
+    };
+    await vaultRef.current.writeFile(file, serializeGamification(singleData));
+  }, [gamiData]);
+
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
   const vault = vaultRef.current;
   return useMemo(() => ({
@@ -2993,6 +3033,7 @@ export function useVaultInternal(): VaultState {
     completeSagaChapter,
     markLootUsed,
     awardProfileXP,
+    awardProfileCoins,
     setCompanion,
     unlockCompanion,
     feedCompanion,
@@ -3029,7 +3070,7 @@ export function useVaultInternal(): VaultState {
     notesHook.addNote, notesHook.updateNote, notesHook.deleteNote,
     addQuote, editQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     missionsHook,
-    completeAdventure, completeSagaChapter, markLootUsed, awardProfileXP,
+    completeAdventure, completeSagaChapter, markLootUsed, awardProfileXP, awardProfileCoins,
     setCompanion, unlockCompanion, feedCompanion,
     dietaryHook,
     storiesHook,

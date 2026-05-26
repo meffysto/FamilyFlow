@@ -293,7 +293,13 @@ const RecipeCard = React.memo(function RecipeCard({
           <Text style={styles.recipeLabel}>{recipe.labelFR}</Text>
           <Text style={styles.recipeTier}>{tierLabel}</Text>
         </View>
-        <Text style={styles.recipeXp}>+{recipe.xpBonus} XP</Text>
+        <View style={styles.recipeReward}>
+          <Text style={styles.recipeXp}>+{recipe.xpBonus} XP & 🍃</Text>
+          {!!recipe.coinBonus && recipe.coinBonus > 0 && (
+            <Text style={styles.recipeGift}>🎁 +{recipe.coinBonus} 🍃 bonus</Text>
+          )}
+          <Text style={styles.recipeRewardHint}>par membre</Text>
+        </View>
       </View>
 
       {/* Ingrédients */}
@@ -598,6 +604,11 @@ export function AtelierSheet({
               >
                 {activeTab === 'recettes' && (
                   <Animated.View entering={FadeIn.duration(200)} style={styles.tabContent}>
+                    <View style={styles.rewardBanner}>
+                      <Text style={styles.rewardBannerText}>
+                        🍃 Chaque craft offre son XP <Text style={styles.rewardBannerEmph}>et autant de feuilles</Text> à chaque membre de la famille.
+                      </Text>
+                    </View>
                     {unlockedRecipeTier === 0 && (
                       <View style={styles.tierBanner}>
                         <Text style={styles.tierBannerText}>
@@ -813,9 +824,39 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
     fontSize: FontSize.label,
     color: farm.brownTextSub,
   },
+  recipeReward: {
+    alignItems: 'flex-end',
+    gap: 1,
+  },
   recipeXp: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    color: farm.greenBtn,
+  },
+  recipeGift: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    color: farm.woodBtn,
+  },
+  recipeRewardHint: {
+    fontSize: FontSize.caption,
+    color: farm.brownTextSub,
+  },
+  rewardBanner: {
+    borderRadius: Radius.md,
+    padding: Spacing.lg,
+    backgroundColor: farm.greenBtn + '1A',
+    borderWidth: 1,
+    borderColor: farm.greenBtn + '40',
+  },
+  rewardBannerText: {
+    fontSize: FontSize.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+    color: farm.brownText,
+  },
+  rewardBannerEmph: {
+    fontWeight: FontWeight.bold,
     color: farm.greenBtn,
   },
   ingredientsRow: {
