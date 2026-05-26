@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 Phase: 52 (stories-pipeline-d-valuation-auto-re-roll-qualit) — EXECUTING
 Plan: 1 of 4
 Status: Executing Phase 52
-Last activity: 2026-05-19 -- Merge Phase 53 lightning-family-wallet (feat/lightning-farm → main, --no-ff)
+Last activity: 2026-05-26 -- Completed quick task 260526-ht8: FAM-31 phrase coupée dans les symptômes
 
 ### Quick Tasks Completed
 
@@ -84,6 +84,7 @@ Last activity: 2026-05-19 -- Merge Phase 53 lightning-family-wallet (feat/lightn
 | 260506-pnl | Injection historique cross-stories dans le prompt (anti-clonage P3+P5+P7) | 2026-05-06 | ade46ee | [260506-pnl-injection-historique-cross-stories-dans-](./quick/260506-pnl-injection-historique-cross-stories-dans-/) |
 | 260512-ezj | FAM-24 Fix saga voyageur_argent stalker + reset versionné | 2026-05-12 | d909742c | [260512-ezj-fam-24-fix-saga-voyageur-argent-stalker-](./quick/260512-ezj-fam-24-fix-saga-voyageur-argent-stalker-/) |
 | 260516-oj6 | Time blocking dans tâches — mode Journée avec auto-placement 4 slots | 2026-05-18 | 0211a08f | [260516-oj6-tasks-time-blocking-mode-journee](./quick/260516-oj6-tasks-time-blocking-mode-journee/) |
+| 260526-ht8 | FAM-31 Journal de Julie: phrase coupée dans les symptômes (retours à la ligne perdus) | 2026-05-26 | 30ec680a | [260526-ht8-fam-31-journal-de-julie-phrase-coup-e-da](./quick/260526-ht8-fam-31-journal-de-julie-phrase-coup-e-da/) |
 
 ## Performance Metrics
 
