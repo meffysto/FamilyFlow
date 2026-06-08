@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 Phase: 52 (stories-pipeline-d-valuation-auto-re-roll-qualit) — EXECUTING
 Plan: 1 of 4
 Status: Executing Phase 52
-Last activity: 2026-06-08 -- Completed quick task 260608-nx8: FAM-37 cadence de production toujours visible
+Last activity: 2026-06-08 -- Completed quick task 260608-rze: FAM-34 répartition par grade des récoltes
 
 ### Quick Tasks Completed
 
@@ -86,6 +86,7 @@ Last activity: 2026-06-08 -- Completed quick task 260608-nx8: FAM-37 cadence de 
 | 260516-oj6 | Time blocking dans tâches — mode Journée avec auto-placement 4 slots | 2026-05-18 | 0211a08f | [260516-oj6-tasks-time-blocking-mode-journee](./quick/260516-oj6-tasks-time-blocking-mode-journee/) |
 | 260526-ht8 | FAM-31 Journal de Julie: phrase coupée dans les symptômes (retours à la ligne perdus) | 2026-05-26 | 30ec680a | [260526-ht8-fam-31-journal-de-julie-phrase-coup-e-da](./quick/260526-ht8-fam-31-journal-de-julie-phrase-coup-e-da/) |
 | 260608-nx8 | FAM-37 Cadence de production des bâtiments de la ferme toujours visible (ruche niveau max) | 2026-06-08 | 374fdbf0 | [260608-nx8-fam-37-afficher-la-cadence-de-production](./quick/260608-nx8-fam-37-afficher-la-cadence-de-production/) |
+| 260608-rze | FAM-34 Répartition par grade (ordinaire/beau/superbe/parfait) à côté de chaque récolte dans Atelier > Inventaire | 2026-06-08 | 9c48e1fa | [260608-rze-fam-34-r-partition-par-grade-c-t-de-chaq](./quick/260608-rze-fam-34-r-partition-par-grade-c-t-de-chaq/) |
 
 ## Performance Metrics
 
