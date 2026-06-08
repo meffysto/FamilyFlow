@@ -754,7 +754,17 @@ export function useVaultCourses(
           ...meta,
           ...(cleaned.length > 0 ? { parcours: cleaned } : { parcours: undefined }),
         };
-        await vm.writeFile(path, serializeCourseList(newMeta, items));
+        const newContent = serializeCourseList(newMeta, items);
+        await vm.writeFile(path, newContent);
+        // Resynchroniser courses si c'est la liste active : serializeCourseList
+        // reconstruit tout le fichier (frontmatter + body), ce qui décale les
+        // lineIndex de tous les items. Sans cette resync, les writes suivants
+        // (toggle/remove/move) utilisent des indices périmés et corrompent le
+        // fichier — effaçant notamment le parcours qu'on vient de sauvegarder.
+        if (id === activeListIdRef.current) {
+          const { items: freshItems } = parseCourseList(newContent, path);
+          setCourses(freshItems);
+        }
         loadListes().catch(() => {});
       } catch (e) {
         warnUnexpected('setListParcours', e);
