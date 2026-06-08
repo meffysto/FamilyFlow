@@ -438,6 +438,15 @@ export function BuildingDetailSheet({
                           </>
                         )}
                       </View>
+
+                      <View style={styles.cadenceRow}>
+                        <Text style={styles.progressMetaLeft}>{labels.cycleLabel}</Text>
+                        <Text style={styles.progressMetaRight}>
+                          <Text style={styles.progressMetaRightBold}>
+                            {formatHours(currentCycleHours / wearMul)}
+                          </Text>
+                        </Text>
+                      </View>
                     </Animated.View>
 
                     <Animated.View
@@ -832,6 +841,15 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   progressMetaRightBold: {
     fontWeight: '800',
     color: farm.brownText,
+  },
+  cadenceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: farm.woodHighlight,
   },
 
   btnFullWidth: {
