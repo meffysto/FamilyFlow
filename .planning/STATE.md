@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 Phase: 52 (stories-pipeline-d-valuation-auto-re-roll-qualit) — EXECUTING
 Plan: 1 of 4
 Status: Executing Phase 52
-Last activity: 2026-05-26 -- Completed quick task 260526-ht8: FAM-31 phrase coupée dans les symptômes
+Last activity: 2026-06-08 -- Completed quick task 260608-nx8: FAM-37 cadence de production toujours visible
 
 ### Quick Tasks Completed
 
@@ -85,6 +85,7 @@ Last activity: 2026-05-26 -- Completed quick task 260526-ht8: FAM-31 phrase coup
 | 260512-ezj | FAM-24 Fix saga voyageur_argent stalker + reset versionné | 2026-05-12 | d909742c | [260512-ezj-fam-24-fix-saga-voyageur-argent-stalker-](./quick/260512-ezj-fam-24-fix-saga-voyageur-argent-stalker-/) |
 | 260516-oj6 | Time blocking dans tâches — mode Journée avec auto-placement 4 slots | 2026-05-18 | 0211a08f | [260516-oj6-tasks-time-blocking-mode-journee](./quick/260516-oj6-tasks-time-blocking-mode-journee/) |
 | 260526-ht8 | FAM-31 Journal de Julie: phrase coupée dans les symptômes (retours à la ligne perdus) | 2026-05-26 | 30ec680a | [260526-ht8-fam-31-journal-de-julie-phrase-coup-e-da](./quick/260526-ht8-fam-31-journal-de-julie-phrase-coup-e-da/) |
+| 260608-nx8 | FAM-37 Cadence de production des bâtiments de la ferme toujours visible (ruche niveau max) | 2026-06-08 | 374fdbf0 | [260608-nx8-fam-37-afficher-la-cadence-de-production](./quick/260608-nx8-fam-37-afficher-la-cadence-de-production/) |
 
 ## Performance Metrics
 
