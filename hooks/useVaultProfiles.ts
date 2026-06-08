@@ -481,6 +481,20 @@ export function useVaultProfiles(
         }
       }
 
+      // Propager le renommage aux dossiers indexés par PRÉNOM (tâches, carnet de
+      // santé, jalons, journal, photos). Sans ça, ces dossiers restent sous
+      // l'ancien nom et l'app les cherche sous le nouveau → tâches/santé orphelines. (FAM-39)
+      if (updates.name) {
+        const oldProfile = profiles.find(p => p.id === profileId);
+        if (oldProfile?.role === 'enfant' && oldProfile.name && oldProfile.name !== updates.name) {
+          try {
+            await vaultRef.current.renameChild(oldProfile.name, updates.name);
+          } catch (e) {
+            warnUnexpected('updateProfile-rename-folders', e);
+          }
+        }
+      }
+
       // Mise à jour optimiste du state local
       try {
         const file = gamiFile(profileId);

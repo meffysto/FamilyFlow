@@ -696,6 +696,50 @@ export class VaultManager {
   }
 
   /**
+   * Renomme un enfant : déplace tous les dossiers indexés par PRÉNOM vers le
+   * nouveau prénom (tâches, carnet de santé, mémoires/jalons, journal, photos).
+   *
+   * Indispensable car ces dossiers sont nommés d'après le prénom et NON l'id
+   * stable du profil (cf. addChild). Sans ce déplacement, un renommage rend les
+   * tâches / carnet de santé / jalons orphelins : l'app cherche
+   * `01 - Enfants/{nouveau}/…` alors que le dossier reste sous l'ancien nom. (FAM-39)
+   *
+   * Best-effort et idempotent : chaque racine n'est déplacée que si le dossier
+   * source existe ET que la destination n'existe pas encore (jamais d'écrasement).
+   */
+  async renameChild(oldName: string, newName: string): Promise<void> {
+    if (!oldName || !newName || oldName === newName) return;
+
+    const roots = ['01 - Enfants', '06 - Mémoires', '03 - Journal', '07 - Photos'];
+    for (const root of roots) {
+      const from = `${root}/${oldName}`;
+      const to = `${root}/${newName}`;
+      try {
+        if (!(await this.exists(from))) continue;
+        if (await this.exists(to)) {
+          if (__DEV__) console.warn(`[renameChild] destination déjà présente, déplacement ignoré : ${to}`);
+          continue;
+        }
+        await this.ensureDir(root);
+        await FileSystem.moveAsync({ from: this.uri(from), to: this.uri(to) });
+      } catch (e) {
+        if (__DEV__) console.warn(`[renameChild] échec déplacement ${from} → ${to}: ${e}`);
+      }
+    }
+
+    // Mettre à jour les liens du Dashboard (texte basé sur le prénom)
+    try {
+      const dashContent = await this.readFile('00 - Dashboard/Dashboard.md');
+      const updated = dashContent
+        .split(`01 - Enfants/${oldName}/`).join(`01 - Enfants/${newName}/`)
+        .split(`${oldName} — Tâches`).join(`${newName} — Tâches`);
+      if (updated !== dashContent) {
+        await this.writeFile('00 - Dashboard/Dashboard.md', updated);
+      }
+    } catch { /* Dashboard.md may not exist */ }
+  }
+
+  /**
    * Convert a grossesse profile to a born child.
    * Replaces pregnancy templates with baby templates.
    */
