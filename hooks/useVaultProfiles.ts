@@ -495,6 +495,7 @@ export function useVaultProfiles(
               const profGami = parseGamification(profGamiContent);
               const gamiProf = profGami.profiles[0];
               return {
+                ...existing,
                 ...base,
                 points: gamiProf?.points ?? existing.points,
                 coins: gamiProf?.coins ?? gamiProf?.points ?? existing.coins,
@@ -506,7 +507,7 @@ export function useVaultProfiles(
                 pityCounter: gamiProf?.pityCounter ?? existing.pityCounter,
               };
             }
-            return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+            return { ...existing, ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
           });
         });
       } catch (e) {
@@ -663,7 +664,7 @@ export function useVaultProfiles(
         return parsed.map(base => {
           const existing = prev.find(p => p.id === base.id);
           if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+          return { ...existing, ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
         });
       });
     } catch (e) {
@@ -732,7 +733,7 @@ export function useVaultProfiles(
         return parsed.map(base => {
           const existing = prev.find(p => p.id === base.id);
           if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+          return { ...existing, ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
         });
       });
     } catch (e) { warnUnexpected('convertToBorn-optimistic', e); }

@@ -172,7 +172,7 @@ export default function SettingsScreen() {
         <SettingsRow
           icon={User}
           title={t('settingsScreen.rows.profiles')}
-          subtitle={activeProfile ? `${activeProfile.avatar} ${activeProfile.name} · ${t('settingsScreen.subtitles.profileCount', { count: profiles.length })}` : t('settingsScreen.subtitles.profileCount', { count: profiles.length })}
+          subtitle={activeProfile ? `${activeProfile.name} · ${t('settingsScreen.subtitles.profileCount', { count: profiles.length })}` : t('settingsScreen.subtitles.profileCount', { count: profiles.length })}
           onPress={() => setActiveSection('profiles')}
           isFirst
         />
