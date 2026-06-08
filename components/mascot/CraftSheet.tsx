@@ -795,12 +795,21 @@ export function CraftSheet({
 
   const harvestEntries = useMemo(() => {
     // Phase B — affichage agrégé (total toutes grades) pour l'onglet Inventaire
-    const entries: Array<{ cropId: string; qty: number; cropDef: typeof CROP_CATALOG[number] | undefined }> = [];
+    // FAM-34 — répartition par grade calculée pour chaque récolte
+    const entries: Array<{
+      cropId: string;
+      qty: number;
+      cropDef: typeof CROP_CATALOG[number] | undefined;
+      gradeBreakdown: Array<{ grade: HarvestGrade; count: number; emoji: string }>;
+    }> = [];
     for (const cropId of Object.keys(harvestInventory)) {
       const qty = countItemTotal(harvestInventory, cropId);
       if (qty > 0) {
         const cropDef = CROP_CATALOG.find(c => c.id === cropId);
-        entries.push({ cropId, qty, cropDef });
+        const gradeBreakdown = GRADE_ORDER
+          .map(grade => ({ grade, count: countItemByGrade(harvestInventory, cropId, grade), emoji: getGradeEmoji(grade) }))
+          .filter(entry => entry.count > 0);
+        entries.push({ cropId, qty, cropDef, gradeBreakdown });
       }
     }
     return entries;
@@ -835,7 +844,7 @@ export function CraftSheet({
           {t('craft.recoltes', '🌱 Récoltes')}
         </Text>
       )}
-      {harvestEntries.map(({ cropId, qty, cropDef }, idx) => {
+      {harvestEntries.map(({ cropId, qty, cropDef, gradeBreakdown }, idx) => {
         const cropName = cropDef ? t(cropDef.labelKey) : cropId;
         const currentQty = getSellQty(cropId);
         const clampedQty = Math.min(currentQty, qty);
@@ -855,6 +864,11 @@ export function CraftSheet({
                 <Text style={styles.inventoryQty}>
                   x{qty} — {unitPrice} 🍃/{t('craft.vendre').toLowerCase()}
                 </Text>
+                {gradeBreakdown.length > 0 && (
+                  <Text style={styles.inventoryGrades}>
+                    {gradeBreakdown.map(g => `${g.count} ${g.emoji}`).join('  ')}
+                  </Text>
+                )}
               </View>
               <TouchableOpacity
                 style={styles.giftBtn}
@@ -1713,6 +1727,11 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   inventoryQty: {
     fontSize: FontSize.caption,
     color: farm.brownTextSub,
+  },
+  inventoryGrades: {
+    fontSize: FontSize.caption,
+    color: farm.brownTextSub,
+    marginTop: 2,
   },
   giftBtn: {
     paddingVertical: Spacing.sm,
