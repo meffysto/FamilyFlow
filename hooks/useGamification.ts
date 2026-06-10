@@ -108,12 +108,39 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
       try {
         // Read current gamification data (fichier per-profil)
         const file = gamiFile(profile.id);
-        const gamiContent = await vault.readFile(file).catch(() => '');
+        let gamiReadFailed = false;
+        const gamiContent = await vault.readFile(file).catch(() => { gamiReadFailed = true; return ''; });
         const gamiData = parseGamification(gamiContent);
+
+        // Garde anti-perte de points : si la lecture du fichier gami a échoué
+        // (iCloud non téléchargé / erreur transitoire), NE PAS réécrire — on
+        // écraserait les points réels par une valeur mémoire périmée.
+        if (gamiReadFailed) {
+          throw new Error('completeTask: lecture gamification échouée — récompense annulée pour éviter la perte de points');
+        }
+
+        // Source de vérité = disque, JAMAIS profile.points (mémoire). Pendant la
+        // fenêtre de boot, la gami est exclue du cache → activeProfile.points vaut 0
+        // le temps que loadVaultData finisse. Repartir de la mémoire écraserait les
+        // vrais points par « 0 + xp ». On rebâtit donc les champs gami depuis le disque.
+        const diskProfile = gamiData.profiles.find((p: Profile) => p.id === profile.id) ?? gamiData.profiles[0];
+        const profileFromDisk: Profile = diskProfile
+          ? {
+              ...profile,
+              points: diskProfile.points,
+              coins: diskProfile.coins,
+              level: diskProfile.level,
+              lootBoxesAvailable: diskProfile.lootBoxesAvailable,
+              multiplier: diskProfile.multiplier,
+              multiplierRemaining: diskProfile.multiplierRemaining,
+              pityCounter: diskProfile.pityCounter,
+              earnedBadges: diskProfile.earnedBadges ?? profile.earnedBadges,
+            }
+          : profile;
 
         // Update streak before awarding points (so streak bonus applies correctly)
         const currentStreak = calculateStreak(gamiData.history, profile.id);
-        const profileWithStreak: Profile = { ...profile, streak: currentStreak + 1 };
+        const profileWithStreak: Profile = { ...profileFromDisk, streak: currentStreak + 1 };
 
         // Calculate new points (uses updated streak for bonus)
         // Phase 42 — getCompanionXpBonus intègre le feedBuff actif (empilage multiplicatif D-07).
@@ -171,9 +198,14 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           }
         }
 
-        // Filtrer pour n'ecrire que les donnees de ce profil
+        // Filtrer pour n'ecrire que les donnees de ce profil.
+        // Garde anti-effacement : ne JAMAIS écrire une gami sans section profil.
+        // Si le filtre ne retrouve pas le profil (id dérivé-du-nom divergent), on
+        // retombe sur updatedProfile (points disque + xp) plutôt qu'un tableau vide
+        // qui effacerait les points sur le disque.
+        const profileSections = newData.profiles.filter((p: Profile) => p.id === profile.id);
         const singleData = {
-          profiles: newData.profiles.filter((p: Profile) => p.id === profile.id),
+          profiles: profileSections.length > 0 ? profileSections : [updatedProfile],
           history: newData.history.filter((e: any) => e.profileId === profile.id),
           activeRewards: (newData.activeRewards ?? []).filter((r: any) => r.profileId === profile.id),
           usedLoots: (newData.usedLoots ?? []).filter((u: any) => u.profileId === profile.id),

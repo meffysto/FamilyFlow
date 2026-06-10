@@ -34,6 +34,30 @@ function farmFile(profileId: string): string {
   return `farm-${profileId}.md`;
 }
 
+/**
+ * Champs ferme/mascotte : ils vivent dans farm-{id}.md mais parseFamille les
+ * réinitialise à vide. Lors d'un merge optimiste `{ ...existing, ...base }`, le
+ * spread `...base` écrase donc ces champs. Ce helper les restaure depuis
+ * `existing` (à appliquer APRÈS `...base`). Sans ça, éditer un profil (ex:
+ * changer l'avatar) vide le jardin/arbre/companion en mémoire (FAM-39).
+ */
+function preserveFarmFields(existing: Profile): Partial<Profile> {
+  return {
+    treeSpecies: existing.treeSpecies,
+    mascotDecorations: existing.mascotDecorations,
+    mascotInhabitants: existing.mascotInhabitants,
+    mascotPlacements: existing.mascotPlacements,
+    farmCrops: existing.farmCrops,
+    farmBuildings: existing.farmBuildings,
+    farmInventory: existing.farmInventory,
+    harvestInventory: existing.harvestInventory,
+    craftedItems: existing.craftedItems,
+    farmTech: existing.farmTech,
+    farmRareSeeds: existing.farmRareSeeds,
+    wearEvents: existing.wearEvents,
+  };
+}
+
 function warnUnexpected(context: string, e: unknown) {
   const msg = String(e);
   const isNotFound = msg.includes('cannot read') || msg.includes('not exist') || msg.includes('no such') || msg.includes('ENOENT');
@@ -511,6 +535,7 @@ export function useVaultProfiles(
               return {
                 ...existing,
                 ...base,
+                ...preserveFarmFields(existing),
                 points: gamiProf?.points ?? existing.points,
                 coins: gamiProf?.coins ?? gamiProf?.points ?? existing.coins,
                 level: gamiProf?.level ?? existing.level,
@@ -521,7 +546,7 @@ export function useVaultProfiles(
                 pityCounter: gamiProf?.pityCounter ?? existing.pityCounter,
               };
             }
-            return { ...existing, ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+            return { ...existing, ...base, ...preserveFarmFields(existing), points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
           });
         });
       } catch (e) {
@@ -678,7 +703,7 @@ export function useVaultProfiles(
         return parsed.map(base => {
           const existing = prev.find(p => p.id === base.id);
           if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-          return { ...existing, ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+          return { ...existing, ...base, ...preserveFarmFields(existing), points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
         });
       });
     } catch (e) {
@@ -747,7 +772,7 @@ export function useVaultProfiles(
         return parsed.map(base => {
           const existing = prev.find(p => p.id === base.id);
           if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-          return { ...existing, ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+          return { ...existing, ...base, ...preserveFarmFields(existing), points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
         });
       });
     } catch (e) { warnUnexpected('convertToBorn-optimistic', e); }
