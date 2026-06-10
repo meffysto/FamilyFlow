@@ -473,7 +473,7 @@ export default function HealthScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} translucent />
       <ScreenHeader
         title={t('health.screenTitle')}
-        subtitle={selectedEnfant ? `${selectedEnfant.avatar} ${selectedEnfant.name}` : undefined}
+        subtitle={selectedEnfant ? selectedEnfant.name : undefined}
         tint="rgba(196,162,101,0.10)"
         bottom={
           <View>

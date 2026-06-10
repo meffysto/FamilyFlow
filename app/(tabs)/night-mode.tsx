@@ -289,7 +289,7 @@ export default function NightModeScreen() {
 
   // Onglets bébés (uniquement si plusieurs)
   const babyTabs: ReadonlyArray<PillTab<string>> = useMemo(
-    () => babies.map((b) => ({ id: b.id, label: `${b.avatar} ${b.name}` })),
+    () => babies.map((b) => ({ id: b.id, label: b.name })),
     [babies],
   );
 
@@ -328,7 +328,7 @@ export default function NightModeScreen() {
       <StatusBar hidden />
 
       <ScreenHeader
-        title={babies.length === 1 ? `${selectedBaby?.avatar ?? ''} ${selectedBaby?.name ?? ''}` : (t('nightMode.title') || 'Mode nuit')}
+        title={babies.length === 1 ? `${selectedBaby?.name ?? ''}` : (t('nightMode.title') || 'Mode nuit')}
         subtitle={t('nightMode.subtitle')}
         actions={
           <TouchableOpacity

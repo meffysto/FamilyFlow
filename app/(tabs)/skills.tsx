@@ -222,7 +222,7 @@ export default function SkillsScreen() {
       <View ref={headerRef}>
         <ScreenHeader
           title={t('skillsScreen.title')}
-          subtitle={selectedChild ? `${selectedChild.avatar} ${selectedChild.name}` : undefined}
+          subtitle={selectedChild ? selectedChild.name : undefined}
           actions={
             isParent && childProfiles.length > 1 ? (
               <View style={styles.avatarRow}>

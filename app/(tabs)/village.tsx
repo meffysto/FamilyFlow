@@ -1022,7 +1022,7 @@ export default function VillageScreen() {
                               const p = profiles.find(pr => pr.id === pid);
                               return (
                                 <Text key={pid} style={[styles.historyMember, { color: colors.textMuted }]}>
-                                  {p?.avatar ?? '👤'} {p?.name ?? pid} : {count}
+                                  {p?.name ?? pid} : {count}
                                 </Text>
                               );
                             })}

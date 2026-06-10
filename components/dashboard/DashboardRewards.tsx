@@ -55,7 +55,7 @@ function DashboardRewardsInner({ isChildMode }: DashboardSectionProps) {
             <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
             <View style={styles.activeRewardInfo}>
               <Text style={[styles.activeRewardLabel, { color: colors.text }]}>
-                {ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId} — {childFriendlyLabel(reward.label, !!isChildMode, t)}
+                {ownerProfile?.name ?? reward.profileId} — {childFriendlyLabel(reward.label, !!isChildMode, t)}
               </Text>
               <Text style={[styles.activeRewardMeta, { color: typeColor }]}>
                 {childFriendlyMeta(reward, !!isChildMode, t)}

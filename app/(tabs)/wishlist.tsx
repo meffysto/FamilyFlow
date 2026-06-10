@@ -126,7 +126,7 @@ export default function WishlistScreen() {
     const names = new Set(wishlistItems.map((w) => w.profileName));
     for (const name of names) {
       const p = profiles.find((pr) => pr.name === name);
-      segs.push({ id: name, label: p ? `${p.avatar} ${name}` : name });
+      segs.push({ id: name, label: name });
     }
     return segs;
   }, [wishlistItems, profiles, t]);
@@ -528,7 +528,7 @@ export default function WishlistScreen() {
               {profiles.map((p) => (
                 <Chip
                   key={p.id}
-                  label={`${p.avatar} ${p.name}`}
+                  label={p.name}
                   selected={editProfile === p.name}
                   onPress={() => setEditProfile(p.name)}
                 />

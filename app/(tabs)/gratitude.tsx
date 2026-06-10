@@ -452,9 +452,11 @@ export default function GratitudeScreen() {
                 >
                   <View style={[styles.bookEntry, { backgroundColor: colors.card }]}>
                     <View style={styles.bookEntryHeader}>
-                      <Text style={styles.bookAvatar}>
-                        {profiles.find((p) => p.id === item.profileId)?.avatar ?? '🙏'}
-                      </Text>
+                      <AvatarIcon
+                        name={profiles.find((p) => p.id === item.profileId)?.avatar ?? 'smile'}
+                        size={28}
+                        color={colors.text}
+                      />
                       <Text style={[styles.bookName, { color: colors.text }]}>{item.profileName}</Text>
                     </View>
                     <MarkdownText style={{ color: colors.textSub }}>{item.text}</MarkdownText>

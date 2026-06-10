@@ -310,7 +310,7 @@ export default function LootScreen() {
                     <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
                     <View style={styles.activeRewardInfo}>
                       <Text style={[styles.activeRewardName, { color: colors.textSub }]}>
-                        {ownerProfile?.avatar ? `${ownerProfile.avatar} ` : ''}{ownerProfile?.name ?? reward.profileId}
+                        {ownerProfile?.name ?? reward.profileId}
                       </Text>
                       <Text style={[styles.activeRewardLabel, { color: colors.text }]}>{reward.label}</Text>
                       <Text style={[styles.activeRewardMeta, { color: colors.error }]}>

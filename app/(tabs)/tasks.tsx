@@ -1213,7 +1213,7 @@ export default function TasksScreen() {
               {profiles.map((p) => (
                 <Chip
                   key={p.id}
-                  label={`${p.avatar} ${p.name}`}
+                  label={p.name}
                   selected={newTaskAssignees.includes(p.name)}
                   onPress={() => setNewTaskAssignees((prev) =>
                     prev.includes(p.name) ? prev.filter((n) => n !== p.name) : [...prev, p.name]
@@ -1314,7 +1314,7 @@ export default function TasksScreen() {
               {profiles.map((p) => (
                 <Chip
                   key={p.id}
-                  label={`${p.avatar} ${p.name}`}
+                  label={p.name}
                   selected={editTaskAssignees.includes(p.name)}
                   onPress={() => setEditTaskAssignees((prev) =>
                     prev.includes(p.name) ? prev.filter((n) => n !== p.name) : [...prev, p.name]

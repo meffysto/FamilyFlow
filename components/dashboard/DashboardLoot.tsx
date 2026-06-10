@@ -36,8 +36,8 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
       <View style={styles.lootProgressRow}>
         <Text style={[isChildMode ? styles.lootProgressLabelChild : styles.lootProgressLabel, { color: colors.text }]}>
           {isChildMode
-            ? `${activeProfile.avatar} ${tier.emoji} ${tier.name} !`
-            : `${tier.emoji} ${tier.name} — ${activeProfile.avatar} ${activeProfile.name}`}
+            ? `${tier.emoji} ${tier.name} !`
+            : `${tier.emoji} ${tier.name} — ${activeProfile.name}`}
         </Text>
         <Text style={[styles.lootProgressPts, { color: colors.textMuted }]}>
           {t('dashboard.loot.level', { level })}

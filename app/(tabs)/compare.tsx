@@ -218,7 +218,7 @@ export default function CompareScreen() {
   const thumbKeyExtractor = useCallback((item: DateThumb) => item.date, []);
 
   const enfantTabs: ReadonlyArray<PillTab<string>> = useMemo(
-    () => enfants.map((e) => ({ id: e.id, label: `${e.avatar} ${e.name}` })),
+    () => enfants.map((e) => ({ id: e.id, label: e.name })),
     [enfants],
   );
 

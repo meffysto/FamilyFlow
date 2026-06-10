@@ -30,6 +30,7 @@ import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useStoryVoice } from '../contexts/StoryVoiceContext';
 import VoiceRecorder from '../components/stories/VoiceRecorder';
+import { AvatarIcon } from '../components/ui/AvatarIcon';
 import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { STORY_LENGTHS, STORY_LENGTH_ORDER, ELEVENLABS_FRENCH_VOICES, ELEVENLABS_ENGLISH_VOICES } from '../lib/stories';
@@ -194,7 +195,7 @@ export default function StorySettingsScreen() {
                   setSelectedChildId(child.id);
                 }}
               >
-                <Text style={styles.childAvatar}>{child.avatar}</Text>
+                <AvatarIcon name={child.avatar} size={28} color={isSelected ? '#fff' : colors.text} />
                 <Text style={[styles.childName, { color: isSelected ? '#fff' : colors.text }]}>
                   {child.name}
                 </Text>
@@ -281,7 +282,7 @@ export default function StorySettingsScreen() {
                       ]}
                       onPress={() => persist({ voiceParentId: parent.id, elevenLabsVoiceId: undefined })}
                     >
-                      <Text style={styles.childAvatar}>{parent.avatar}</Text>
+                      <AvatarIcon name={parent.avatar} size={28} color={isSelected ? '#fff' : colors.text} />
                       <Text style={[styles.choiceLabel, { color: isSelected ? '#fff' : colors.text }]}>
                         {parent.name}
                       </Text>
@@ -372,7 +373,7 @@ export default function StorySettingsScreen() {
                       ]}
                       onPress={() => persist({ voiceParentId: parent.id })}
                     >
-                      <Text style={styles.childAvatar}>{parent.avatar}</Text>
+                      <AvatarIcon name={parent.avatar} size={28} color={isSelected ? '#fff' : colors.text} />
                       <Text style={[styles.choiceLabel, { color: isSelected ? '#fff' : colors.text }]}>
                         {parent.name}
                       </Text>

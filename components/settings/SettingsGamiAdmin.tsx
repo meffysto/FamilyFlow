@@ -228,7 +228,7 @@ function ProfileCard({
       await vault.writeFile(farmPath, serializeFarmProfile(profile.name, farmData));
 
       await refresh();
-      Alert.alert('Admin', `${profile.avatar} ${profile.name} mis à jour`);
+      Alert.alert('Admin', `${profile.name} mis à jour`);
     } catch (e: any) {
       Alert.alert('Erreur', e.message ?? String(e));
     }
@@ -508,7 +508,7 @@ function ProfileCard({
                     };
                     await vault.writeFile(farmPath, serializeFarmProfile(profile.name, farmData));
                     await refresh();
-                    Alert.alert('🧪 Seed grades', `${profile.avatar} ${profile.name} — techs culture-1→5 + 5 cultures avec mix de grades (10/5/2/1)`);
+                    Alert.alert('🧪 Seed grades', `${profile.name} — techs culture-1→5 + 5 cultures avec mix de grades (10/5/2/1)`);
                   } catch (e: any) {
                     Alert.alert('Erreur', e.message ?? String(e));
                   }
