@@ -568,6 +568,38 @@ export function initializeMarketStock(): MarketStock {
   return stock;
 }
 
+/** Taux de réapprovisionnement journalier — 25% de l'écart vers le referenceStock */
+const DAILY_RESTOCK_RATE = 0.25;
+
+/**
+ * Réapprovisionnement journalier — fait dériver chaque item vers son referenceStock.
+ * Pour chaque item en dessous du referenceStock : restock += ceil(gap × 0.25), min 1.
+ * Les items au-dessus ne sont pas touchés (ventes joueurs ont monté le stock).
+ */
+export function computeDailyRestock(marketStock: MarketStock): MarketStock {
+  const newStock = { ...marketStock };
+  for (const item of MARKET_ITEMS) {
+    const current = newStock[item.itemId] ?? 0;
+    if (current < item.referenceStock) {
+      const gap = item.referenceStock - current;
+      const restock = Math.max(1, Math.ceil(gap * DAILY_RESTOCK_RATE));
+      newStock[item.itemId] = Math.min(item.referenceStock, current + restock);
+    }
+  }
+  return newStock;
+}
+
+/**
+ * Vérifie si un restock journalier est nécessaire.
+ * lastRestockDate est au format YYYY-MM-DD (ou undefined si jamais restocké).
+ */
+export function needsDailyRestock(
+  lastRestockDate: string | undefined,
+  now: Date = new Date(),
+): boolean {
+  return lastRestockDate !== formatDateYMD(now);
+}
+
 /**
  * Purge le log de transactions pour ne garder que les N plus récentes.
  */

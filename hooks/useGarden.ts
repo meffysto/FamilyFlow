@@ -47,6 +47,8 @@ import {
   transactionsRemainingToday,
   pruneTransactionLog,
   MAX_MARKET_TXN_PER_DAY,
+  computeDailyRestock,
+  needsDailyRestock,
 } from '../lib/village';
 import { parseFarmProfile, serializeFarmProfile } from '../lib/parser';
 import type {
@@ -341,6 +343,49 @@ export function useGarden(): UseGardenReturn {
     },
     [productionState, lifetimeContributions, villageTechBonuses],
   );
+
+  // ---------------------------------------------------------------------------
+  // Restock journalier du marché (FAM-35)
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    if (!vault) return;
+    // Marché non débloqué → pas de restock
+    if (!unlockedBuildings.some(b => b.buildingId === 'marche')) return;
+    if (!needsDailyRestock(gardenData.lastMarketRestock)) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const freshContent = await vault.readFile(VILLAGE_FILE).catch(() => '');
+        const freshData = parseGardenFile(freshContent);
+
+        // Double-check sur données fraîches (guard anti-boucle)
+        if (!needsDailyRestock(freshData.lastMarketRestock)) return;
+
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        const restockedStock = computeDailyRestock(freshData.marketStock ?? {});
+        const newData: VillageData = {
+          ...freshData,
+          marketStock: restockedStock,
+          lastMarketRestock: todayStr,
+        };
+
+        const newContent = serializeGardenFile(newData);
+        if (cancelled) return;
+        await vault.writeFile(VILLAGE_FILE, newContent);
+        setGardenRaw(newContent);
+      } catch (e) {
+        if (__DEV__) console.warn('useGarden — restock journalier marché:', e);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  // Dépendances intentionnellement restreintes — même pattern que l'objectif hebdo.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vault, gardenData.lastMarketRestock, unlockedBuildings]);
 
   // ---------------------------------------------------------------------------
   // Génération objectif hebdomadaire (per D-04, D-05, D-06, D-07)

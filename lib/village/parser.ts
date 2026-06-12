@@ -81,6 +81,7 @@ export function parseGardenFile(content: string): VillageData {
   const currentWeekStart = fm.current_week_start ?? '';
   const currentThemeIndex = fm.current_theme_index ? parseInt(fm.current_theme_index, 10) : 0;
   const rewardClaimed = fm.reward_claimed === 'true';
+  const lastMarketRestock = fm.last_market_restock || undefined;
 
   const contributions: VillageContribution[] = [];
   const pastWeeks: VillageWeekRecord[] = [];
@@ -275,6 +276,7 @@ export function parseGardenFile(content: string): VillageData {
     atelierTechs,
     marketStock,
     marketTransactions,
+    lastMarketRestock,
   };
 }
 
@@ -297,6 +299,7 @@ export function serializeGardenFile(data: VillageData): string {
   lines.push(`current_week_start: ${data.currentWeekStart}`);
   lines.push(`current_theme_index: ${data.currentThemeIndex}`);
   lines.push(`reward_claimed: ${data.rewardClaimed}`);
+  if (data.lastMarketRestock) lines.push(`last_market_restock: ${data.lastMarketRestock}`);
   lines.push('---');
   lines.push('');
 

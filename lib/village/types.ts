@@ -91,6 +91,7 @@ export interface VillageData {
   atelierTechs: string[];               // CSV des techs village débloquées
   marketStock: MarketStock;              // Stock du marché boursier
   marketTransactions: MarketTransaction[]; // Log des 50 dernières transactions
+  lastMarketRestock?: string;            // YYYY-MM-DD — date du dernier restock journalier
 }
 
 /** Template d'objectif hebdomadaire thematise (per D-06) */
