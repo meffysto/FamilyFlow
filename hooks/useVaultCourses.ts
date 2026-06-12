@@ -765,9 +765,10 @@ export function useVaultCourses(
           const { items: freshItems } = parseCourseList(newContent, path);
           setCourses(freshItems);
         }
-        // Mise à jour optimiste du parcours dans listes sans attendre loadListes :
-        // loadListes est fire-and-forget, son résultat arrive trop tard pour que
-        // ShoppingModeView réordonne ses sections immédiatement après la sauvegarde.
+        // Mise à jour directe du parcours dans listes (pas loadListes) :
+        // setListParcours ne modifie ni itemCount ni remainingCount, donc un
+        // loadListes serait inutile — et sur iCloud il lirait parfois l'ancien
+        // contenu (délai de coordination), écrasant le nouveau parcours.
         setListes(prev => prev.map(l => {
           if (l.id !== id) return l;
           const updated = { ...l };
@@ -778,7 +779,6 @@ export function useVaultCourses(
           }
           return updated;
         }));
-        loadListes().catch(() => {});
       } catch (e) {
         warnUnexpected('setListParcours', e);
       }
