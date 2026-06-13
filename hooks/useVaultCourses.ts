@@ -50,6 +50,10 @@ function warnUnexpected(context: string, e: unknown) {
 
 const makeTempId = () => `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+/** Égalité ordonnée de deux listes de sections (le parcours est ordonné). */
+const sameOrder = (a: string[], b: string[]): boolean =>
+  a.length === b.length && a.every((s, i) => s === b[i]);
+
 const todayLocal = (): string => {
   const d = new Date();
   const y = d.getFullYear();
@@ -99,7 +103,7 @@ export interface UseVaultCoursesResult {
     listId: string,
     items: { text: string; name: string; quantity: number | null; section: string }[],
   ) => Promise<{ added: number; merged: number }>;
-  setListParcours: (id: string, parcours: string[]) => Promise<void>;
+  setListParcours: (id: string, parcours: string[]) => Promise<boolean>;
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -119,6 +123,13 @@ export function useVaultCourses(
   useEffect(() => { coursesRef.current = courses; }, [courses]);
   useEffect(() => { listesRef.current = listes; }, [listes]);
   useEffect(() => { activeListIdRef.current = activeListId; }, [activeListId]);
+
+  // Overrides parcours locaux : le parcours qu'on vient d'écrire fait autorité
+  // tant que le disque n'a pas rattrapé. Sans ça, un loadListes() déclenché par
+  // un toggle/add/remove relit le frontmatter encore périmé (délai iCloud) et
+  // écrase le parcours fraîchement sauvegardé → l'ordre revient à l'initial.
+  // Map<listId, parcours> ; un tableau vide signifie « parcours réinitialisé ».
+  const parcoursOverridesRef = useRef<Map<string, string[]>>(new Map());
 
   // Queue d'écritures séquentielle — évite les races sur le même fichier vault.
   const writeQueueRef = useRef<Promise<unknown>>(Promise.resolve());
@@ -152,6 +163,21 @@ export function useVaultCourses(
       try {
         const content = await vm.readFile(path);
         const { meta, items } = parseCourseList(content, path);
+
+        // Parcours effectif : l'override local prime tant que le disque ne l'a
+        // pas rattrapé (délai de coordination iCloud). Dès que le disque
+        // correspond à l'override, on purge l'override (le disque fait foi).
+        const diskParcours = meta.parcours && meta.parcours.length > 0 ? meta.parcours : [];
+        const override = parcoursOverridesRef.current.get(id);
+        let effectiveParcours = diskParcours;
+        if (override !== undefined) {
+          if (sameOrder(diskParcours, override)) {
+            parcoursOverridesRef.current.delete(id);
+          } else {
+            effectiveParcours = override;
+          }
+        }
+
         parsed.push({
           id,
           nom: meta.nom,
@@ -160,7 +186,7 @@ export function useVaultCourses(
           createdAt: meta.createdAt,
           itemCount: items.length,
           remainingCount: items.filter(i => !i.completed).length,
-          ...(meta.parcours && meta.parcours.length > 0 ? { parcours: meta.parcours } : {}),
+          ...(effectiveParcours.length > 0 ? { parcours: effectiveParcours } : {}),
         });
       } catch (e) {
         warnUnexpected(`loadListes(${entry})`, e);
@@ -741,9 +767,9 @@ export function useVaultCourses(
 
   // ─── Parcours (mode magasin) ──────────────────────────────────────────────
 
-  const setListParcours = useCallback(async (id: string, parcours: string[]): Promise<void> => {
+  const setListParcours = useCallback(async (id: string, parcours: string[]): Promise<boolean> => {
     const vm = vaultRef.current;
-    if (!vm) return;
+    if (!vm) return false;
     return enqueueWrite(async () => {
       try {
         const path = pathOf(id);
@@ -756,6 +782,10 @@ export function useVaultCourses(
         };
         const newContent = serializeCourseList(newMeta, items);
         await vm.writeFile(path, newContent);
+        // Marque ce parcours comme localement autoritaire : un loadListes()
+        // ultérieur (déclenché par un toggle/add/remove) ne doit pas le réécraser
+        // avec un frontmatter encore périmé tant que l'iCloud n'a pas synchronisé.
+        parcoursOverridesRef.current.set(id, cleaned);
         // Resynchroniser courses si c'est la liste active : serializeCourseList
         // reconstruit tout le fichier (frontmatter + body), ce qui décale les
         // lineIndex de tous les items. Sans cette resync, les writes suivants
@@ -779,8 +809,10 @@ export function useVaultCourses(
           }
           return updated;
         }));
+        return true;
       } catch (e) {
         warnUnexpected('setListParcours', e);
+        return false;
       }
     });
   }, [enqueueWrite, loadListes]);

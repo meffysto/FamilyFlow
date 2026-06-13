@@ -3412,7 +3412,10 @@ export default function MealsScreen() {
           onClose={() => setShowParcoursEditor(false)}
           onSave={async (newOrder) => {
             if (activeListId) {
-              try { await setListParcours(activeListId, newOrder); } catch { /* non-critical */ }
+              try {
+                const ok = await setListParcours(activeListId, newOrder);
+                if (ok) showToast('parcours enregistré — je le suivrai la prochaine fois ✓', 'success');
+              } catch { /* non-critical */ }
             }
             setShowParcoursEditor(false);
           }}
@@ -3450,7 +3453,10 @@ export default function MealsScreen() {
           totalCount={courses.length}
           onApply={async (newOrder) => {
             if (activeListId) {
-              try { await setListParcours(activeListId, newOrder); } catch { /* non-critical */ }
+              try {
+                const ok = await setListParcours(activeListId, newOrder);
+                if (ok) showToast('c\'est noté — je connais ton parcours maintenant 🛒', 'success');
+              } catch { /* non-critical */ }
             }
             setBilanObservedOrder(null);
             setShowShoppingMode(false);
@@ -3472,7 +3478,10 @@ export default function MealsScreen() {
           onClose={() => setShowParcoursEditor(false)}
           onSave={async (newOrder) => {
             if (activeListId) {
-              try { await setListParcours(activeListId, newOrder); } catch { /* non-critical */ }
+              try {
+                const ok = await setListParcours(activeListId, newOrder);
+                if (ok) showToast('parcours enregistré — je le suivrai la prochaine fois ✓', 'success');
+              } catch { /* non-critical */ }
             }
             setShowParcoursEditor(false);
           }}

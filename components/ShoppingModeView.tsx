@@ -107,21 +107,12 @@ export function ShoppingModeView({
     return [...ordered, ...tail];
   }, [rawSections, parcours]);
 
-  const { remainingCount, nextItems, moreCount } = useMemo(() => {
+  const remainingCount = useMemo(() => {
     let remaining = 0;
-    const remainingTexts: string[] = [];
     for (const s of sections) {
-      const items = itemsBySection[s] ?? [];
-      remaining += items.length;
-      for (const it of items) {
-        if (!it.completed) remainingTexts.push(it.text);
-      }
+      remaining += (itemsBySection[s] ?? []).length;
     }
-    return {
-      remainingCount: remaining,
-      nextItems: remainingTexts.slice(0, 3),
-      moreCount: Math.max(0, remainingTexts.length - 3),
-    };
+    return remaining;
   }, [sections, itemsBySection]);
 
   // Items cochés = supprimés de la liste → comptés via undoStack
@@ -281,16 +272,20 @@ export function ShoppingModeView({
         colors={[heroTopColor, heroBottomColor]}
         style={[styles.hero, { paddingTop: insets.top + Spacing.lg }]}
       >
+        {/* Bandeau compact : nom de liste + compteur inline + fermer */}
         <View style={styles.heroRow}>
-          <View style={styles.heroTitleBlock}>
-            <Text style={[styles.eyebrow, { color: colors.textMuted }]}>
-              {allDone ? 'et voilà — tu as tout pris' : 'tu fais les courses pour'}
+          <Text
+            style={[styles.heroList, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {allDone ? 'tout pris 🎉' : listName}
+          </Text>
+          <View style={styles.heroCounter}>
+            <Text style={[styles.progressDone, { color: primary }]}>
+              {checkedCount}
             </Text>
-            <Text
-              style={[styles.heroList, { color: colors.text }]}
-              numberOfLines={1}
-            >
-              {allDone ? '🎉' : listName}
+            <Text style={[styles.progressTotal, { color: colors.textMuted }]}>
+              /{totalCount}
             </Text>
           </View>
           <TouchableOpacity
@@ -306,29 +301,6 @@ export function ShoppingModeView({
         </View>
 
         <View style={styles.progressBlock}>
-          <View style={styles.progressNumbers}>
-            <Text style={[styles.progressDone, { color: primary }]}>
-              {checkedCount}
-            </Text>
-            <Text style={[styles.progressTotal, { color: colors.textMuted }]}>
-              / {totalCount}
-            </Text>
-            {!allDone && initialTotalEstimateRef.current !== undefined &&
-              initialTotalEstimateRef.current > 0 && (() => {
-                const fmt = formatTotalEstimate ?? ((n: number) => `≈ ${Math.round(n)} €`);
-                const totalEst = initialTotalEstimateRef.current!;
-                const restEst = remainingEstimate ?? 0;
-                return (
-                  <Text
-                    style={[styles.progressEstimate, { color: colors.text }]}
-                    numberOfLines={1}
-                  >
-                    {restEst > 0 ? `${fmt(restEst)} restants · ` : ''}{fmt(totalEst)} total
-                  </Text>
-                );
-              })()}
-          </View>
-
           <View
             style={[
               styles.progressBarBg,
@@ -344,22 +316,20 @@ export function ShoppingModeView({
             />
           </View>
 
-          {!allDone && nextItems.length > 0 && (
-            <Text
-              style={[styles.caption, { color: colors.textMuted }]}
-              numberOfLines={2}
-            >
-              il te reste{' '}
-              <Text style={[styles.captionStrong, { color: colors.text }]}>
-                {nextItems.join(', ')}
-              </Text>
-              {moreCount > 0 && (
-                <Text style={{ color: colors.textFaint }}>
-                  {' '}et {moreCount} {moreCount > 1 ? 'autres' : 'autre'}
+          {!allDone && initialTotalEstimateRef.current !== undefined &&
+            initialTotalEstimateRef.current > 0 && (() => {
+              const fmt = formatTotalEstimate ?? ((n: number) => `≈ ${Math.round(n)} €`);
+              const totalEst = initialTotalEstimateRef.current!;
+              const restEst = remainingEstimate ?? 0;
+              return (
+                <Text
+                  style={[styles.progressEstimate, { color: colors.textMuted }]}
+                  numberOfLines={1}
+                >
+                  {restEst > 0 ? `${fmt(restEst)} restants · ` : ''}{fmt(totalEst)} total
                 </Text>
-              )}
-            </Text>
-          )}
+              );
+            })()}
           {totalCount === 0 && (
             <Text style={[styles.caption, { color: colors.textMuted }]}>
               la liste est vide
@@ -632,60 +602,50 @@ const styles = StyleSheet.create({
   },
   hero: {
     paddingHorizontal: Spacing['2xl'],
-    paddingBottom: Spacing['2xl'],
+    paddingBottom: Spacing.lg,
   },
   heroRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: Spacing.md,
   },
-  heroTitleBlock: {
-    flex: 1,
-    paddingTop: 2,
-  },
-  eyebrow: {
-    fontFamily: FontFamily.handwrite,
-    fontSize: 18,
-    lineHeight: 18,
-    marginBottom: 2,
-  },
   heroList: {
+    flex: 1,
     fontFamily: FontFamily.serif,
-    fontSize: 28,
-    lineHeight: 32,
+    fontSize: 20,
+    lineHeight: 24,
+  },
+  heroCounter: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
   },
   heroClose: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressBlock: {
-    marginTop: Spacing.lg,
-  },
-  progressNumbers: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: Spacing.md,
+    marginTop: Spacing.md,
   },
   progressDone: {
     fontFamily: FontFamily.serif,
-    fontSize: 56,
-    lineHeight: 56,
+    fontSize: 30,
+    lineHeight: 32,
   },
   progressTotal: {
     fontFamily: FontFamily.serif,
-    fontSize: 28,
-    marginLeft: 8,
+    fontSize: 18,
+    marginLeft: 1,
   },
   progressEstimate: {
-    marginLeft: 'auto',
+    marginTop: 6,
     fontFamily: FontFamily.handwrite,
-    fontSize: 20,
+    fontSize: 16,
   },
   progressBarBg: {
-    height: 10,
+    height: 8,
     borderRadius: 999,
     overflow: 'hidden',
   },
@@ -698,9 +658,6 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.handwrite,
     fontSize: 19,
     lineHeight: 22,
-  },
-  captionStrong: {
-    fontFamily: FontFamily.handwriteSemibold,
   },
   undoBtn: {
     marginTop: Spacing.md,
