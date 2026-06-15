@@ -129,6 +129,7 @@ export interface Profile {
   growthSprintUntil?: string;       // ISO datetime — EFFECTS-05 : -1 task/stage temporaire
   wearEvents?: import('./mascot/wear-engine').WearEvent[];          // Evenements d'usure ferme
   companion?: import('./mascot/companion-types').CompanionData | null; // Compagnon actif du profil
+  companionHouse?: import('./mascot/companion-house-types').CompanionHouseData | null; // Meublage maison du compagnon
   giftHistory?: string;       // CSV historique cadeaux (pipe-separe, 10 derniers)
   giftsSentToday?: string;    // Anti-abus format "count|YYYY-MM-DD"
   foodAllergies?: string[];      // PREF-02 : IDs canoniques EU_ALLERGENS ou texte libre
@@ -657,6 +658,7 @@ export interface FarmProfileData {
   farmRareSeeds?: import('../lib/mascot/types').RareSeedInventory;
   wearEvents?: import('./mascot/wear-engine').WearEvent[];
   companion?: import('./mascot/companion-types').CompanionData | null;
+  companionHouse?: import('./mascot/companion-house-types').CompanionHouseData | null;
   giftHistory?: string; // CSV pipe-separe des 10 derniers echanges
   giftsSentToday?: string; // format "count|YYYY-MM-DD" anti-abus
   // Phase 20 — bonus temporels effets semantiques
