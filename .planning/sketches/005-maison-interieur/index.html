@@ -106,6 +106,13 @@
   .roomReal .room-hint { background: linear-gradient(180deg, transparent, rgba(26,16,10,.55)); color: var(--brand-miel); }
   .roomReal .room-hint b { color: #fff; }
 
+  /* ================= sprite images (real assets) ================= */
+  .cat-img  { width: 54px; height: 54px; object-fit: contain; }
+  .slot-img { width: 64px; height: 64px; object-fit: contain; pointer-events: none; }
+  .furn-img { width: 70px; height: 70px; object-fit: contain; display: block; pointer-events: none; }
+  .pet-img  { width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+  .furn .del { z-index: 2; }
+
   /* ================= VARIANT L — free placement ================= */
   .shop-fab {
     position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
@@ -303,7 +310,7 @@
         <span class="mood-label" id="moodLabL">Content</span>
       </div>
       <div class="roomReal" id="roomL">
-        <div class="petR" id="petL" style="left:50%;top:57%">🐶</div>
+        <div class="petR" id="petL" style="left:50%;top:57%"><img src="assets/chien.png" class="pet-img" alt="" draggable="false"></div>
         <div class="room-hint" id="hintL">Ouvre la <b>boutique</b> et pose des meubles où tu veux</div>
         <div class="shop-fab" onclick="openCat('L',null,null)">🛒 Boutique</div>
       </div>
@@ -428,13 +435,14 @@
 <script>
   // ---------- shared state ----------
   const CATALOG = [
-    { id: 'tapis',   ico: '🟫', nm: 'Tapis tressé',  price: 40 },
-    { id: 'coussin', ico: '🛋️', nm: 'Coussin douillet', price: 55 },
-    { id: 'plante',  ico: '🪴', nm: 'Plante verte',  price: 60 },
-    { id: 'lampe',   ico: '💡', nm: 'Lampe chaude',   price: 70 },
-    { id: 'tableau', ico: '🖼️', nm: 'Petit tableau',  price: 85 },
-    { id: 'gamelle', ico: '🥣', nm: 'Gamelle deluxe', price: 95 },
+    { id: 'tapis',   img: 'assets/tapis.png',   nm: 'Tapis tressé',    price: 40 },
+    { id: 'coussin', img: 'assets/coussin.png', nm: 'Coussin douillet', price: 55 },
+    { id: 'plante',  img: 'assets/plante.png',  nm: 'Plante verte',    price: 60 },
+    { id: 'lampe',   img: 'assets/lampe.png',   nm: 'Lampe chaude',     price: 70 },
+    { id: 'tableau', img: 'assets/tableau.png', nm: 'Petit tableau',    price: 85 },
+    { id: 'gamelle', img: 'assets/gamelle.png', nm: 'Gamelle deluxe',   price: 95 },
   ];
+  const iconHTML = (item, cls) => `<img src="${item.img}" class="${cls||''}" alt="" draggable="false">`;
   const MOODS = [
     { min: 0, label: 'Tout seul', pet: '🐶', fill: 18 },
     { min: 1, label: 'Content',   pet: '🐶', fill: 42 },
@@ -470,7 +478,7 @@
     document.getElementById('mood'+v).style.width = m.fill+'%';
     document.getElementById('moodLab'+v).textContent = m.label;
     const pet = document.getElementById('pet'+v);
-    pet.textContent = m.pet;
+    if (v !== 'L') pet.textContent = m.pet;   // L uses the real dog sprite, keep it
     pet.classList.add('happy');
     setTimeout(()=>pet.classList.remove('happy'), 1100);
     // mini pet in mood strip
@@ -495,7 +503,7 @@
       const cant = !owned && state.leaves < item.price;
       const div = document.createElement('div');
       div.className = 'cat-item' + (owned?' owned':'') + (cant?' cant':'');
-      div.innerHTML = `<span class="ico">${item.ico}</span>
+      div.innerHTML = `<span class="ico">${iconHTML(item,'cat-img')}</span>
         <span class="nm">${item.nm}</span>
         <span class="price">🍃 ${item.price}</span>
         <span class="buy-tag">${owned?'Déjà posé':(cant?'Trop cher':'Acheter')}</span>`;
@@ -520,7 +528,7 @@
     } else {
       state.slots[v][slotId] = item.id;
       el.classList.remove('empty'); el.classList.add('filled');
-      el.textContent = item.ico;
+      el.innerHTML = iconHTML(item, 'slot-img');
       syncMood(v); closeCat(v); popHearts(el);
     }
   }
@@ -530,7 +538,7 @@
     const room = document.getElementById('roomL');
     const f = document.createElement('div');
     f.className = 'furn spawn-pop';
-    f.textContent = item.ico;
+    f.innerHTML = iconHTML(item, 'furn-img');
     // spawn slightly randomised near centre so stacked buys don't overlap perfectly
     const jx = 38 + Math.round((state.placedFree % 5) * 9 - 18);
     const jy = 42 + Math.round((Math.floor(state.placedFree/5) % 4) * 7 - 10);
