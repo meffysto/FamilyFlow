@@ -9,8 +9,14 @@ import {
   parsePlacedFurniture,
   serializePlacedFurniture,
   parseCompanionHouse,
-  serializeCompanionHouse,
+  serializeCompanionHouseLines,
+  canUnlockCompanionHouse,
+  canBuyFurniture,
+  placeFurniture,
+  moveFurniture,
+  removeFurniture,
 } from '../mascot/companion-house-engine';
+import { COMPANION_HOUSE_UNLOCK_COST } from '../mascot/companion-house-types';
 import type { PlacedFurniture } from '../mascot/companion-house-types';
 
 describe('companion-house-engine', () => {
@@ -79,20 +85,76 @@ describe('companion-house-engine', () => {
     });
   });
 
-  describe('parseCompanionHouse / serializeCompanionHouse', () => {
-    it('renvoie null si aucun meuble', () => {
-      expect(parseCompanionHouse(undefined)).toBeNull();
-      expect(parseCompanionHouse('')).toBeNull();
+  describe('parseCompanionHouse / serializeCompanionHouseLines', () => {
+    it('renvoie null si ni débloquée ni meublée', () => {
+      expect(parseCompanionHouse({})).toBeNull();
+      expect(parseCompanionHouse({ unlocked: 'false', furniture: '' })).toBeNull();
     });
 
-    it('roundtrip avec meubles', () => {
+    it('débloquée mais vide → état présent, pièce vide', () => {
+      const r = parseCompanionHouse({ unlocked: 'true', unlockedAt: '2026-06-16T09:00:00Z' });
+      expect(r).toEqual({ unlocked: true, unlockedAt: '2026-06-16T09:00:00Z', placedFurniture: [] });
+    });
+
+    it('meublée sans flag unlock reste exploitable (unlocked=false)', () => {
+      const r = parseCompanionHouse({ furniture: 'tapis:0.1:0.1:2026-06-15' });
+      expect(r?.unlocked).toBe(false);
+      expect(r?.placedFurniture).toHaveLength(1);
+    });
+
+    it('roundtrip lignes frontmatter', () => {
       const data = {
-        placedFurniture: [
-          { furnitureId: 'tapis', x: 0.15, y: 0.25, placedAt: '2026-06-15T10:00:00Z' },
-        ],
+        unlocked: true,
+        unlockedAt: '2026-06-16T09:00:00Z',
+        placedFurniture: [{ furnitureId: 'tapis', x: 0.15, y: 0.25, placedAt: '2026-06-15T10:00:00Z' }],
       };
-      const csv = serializeCompanionHouse(data);
-      expect(parseCompanionHouse(csv)).toEqual(data);
+      const lines = serializeCompanionHouseLines(data);
+      expect(lines).toEqual([
+        'companion_house_unlocked: true',
+        'companion_house_unlocked_at: 2026-06-16T09:00:00Z',
+        'companion_house: tapis:0.1500:0.2500:2026-06-15T10:00:00Z',
+      ]);
+      // reparse depuis les valeurs des lignes
+      const reparsed = parseCompanionHouse({
+        unlocked: 'true',
+        unlockedAt: '2026-06-16T09:00:00Z',
+        furniture: 'tapis:0.1500:0.2500:2026-06-15T10:00:00Z',
+      });
+      expect(reparsed).toEqual(data);
+    });
+  });
+
+  describe('helpers achat (façon marché)', () => {
+    it('canUnlockCompanionHouse : solde, anti-rejeu', () => {
+      expect(canUnlockCompanionHouse(COMPANION_HOUSE_UNLOCK_COST, false).ok).toBe(true);
+      expect(canUnlockCompanionHouse(COMPANION_HOUSE_UNLOCK_COST - 1, false).ok).toBe(false);
+      expect(canUnlockCompanionHouse(COMPANION_HOUSE_UNLOCK_COST, true).reason).toMatch(/déjà/);
+    });
+
+    it('canBuyFurniture : solde + meuble inconnu', () => {
+      expect(canBuyFurniture('tapis', 40)).toEqual({ ok: true, cost: 40 });
+      expect(canBuyFurniture('tapis', 39).ok).toBe(false);
+      expect(canBuyFurniture('inconnu', 999).ok).toBe(false);
+    });
+  });
+
+  describe('helpers placement (pur)', () => {
+    const base: PlacedFurniture[] = [{ furnitureId: 'tapis', x: 0.2, y: 0.2, placedAt: '2026-06-15' }];
+
+    it('placeFurniture ajoute + clampe', () => {
+      const r = placeFurniture(base, 'plante', 1.5, -0.5, '2026-06-16');
+      expect(r).toHaveLength(2);
+      expect(r[1]).toEqual({ furnitureId: 'plante', x: 1, y: 0, placedAt: '2026-06-16' });
+    });
+
+    it('moveFurniture déplace par index + clampe, no-op si invalide', () => {
+      expect(moveFurniture(base, 0, 0.9, 0.9)[0]).toMatchObject({ x: 0.9, y: 0.9 });
+      expect(moveFurniture(base, 5, 0.1, 0.1)).toBe(base);
+    });
+
+    it('removeFurniture retire par index, no-op si invalide', () => {
+      expect(removeFurniture(base, 0)).toHaveLength(0);
+      expect(removeFurniture(base, 9)).toBe(base);
     });
   });
 });

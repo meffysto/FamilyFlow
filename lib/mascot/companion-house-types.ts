@@ -14,8 +14,14 @@ export interface PlacedFurniture {
   placedAt: string;    // ISO datetime du placement
 }
 
-/** État du meublage. Identité d'une instance = son index dans la liste (runtime). */
+/**
+ * État de la maison du compagnon.
+ * `unlocked` = déblocage one-shot payé (100k 🍃). Identité d'une instance de meuble
+ * = son index dans `placedFurniture` (runtime).
+ */
 export interface CompanionHouseData {
+  unlocked: boolean;
+  unlockedAt?: string;          // ISO datetime du déblocage
   placedFurniture: PlacedFurniture[];
 }
 
