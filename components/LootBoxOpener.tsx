@@ -39,6 +39,7 @@ import * as Haptics from 'expo-haptics';
 import { LootBox, ProfileTheme } from '../lib/types';
 import { RARITY_COLORS, RARITY_EMOJIS, getRarityLabel, SEASONAL_EVENTS } from '../lib/gamification';
 import { getTheme } from '../constants/themes';
+import { AvatarIcon } from './ui/AvatarIcon';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -703,9 +704,10 @@ export function LootBoxOpener({
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.profileInfo}>
-            {profileAvatar} {profileName}
-          </Text>
+          <View style={styles.profileInfoRow}>
+            <AvatarIcon name={profileAvatar} color="#FFFFFF" size={32} />
+            <Text style={styles.profileInfo}>{profileName}</Text>
+          </View>
           <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Text style={[styles.closeBtn, { color: textFaint }]}>✕</Text>
           </TouchableOpacity>
@@ -948,6 +950,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: 40,
+  },
+  profileInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   profileInfo: {
     fontSize: FontSize.heading,
