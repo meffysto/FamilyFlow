@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useFarmTheme } from '../../constants/farm-theme';
 import { FURNITURE_CATALOG, COMPANION_HOUSE_UNLOCK_COST, type PlacedFurniture } from '../../lib/mascot/companion-house-types';
 import { unlockCompanionHouse, buyAndPlaceFurniture, saveFurnitureLayout, debugForceUnlock } from '../../lib/mascot/companion-house-actions';
 import { DraggableFurniture } from '../../components/companion-house/DraggableFurniture';
@@ -35,6 +37,7 @@ export default function CompanionHouseRoute() {
   const profileId = typeof params.profileId === 'string' ? params.profileId : '';
   const { profiles, vault, refreshGamification, refreshFarm, isLoading } = useVault();
   const { colors, primary, isDark } = useThemeColors();
+  const { farm } = useFarmTheme();
   const insets = useSafeAreaInsets();
 
   const [busy, setBusy] = useState(false);
@@ -159,9 +162,12 @@ export default function CompanionHouseRoute() {
 
   return (
     <View style={styles.flex}>
+      <StatusBar style="light" />
       <ImageBackground source={ROOM_BG} style={styles.flex} resizeMode="cover">
+        {/* Voile sombre en haut → lisibilité horloge/réseau + barre */}
+        <View style={[styles.topScrim, { height: insets.top + 56 }]} pointerEvents="none" />
         {/* Barre haute : retour + titre + portefeuille */}
-        <View style={[styles.topbar, { paddingTop: insets.top + 8 }]}>
+        <View style={[styles.topbar, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Retour">
             <Text style={styles.backChevron}>‹</Text>
           </TouchableOpacity>
@@ -209,29 +215,31 @@ export default function CompanionHouseRoute() {
         {/* Mur de déblocage si verrouillée */}
         {!unlocked && (
           <View style={styles.lockOverlay}>
-            <View style={styles.lockCard}>
+            <View style={[styles.lockFrame, { backgroundColor: farm.woodDark }]}>
+             <View style={[styles.lockCard, { backgroundColor: farm.parchment, borderColor: farm.woodHighlight }]}>
               <Text style={styles.lockEmoji}>🏡</Text>
-              <Text style={styles.lockTitle}>La maison du compagnon</Text>
-              <Text style={styles.lockBody}>
+              <Text style={[styles.lockTitle, { color: farm.brownText, textShadowColor: farm.textEmboss }]}>La maison du compagnon</Text>
+              <Text style={[styles.lockBody, { color: farm.brownTextSub }]}>
                 Offre un chez-lui à ton compagnon, puis décore-le comme tu veux.
               </Text>
               <TouchableOpacity
-                style={[styles.unlockBtn, (busy || coins < COMPANION_HOUSE_UNLOCK_COST) && styles.btnDisabled]}
+                style={[styles.unlockBtn, { backgroundColor: farm.greenBtn, borderBottomColor: farm.greenBtnShadow }, (busy || coins < COMPANION_HOUSE_UNLOCK_COST) && styles.btnDisabled]}
                 onPress={handleUnlock}
                 disabled={busy || coins < COMPANION_HOUSE_UNLOCK_COST}
               >
                 {busy
-                  ? <ActivityIndicator color="#6B4226" />
+                  ? <ActivityIndicator color="#FFFFFF" />
                   : <Text style={styles.unlockBtnText}>Débloquer · {COMPANION_HOUSE_UNLOCK_COST.toLocaleString('fr-FR')} 🍃</Text>}
               </TouchableOpacity>
               {coins < COMPANION_HOUSE_UNLOCK_COST && (
-                <Text style={styles.lockHint}>Encore {(COMPANION_HOUSE_UNLOCK_COST - coins).toLocaleString('fr-FR')} 🍃 à récolter</Text>
+                <Text style={[styles.lockHint, { color: farm.brownTextSub }]}>Encore {(COMPANION_HOUSE_UNLOCK_COST - coins).toLocaleString('fr-FR')} 🍃 à récolter</Text>
               )}
               {__DEV__ && (
                 <TouchableOpacity style={styles.debugBtn} onPress={handleDebugUnlock} disabled={busy}>
                   <Text style={styles.debugBtnText}>🛠 Débloquer (debug, gratuit)</Text>
                 </TouchableOpacity>
               )}
+             </View>
             </View>
           </View>
         )}
@@ -250,27 +258,31 @@ export default function CompanionHouseRoute() {
       {/* Boutique mobilier */}
       <Modal visible={shopOpen} transparent animationType="slide" onRequestClose={() => setShopOpen(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setShopOpen(false)}>
-          <Pressable style={styles.sheet} onPress={() => {}}>
-            <View style={styles.grip} />
-            <Text style={styles.sheetTitle}>Boutique mobilier</Text>
-            <Text style={styles.sheetSub}>Achète, recommence — paie en feuilles 🍃</Text>
-            <ScrollView contentContainerStyle={styles.shopGrid}>
-              {FURNITURE_CATALOG.map(item => {
-                const canAfford = coins >= item.cost;
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[styles.shopItem, !canAfford && styles.btnDisabled]}
-                    disabled={!canAfford || busy}
-                    onPress={() => handleBuy(item.id)}
-                  >
-                    <Image source={FURNITURE_SPRITES[item.id]} style={styles.shopItemImg} />
-                    <Text style={styles.shopPrice}>🍃 {item.cost}</Text>
-                    <Text style={styles.shopTag}>{canAfford ? 'Acheter' : 'Trop cher'}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+          <Pressable style={[styles.woodFrame, { backgroundColor: farm.woodDark }]} onPress={() => {}}>
+            <View style={[styles.sheet, { backgroundColor: farm.parchment, borderColor: farm.woodHighlight }]}>
+              <View style={[styles.grip, { backgroundColor: farm.woodHighlight }]} />
+              <Text style={[styles.sheetTitle, { color: farm.brownText, textShadowColor: farm.textEmboss }]}>Boutique mobilier</Text>
+              <Text style={[styles.sheetSub, { color: farm.brownTextSub }]}>Achète, recommence — paie en feuilles 🍃</Text>
+              <ScrollView contentContainerStyle={styles.shopGrid}>
+                {FURNITURE_CATALOG.map(item => {
+                  const canAfford = coins >= item.cost;
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.shopItem, { backgroundColor: farm.parchmentDark, borderColor: farm.woodHighlight }, !canAfford && styles.btnDisabled]}
+                      disabled={!canAfford || busy}
+                      onPress={() => handleBuy(item.id)}
+                    >
+                      <Image source={FURNITURE_SPRITES[item.id]} style={styles.shopItemImg} />
+                      <Text style={[styles.shopPrice, { color: farm.brownText }]}>🍃 {item.cost}</Text>
+                      <Text style={[styles.shopTag, { backgroundColor: canAfford ? farm.greenBtn : 'transparent', color: canAfford ? '#FFFFFF' : farm.brownTextSub }]}>
+                        {canAfford ? 'Acheter' : 'Trop cher'}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
           </Pressable>
         </Pressable>
       </Modal>
@@ -288,30 +300,33 @@ const styles = StyleSheet.create({
   wallet: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(232,200,88,0.22)', borderColor: 'rgba(232,200,88,0.6)', borderWidth: 1, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5 },
   walletLeaf: { fontSize: 14 },
   walletVal: { color: '#FFE9A8', fontWeight: '800', fontSize: 14 },
+  topScrim: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'rgba(26,16,10,0.32)' },
   room: { ...StyleSheet.absoluteFillObject },
   pet: { position: 'absolute', width: 96, height: 96, marginLeft: -48, marginTop: -48, resizeMode: 'contain' },
   furn: { position: 'absolute', width: FURN_SIZE, height: FURN_SIZE, marginLeft: -FURN_SIZE / 2, marginTop: -FURN_SIZE / 2, resizeMode: 'contain' },
   lockOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(26,16,10,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  lockCard: { backgroundColor: '#FFF8EC', borderRadius: 18, padding: 22, alignItems: 'center', width: '100%', maxWidth: 340 },
+  lockFrame: { borderRadius: 22, padding: 5, width: '100%', maxWidth: 348, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 10 },
+  lockCard: { borderRadius: 18, borderWidth: 2, padding: 22, alignItems: 'center' },
   lockEmoji: { fontSize: 44, marginBottom: 6 },
-  lockTitle: { fontSize: 19, fontWeight: '800', color: '#2A1810', marginBottom: 6 },
-  lockBody: { fontSize: 13.5, color: '#6B4226', textAlign: 'center', lineHeight: 19, marginBottom: 18 },
-  unlockBtn: { backgroundColor: '#E8C858', borderRadius: 999, paddingVertical: 13, paddingHorizontal: 24, minWidth: 220, alignItems: 'center' },
-  unlockBtnText: { color: '#6B4226', fontWeight: '800', fontSize: 15 },
+  lockTitle: { fontSize: 19, fontWeight: '800', marginBottom: 6, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 0 },
+  lockBody: { fontSize: 13.5, textAlign: 'center', lineHeight: 19, marginBottom: 18 },
+  unlockBtn: { borderRadius: 999, paddingVertical: 13, paddingHorizontal: 24, minWidth: 220, alignItems: 'center', borderBottomWidth: 3 },
+  unlockBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15, textShadowColor: 'rgba(0,0,0,0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 0 },
   btnDisabled: { opacity: 0.5 },
-  lockHint: { marginTop: 12, fontSize: 12, color: '#A0784C' },
+  lockHint: { marginTop: 12, fontSize: 12 },
   debugBtn: { marginTop: 14, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1, borderColor: '#C84A4A', borderStyle: 'dashed' },
   debugBtnText: { color: '#C84A4A', fontSize: 12, fontWeight: '700' },
   shopFab: { position: 'absolute', alignSelf: 'center', backgroundColor: '#E8C858', borderColor: '#fff', borderWidth: 2, borderRadius: 999, paddingVertical: 11, paddingHorizontal: 24 },
   shopFabText: { color: '#6B4226', fontWeight: '800', fontSize: 14 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(26,16,10,0.45)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#FFF8EC', borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 16, paddingBottom: 30, maxHeight: '72%' },
-  grip: { width: 38, height: 4, borderRadius: 2, backgroundColor: 'rgba(107,66,38,0.3)', alignSelf: 'center', marginBottom: 14 },
-  sheetTitle: { fontSize: 18, fontWeight: '800', color: '#2A1810' },
-  sheetSub: { fontSize: 12.5, color: '#6B4226', marginBottom: 14 },
+  woodFrame: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 5, maxHeight: '78%', overflow: 'hidden' },
+  sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: 2, borderBottomWidth: 0, padding: 16, paddingBottom: 30 },
+  grip: { width: 38, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 14 },
+  sheetTitle: { fontSize: 18, fontWeight: '800', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 0 },
+  sheetSub: { fontSize: 12.5, marginBottom: 14 },
   shopGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' },
-  shopItem: { width: '31%', backgroundColor: '#fff', borderRadius: 12, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(107,66,38,0.12)' },
+  shopItem: { width: '31%', borderRadius: 12, padding: 10, alignItems: 'center', borderWidth: 1 },
   shopItemImg: { width: 48, height: 48, resizeMode: 'contain', marginBottom: 6 },
-  shopPrice: { fontSize: 12.5, fontWeight: '800', color: '#C49A4A' },
-  shopTag: { marginTop: 4, fontSize: 10, fontWeight: '700', color: '#6B4226', backgroundColor: '#E8C858', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, overflow: 'hidden' },
+  shopPrice: { fontSize: 12.5, fontWeight: '800' },
+  shopTag: { marginTop: 4, fontSize: 10, fontWeight: '700', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, overflow: 'hidden' },
 });
