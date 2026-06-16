@@ -1,4 +1,50 @@
 {
+  "companionHouse": {
+    "titleWith": "Chez {{name}}",
+    "titleDefault": "ton compagnon",
+    "back": "Retour",
+    "profileNotFound": "Profil introuvable",
+    "unlock": {
+      "title": "La maison du compagnon",
+      "body": "Offre un chez-lui à ton compagnon, puis décore-le comme tu veux.",
+      "button": "Débloquer · {{cost}} 🍃",
+      "hint": "Encore {{remaining}} 🍃 à récolter",
+      "debug": "🛠 Débloquer (debug, gratuit)"
+    },
+    "shop": {
+      "open": "🛒 Boutique",
+      "title": "Boutique mobilier",
+      "sub": "Achète, recommence — paie en feuilles 🍃"
+    },
+    "errors": {
+      "insufficientTitle": "Feuilles insuffisantes",
+      "insufficientBody": "Il te faut {{cost}} 🍃 pour débloquer la maison.",
+      "oops": "Oups",
+      "buyFail": "Achat impossible"
+    },
+    "category": {
+      "sol": "Sol", "meuble": "Meubles", "mur": "Mur", "lumiere": "Lumière",
+      "compagnon": "Compagnon", "nature": "Nature", "lecture": "Lecture",
+      "jeux": "Jeux", "fete": "Fête & saisons", "prestige": "Prestige"
+    },
+    "furniture": {
+      "tapis": "Tapis", "coussin": "Coussin", "tapis_motif": "Tapis à motifs",
+      "pouf": "Pouf", "panier_couchage": "Panier couchage", "table_basse": "Table basse",
+      "banc_bois": "Banc en bois", "coffre": "Coffre", "etagere": "Étagère",
+      "commode": "Commode", "fauteuil": "Fauteuil", "cadre_photo": "Cadre photo",
+      "tableau": "Tableau", "fanion_guirlande": "Guirlande fanions", "horloge": "Horloge",
+      "etagere_murale": "Étagère murale", "miroir": "Miroir", "lampe": "Lampe",
+      "bougies": "Bougies", "applique": "Applique", "lampadaire": "Lampadaire",
+      "cheminee": "Cheminée", "jouet_balle": "Balle", "gamelle": "Gamelle",
+      "griffoir": "Griffoir", "niche_mini": "Niche", "arbre_a_chat": "Arbre à chat",
+      "plante": "Plante", "bouquet": "Bouquet", "grande_plante": "Grande plante",
+      "terrarium": "Terrarium", "pile_livres": "Pile de livres", "lampe_lecture": "Lampe de lecture",
+      "fauteuil_lecture": "Fauteuil lecture", "cubes": "Cubes", "tapis_jeu": "Tapis de jeu",
+      "petite_console": "Petite console", "guirlande_lumineuse": "Guirlande lumineuse",
+      "citrouille": "Citrouille", "sapin_mini": "Sapin de Noël", "coussin_etoile": "Coussin étoilé",
+      "lanterne_magique": "Lanterne magique", "statue_licorne": "Statue licorne"
+    }
+  },
   "errorBoundary": {
     "title": "Oups, quelque chose a planté",
     "unknown": "Erreur inconnue",

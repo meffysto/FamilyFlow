@@ -1,4 +1,50 @@
 {
+  "companionHouse": {
+    "titleWith": "{{name}}'s home",
+    "titleDefault": "your companion",
+    "back": "Back",
+    "profileNotFound": "Profile not found",
+    "unlock": {
+      "title": "The companion's house",
+      "body": "Give your companion a home, then decorate it however you like.",
+      "button": "Unlock · {{cost}} 🍃",
+      "hint": "{{remaining}} 🍃 left to collect",
+      "debug": "🛠 Unlock (debug, free)"
+    },
+    "shop": {
+      "open": "🛒 Shop",
+      "title": "Furniture shop",
+      "sub": "Buy, repeat — pay in leaves 🍃"
+    },
+    "errors": {
+      "insufficientTitle": "Not enough leaves",
+      "insufficientBody": "You need {{cost}} 🍃 to unlock the house.",
+      "oops": "Oops",
+      "buyFail": "Purchase failed"
+    },
+    "category": {
+      "sol": "Floor", "meuble": "Furniture", "mur": "Wall", "lumiere": "Lighting",
+      "compagnon": "Companion", "nature": "Nature", "lecture": "Reading",
+      "jeux": "Games", "fete": "Festive", "prestige": "Prestige"
+    },
+    "furniture": {
+      "tapis": "Rug", "coussin": "Cushion", "tapis_motif": "Patterned rug",
+      "pouf": "Pouf", "panier_couchage": "Pet bed", "table_basse": "Coffee table",
+      "banc_bois": "Wooden bench", "coffre": "Chest", "etagere": "Bookshelf",
+      "commode": "Dresser", "fauteuil": "Armchair", "cadre_photo": "Photo frame",
+      "tableau": "Painting", "fanion_guirlande": "Bunting", "horloge": "Clock",
+      "etagere_murale": "Wall shelf", "miroir": "Mirror", "lampe": "Lamp",
+      "bougies": "Candles", "applique": "Wall sconce", "lampadaire": "Floor lamp",
+      "cheminee": "Fireplace", "jouet_balle": "Ball toy", "gamelle": "Food bowl",
+      "griffoir": "Scratching post", "niche_mini": "Kennel", "arbre_a_chat": "Cat tree",
+      "plante": "Plant", "bouquet": "Bouquet", "grande_plante": "Large plant",
+      "terrarium": "Terrarium", "pile_livres": "Stack of books", "lampe_lecture": "Reading lamp",
+      "fauteuil_lecture": "Reading armchair", "cubes": "Blocks", "tapis_jeu": "Play mat",
+      "petite_console": "Game console", "guirlande_lumineuse": "Fairy lights",
+      "citrouille": "Pumpkin", "sapin_mini": "Christmas tree", "coussin_etoile": "Star cushion",
+      "lanterne_magique": "Magic lantern", "statue_licorne": "Unicorn statue"
+    }
+  },
   "errorBoundary": {
     "title": "Oops, something crashed",
     "unknown": "Unknown error",
