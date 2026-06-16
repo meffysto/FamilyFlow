@@ -46,6 +46,7 @@ import { TileMapRenderer, VILLAGE_GRASS_TILE_IMAGE } from '../../components/masc
 import { LiquidXPBar } from '../../components/ui/LiquidXPBar';
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
 import { ReactiveAvatar } from '../../components/ui/ReactiveAvatar';
+import { AvatarIcon } from '../../components/ui/AvatarIcon';
 import { getTheme } from '../../constants/themes';
 import { getCurrentSeason } from '../../lib/mascot/seasons';
 import { pickSeasonalActivity } from '../../lib/village/activities';
@@ -298,11 +299,13 @@ const CraftFeedItem = React.memo(function CraftFeedItem({
   craft,
   profileName,
   profileEmoji,
+  profileColor,
   colors,
 }: {
   craft: VillageAtelierCraft;
   profileName: string;
   profileEmoji: string;
+  profileColor: string;
   colors: ColorsType;
 }) {
   const recipe = VILLAGE_RECIPES.find(r => r.id === craft.recipeId);
@@ -310,7 +313,7 @@ const CraftFeedItem = React.memo(function CraftFeedItem({
   const xp = recipe?.xpBonus ?? 0;
   return (
     <View style={[styles.feedItem, styles.craftFeedItem, { borderBottomColor: colors.borderLight }]}>
-      <Text style={styles.feedEmoji}>{profileEmoji}</Text>
+      <AvatarIcon name={profileEmoji} color={profileColor} size={28} />
       <View style={styles.feedContent}>
         <Text style={[styles.feedName, { color: colors.text }]} numberOfLines={1}>
           {profileName}
@@ -928,12 +931,14 @@ export default function VillageScreen() {
                     const profile = profiles.find(p => p.id === profileId);
                     const name = profile?.name ?? profileId;
                     const emoji = profile?.avatar ?? '👤';
+                    const avatarColor = profile ? getTheme(profile.theme).primary : colors.textMuted;
                     return (
                       <CraftFeedItem
                         key={`craft-${item.timestamp}-${idx}`}
                         craft={item.data as VillageAtelierCraft}
                         profileName={name}
                         profileEmoji={emoji}
+                        profileColor={avatarColor}
                         colors={colors}
                       />
                     );

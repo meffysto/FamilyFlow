@@ -29,6 +29,8 @@ import { Clock, Lightbulb, Settings as SettingsIcon, Zap } from 'lucide-react-na
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useVault } from '../../contexts/VaultContext';
 import { SectionHeader } from '../ui/SectionHeader';
+import { AvatarIcon } from '../ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -477,9 +479,12 @@ export function SettingsLightning() {
               const entry = formMembers[p.id] ?? { invoiceKey: '', adminKey: '' };
               return (
                 <View key={p.id} style={{ marginTop: Spacing.md, gap: Spacing.xs }}>
-                  <Text style={[styles.memberLabel, { color: colors.text }]}>
-                    {p.avatar} {p.name}
-                  </Text>
+                  <View style={styles.memberLabelRow}>
+                    <AvatarIcon name={p.avatar} color={getTheme(p.theme).primary} size={24} />
+                    <Text style={[styles.memberLabel, { color: colors.text }]}>
+                      {p.name}
+                    </Text>
+                  </View>
                   <TextInput
                     style={[
                       styles.fieldInput,
@@ -833,6 +838,11 @@ const styles = StyleSheet.create({
   testBtnText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
+  },
+  memberLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   memberLabel: {
     fontSize: FontSize.body,

@@ -16,6 +16,8 @@ import { serializeGamification, parseFarmProfile, serializeFarmProfile } from '.
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { HarvestCardToast, type HarvestItem } from '../gamification/HarvestCardToast';
 import { Button } from '../ui/Button';
+import { AvatarIcon } from '../ui/AvatarIcon';
+import { getTheme } from '../../constants/themes';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -245,8 +247,9 @@ function ProfileCard({
         onPress={() => setExpanded(e => !e)}
         activeOpacity={0.7}
       >
+        <AvatarIcon name={profile.avatar} color={getTheme(profile.theme).primary} size={28} />
         <Text style={[styles.cardTitle, { color: colors.text }]}>
-          {profile.avatar} {profile.name}
+          {profile.name}
         </Text>
         <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
           Niv. {level} · {points} XP · {coins} coins

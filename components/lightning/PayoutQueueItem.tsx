@@ -17,6 +17,8 @@ import { format, parseISO } from 'date-fns';
 import type { PayoutQueueItem as PayoutQueueItemType } from '../../lib/lightning';
 import type { Profile } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { getTheme } from '../../constants/themes';
+import { AvatarIcon } from '../ui/AvatarIcon';
 import { getDateLocale } from '../../lib/date-locale';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -54,15 +56,12 @@ function PayoutQueueItemImpl({ item, profile, taskTitle }: PayoutQueueItemProps)
       accessibilityRole="text"
       accessibilityLabel={`${displayName}, ${item.sats} sats, ${taskTitle}, ${dateAffichee}`}
     >
-      {/* Avatar emoji 36×36 (UI-SPEC Surface 4) */}
-      <View
-        style={[
-          styles.avatar,
-          { backgroundColor: colors.cardAlt },
-        ]}
-      >
-        <Text style={styles.avatarEmoji}>{avatarEmoji}</Text>
-      </View>
+      {/* Avatar 36×36 (UI-SPEC Surface 4) — emoji legacy + icônes Lucide */}
+      <AvatarIcon
+        name={avatarEmoji}
+        color={profile ? getTheme(profile.theme).primary : colors.textMuted}
+        size={36}
+      />
 
       {/* Colonne droite — 2 lignes avec sats à droite */}
       <View style={styles.content}>
@@ -102,16 +101,6 @@ const styles = StyleSheet.create({
     gap: Spacing.xl,
     borderRadius: Radius.lg,
     padding: Spacing.xl,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarEmoji: {
-    fontSize: FontSize.title,
   },
   content: {
     flex: 1,

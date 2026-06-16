@@ -23,6 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { AvatarIcon } from '../ui/AvatarIcon';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -263,7 +264,11 @@ export function RewardCardToast({ visible, data, onDismiss }: RewardCardToastPro
         },
       ]}>
         <View style={styles.bandeauRow}>
-          <Text style={styles.bandeauEmoji}>{data.hasLoot ? '🎁' : data.profileEmoji}</Text>
+          {data.hasLoot ? (
+            <Text style={styles.bandeauEmoji}>🎁</Text>
+          ) : (
+            <AvatarIcon name={data.profileEmoji} color={primary} size={32} />
+          )}
           <Text
             style={[styles.bandeauName, { color: colors.textMuted }]}
             numberOfLines={1}
