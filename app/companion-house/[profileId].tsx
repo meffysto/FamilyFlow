@@ -3,7 +3,7 @@
 // puis meublage (placement libre — drag ajouté en Phase 3 ; meubles statiques ici).
 
 import { useLocalSearchParams, router } from 'expo-router';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, Image, ImageBackground, StyleSheet,
   ActivityIndicator, Alert, Modal, ScrollView, Pressable,
@@ -12,8 +12,9 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { FURNITURE_CATALOG, COMPANION_HOUSE_UNLOCK_COST } from '../../lib/mascot/companion-house-types';
-import { unlockCompanionHouse, buyAndPlaceFurniture, debugForceUnlock } from '../../lib/mascot/companion-house-actions';
+import { FURNITURE_CATALOG, COMPANION_HOUSE_UNLOCK_COST, type PlacedFurniture } from '../../lib/mascot/companion-house-types';
+import { unlockCompanionHouse, buyAndPlaceFurniture, saveFurnitureLayout, debugForceUnlock } from '../../lib/mascot/companion-house-actions';
+import { DraggableFurniture } from '../../components/companion-house/DraggableFurniture';
 
 const ROOM_BG = require('../../assets/companion-house/room-bg.png');
 const FURNITURE_SPRITES: Record<string, any> = {
@@ -36,6 +37,11 @@ export default function CompanionHouseRoute() {
 
   const [busy, setBusy] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [roomSize, setRoomSize] = useState({ w: 0, h: 0 });
+  // Copie locale du meublage pour un rendu fluide pendant le drag (la source de
+  // vérité reste le vault ; on persiste à chaque move/delete).
+  const [placed, setPlaced] = useState<PlacedFurniture[]>([]);
 
   const profile = useMemo(
     () => profiles.find(p => p.id === profileId) ?? null,
@@ -45,7 +51,38 @@ export default function CompanionHouseRoute() {
   const house = profile?.companionHouse ?? null;
   const unlocked = house?.unlocked ?? false;
   const coins = profile?.coins ?? 0;
-  const furniture = house?.placedFurniture ?? [];
+
+  // Resynchronise la copie locale quand le vault change (achat, reload, déblocage)
+  useEffect(() => {
+    setPlaced(house?.placedFurniture ?? []);
+  }, [house?.placedFurniture]);
+
+  const persistLayout = useCallback(async (next: PlacedFurniture[]) => {
+    if (!vault || !profile) return;
+    try {
+      await saveFurnitureLayout(vault, profile, next);
+    } catch (e) {
+      if (__DEV__) console.warn('[companion-house] saveFurnitureLayout', e);
+    }
+  }, [vault, profile]);
+
+  const handleMoveEnd = useCallback((index: number, x: number, y: number) => {
+    setPlaced(prev => {
+      const next = prev.map((f, i) => (i === index ? { ...f, x, y } : f));
+      persistLayout(next);
+      return next;
+    });
+  }, [persistLayout]);
+
+  const handleDelete = useCallback((index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelected(null);
+    setPlaced(prev => {
+      const next = prev.filter((_, i) => i !== index);
+      persistLayout(next);
+      return next;
+    });
+  }, [persistLayout]);
 
   const handleUnlock = useCallback(async () => {
     if (!vault || !profile || busy) return;
@@ -124,17 +161,33 @@ export default function CompanionHouseRoute() {
           </View>
         </View>
 
-        {/* Pièce : compagnon + meubles posés (statiques pour l'instant) */}
-        <View style={styles.room} pointerEvents="box-none">
-          <Image source={PET_SPRITE} style={[styles.pet, { left: '50%', top: '57%' }]} />
-          {unlocked && furniture.map((f, i) => {
+        {/* Pièce : compagnon + meubles déplaçables */}
+        <View
+          style={styles.room}
+          pointerEvents="box-none"
+          onLayout={e => setRoomSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+        >
+          {/* Fond tappable → désélectionne */}
+          {selected !== null && (
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setSelected(null)} />
+          )}
+          <Image source={PET_SPRITE} style={[styles.pet, { left: '50%', top: '57%' }]} pointerEvents="none" />
+          {unlocked && roomSize.w > 0 && placed.map((f, i) => {
             const sprite = FURNITURE_SPRITES[f.furnitureId];
             if (!sprite) return null;
             return (
-              <Image
+              <DraggableFurniture
                 key={`${f.furnitureId}-${i}`}
-                source={sprite}
-                style={[styles.furn, { left: `${f.x * 100}%`, top: `${f.y * 100}%` }]}
+                sprite={sprite}
+                x={f.x}
+                y={f.y}
+                roomW={roomSize.w}
+                roomH={roomSize.h}
+                size={FURN_SIZE}
+                selected={selected === i}
+                onSelect={() => setSelected(i)}
+                onMoveEnd={(x, y) => handleMoveEnd(i, x, y)}
+                onDelete={() => handleDelete(i)}
               />
             );
           })}
