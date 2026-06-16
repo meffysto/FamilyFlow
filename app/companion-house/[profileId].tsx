@@ -33,7 +33,7 @@ const FURN_SIZE = 72;
 export default function CompanionHouseRoute() {
   const params = useLocalSearchParams<{ profileId: string }>();
   const profileId = typeof params.profileId === 'string' ? params.profileId : '';
-  const { profiles, vault, refreshGamification, isLoading } = useVault();
+  const { profiles, vault, refreshGamification, refreshFarm, isLoading } = useVault();
   const { colors, primary, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
 
@@ -71,10 +71,11 @@ export default function CompanionHouseRoute() {
     if (!vault || !profile) return;
     try {
       await saveFurnitureLayout(vault, profile, next);
+      await refreshFarm(profile.id);   // resync mémoire → positions tenues au retour
     } catch (e) {
       if (__DEV__) console.warn('[companion-house] saveFurnitureLayout', e);
     }
-  }, [vault, profile]);
+  }, [vault, profile, refreshFarm]);
 
   const handleMoveEnd = useCallback((index: number, x: number, y: number) => {
     setPlaced(prev => {
