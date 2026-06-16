@@ -55,6 +55,8 @@ function preserveFarmFields(existing: Profile): Partial<Profile> {
     farmTech: existing.farmTech,
     farmRareSeeds: existing.farmRareSeeds,
     wearEvents: existing.wearEvents,
+    companion: existing.companion,
+    companionHouse: existing.companionHouse,
   };
 }
 

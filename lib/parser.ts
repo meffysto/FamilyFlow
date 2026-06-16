@@ -64,6 +64,7 @@ import { parseWearEvents, serializeWearEvents, type WearEvent } from './mascot/w
 import { getTechBonuses } from './mascot/tech-engine';
 import { parseCrops as parseFarmCrops, serializeCrops as serializeFarmCrops } from './mascot/farm-engine';
 import { FIRST_EXPANSION_STABLE_INDEX, MEGA_STABLE_INDEX } from './mascot/world-grid';
+import { parseCompanionHouse, serializeCompanionHouseLines } from './mascot/companion-house-engine';
 import type { CompanionData, CompanionSpecies, FeedBuff } from './mascot/companion-types';
 import { calculateLevel } from './gamification';
 import type { TreeSpecies } from './mascot/types';
@@ -1082,6 +1083,11 @@ export function parseFarmProfile(content: string): FarmProfileData {
     farmRareSeeds: parseRareSeeds(props.farm_rare_seeds),
     wearEvents,
     companion: parseCompanion(props.companion),
+    companionHouse: parseCompanionHouse({
+      unlocked: props.companion_house_unlocked,
+      unlockedAt: props.companion_house_unlocked_at,
+      furniture: props.companion_house,
+    }),
     giftHistory: props.gift_history,
     giftsSentToday: props.gifts_sent_today,
     buildingTurboUntil: props.building_turbo_until || undefined,
@@ -1161,6 +1167,9 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   }
   if (data.wearEvents && data.wearEvents.length > 0) lines.push(`wear_events: ${serializeWearEvents(data.wearEvents)}`);
   if (data.companion) lines.push(`companion: ${serializeCompanion(data.companion)}`);
+  if (data.companionHouse) {
+    for (const l of serializeCompanionHouseLines(data.companionHouse)) lines.push(l);
+  }
   if (data.giftHistory) lines.push(`gift_history: ${data.giftHistory}`);
   if (data.giftsSentToday) lines.push(`gifts_sent_today: ${data.giftsSentToday}`);
   if (data.buildingTurboUntil) lines.push(`building_turbo_until: ${data.buildingTurboUntil}`);

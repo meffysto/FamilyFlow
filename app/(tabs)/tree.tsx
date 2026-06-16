@@ -3580,6 +3580,17 @@ export default function TreeScreen() {
           >
             <Text style={styles.hudEmoji}>{'📷'}</Text>
           </TouchableOpacity>
+          {/* Maison du compagnon — accès écran dédié (sink de feuilles, placement libre) */}
+          {isOwnTree && (
+            <TouchableOpacity
+              style={styles.hudCodexButton}
+              onPress={() => { Haptics.selectionAsync(); router.push(`/companion-house/${profile.id}` as any); }}
+              accessibilityLabel="Maison du compagnon"
+              accessibilityRole="button"
+            >
+              <Text style={styles.hudEmoji}>{'🏡'}</Text>
+            </TouchableOpacity>
+          )}
           {/* Phase 53 — Bouton HUD ⚡ Lightning Family Wallet (UI-SPEC Surface 1)
               Visibilité conditionnelle : LIGHTNING_ENABLED + wallet mappé au
               profil actif (D-01 + D-02 + REQ-8). Le ref est branché au bus
