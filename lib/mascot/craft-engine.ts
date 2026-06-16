@@ -526,6 +526,21 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     minTreeStage: 'majestueux',
   },
   {
+    // Recette accessible pour la larme_phenix : débloquée dès « majestueux »
+    // (un palier avant feu_eternel) et sans graine d'expédition — donne un
+    // débouché plus tôt à une graine épique rare (drop 4 %).
+    id: 'braise_phenix',
+    labelKey: 'craft.recipe.braise_phenix',
+    emoji: '🪶',
+    ingredients: [
+      { itemId: 'larme_phenix', quantity: 1, source: 'crop' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 180,
+    sellValue: 9050, // (3500 + 120) × 2.5
+    minTreeStage: 'majestueux',
+  },
+  {
     id: 'feu_eternel',
     labelKey: 'craft.recipe.feu_eternel',
     emoji: '🔥',
