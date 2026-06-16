@@ -15,6 +15,9 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { FURNITURE_CATALOG, COMPANION_HOUSE_UNLOCK_COST, type PlacedFurniture } from '../../lib/mascot/companion-house-types';
 import { unlockCompanionHouse, buyAndPlaceFurniture, saveFurnitureLayout, debugForceUnlock } from '../../lib/mascot/companion-house-actions';
 import { DraggableFurniture } from '../../components/companion-house/DraggableFurniture';
+import { COMPANION_SPRITES } from '../../lib/mascot/companion-sprites';
+import { getCompanionStage } from '../../lib/mascot/companion-engine';
+import { calculateLevel } from '../../lib/gamification';
 
 const ROOM_BG = require('../../assets/companion-house/room-bg.png');
 const FURNITURE_SPRITES: Record<string, any> = {
@@ -25,7 +28,6 @@ const FURNITURE_SPRITES: Record<string, any> = {
   tableau: require('../../assets/companion-house/tableau.png'),
   gamelle: require('../../assets/companion-house/gamelle.png'),
 };
-const PET_SPRITE = require('../../assets/companion-house/chien.png');
 const FURN_SIZE = 72;
 
 export default function CompanionHouseRoute() {
@@ -51,6 +53,14 @@ export default function CompanionHouseRoute() {
   const house = profile?.companionHouse ?? null;
   const unlocked = house?.unlocked ?? false;
   const coins = profile?.coins ?? 0;
+
+  // Le VRAI compagnon du profil (même espèce + stade que dans la ferme)
+  const petSprite = useMemo(() => {
+    const species = profile?.companion?.activeSpecies;
+    if (!species) return null;
+    const stage = getCompanionStage(calculateLevel(profile?.points ?? 0));
+    return COMPANION_SPRITES[species]?.[stage]?.idle_1 ?? null;
+  }, [profile?.companion?.activeSpecies, profile?.points]);
 
   // Resynchronise la copie locale quand le vault change (achat, reload, déblocage)
   useEffect(() => {
@@ -171,7 +181,9 @@ export default function CompanionHouseRoute() {
           {selected !== null && (
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setSelected(null)} />
           )}
-          <Image source={PET_SPRITE} style={[styles.pet, { left: '50%', top: '57%' }]} pointerEvents="none" />
+          {petSprite && (
+            <Image source={petSprite} style={[styles.pet, { left: '50%', top: '57%' }]} pointerEvents="none" />
+          )}
           {unlocked && roomSize.w > 0 && placed.map((f, i) => {
             const sprite = FURNITURE_SPRITES[f.furnitureId];
             if (!sprite) return null;
