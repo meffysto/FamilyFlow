@@ -14,22 +14,15 @@ import { StatusBar } from 'expo-status-bar';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useFarmTheme } from '../../constants/farm-theme';
-import { FURNITURE_CATALOG, COMPANION_HOUSE_UNLOCK_COST, type PlacedFurniture } from '../../lib/mascot/companion-house-types';
+import { FURNITURE_CATALOG, FURNITURE_CATEGORIES, COMPANION_HOUSE_UNLOCK_COST, type PlacedFurniture } from '../../lib/mascot/companion-house-types';
 import { unlockCompanionHouse, buyAndPlaceFurniture, saveFurnitureLayout, debugForceUnlock } from '../../lib/mascot/companion-house-actions';
 import { DraggableFurniture } from '../../components/companion-house/DraggableFurniture';
+import { FURNITURE_SPRITES } from '../../components/companion-house/furniture-sprites';
 import { COMPANION_SPRITES } from '../../lib/mascot/companion-sprites';
 import { getCompanionStage } from '../../lib/mascot/companion-engine';
 import { calculateLevel } from '../../lib/gamification';
 
 const ROOM_BG = require('../../assets/companion-house/room-bg.png');
-const FURNITURE_SPRITES: Record<string, any> = {
-  tapis: require('../../assets/companion-house/tapis.png'),
-  coussin: require('../../assets/companion-house/coussin.png'),
-  plante: require('../../assets/companion-house/plante.png'),
-  lampe: require('../../assets/companion-house/lampe.png'),
-  tableau: require('../../assets/companion-house/tableau.png'),
-  gamelle: require('../../assets/companion-house/gamelle.png'),
-};
 const FURN_SIZE = 72;
 
 export default function CompanionHouseRoute() {
@@ -263,22 +256,31 @@ export default function CompanionHouseRoute() {
               <View style={[styles.grip, { backgroundColor: farm.woodHighlight }]} />
               <Text style={[styles.sheetTitle, { color: farm.brownText, textShadowColor: farm.textEmboss }]}>Boutique mobilier</Text>
               <Text style={[styles.sheetSub, { color: farm.brownTextSub }]}>Achète, recommence — paie en feuilles 🍃</Text>
-              <ScrollView contentContainerStyle={styles.shopGrid}>
-                {FURNITURE_CATALOG.map(item => {
-                  const canAfford = coins >= item.cost;
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {FURNITURE_CATEGORIES.map(cat => {
+                  const items = FURNITURE_CATALOG.filter(f => f.category === cat.key);
+                  if (items.length === 0) return null;
                   return (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={[styles.shopItem, { backgroundColor: farm.parchmentDark, borderColor: farm.woodHighlight }, !canAfford && styles.btnDisabled]}
-                      disabled={!canAfford || busy}
-                      onPress={() => handleBuy(item.id)}
-                    >
-                      <Image source={FURNITURE_SPRITES[item.id]} style={styles.shopItemImg} />
-                      <Text style={[styles.shopPrice, { color: farm.brownText }]}>🍃 {item.cost}</Text>
-                      <Text style={[styles.shopTag, { backgroundColor: canAfford ? farm.greenBtn : 'transparent', color: canAfford ? '#FFFFFF' : farm.brownTextSub }]}>
-                        {canAfford ? 'Acheter' : 'Trop cher'}
-                      </Text>
-                    </TouchableOpacity>
+                    <View key={cat.key} style={styles.catBlock}>
+                      <Text style={[styles.catHeader, { color: farm.brownText }]}>{cat.label}</Text>
+                      <View style={styles.shopGrid}>
+                        {items.map(item => {
+                          const canAfford = coins >= item.cost;
+                          return (
+                            <TouchableOpacity
+                              key={item.id}
+                              style={[styles.shopItem, { backgroundColor: farm.parchmentDark, borderColor: farm.woodHighlight }, !canAfford && styles.btnDisabled]}
+                              disabled={!canAfford || busy}
+                              onPress={() => handleBuy(item.id)}
+                            >
+                              <Image source={FURNITURE_SPRITES[item.id]} style={styles.shopItemImg} />
+                              <Text style={[styles.shopName, { color: farm.brownText }]} numberOfLines={1}>{item.label}</Text>
+                              <Text style={[styles.shopPrice, { color: farm.brownTextSub }]}>🍃 {item.cost.toLocaleString('fr-FR')}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
                   );
                 })}
               </ScrollView>
@@ -324,9 +326,11 @@ const styles = StyleSheet.create({
   grip: { width: 38, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 14 },
   sheetTitle: { fontSize: 18, fontWeight: '800', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 0 },
   sheetSub: { fontSize: 12.5, marginBottom: 14 },
-  shopGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' },
-  shopItem: { width: '31%', borderRadius: 12, padding: 10, alignItems: 'center', borderWidth: 1 },
-  shopItemImg: { width: 48, height: 48, resizeMode: 'contain', marginBottom: 6 },
-  shopPrice: { fontSize: 12.5, fontWeight: '800' },
-  shopTag: { marginTop: 4, fontSize: 10, fontWeight: '700', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, overflow: 'hidden' },
+  catBlock: { marginBottom: 16 },
+  catHeader: { fontSize: 14, fontWeight: '800', marginTop: 4, marginBottom: 8 },
+  shopGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  shopItem: { width: '31%', borderRadius: 12, padding: 8, alignItems: 'center', borderWidth: 1 },
+  shopItemImg: { width: 50, height: 50, resizeMode: 'contain', marginBottom: 4 },
+  shopName: { fontSize: 11, fontWeight: '700', marginBottom: 1, maxWidth: '100%' },
+  shopPrice: { fontSize: 11.5, fontWeight: '800' },
 });
