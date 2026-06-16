@@ -26,7 +26,7 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
   const enfants = profiles.filter((p) => p.role === 'enfant');
 
   const pickPhotoForEnfant = useCallback(
-    async (enfantName: string) => {
+    async (enfantId: string, enfantName: string) => {
       const launchPicker = async (useCamera: boolean) => {
         try {
           if (useCamera) {
@@ -61,7 +61,7 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
 
           if (result.canceled || !result.assets?.[0]?.uri) return;
 
-          await addPhoto(enfantName, todayStr, result.assets[0].uri);
+          await addPhoto(enfantId, enfantName, todayStr, result.assets[0].uri);
         } catch (e: any) {
           const msg = e?.message || String(e);
           Alert.alert(t('dashboard.photos.error'), t('dashboard.photos.addError', { name: enfantName }));
@@ -104,7 +104,7 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
           <TouchableOpacity
             key={e.id}
             style={styles.avatarItem}
-            onPress={() => { if (!e.hasPhoto) { pickPhotoForEnfant(e.name); } else { router.push('/(tabs)/photos'); } }}
+            onPress={() => { if (!e.hasPhoto) { pickPhotoForEnfant(e.id, e.name); } else { router.push('/(tabs)/photos'); } }}
             activeOpacity={0.7}
           >
             <AvatarIcon name={e.avatar} color={primary} size={36} />

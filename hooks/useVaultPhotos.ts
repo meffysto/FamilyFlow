@@ -17,7 +17,7 @@ const PHOTOS_DIR = '07 - Photos';
 export interface UseVaultPhotosResult {
   photoDates: Record<string, string[]>;
   setPhotoDates: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
-  addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
+  addPhoto: (enfantId: string, enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
   resetPhotos: () => void;
 }
@@ -34,18 +34,20 @@ export function useVaultPhotos(
     setPhotoDates({});
   }, []);
 
-  const addPhoto = useCallback(async (enfantName: string, date: string, imageUri: string) => {
+  const addPhoto = useCallback(async (enfantId: string, enfantName: string, date: string, imageUri: string) => {
     if (!vaultRef.current) throw new Error('Vault non initialisé');
     busyRef.current = true;
     try {
+      // Dossier disque indexé par prénom (suivi via renameChild lors d'un rename)…
       const relativePath = `${PHOTOS_DIR}/${enfantName}/${date}.jpg`;
       await vaultRef.current.copyFileToVault(imageUri, relativePath);
 
-      const id = enfantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+      // L'index m\u00e9moire est cl\u00e9-\u00e9 par l'id STABLE du profil, pour rester coh\u00e9rent
+      // avec la lecture UI (photoDates[profile.id]) apr\u00e8s un renommage de l'enfant.
       setPhotoDates((prev) => {
-        const existing = prev[id] ?? [];
+        const existing = prev[enfantId] ?? [];
         if (existing.includes(date)) return prev;
-        return { ...prev, [id]: [...existing, date].sort() };
+        return { ...prev, [enfantId]: [...existing, date].sort() };
       });
 
       const photoUri = vaultRef.current.getPhotoUri(enfantName, date);

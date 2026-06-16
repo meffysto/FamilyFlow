@@ -245,6 +245,7 @@ export default function PhotosScreen() {
       return;
     }
     const dateStr = format(date, 'yyyy-MM-dd');
+    const enfantId = selectedEnfant.id;
     const enfantName = selectedEnfant.name;
 
     const launchPicker = async (useCamera: boolean) => {
@@ -275,7 +276,7 @@ export default function PhotosScreen() {
 
         if (result.canceled || !result.assets?.[0]?.uri) return;
 
-        await addPhoto(enfantName, dateStr, result.assets[0].uri);
+        await addPhoto(enfantId, enfantName, dateStr, result.assets[0].uri);
         setPhotoCacheBust(prev => prev + 1);
       } catch (e: any) {
         Alert.alert(t('photosScreen.alert.photoError'), `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${e?.message || String(e)}`);

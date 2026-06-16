@@ -60,7 +60,7 @@ describe('useVaultPhotos', () => {
     const vaultRef = createVaultRef(mock);
     const { result } = renderHook(() => useVaultPhotos(vaultRef, busyRef));
 
-    await act(() => result.current.addPhoto('Lucas', '2026-04-05', 'file:///tmp/photo.jpg'));
+    await act(() => result.current.addPhoto('lucas', 'Lucas', '2026-04-05', 'file:///tmp/photo.jpg'));
 
     expect(mock.copyFileToVault).toHaveBeenCalledWith(
       'file:///tmp/photo.jpg',
@@ -69,13 +69,33 @@ describe('useVaultPhotos', () => {
     expect(result.current.photoDates['lucas']).toContain('2026-04-05');
   });
 
+  it('addPhoto indexe par id stable, pas par prénom (robuste au renommage)', async () => {
+    // Enfant créé sous le prénom "Lucas" (id stable "lucas"), puis renommé "Loulou".
+    // Le dossier disque suit le nouveau prénom, mais l'index mémoire doit rester
+    // clé-é sur l'id stable pour que la lecture UI (photoDates[profile.id]) marche.
+    const mock = createMockVault();
+    const vaultRef = createVaultRef(mock);
+    const { result } = renderHook(() => useVaultPhotos(vaultRef, busyRef));
+
+    await act(() => result.current.addPhoto('lucas', 'Loulou', '2026-04-05', 'file:///tmp/photo.jpg'));
+
+    // Fichier écrit sous le nouveau prénom…
+    expect(mock.copyFileToVault).toHaveBeenCalledWith(
+      'file:///tmp/photo.jpg',
+      '07 - Photos/Loulou/2026-04-05.jpg'
+    );
+    // …mais index clé-é par l'id stable (pas "loulou").
+    expect(result.current.photoDates['lucas']).toContain('2026-04-05');
+    expect(result.current.photoDates['loulou']).toBeUndefined();
+  });
+
   it('addPhoto ne duplique pas les dates existantes', async () => {
     const mock = createMockVault();
     const vaultRef = createVaultRef(mock);
     const { result } = renderHook(() => useVaultPhotos(vaultRef, busyRef));
 
     await act(() => result.current.setPhotoDates({ lucas: ['2026-04-05'] }));
-    await act(() => result.current.addPhoto('Lucas', '2026-04-05', 'file:///tmp/photo.jpg'));
+    await act(() => result.current.addPhoto('lucas', 'Lucas', '2026-04-05', 'file:///tmp/photo.jpg'));
 
     expect(result.current.photoDates['lucas']).toEqual(['2026-04-05']);
   });
@@ -90,7 +110,7 @@ describe('useVaultPhotos', () => {
     const vaultRef = createVaultRef(mock);
     const { result } = renderHook(() => useVaultPhotos(vaultRef, busyRef));
 
-    await act(() => result.current.addPhoto('Lucas', '2026-04-05', 'file:///tmp/photo.jpg'));
+    await act(() => result.current.addPhoto('lucas', 'Lucas', '2026-04-05', 'file:///tmp/photo.jpg'));
 
     expect(wasBusy).toBe(true);
     expect(busyRef.current).toBe(false);
@@ -101,7 +121,7 @@ describe('useVaultPhotos', () => {
     const { result } = renderHook(() => useVaultPhotos(vaultRef, busyRef));
 
     await expect(
-      act(() => result.current.addPhoto('Lucas', '2026-04-05', 'file:///x'))
+      act(() => result.current.addPhoto('lucas', 'Lucas', '2026-04-05', 'file:///x'))
     ).rejects.toThrow('Vault non initialisé');
   });
 

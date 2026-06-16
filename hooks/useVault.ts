@@ -186,7 +186,7 @@ export interface VaultState {
   updateMeal: (day: string, mealType: string, text: string, recipeRef?: string, weekDate?: Date) => Promise<void>;
   loadMealsForWeek: (date: Date) => Promise<MealItem[]>;
   photoDates: Record<string, string[]>;  // enfantId → dates with photos
-  addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
+  addPhoto: (enfantId: string, enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
   renameGarden: (profileId: string, name: string) => Promise<void>;
@@ -1299,6 +1299,9 @@ export function useVaultInternal(): VaultState {
       let familleContent = '';
       let gamiContent = '';
       let enfantNames: string[] = [];
+      // Paires {id, name} enfants : l'index photos est clé-é par l'id STABLE du
+      // profil (pas le prénom), pour rester correct après un renommage (FAM-39+).
+      let enfantProfiles: { id: string; name: string }[] = [];
       // Snapshot des profils pour saveCache() en fin de fonction (évite la
       // lecture de state React potentiellement stale dans le closure).
       let profilesSnapshot: Profile[] = [];
@@ -1306,6 +1309,7 @@ export function useVaultInternal(): VaultState {
         familleContent = await vault.readFile(FAMILLE_FILE);
         const baseProfiles = parseFamille(familleContent);
         enfantNames = baseProfiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+        enfantProfiles = baseProfiles.filter((p) => p.role === 'enfant').map((p) => ({ id: p.id, name: p.name }));
 
         // Migration one-shot depuis gamification.md → gami-{id}.md
         await migrateGamification(vault, baseProfiles);
@@ -2095,11 +2099,11 @@ export function useVaultInternal(): VaultState {
         // [0] Photos
         (async () => {
           const photoMap: Record<string, string[]> = {};
-          await Promise.all(enfantNames.map(async (name) => {
+          // Cl\u00e9 = id stable du profil ; le dossier disque reste index\u00e9 par pr\u00e9nom
+          // (suivi via renameChild). Lecture c\u00f4t\u00e9 UI = photoDates[profile.id].
+          await Promise.all(enfantProfiles.map(async ({ id, name }) => {
             try {
-              const dates = await vault.listPhotoDates(name);
-              const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-              photoMap[id] = dates;
+              photoMap[id] = await vault.listPhotoDates(name);
             } catch (e) { warnUnexpected(`photos(${name})`, e); }
           }));
           return photoMap;
