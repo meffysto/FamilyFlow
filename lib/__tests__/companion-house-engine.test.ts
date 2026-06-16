@@ -132,9 +132,9 @@ describe('companion-house-engine', () => {
     });
 
     it('canBuyFurniture : solde + meuble inconnu', () => {
-      expect(canBuyFurniture('tapis', 40)).toEqual({ ok: true, cost: 40 });
-      expect(canBuyFurniture('tapis', 39).ok).toBe(false);
-      expect(canBuyFurniture('inconnu', 999).ok).toBe(false);
+      expect(canBuyFurniture('tapis', 800)).toEqual({ ok: true, cost: 800 });
+      expect(canBuyFurniture('tapis', 799).ok).toBe(false);
+      expect(canBuyFurniture('inconnu', 999999).ok).toBe(false);
     });
   });
 

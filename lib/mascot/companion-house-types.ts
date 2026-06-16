@@ -34,16 +34,17 @@ export interface FurnitureDefinition {
 }
 
 /**
- * Catalogue v1 — 6 meubles. Prix calés sur le sketch validé (≈ 1-3 jours de jeu / meuble,
- * base ~30 🍃/jour). Sprites câblés en Phase 2.
+ * Catalogue mobilier. Prix calés sur l'économie du sink (déblocage maison 100k) :
+ * meubles de 800 à 90 000 🍃 selon le palier, pour un sink durable. Sprites câblés
+ * au fur et à mesure de leur génération.
  */
 export const FURNITURE_CATALOG: FurnitureDefinition[] = [
-  { id: 'tapis',   labelKey: 'companionHouse.furniture.tapis',   cost: 40 },
-  { id: 'coussin', labelKey: 'companionHouse.furniture.coussin', cost: 55 },
-  { id: 'plante',  labelKey: 'companionHouse.furniture.plante',  cost: 60 },
-  { id: 'lampe',   labelKey: 'companionHouse.furniture.lampe',   cost: 70 },
-  { id: 'tableau', labelKey: 'companionHouse.furniture.tableau', cost: 85 },
-  { id: 'gamelle', labelKey: 'companionHouse.furniture.gamelle', cost: 95 },
+  { id: 'tapis',   labelKey: 'companionHouse.furniture.tapis',   cost: 800 },
+  { id: 'gamelle', labelKey: 'companionHouse.furniture.gamelle', cost: 1000 },
+  { id: 'coussin', labelKey: 'companionHouse.furniture.coussin', cost: 1200 },
+  { id: 'plante',  labelKey: 'companionHouse.furniture.plante',  cost: 1500 },
+  { id: 'lampe',   labelKey: 'companionHouse.furniture.lampe',   cost: 2500 },
+  { id: 'tableau', labelKey: 'companionHouse.furniture.tableau', cost: 3000 },
 ];
 
 /** Identifiant du bâtiment-maison dans BUILDING_CATALOG (déblocage one-shot 100k). */
