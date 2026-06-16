@@ -12,8 +12,6 @@ import * as Haptics from 'expo-haptics';
 
 const SPRING = { damping: 16, stiffness: 200 } as const;
 
-const clamp = (n: number, min: number, max: number) => (n < min ? min : n > max ? max : n);
-
 interface Props {
   sprite: any;
   x: number;          // 0-1 initial
@@ -45,6 +43,7 @@ function DraggableFurnitureBase({ sprite, x, y, roomW, roomH, size, selected, on
 
   const pan = Gesture.Pan()
     .onStart(() => {
+      'worklet';
       startX.value = cx.value;
       startY.value = cy.value;
       lifted.value = withSpring(1, SPRING);
@@ -52,17 +51,21 @@ function DraggableFurnitureBase({ sprite, x, y, roomW, roomH, size, selected, on
       runOnJS(buzz)();
     })
     .onUpdate((e) => {
-      cx.value = clamp(startX.value + e.translationX, 0, roomW);
-      cy.value = clamp(startY.value + e.translationY, 0, roomH);
+      'worklet';
+      const nx = startX.value + e.translationX;
+      const ny = startY.value + e.translationY;
+      cx.value = nx < 0 ? 0 : nx > roomW ? roomW : nx;
+      cy.value = ny < 0 ? 0 : ny > roomH ? roomH : ny;
     })
     .onEnd(() => {
+      'worklet';
       lifted.value = withSpring(0, SPRING);
       const fx = roomW > 0 ? cx.value / roomW : 0.5;
       const fy = roomH > 0 ? cy.value / roomH : 0.5;
       runOnJS(onMoveEnd)(fx, fy);
     });
 
-  const tap = Gesture.Tap().onEnd(() => { runOnJS(onSelect)(); });
+  const tap = Gesture.Tap().onEnd(() => { 'worklet'; runOnJS(onSelect)(); });
 
   const gesture = Gesture.Race(pan, tap);
 
