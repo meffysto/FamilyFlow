@@ -1,0 +1,84 @@
+═══════════════════════════════════════════════════════════════════════════════
+  MAISON DU COMPAGNON — ASSETS v2 (à générer)
+  34 nouveaux meubles. Style peint top-down, cohérent avec room-bg.png.
+  Génération : Codex (comme les 6 premiers). Sortie attendue : 1 PNG transparent
+  512×512 par id, fond alpha, nommé <id>.png.
+═══════════════════════════════════════════════════════════════════════════════
+
+STYLE (préambule à coller / réutiliser pour CHAQUE meuble) :
+-------------------------------------------------------------------------------
+Hand-painted top-down RPG furniture asset for a cozy game, matching a warm
+illustrated wooden room interior (Stardew Valley HD vibe, painterly, NOT pixel
+art). Slight 3/4 overhead perspective (same angle as a gently tilted floor).
+Light from TOP-LEFT, soft shadow to bottom-right + a soft contact shadow on the
+ground so it sits in the room. Warm palette: honey wood, cream, soft browns and
+greens. Single object, centered, isolated, filling ~70% of frame. TRANSPARENT
+background (PNG alpha), no floor, no walls, no text, no border, no watermark.
+Square 512x512. Consistent scale (an armchair ≈ 65% of frame height).
+-------------------------------------------------------------------------------
+
+Format des lignes :  <id>  ·  <prix 🍃>  ·  <label FR>  ·  → "<prompt objet EN>"
+
+───────────────────────────────  A — SOL  ───────────────────────────────
+tapis_rond       · 900   · Tapis rond        · → "a round braided rug, beige and sage tones, flat on the floor"
+tapis_motif      · 1000  · Tapis à motifs    · → "a rectangular rug with warm geometric motifs, flat on the floor"
+pouf             · 1500  · Pouf              · → "a round padded pouf ottoman, cream fabric"
+panier_couchage  · 1800  · Panier couchage   · → "a cozy pet sleeping basket with a soft cushion"
+table_basse      · 3500  · Table basse       · → "a small low wooden coffee table"
+
+──────────────────────────────  B — MEUBLES  ─────────────────────────────
+banc_bois        · 4000  · Banc en bois      · → "a simple wooden bench"
+coffre           · 4500  · Coffre            · → "a wooden treasure chest with iron bands, closed lid"
+etagere          · 5000  · Étagère           · → "a wooden bookshelf filled with colorful books"
+commode          · 5500  · Commode           · → "a wooden chest of drawers (dresser)"
+fauteuil         · 6000  · Fauteuil          · → "a cozy armchair with a soft cushion"
+
+────────────────────────────────  C — MUR  ───────────────────────────────
+cadre_photo      · 2000  · Cadre photo       · → "a small framed family photo, wooden frame"
+horloge          · 3500  · Horloge           · → "a round wall clock with a wooden frame"
+etagere_murale   · 4000  · Étagère murale    · → "a small wooden wall shelf holding a few trinkets"
+miroir           · 5000  · Miroir            · → "an oval wall mirror with a carved wooden frame"
+fanion_guirlande · 3000  · Guirlande fanions · → "a string of triangular bunting flags in warm colors"
+
+─────────────────────────  D — LUMIÈRE / AMBIANCE  ───────────────────────
+bougies          · 2500  · Bougies           · → "a cluster of lit candles on a small dish, warm glow"
+applique         · 4500  · Applique          · → "a wall sconce lamp with a warm light"
+lampadaire       · 6000  · Lampadaire        · → "a tall floor lamp, wooden base, warm amber shade"
+cheminee         · 22000 · Cheminée          · → "a small cozy fireplace with a lit fire, warm glow"
+
+────────────────────────────  E — COMPAGNON  ─────────────────────────────
+jouet_balle      · 800   · Balle             · → "a small pet toy ball"
+griffoir         · 2000  · Griffoir          · → "a cat scratching post"
+niche_mini       · 4000  · Niche             · → "a small wooden pet house / kennel"
+arbre_a_chat     · 7000  · Arbre à chat      · → "a multi-level cat tree tower with platforms"
+
+──────────────────────────────  F1 — LECTURE  ────────────────────────────
+pile_livres      · 2500  · Pile de livres    · → "a small stack of colorful books"
+lampe_lecture    · 4000  · Lampe de lecture  · → "a reading lamp casting a warm focused glow"
+fauteuil_lecture · 9000  · Fauteuil lecture  · → "a plush reading armchair with a folded blanket"
+
+───────────────────────────────  F2 — JEUX  ──────────────────────────────
+cubes            · 1500  · Cubes             · → "a small pile of wooden toy building blocks"
+tapis_jeu        · 3000  · Tapis de jeu      · → "a colorful children play mat rug, flat on the floor"
+petite_console   · 6000  · Petite console    · → "a small retro game console with a tiny screen"
+
+──────────────────────────────  F3 — NATURE  ─────────────────────────────
+bouquet          · 1500  · Bouquet           · → "a vase holding a bouquet of wildflowers"
+grande_plante    · 5000  · Grande plante     · → "a large leafy potted monstera plant in a terracotta pot"
+terrarium        · 8000  · Terrarium         · → "a glass terrarium with small plants and stones"
+
+──────────────────────────  F4 — FÊTE / SAISONS  ─────────────────────────
+guirlande_lumineuse · 6000  · Guirlande lumineuse · → "a string of warm glowing fairy lights"
+citrouille          · 9000  · Citrouille          · → "a carved Halloween pumpkin with a warm inner glow"
+sapin_mini          · 12000 · Sapin de Noël       · → "a small decorated Christmas tree with ornaments"
+
+────────────────────────  F5 — PRESTIGE FANTAISIE  ───────────────────────
+coussin_etoile   · 40000 · Coussin étoilé    · → "a star-patterned magical floor cushion with a soft glow"
+lanterne_magique · 55000 · Lanterne magique  · → "an ornate magical lantern emitting a mystical glow"
+statue_licorne   · 90000 · Statue licorne    · → "a small ornate unicorn statue, pastel and gold accents"
+
+═══════════════════════════════════════════════════════════════════════════════
+  Total : 34 meubles · collection v2 ≈ 470 000 🍃 (+ les 6 v1 ≈ 10 000)
+  Une fois générés → dossier <id>.png → je câble : FURNITURE_CATALOG complet,
+  i18n FR (companionHouse.furniture.*), boutique catégorisée.
+═══════════════════════════════════════════════════════════════════════════════
