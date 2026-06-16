@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { FURNITURE_CATALOG, COMPANION_HOUSE_UNLOCK_COST } from '../../lib/mascot/companion-house-types';
-import { unlockCompanionHouse, buyAndPlaceFurniture } from '../../lib/mascot/companion-house-actions';
+import { unlockCompanionHouse, buyAndPlaceFurniture, debugForceUnlock } from '../../lib/mascot/companion-house-actions';
 
 const ROOM_BG = require('../../assets/companion-house/room-bg.png');
 const FURNITURE_SPRITES: Record<string, any> = {
@@ -64,6 +64,19 @@ export default function CompanionHouseRoute() {
       setBusy(false);
     }
   }, [vault, profile, busy, coins, refreshGamification]);
+
+  const handleDebugUnlock = useCallback(async () => {
+    if (!vault || !profile || busy) return;
+    setBusy(true);
+    try {
+      await debugForceUnlock(vault, profile);
+      await refreshGamification();
+    } catch (e) {
+      Alert.alert('Debug', String(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [vault, profile, busy, refreshGamification]);
 
   const handleBuy = useCallback(async (furnitureId: string) => {
     if (!vault || !profile || busy) return;
@@ -148,6 +161,11 @@ export default function CompanionHouseRoute() {
               {coins < COMPANION_HOUSE_UNLOCK_COST && (
                 <Text style={styles.lockHint}>Encore {(COMPANION_HOUSE_UNLOCK_COST - coins).toLocaleString('fr-FR')} 🍃 à récolter</Text>
               )}
+              {__DEV__ && (
+                <TouchableOpacity style={styles.debugBtn} onPress={handleDebugUnlock} disabled={busy}>
+                  <Text style={styles.debugBtnText}>🛠 Débloquer (debug, gratuit)</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}
@@ -216,6 +234,8 @@ const styles = StyleSheet.create({
   unlockBtnText: { color: '#6B4226', fontWeight: '800', fontSize: 15 },
   btnDisabled: { opacity: 0.5 },
   lockHint: { marginTop: 12, fontSize: 12, color: '#A0784C' },
+  debugBtn: { marginTop: 14, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1, borderColor: '#C84A4A', borderStyle: 'dashed' },
+  debugBtnText: { color: '#C84A4A', fontSize: 12, fontWeight: '700' },
   shopFab: { position: 'absolute', alignSelf: 'center', backgroundColor: '#E8C858', borderColor: '#fff', borderWidth: 2, borderRadius: 999, paddingVertical: 11, paddingHorizontal: 24 },
   shopFabText: { color: '#6B4226', fontWeight: '800', fontSize: 14 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(26,16,10,0.45)', justifyContent: 'flex-end' },

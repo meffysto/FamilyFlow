@@ -150,3 +150,17 @@ export async function saveFurnitureLayout(
     placedFurniture,
   });
 }
+
+/**
+ * DEBUG (__DEV__ uniquement) — force le déblocage de la maison SANS débiter de
+ * feuilles, pour tester le meublage/drag sans grinder 100k. À ne jamais exposer
+ * en production.
+ */
+export async function debugForceUnlock(vault: VaultManager, profile: Profile): Promise<void> {
+  const current = await readHouse(vault, profile);
+  await writeHouse(vault, profile, {
+    unlocked: true,
+    unlockedAt: current?.unlockedAt ?? new Date().toISOString(),
+    placedFurniture: current?.placedFurniture ?? [],
+  });
+}
