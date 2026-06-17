@@ -25,7 +25,7 @@ import {
   canBuyFurniture,
   placeFurniture,
 } from './companion-house-engine';
-import type { CompanionHouseData, PlacedFurniture } from './companion-house-types';
+import { RECOLOR_COST, type CompanionHouseData, type PlacedFurniture } from './companion-house-types';
 
 function gamiPath(id: string): string { return `gami-${id}.md`; }
 function farmPath(id: string): string { return `farm-${id}.md`; }
@@ -149,6 +149,43 @@ export async function saveFurnitureLayout(
     unlockedAt: current?.unlockedAt,
     placedFurniture,
   });
+}
+
+/**
+ * Recolore l'instance à `index` avec une clé de teinte (#7/#8).
+ * Revenir à l'original (`O`) ou re-choisir la couleur déjà appliquée est gratuit ;
+ * sinon on débite RECOLOR_COST (petit prix). Atomicité : débit puis écriture, rollback.
+ * Renvoie le solde de coins mis à jour.
+ */
+export async function recolorFurniture(
+  vault: VaultManager,
+  profile: Profile,
+  index: number,
+  colorKey: string,
+): Promise<number> {
+  const current = await readHouse(vault, profile);
+  if (!current?.unlocked) throw new Error('Maison non débloquée');
+  const target = current.placedFurniture[index];
+  if (!target) throw new Error('Meuble introuvable');
+
+  const nextColor = colorKey === 'O' ? undefined : colorKey;
+  const prevColor = target.color;
+  const free = nextColor === prevColor || (nextColor === undefined && !prevColor);
+  const coins = profile.coins ?? profile.points;
+  if (!free && coins < RECOLOR_COST) throw new Error(`Pas assez de 🍃 (${coins} / ${RECOLOR_COST})`);
+
+  let newCoins = coins;
+  if (!free) newCoins = await adjustCoins(vault, profile, -RECOLOR_COST, `🎨 Recoloration : ${target.furnitureId}`);
+  try {
+    const placedFurniture = current.placedFurniture.map((f, i) =>
+      i === index ? { ...f, color: nextColor } : f,
+    );
+    await writeHouse(vault, profile, { ...current, placedFurniture });
+  } catch (e) {
+    if (!free) await adjustCoins(vault, profile, RECOLOR_COST, '↩️ Remboursement (échec recoloration)');
+    throw e;
+  }
+  return newCoins;
 }
 
 /**

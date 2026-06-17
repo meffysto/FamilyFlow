@@ -1,0 +1,70 @@
+═══════════════════════════════════════════════════════════════════════════════
+  MAISON DU COMPAGNON — PACKS DE STYLE (#10, FAM-44)
+  16 nouveaux meubles : 8 « Moderne » + 8 « Ferme ».
+  Sortie attendue : 1 PNG transparent 512×512 par id, fond alpha, nommé <id>.png,
+  déposé dans assets/companion-house/. Puis décommenter la ligne require()
+  correspondante dans components/companion-house/furniture-sprites.ts.
+  Le catalogue (prix/label/catégorie/surface/scale) est DÉJÀ câblé.
+═══════════════════════════════════════════════════════════════════════════════
+
+PRÉAMBULE COMMUN (à coller pour CHAQUE meuble — identique à v1/v2 pour cohérence) :
+-------------------------------------------------------------------------------
+Hand-painted top-down RPG furniture asset for a cozy game, matching a warm
+illustrated wooden room interior (Stardew Valley HD vibe, painterly, NOT pixel
+art). Slight 3/4 overhead perspective (same angle as a gently tilted floor).
+Light from TOP-LEFT, soft shadow to bottom-right + a soft contact shadow on the
+ground so it sits in the room. Single object, centered, isolated, filling ~70%
+of frame (an armchair ≈ 65% of frame height; a rug drawn flat on the floor).
+TRANSPARENT background (PNG alpha), no floor, no walls, no text, no border, no
+watermark. Square 512x512, consistent scale with the existing set.
+NOTE — wall items (cadre_*) are drawn as a flat FRONT-FACING wall piece, like the
+existing cadre_photo / tableau, not from above.
+-------------------------------------------------------------------------------
+
+Format des lignes :  <id>  ·  <prix 🍃>  ·  <label FR>  ·  → "<prompt objet EN>"
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  PACK « MODERNE »  🪟                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+MODIFICATEUR DE STYLE (ajouter après le préambule commun) :
+  "Modern contemporary style: clean minimal lines, sleek matte finishes, cool
+   neutral palette (light grey, white, pale oak, soft charcoal) with a single
+   muted sage accent, slim brushed-metal or matte-black legs. Still the same
+   painterly hand-painted look as the room — uncluttered and elegant."
+
+tapis_moderne       · 1100 · Tapis moderne        · → "a rectangular modern low-pile rug, minimalist geometric pattern in grey, white and muted sage, flat on the floor"
+coussin_moderne     · 1300 · Coussin moderne      · → "a square modern floor cushion, matte light-grey fabric with clean seams"
+table_basse_moderne · 3800 · Table basse moderne  · → "a low modern coffee table, pale oak top with slim matte-black metal legs"
+fauteuil_moderne    · 6500 · Fauteuil moderne     · → "a modern lounge armchair, light-grey upholstery, low clean silhouette, slim tapered wooden legs"
+etagere_moderne     · 5200 · Étagère moderne      · → "a modern minimalist open shelving unit, white and pale oak, a few neatly arranged books and one small plant"
+lampe_moderne       · 2700 · Lampe moderne        · → "a modern arc floor lamp, slim matte-black stem and white dome shade casting a soft warm light"
+plante_moderne      · 1600 · Plante moderne       · → "a sculptural snake plant in a smooth white cylindrical planter, modern and tidy"
+cadre_moderne       · 2200 · Cadre moderne        · → "a modern minimalist wall art frame, thin black border with a simple abstract print (front-facing wall piece)"
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  PACK « FERME »  🌾                                                             ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+MODIFICATEUR DE STYLE (ajouter après le préambule commun) :
+  "Rustic farmhouse country style: reclaimed weathered wood, woven rattan/jute,
+   linen and gingham fabrics, black wrought-iron accents, warm earthy palette
+   (cream, sage, terracotta, honey wood), homey and gently worn. Same painterly
+   hand-painted look as the room — cozy and handmade."
+
+tapis_ferme    · 1100 · Tapis ferme         · → "a rectangular farmhouse rug, woven jute with cream and sage stripes, flat on the floor"
+pouf_ferme     · 1600 · Pouf ferme          · → "a round farmhouse pouf in chunky knitted cream wool, cozy and soft"
+table_ferme    · 3800 · Table de ferme      · → "a rustic farmhouse table, thick reclaimed-wood top on sturdy turned legs"
+fauteuil_ferme · 6500 · Fauteuil ferme      · → "a cozy farmhouse rocking chair, weathered wood frame with a plaid gingham cushion"
+coffre_ferme   · 4800 · Coffre ferme        · → "a rustic farmhouse storage chest, weathered planks with black iron hinges and a small latch"
+lanterne_ferme · 2700 · Lanterne ferme      · → "a rustic farmhouse lantern, black wrought-iron frame with a warm glowing candle inside"
+plante_ferme   · 1600 · Plante en pot ferme · → "a leafy potted herb plant in a galvanized metal bucket, farmhouse style"
+cadre_ferme    · 2200 · Cadre ferme         · → "a farmhouse wall frame, distressed white wood with a pressed-flower botanical print (front-facing wall piece)"
+
+═══════════════════════════════════════════════════════════════════════════════
+  Une fois les 16 PNG générés → dossier assets/companion-house/<id>.png →
+  décommente les lignes dans furniture-sprites.ts. Les onglets « Moderne » et
+  « Ferme » apparaissent automatiquement en boutique. i18n : les labels tombent
+  en defaultValue ; pour des traductions propres, ajoute companionHouse.furniture.*
+  (FR/EN) comme pour les autres meubles.
+═══════════════════════════════════════════════════════════════════════════════

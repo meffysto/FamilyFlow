@@ -14,8 +14,10 @@
 
 import {
   COMPANION_HOUSE_UNLOCK_COST,
+  SEASON_WINDOWS,
   findFurniture,
   type CompanionHouseData,
+  type FurnitureDefinition,
   type PlacedFurniture,
 } from './companion-house-types';
 
@@ -23,16 +25,32 @@ const clamp01 = (n: number): number => (n < 0 ? 0 : n > 1 ? 1 : n);
 
 // ─── Sérialisation meublage ──────────────────────────────────────────────────
 
-/** Sérialise les meubles posés en CSV. x/y arrondis à 4 décimales. */
+/**
+ * Sérialise les meubles posés en CSV. x/y arrondis à 4 décimales.
+ *
+ * Attributs optionnels en tokens taggés APRÈS le placedAt :
+ *   `f1` = flippé (miroir), `c<K>` = clé de teinte (ex. `cR`).
+ * Les meubles « nus » gardent le format historique `id:x:y:placedAtISO` (rétro-compat).
+ */
 export function serializePlacedFurniture(items: PlacedFurniture[]): string {
   return items
-    .map(f => `${f.furnitureId}:${clamp01(f.x).toFixed(4)}:${clamp01(f.y).toFixed(4)}:${f.placedAt}`)
+    .map(f => {
+      let s = `${f.furnitureId}:${clamp01(f.x).toFixed(4)}:${clamp01(f.y).toFixed(4)}:${f.placedAt}`;
+      if (f.flipped) s += ':f1';
+      if (f.color && f.color !== 'O') s += `:c${f.color}`;
+      return s;
+    })
     .join('|');
 }
 
 /**
  * Parse le CSV des meubles. Rejette les entrées invalides (id manquant,
  * coords NaN ou hors [0,1]). placedAt = tout ce qui suit x,y (un ISO contient des `:`).
+ *
+ * On épluche d'abord les tokens taggés de fin (`f0/f1`, `c<K>`), dans n'importe quel
+ * ordre. Compat héritée : un dernier segment `0`/`1` brut (format flip transitoire,
+ * ≥ 5 segments) est aussi lu comme flip. Les anciennes lignes finissent par un ISO
+ * (`…Z`/offset `…:00`) → jamais confondues avec un token.
  */
 export function parsePlacedFurniture(csv: string | undefined): PlacedFurniture[] {
   if (!csv || !csv.trim()) return [];
@@ -41,11 +59,24 @@ export function parsePlacedFurniture(csv: string | undefined): PlacedFurniture[]
     .map(entry => {
       const parts = entry.trim().split(':');
       if (parts.length < 3) return null;
+      let flipped = false;
+      let color: string | undefined;
+      // Épluche les tokens optionnels en fin (tant qu'il reste id:x:y:placedAt mini).
+      while (parts.length > 4) {
+        const last = parts[parts.length - 1];
+        if (/^f[01]$/.test(last)) { flipped = last === 'f1'; parts.pop(); continue; }
+        if (/^c[A-Za-z]$/.test(last)) { color = last.slice(1); parts.pop(); continue; }
+        if (last === '0' || last === '1') { flipped = last === '1'; parts.pop(); continue; } // hérité
+        break;
+      }
       const [furnitureId, xStr, yStr, ...rest] = parts;
       const x = parseFloat(xStr);
       const y = parseFloat(yStr);
       if (!furnitureId || isNaN(x) || isNaN(y) || x < 0 || x > 1 || y < 0 || y > 1) return null;
-      return { furnitureId, x, y, placedAt: rest.join(':') } as PlacedFurniture;
+      const item: PlacedFurniture = { furnitureId, x, y, placedAt: rest.join(':') };
+      if (flipped) item.flipped = true;
+      if (color) item.color = color;
+      return item;
     })
     .filter((f): f is PlacedFurniture => f !== null);
 }
@@ -94,15 +125,44 @@ export function canUnlockCompanionHouse(
   return { ok: true, cost };
 }
 
-/** Peut-on acheter ce meuble ? (duplicatas autorisés) */
+/** Peut-on acheter ce meuble ? (duplicatas autorisés ; hors-saison refusé) */
 export function canBuyFurniture(
   furnitureId: string,
   coins: number,
+  now: Date = new Date(),
 ): { ok: boolean; cost: number; reason?: string } {
   const def = findFurniture(furnitureId);
   if (!def) return { ok: false, cost: 0, reason: 'Meuble introuvable' };
+  const season = getSeasonStatus(def, now);
+  if (!season.inSeason) return { ok: false, cost: def.cost, reason: `${season.emoji} Disponible uniquement à ${season.label}` };
   if (coins < def.cost) return { ok: false, cost: def.cost, reason: `Pas assez de 🍃 (${coins} / ${def.cost})` };
   return { ok: true, cost: def.cost };
+}
+
+// ─── Helpers saisonniers (pur) ───────────────────────────────────────────────
+
+/** True si `md` (mois*100+jour) tombe dans la fenêtre, en gérant le chevauchement d'année. */
+function inWindow(md: number, startMd: number, endMd: number): boolean {
+  return startMd <= endMd ? md >= startMd && md <= endMd : md >= startMd || md <= endMd;
+}
+
+export interface SeasonStatus {
+  seasonal: boolean;   // le meuble est-il saisonnier ?
+  inSeason: boolean;   // dispo à l'achat en ce moment ?
+  label: string;       // 'Noël', 'Halloween', 'Été' (vide si non saisonnier)
+  emoji: string;       // '🎄' (vide si non saisonnier)
+}
+
+/**
+ * Statut saisonnier d'un meuble à la date `now` (défaut = maintenant).
+ * Un meuble non saisonnier est toujours `inSeason: true`.
+ */
+export function getSeasonStatus(def: FurnitureDefinition | undefined, now: Date = new Date()): SeasonStatus {
+  if (!def?.season) return { seasonal: false, inSeason: true, label: '', emoji: '' };
+  const w = SEASON_WINDOWS[def.season];
+  const md = (now.getMonth() + 1) * 100 + now.getDate();
+  const inSeason = inWindow(md, w.startMonth * 100 + w.startDay, w.endMonth * 100 + w.endDay);
+  return { seasonal: true, inSeason, label: w.label, emoji: w.emoji };
 }
 
 // ─── Helpers de placement (pur) ──────────────────────────────────────────────

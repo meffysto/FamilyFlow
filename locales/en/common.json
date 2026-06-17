@@ -16,6 +16,13 @@
       "title": "Furniture shop",
       "sub": "Buy, repeat — pay in leaves 🍃"
     },
+    "recolor": {
+      "title": "Furniture colour",
+      "sub": "Free preview · apply for {{cost}} 🍃",
+      "apply": "Apply · 🍃 {{cost}}",
+      "close": "Close",
+      "tooPoor": "Not enough 🍃 ({{cost}})"
+    },
     "errors": {
       "insufficientTitle": "Not enough leaves",
       "insufficientBody": "You need {{cost}} 🍃 to unlock the house.",
@@ -26,6 +33,9 @@
       "sol": "Floor", "meuble": "Furniture", "mur": "Wall", "lumiere": "Lighting",
       "compagnon": "Companion", "nature": "Nature", "lecture": "Reading",
       "jeux": "Games", "fete": "Festive", "prestige": "Prestige"
+    },
+    "style": {
+      "classique": "Classic", "moderne": "Modern", "ferme": "Farmhouse"
     },
     "furniture": {
       "tapis": "Rug", "coussin": "Cushion", "tapis_motif": "Patterned rug",
@@ -42,7 +52,15 @@
       "fauteuil_lecture": "Reading armchair", "cubes": "Blocks", "tapis_jeu": "Play mat",
       "petite_console": "Game console", "guirlande_lumineuse": "Fairy lights",
       "citrouille": "Pumpkin", "sapin_mini": "Christmas tree", "coussin_etoile": "Star cushion",
-      "lanterne_magique": "Magic lantern", "statue_licorne": "Unicorn statue"
+      "lanterne_magique": "Magic lantern", "statue_licorne": "Unicorn statue",
+      "tapis_moderne": "Modern rug", "coussin_moderne": "Modern cushion",
+      "table_basse_moderne": "Modern coffee table", "fauteuil_moderne": "Modern armchair",
+      "etagere_moderne": "Modern shelf", "lampe_moderne": "Modern lamp",
+      "plante_moderne": "Modern plant", "cadre_moderne": "Modern frame",
+      "tapis_ferme": "Farmhouse rug", "pouf_ferme": "Farmhouse pouf",
+      "table_ferme": "Farmhouse table", "fauteuil_ferme": "Farmhouse rocking chair",
+      "coffre_ferme": "Farmhouse chest", "lanterne_ferme": "Farmhouse lantern",
+      "plante_ferme": "Farmhouse potted plant", "cadre_ferme": "Farmhouse frame"
     }
   },
   "errorBoundary": {

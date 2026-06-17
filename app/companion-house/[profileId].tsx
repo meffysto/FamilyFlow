@@ -16,8 +16,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useFarmTheme } from '../../constants/farm-theme';
-import { FURNITURE_CATALOG, FURNITURE_CATEGORIES, COMPANION_HOUSE_UNLOCK_COST, type PlacedFurniture } from '../../lib/mascot/companion-house-types';
-import { unlockCompanionHouse, buyAndPlaceFurniture, saveFurnitureLayout, debugForceUnlock } from '../../lib/mascot/companion-house-actions';
+import { FURNITURE_CATALOG, FURNITURE_CATEGORIES, FURNITURE_STYLES, COMPANION_HOUSE_UNLOCK_COST, WALL_BAND, FURNITURE_TINTS, RECOLOR_COST, findFurniture, findTint, furnitureStyle, type FurnitureStyle, type PlacedFurniture } from '../../lib/mascot/companion-house-types';
+import { getSeasonStatus } from '../../lib/mascot/companion-house-engine';
+import { unlockCompanionHouse, buyAndPlaceFurniture, saveFurnitureLayout, recolorFurniture, debugForceUnlock } from '../../lib/mascot/companion-house-actions';
 import { DraggableFurniture } from '../../components/companion-house/DraggableFurniture';
 import { FURNITURE_SPRITES } from '../../components/companion-house/furniture-sprites';
 import { COMPANION_SPRITES } from '../../lib/mascot/companion-sprites';
@@ -25,7 +26,9 @@ import { getCompanionStage } from '../../lib/mascot/companion-engine';
 import { calculateLevel } from '../../lib/gamification';
 
 const ROOM_BG = require('../../assets/companion-house/room-bg.png');
-const FURN_SIZE = 72;
+// Taille de base d'un meuble (px). Augmentée vs v1 (72) pour que la pièce paraisse
+// moins grande : meubles + compagnon remplissent davantage l'espace.
+const FURN_SIZE = 92;
 
 export default function CompanionHouseRoute() {
   const params = useLocalSearchParams<{ profileId: string }>();
@@ -39,8 +42,16 @@ export default function CompanionHouseRoute() {
   const [busy, setBusy] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
+  const [recoloring, setRecoloring] = useState<number | null>(null);  // index en cours de recoloration
+  const [previewKey, setPreviewKey] = useState<string | null>(null);  // teinte prévisualisée (gratuite)
   const [roomSize, setRoomSize] = useState({ w: 0, h: 0 });
   const [activeCat, setActiveCat] = useState(FURNITURE_CATEGORIES[0].key);
+  const [activeStyle, setActiveStyle] = useState<FurnitureStyle>('classique');
+  // Styles dont au moins un meuble a un sprite chargé → onglet visible (sinon masqué).
+  const availableStyles = useMemo(
+    () => FURNITURE_STYLES.filter(s => FURNITURE_CATALOG.some(f => furnitureStyle(f) === s.key && FURNITURE_SPRITES[f.id])),
+    [],
+  );
   // Copie locale du meublage pour un rendu fluide pendant le drag (la source de
   // vérité reste le vault ; on persiste à chaque move/delete).
   const [placed, setPlaced] = useState<PlacedFurniture[]>([]);
@@ -102,6 +113,46 @@ export default function CompanionHouseRoute() {
     });
   }, [persistLayout]);
 
+  const handleFlip = useCallback((index: number) => {
+    Haptics.selectionAsync();
+    setPlaced(prev => {
+      const next = prev.map((f, i) => (i === index ? { ...f, flipped: !f.flipped } : f));
+      persistLayout(next);
+      return next;
+    });
+  }, [persistLayout]);
+
+  const openRecolor = useCallback((index: number) => {
+    Haptics.selectionAsync();
+    setRecoloring(index);
+    setPreviewKey(placed[index]?.color ?? 'O');
+  }, [placed]);
+
+  const closeRecolor = useCallback(() => {
+    setRecoloring(null);
+    setPreviewKey(null);
+  }, []);
+
+  const handleApplyColor = useCallback(async () => {
+    if (recoloring === null || !vault || !profile || busy) return;
+    const index = recoloring;
+    const key = previewKey ?? 'O';
+    const currentKey = placed[index]?.color ?? 'O';
+    if (key === currentKey) { closeRecolor(); return; }   // rien à payer
+    setBusy(true);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await recolorFurniture(vault, profile, index, key);
+      await refreshGamification();
+      await refreshFarm(profile.id);
+    } catch (e) {
+      Alert.alert(t('companionHouse.errors.oops'), String(e));
+    } finally {
+      setBusy(false);
+      closeRecolor();
+    }
+  }, [recoloring, previewKey, placed, vault, profile, busy, refreshGamification, refreshFarm, closeRecolor, t]);
+
   const handleDelete = useCallback((index: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelected(null);
@@ -143,12 +194,26 @@ export default function CompanionHouseRoute() {
     }
   }, [vault, profile, busy, refreshGamification]);
 
+  const handlePickStyle = useCallback((styleKey: FurnitureStyle) => {
+    Haptics.selectionAsync();
+    setActiveStyle(styleKey);
+    // Bascule sur la 1re catégorie qui a des meubles (avec sprite) dans ce style
+    const hasInCat = FURNITURE_CATALOG.some(f => furnitureStyle(f) === styleKey && f.category === activeCat && FURNITURE_SPRITES[f.id]);
+    if (!hasInCat) {
+      const firstCat = FURNITURE_CATEGORIES.find(c => FURNITURE_CATALOG.some(f => furnitureStyle(f) === styleKey && f.category === c.key && FURNITURE_SPRITES[f.id]));
+      if (firstCat) setActiveCat(firstCat.key);
+    }
+  }, [activeCat]);
+
   const handleBuy = useCallback(async (furnitureId: string) => {
     if (!vault || !profile || busy) return;
     setBusy(true);
     try {
       Haptics.selectionAsync();
-      await buyAndPlaceFurniture(vault, profile, furnitureId, 0.5, 0.55);
+      // Déco murale → posée dans la bande haute ; sinon centre-bas du sol.
+      const isWall = findFurniture(furnitureId)?.surface === 'wall';
+      const y = isWall ? (WALL_BAND.min + WALL_BAND.max) / 2 : 0.55;
+      await buyAndPlaceFurniture(vault, profile, furnitureId, 0.5, y);
       await refreshGamification();
     } catch (e) {
       Alert.alert(t('companionHouse.errors.buyFail'), String(e));
@@ -210,6 +275,11 @@ export default function CompanionHouseRoute() {
           {unlocked && roomSize.w > 0 && placed.map((f, i) => {
             const sprite = FURNITURE_SPRITES[f.furnitureId];
             if (!sprite) return null;
+            const def = findFurniture(f.furnitureId);
+            const itemSize = FURN_SIZE * (def?.scale ?? 1);
+            const isWall = def?.surface === 'wall';
+            // Aperçu live gratuit pendant la recoloration de cet objet
+            const colorKey = recoloring === i ? previewKey : f.color;
             return (
               <DraggableFurniture
                 key={`${f.furnitureId}-${i}`}
@@ -218,10 +288,16 @@ export default function CompanionHouseRoute() {
                 y={f.y}
                 roomW={roomSize.w}
                 roomH={roomSize.h}
-                size={FURN_SIZE}
+                size={itemSize}
+                flipped={f.flipped ?? false}
+                tint={findTint(colorKey ?? undefined)}
+                minY={isWall ? WALL_BAND.min : 0}
+                maxY={isWall ? WALL_BAND.max : 1}
                 selected={selected === i}
                 onSelect={() => setSelected(i)}
                 onMoveEnd={(x, y) => handleMoveEnd(i, x, y)}
+                onFlip={() => handleFlip(i)}
+                onRecolor={() => openRecolor(i)}
                 onDelete={() => handleDelete(i)}
               />
             );
@@ -260,13 +336,23 @@ export default function CompanionHouseRoute() {
           </View>
         )}
 
-        {/* Bouton boutique si débloquée */}
+        {/* Bandeau boutique si débloquée — pleine largeur en bas */}
         {unlocked && (
           <TouchableOpacity
-            style={[styles.shopFab, { bottom: insets.bottom + 20 }]}
+            activeOpacity={0.85}
+            style={[styles.shopBanner, { paddingBottom: insets.bottom + 14, borderTopColor: farm.woodHighlight, backgroundColor: farm.woodDark }]}
             onPress={() => { Haptics.selectionAsync(); setShopOpen(true); }}
+            accessibilityRole="button"
+            accessibilityLabel={t('companionHouse.shop.open')}
           >
-            <Text style={styles.shopFabText}>{t('companionHouse.shop.open')}</Text>
+            <View style={[styles.shopBannerInner, { backgroundColor: farm.greenBtn, borderBottomColor: farm.greenBtnShadow }]}>
+              <Text style={styles.shopBannerIcon}>🛋️</Text>
+              <Text style={styles.shopBannerText}>{t('companionHouse.shop.open')}</Text>
+              <View style={styles.shopBannerWallet}>
+                <Text style={styles.shopBannerLeaf}>🍃</Text>
+                <Text style={styles.shopBannerCoins}>{coins.toLocaleString('fr-FR')}</Text>
+              </View>
+            </View>
           </TouchableOpacity>
         )}
       </ImageBackground>
@@ -279,6 +365,24 @@ export default function CompanionHouseRoute() {
               <View style={[styles.grip, { backgroundColor: farm.woodHighlight }]} />
               <Text style={[styles.sheetTitle, { color: farm.brownText, textShadowColor: farm.textEmboss }]}>{t('companionHouse.shop.title')}</Text>
               <Text style={[styles.sheetSub, { color: farm.brownTextSub }]}>{t('companionHouse.shop.sub')}</Text>
+              {/* Onglets de STYLE (#10) — visibles seulement si ≥ 2 styles ont des assets */}
+              {availableStyles.length > 1 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll} contentContainerStyle={styles.tabRow}>
+                  {availableStyles.map(s => {
+                    const active = activeStyle === s.key;
+                    return (
+                      <TouchableOpacity
+                        key={s.key}
+                        onPress={() => handlePickStyle(s.key)}
+                        style={[styles.styleTab, { backgroundColor: active ? farm.woodDark : farm.parchmentDark, borderColor: farm.woodHighlight }]}
+                      >
+                        <Text style={styles.styleTabEmoji}>{s.emoji}</Text>
+                        <Text style={[styles.tabText, { color: active ? '#FFFFFF' : farm.brownTextSub }]}>{t('companionHouse.style.' + s.key, { defaultValue: s.label })}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
               {/* Onglets de catégorie */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll} contentContainerStyle={styles.tabRow}>
                 {FURNITURE_CATEGORIES.map(cat => {
@@ -295,22 +399,85 @@ export default function CompanionHouseRoute() {
                 })}
               </ScrollView>
               <ScrollView showsVerticalScrollIndicator={false} style={styles.shopScroll} contentContainerStyle={styles.shopGrid}>
-                {FURNITURE_CATALOG.filter(f => f.category === activeCat).map(item => {
+                {/* Filtre : catégorie + style actifs, et SPRITE chargé (packs partiels sûrs) */}
+                {FURNITURE_CATALOG.filter(f => f.category === activeCat && furnitureStyle(f) === activeStyle && FURNITURE_SPRITES[f.id]).map(item => {
+                  const season = getSeasonStatus(item);
+                  const locked = season.seasonal && !season.inSeason;
                   const canAfford = coins >= item.cost;
+                  const disabled = locked || !canAfford || busy;
                   return (
                     <TouchableOpacity
                       key={item.id}
-                      style={[styles.shopItem, { backgroundColor: farm.parchmentDark, borderColor: farm.woodHighlight }, !canAfford && styles.btnDisabled]}
-                      disabled={!canAfford || busy}
+                      style={[styles.shopItem, { backgroundColor: farm.parchmentDark, borderColor: farm.woodHighlight }, disabled && styles.btnDisabled]}
+                      disabled={disabled}
                       onPress={() => handleBuy(item.id)}
                     >
-                      <Image source={FURNITURE_SPRITES[item.id]} style={styles.shopItemImg} />
+                      <Image source={FURNITURE_SPRITES[item.id]} style={[styles.shopItemImg, locked && styles.shopItemImgLocked]} />
                       <Text style={[styles.shopName, { color: farm.brownText }]} numberOfLines={1}>{t('companionHouse.furniture.' + item.id, { defaultValue: item.label })}</Text>
-                      <Text style={[styles.shopPrice, { color: farm.brownTextSub }]}>🍃 {item.cost.toLocaleString('fr-FR')}</Text>
+                      {locked
+                        ? <Text style={[styles.shopSeasonLock, { color: farm.brownTextSub }]} numberOfLines={1}>🔒 {season.emoji} {season.label}</Text>
+                        : <Text style={[styles.shopPrice, { color: farm.brownTextSub }]}>🍃 {item.cost.toLocaleString('fr-FR')}</Text>}
+                      {season.seasonal && !locked && (
+                        <View style={[styles.shopSeasonBadge, { backgroundColor: farm.greenBtn }]}>
+                          <Text style={styles.shopSeasonBadgeText}>{season.emoji}</Text>
+                        </View>
+                      )}
                     </TouchableOpacity>
                   );
                 })}
               </ScrollView>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Nuancier de recoloration (#7) — aperçu live gratuit, application payante */}
+      <Modal visible={recoloring !== null} transparent animationType="slide" onRequestClose={closeRecolor}>
+        <Pressable style={styles.modalBackdrop} onPress={closeRecolor}>
+          <Pressable style={[styles.woodFrame, { backgroundColor: farm.woodDark }]} onPress={() => {}}>
+            <View style={[styles.sheet, { backgroundColor: farm.parchment, borderColor: farm.woodHighlight }]}>
+              <View style={[styles.grip, { backgroundColor: farm.woodHighlight }]} />
+              <Text style={[styles.sheetTitle, { color: farm.brownText, textShadowColor: farm.textEmboss }]}>{t('companionHouse.recolor.title')}</Text>
+              <Text style={[styles.sheetSub, { color: farm.brownTextSub }]}>{t('companionHouse.recolor.sub', { cost: RECOLOR_COST })}</Text>
+              <View style={styles.swatchRow}>
+                {FURNITURE_TINTS.map(tint => {
+                  const active = (previewKey ?? 'O') === tint.key;
+                  return (
+                    <TouchableOpacity
+                      key={tint.key}
+                      onPress={() => { Haptics.selectionAsync(); setPreviewKey(tint.key); }}
+                      style={[
+                        styles.swatch,
+                        { backgroundColor: tint.color ?? farm.parchmentDark, borderColor: active ? farm.brownText : farm.woodHighlight },
+                        active && styles.swatchActive,
+                      ]}
+                      accessibilityLabel={tint.label}
+                    >
+                      {tint.color === null && <Text style={[styles.swatchNone, { color: farm.brownTextSub }]}>∅</Text>}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {(() => {
+                const currentKey = (recoloring !== null ? placed[recoloring]?.color : undefined) ?? 'O';
+                const willPay = (previewKey ?? 'O') !== currentKey;
+                const tooPoor = willPay && coins < RECOLOR_COST;
+                return (
+                  <TouchableOpacity
+                    style={[styles.applyBtn, { backgroundColor: farm.greenBtn, borderBottomColor: farm.greenBtnShadow }, (busy || tooPoor) && styles.btnDisabled]}
+                    onPress={handleApplyColor}
+                    disabled={busy || tooPoor}
+                  >
+                    <Text style={styles.applyBtnText}>
+                      {!willPay
+                        ? t('companionHouse.recolor.close')
+                        : tooPoor
+                          ? t('companionHouse.recolor.tooPoor', { cost: RECOLOR_COST })
+                          : t('companionHouse.recolor.apply', { cost: RECOLOR_COST })}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })()}
             </View>
           </Pressable>
         </Pressable>
@@ -331,9 +498,8 @@ const styles = StyleSheet.create({
   walletVal: { color: '#FFE9A8', fontWeight: '800', fontSize: 14 },
   topScrim: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'rgba(26,16,10,0.32)' },
   room: { ...StyleSheet.absoluteFillObject },
-  pet: { position: 'absolute', width: 96, height: 96, marginLeft: -48, marginTop: -48 },
+  pet: { position: 'absolute', width: 120, height: 120, marginLeft: -60, marginTop: -60 },
   petImg: { width: '100%', height: '100%', resizeMode: 'contain' },
-  furn: { position: 'absolute', width: FURN_SIZE, height: FURN_SIZE, marginLeft: -FURN_SIZE / 2, marginTop: -FURN_SIZE / 2, resizeMode: 'contain' },
   lockOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(26,16,10,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   lockFrame: { borderRadius: 22, padding: 5, width: '100%', maxWidth: 348, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 10 },
   lockCard: { borderRadius: 18, borderWidth: 2, padding: 22, alignItems: 'center' },
@@ -346,8 +512,13 @@ const styles = StyleSheet.create({
   lockHint: { marginTop: 12, fontSize: 12 },
   debugBtn: { marginTop: 14, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1, borderColor: '#C84A4A', borderStyle: 'dashed' },
   debugBtnText: { color: '#C84A4A', fontSize: 12, fontWeight: '700' },
-  shopFab: { position: 'absolute', alignSelf: 'center', backgroundColor: '#E8C858', borderColor: '#fff', borderWidth: 2, borderRadius: 999, paddingVertical: 11, paddingHorizontal: 24 },
-  shopFabText: { color: '#6B4226', fontWeight: '800', fontSize: 14 },
+  shopBanner: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 12, paddingHorizontal: 12, borderTopWidth: 2 },
+  shopBannerInner: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 13, paddingHorizontal: 18, borderBottomWidth: 3 },
+  shopBannerIcon: { fontSize: 20 },
+  shopBannerText: { flex: 1, color: '#FFFFFF', fontWeight: '800', fontSize: 16, textShadowColor: 'rgba(0,0,0,0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 0 },
+  shopBannerWallet: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5 },
+  shopBannerLeaf: { fontSize: 13 },
+  shopBannerCoins: { color: '#FFE9A8', fontWeight: '800', fontSize: 14 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(26,16,10,0.45)', justifyContent: 'flex-end' },
   woodFrame: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 5, maxHeight: '78%', overflow: 'hidden' },
   sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: 2, borderBottomWidth: 0, padding: 16, paddingBottom: 30, flexShrink: 1 },
@@ -359,9 +530,21 @@ const styles = StyleSheet.create({
   tabRow: { gap: 8, paddingVertical: 10, paddingRight: 8 },
   tab: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, borderWidth: 1 },
   tabText: { fontSize: 12.5, fontWeight: '700' },
+  styleTab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12, borderWidth: 1 },
+  styleTabEmoji: { fontSize: 14 },
   shopGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingBottom: 8 },
   shopItem: { width: '31%', borderRadius: 12, padding: 8, alignItems: 'center', borderWidth: 1 },
   shopItemImg: { width: 50, height: 50, resizeMode: 'contain', marginBottom: 4 },
+  shopItemImgLocked: { opacity: 0.4 },
   shopName: { fontSize: 11, fontWeight: '700', marginBottom: 1, maxWidth: '100%' },
   shopPrice: { fontSize: 11.5, fontWeight: '800' },
+  shopSeasonLock: { fontSize: 10, fontWeight: '700', maxWidth: '100%' },
+  shopSeasonBadge: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  shopSeasonBadgeText: { fontSize: 11 },
+  swatchRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', paddingVertical: 12 },
+  swatch: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  swatchActive: { borderWidth: 3, transform: [{ scale: 1.12 }] },
+  swatchNone: { fontSize: 16, fontWeight: '700' },
+  applyBtn: { marginTop: 8, borderRadius: 999, paddingVertical: 13, alignItems: 'center', borderBottomWidth: 3 },
+  applyBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15, textShadowColor: 'rgba(0,0,0,0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 0 },
 });

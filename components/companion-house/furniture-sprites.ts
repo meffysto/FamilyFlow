@@ -55,6 +55,28 @@ export const FURNITURE_SPRITES: Record<string, any> = {
   coussin_etoile: require('../../assets/companion-house/coussin_etoile.png'),
   lanterne_magique: require('../../assets/companion-house/lanterne_magique.png'),
   statue_licorne: require('../../assets/companion-house/statue_licorne.png'),
+
+  // ─── Packs STYLE (#10) ──────
+  // Les entrées catalogue (companion-house-types.ts) sont prêtes ; les sprites
+  // enregistrés ici rendent les items visibles en boutique.
+  // Style « Moderne » :
+  tapis_moderne: require('../../assets/companion-house/tapis_moderne.png'),
+  coussin_moderne: require('../../assets/companion-house/coussin_moderne.png'),
+  table_basse_moderne: require('../../assets/companion-house/table_basse_moderne.png'),
+  fauteuil_moderne: require('../../assets/companion-house/fauteuil_moderne.png'),
+  etagere_moderne: require('../../assets/companion-house/etagere_moderne.png'),
+  lampe_moderne: require('../../assets/companion-house/lampe_moderne.png'),
+  plante_moderne: require('../../assets/companion-house/plante_moderne.png'),
+  cadre_moderne: require('../../assets/companion-house/cadre_moderne.png'),
+  // Style « Ferme » :
+  tapis_ferme: require('../../assets/companion-house/tapis_ferme.png'),
+  pouf_ferme: require('../../assets/companion-house/pouf_ferme.png'),
+  table_ferme: require('../../assets/companion-house/table_ferme.png'),
+  fauteuil_ferme: require('../../assets/companion-house/fauteuil_ferme.png'),
+  coffre_ferme: require('../../assets/companion-house/coffre_ferme.png'),
+  lanterne_ferme: require('../../assets/companion-house/lanterne_ferme.png'),
+  plante_ferme: require('../../assets/companion-house/plante_ferme.png'),
+  cadre_ferme: require('../../assets/companion-house/cadre_ferme.png'),
 };
 
 export const PET_FALLBACK = undefined;

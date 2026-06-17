@@ -12,11 +12,12 @@ import {
   serializeCompanionHouseLines,
   canUnlockCompanionHouse,
   canBuyFurniture,
+  getSeasonStatus,
   placeFurniture,
   moveFurniture,
   removeFurniture,
 } from '../mascot/companion-house-engine';
-import { COMPANION_HOUSE_UNLOCK_COST } from '../mascot/companion-house-types';
+import { COMPANION_HOUSE_UNLOCK_COST, findFurniture } from '../mascot/companion-house-types';
 import type { PlacedFurniture } from '../mascot/companion-house-types';
 
 describe('companion-house-engine', () => {
@@ -82,6 +83,100 @@ describe('companion-house-engine', () => {
         { furnitureId: 'plante', x: 0.9, y: 0.1, placedAt: '2026-06-16T09:00:00Z' },
       ];
       expect(parsePlacedFurniture(serializePlacedFurniture(items))).toEqual(items);
+    });
+  });
+
+  describe('flip (miroir horizontal)', () => {
+    it('ne sérialise PAS de suffixe quand non flippé (rétro-compat byte)', () => {
+      const csv = serializePlacedFurniture([{ furnitureId: 'tapis', x: 0.1, y: 0.2, placedAt: '2026-06-15T10:00:00Z' }]);
+      expect(csv).toBe('tapis:0.1000:0.2000:2026-06-15T10:00:00Z');
+    });
+
+    it('sérialise un token `:f1` quand flippé', () => {
+      const csv = serializePlacedFurniture([{ furnitureId: 'tapis', x: 0.1, y: 0.2, placedAt: '2026-06-15T10:00:00Z', flipped: true }]);
+      expect(csv).toBe('tapis:0.1000:0.2000:2026-06-15T10:00:00Z:f1');
+    });
+
+    it('parse le flag flip et roundtrip', () => {
+      const items: PlacedFurniture[] = [
+        { furnitureId: 'tapis', x: 0.1, y: 0.2, placedAt: '2026-06-15T10:00:00Z', flipped: true },
+        { furnitureId: 'plante', x: 0.5, y: 0.5, placedAt: '2026-06-16T08:30:00Z' },
+      ];
+      expect(parsePlacedFurniture(serializePlacedFurniture(items))).toEqual(items);
+    });
+
+    it('lit le format flip hérité (`:1` brut)', () => {
+      const r = parsePlacedFurniture('tapis:0.1500:0.2500:2026-06-15T10:00:00Z:1');
+      expect(r[0].flipped).toBe(true);
+      expect(r[0].placedAt).toBe('2026-06-15T10:00:00Z');
+    });
+
+    it('lit les anciennes lignes (sans flag) comme non flippées', () => {
+      const r = parsePlacedFurniture('tapis:0.15:0.25:2026-06-15T10:00:00Z');
+      expect(r[0].flipped).toBeUndefined();
+    });
+
+    it('ne confond pas un offset ISO finissant par `:00` avec un flag', () => {
+      const r = parsePlacedFurniture('lampe:0.5:0.5:2026-06-15T14:30:45+02:00');
+      expect(r).toHaveLength(1);
+      expect(r[0].placedAt).toBe('2026-06-15T14:30:45+02:00');
+      expect(r[0].flipped).toBeUndefined();
+    });
+  });
+
+  describe('couleur (teinte)', () => {
+    it('sérialise un token `:c<K>` quand teinté (pas pour Original)', () => {
+      const tinted = serializePlacedFurniture([{ furnitureId: 'tapis', x: 0.1, y: 0.2, placedAt: '2026-06-15T10:00:00Z', color: 'R' }]);
+      expect(tinted).toBe('tapis:0.1000:0.2000:2026-06-15T10:00:00Z:cR');
+      const original = serializePlacedFurniture([{ furnitureId: 'tapis', x: 0.1, y: 0.2, placedAt: '2026-06-15T10:00:00Z', color: 'O' }]);
+      expect(original).toBe('tapis:0.1000:0.2000:2026-06-15T10:00:00Z');
+    });
+
+    it('roundtrip flip + couleur combinés', () => {
+      const items: PlacedFurniture[] = [
+        { furnitureId: 'fauteuil', x: 0.3, y: 0.6, placedAt: '2026-06-15T10:00:00Z', flipped: true, color: 'B' },
+      ];
+      expect(parsePlacedFurniture(serializePlacedFurniture(items))).toEqual(items);
+    });
+
+    it('parse une teinte seule', () => {
+      const r = parsePlacedFurniture('coussin:0.5:0.5:2026-06-15T10:00:00Z:cG');
+      expect(r[0].color).toBe('G');
+      expect(r[0].flipped).toBeUndefined();
+    });
+  });
+
+  describe('saison (getSeasonStatus + gating achat)', () => {
+    // citrouille = halloween (1er oct → 2 nov), sapin_mini = noël (1er déc → 6 jan)
+    it('non saisonnier → toujours inSeason', () => {
+      const s = getSeasonStatus(findFurniture('tapis'), new Date(2026, 5, 17));
+      expect(s).toEqual({ seasonal: false, inSeason: true, label: '', emoji: '' });
+    });
+
+    it('citrouille dispo en octobre, pas en juin', () => {
+      const cit = findFurniture('citrouille');
+      expect(getSeasonStatus(cit, new Date(2026, 9, 15)).inSeason).toBe(true);   // 15 oct
+      expect(getSeasonStatus(cit, new Date(2026, 5, 17)).inSeason).toBe(false);  // 17 juin
+      expect(getSeasonStatus(cit, new Date(2026, 9, 15)).label).toBe('Halloween');
+    });
+
+    it('noël chevauche l’année (déc ET janvier)', () => {
+      const sapin = findFurniture('sapin_mini');
+      expect(getSeasonStatus(sapin, new Date(2026, 11, 25)).inSeason).toBe(true); // 25 déc
+      expect(getSeasonStatus(sapin, new Date(2027, 0, 3)).inSeason).toBe(true);   // 3 jan
+      expect(getSeasonStatus(sapin, new Date(2026, 6, 1)).inSeason).toBe(false);  // 1 juil
+    });
+
+    it('canBuyFurniture refuse un achat hors saison malgré un solde suffisant', () => {
+      const juin = new Date(2026, 5, 17);
+      const r = canBuyFurniture('citrouille', 999999, juin);
+      expect(r.ok).toBe(false);
+      expect(r.reason).toMatch(/Halloween/);
+    });
+
+    it('canBuyFurniture autorise en saison', () => {
+      const r = canBuyFurniture('citrouille', 999999, new Date(2026, 9, 15));
+      expect(r.ok).toBe(true);
     });
   });
 

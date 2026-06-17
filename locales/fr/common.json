@@ -16,6 +16,13 @@
       "title": "Boutique mobilier",
       "sub": "Achète, recommence — paie en feuilles 🍃"
     },
+    "recolor": {
+      "title": "Couleur du meuble",
+      "sub": "Aperçu gratuit · application {{cost}} 🍃",
+      "apply": "Appliquer · 🍃 {{cost}}",
+      "close": "Fermer",
+      "tooPoor": "Pas assez de 🍃 ({{cost}})"
+    },
     "errors": {
       "insufficientTitle": "Feuilles insuffisantes",
       "insufficientBody": "Il te faut {{cost}} 🍃 pour débloquer la maison.",
@@ -26,6 +33,9 @@
       "sol": "Sol", "meuble": "Meubles", "mur": "Mur", "lumiere": "Lumière",
       "compagnon": "Compagnon", "nature": "Nature", "lecture": "Lecture",
       "jeux": "Jeux", "fete": "Fête & saisons", "prestige": "Prestige"
+    },
+    "style": {
+      "classique": "Classique", "moderne": "Moderne", "ferme": "Ferme"
     },
     "furniture": {
       "tapis": "Tapis", "coussin": "Coussin", "tapis_motif": "Tapis à motifs",
@@ -42,7 +52,15 @@
       "fauteuil_lecture": "Fauteuil lecture", "cubes": "Cubes", "tapis_jeu": "Tapis de jeu",
       "petite_console": "Petite console", "guirlande_lumineuse": "Guirlande lumineuse",
       "citrouille": "Citrouille", "sapin_mini": "Sapin de Noël", "coussin_etoile": "Coussin étoilé",
-      "lanterne_magique": "Lanterne magique", "statue_licorne": "Statue licorne"
+      "lanterne_magique": "Lanterne magique", "statue_licorne": "Statue licorne",
+      "tapis_moderne": "Tapis moderne", "coussin_moderne": "Coussin moderne",
+      "table_basse_moderne": "Table basse moderne", "fauteuil_moderne": "Fauteuil moderne",
+      "etagere_moderne": "Étagère moderne", "lampe_moderne": "Lampe moderne",
+      "plante_moderne": "Plante moderne", "cadre_moderne": "Cadre moderne",
+      "tapis_ferme": "Tapis ferme", "pouf_ferme": "Pouf ferme",
+      "table_ferme": "Table de ferme", "fauteuil_ferme": "Fauteuil ferme",
+      "coffre_ferme": "Coffre ferme", "lanterne_ferme": "Lanterne ferme",
+      "plante_ferme": "Plante en pot ferme", "cadre_ferme": "Cadre ferme"
     }
   },
   "errorBoundary": {
