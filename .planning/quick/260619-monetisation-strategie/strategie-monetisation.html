@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — Stratégie de monétisation</title>
+<style>
+  :root {
+    --cream: #FBF7F0;
+    --cream-2: #F4ECE0;
+    --ink: #3A2E28;
+    --ink-soft: #6B5A4F;
+    --terra: #E07856;
+    --terra-dark: #C25E3E;
+    --gold: #D9A441;
+    --green: #6FA86B;
+    --green-bg: #EAF3E8;
+    --blue: #5B8BC4;
+    --blue-bg: #E8F0F8;
+    --gold-bg: #FBF1DC;
+    --terra-bg: #FBE8E0;
+    --line: #E6DACB;
+    --shadow: 0 4px 18px rgba(58,46,40,.08);
+    --shadow-lg: 0 12px 40px rgba(58,46,40,.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; line-height: 1.2; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+
+  /* HERO */
+  header {
+    background: linear-gradient(150deg, #F9EDE2 0%, #FBF7F0 55%, #EFF4EA 100%);
+    padding: 72px 0 56px;
+    border-bottom: 1px solid var(--line);
+  }
+  .badge {
+    display: inline-block; background: var(--terra-bg); color: var(--terra-dark);
+    font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    padding: 6px 14px; border-radius: 100px; margin-bottom: 20px;
+  }
+  header h1 { font-size: 46px; letter-spacing: -.5px; }
+  header h1 .accent { color: var(--terra); }
+  header .sub { font-size: 19px; color: var(--ink-soft); margin-top: 16px; max-width: 640px; }
+  .meta-row { margin-top: 28px; display: flex; gap: 28px; flex-wrap: wrap; font-size: 14px; color: var(--ink-soft); }
+  .meta-row b { color: var(--ink); }
+
+  /* SECTIONS */
+  section { padding: 54px 0; border-bottom: 1px solid var(--line); }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--terra); margin-bottom: 10px; }
+  section h2 { font-size: 32px; margin-bottom: 8px; }
+  section .lead { font-size: 17px; color: var(--ink-soft); margin-bottom: 28px; max-width: 680px; }
+
+  /* VERDICT CARD */
+  .verdict {
+    background: linear-gradient(135deg, var(--terra) 0%, #E89B72 100%);
+    color: #fff; border-radius: 22px; padding: 38px 40px; box-shadow: var(--shadow-lg);
+  }
+  .verdict .k { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; opacity: .85; font-weight: 700; }
+  .verdict h3 { font-size: 28px; margin: 8px 0 14px; color: #fff; }
+  .verdict p { opacity: .95; font-size: 16px; }
+  .verdict .pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 26px; }
+  .verdict .pillar { background: rgba(255,255,255,.16); border-radius: 14px; padding: 18px 20px; }
+  .verdict .pillar .t { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .verdict .pillar .d { font-size: 13.5px; opacity: .9; }
+
+  /* CARDS GRID */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px; box-shadow: var(--shadow); }
+  .card .tag { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; padding: 5px 11px; border-radius: 100px; margin-bottom: 14px; }
+  .tag.free { background: var(--green-bg); color: #4a7a47; }
+  .tag.life { background: var(--gold-bg); color: #a6792a; }
+  .tag.ai { background: var(--blue-bg); color: #3f6aa9; }
+  .card h3 { font-size: 17px; margin-bottom: 10px; }
+  .card ul { list-style: none; font-size: 14px; color: var(--ink-soft); }
+  .card li { padding: 4px 0 4px 20px; position: relative; }
+  .card li::before { content: "•"; position: absolute; left: 4px; color: var(--terra); font-weight: 700; }
+
+  /* PRICE TABLE */
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); font-size: 14.5px; }
+  thead { background: var(--cream-2); }
+  th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); }
+  tbody tr:last-child td { border-bottom: none; }
+  td .price { font-weight: 700; color: var(--terra-dark); font-size: 16px; }
+  .pill { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 100px; }
+  .pill.life { background: var(--gold-bg); color: #a6792a; }
+  .pill.conso { background: var(--blue-bg); color: #3f6aa9; }
+  .pill.abo { background: var(--terra-bg); color: var(--terra-dark); }
+  .pill.acte { background: var(--green-bg); color: #4a7a47; }
+
+  /* SCENARIO COMPARISON */
+  .scen { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 26px; }
+  .scen .box { border-radius: 18px; padding: 26px; border: 1px solid var(--line); }
+  .scen .a { background: #FCEEEA; border-color: #F2D2C6; }
+  .scen .b { background: var(--green-bg); border-color: #CFE3CB; }
+  .scen .box .h { display:flex; align-items:center; gap:10px; font-size: 18px; font-weight: 800; font-family: serif; margin-bottom: 6px; }
+  .scen .a .h { color: var(--terra-dark); }
+  .scen .b .h { color: #4a7a47; }
+  .scen .box .desc { font-size: 14px; color: var(--ink-soft); min-height: 42px; }
+  .scen .metric { margin-top: 18px; }
+  .scen .metric .lbl { font-size: 12.5px; color: var(--ink-soft); }
+  .scen .metric .val { font-size: 30px; font-weight: 800; font-family: serif; }
+  .scen .a .val { color: var(--terra-dark); }
+  .scen .b .val { color: #4a7a47; }
+  .scen .metric .val small { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+
+  /* BAR CHART */
+  .chart { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 28px; box-shadow: var(--shadow); }
+  .chart h3 { font-size: 17px; margin-bottom: 4px; }
+  .chart .note { font-size: 13px; color: var(--ink-soft); margin-bottom: 22px; }
+  .barrow { margin-bottom: 22px; }
+  .barrow .toplbl { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; }
+  .barrow .toplbl .nm { font-weight: 600; }
+  .track { background: var(--cream-2); border-radius: 100px; height: 30px; position: relative; overflow: hidden; }
+  .fill { height: 100%; border-radius: 100px; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; color: #fff; font-weight: 700; font-size: 13px; }
+  .fill.a { background: linear-gradient(90deg,#E89B72,var(--terra)); }
+  .fill.b { background: linear-gradient(90deg,#8FBF8A,var(--green)); }
+
+  /* CALLOUT */
+  .callout { background: var(--gold-bg); border: 1px solid #EAD4A0; border-left: 5px solid var(--gold); border-radius: 12px; padding: 20px 24px; font-size: 15px; }
+  .callout b { color: #8a6418; }
+
+  /* ROADMAP */
+  .road { display: grid; gap: 14px; }
+  .step { display: grid; grid-template-columns: 56px 1fr; gap: 18px; align-items: start; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .step .num { width: 44px; height: 44px; border-radius: 12px; background: var(--terra); color: #fff; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; font-family: serif; }
+  .step h3 { font-size: 16px; margin-bottom: 4px; }
+  .step p { font-size: 14px; color: var(--ink-soft); }
+
+  /* MARKETING */
+  .mk { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .mk .m { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
+  .mk .m .emo { font-size: 26px; }
+  .mk .m .hook { font-size: 18px; font-weight: 700; font-family: serif; margin: 8px 0 4px; color: var(--ink); }
+  .mk .m .why { font-size: 13.5px; color: var(--ink-soft); }
+
+  footer { padding: 40px 0 64px; text-align: center; color: var(--ink-soft); font-size: 13.5px; }
+  .hl { background: linear-gradient(transparent 60%, #FBE3B0 60%); font-weight: 600; }
+
+  @media (max-width: 760px) {
+    header h1 { font-size: 34px; }
+    .cards, .scen, .mk, .verdict .pillars { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 44px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="badge">FamilyFlow · Stratégie 2026</span>
+    <h1>Passer FamilyFlow en <span class="accent">payant</span>, sans trahir l'esprit famille.</h1>
+    <p class="sub">Analyse concurrentielle (FamilyWall &amp; marché FR), découpage gratuit / premium, prix, et comparaison chiffrée des modèles. Un plan prêt à exécuter et à décliner en marketing.</p>
+    <div class="meta-row">
+      <span><b>Modèle recommandé&nbsp;:</b> Hybride (achat unique + IA à la carte)</span>
+      <span><b>Cœur de l'avantage&nbsp;:</b> aucun backend → « payez une fois »</span>
+      <span><b>Date&nbsp;:</b> 19/06/2026</span>
+    </div>
+  </div>
+</header>
+
+<!-- VERDICT -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">La décision centrale</div>
+    <h2>Le modèle hybride</h2>
+    <p class="lead">Le marché FR est 100&nbsp;% abonnement (~5&nbsp;€/mois, ~35&nbsp;€/an) — parce que tous les concurrents portent des coûts serveur. FamilyFlow n'a pas de backend&nbsp;: ta contrainte technique devient ton argument unique.</p>
+    <div class="verdict">
+      <div class="k">Recommandation</div>
+      <h3>Achat unique « à vie » pour le cœur · IA à la carte pour le reste</h3>
+      <p>On vend une fois ce qui n'a aucun coût récurrent, et on facture au juste prix les seules features qui coûtent de l'API. C'est le seul positionnement qu'aucun concurrent FR ne peut copier.</p>
+      <div class="pillars">
+        <div class="pillar">
+          <div class="t">🏡 Cœur de l'app — coût récurrent nul</div>
+          <div class="d">Budget, repas, export livre PDF, mascotte/ferme avancée, santé → <b>achat unique</b>.</div>
+        </div>
+        <div class="pillar">
+          <div class="t">🌙 Features IA — coût d'API variable</div>
+          <div class="d">Histoires TTS, voix clonées, scan tickets → <b>crédits / quota</b> qui couvrent leurs coûts.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GATING -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Découpage</div>
+    <h2>Gratuit, à vie, ou à la carte</h2>
+    <p class="lead">Règle d'or&nbsp;: ne jamais verrouiller ce qui est gratuit chez les concurrents. Le premium <em>sans IA</em> est la colonne vertébrale du revenu&nbsp;; l'IA est la cerise.</p>
+    <div class="cards">
+      <div class="card">
+        <span class="tag free">🟢 Gratuit, pour toujours</span>
+        <h3>Le hook de rétention</h3>
+        <ul>
+          <li>Dashboard, tâches, calendrier, RDVs</li>
+          <li>Journal bébé, photos &amp; souvenirs</li>
+          <li>Gamification de base (XP, mascotte, ferme, Sporée)</li>
+          <li>Courses, notes, wishlist, anniversaires</li>
+          <li><b>Zéro publicité</b></li>
+          <li>2–3 histoires du soir / mois</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag life">🟡 Premium à vie</span>
+        <h3>Le cœur du revenu (marge ~85 %)</h3>
+        <ul>
+          <li>Budget &amp; finances avancées</li>
+          <li>Planificateur repas + recettes illimitées</li>
+          <li><b>Export livres PDF</b> — unique sur le marché</li>
+          <li>Mascotte / ferme / village avancés</li>
+          <li>Carnet santé, courbes, grossesse</li>
+          <li>Lightning Family Wallet</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag ai">🔵 IA à la carte</span>
+        <h3>Le « waouh » émotionnel</h3>
+        <ul>
+          <li>Histoires du soir illimitées</li>
+          <li>Voix clonées premium (la voix de papa/maman)</li>
+          <li>Scan tickets de caisse</li>
+          <li>Suggestions recettes « Cuisiner ce soir »</li>
+          <li>Prép. RDV IA enrichie</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Configuration des prix</div>
+    <h2>La grille tarifaire</h2>
+    <p class="lead">Ancrage marché&nbsp;: un an chez les concurrents ≈ 35&nbsp;€. Ton lifetime vaut « un an chez les autres, mais pour toujours ».</p>
+    <table>
+      <thead>
+        <tr><th>Produit</th><th>Type</th><th>Prix conseillé</th><th>Justification</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>FamilyFlow à Vie</b></td>
+          <td><span class="pill life">Achat unique</span></td>
+          <td><span class="price">29,99 €</span></td>
+          <td>Sous la barre des 30 €, = 1 an concurrent. Le cœur du revenu.</td>
+        </tr>
+        <tr>
+          <td><b>Pack Histoires</b></td>
+          <td><span class="pill conso">Consommable</span></td>
+          <td><span class="price">4,99 €</span> / 30</td>
+          <td>Recharge naturelle, couvre le coût API + marge.</td>
+        </tr>
+        <tr>
+          <td><b>Abo Histoires</b> <span style="color:var(--ink-soft)">(option)</span></td>
+          <td><span class="pill abo">Abonnement</span></td>
+          <td><span class="price">3,99 €</span>/mois · 24,99 €/an</td>
+          <td>Pour les gros consommateurs d'histoires.</td>
+        </tr>
+        <tr>
+          <td><b>Impression livre</b> (Lulu)</td>
+          <td><span class="pill acte">À l'acte</span></td>
+          <td><span class="price">coût + marge</span></td>
+          <td>Revenu additionnel physique, hors abonnement.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout" style="margin-top:18px">
+      <b>Variante « tout-en-un »&nbsp;:</b> un seul lifetime à <b>39,99 €</b> incluant 10 histoires/mois + recharges au-delà. Message ultra-clair, friction minimale — au prix d'un léger risque sur les coûts IA en cas de gros usage.
+    </div>
+  </div>
+</section>
+
+<!-- SCENARIOS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">La preuve par les chiffres</div>
+    <h2>IA seule vs Hybride</h2>
+    <p class="lead">Hypothèses&nbsp;: commission Apple 15&nbsp;% (Small Business Program), coût IA ~0,10&nbsp;€/histoire après cache. Conversions&nbsp;: 8&nbsp;% (IA seule) · 18&nbsp;% lifetime + 6&nbsp;% add-on IA (hybride).</p>
+
+    <div class="scen">
+      <div class="box a">
+        <div class="h">🔴 IA seule</div>
+        <div class="desc">Tout gratuit sauf l'IA. Forcément en abonnement/crédits (coût récurrent).</div>
+        <div class="metric"><div class="lbl">Marge gardée par € encaissé</div><div class="val">25<small>&nbsp;%</small></div></div>
+      </div>
+      <div class="box b">
+        <div class="h">🟢 Hybride</div>
+        <div class="desc">Lifetime sur le cœur (marge ~100 %) + IA à la carte en supplément.</div>
+        <div class="metric"><div class="lbl">Marge gardée sur le lifetime</div><div class="val">85<small>&nbsp;%</small></div></div>
+      </div>
+    </div>
+
+    <div class="chart" style="margin-bottom:22px">
+      <h3>Revenu net — Année 1</h3>
+      <div class="note">Le point clé n'est pas que l'IA rapporte moins&nbsp;: c'est que tu n'en gardes que 25 % (API + Apple).</div>
+
+      <div class="barrow">
+        <div class="toplbl"><span class="nm">500 familles · IA seule</span><span>300 €</span></div>
+        <div class="track"><div class="fill a" style="width:6%">300&nbsp;€</div></div>
+      </div>
+      <div class="barrow">
+        <div class="toplbl"><span class="nm">500 familles · Hybride</span><span>2 520 €</span></div>
+        <div class="track"><div class="fill b" style="width:25%">2&nbsp;520&nbsp;€</div></div>
+      </div>
+      <div class="barrow">
+        <div class="toplbl"><span class="nm">2 000 familles · IA seule</span><span>1 200 €</span></div>
+        <div class="track"><div class="fill a" style="width:12%">1&nbsp;200&nbsp;€</div></div>
+      </div>
+      <div class="barrow" style="margin-bottom:0">
+        <div class="toplbl"><span class="nm">2 000 familles · Hybride</span><span>10 080 €</span></div>
+        <div class="track"><div class="fill b" style="width:100%">10&nbsp;080&nbsp;€</div></div>
+      </div>
+    </div>
+
+    <div class="chart">
+      <h3>Cumul sur 3 ans</h3>
+      <div class="note">Hypothèse pessimiste pour l'hybride (base stable, sans croissance). L'IA récurrente continue de tourner — et reste 5× derrière.</div>
+      <div class="barrow">
+        <div class="toplbl"><span class="nm">500 fam · IA seule</span><span>900 €</span></div>
+        <div class="track"><div class="fill a" style="width:5%">900&nbsp;€</div></div>
+      </div>
+      <div class="barrow">
+        <div class="toplbl"><span class="nm">500 fam · Hybride</span><span>~4 370 €</span></div>
+        <div class="track"><div class="fill b" style="width:25%">~4&nbsp;370&nbsp;€</div></div>
+      </div>
+      <div class="barrow">
+        <div class="toplbl"><span class="nm">2 000 fam · IA seule</span><span>3 600 €</span></div>
+        <div class="track"><div class="fill a" style="width:20%">3&nbsp;600&nbsp;€</div></div>
+      </div>
+      <div class="barrow" style="margin-bottom:0">
+        <div class="toplbl"><span class="nm">2 000 fam · Hybride</span><span>~17 490 €</span></div>
+        <div class="track"><div class="fill b" style="width:100%">~17&nbsp;490&nbsp;€</div></div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:20px">
+      <b>Test du seuil de rattrapage&nbsp;:</b> pour que l'IA seule (300 €/an) rattrape juste la 1ʳᵉ année de l'hybride (2 520 €), il faudrait <b>~8,5 ans sans le moindre nouvel utilisateur</b>. Dès la première once de croissance, l'hybride reste devant pour toujours.
+    </div>
+  </div>
+</section>
+
+<!-- AI COST -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Le seul risque financier</div>
+    <h2>Maîtriser les coûts IA</h2>
+    <p class="lead">L'IA est la seule brique à coût variable. Quatre garde-fous, à intégrer dès le départ&nbsp;:</p>
+    <div class="cards">
+      <div class="card"><h3>🗄️ Cache MP3 agressif</h3><ul><li>0 € à chaque relecture d'une histoire déjà générée (déjà en place).</li></ul></div>
+      <div class="card"><h3>🚦 Cap dur en gratuit</h3><ul><li>3 histoires/mois max par famille sur le free tier.</li></ul></div>
+      <div class="card"><h3>🪶 Fallback léger</h3><ul><li>Bascule Haiku / TTS local si quota API atteint.</li></ul></div>
+    </div>
+    <div class="callout" style="margin-top:18px">
+      <b>Règle absolue&nbsp;:</b> les crédits/abo histoires doivent <b>toujours couvrir le coût marginal</b>. Jamais d'IA illimitée à perte adossée au seul lifetime.
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Exécution</div>
+    <h2>Roadmap d'implémentation</h2>
+    <p class="lead">Terrain vierge&nbsp;: aucune infra de paiement aujourd'hui (zéro RevenueCat / StoreKit / paywall).</p>
+    <div class="road">
+      <div class="step">
+        <div class="num">A</div>
+        <div>
+          <h3>Infrastructure d'entitlements</h3>
+          <p><code>lib/entitlements/</code> + <code>contexts/EntitlementContext.tsx</code> (<code>useEntitlements()</code>, <code>FREE | LIFETIME</code>, statut crédits) · intégration <b>RevenueCat</b> (gère lifetime + consommables + restauration) · paywall lifetime 29,99 € en <code>pageSheet</code> avec <code>useThemeColors()</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">B</div>
+        <div>
+          <h3>IA à la carte + caps</h3>
+          <p>Crédits/abo histoires · wrapper d'entitlement sur <code>hooks/useAI.ts</code> · cap 3 histoires/mois en gratuit · placement paywall après la 3ᵉ histoire + bannières douces (zéro dark pattern).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">C</div>
+        <div>
+          <h3>Optimisation &amp; offres</h3>
+          <p>Offres saisonnières (Noël « offrez Premium »), impression livre à l'acte, bundles, récupération de churn.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARKETING -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Prêt à décliner</div>
+    <h2>Angles marketing (DA chaleureuse)</h2>
+    <p class="lead">Quatre accroches alignées sur le ton slice-of-life de FamilyFlow, prêtes pour la skill <code>tweet-familyflow</code> et les visuels App Store.</p>
+    <div class="mk">
+      <div class="m"><div class="emo">🏡</div><div class="hook">« Payez une fois. Pour toujours. »</div><div class="why">Anti-fatigue de l'abonnement — impossible à dire pour FamilyWall/Cozi.</div></div>
+      <div class="m"><div class="emo">🔒</div><div class="hook">« Vos souvenirs ne quittent jamais votre téléphone. »</div><div class="why">Privacy radicale&nbsp;: va plus loin que « on ne vend pas vos données ».</div></div>
+      <div class="m"><div class="emo">📕</div><div class="hook">« Transformez votre année en un vrai livre. »</div><div class="why">L'export PDF souvenirs — que personne d'autre ne propose.</div></div>
+      <div class="m"><div class="emo">🌙</div><div class="hook">« Des histoires du soir avec VOTRE voix. »</div><div class="why">Le clonage vocal — la corde émotionnelle ultime.</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    FamilyFlow — Stratégie de monétisation · établie le 19/06/2026 · document de travail interne.<br>
+    <span class="hl">Prochaine étape&nbsp;: verrouiller le modèle hybride et lancer la Phase A (RevenueCat + paywall).</span>
+  </div>
+</footer>
+
+</body>
+</html>
