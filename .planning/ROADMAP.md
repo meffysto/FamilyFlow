@@ -410,8 +410,6 @@ Plans:
 - [x] 47-03-PLAN.md — Wiring sprites dans AubergeSheet/DashboardAuberge + theme colors + ActiveVisitor.lootChance snapshot
 - [x] 47-04-PLAN.md — Animation livraison Reanimated (scale + flash + particule) + microcopy polish (empty state, bios, toast, notifs)
 
----
-
 ## v1.8 Export PDF imprimable des histoires (Phases 48-51) — PLANNING
 
 **Milestone Goal:** Permettre d'exporter chaque chapitre d'histoire en PDF imprimable aux specs Lulu Direct (carré 21×21, saddle-stitch 16 pages, bleed, polices embarquées), avec QR audio en 4ème de couverture (deep link `familyvault://story/:id`), sans backend. L'utilisateur upload manuellement son PDF sur lulu.com (Option 1). Architecture pensée pour évoluer vers intégration API ultérieurement sans casser les livres déjà imprimés.
@@ -568,3 +566,25 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 53-04-PLAN.md — REQ-6 'undone' audit entry + cleanup playgrounds + non-régression + App Store posture (REQ-12, REQ-6)
+
+### Phase 54: Monétisation hybride — infrastructure de paiement
+
+**Goal :** Introduire le premier modèle payant de FamilyFlow sans casser l'app publiée. Modèle hybride verrouillé : achat unique « FamilyFlow à Vie » (29,99 €, non-consommable) débloquant le premium sans coût récurrent (budget avancé, planificateur repas + recettes illimitées, export livres PDF, mascotte/ferme/village avancés, carnet santé/courbes/grossesse, Lightning Wallet) + IA à la carte « Pack Histoires » (4,99 €/30, consommable) au-delà de 3 histoires/mois gratuites. Règle d'or : l'IA se finance toujours elle-même. Gratuit pour toujours : organisation complète + gamification de base + zéro pub.
+
+**Depends on :** Aucune dépendance bloquante (intègre par-dessus l'existant). Stratégie de référence : `.planning/quick/260619-monetisation-strategie/strategie-monetisation.html`.
+
+**Requirements :** À détailler en `.planning/phases/54-monetisation-hybride-paiement/54-SPEC.md` (à générer via `/gsd-spec-phase 54`).
+
+**Success criteria** (à verrouiller par SPEC/CONTEXT) :
+1. Infra entitlements : `lib/entitlements/` + `contexts/EntitlementContext.tsx` (`useEntitlements`, statut `FREE | LIFETIME`, solde crédits IA persistant)
+2. Intégration RevenueCat : achat lifetime (non-consommable) + Pack Histoires (consommable) + restauration d'achats fonctionnelle
+3. Paywall : `components/paywalls/` présenté en `pageSheet` + drag-to-dismiss, `useThemeColors()` (zéro hardcoded), DA chaleureuse
+4. Feature gates : wrapper d'entitlement sur `hooks/useAI.ts` + écrans premium ; free tier 3 histoires/mois respecté (cap dur)
+5. Produits configurés dans App Store Connect (Team Apple `AKMNXGVVGX`) : IDs, prix, sandbox testés
+6. Non-cassant : app publiée préservée, aucune régression, `npx tsc --noEmit` clean
+7. Règle d'or vérifiée : les crédits/abo IA couvrent toujours le coût marginal API
+
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run `/gsd-plan-phase 54` to break down)

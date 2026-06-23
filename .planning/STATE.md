@@ -239,6 +239,7 @@ Last activity: 2026-06-08 -- Completed quick task 260608-rze: FAM-34 répartitio
 - v1.6 roadmap created 2026-04-16: Phases 34-37 (fondation données, carte enveloppe + écran boîte, composition + reveal, garde-parent + polish)
 - v1.6 partial shipped 2026-04-17: Phases 34, 35, 36 livrées — Phase 37 (garde-parent + polish) deferred
 - v1.7 roadmap created 2026-04-18: Phases 38-41 (fondation modifiers + économie Sporée, moteur prorata + calcul famille, UI Sporée seed picker + badge + validation, polish onboarding + codex + non-régression) — 16/16 REQ mappés
+- Phase 54 added 2026-06-23: Monétisation hybride — infrastructure de paiement (achat unique « FamilyFlow à Vie » 29,99€ + IA à la carte « Pack Histoires » 4,99€/30, free tier 3 histoires/mois). RevenueCat + entitlements + paywall. Stratégie : `.planning/quick/260619-monetisation-strategie/strategie-monetisation.html`. NB : `gsd-sdk phase.add` a mal numéroté (52, collision) car la liste milestone repliée s'arrête à 51 ; corrigé manuellement en 54.
 
 ### Decisions
 
