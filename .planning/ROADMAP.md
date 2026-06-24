@@ -584,10 +584,10 @@ Plans:
 6. Non-cassant : app publiée préservée, aucune régression, `npx tsc --noEmit` clean
 7. Règle d'or vérifiée : les crédits/abo IA couvrent toujours le coût marginal API
 
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
-- [ ] 54-01-PLAN.md — Wave 1 : install natif react-native-purchases + produits ASC + entitlement/offering RevenueCat + sandbox
+- [x] 54-01-PLAN.md — Wave 1 : install natif react-native-purchases + produits ASC + entitlement/offering RevenueCat + sandbox
 - [x] 54-02-PLAN.md — Wave 2 : lib/entitlements pur (types, engine quota, parser vault) + tests Jest (cap 3/mois, reset, règle d'or)
-- [ ] 54-03-PLAN.md — Wave 3 : EntitlementContext (RevenueCat + quota vault + grandfather one-shot) + insertion provider
+- [x] 54-03-PLAN.md — Wave 3 : EntitlementContext (RevenueCat + quota vault + grandfather one-shot) + insertion provider
 - [ ] 54-04-PLAN.md — Wave 4 : paywall pageSheet + PremiumBanner + gate cap dur génération histoires (friction + décrément après succès)
