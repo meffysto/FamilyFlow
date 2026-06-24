@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Export PDF imprimable des histoires
 status: executing
-last_updated: "2026-06-24T07:35:53.648Z"
+last_updated: "2026-06-24T08:30:00.000Z"
 last_activity: 2026-06-24
 progress:
   total_phases: 4
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 54 (monetisation-hybride-paiement) — EXECUTING
-Plan: 2 of 4
-Status: Ready to execute
+Plan: 1 of 4 — PAUSED at checkpoint (Task 2 human-action bloquant)
+Status: Task 1 (install + .env.example) committé aa26c8d0 ; en attente config externe + rebuild device
 Last activity: 2026-06-24
 
 ### Quick Tasks Completed
@@ -431,6 +431,7 @@ Recent decisions affecting current work:
 - [Phase 47]: Plan 47-04: trigger anim optimiste (avant await deliverVisitor) → l'effet joue avant que le moteur retire le visiteur
 - [Phase ?]: [Phase 54-02]: Reset mensuel quota en heure LOCALE via date-fns format yyyy-MM (Piège 7) — jamais UTC
 - [Phase ?]: [Phase 54-02]: decrementQuota épuise crédits Pack AVANT slots gratuits (D-07) ; LIFETIME ne décompte jamais (D-06) — règle d'or verrouillée par 26 tests
+- [Phase 54-01]: react-native-purchases@10.4.0 ne ship AUCUN config plugin Expo (pas de app.plugin.js) → autolinking pur, AUCUNE entrée plugins[] dans app.json (A1 résolu sans prebuild --clean, tranché en inspectant le package npm)
 
 ### Todos
 
@@ -438,9 +439,10 @@ Recent decisions affecting current work:
 
 ### Blockers
 
-None
+- [54-01 Task 2 — human-action bloquant] Rebuild dev-client sur iPhone physique (`npx expo run:ios --device`) + config externe : créer 2 produits IAP dans App Store Connect (`familyflow_lifetime_v1` ~29,99 €, `familyflow_story_pack_30` ~4,99 €), config RevenueCat (app iOS bundle `com.familyvault.dev`, entitlement `familyflow_premium`, offering `default`), compte sandbox connecté, et renseigner `EXPO_PUBLIC_RC_IOS_KEY` dans `.env`. Non automatisable (device + dashboards). Répondre « configuré » pour reprendre.
 
 ## Session Continuity
 
-Last session: 2026-06-24T07:35:47.503Z
-Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
+Last session: 2026-06-24T08:30:00.000Z
+Stopped at: 54-01 Task 2 (checkpoint human-action bloquant) — Task 1 committé aa26c8d0
+Next: Config externe RevenueCat/ASC + rebuild dev-client device, puis répondre « configuré » pour reprendre la phase (54-03, 54-04 restent)
