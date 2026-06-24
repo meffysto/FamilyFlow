@@ -1,6 +1,11 @@
 # ── EAS Build — fichiers exclus de l'upload ──────────────────────────────
-# Sans ce fichier, EAS upload tout le repo (sauf .gitignore).
-# Réduit le bundle upload de ~800 MB à ~40 MB.
+# ⚠️ Quand ce fichier existe, EAS l'utilise À LA PLACE de .gitignore.
+# Il faut donc y re-déclarer node_modules/.git (sinon ils sont uploadés).
+# EAS réinstalle les deps + relance pod install côté cloud.
+
+# Dépendances et git (réinstallés/inutiles côté EAS)
+node_modules/
+.git/
 
 # Vidéos / screenshots / docs (marketing, pas runtime)
 video/
@@ -20,6 +25,20 @@ apps/
 # Build artifacts
 dist/
 *.ipa
+*.xcappdata
+build-*.ipa
+
+# Workspaces / outils séparés (pas le runtime de l'app)
+agent-sprite-forge/
+.mockups/
+.gnhf/
+.expo/
+
+# iOS : on garde le projet (Podfile + xcodeproj + sources natives custom)
+# mais on exclut les Pods et artefacts compilés — EAS relance pod install lui-même.
+ios/Pods/
+ios/build/
+ios/DerivedData/
 
 # IDE / tooling
 .mcp.json
