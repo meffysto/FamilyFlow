@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Export PDF imprimable des histoires
 status: executing
-last_updated: "2026-06-23T22:15:41.242Z"
-last_activity: "2026-06-08 -- Completed quick task 260608-rze: FAM-34 répartition par grade des récoltes"
+last_updated: "2026-06-24T07:35:53.648Z"
+last_activity: 2026-06-24
 progress:
   total_phases: 4
   completed_phases: 4
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 52 — stories-pipeline-d-valuation-auto-re-roll-qualit
+**Current focus:** Phase 54 — monetisation-hybride-paiement
 
 ## Current Position
 
-Phase: 52 (stories-pipeline-d-valuation-auto-re-roll-qualit) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 52
-Last activity: 2026-06-08 -- Completed quick task 260608-rze: FAM-34 répartition par grade des récoltes
+Phase: 54 (monetisation-hybride-paiement) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-06-24
 
 ### Quick Tasks Completed
 
@@ -225,6 +225,7 @@ Last activity: 2026-06-08 -- Completed quick task 260608-rze: FAM-34 répartitio
 | Phase 47 P02 | ~4 min | 2 tasks | 7 files |
 | Phase 47 P03 | 10min | 3 tasks | 4 files |
 | Phase 47 P04 | 10min | 2 tasks | 3 files |
+| Phase 54 P02 | ~10min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -428,6 +429,8 @@ Recent decisions affecting current work:
 - [Phase 45-auberge-ui-modal-dashboard-dev-spawn]: AubergeSheet : map FR locale pour les 6 PNJ (i18n catalogue différée), 2 hex timer constantées (TIMER_AMBER/TIMER_RED) alignées pattern wear
 - [Phase 47]: Plan 47-02 : registry visitor-sprites.ts avec clés alignées sur VISITOR_CATALOG (hugo_boulanger, meme_lucette, voyageuse, yann_apiculteur, marchand_ambulant, comtesse) ; sprites placeholders procéduraux PIL faute d'accès pixellab — itération visuelle deferred
 - [Phase 47]: Plan 47-04: trigger anim optimiste (avant await deliverVisitor) → l'effet joue avant que le moteur retire le visiteur
+- [Phase ?]: [Phase 54-02]: Reset mensuel quota en heure LOCALE via date-fns format yyyy-MM (Piège 7) — jamais UTC
+- [Phase ?]: [Phase 54-02]: decrementQuota épuise crédits Pack AVANT slots gratuits (D-07) ; LIFETIME ne décompte jamais (D-06) — règle d'or verrouillée par 26 tests
 
 ### Todos
 
@@ -439,5 +442,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-23T22:15:41.232Z
+Last session: 2026-06-24T07:35:47.503Z
 Next: Execute Phase 38 (3 plans, waves sérielles 1→2→3)
