@@ -43,9 +43,7 @@ const PREMIUM_FEATURES: { icon: string; label: string }[] = [
   { icon: '📊', label: 'Budget familial avancé, sans limite' },
   { icon: '🍲', label: 'Repas & recettes illimités' },
   { icon: '📖', label: 'Vos histoires imprimées en vrais livres' },
-  { icon: '🌳', label: 'Mascotte, ferme et village avancés' },
   { icon: '🩺', label: 'Carnet santé, courbes & suivi grossesse' },
-  { icon: '⚡', label: 'Lightning Wallet familial' },
   { icon: '🔒', label: 'Vos souvenirs restent sur votre téléphone' },
 ];
 
