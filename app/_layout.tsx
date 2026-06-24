@@ -37,6 +37,7 @@ import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { AIProvider } from '../contexts/AIContext';
+import { EntitlementProvider } from '../contexts/EntitlementContext';
 import { StoryVoiceProvider } from '../contexts/StoryVoiceContext';
 import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
 import { HelpProvider } from '../contexts/HelpContext';
@@ -310,6 +311,7 @@ function RootLayout() {
           <VaultProvider>
             <AuthProvider>
             <ThemeProvider>
+              <EntitlementProvider>
               <AIProvider>
               <StoryVoiceProvider>
               <HelpProvider>
@@ -345,6 +347,7 @@ function RootLayout() {
               </HelpProvider>
               </StoryVoiceProvider>
               </AIProvider>
+              </EntitlementProvider>
             </ThemeProvider>
             </AuthProvider>
           </VaultProvider>
