@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Time Blocking — Ma journée</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-page);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px;
+    font-family: var(--font-body);
+    color: var(--text-primary);
+  }
+
+  .stage {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+  }
+
+  .caption {
+    color: var(--text-on-dark);
+    max-width: 280px;
+    padding-top: 60px;
+  }
+  .caption h2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    margin-bottom: 12px;
+    color: var(--brand-or);
+  }
+  .caption p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(245,239,229,0.78);
+    margin-bottom: 10px;
+  }
+  .caption ul {
+    list-style: none;
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(245,239,229,0.65);
+  }
+  .caption li:before {
+    content: "→ ";
+    color: var(--brand-or);
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: #F5EFE2;
+    border-radius: 50px;
+    padding: 14px;
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.5),
+      0 0 0 12px #0a0a14,
+      0 0 0 13px #2a2a3a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screen {
+    background: #FAF4E6;
+    border-radius: 38px;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 32px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+  .status-bar .icons { display: flex; gap: 4px; align-items: center; }
+
+  /* Header */
+  .header {
+    padding: 8px 20px 16px;
+    flex-shrink: 0;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .back {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(107,66,38,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    color: var(--brand-soil);
+  }
+  .header-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(107,66,38,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+
+  .title {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+  }
+
+  /* Summary chip */
+  .summary {
+    margin: 14px 20px 8px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #FFF4DA 0%, #FFE8B8 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(232,200,88,0.45);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .summary-icon {
+    font-size: 24px;
+    line-height: 1;
+  }
+  .summary-text { flex: 1; }
+  .summary-big {
+    font-family: var(--font-display);
+    font-size: 17px;
+    color: var(--brand-soil);
+    line-height: 1.2;
+  }
+  .summary-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.75;
+    margin-top: 2px;
+  }
+
+  /* Profile pills */
+  .profile-row {
+    display: flex;
+    gap: 6px;
+    padding: 8px 20px 4px;
+    flex-shrink: 0;
+  }
+  .pill {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(107,66,38,0.06);
+    font-size: 12px;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+  }
+  .pill.active {
+    background: var(--brand-soil);
+    color: #FFF4DA;
+    border-color: var(--brand-soil);
+  }
+
+  /* Slots scroll area */
+  .slots {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 20px 100px;
+  }
+
+  .slot {
+    background: #FFFCF4;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(107,66,38,0.08);
+    box-shadow: 0 1px 0 rgba(107,66,38,0.04);
+  }
+
+  .slot-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px 6px;
+    position: relative;
+  }
+  .slot-emoji {
+    font-size: 18px;
+    line-height: 1;
+  }
+  .slot-label {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .slot-time {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+  }
+  .slot-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--bar-color, var(--brand-or)) 0%, transparent 100%);
+    margin: 0 14px 8px;
+    border-radius: 2px;
+  }
+
+  .slot.matin   { --bar-color: #F5C95A; }
+  .slot.midi    { --bar-color: #E89C5A; }
+  .slot.aprem   { --bar-color: #8FBF7A; }
+  .slot.soir    { --bar-color: #8B7BB8; }
+
+  .slot-items { padding: 0 14px 12px; }
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+  }
+  .item + .item { border-top: 1px dashed rgba(107,66,38,0.10); }
+
+  .check {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid rgba(107,66,38,0.30);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+  .check.done {
+    background: var(--brand-soil);
+    border-color: var(--brand-soil);
+    color: #FFF4DA;
+  }
+  .item.done .item-label {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+    opacity: 0.55;
+  }
+
+  .item-pinned .check {
+    border-radius: 50%;
+    border-color: #C84A4A;
+    background: rgba(200,74,74,0.10);
+    color: #C84A4A;
+  }
+
+  .item-label {
+    flex: 1;
+    line-height: 1.3;
+  }
+  .item-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.65;
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+  .item-grip {
+    color: rgba(107,66,38,0.25);
+    font-size: 14px;
+    cursor: grab;
+  }
+
+  .free-band {
+    margin: 6px 4px;
+    padding: 14px 12px;
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(143,191,122,0.12) 0px,
+        rgba(143,191,122,0.12) 8px,
+        rgba(143,191,122,0.06) 8px,
+        rgba(143,191,122,0.06) 16px
+      );
+    border-radius: 10px;
+    border: 1px dashed rgba(143,191,122,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+  }
+  .free-band-content {
+    font-family: var(--font-display);
+    font-style: italic;
+    color: #4F7A40;
+    font-size: 14px;
+  }
+  .free-band-content small {
+    display: block;
+    font-style: normal;
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    color: rgba(79,122,64,0.75);
+    margin-top: 1px;
+    letter-spacing: 0.3px;
+  }
+
+  .empty-slot {
+    padding: 10px 4px;
+    text-align: center;
+    color: var(--text-secondary);
+    opacity: 0.45;
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  /* Floating drawer with unplaced tasks */
+  .drawer {
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    background: #FFFCF4;
+    border-top: 1px solid rgba(107,66,38,0.12);
+    border-radius: 22px 22px 38px 38px;
+    padding: 12px 20px 26px;
+    box-shadow: 0 -6px 20px rgba(107,66,38,0.08);
+  }
+  .drawer-handle {
+    width: 40px; height: 4px;
+    background: rgba(107,66,38,0.20);
+    border-radius: 2px;
+    margin: 0 auto 10px;
+  }
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .drawer-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+  .drawer-count {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: rgba(200,74,74,0.10);
+    color: #A03030;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .chip-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .task-chip {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    background: #FFF4DA;
+    border: 1px solid rgba(232,200,88,0.45);
+    border-radius: 10px;
+    font-size: 12.5px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .task-chip .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--brand-or-deep);
+  }
+  .task-chip.urgent .dot { background: #C84A4A; }
+  .task-chip .meta {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+  }
+
+  /* Annotation arrow */
+  .annotate {
+    position: absolute;
+    color: var(--brand-or);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 12px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="caption">
+    <h2>Time Blocking — FamilyFlow</h2>
+    <p>
+      Une journée organisée en 4 grands créneaux (☀️ matin, 🍽️ midi, ☕ aprem, 🌙 soir).
+      Les tâches se glissent dedans, les RDV existants s'insèrent automatiquement (épinglés ronds rouges).
+    </p>
+    <p style="color: var(--brand-or); margin-top: 18px;">Idées clés :</p>
+    <ul>
+      <li>Le <strong>temps libre</strong> est visualisé (band rayé vert), pas implicite</li>
+      <li>Slots <strong>flous</strong> (matin = 6h–12h) — pas d'agenda rigide hour-by-hour</li>
+      <li>RDV calendrier <strong>auto-placés</strong> et non-déplaçables (ronds)</li>
+      <li>Tâches <strong>draggables</strong> entre slots (☰ poignée)</li>
+      <li>Drawer bas : <strong>tâches non placées</strong> du jour</li>
+      <li>Header : <strong>budget temps libre</strong> au-dessus du fold</li>
+    </ul>
+  </div>
+
+  <div class="phone">
+    <div class="screen">
+
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="icons">
+          <span style="font-size:11px">●●●</span>
+          <span style="margin-left:4px">📶</span>
+          <span style="margin-left:2px">🔋</span>
+        </div>
+      </div>
+
+      <div class="header">
+        <div class="header-top">
+          <div class="back">‹</div>
+          <div class="header-actions">
+            <div class="icon-btn">📅</div>
+            <div class="icon-btn">⋯</div>
+          </div>
+        </div>
+        <div class="title">Ma journée</div>
+        <div class="subtitle">Lundi 17 mai</div>
+      </div>
+
+      <div class="summary">
+        <div class="summary-icon">✨</div>
+        <div class="summary-text">
+          <div class="summary-big">3h45 de temps libre aujourd'hui</div>
+          <div class="summary-sub">8 tâches placées sur 11 · 3 à caser ↓</div>
+        </div>
+      </div>
+
+      <div class="profile-row">
+        <div class="pill active">Toi</div>
+        <div class="pill">Lucas</div>
+        <div class="pill">Emma</div>
+        <div class="pill">Tous</div>
+      </div>
+
+      <div class="slots">
+
+        <!-- MATIN -->
+        <div class="slot matin">
+          <div class="slot-header">
+            <span class="slot-emoji">☀️</span>
+            <span class="slot-label">Matin</span>
+            <span class="slot-time">6h – 12h</span>
+          </div>
+          <div class="slot-bar"></div>
+          <div class="slot-items">
+            <div class="item done">
+              <span class="check done">✓</span>
+              <span class="item-label">Lessive</span>
+              <span class="item-meta">7h · 30min</span>
+              <span class="item-grip">☰</span>
+            </div>
+            <div class="item item-pinned">
+              <span class="check">●</span>
+              <span class="item-label">RDV pédiatre Lucas</span>
+              <span class="item-meta">10h00</span>
+            </div>
+            <div class="item">
+              <span class="check"></span>
+              <span class="item-label">Préparer cartable enfants</span>
+              <span class="item-meta">11h</span>
+              <span class="item-grip">☰</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MIDI -->
+        <div class="slot midi">
+          <div class="slot-header">
+            <span class="slot-emoji">🍽️</span>
+            <span class="slot-label">Midi</span>
+            <span class="slot-time">12h – 14h</span>
+          </div>
+          <div class="slot-bar"></div>
+          <div class="slot-items">
+            <div class="item">
+              <span class="check"></span>
+              <span class="item-label">Préparer pâtes carbo</span>
+              <span class="item-meta">12h30 · 20min</span>
+              <span class="item-grip">☰</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- APREM -->
+        <div class="slot aprem">
+          <div class="slot-header">
+            <span class="slot-emoji">☕</span>
+            <span class="slot-label">Après-midi</span>
+            <span class="slot-time">14h – 18h</span>
+          </div>
+          <div class="slot-bar"></div>
+          <div class="slot-items">
+            <div class="free-band">
+              <div class="free-band-content">
+                Temps libre · 2h
+                <small>PROFITE</small>
+              </div>
+            </div>
+            <div class="item">
+              <span class="check"></span>
+              <span class="item-label">Courses parmesan + pain</span>
+              <span class="item-meta">16h30 · 45min</span>
+              <span class="item-grip">☰</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SOIR -->
+        <div class="slot soir">
+          <div class="slot-header">
+            <span class="slot-emoji">🌙</span>
+            <span class="slot-label">Soir</span>
+            <span class="slot-time">18h – 22h</span>
+          </div>
+          <div class="slot-bar"></div>
+          <div class="slot-items">
+            <div class="item">
+              <span class="check"></span>
+              <span class="item-label">Bain + dîner enfants</span>
+              <span class="item-meta">18h30</span>
+              <span class="item-grip">☰</span>
+            </div>
+            <div class="item">
+              <span class="check"></span>
+              <span class="item-label">Histoire dodo</span>
+              <span class="item-meta">20h00</span>
+              <span class="item-grip">☰</span>
+            </div>
+            <div class="free-band" style="margin-top: 8px;">
+              <div class="free-band-content">
+                Temps libre · 1h45
+                <small>SOIRÉE COUPLE</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DRAWER -->
+      <div class="drawer">
+        <div class="drawer-handle"></div>
+        <div class="drawer-header">
+          <div class="drawer-title">À placer</div>
+          <div class="drawer-count">3</div>
+        </div>
+        <div class="chip-row">
+          <div class="task-chip urgent">
+            <span class="dot"></span>
+            Appeler dentiste
+            <span class="meta">· urgent</span>
+          </div>
+          <div class="task-chip">
+            <span class="dot"></span>
+            Email maîtresse Emma
+          </div>
+          <div class="task-chip">
+            <span class="dot"></span>
+            Ranger garage
+            <span class="meta">· 1h</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

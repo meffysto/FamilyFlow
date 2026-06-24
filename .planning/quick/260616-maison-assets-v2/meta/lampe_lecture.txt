@@ -1,0 +1,7 @@
+id=lampe_lecture
+source=/Users/gabrielwaltio/.codex/generated_images/019ecfa1-57d1-7902-96d6-2f24d1507d12/ig_04a5f94d60e93a46016a311830f20c8191aaab4b5fe395c421.png
+raw=/Users/gabrielwaltio/Documents/family-vault/.planning/quick/260616-maison-assets-v2/raw/lampe_lecture-raw.png
+final=/Users/gabrielwaltio/Documents/family-vault/assets/companion-house/lampe_lecture.png
+size=512x512
+corner_alpha=[0, 0, 0, 0]
+opaque_coverage=0.1473

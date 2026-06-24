@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sketch 002 — Dashboard · Partner Pulse</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-page);
+    color: var(--text-on-dark);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding: 28px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -.3px;
+  }
+  .question {
+    font-size: 13px;
+    opacity: 0.7;
+    max-width: 540px;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: rgba(255,255,255,0.05);
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .tabs button {
+    background: transparent;
+    color: var(--text-on-dark);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    transition: background .2s, color .2s;
+    opacity: 0.65;
+  }
+  .tabs button:hover { opacity: 1; }
+  .tabs button.active {
+    background: var(--brand-or);
+    color: var(--brand-soil);
+    opacity: 1;
+    font-weight: 600;
+  }
+  .frame-stack {
+    display: flex; flex-direction: row; gap: 24px;
+    align-items: flex-start;
+  }
+  .phone-frame {
+    width: 390px;
+    height: 780px;
+    border: 3px solid #444;
+    border-radius: 38px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-md);
+    background: linear-gradient(180deg, #FFE9E0 0%, #FFD9C5 14%, #FFEED3 26%, #FAF3E3 100%);
+    flex-shrink: 0;
+  }
+  /* Underlying dashboard bg — we'll position it relative to the frame.
+     The screenshot is 1170px wide (3x retina) — we scale it to 390. */
+  .dashboard-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Status bar (faked since overlays may cover it) */
+  .status-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 0;
+    z-index: 5;
+  }
+
+  /* ─── Variant D (A') — Strip fin sous le header ───
+     Pas une carte. Pas de chrome. Une bande horizontale fine,
+     sous le date header, AVANT les cards. ~40px de hauteur. */
+  .variant-d-cover {
+    position: absolute;
+    top: 95px;
+    left: 0; right: 0;
+    height: 56px;
+    background: linear-gradient(180deg, #FBE9D5 0%, #FAF3E3 100%);
+    z-index: 9;
+  }
+  .partner-strip {
+    position: absolute;
+    top: 102px;
+    left: 16px; right: 16px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px 0 4px;
+    z-index: 12;
+    border-bottom: 1px solid rgba(107,66,38,0.10);
+    /* No card chrome — pas de background, pas de shadow, pas de border-radius */
+  }
+  .partner-strip .av-strip {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--partner-color) 0%, var(--partner-color-soft) 100%);
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px rgba(91,141,191,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .partner-strip .av-strip::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 8px; height: 8px;
+    background: #6FCF67;
+    border-radius: 50%;
+    border: 1.5px solid white;
+  }
+  .partner-strip .name-strip {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+  .partner-strip .sep {
+    color: rgba(107,66,38,0.30);
+    font-size: 10px;
+    margin: 0 2px;
+  }
+  .partner-strip .chip-strip {
+    font-size: 12px;
+    color: var(--brand-soil);
+    display: flex; align-items: center; gap: 4px;
+    white-space: nowrap;
+  }
+  .partner-strip .chip-strip .emo {
+    font-size: 14px;
+    line-height: 1;
+  }
+  .partner-strip .chip-strip.epic {
+    color: var(--brand-or-deep);
+    font-weight: 600;
+  }
+  .partner-strip .arrow-strip {
+    margin-left: auto;
+    color: var(--brand-soil-muted);
+    font-size: 14px;
+  }
+  .partner-strip .tasks-ratio {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+  }
+  /* Mobile-truncate friendly: overflow ellipsis on the chips area */
+  .partner-strip .chips-flow {
+    display: flex; align-items: center; gap: 8px;
+    overflow: hidden;
+    min-width: 0;
+    flex: 1;
+  }
+
+  /* "After" state showing the rest of the dashboard pushed down */
+  .strip-aftermath {
+    position: absolute;
+    top: 156px;
+    left: 0; right: 0;
+    bottom: 60px;
+    z-index: 8;
+    overflow: hidden;
+    background: #FAF3E3;
+  }
+  .strip-aftermath::before {
+    /* Re-show the original dashboard pushed down by 50px */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0; right: 0;
+    height: 700px;
+    background: url('./dashboard-bg.png') top center / 100% auto no-repeat;
+    /* Crop top 155px (header area) */
+    background-position: 0 -155px;
+  }
+
+  /* Hover state — comparing the strip to a card */
+  .size-callout {
+    position: absolute;
+    right: -240px;
+    background: rgba(91,141,191,0.95);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .size-callout::before {
+    content: '';
+    position: absolute;
+    left: -6px; top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-right-color: rgba(91,141,191,0.95);
+  }
+
+  /* ─── Variant A — Carte dédiée "Marie aujourd'hui" ───
+     Appears between the header and the "En retard" card.
+     The real dashboard's first card starts around y=155. We push everything else down. */
+  .variant-a-cover {
+    /* hide the original first card by covering everything below the header */
+    position: absolute;
+    top: 105px;
+    left: 0; right: 0;
+    bottom: 60px; /* leave tab bar visible */
+    background: linear-gradient(180deg, #FBE9D5 0%, #FBE9D5 4%, #FAF3E3 30%, #FAF3E3 100%);
+    z-index: 8;
+  }
+  .partner-card {
+    position: absolute;
+    top: 118px;
+    left: 16px; right: 16px;
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 14px 16px;
+    z-index: 12;
+    box-shadow: 0 2px 8px rgba(107,66,38,0.10);
+    border: 1px solid rgba(91,141,191,0.20);
+  }
+  .partner-card .head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .partner-card .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--partner-color) 0%, var(--partner-color-soft) 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: white;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .partner-card .avatar::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 10px; height: 10px;
+    background: #6FCF67;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+  .partner-card .meta {
+    flex: 1; min-width: 0;
+  }
+  .partner-card .name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .partner-card .when {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--brand-soil-muted);
+    font-style: italic;
+    margin-top: 1px;
+  }
+  .partner-card .more {
+    color: var(--partner-color);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .pulse-rows {
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .pulse-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-primary);
+  }
+  .pulse-row .ico { font-size: 16px; width: 22px; text-align: center; }
+  .pulse-row .what { flex: 1; }
+  .pulse-row .what strong { color: var(--brand-soil); }
+  .pulse-row .epic-tag {
+    color: var(--brand-or-deep);
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(232,200,88,0.18);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  /* fake first dashboard card after partner-card */
+  .fake-card {
+    position: absolute;
+    left: 16px; right: 16px;
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(107,66,38,0.08);
+    z-index: 11;
+  }
+  .fake-card.late {
+    top: 290px;
+    border: 2px solid #D4837B;
+    background: #FBE9E2;
+  }
+  .fake-card .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .fake-card .card-title {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: #B5524A;
+  }
+  .fake-card .card-title .ico { font-size: 18px; }
+  .fake-card .badge {
+    background: #B5524A;
+    color: white;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 10px;
+  }
+  .fake-card .voirtout {
+    color: #B5524A;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .fake-card .stat {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: #B5524A;
+    font-weight: 600;
+  }
+  .fake-card .sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #A0784C;
+    font-style: italic;
+    margin-top: 2px;
+    margin-bottom: 8px;
+  }
+
+  /* ─── Variant B — Pulse rail (avatars row) ───
+     Above all cards, just under the header */
+  .pulse-rail {
+    position: absolute;
+    top: 105px;
+    left: 0; right: 0;
+    padding: 10px 16px 12px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    z-index: 12;
+    background: linear-gradient(180deg, rgba(251,233,213,0.6) 0%, rgba(251,233,213,0) 100%);
+    backdrop-filter: blur(2px);
+  }
+  .pulse-rail::-webkit-scrollbar { display: none; }
+  .pulse-cell {
+    flex-shrink: 0;
+    width: 76px;
+    display: flex; flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .pulse-cell .av-ring {
+    position: relative;
+    padding: 2px;
+    background: var(--bg-card);
+    border-radius: 50%;
+    border: 2px solid transparent;
+  }
+  .pulse-cell.self .av-ring { border-color: var(--self-color); }
+  .pulse-cell.partner .av-ring { border-color: var(--partner-color); }
+  .pulse-cell.kid .av-ring { border-color: #6FCF67; }
+  .pulse-cell .av {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: white;
+    border: 2px solid white;
+  }
+  .pulse-cell.self .av { background: linear-gradient(135deg, var(--self-color), var(--self-color-soft)); }
+  .pulse-cell.partner .av { background: linear-gradient(135deg, var(--partner-color), var(--partner-color-soft)); }
+  .pulse-cell.kid .av { background: linear-gradient(135deg, #6FCF67, #A8E0A0); }
+  .pulse-cell .name-mini {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 1px;
+  }
+  .pulse-cell .mood {
+    font-size: 16px;
+    margin-top: -2px;
+    line-height: 1;
+  }
+  .pulse-cell .stats-mini {
+    display: flex; gap: 3px;
+    font-size: 9.5px;
+    color: var(--brand-soil-muted);
+    font-family: var(--font-mono);
+  }
+  .pulse-cell .stats-mini .dot { color: var(--partner-color); }
+  /* Activity badge — top right of avatar */
+  .pulse-cell .activity-pip {
+    position: absolute;
+    top: -2px; right: -2px;
+    background: var(--partner-color);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid white;
+  }
+  .pulse-cell.self .activity-pip { background: var(--self-color); }
+  .pulse-cell.kid .activity-pip { background: #6FCF67; }
+  /* Pulse rail cover — hide first part of dashboard underneath */
+  .variant-b-cover {
+    position: absolute;
+    top: 95px;
+    left: 0; right: 0;
+    height: 140px;
+    background: linear-gradient(180deg, #FBE9D5 0%, #FBE9D5 60%, rgba(251,233,213,0) 100%);
+    z-index: 10;
+  }
+
+  /* ─── Variant C — Inline integration ───
+     Hide top of dashboard image and overlay modified sections */
+  .variant-c-cover {
+    position: absolute;
+    top: 95px; left: 0; right: 0; bottom: 60px;
+    background: linear-gradient(180deg, #FBE9D5 0%, #FBE9D5 4%, #FAF3E3 25%, #FAF3E3 100%);
+    z-index: 10;
+  }
+  .inline-card {
+    position: absolute;
+    left: 16px; right: 16px;
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(107,66,38,0.08);
+    z-index: 12;
+  }
+  .inline-card .ch {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .inline-card .ct {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-display);
+    font-size: 15.5px;
+    font-weight: 600;
+    color: var(--brand-soil);
+  }
+  .inline-card .ct .ico { font-size: 17px; }
+  .inline-card .more {
+    color: var(--brand-soil-muted);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  /* Section humeur with both users */
+  .humeur-row {
+    display: flex; gap: 10px;
+    margin-top: 4px;
+  }
+  .humeur-cell {
+    flex: 1;
+    background: rgba(196,162,101,0.08);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex; align-items: center; gap: 9px;
+  }
+  .humeur-cell .av-tiny {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: white;
+    flex-shrink: 0;
+  }
+  .humeur-cell.self .av-tiny { background: var(--self-color); border: 2px solid white; box-shadow: 0 0 0 1px var(--self-color); }
+  .humeur-cell.partner .av-tiny { background: var(--partner-color); border: 2px solid white; box-shadow: 0 0 0 1px var(--partner-color); }
+  .humeur-cell .mood-data { flex: 1; min-width: 0; }
+  .humeur-cell .mood-emoji { font-size: 19px; line-height: 1; }
+  .humeur-cell .mood-label {
+    font-size: 11px;
+    color: var(--brand-soil);
+    margin-top: 1px;
+    font-family: var(--font-mono);
+  }
+  /* Section tâches with split count */
+  .tasks-split {
+    display: flex; gap: 12px;
+    align-items: flex-end;
+    margin-top: 4px;
+  }
+  .tasks-col { flex: 1; }
+  .tasks-col.partner { opacity: 0.85; }
+  .tasks-col .who {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--brand-soil-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 2px;
+  }
+  .tasks-col.partner .who { color: var(--partner-color); }
+  .tasks-col .count {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--brand-soil);
+    line-height: 1;
+  }
+  .tasks-col.partner .count { color: var(--partner-color); font-size: 18px; }
+  .tasks-col .prog {
+    height: 5px;
+    background: rgba(107,66,38,0.10);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  .tasks-col .prog .bar {
+    height: 100%;
+    background: #6FCF67;
+    border-radius: 3px;
+  }
+  .tasks-col.partner .prog .bar { background: var(--partner-color); }
+  /* Ferme row */
+  .ferme-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 4px;
+    background: rgba(124,179,66,0.08);
+    border-radius: 10px;
+    padding: 9px 12px;
+  }
+  .ferme-row .av-tiny {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--partner-color);
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px var(--partner-color);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: white;
+    flex-shrink: 0;
+  }
+  .ferme-row .ferme-what {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+  .ferme-row .ferme-what strong { color: var(--partner-color); }
+
+  /* Variant toggle */
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  /* Notes panel */
+  .notes {
+    width: 390px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .notes h3 {
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--brand-or);
+    margin-bottom: 8px;
+  }
+  .notes .pros, .notes .cons { margin-top: 6px; }
+  .notes .pros li, .notes .cons li {
+    list-style: none;
+    padding-left: 18px;
+    position: relative;
+    margin-bottom: 3px;
+  }
+  .notes .pros li::before { content: '+'; position: absolute; left: 0; color: #6FCF67; font-weight: bold; }
+  .notes .cons li::before { content: '−'; position: absolute; left: 0; color: var(--self-color-soft); font-weight: bold; }
+  .notes strong { color: rgba(255,255,255,0.95); }
+
+  /* Toolbar */
+  .toolbar {
+    position: fixed; bottom: 12px; right: 12px;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    display: flex; gap: 10px; align-items: center;
+  }
+  .toolbar a { color: var(--brand-or); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<h1>Sketch 002 — Dashboard · Partner Pulse</h1>
+<div class="question">
+  Surfacer le pulse du/de la partenaire (multi-domaines : humeur, tâches, ferme, gratitude)
+  sur le dashboard <em>Aujourd'hui</em> — l'écran que tu ouvres en premier dans le loop.
+</div>
+
+<div class="tabs">
+  <button id="tab-d" class="active" onclick="setVariant('d')">★ A' — Strip (raffiné)</button>
+  <button id="tab-a" onclick="setVariant('a')">A — Carte dédiée</button>
+  <button id="tab-b" onclick="setVariant('b')">B — Pulse rail (avatars)</button>
+  <button id="tab-c" onclick="setVariant('c')">C — Inline dans sections</button>
+</div>
+
+<div class="frame-stack">
+  <div class="phone-frame">
+    <img src="./dashboard-bg.png" class="dashboard-bg" alt="">
+
+    <!-- ════════════ VARIANT D (A') — Strip fin sous header ════════════ -->
+    <div class="variant active" id="variant-d">
+      <div class="variant-d-cover"></div>
+      <div class="strip-aftermath"></div>
+      <div class="partner-strip">
+        <div class="av-strip">M</div>
+        <div class="name-strip">Marie</div>
+        <div class="chips-flow">
+          <span class="sep">·</span>
+          <span class="chip-strip"><span class="emo">💝</span> tendre</span>
+          <span class="sep">·</span>
+          <span class="chip-strip tasks-ratio">9/12 ✓</span>
+          <span class="sep">·</span>
+          <span class="chip-strip epic">🌾 ✦</span>
+        </div>
+        <div class="arrow-strip">›</div>
+      </div>
+    </div>
+
+    <!-- ════════════ VARIANT A — Carte dédiée Marie ════════════ -->
+    <div class="variant" id="variant-a">
+      <div class="variant-a-cover"></div>
+      <div class="partner-card">
+        <div class="head">
+          <div class="avatar">M</div>
+          <div class="meta">
+            <div class="name">Marie aujourd'hui</div>
+            <div class="when">active il y a 12min</div>
+          </div>
+          <div class="more">›</div>
+        </div>
+        <div class="pulse-rows">
+          <div class="pulse-row">
+            <div class="ico">💝</div>
+            <div class="what">d'humeur <strong>tendre</strong> ce matin</div>
+          </div>
+          <div class="pulse-row">
+            <div class="ico">✅</div>
+            <div class="what"><strong>9/12</strong> tâches faites</div>
+          </div>
+          <div class="pulse-row">
+            <div class="ico">🌾</div>
+            <div class="what">a planté <strong>Étoile du Berger</strong></div>
+            <div class="epic-tag">✦ épique</div>
+          </div>
+          <div class="pulse-row">
+            <div class="ico">🙏</div>
+            <div class="what">gratitude pour <strong>« le soleil »</strong></div>
+          </div>
+        </div>
+      </div>
+      <!-- fake "En retard" card to show layout continues -->
+      <div class="fake-card late">
+        <div class="card-head">
+          <div class="card-title">
+            <span class="ico">⚠️</span>
+            <span>En retard</span>
+            <span class="badge">6</span>
+          </div>
+          <span class="voirtout">Voir tout ›</span>
+        </div>
+        <div class="stat">6 tâches reportées</div>
+        <div class="sub">à finir quand tu peux</div>
+      </div>
+    </div>
+
+    <!-- ════════════ VARIANT B — Pulse rail ════════════ -->
+    <div class="variant" id="variant-b">
+      <div class="variant-b-cover"></div>
+      <div class="pulse-rail">
+        <div class="pulse-cell self">
+          <div class="av-ring"><div class="av">G</div></div>
+          <div class="name-mini">Toi</div>
+          <div class="mood">😊</div>
+          <div class="stats-mini"><span>14/27</span></div>
+        </div>
+        <div class="pulse-cell partner">
+          <div class="av-ring">
+            <div class="av">M</div>
+            <div class="activity-pip">3</div>
+          </div>
+          <div class="name-mini">Marie</div>
+          <div class="mood">💝</div>
+          <div class="stats-mini"><span>9/12</span><span class="dot">·</span><span>🌾</span></div>
+        </div>
+        <div class="pulse-cell kid">
+          <div class="av-ring"><div class="av">L</div></div>
+          <div class="name-mini">Lucas</div>
+          <div class="mood">🙂</div>
+          <div class="stats-mini"><span>2/3</span></div>
+        </div>
+        <div class="pulse-cell kid">
+          <div class="av-ring"><div class="av">E</div></div>
+          <div class="name-mini">Emma</div>
+          <div class="mood">😴</div>
+          <div class="stats-mini"><span>—</span></div>
+        </div>
+      </div>
+      <!-- Reuse the original dashboard image below (uncover from y=235) -->
+    </div>
+
+    <!-- ════════════ VARIANT C — Inline dans sections ════════════ -->
+    <div class="variant" id="variant-c">
+      <div class="variant-c-cover"></div>
+      <!-- Section humeur (NOUVELLE — au top) -->
+      <div class="inline-card" style="top: 112px">
+        <div class="ch">
+          <div class="ct"><span class="ico">💝</span><span>Humeur du jour</span></div>
+          <div class="more">Voir ›</div>
+        </div>
+        <div class="humeur-row">
+          <div class="humeur-cell self">
+            <div class="av-tiny">G</div>
+            <div class="mood-data">
+              <div class="mood-emoji">😊</div>
+              <div class="mood-label">joyeux</div>
+            </div>
+          </div>
+          <div class="humeur-cell partner">
+            <div class="av-tiny">M</div>
+            <div class="mood-data">
+              <div class="mood-emoji">💝</div>
+              <div class="mood-label">tendre · 12min</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Section tâches MODIFIÉE — split self / partner -->
+      <div class="inline-card" style="top: 240px">
+        <div class="ch">
+          <div class="ct"><span class="ico">🌿</span><span>Tâches du jour</span></div>
+          <div class="more">Voir ›</div>
+        </div>
+        <div class="tasks-split">
+          <div class="tasks-col">
+            <div class="who">Toi</div>
+            <div class="count">14<span style="font-size:13px;color:#A0784C;font-weight:400">/27</span></div>
+            <div class="prog"><div class="bar" style="width:52%"></div></div>
+          </div>
+          <div class="tasks-col partner">
+            <div class="who">Marie</div>
+            <div class="count">9<span style="font-size:11px;color:#A0784C;font-weight:400">/12</span></div>
+            <div class="prog"><div class="bar" style="width:75%"></div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Section ferme avec partner highlight inline -->
+      <div class="inline-card" style="top: 370px">
+        <div class="ch">
+          <div class="ct"><span class="ico">🌾</span><span>Ferme</span></div>
+          <div class="more">Voir ›</div>
+        </div>
+        <div style="display:flex; align-items:flex-end; gap:12px;">
+          <div style="flex:1">
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--brand-soil);line-height:1">Niv 14</div>
+            <div style="font-size:11px;color:#A0784C;margin-top:3px;font-family:var(--font-mono);font-style:italic">prochaine récolte dans 2h</div>
+          </div>
+          <div style="font-size:12px;color:var(--brand-soil-muted);text-align:right;font-family:var(--font-mono)">
+            🍃 1240 · 🔥 3
+          </div>
+        </div>
+        <div class="ferme-row">
+          <div class="av-tiny">M</div>
+          <div class="ferme-what"><strong>Marie</strong> a planté <strong>✦ Étoile du Berger</strong> · 2h</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes panel -->
+  <div class="notes">
+    <h3 id="notes-title">A — Carte dédiée "Marie aujourd'hui"</h3>
+    <div id="notes-body"></div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <span>Sketch 002 · variant <strong id="current-variant">A</strong></span>
+  <span>·</span>
+  <a href="#" onclick="event.preventDefault(); setVariant('d')">A′</a>
+  <a href="#" onclick="event.preventDefault(); setVariant('a')">A</a>
+  <a href="#" onclick="event.preventDefault(); setVariant('b')">B</a>
+  <a href="#" onclick="event.preventDefault(); setVariant('c')">C</a>
+</div>
+
+<script>
+  const NOTES = {
+    d: {
+      title: 'A′ — Strip fin sous le header (★ recommandé)',
+      body: `
+        <p><strong>Forme :</strong> pas une carte. Une bande de ~40px sous le header date, avant les sections existantes. Avatar mini + nom + chips inline (humeur · tâches · highlight ferme). Pas de border, pas de shadow — juste un séparateur fin en bas.</p>
+        <ul class="pros">
+          <li><strong>Quart d'une carte en hauteur</strong> — pousse pas le reste vers le bas</li>
+          <li>Lit comme une extension du header, pas comme un nouveau module</li>
+          <li>Auto-hide si zéro activité → pas de moment vide</li>
+          <li>Tap = drill dans son profil ou modal expandable</li>
+          <li>Garde la présence ambient sans alourdir le dashboard</li>
+          <li>Même contenu informationnel que A, dans 22% de l'espace</li>
+        </ul>
+        <ul class="cons">
+          <li>Densité d'info plus forte → moins respirant que la carte A</li>
+          <li>Risque d'être ignoré comme une notification bar</li>
+          <li>Limité à ~3 chips visibles (truncate au-delà sur petits écrans)</li>
+          <li>Highlight épique réduit à un emoji ✦ — perd un peu de "wow"</li>
+        </ul>
+        <p><strong>Coût :</strong> bas — 1 composant strip + 1 hook agrégateur + auto-hide logic. Quasi le même travail que A mais avec un footprint visuel divisé par 4.</p>
+        <p><em>Origine :</em> raffinement après objection "trop de cartes". Réduit le coût visuel sans perdre la fonction.</p>
+      `
+    },
+    a: {
+      title: 'A — Carte dédiée "Marie aujourd\'hui"',
+      body: `
+        <p><strong>Position :</strong> juste sous le header date, AVANT "En retard". Une seule carte qui agrège 3-4 lignes : humeur, tâches, ferme highlight, gratitude. Tap = drill dans son profil.</p>
+        <ul class="pros">
+          <li>Lit comme les autres cards — zéro nouvelle UI grammar</li>
+          <li>Contenu prioritisé : tu vois l'essentiel en 2 secondes</li>
+          <li>Possible d'ajouter/retirer des lignes selon l'activité du jour (vide = absente)</li>
+          <li>S'éteint si elle n'a rien fait → pas de "présence forcée"</li>
+        </ul>
+        <ul class="cons">
+          <li>Encore une carte dans un dashboard déjà chargé</li>
+          <li>Si elle est active, sa carte sera toujours en haut → peut pousser tes "En retard" en bas</li>
+          <li>Pas de vue d'ensemble famille (juste Marie isolée)</li>
+        </ul>
+        <p><strong>Coût :</strong> bas — 1 composant + 1 hook qui agrège ses domaines.</p>
+      `
+    },
+    b: {
+      title: 'B — Pulse rail (rangée d\'avatars)',
+      body: `
+        <p><strong>Position :</strong> rangée horizontale en haut du dashboard, sous le header. Chaque membre = avatar coloré + humeur emoji + 1-2 chips. Le pip rouge = nouveauté depuis ta dernière vue. Tap avatar = drill dans sa journée.</p>
+        <ul class="pros">
+          <li>People-first — l'écran s'ouvre sur "qui est là", pas "quoi faire"</li>
+          <li>Scale à la famille entière (toi + conjoint·e + enfants)</li>
+          <li>Inspiré Instagram Stories / Slack presence — pattern connu</li>
+          <li>Très peu d'info par cellule → pas de surcharge cognitive</li>
+          <li>Compact verticalement (~110px) vs 180px pour la carte A</li>
+        </ul>
+        <ul class="cons">
+          <li>Change la hiérarchie du dashboard — tâches descendent</li>
+          <li>Peut sembler "social media" pas "vault familial"</li>
+          <li>Les chips sous l'avatar sont condensés → peu de profondeur</li>
+          <li>Si la famille a peu d'enfants actifs, le rail sera vide</li>
+        </ul>
+        <p><strong>Coût :</strong> moyen — composant rail + cellules + drill navigation. Le plus de design surface mais le plus expressif.</p>
+      `
+    },
+    c: {
+      title: 'C — Inline dans les sections existantes',
+      body: `
+        <p><strong>Approche :</strong> pas de nouveau composant. La section "Humeur" affiche les 2 humeurs côte à côte. "Tâches" est split toi/Marie. "Ferme" inclut un highlight inline de Marie. Zéro UI nouvelle, juste plus de données.</p>
+        <ul class="pros">
+          <li>Le plus invisible — aucune surcharge visuelle nouvelle</li>
+          <li>Renforce les sections existantes au lieu d'en créer une nouvelle</li>
+          <li>Pas de hiérarchie à arbitrer (Marie/tâches : qui d'abord ?)</li>
+          <li>Naturellement multi-utilisateur — extensible aux enfants par domaine</li>
+        </ul>
+        <ul class="cons">
+          <li>Pas de moment "Marie" — elle est dispersée, jamais réunie</li>
+          <li>Modifications dans 4-5 composants vs 1 — touche plus de code</li>
+          <li>Risque de noyer le signal partenaire dans le bruit ambient</li>
+          <li>"Présence" moins ressentie — c'est de la data, pas un visage</li>
+        </ul>
+        <p><strong>Coût :</strong> moyen-haut <em>en touches multiples</em> — humeur section + tasks section + ferme section + autres. Plus de risque de régression sur l'existant. Mais zéro nouveau pattern à designer.</p>
+      `
+    }
+  };
+
+  function setVariant(v) {
+    document.querySelectorAll('.variant').forEach(el => el.classList.remove('active'));
+    document.getElementById('variant-' + v).classList.add('active');
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + v).classList.add('active');
+    document.getElementById('notes-title').textContent = NOTES[v].title;
+    document.getElementById('notes-body').innerHTML = NOTES[v].body;
+    document.getElementById('current-variant').textContent = v.toUpperCase();
+  }
+  setVariant('d');
+</script>
+
+</body>
+</html>

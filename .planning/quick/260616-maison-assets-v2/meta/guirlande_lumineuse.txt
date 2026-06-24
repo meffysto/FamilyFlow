@@ -1,0 +1,7 @@
+id=guirlande_lumineuse
+source=/Users/gabrielwaltio/.codex/generated_images/019ecfa1-57d1-7902-96d6-2f24d1507d12/ig_04a5f94d60e93a46016a311c9e88e88191bf6ec1e7dc311c72.png
+raw=/Users/gabrielwaltio/Documents/family-vault/.planning/quick/260616-maison-assets-v2/raw/guirlande_lumineuse-raw.png
+final=/Users/gabrielwaltio/Documents/family-vault/assets/companion-house/guirlande_lumineuse.png
+size=512x512
+corner_alpha=[0, 0, 0, 0]
+opaque_coverage=0.0531

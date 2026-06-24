@@ -75,6 +75,22 @@ next_action: apply fixes
 - Données gamification orphelines : NON — gami-{profileId}.md est keyed par profileId stable, pas par name.
 - Inventaire préservé pour raison différente : logique, il vit dans farm-{id}.md keyed par id stable.
 
+## Verification — disque non corrompu (post-fix, suite question utilisateur)
+
+Question : cocher une tâche / une écriture .md pendant que le state mémoire est corrompu
+pourrait-elle persister les champs ferme vides sur le disque ?
+
+Réponse : NON. Trois fichiers séparés, isolation prouvée :
+- parser.ts:1392 — parseFamille met farm/mascot/companion à defaults : famille.md ne transporte
+  AUCUN champ ferme. updateProfile édite famille.md ligne-à-ligne (useVaultProfiles.ts:451-452).
+- useFarm.ts:250-266 (+ tous les sites d'écriture farm) — chaque mutation fait
+  readFile(farmFile) → parseFarmProfile(content) → mutate → writeFile. Source = TOUJOURS le disque.
+  Le seul champ pris de `profiles` mémoire est profileName (header ## Nom) — et name n'était pas corrompu.
+- addCoins/deductCoins (useFarm.ts:190-245) — gami relu frais du disque avant écriture.
+
+→ Le state mémoire corrompu (farm vides) ne peut JAMAIS atteindre le disque. Jardin/arbre/hérisson/
+  feuilles/inventaire intacts dans farm-{id}.md. Cocher des tâches n'aggrave rien. Redémarrage = restore.
+
 ## Resolution
 
 root_cause: >

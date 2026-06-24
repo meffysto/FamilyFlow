@@ -1,0 +1,7 @@
+id=tapis_motif
+source=/Users/gabrielwaltio/.codex/generated_images/019ecfa1-57d1-7902-96d6-2f24d1507d12/ig_04a5f94d60e93a46016a310fe122ec8191a33c4d90f83882c6.png
+raw=/Users/gabrielwaltio/Documents/family-vault/.planning/quick/260616-maison-assets-v2/raw/tapis_motif-raw.png
+final=/Users/gabrielwaltio/Documents/family-vault/assets/companion-house/tapis_motif.png
+size=512x512
+corner_alpha=[0, 0, 0, 0]
+opaque_coverage=0.6282

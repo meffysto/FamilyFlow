@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sketch 001 — Ferme · Présence Partenaire</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-page);
+    color: var(--text-on-dark);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding: 28px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -.3px;
+  }
+  .question {
+    font-size: 13px;
+    opacity: 0.7;
+    max-width: 540px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: rgba(255,255,255,0.05);
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .tabs button {
+    background: transparent;
+    color: var(--text-on-dark);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    transition: background .2s, color .2s;
+    opacity: 0.65;
+  }
+  .tabs button:hover { opacity: 1; }
+  .tabs button.active {
+    background: var(--brand-or);
+    color: var(--brand-soil);
+    opacity: 1;
+    font-weight: 600;
+  }
+
+  /* Phone frame — real farm screenshot as bg */
+  .frame-stack {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  .phone-frame {
+    width: 390px;
+    height: 780px;
+    border: 3px solid #444;
+    border-radius: 38px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-md);
+    background: #5A8C32 url('./ferme-bg.png') center/cover no-repeat;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     VARIANT A — Bandeau ambient
+     Sous la barre de stats (qui est dans l'image),
+     juste avant le potager
+     ────────────────────────────────────────────────────────── */
+  .partner-banner {
+    position: absolute;
+    top: 100px;
+    left: 12px; right: 12px;
+    background: linear-gradient(135deg, rgba(91,141,191,0.92) 0%, rgba(91,141,191,0.78) 100%);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: var(--radius-md);
+    padding: 9px 12px 9px 10px;
+    display: flex; align-items: center; gap: 10px;
+    z-index: 15;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: white;
+  }
+  .partner-banner .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffeec7 0%, #f4d99a 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--partner-color);
+    border: 2px solid white;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .partner-banner .ticker {
+    position: relative;
+    height: 30px;
+    overflow: hidden;
+    flex: 1;
+  }
+  .partner-banner .ticker-track {
+    position: absolute; left: 0; right: 0; top: 0;
+    animation: ticker 12s steps(1) infinite;
+  }
+  .partner-banner .ticker-item {
+    height: 30px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .partner-banner .who {
+    font-size: 10px;
+    color: rgba(255,255,255,0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .partner-banner .what {
+    font-size: 12.5px;
+    color: white;
+    margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.15);
+  }
+  .partner-banner .arrow {
+    color: rgba(255,255,255,0.85);
+    font-size: 18px;
+    font-weight: 300;
+  }
+  @keyframes ticker {
+    0%, 25% { transform: translateY(0); }
+    33%, 58% { transform: translateY(-30px); }
+    66%, 91% { transform: translateY(-60px); }
+    100% { transform: translateY(0); }
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     VARIANT B — Modal "Depuis ta dernière visite"
+     ────────────────────────────────────────────────────────── */
+  .modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: fadeIn .25s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .modal-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 20px 18px 14px;
+    width: 100%;
+    max-height: 92%;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    animation: slideUp .35s cubic-bezier(.2,.9,.3,1.1);
+    border: 1px solid rgba(107,66,38,0.15);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px) scale(.95); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .modal-card .header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px;
+  }
+  .modal-card .avatar-lg {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--partner-color) 0%, var(--partner-color-soft) 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: white;
+    border: 3px solid white;
+    box-shadow: var(--shadow-glow-partner);
+  }
+  .modal-card h2 {
+    font-family: var(--font-display);
+    font-size: 17px;
+    color: var(--text-primary);
+    line-height: 1.2;
+    font-weight: 600;
+  }
+  .modal-card .subhead {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--brand-soil-muted);
+    font-style: italic;
+    margin-top: 2px;
+  }
+  .activity-list {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .activity {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 11px;
+    background: rgba(196,162,101,0.10);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--partner-color);
+  }
+  .activity .ico {
+    font-size: 22px;
+    width: 28px; text-align: center; flex-shrink: 0;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+  }
+  .activity .body { flex: 1; min-width: 0; }
+  .activity .label {
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+  .activity .time {
+    font-size: 10px;
+    color: var(--brand-soil-muted);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+  .activity.epic {
+    background: linear-gradient(135deg, rgba(232,200,88,0.20), rgba(196,154,74,0.10));
+    border-left-color: var(--brand-or-deep);
+  }
+  .activity.epic .label::after {
+    content: '✦ épique';
+    margin-left: 6px;
+    font-size: 9.5px;
+    color: var(--brand-or-deep);
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .modal-card .actions {
+    display: flex; gap: 8px;
+  }
+  .modal-card .btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: var(--radius-md);
+    border: none;
+    font: inherit; font-size: 12.5px; font-weight: 600;
+    cursor: pointer;
+  }
+  .modal-card .btn.primary {
+    background: var(--brand-or);
+    color: var(--brand-soil);
+  }
+  .modal-card .btn.ghost {
+    background: rgba(107,66,38,0.10);
+    color: var(--brand-soil);
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     VARIANT C — Avatar in-scene + bulles
+     L'avatar se promène DANS la ferme — positionné sur le chemin
+     central près de l'arbre, avec bulles sur ses dernières actions
+     ────────────────────────────────────────────────────────── */
+  .partner-presence {
+    position: absolute;
+    /* placée sur le chemin dirt, sous le potager, près de l'arbre */
+    top: 360px;
+    left: 142px;
+    z-index: 20;
+    animation: float 3.5s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  .partner-presence .avatar-pixel {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--partner-color) 0%, var(--partner-color-soft) 100%);
+    border: 3px solid white;
+    box-shadow: var(--shadow-glow-partner), 0 4px 8px rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: white;
+    position: relative;
+  }
+  /* Online indicator pulse */
+  .partner-presence .avatar-pixel::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; right: -2px;
+    width: 13px; height: 13px;
+    background: #6FCF67;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 0 rgba(111,207,103,0.7);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(111,207,103,0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(111,207,103,0); }
+    100% { box-shadow: 0 0 0 0 rgba(111,207,103,0); }
+  }
+  .partner-presence .name-tag {
+    position: absolute;
+    top: 52px; left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--partner-color);
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    letter-spacing: 0.3px;
+  }
+  /* Speech bubble — anchored above avatar */
+  .bubble {
+    position: absolute;
+    background: white;
+    padding: 7px 10px;
+    border-radius: var(--radius-md);
+    font-size: 11px;
+    color: var(--text-primary);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    max-width: 170px;
+    border: 1px solid rgba(91,141,191,0.25);
+  }
+  .bubble.bubble-1 {
+    bottom: 60px; left: -50px;
+    animation: pop .5s cubic-bezier(.4,1.5,.6,1) 0.3s both;
+  }
+  .bubble.bubble-1::before {
+    content: '';
+    position: absolute;
+    bottom: -6px; left: 56px;
+    width: 10px; height: 10px;
+    background: white;
+    transform: rotate(45deg);
+    border-right: 1px solid rgba(91,141,191,0.25);
+    border-bottom: 1px solid rgba(91,141,191,0.25);
+  }
+  .bubble.bubble-2 {
+    bottom: 60px; right: -90px;
+    animation: pop .5s cubic-bezier(.4,1.5,.6,1) 2s both;
+  }
+  .bubble.bubble-2::before {
+    content: '';
+    position: absolute;
+    bottom: -6px; left: 16px;
+    width: 10px; height: 10px;
+    background: white;
+    transform: rotate(45deg);
+    border-right: 1px solid rgba(91,141,191,0.25);
+    border-bottom: 1px solid rgba(91,141,191,0.25);
+  }
+  @keyframes pop {
+    from { transform: scale(0) translateY(10px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .bubble .what {
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .bubble .when {
+    font-size: 9.5px;
+    color: var(--brand-soil-muted);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+  /* Sparkle markers on partner's recent plots — positioned on actual potager */
+  .partner-crop-marker {
+    position: absolute;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 2px dashed rgba(91,141,191,0.85);
+    pointer-events: none;
+    animation: marker-pulse 2.5s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(91,141,191,0.4);
+    z-index: 15;
+  }
+  @keyframes marker-pulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+  /* Small partner-color sparkle ✦ */
+  .partner-sparkle {
+    position: absolute;
+    color: var(--partner-color);
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 16;
+    animation: sparkle 2s ease-in-out infinite;
+    text-shadow: 0 0 6px rgba(91,141,191,0.6);
+  }
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.5; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.2) rotate(15deg); }
+  }
+
+  /* Variant switching */
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  /* Notes panel */
+  .notes {
+    width: 390px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .notes h3 {
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--brand-or);
+    margin-bottom: 8px;
+  }
+  .notes .pros, .notes .cons { margin-top: 6px; }
+  .notes .pros li, .notes .cons li {
+    list-style: none;
+    padding-left: 18px;
+    position: relative;
+    margin-bottom: 3px;
+  }
+  .notes .pros li::before {
+    content: '+'; position: absolute; left: 0; color: #6FCF67; font-weight: bold;
+  }
+  .notes .cons li::before {
+    content: '−'; position: absolute; left: 0; color: var(--self-color-soft); font-weight: bold;
+  }
+  .notes strong { color: rgba(255,255,255,0.95); }
+
+  /* Toolbar */
+  .toolbar {
+    position: fixed; bottom: 12px; right: 12px;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    display: flex; gap: 10px; align-items: center;
+  }
+  .toolbar a { color: var(--brand-or); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<h1>Sketch 001 — Ferme · Présence Partenaire</h1>
+<div class="question">
+  Surfacer les <strong>accomplissements ferme du partenaire</strong>
+  dans la vraie ferme — sans casser le flow ni spammer.
+  Le fond est un screenshot réel de la ferme actuelle.
+</div>
+
+<div class="tabs">
+  <button id="tab-a" class="active" onclick="setVariant('a')">A — Bandeau ambient</button>
+  <button id="tab-b" onclick="setVariant('b')">B — Modal au retour</button>
+  <button id="tab-c" onclick="setVariant('c')">C — Avatar in-scene</button>
+</div>
+
+<div class="frame-stack">
+  <div class="phone-frame">
+
+    <!-- ════════════ VARIANT A — Bandeau ambient ════════════ -->
+    <div class="variant active" id="variant-a">
+      <div class="partner-banner">
+        <div class="avatar">M</div>
+        <div class="ticker">
+          <div class="ticker-track">
+            <div class="ticker-item">
+              <div class="who">Marie · sa ferme</div>
+              <div class="what">vient de récolter 12 🍅 · il y a 8min</div>
+            </div>
+            <div class="ticker-item">
+              <div class="who">Marie · sa ferme</div>
+              <div class="what">a planté ✦ Étoile du Berger</div>
+            </div>
+            <div class="ticker-item">
+              <div class="who">Marie · sa ferme</div>
+              <div class="what">passée niveau 13 · ce matin</div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+      </div>
+    </div>
+
+    <!-- ════════════ VARIANT B — Modal au lancement ════════════ -->
+    <div class="variant" id="variant-b">
+      <div class="modal-backdrop">
+        <div class="modal-card">
+          <div class="header">
+            <div class="avatar-lg">M</div>
+            <div>
+              <h2>Marie a été productive ✨</h2>
+              <div class="subhead">depuis ta dernière visite, hier soir</div>
+            </div>
+          </div>
+          <div class="activity-list">
+            <div class="activity epic">
+              <div class="ico">✦</div>
+              <div class="body">
+                <div class="label">A planté une Étoile du Berger</div>
+                <div class="time">il y a 2h · graine épique</div>
+              </div>
+            </div>
+            <div class="activity">
+              <div class="ico">🍅</div>
+              <div class="body">
+                <div class="label">A récolté 12 tomates</div>
+                <div class="time">il y a 8min</div>
+              </div>
+            </div>
+            <div class="activity">
+              <div class="ico">⭐</div>
+              <div class="body">
+                <div class="label">Est passée niveau 13</div>
+                <div class="time">ce matin · +1 emplacement</div>
+              </div>
+            </div>
+            <div class="activity">
+              <div class="ico">🐣</div>
+              <div class="body">
+                <div class="label">A fait éclore un poussin doré</div>
+                <div class="time">hier soir, 22h14</div>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" onclick="document.querySelector('#variant-b .modal-backdrop').style.display='none'">Plus tard</button>
+            <button class="btn primary" onclick="document.querySelector('#variant-b .modal-backdrop').style.display='none'">Voir sa ferme →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ VARIANT C — Avatar in-scene ════════════ -->
+    <div class="variant" id="variant-c">
+      <!-- Markers sur les parcelles du potager (les rangs du haut, là où Marie a planté/récolté) -->
+      <div class="partner-crop-marker" style="top: 192px; left: 95px"></div>
+      <div class="partner-sparkle"      style="top: 198px; left: 124px">✦</div>
+      <div class="partner-crop-marker" style="top: 192px; left: 195px"></div>
+      <div class="partner-sparkle"      style="top: 198px; left: 224px">✦</div>
+
+      <!-- Avatar Marie sur le chemin central, près de l'arbre -->
+      <div class="partner-presence">
+        <div class="bubble bubble-1">
+          <div class="what">Récolté 12 🍅</div>
+          <div class="when">il y a 8min</div>
+        </div>
+        <div class="bubble bubble-2">
+          <div class="what">Planté ✦ Étoile du Berger</div>
+          <div class="when">il y a 2h</div>
+        </div>
+        <div class="avatar-pixel">M</div>
+        <div class="name-tag">Marie</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Variant-specific notes -->
+  <div class="notes">
+    <h3 id="notes-title">A — Bandeau ambient</h3>
+    <div id="notes-body">
+      <p><strong>Position :</strong> juste sous la barre de stats (🍃 🔥 🌟 saison), au-dessus du potager. Ticker passif cycle entre 2-3 events.</p>
+      <ul class="pros">
+        <li>Aucune friction — pas de tap requis, pas de modale</li>
+        <li>Toujours présent → "ambient" durable</li>
+        <li>Bleu partenaire distinct du chrome ferme actuel</li>
+      </ul>
+      <ul class="cons">
+        <li>Mange ~50px d'espace écran en permanence</li>
+        <li>Couleur bleue contraste avec la palette nature</li>
+        <li>Risque d'être ignoré comme une banner pub</li>
+      </ul>
+      <p><strong>Coût :</strong> bas — composant + hook qui lit la ferme partenaire et filtre les events récents.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <span>Sketch 001 · variant <strong id="current-variant">A</strong></span>
+  <span>·</span>
+  <a href="#" onclick="event.preventDefault(); setVariant('a')">A</a>
+  <a href="#" onclick="event.preventDefault(); setVariant('b')">B</a>
+  <a href="#" onclick="event.preventDefault(); setVariant('c')">C</a>
+</div>
+
+<script>
+  const NOTES = {
+    a: {
+      title: 'A — Bandeau ambient',
+      body: `
+        <p><strong>Position :</strong> juste sous la barre de stats (🍃 🔥 🌟 saison), au-dessus du potager. Ticker passif cycle entre 2-3 events.</p>
+        <ul class="pros">
+          <li>Aucune friction — pas de tap requis, pas de modale</li>
+          <li>Toujours présent → "ambient" durable</li>
+          <li>Bleu partenaire distinct du chrome ferme actuel</li>
+        </ul>
+        <ul class="cons">
+          <li>Mange ~50px d'espace écran en permanence</li>
+          <li>Couleur bleue contraste avec la palette nature</li>
+          <li>Risque d'être ignoré comme une banner pub</li>
+        </ul>
+        <p><strong>Coût :</strong> bas — composant + hook qui lit la ferme partenaire et filtre les events récents.</p>
+      `
+    },
+    b: {
+      title: 'B — Modal au retour',
+      body: `
+        <p><strong>Déclenchement :</strong> au lancement de la ferme si > 4h depuis la dernière visite ET ≥ 1 event partenaire. Modale unique par session.</p>
+        <ul class="pros">
+          <li>Moment de "présence" fort — célèbre les accomplissements</li>
+          <li>Hiérarchie claire : épique en haut, récents ensuite</li>
+          <li>CTA "Voir sa ferme" = pont organique vers sa map</li>
+          <li>Zéro pollution permanente de l'UI ferme</li>
+          <li>S'aligne avec le pattern Sunrise Report déjà existant</li>
+        </ul>
+        <ul class="cons">
+          <li>Friction au boot — agace si trop fréquent</li>
+          <li>Threshold à calibrer (4h ? 8h ? après le sunrise ?)</li>
+          <li>Si Marie n'a rien fait → silence (peut sembler vide)</li>
+        </ul>
+        <p><strong>Coût :</strong> moyen — modal + last-visited en SecureStore + règles seuil/dedup. Bonus : peut s'intégrer au Sunrise Report existant comme une section "Ta partenaire".</p>
+      `
+    },
+    c: {
+      title: 'C — Avatar in-scene + bulles',
+      body: `
+        <p><strong>Position :</strong> avatar Marie flotte sur le chemin central près de l'arbre, bulles de speech sur ses 2 derniers events, parcelles cerclées en bleu sur le potager.</p>
+        <ul class="pros">
+          <li>Le plus émotionnel — Marie EST dans ta ferme</li>
+          <li>S'intègre à l'esthétique cozy / Animal Crossing</li>
+          <li>Tap sur avatar = visite immédiate de sa ferme</li>
+          <li>Différenciation forte vs apps utilitaires</li>
+          <li>Markers cerclés gardent un lien aux parcelles, pas juste texte</li>
+        </ul>
+        <ul class="cons">
+          <li>Le plus complexe — animations, états, positionnement</li>
+          <li>Encombre une ferme déjà dense visuellement</li>
+          <li>Que faire si Marie inactive 3 jours ? Avatar fantôme ?</li>
+          <li>Bulles auto-dismiss : risque de manquer un event</li>
+          <li>Conflit visuel possible avec les pluies de pollen / particles existantes</li>
+        </ul>
+        <p><strong>Coût :</strong> haut — composant avatar animé, bubbles state machine, positioning sur la grille, présence/absence states, intégration aux particles existants.</p>
+      `
+    }
+  };
+
+  function setVariant(v) {
+    document.querySelectorAll('.variant').forEach(el => el.classList.remove('active'));
+    document.getElementById('variant-' + v).classList.add('active');
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + v).classList.add('active');
+    document.getElementById('notes-title').textContent = NOTES[v].title;
+    document.getElementById('notes-body').innerHTML = NOTES[v].body;
+    document.getElementById('current-variant').textContent = v.toUpperCase();
+    if (v === 'b') {
+      const modal = document.querySelector('#variant-b .modal-backdrop');
+      if (modal) modal.style.display = 'flex';
+    }
+  }
+</script>
+
+</body>
+</html>

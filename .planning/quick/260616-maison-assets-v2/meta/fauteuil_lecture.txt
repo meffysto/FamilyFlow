@@ -1,0 +1,7 @@
+id=fauteuil_lecture
+source=/Users/gabrielwaltio/.codex/generated_images/019ecfa1-57d1-7902-96d6-2f24d1507d12/ig_04a5f94d60e93a46016a3118ac24248191bccc7be9066c06a0.png
+raw=/Users/gabrielwaltio/Documents/family-vault/.planning/quick/260616-maison-assets-v2/raw/fauteuil_lecture-raw.png
+final=/Users/gabrielwaltio/Documents/family-vault/assets/companion-house/fauteuil_lecture.png
+size=512x512
+corner_alpha=[0, 0, 0, 0]
+opaque_coverage=0.3053

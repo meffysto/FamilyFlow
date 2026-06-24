@@ -1,0 +1,59 @@
+/* FamilyFlow sketch theme — warm pixel cozy
+   Cohérent avec docs/farm-tilemap-mockup.html et la ferme actuelle de l'app */
+
+:root {
+  /* Surface */
+  --bg-page:        #1a1a2e;        /* page background (workshop view) */
+  --bg-farm:        #5A8C32;        /* farm grass field */
+  --bg-card:        #FFF8EC;        /* warm parchment cards */
+  --bg-card-dark:   #231F1A;        /* dark mode card */
+  --bg-tint-wash:   rgba(196,162,101,0.10);
+
+  /* Brand */
+  --brand-soil:        #6B4226;
+  --brand-soil-muted:  #A0784C;
+  --brand-or:          #E8C858;
+  --brand-or-deep:     #C49A4A;
+  --brand-miel:        #FFF4DA;
+
+  /* Partner accent (couleur distincte de l'utilisateur — bleu doux) */
+  --partner-color:     #5B8DBF;
+  --partner-color-soft:#A8C5E3;
+  --partner-bg:        rgba(91,141,191,0.12);
+  --partner-border:    rgba(91,141,191,0.40);
+
+  /* Self color (référence utilisateur courant) */
+  --self-color:        #C84A4A;
+  --self-color-soft:   #E89090;
+
+  /* Text */
+  --text-primary:      #2A1810;
+  --text-secondary:    #6B4226;
+  --text-on-dark:      #F5EFE5;
+
+  /* Type */
+  --font-display: Georgia, 'Times New Roman', serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  --font-mono:    'SF Mono', Menlo, 'Courier New', monospace;
+  --font-pixel:   'Courier New', monospace;
+
+  /* Spacing — match RN tokens */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-lg: 16px;
+  --sp-xl: 20px;
+  --sp-2xl: 24px;
+  --sp-3xl: 32px;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.20);
+  --shadow-glow-partner: 0 0 12px rgba(91,141,191,0.35);
+}

@@ -1,0 +1,7 @@
+id=arbre_a_chat
+source=/Users/gabrielwaltio/.codex/generated_images/019ecfa1-57d1-7902-96d6-2f24d1507d12/ig_04a5f94d60e93a46016a31174cf42c8191b7aa99b09554e212.png
+raw=/Users/gabrielwaltio/Documents/family-vault/.planning/quick/260616-maison-assets-v2/raw/arbre_a_chat-raw.png
+final=/Users/gabrielwaltio/Documents/family-vault/assets/companion-house/arbre_a_chat.png
+size=512x512
+corner_alpha=[0, 0, 0, 0]
+opaque_coverage=0.2797

@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Livres-jeux 4-7 ans — FamilyFlow sketch v2</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-page);
+    font-family: var(--font-body);
+    color: var(--text-on-dark);
+    padding: var(--sp-3xl) var(--sp-xl);
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    margin-bottom: var(--sp-sm);
+    color: var(--brand-miel);
+  }
+  .subtitle {
+    color: #9a9aa8;
+    margin-bottom: var(--sp-3xl);
+    max-width: 760px;
+    line-height: 1.5;
+  }
+  .frames {
+    display: flex;
+    gap: var(--sp-2xl);
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 340px;
+    background: var(--bg-card);
+    border-radius: 36px;
+    border: 3px solid #0d0d1a;
+    box-shadow: var(--shadow-md), inset 0 0 0 8px #0d0d1a;
+    overflow: hidden;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    min-height: 700px;
+  }
+  .phone-wrap { display: flex; flex-direction: column; }
+  .phone-label {
+    text-align: center;
+    margin-top: var(--sp-md);
+    font-size: 11px;
+    color: #9a9aa8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* === Phone 1: Cover === */
+  .cover {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #f4d590 0%, #e8b65c 50%, #d4943a 100%);
+    padding: var(--sp-2xl) var(--sp-lg);
+    position: relative;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: var(--sp-lg);
+    border: 3px double rgba(107,66,38,0.4);
+    border-radius: var(--radius-md);
+    pointer-events: none;
+  }
+  .cover-collection {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--brand-soil);
+    margin-bottom: var(--sp-lg);
+    margin-top: var(--sp-sm);
+  }
+  .cover-title {
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--brand-soil);
+    line-height: 1.1;
+    margin: var(--sp-md) var(--sp-md);
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+  }
+  .cover-art {
+    margin: var(--sp-lg) auto;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle at 30% 30%, #fff8d6, #f4c87a 60%, #d68838);
+    border-radius: 50%;
+    border: 4px solid var(--brand-soil);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 100px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .cover-hero {
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--brand-soil);
+    margin-top: var(--sp-lg);
+    font-style: italic;
+  }
+  .cover-tagline {
+    text-align: center;
+    font-size: 13px;
+    color: var(--brand-soil);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: auto;
+    padding-bottom: var(--sp-md);
+  }
+  .cover-tagline strong {
+    display: block;
+    font-size: 17px;
+    margin-top: 4px;
+    color: var(--text-primary);
+  }
+
+  /* === Phone 2: Casting simple === */
+  .phone-header {
+    background: var(--brand-soil);
+    color: var(--brand-miel);
+    padding: var(--sp-2xl) var(--sp-lg) var(--sp-md);
+    text-align: center;
+  }
+  .phone-header h2 {
+    font-family: var(--font-display);
+    font-size: 20px;
+  }
+  .phone-body {
+    padding: var(--sp-lg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+  }
+  .casting-q {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--brand-soil);
+    text-align: center;
+    margin: var(--sp-lg) 0 var(--sp-md);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-md);
+  }
+  .hero-card {
+    background: #fff;
+    border-radius: var(--radius-md);
+    padding: var(--sp-md);
+    border: 3px solid transparent;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+  }
+  .hero-card.selected {
+    border-color: var(--brand-or);
+    background: var(--brand-miel);
+    transform: scale(1.04);
+  }
+  .hero-avatar {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto var(--sp-sm);
+    border-radius: 50%;
+    background: #f4c87a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    border: 3px solid var(--brand-soil);
+  }
+  .hero-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--brand-soil);
+  }
+  .cta-big {
+    background: var(--brand-soil);
+    color: var(--brand-miel);
+    padding: var(--sp-xl);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 700;
+    font-size: 17px;
+    box-shadow: var(--shadow-md);
+    margin-top: auto;
+  }
+
+  /* === Phone 3: Lecture === */
+  .reading {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #FFF8EC;
+  }
+  .reading-top {
+    background: linear-gradient(180deg, #f4d590, #e8b65c);
+    padding: var(--sp-xl) var(--sp-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .back-btn {
+    background: rgba(255,255,255,0.5);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-soil);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .progress-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .progress-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(107,66,38,0.25);
+  }
+  .progress-dots .dot.done { background: var(--brand-soil); }
+  .progress-dots .dot.current {
+    background: var(--brand-soil);
+    width: 14px;
+    border-radius: 4px;
+  }
+  .scene-art {
+    height: 200px;
+    background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 60%, #8B4513 60%, #8B4513 100%);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+    padding-bottom: 20px;
+    border-bottom: 3px solid var(--brand-soil);
+  }
+  .scene-art::before {
+    content: '☀️';
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    font-size: 32px;
+  }
+  .scene-art::after {
+    content: '☁️';
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    font-size: 24px;
+  }
+  .scene-emoji {
+    font-size: 80px;
+    text-align: center;
+    z-index: 2;
+    filter: drop-shadow(2px 4px 0 rgba(0,0,0,0.15));
+  }
+  .scene-emoji-row {
+    display: flex;
+    gap: var(--sp-sm);
+    align-items: flex-end;
+    z-index: 2;
+  }
+  .scene-emoji-small { font-size: 50px; }
+
+  .story-text {
+    padding: var(--sp-xl) var(--sp-lg) var(--sp-lg);
+    font-family: var(--font-display);
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .story-text .word-highlight {
+    background: rgba(232,200,88,0.5);
+    padding: 0 4px;
+    border-radius: 4px;
+  }
+
+  .tts-button {
+    margin: 0 auto var(--sp-lg);
+    background: var(--brand-or);
+    color: var(--text-primary);
+    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 4px 0 var(--brand-or-deep), var(--shadow-md);
+    position: relative;
+  }
+  .tts-button::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px solid var(--brand-or);
+    opacity: 0.4;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.3); opacity: 0; }
+  }
+
+  .choices {
+    padding: 0 var(--sp-lg) var(--sp-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+  }
+  .choice-xxl {
+    background: #fff;
+    border: 3px solid var(--brand-or-deep);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-md);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-md);
+    box-shadow: 0 4px 0 var(--brand-or-deep), var(--shadow-sm);
+  }
+  .choice-xxl:active { transform: translateY(2px); }
+  .choice-xxl .choice-img {
+    width: 64px;
+    height: 64px;
+    background: var(--brand-miel);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    border: 2px solid var(--brand-soil);
+    flex-shrink: 0;
+  }
+  .choice-xxl .choice-label {
+    font-family: var(--font-display);
+    font-size: 19px;
+    color: var(--brand-soil);
+    font-weight: 700;
+  }
+
+  /* === Phone 4: Fin === */
+  .ending {
+    background: linear-gradient(180deg, #fff4d6 0%, #f4d590 100%);
+    height: 100%;
+    padding: var(--sp-2xl) var(--sp-lg);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+  }
+  .ending-banner {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--brand-soil);
+    margin-bottom: var(--sp-sm);
+  }
+  .ending-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--brand-soil);
+    margin-bottom: var(--sp-lg);
+    line-height: 1.2;
+  }
+  .ending-art {
+    margin: var(--sp-lg) auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff9e0, #f4c87a 70%, #c89048);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 90px;
+    border: 4px solid var(--brand-soil);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+  .ending-text {
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    padding: 0 var(--sp-sm);
+    font-style: italic;
+  }
+  .ending-badge {
+    margin: var(--sp-lg) auto var(--sp-md);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-sm);
+    background: var(--brand-soil);
+    color: var(--brand-miel);
+    padding: var(--sp-sm) var(--sp-lg);
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .ending-actions {
+    display: flex;
+    gap: var(--sp-sm);
+    margin-top: auto;
+  }
+  .end-btn {
+    flex: 1;
+    padding: var(--sp-md);
+    border-radius: var(--radius-md);
+    background: rgba(255,255,255,0.6);
+    border: 2px solid var(--brand-soil);
+    color: var(--brand-soil);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .end-btn.primary {
+    background: var(--brand-soil);
+    color: var(--brand-miel);
+  }
+
+  /* === Phone 5: PDF page === */
+  .pdf-frame {
+    background: #efe6d3;
+    padding: var(--sp-lg);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .pdf-page {
+    background: #FFFCF4;
+    border: 1px solid rgba(107,66,38,0.25);
+    padding: var(--sp-md);
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-image:
+      radial-gradient(ellipse at top left, rgba(196,162,101,0.08), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(196,162,101,0.08), transparent 60%);
+  }
+  .pdf-pagenum {
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 11px;
+    color: var(--brand-soil-muted);
+    margin-bottom: var(--sp-sm);
+    letter-spacing: 2px;
+  }
+  .pdf-art {
+    background: linear-gradient(180deg, #cde7f0 0%, #cde7f0 55%, #b8845a 55%, #8B4513 100%);
+    height: 160px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: var(--sp-sm);
+    border: 1px solid var(--brand-soil);
+    position: relative;
+  }
+  .pdf-art::before {
+    content: '☀️';
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    font-size: 20px;
+  }
+  .pdf-art .ar-em {
+    font-size: 60px;
+    filter: drop-shadow(1px 2px 0 rgba(0,0,0,0.2));
+  }
+  .pdf-story {
+    font-family: var(--font-display);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    padding: var(--sp-md) var(--sp-xs);
+    text-align: justify;
+  }
+  .pdf-choice-block {
+    margin-top: auto;
+    border-top: 2px dashed rgba(107,66,38,0.3);
+    padding-top: var(--sp-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-sm);
+  }
+  .pdf-choice {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-md);
+    background: rgba(232,200,88,0.15);
+    padding: var(--sp-sm);
+    border-radius: var(--radius-sm);
+  }
+  .pdf-qr {
+    width: 48px;
+    height: 48px;
+    background:
+      linear-gradient(45deg, #000 25%, transparent 25%) 0 0 / 7px 7px,
+      linear-gradient(-45deg, #000 25%, transparent 25%) 0 0 / 7px 7px,
+      linear-gradient(45deg, transparent 75%, #000 75%) 3.5px 3.5px / 7px 7px,
+      linear-gradient(-45deg, transparent 75%, #000 75%) 3.5px 3.5px / 7px 7px,
+      white;
+    border: 2px solid #000;
+    flex-shrink: 0;
+  }
+  .pdf-choice-text {
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--brand-soil);
+  }
+  .pdf-choice-text strong { font-size: 15px; display: block; }
+  .pdf-choice-text small { opacity: 0.6; font-style: italic; }
+
+  .arrow-flow {
+    align-self: center;
+    color: var(--brand-or);
+    font-size: 32px;
+    line-height: 700px;
+  }
+
+  .note {
+    max-width: 760px;
+    margin: var(--sp-3xl) auto 0;
+    padding: var(--sp-lg);
+    background: rgba(232,200,88,0.08);
+    border-left: 3px solid var(--brand-or);
+    color: #d4d4dc;
+    font-size: 13px;
+    line-height: 1.6;
+    border-radius: var(--radius-sm);
+  }
+  .note strong { color: var(--brand-miel); }
+  .note h3 {
+    color: var(--brand-miel);
+    font-size: 15px;
+    margin-bottom: var(--sp-sm);
+    font-family: var(--font-display);
+  }
+  .note ul { margin: var(--sp-sm) 0 var(--sp-sm) var(--sp-lg); }
+  .note li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<h1>📖 Livres dont tu es le héros — v2 (4-7 ans)</h1>
+<p class="subtitle">
+  Texte court (2-3 phrases), 2 choix max avec gros visuels, TTS first-class auto-play,
+  aucune mort ni échec — chaque branche mène à une fin tendre. Esthétique livre cartonné
+  jeunesse, pas livre de poche aventure.
+</p>
+
+<div class="frames">
+
+  <!-- ============ PHONE 1 : Couverture ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="cover">
+        <div class="cover-collection">★ LES AVENTURES DE LA FERME ★</div>
+        <div class="cover-title">Le matin<br>tout drôle</div>
+        <div class="cover-art">🐔</div>
+        <div class="cover-hero">— une aventure d'Emma —</div>
+        <div class="cover-tagline">
+          C'est toi qui choisis !
+          <strong>🔊 Appuie pour écouter</strong>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">1 · Couverture</div>
+  </div>
+
+  <div class="arrow-flow">→</div>
+
+  <!-- ============ PHONE 2 : Casting simplifié ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-header">
+        <h2>Qui est le héros ?</h2>
+      </div>
+      <div class="phone-body">
+        <div class="hero-grid">
+          <div class="hero-card">
+            <div class="hero-avatar">👦</div>
+            <div class="hero-name">Lucas</div>
+          </div>
+          <div class="hero-card selected">
+            <div class="hero-avatar">👧</div>
+            <div class="hero-name">Emma</div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-avatar">👨</div>
+            <div class="hero-name">Papa</div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-avatar">👩</div>
+            <div class="hero-name">Maman</div>
+          </div>
+        </div>
+
+        <div class="casting-q" style="font-size:16px; margin-top:var(--sp-lg); opacity:0.6;">
+          Avec Biscotte 🐾
+        </div>
+
+        <div class="cta-big">✨ C'est parti !</div>
+      </div>
+    </div>
+    <div class="phone-label">2 · Casting (2 taps)</div>
+  </div>
+
+  <div class="arrow-flow">→</div>
+
+  <!-- ============ PHONE 3 : Lecture nœud 1 ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="reading">
+        <div class="reading-top">
+          <div class="back-btn">←</div>
+          <div class="progress-dots">
+            <div class="dot current"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div style="width:36px"></div>
+        </div>
+
+        <div class="scene-art">
+          <div class="scene-emoji-row">
+            <span class="scene-emoji-small">🏚️</span>
+            <span class="scene-emoji">👧</span>
+            <span class="scene-emoji-small">🐕</span>
+          </div>
+        </div>
+
+        <div class="story-text">
+          Ce matin, à la ferme, quelque chose <span class="word-highlight">cloche</span>.
+          Les poules ne chantent pas. Biscotte gratte la porte. Emma enfile ses bottes.
+        </div>
+
+        <div class="tts-button">🔊</div>
+
+        <div class="choices">
+          <div class="choice-xxl">
+            <div class="choice-img">🐔</div>
+            <div class="choice-label">Voir les poules</div>
+          </div>
+          <div class="choice-xxl">
+            <div class="choice-img">🌳</div>
+            <div class="choice-label">Suivre Biscotte</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">3 · Lecture (nœud 1/4)</div>
+  </div>
+
+  <div class="arrow-flow">→</div>
+
+  <!-- ============ PHONE 4 : Nœud 2 (suite verger) ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="reading">
+        <div class="reading-top">
+          <div class="back-btn">←</div>
+          <div class="progress-dots">
+            <div class="dot done"></div>
+            <div class="dot current"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div style="width:36px"></div>
+        </div>
+
+        <div class="scene-art" style="background: linear-gradient(180deg, #b4e1c8 0%, #b4e1c8 55%, #5A8C32 55%, #346524 100%);">
+          <div class="scene-emoji-row">
+            <span class="scene-emoji" style="font-size:90px;">🍎</span>
+          </div>
+        </div>
+
+        <div class="story-text">
+          Biscotte court vers le verger. Sous le grand pommier,
+          une pomme <span class="word-highlight">géante</span> a roulé par terre.
+          Elle bouge toute seule !
+        </div>
+
+        <div class="tts-button">🔊</div>
+
+        <div class="choices">
+          <div class="choice-xxl">
+            <div class="choice-img">🍎</div>
+            <div class="choice-label">Toucher la pomme</div>
+          </div>
+          <div class="choice-xxl">
+            <div class="choice-img">👀</div>
+            <div class="choice-label">Se cacher pour voir</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">4 · Lecture (nœud 2/4)</div>
+  </div>
+
+  <div class="arrow-flow">→</div>
+
+  <!-- ============ PHONE 5 : Fin ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="ending">
+        <div class="ending-banner">★ ★ ★ FIN ★ ★ ★</div>
+        <div class="ending-title">Le hérisson<br>gourmand</div>
+
+        <div class="ending-art">🦔</div>
+
+        <div class="ending-text">
+          La pomme s'ouvre tout doucement. Un petit hérisson sort
+          en éternuant — atchoum ! Il était venu manger les pommes
+          tombées pendant la nuit. Emma lui fait un câlin tout léger.
+        </div>
+
+        <div class="ending-badge">
+          🏅 Fin n°2 sur 4 trouvée
+        </div>
+
+        <div class="ending-actions">
+          <div class="end-btn">📖 Bibliothèque</div>
+          <div class="end-btn primary">🔄 Recommencer</div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">5 · Fin tendre (4 fins possibles)</div>
+  </div>
+
+  <!-- ============ PHONE 6 : PDF page ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="pdf-frame">
+        <div class="pdf-page">
+          <div class="pdf-pagenum">~ 3 ~</div>
+
+          <div class="pdf-art">
+            <span class="ar-em">🍎</span>
+          </div>
+
+          <div class="pdf-story">
+            Biscotte court vers le verger. Sous le grand pommier,
+            une pomme géante a roulé par terre. Elle bouge toute seule !
+          </div>
+
+          <div class="pdf-choice-block">
+            <div class="pdf-choice">
+              <div class="pdf-qr"></div>
+              <div class="pdf-choice-text">
+                <strong>🍎 Toucher la pomme</strong>
+                <small>scanne ou page 6</small>
+              </div>
+            </div>
+            <div class="pdf-choice">
+              <div class="pdf-qr"></div>
+              <div class="pdf-choice-text">
+                <strong>👀 Se cacher pour voir</strong>
+                <small>scanne ou page 8</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">6 · PDF imprimé (parent scanne)</div>
+  </div>
+
+</div>
+
+<div class="note">
+  <h3>Saga complète "Le matin tout drôle" — 6 nœuds, 4 fins</h3>
+  <p>
+    <strong>Nœud 1 (départ)</strong> — « Ce matin, à la ferme, quelque chose cloche. Les poules ne chantent pas. Biscotte gratte la porte. Emma enfile ses bottes. »
+    → 🐔 <em>Voir les poules</em> | 🌳 <em>Suivre Biscotte</em>
+  </p>
+  <p style="margin-top:8px">
+    <strong>Nœud 2a (poulailler)</strong> — « Dans le poulailler, des plumes partout ! Une petite poule rousse se cache derrière un seau. Elle tremble tout doucement. »
+    → 🤗 <em>Lui faire un câlin</em> → <strong>FIN 1 : L'œuf qui chante</strong> (la poule pond un œuf doré qui fredonne une berceuse)
+  </p>
+  <p style="margin-top:8px">
+    <strong>Nœud 2b (verger)</strong> — « Biscotte court vers le verger. Sous le grand pommier, une pomme géante a roulé par terre. Elle bouge toute seule ! »
+    → 🍎 <em>Toucher</em> → <strong>FIN 2 : Le hérisson gourmand</strong>
+    | 👀 <em>Se cacher</em> → Nœud 3
+  </p>
+  <p style="margin-top:8px">
+    <strong>Nœud 3 (caché)</strong> — « La pomme bouge encore. Un petit nez sort. Puis deux yeux brillants. C'est un bébé renard ! »
+    → 🥕 <em>Lui donner une carotte</em> → <strong>FIN 3 : L'ami roux</strong>
+    | 📣 <em>Appeler Mamie</em> → <strong>FIN 4 : Le secret de Mamie</strong> (Mamie sait déjà tout, elle nourrit les animaux du verger en cachette)
+  </p>
+  <p style="margin-top:var(--sp-md)">
+    <strong>Variables remplacées par le LLM</strong> : <code>{{hero}}</code> = Emma,
+    <code>{{compagnon}}</code> = Biscotte, <code>{{lieu_vault}}</code> = la ferme,
+    <code>{{anciene}}</code> = Mamie. Le reste du texte est fixe → narration cohérente, zéro dérive.
+  </p>
+</div>
+
+<div class="note" style="border-color: var(--self-color); background: rgba(200,74,74,0.08);">
+  <h3>Décisions à trancher</h3>
+  <ul>
+    <li><strong>TTS</strong> : auto-play au chargement du nœud, ou tap obligatoire ? (auto-play = magie pré-lecteur, mais coupe la voix du parent qui voudrait lire lui-même)</li>
+    <li><strong>Illustrations</strong> : emoji + scènes CSS (rapide, cohérent), ou Pixellab pour vraies illus jeunesse (cher, mais identité forte) ?</li>
+    <li><strong>Récompense</strong> : compteur "fins trouvées" simple, ou badge gamification global (XP mascotte) ?</li>
+    <li><strong>Voix TTS</strong> : voix narrateur unique, ou différentes voix par personnage (réutilise StoryVoiceContext) ?</li>
+  </ul>
+</div>
+
+</body>
+</html>

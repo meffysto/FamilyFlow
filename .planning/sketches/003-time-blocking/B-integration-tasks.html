@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Time Blocking — intégré dans Tâches</title>
+<link rel="stylesheet" href="../themes/default.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-page);
+    min-height: 100vh;
+    padding: 40px 20px;
+    font-family: var(--font-body);
+    color: var(--text-primary);
+  }
+
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  .header-doc {
+    color: var(--text-on-dark);
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .header-doc h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--brand-or);
+    margin-bottom: 8px;
+  }
+  .header-doc p {
+    font-size: 13px;
+    color: rgba(245,239,229,0.7);
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .stage {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .col-label {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--brand-or);
+    text-align: center;
+  }
+  .col-label small {
+    display: block;
+    color: rgba(245,239,229,0.55);
+    font-style: italic;
+    font-size: 11px;
+    margin-top: 2px;
+    font-family: var(--font-body);
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 380px;
+    height: 824px;
+    background: #F5EFE2;
+    border-radius: 48px;
+    padding: 12px;
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.5),
+      0 0 0 10px #0a0a14,
+      0 0 0 11px #2a2a3a;
+    position: relative;
+    overflow: hidden;
+  }
+  .screen {
+    background: #FAF4E6;
+    border-radius: 38px;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    height: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .status-bar .icons {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    color: var(--text-primary);
+  }
+  .status-bar svg { width: 14px; height: 14px; stroke-width: 2; }
+
+  /* ScreenHeader */
+  .screen-header {
+    padding: 4px 18px 0;
+    flex-shrink: 0;
+  }
+  .screen-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+    padding-bottom: 10px;
+  }
+  .title-block .title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+  }
+  .title-block .subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    margin-top: 1px;
+  }
+  .header-actions { display: flex; gap: 6px; align-items: center; }
+
+  .add-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #C76A3A;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .add-btn svg { width: 18px; height: 18px; stroke-width: 2.5; }
+
+  /* Mode segmented toggle */
+  .mode-toggle {
+    display: flex;
+    background: rgba(167,121,82,0.08);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .mode-toggle .seg {
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(107,66,38,0.55);
+  }
+  .mode-toggle .seg svg { width: 15px; height: 15px; stroke-width: 2; }
+  .mode-toggle .seg.active {
+    background: white;
+    color: var(--brand-soil);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.10);
+  }
+
+  /* Search row */
+  .search-row { padding: 0 4px 8px; }
+  .search-input {
+    width: 100%;
+    height: 36px;
+    background: rgba(167,121,82,0.08);
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 13px;
+    color: rgba(107,66,38,0.55);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .search-input svg { width: 14px; height: 14px; stroke-width: 2; }
+
+  /* Filter chips */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    padding: 0 4px 14px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .chip {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    background: rgba(167,121,82,0.08);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .chip svg { width: 12px; height: 12px; stroke-width: 2; }
+  .chip.active {
+    background: var(--brand-soil);
+    color: #FFF4DA;
+  }
+
+  /* Summary pill (mode Journée only) */
+  .summary-pill {
+    margin: 0 18px 12px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #FFF4DA 0%, #FFE8B8 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(232,200,88,0.40);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .summary-pill .icon-wrap {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(232,200,88,0.30);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--brand-or-deep);
+  }
+  .summary-pill .icon-wrap svg { width: 16px; height: 16px; stroke-width: 2; }
+  .summary-pill .big {
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--brand-soil);
+    font-weight: 500;
+  }
+  .summary-pill .meta {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    margin-top: 1px;
+  }
+
+  /* List body */
+  .list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 18px 80px;
+  }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 4px 6px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .section-title svg { width: 14px; height: 14px; stroke-width: 2; }
+  .section-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    font-variant-numeric: tabular-nums;
+  }
+  .section-time {
+    font-size: 10px;
+    color: var(--text-secondary);
+    opacity: 0.55;
+    margin-left: 6px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+  }
+
+  /* Task card */
+  .task-card {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    box-shadow: 0 1px 2px rgba(107,66,38,0.06);
+  }
+  .check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(167,121,82,0.40);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: transparent;
+  }
+  .check.done {
+    background: #C76A3A;
+    border-color: #C76A3A;
+    color: white;
+  }
+  .check svg { width: 12px; height: 12px; stroke-width: 3; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-label {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+  .task-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    margin-top: 2px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .task-meta svg { width: 11px; height: 11px; stroke-width: 2; }
+  .task-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .task-meta .urgent { color: #B85450; }
+  .task-card.done .task-label {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+    opacity: 0.55;
+  }
+
+  /* Pinned RDV variant */
+  .task-card.pinned .check {
+    background: rgba(184,84,80,0.10);
+    border-color: #B85450;
+    color: #B85450;
+  }
+
+  /* Slot badge */
+  .slot-badge {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 999px;
+    background: rgba(167,121,82,0.08);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .slot-badge svg { width: 13px; height: 13px; stroke-width: 2; }
+
+  /* Auto-placed badge — bordure pointillée + Wand2 = "l'app a choisi" */
+  .slot-badge.auto {
+    background: rgba(91,141,191,0.10);
+    color: var(--partner-color);
+    border: 1px dashed var(--partner-color-soft);
+  }
+
+  /* Free time band */
+  .free-band {
+    margin: 4px 0 6px;
+    padding: 14px;
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(143,191,122,0.12) 0px,
+        rgba(143,191,122,0.12) 8px,
+        rgba(143,191,122,0.06) 8px,
+        rgba(143,191,122,0.06) 16px
+      );
+    border-radius: 10px;
+    border: 1px dashed rgba(143,191,122,0.55);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .free-band svg {
+    width: 14px; height: 14px;
+    stroke-width: 2;
+    color: #4F7A40;
+  }
+  .free-band-text {
+    font-family: var(--font-display);
+    font-style: italic;
+    color: #4F7A40;
+    font-size: 13px;
+  }
+  .free-band-text small {
+    display: block;
+    font-style: normal;
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: rgba(79,122,64,0.75);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Diff note */
+  .diff-note {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(232,200,88,0.10);
+    border-left: 3px solid var(--brand-or);
+    border-radius: 4px;
+    font-size: 11.5px;
+    color: rgba(245,239,229,0.88);
+    line-height: 1.55;
+    max-width: 360px;
+  }
+  .diff-note strong { color: var(--brand-or); }
+  .diff-note code {
+    background: rgba(232,200,88,0.18);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+  }
+
+  /* Default-placement explainer block */
+  .placement-block {
+    margin: 40px auto 0;
+    max-width: 880px;
+    background: rgba(255,244,218,0.06);
+    border: 1px solid rgba(232,200,88,0.20);
+    border-radius: 14px;
+    padding: 24px 28px;
+    color: rgba(245,239,229,0.92);
+  }
+  .placement-block h2 {
+    font-family: var(--font-display);
+    color: var(--brand-or);
+    font-size: 18px;
+    margin-bottom: 14px;
+  }
+  .placement-block ol {
+    list-style: none;
+    counter-reset: rule;
+  }
+  .placement-block ol li {
+    counter-increment: rule;
+    padding: 8px 0 8px 32px;
+    position: relative;
+    font-size: 13px;
+    line-height: 1.5;
+    border-bottom: 1px dashed rgba(232,200,88,0.15);
+  }
+  .placement-block ol li:last-child { border-bottom: none; }
+  .placement-block ol li::before {
+    content: counter(rule);
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--brand-or);
+    color: var(--bg-page);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .placement-block code {
+    background: rgba(232,200,88,0.18);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--brand-miel);
+  }
+
+  .mapping-table {
+    margin-top: 14px;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .mapping-table th,
+  .mapping-table td {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(232,200,88,0.15);
+  }
+  .mapping-table th {
+    color: var(--brand-or);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 10.5px;
+  }
+  .mapping-table td:first-child {
+    font-family: var(--font-mono);
+    color: var(--brand-miel);
+  }
+  .mapping-table td .slot-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mapping-table svg {
+    width: 13px; height: 13px;
+    stroke-width: 2;
+    color: var(--brand-or-deep);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="header-doc">
+    <h1>Time Blocking — intégré dans <code style="font-family:var(--font-mono);background:rgba(232,200,88,0.15);padding:2px 6px;border-radius:4px;font-size:0.85em;color:var(--brand-or);">app/(tabs)/tasks.tsx</code></h1>
+    <p>
+      Pas d'écran en plus. Toggle de mode <strong>Liste / Journée</strong> dans le header.
+      Les sections passent de "par fichier vault" à "par créneau".
+      Tous les pictos sont des icônes Lucide.
+    </p>
+  </div>
+
+  <div class="stage">
+
+    <!-- COL 1 : Mode Liste -->
+    <div class="col">
+      <div class="col-label">
+        Mode Liste
+        <small>État actuel + toggle ajouté</small>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="icons">
+              <i data-lucide="signal"></i>
+              <i data-lucide="wifi"></i>
+              <i data-lucide="battery-full"></i>
+            </span>
+          </div>
+
+          <div class="screen-header">
+            <div class="screen-header-top">
+              <div class="title-block">
+                <div class="title">Tâches</div>
+                <div class="subtitle">11 restantes</div>
+              </div>
+              <div class="header-actions">
+                <div class="mode-toggle">
+                  <div class="seg active"><i data-lucide="list"></i></div>
+                  <div class="seg"><i data-lucide="clock"></i></div>
+                </div>
+                <div class="add-btn"><i data-lucide="plus"></i></div>
+              </div>
+            </div>
+
+            <div class="search-row">
+              <div class="search-input">
+                <i data-lucide="search"></i>
+                Rechercher…
+              </div>
+            </div>
+
+            <div class="filter-row">
+              <div class="chip active">Tous</div>
+              <div class="chip"><i data-lucide="alarm-clock"></i> Retard</div>
+              <div class="chip"><i data-lucide="user"></i> Mes tâches</div>
+              <div class="chip"><i data-lucide="baby"></i> Lucas</div>
+              <div class="chip"><i data-lucide="baby"></i> Emma</div>
+              <div class="chip"><i data-lucide="home"></i> Maison</div>
+            </div>
+          </div>
+
+          <div class="list">
+
+            <div class="section-header">
+              <div class="section-title">Maison — Tâches récurrentes</div>
+              <div class="section-count">4</div>
+            </div>
+
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Sortir poubelles</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="repeat"></i> chaque jeudi</span>
+                </div>
+              </div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Lessive</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 7h · 30min</span>
+                </div>
+              </div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Préparer cartable enfants</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 11h</span>
+                </div>
+              </div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Courses parmesan + pain</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="calendar"></i> aujourd'hui</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-header">
+              <div class="section-title">Lucas — Tâches récurrentes</div>
+              <div class="section-count">3</div>
+            </div>
+
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Bain + dîner</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 18h30</span>
+                </div>
+              </div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Histoire dodo</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 20h00</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-note">
+        <strong>Diff vs actuel :</strong> juste le <code>mode-toggle</code> ajouté
+        entre le bouton <code>+</code> et la pill de section reorder. Rien d'autre
+        ne bouge. Comportement existant préservé à 100%.
+      </div>
+    </div>
+
+    <!-- COL 2 : Mode Journée -->
+    <div class="col">
+      <div class="col-label">
+        Mode Journée
+        <small>Mêmes tâches, regroupées par créneau</small>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="icons">
+              <i data-lucide="signal"></i>
+              <i data-lucide="wifi"></i>
+              <i data-lucide="battery-full"></i>
+            </span>
+          </div>
+
+          <div class="screen-header">
+            <div class="screen-header-top">
+              <div class="title-block">
+                <div class="title">Tâches</div>
+                <div class="subtitle">Lundi 17 mai</div>
+              </div>
+              <div class="header-actions">
+                <div class="mode-toggle">
+                  <div class="seg"><i data-lucide="list"></i></div>
+                  <div class="seg active"><i data-lucide="clock"></i></div>
+                </div>
+                <div class="add-btn"><i data-lucide="plus"></i></div>
+              </div>
+            </div>
+
+            <div class="search-row">
+              <div class="search-input">
+                <i data-lucide="search"></i>
+                Rechercher…
+              </div>
+            </div>
+
+            <div class="filter-row">
+              <div class="chip"><i data-lucide="chevron-left"></i> Hier</div>
+              <div class="chip active"><i data-lucide="calendar"></i> Aujourd'hui</div>
+              <div class="chip">Demain <i data-lucide="chevron-right"></i></div>
+              <div class="chip">Semaine</div>
+            </div>
+          </div>
+
+          <div class="summary-pill">
+            <div class="icon-wrap"><i data-lucide="sparkles"></i></div>
+            <div>
+              <div class="big">3h15 de libre aujourd'hui</div>
+              <div class="meta">10 tâches placées · 0 en attente</div>
+            </div>
+          </div>
+
+          <div class="list">
+
+            <!-- MATIN -->
+            <div class="section-header">
+              <div class="section-title">
+                <i data-lucide="sunrise"></i>
+                Matin
+                <span class="section-time">6h – 12h</span>
+              </div>
+              <div class="section-count">4</div>
+            </div>
+
+            <div class="task-card done">
+              <div class="check done"><i data-lucide="check"></i></div>
+              <div class="task-body">
+                <div class="task-label">Lessive</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 7h · 30min</span>
+                </div>
+              </div>
+            </div>
+            <div class="task-card pinned">
+              <div class="check"><i data-lucide="map-pin"></i></div>
+              <div class="task-body">
+                <div class="task-label">RDV pédiatre Lucas</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="calendar"></i> 10h00 · auto</span>
+                </div>
+              </div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Préparer cartable enfants</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 11h</span>
+                </div>
+              </div>
+              <div class="slot-badge"><i data-lucide="sunrise"></i></div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Appeler dentiste</div>
+                <div class="task-meta">
+                  <span class="meta-item urgent"><i data-lucide="alert-circle"></i> urgent</span>
+                  <span class="meta-item"><i data-lucide="wand-2"></i> auto · cabinet ouvert</span>
+                </div>
+              </div>
+              <div class="slot-badge auto"><i data-lucide="wand-2"></i></div>
+            </div>
+
+            <!-- MIDI -->
+            <div class="section-header">
+              <div class="section-title">
+                <i data-lucide="sun"></i>
+                Midi
+                <span class="section-time">12h – 14h</span>
+              </div>
+              <div class="section-count">1</div>
+            </div>
+
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Préparer pâtes carbo</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 12h30 · 20min</span>
+                </div>
+              </div>
+              <div class="slot-badge"><i data-lucide="sun"></i></div>
+            </div>
+
+            <!-- APREM -->
+            <div class="section-header">
+              <div class="section-title">
+                <i data-lucide="sunset"></i>
+                Après-midi
+                <span class="section-time">14h – 18h</span>
+              </div>
+              <div class="section-count">3</div>
+            </div>
+
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Email maîtresse Emma</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="wand-2"></i> auto · admin</span>
+                </div>
+              </div>
+              <div class="slot-badge auto"><i data-lucide="wand-2"></i></div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Courses parmesan + pain</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 16h30 · 45min</span>
+                </div>
+              </div>
+              <div class="slot-badge"><i data-lucide="sunset"></i></div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Ranger garage</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="wand-2"></i> auto · 1h</span>
+                </div>
+              </div>
+              <div class="slot-badge auto"><i data-lucide="wand-2"></i></div>
+            </div>
+
+            <div class="free-band">
+              <i data-lucide="leaf"></i>
+              <div class="free-band-text">
+                Temps libre · 1h15
+                <small>PROFITE</small>
+              </div>
+            </div>
+
+            <!-- SOIR -->
+            <div class="section-header">
+              <div class="section-title">
+                <i data-lucide="moon"></i>
+                Soir
+                <span class="section-time">18h – 22h</span>
+              </div>
+              <div class="section-count">2</div>
+            </div>
+
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Bain + dîner enfants</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 18h30</span>
+                </div>
+              </div>
+              <div class="slot-badge"><i data-lucide="moon"></i></div>
+            </div>
+            <div class="task-card">
+              <div class="check"></div>
+              <div class="task-body">
+                <div class="task-label">Histoire dodo</div>
+                <div class="task-meta">
+                  <span class="meta-item"><i data-lucide="alarm-clock"></i> 20h</span>
+                </div>
+              </div>
+              <div class="slot-badge"><i data-lucide="moon"></i></div>
+            </div>
+
+            <div class="free-band">
+              <i data-lucide="heart"></i>
+              <div class="free-band-text">
+                Temps libre · 2h
+                <small>SOIRÉE COUPLE</small>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-note">
+        <strong>Auto-placement systématique.</strong> Toutes les tâches du jour
+        sont slottées — jamais de "À placer". Les tâches que l'app a placées
+        portent un badge <span style="display:inline-flex;align-items:center;gap:3px;background:rgba(91,141,191,0.15);color:var(--partner-color-soft);padding:1px 6px;border-radius:999px;border:1px dashed var(--partner-color);font-size:10px;"><i data-lucide="wand-2" style="width:9px;height:9px;"></i> auto</span>
+        — tap pour changer le slot, long-press pour renvoyer au backlog.
+        Capacité 75% par slot ⇒ buffer anti-Parkinson garanti.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DEFAULT PLACEMENT EXPLAINER -->
+  <div class="placement-block">
+    <h2>Auto-placement — chaîne de décision</h2>
+    <p style="font-size: 12.5px; line-height: 1.6; color: rgba(245,239,229,0.75); margin-bottom: 18px;">
+      <strong style="color: var(--brand-or);">Principe</strong> : toute tâche du
+      jour est slottée. Pas de purgatoire "À placer". Si l'app fait un choix,
+      il est marqué visible <span class="slot-tag" style="display:inline-flex;background:rgba(91,141,191,0.15);color:var(--partner-color-soft);padding:2px 8px;border-radius:999px;border:1px dashed var(--partner-color);"><i data-lucide="wand-2" style="width:11px;height:11px;"></i> auto</span>
+      — tap pour changer, long-press pour renvoyer la tâche au backlog (mode Liste).
+    </p>
+    <ol>
+      <li>
+        <strong>Décision utilisateur explicite</strong> — <code>timeSlot</code> dans
+        le markdown (emoji <code>☀️🍽️☕🌙</code>) → respecté absolument.
+      </li>
+      <li>
+        <strong>Heure existante</strong> — <code>reminderTime</code> ou
+        <code>dueDate.time</code> → mappé via tableau ci-dessous.
+      </li>
+      <li>
+        <strong>Historique de complétion</strong> (≥2 occurrences passées) — l'app
+        observe quand tu coches habituellement cette tâche, place dans le slot
+        dominant. Tag <code>auto</code> affiché.
+      </li>
+      <li>
+        <strong>Source file structurée</strong> — fichier nommé "Routine matin.md"
+        → slot matin. Tag <code>auto</code> affiché.
+      </li>
+      <li>
+        <strong>Next-fit ≤75%</strong> — la tâche entre dans le premier slot du
+        jour dont la charge reste ≤ 75% (3h sur 4 pour aprem). Tag <code>auto</code>
+        affiché. Aucun slot ne dépasse 75% par défaut → buffer anti-Parkinson
+        garanti.
+      </li>
+    </ol>
+
+    <table class="mapping-table">
+      <thead>
+        <tr><th>Heure</th><th>→ Slot</th><th>Capacité (75%)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>06:00 – 11:59</td>
+          <td><span class="slot-tag"><i data-lucide="sunrise"></i> Matin</span></td>
+          <td>4h30 max</td>
+        </tr>
+        <tr>
+          <td>12:00 – 13:59</td>
+          <td><span class="slot-tag"><i data-lucide="sun"></i> Midi</span></td>
+          <td>1h30 max</td>
+        </tr>
+        <tr>
+          <td>14:00 – 17:59</td>
+          <td><span class="slot-tag"><i data-lucide="sunset"></i> Après-midi</span></td>
+          <td>3h max</td>
+        </tr>
+        <tr>
+          <td>18:00 – 05:59</td>
+          <td><span class="slot-tag"><i data-lucide="moon"></i> Soir</span></td>
+          <td>3h max</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top: 16px; font-size: 12px; line-height: 1.5; color: rgba(245,239,229,0.7);">
+      <strong style="color: var(--brand-or);">Vault Obsidian</strong> : l'app
+      n'écrit l'emoji slot dans le markdown <strong>que si</strong> l'utilisateur
+      a validé ou modifié le placement (verrou). Sinon, l'auto-placement vit en
+      mémoire/cache uniquement. Le vault reste lisible humain, le markdown
+      n'enregistre que les décisions humaines.
+    </p>
+
+    <p style="margin-top: 10px; font-size: 12px; line-height: 1.5; color: rgba(245,239,229,0.7);">
+      <strong style="color: var(--brand-or);">Gamification</strong> : zéro impact.
+      Le champ <code>timeSlot</code> est purement organisationnel — aucun calcul XP,
+      streak, ou quête coop ne le lit. Seul <code>CACHE_VERSION</code> bumpé pour
+      le nouveau champ optionnel dans la cache.
+    </p>
+  </div>
+
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+</body>
+</html>

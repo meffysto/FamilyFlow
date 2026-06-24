@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Livres-jeux — FamilyFlow sketch</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-page);
+    font-family: var(--font-body);
+    color: var(--text-on-dark);
+    padding: var(--sp-3xl) var(--sp-xl);
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    margin-bottom: var(--sp-sm);
+    color: var(--brand-miel);
+  }
+  .subtitle {
+    color: #9a9aa8;
+    margin-bottom: var(--sp-3xl);
+    max-width: 720px;
+    line-height: 1.5;
+  }
+  .frames {
+    display: flex;
+    gap: var(--sp-2xl);
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .phone {
+    width: 320px;
+    background: var(--bg-card);
+    border-radius: 36px;
+    border: 3px solid #0d0d1a;
+    box-shadow: var(--shadow-md), inset 0 0 0 8px #0d0d1a;
+    overflow: hidden;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    min-height: 640px;
+  }
+  .phone-header {
+    background: var(--brand-soil);
+    color: var(--brand-miel);
+    padding: var(--sp-2xl) var(--sp-lg) var(--sp-md);
+    text-align: center;
+    border-bottom: 2px solid var(--brand-soil-muted);
+  }
+  .phone-header .step {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    opacity: 0.7;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .phone-header h2 {
+    font-family: var(--font-display);
+    font-size: 18px;
+  }
+  .phone-body {
+    padding: var(--sp-lg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+  }
+
+  /* === Cards === */
+  .card {
+    background: #fff;
+    border: 1px solid rgba(107,66,38,0.15);
+    border-radius: var(--radius-md);
+    padding: var(--sp-md);
+    box-shadow: var(--shadow-sm);
+  }
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--brand-soil);
+    margin-bottom: 4px;
+  }
+  .card-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.75;
+  }
+  .saga-emoji {
+    font-size: 24px;
+    margin-right: var(--sp-sm);
+    vertical-align: middle;
+  }
+
+  /* === Tabs (phone 1) === */
+  .tabs {
+    display: flex;
+    background: var(--brand-miel);
+    border-bottom: 1px solid rgba(107,66,38,0.2);
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: var(--sp-md);
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  .tab.active {
+    color: var(--brand-soil);
+    border-bottom: 3px solid var(--brand-or);
+    background: #fff;
+  }
+  .tab .badge-new {
+    background: var(--self-color);
+    color: white;
+    font-size: 8px;
+    padding: 2px 5px;
+    border-radius: var(--radius-pill);
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  .add-btn {
+    margin-top: auto;
+    background: var(--brand-or);
+    color: var(--text-primary);
+    border: none;
+    padding: var(--sp-md);
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* === Saga picker === */
+  .saga-row {
+    display: flex;
+    align-items: center;
+    padding: var(--sp-md);
+    background: #fff;
+    border: 1px solid rgba(107,66,38,0.12);
+    border-radius: var(--radius-md);
+    gap: var(--sp-md);
+  }
+  .saga-row .icon-tile {
+    width: 48px;
+    height: 48px;
+    background: var(--brand-miel);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    border: 2px solid var(--brand-or-deep);
+  }
+  .saga-row .saga-info { flex: 1; }
+  .saga-row .saga-info .title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--brand-soil);
+  }
+  .saga-row .saga-info .meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  /* === Casting === */
+  .field-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--brand-soil);
+    font-weight: 700;
+    margin-bottom: var(--sp-xs);
+  }
+  .hero-pills {
+    display: flex;
+    gap: var(--sp-sm);
+    flex-wrap: wrap;
+  }
+  .hero-pill {
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    background: #fff;
+    border: 2px solid rgba(107,66,38,0.2);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .hero-pill.selected {
+    background: var(--self-color);
+    color: white;
+    border-color: var(--self-color);
+  }
+  .select-box {
+    background: #fff;
+    border: 1px solid rgba(107,66,38,0.2);
+    border-radius: var(--radius-md);
+    padding: var(--sp-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .select-box .arrow { color: var(--brand-soil-muted); }
+  .field-group { margin-bottom: var(--sp-lg); }
+
+  .cta-primary {
+    background: var(--brand-soil);
+    color: var(--brand-miel);
+    padding: var(--sp-lg);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: var(--shadow-md);
+    margin-top: auto;
+  }
+
+  /* === Reading screen === */
+  .illustration {
+    background: linear-gradient(135deg, #d4b896 0%, #a87f4f 100%);
+    border-radius: var(--radius-md);
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    border: 2px solid var(--brand-soil);
+    position: relative;
+    overflow: hidden;
+  }
+  .illustration::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.04) 0 2px, transparent 2px 4px);
+  }
+  .node-text {
+    font-family: var(--font-display);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    padding: var(--sp-sm) var(--sp-xs);
+    font-style: italic;
+  }
+  .choice-btn {
+    background: var(--brand-miel);
+    border: 2px solid var(--brand-or-deep);
+    border-radius: var(--radius-md);
+    padding: var(--sp-md);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand-soil);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-sm);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+  .choice-btn .emoji { font-size: 20px; }
+  .choice-btn:hover { background: #fff; }
+
+  .reading-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: var(--sp-sm);
+    border-top: 1px solid rgba(107,66,38,0.1);
+    font-size: 12px;
+    color: var(--brand-soil-muted);
+  }
+  .progress-bar {
+    height: 4px;
+    background: rgba(107,66,38,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: var(--sp-xs);
+  }
+  .progress-bar .fill {
+    height: 100%;
+    width: 35%;
+    background: var(--brand-or);
+  }
+
+  /* === PDF preview (right column) === */
+  .pdf-page {
+    background: #FFFCF4;
+    border: 1px solid rgba(107,66,38,0.3);
+    padding: var(--sp-lg);
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-sm);
+  }
+  .pdf-page .page-num {
+    text-align: center;
+    font-size: 10px;
+    color: var(--brand-soil-muted);
+    letter-spacing: 1px;
+  }
+  .pdf-illustration {
+    background: linear-gradient(135deg, #c4a96f, #8a6a3a);
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    border: 1px solid var(--brand-soil);
+  }
+  .pdf-text {
+    font-family: var(--font-display);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    font-style: italic;
+  }
+  .pdf-choice {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-sm);
+    padding: var(--sp-sm);
+    border-top: 1px dashed rgba(107,66,38,0.3);
+    font-size: 11px;
+    color: var(--brand-soil);
+  }
+  .pdf-qr {
+    width: 36px;
+    height: 36px;
+    background:
+      linear-gradient(45deg, #000 25%, transparent 25%) 0 0 / 6px 6px,
+      linear-gradient(-45deg, #000 25%, transparent 25%) 0 0 / 6px 6px,
+      linear-gradient(45deg, transparent 75%, #000 75%) 3px 3px / 6px 6px,
+      linear-gradient(-45deg, transparent 75%, #000 75%) 3px 3px / 6px 6px,
+      white;
+    border: 2px solid #000;
+    flex-shrink: 0;
+  }
+
+  /* Labels for each phone */
+  .phone-label {
+    text-align: center;
+    margin-top: var(--sp-md);
+    font-size: 11px;
+    color: #9a9aa8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .phone-wrap { display: flex; flex-direction: column; }
+
+  .arrow-flow {
+    align-self: center;
+    color: var(--brand-or);
+    font-size: 32px;
+    margin: 0 -8px;
+    align-self: center;
+    line-height: 640px;
+  }
+
+  .note {
+    max-width: 720px;
+    margin: var(--sp-3xl) auto 0;
+    padding: var(--sp-lg);
+    background: rgba(232,200,88,0.08);
+    border-left: 3px solid var(--brand-or);
+    color: #d4d4dc;
+    font-size: 13px;
+    line-height: 1.6;
+    border-radius: var(--radius-sm);
+  }
+  .note strong { color: var(--brand-miel); }
+</style>
+</head>
+<body>
+
+<h1>📖 Livres dont tu es le héros</h1>
+<p class="subtitle">
+  Sketch v1 — flow de génération + lecture + export PDF.
+  Templates de sagas pré-écrits, LLM remplit uniquement les variables (prénoms, lieux, mascotte du vault).
+</p>
+
+<div class="frames">
+
+  <!-- ============ PHONE 1 : Onglet & liste ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="step">Étape 1</div>
+        <h2>Histoires</h2>
+      </div>
+      <div class="tabs">
+        <div class="tab">Du soir</div>
+        <div class="tab active">Livres-jeux<span class="badge-new">NEW</span></div>
+      </div>
+      <div class="phone-body">
+        <div class="card">
+          <div class="card-title"><span class="saga-emoji">🌾</span>Lucas et le mystère de la ferme</div>
+          <div class="card-meta">Nœud 7/14 · 3 fins possibles</div>
+          <div class="progress-bar"><div class="fill"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="saga-emoji">🏰</span>Emma chez la Reine des Légumes</div>
+          <div class="card-meta">✓ Terminé · Fin : Héroïne du potager</div>
+        </div>
+        <div class="card" style="opacity:0.6">
+          <div class="card-title"><span class="saga-emoji">🌊</span>L'expédition au phare</div>
+          <div class="card-meta">Non commencé</div>
+        </div>
+        <button class="add-btn">➕ Nouvelle aventure</button>
+      </div>
+    </div>
+    <div class="phone-label">1 · Bibliothèque</div>
+  </div>
+
+  <div class="arrow-flow">→</div>
+
+  <!-- ============ PHONE 2 : Casting ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="step">Étape 2</div>
+        <h2>🌾 Le mystère de la ferme</h2>
+      </div>
+      <div class="phone-body">
+        <p style="font-size:12px; color: var(--text-secondary); font-style: italic; margin-bottom: var(--sp-sm);">
+          Une aventure mystérieuse dans la grange et le verger. 12 nœuds, 3 fins.
+        </p>
+
+        <div class="field-group">
+          <div class="field-label">Héros·ïne</div>
+          <div class="hero-pills">
+            <div class="hero-pill">Lucas</div>
+            <div class="hero-pill selected">Emma</div>
+            <div class="hero-pill">Papa</div>
+            <div class="hero-pill">Maman</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Compagnon</div>
+          <div class="select-box">
+            <span>🐾 Biscotte (la mascotte)</span>
+            <span class="arrow">▼</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Lieu spécial du vault</div>
+          <div class="select-box">
+            <span>🌱 Le jardin de Mamie</span>
+            <span class="arrow">▼</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Objet précieux</div>
+          <div class="select-box">
+            <span>🔑 La clé en bois</span>
+            <span class="arrow">▼</span>
+          </div>
+        </div>
+
+        <div class="cta-primary">✨ Générer mon livre</div>
+      </div>
+    </div>
+    <div class="phone-label">2 · Casting (vault data)</div>
+  </div>
+
+  <div class="arrow-flow">→</div>
+
+  <!-- ============ PHONE 3 : Lecture in-app ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="step">Étape 3 · Lecture app</div>
+        <h2>Nœud 3 / 14</h2>
+      </div>
+      <div class="phone-body">
+        <div class="illustration">🏚️</div>
+
+        <div class="node-text">
+          « Emma arrive devant deux portes. La grange grince
+          dans le vent, tandis qu'un parfum sucré flotte
+          depuis le verger… Biscotte renifle, indécise. »
+        </div>
+
+        <div class="choice-btn">
+          <span class="emoji">🌑</span>
+          <span>Pousser la porte de la grange</span>
+        </div>
+        <div class="choice-btn">
+          <span class="emoji">🍎</span>
+          <span>Suivre l'odeur du verger</span>
+        </div>
+
+        <div style="flex:1"></div>
+
+        <div class="reading-footer">
+          <span>← Retour</span>
+          <span>🔊 Lire à voix haute</span>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">3 · Lecture interactive</div>
+  </div>
+
+  <div class="arrow-flow">↓</div>
+
+  <!-- ============ PHONE 4 : PDF export ============ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="step">Étape 4 · Export PDF Lulu</div>
+        <h2>Page 7 — Nœud 3</h2>
+      </div>
+      <div class="phone-body" style="background: #efe6d3;">
+        <div class="pdf-page">
+          <div class="page-num">— 7 —</div>
+          <div class="pdf-illustration">🏚️</div>
+          <div class="pdf-text">
+            Emma arrive devant deux portes. La grange grince
+            dans le vent, tandis qu'un parfum sucré flotte
+            depuis le verger. Biscotte renifle, indécise.
+          </div>
+          <div class="pdf-choice">
+            <div class="pdf-qr"></div>
+            <div>
+              <strong>🌑 La grange</strong><br>
+              <span style="opacity:0.7">→ rends-toi page 12</span>
+            </div>
+          </div>
+          <div class="pdf-choice">
+            <div class="pdf-qr"></div>
+            <div>
+              <strong>🍎 Le verger</strong><br>
+              <span style="opacity:0.7">→ rends-toi page 18</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">4 · PDF imprimable (QR + page n°)</div>
+  </div>
+
+</div>
+
+<div class="note">
+  <strong>Décisions ouvertes :</strong>
+  (a) Le LLM remplit uniquement les variables des templates (prénoms, lieux, mascotte) ou peut-il aussi
+  paraphraser les paragraphes pour varier les rejouages ?
+  (b) Illustrations : sprites pixel-art recyclés de la ferme, ou génération AI (Pixellab) par nœud ?
+  (c) Les fins déclenchent-elles un reward gamification (badge "Héroïne du potager") ou restent-elles
+  un monde clos ?
+</div>
+
+</body>
+</html>

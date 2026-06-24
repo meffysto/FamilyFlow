@@ -1,0 +1,7 @@
+id=etagere_murale
+source=/Users/gabrielwaltio/.codex/generated_images/019ecfa1-57d1-7902-96d6-2f24d1507d12/ig_04a5f94d60e93a46016a31138a09448191bf1dc7870a04be22.png
+raw=/Users/gabrielwaltio/Documents/family-vault/.planning/quick/260616-maison-assets-v2/raw/etagere_murale-raw.png
+final=/Users/gabrielwaltio/Documents/family-vault/assets/companion-house/etagere_murale.png
+size=512x512
+corner_alpha=[0, 0, 0, 0]
+opaque_coverage=0.2275
