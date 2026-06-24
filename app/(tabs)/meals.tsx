@@ -59,6 +59,8 @@ import { generateCookFile } from '../../lib/cooklang';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useEntitlements } from '../../contexts/EntitlementContext';
+import { PaywallModal } from '../../components/paywalls';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
@@ -107,6 +109,9 @@ const DAY_DISPLAY_KEYS: Record<string, string> = {
   'Samedi': 'meals.days.saturday',
   'Dimanche': 'meals.days.sunday',
 };
+
+/** Cap de recettes en free tier (au-delà → paywall ; premium = illimité). Vague 2. */
+const FREE_RECIPES_LIMIT = 20;
 
 const MEAL_DISPLAY_KEYS: Record<string, string> = {
   'Petit-déj': 'meals.mealTypes.breakfast',
@@ -168,6 +173,10 @@ export default function MealsScreen() {
   } = useVault();
   const { primary, tint, colors, isDark } = useThemeColors();
   const { config: aiConfig, isConfigured: aiConfigured } = useAI();
+  // Gates premium (vague 2) : suggestion IA repas + cap de recettes (FREE_RECIPES_LIMIT).
+  // isReady évite un faux blocage chez un user premium/grandfathered au cold start.
+  const { isPremium, isReady: entitlementsReady } = useEntitlements();
+  const [paywallVisible, setPaywallVisible] = useState(false);
   const { showToast } = useToast();
   const { t } = useTranslation();
 
@@ -594,14 +603,32 @@ export default function MealsScreen() {
   }, [aiConfig, stock, recipes, profiles, dietary.guests, meals, healthRecords, cookRefine, previousSuggestions]);
 
   const handleSuggestFromStock = useCallback(() => {
+    // Gate premium : la suggestion IA de repas est réservée au premium.
+    if (entitlementsReady && !isPremium) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setPaywallVisible(true);
+      return;
+    }
     setCookSuggestVisible(true);
     setCookRefine('');
     runSuggest({ reset: true });
-  }, [runSuggest]);
+  }, [entitlementsReady, isPremium, runSuggest]);
 
   const handleCookSuggestRegenerate = useCallback(() => {
     runSuggest({ reset: false });
   }, [runSuggest]);
+
+  // Gate premium : cap de recettes. Au-delà de FREE_RECIPES_LIMIT, un non-premium
+  // tombe sur le paywall avant le picker d'import (couvre tous les chemins d'ajout).
+  // Les recettes existantes restent intactes/consultables.
+  const handleOpenImportPicker = useCallback(() => {
+    if (entitlementsReady && !isPremium && recipes.length >= FREE_RECIPES_LIMIT) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setPaywallVisible(true);
+      return;
+    }
+    setShowImportPicker(true);
+  }, [entitlementsReady, isPremium, recipes.length]);
 
   const handleCookSuggestClose = useCallback(() => {
     setCookSuggestVisible(false);
@@ -2242,7 +2269,7 @@ export default function MealsScreen() {
             {/* Import button */}
             <TouchableOpacity
               style={[styles.importPickerBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
-              onPress={() => setShowImportPicker(true)}
+              onPress={handleOpenImportPicker}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={t('meals.import.pickerA11y')}
@@ -3487,6 +3514,12 @@ export default function MealsScreen() {
           }}
         />
       </Modal>
+
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+        context="premium_feature"
+      />
     </SafeAreaView>
   );
 }

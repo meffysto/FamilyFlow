@@ -26,6 +26,8 @@ import { setNavPillAtTop } from '../../lib/nav-pill-bus';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useEntitlements } from '../../contexts/EntitlementContext';
+import { PremiumBanner, PaywallModal } from '../../components/paywalls';
 import { AvatarIcon } from '../../components/ui/AvatarIcon';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -350,6 +352,9 @@ export default function HealthScreen() {
   const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const { isPremium, isReady: entitlementsReady } = useEntitlements();
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const premiumLocked = entitlementsReady && !isPremium;
 
   const enfants = useMemo(() => profiles.filter(p => p.role === 'enfant' || p.role === 'ado'), [profiles]);
   const [selectedEnfantId, setSelectedEnfantId] = useState<string>(enfants[0]?.id || '');
@@ -520,13 +525,25 @@ export default function HealthScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {activeTab === 'croissance' && (
-          <CroissanceTab record={record} enfant={selectedEnfant} onAdd={() => setShowGrowthForm(true)} onEditEntry={setEditingEntry} />
+          <CroissanceTab
+            record={record}
+            enfant={selectedEnfant}
+            onAdd={() => setShowGrowthForm(true)}
+            onEditEntry={setEditingEntry}
+            premiumLocked={premiumLocked}
+            onOpenPaywall={() => setPaywallVisible(true)}
+          />
         )}
         {activeTab === 'vaccins' && (
           <VaccinsTab record={record} onAdd={() => setShowVaccineForm(true)} />
         )}
         {activeTab === 'infos' && (
-          <InfosTab record={record} onEdit={() => setShowInfoEditor(true)} />
+          <InfosTab
+            record={record}
+            onEdit={() => setShowInfoEditor(true)}
+            premiumLocked={premiumLocked}
+            onOpenPaywall={() => setPaywallVisible(true)}
+          />
         )}
       </Animated.ScrollView>
 
@@ -553,13 +570,15 @@ export default function HealthScreen() {
           />
         )}
       </Modal>
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} context="premium_feature" />
     </SafeAreaView>
   );
 }
 
 // ─── Onglet Croissance ────────────────────────────────────────────────────────
 
-function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthRecord; enfant?: import('../../lib/types').Profile; onAdd: () => void; onEditEntry?: (entry: GrowthEntry) => void }) {
+function CroissanceTab({ record, enfant, onAdd, onEditEntry, premiumLocked, onOpenPaywall }: { record: HealthRecord; enfant?: import('../../lib/types').Profile; onAdd: () => void; onEditEntry?: (entry: GrowthEntry) => void; premiumLocked: boolean; onOpenPaywall: () => void }) {
   const { primary, tint, colors } = useThemeColors();
   const { t } = useTranslation();
   const entries = [...record.croissance].reverse(); // plus récent en premier
@@ -598,9 +617,17 @@ function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthR
 
   return (
     <View style={styles.tabContent}>
-      {/* Sélecteur de courbe */}
+      {/* Sélecteur de courbe (premium : courbes personnalisées) */}
       {enfant?.birthdate && (
         <>
+          {premiumLocked && (
+            <PremiumBanner
+              message="Les courbes de croissance personnalisées sont réservées à FamilyFlow à Vie."
+              ctaLabel="Découvrir"
+              onPress={onOpenPaywall}
+            />
+          )}
+          <View pointerEvents={premiumLocked ? 'none' : 'auto'} style={{ opacity: premiumLocked ? 0.4 : 1 }}>
           <View style={styles.chipRow}>
             {metricChips.map((chip) => (
               <TouchableOpacity
@@ -656,6 +683,7 @@ function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthR
               />
             </Animated.View>
           )}
+          </View>
         </>
       )}
 
@@ -842,9 +870,14 @@ function VaccinsTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void
 
 // ─── Onglet Infos ─────────────────────────────────────────────────────────────
 
-function InfosTab({ record, onEdit }: { record: HealthRecord; onEdit: () => void }) {
+function InfosTab({ record, onEdit, premiumLocked, onOpenPaywall }: { record: HealthRecord; onEdit: () => void; premiumLocked: boolean; onOpenPaywall: () => void }) {
   const { primary, colors } = useThemeColors();
   const { t } = useTranslation();
+
+  const handleAdvancedPress = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    onOpenPaywall();
+  };
 
   const InfoRow = ({ emoji, label, value }: { emoji: string; label: string; value?: string }) => (
     <View style={[styles.infoRow, { borderBottomColor: colors.separator }]}>
@@ -890,9 +923,27 @@ function InfosTab({ record, onEdit }: { record: HealthRecord; onEdit: () => void
         <InfoRow emoji="🚑" label={t('health.info.emergency')} value={record.contactUrgences} />
       </Animated.View>
 
-      <ListSection emoji="⚠️" title={t('health.info.allergies')} items={record.allergies} />
-      <ListSection emoji="🏥" title={t('health.info.history')} items={record.antecedents} />
-      <ListSection emoji="💊" title={t('health.info.medications')} items={record.medicamentsEnCours} />
+      {premiumLocked ? (
+        <TouchableOpacity
+          onPress={handleAdvancedPress}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t('health.info.medicalRecord')}
+          style={[styles.advancedLocked, { backgroundColor: colors.card, borderColor: primary, opacity: 0.4 }]}
+        >
+          <Text style={styles.advancedLockedEmoji}>🔒</Text>
+          <Text style={[styles.advancedLockedText, { color: colors.text }]}>
+            Informations médicales avancées réservées à FamilyFlow à Vie
+          </Text>
+          <Text style={[styles.advancedLockedCta, { color: primary }]}>Découvrir →</Text>
+        </TouchableOpacity>
+      ) : (
+        <>
+          <ListSection emoji="⚠️" title={t('health.info.allergies')} items={record.allergies} />
+          <ListSection emoji="🏥" title={t('health.info.history')} items={record.antecedents} />
+          <ListSection emoji="💊" title={t('health.info.medications')} items={record.medicamentsEnCours} />
+        </>
+      )}
     </View>
   );
 }
@@ -1073,6 +1124,18 @@ const styles = StyleSheet.create({
   infoListDot: { fontSize: FontSize.body, lineHeight: 20 },
   infoListText: { fontSize: FontSize.sm, flex: 1 },
   infoListEmpty: { fontSize: FontSize.sm, fontStyle: 'italic' },
+
+  // Placeholder infos médicales avancées (premium gate)
+  advancedLocked: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: Spacing.xl,
+    gap: Spacing.sm,
+    alignItems: 'center',
+  },
+  advancedLockedEmoji: { fontSize: FontSize.titleLg },
+  advancedLockedText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold, textAlign: 'center', lineHeight: 22 },
+  advancedLockedCta: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
 
   // Empty states
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.lg, padding: Spacing['3xl'] },

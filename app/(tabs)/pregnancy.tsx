@@ -22,6 +22,8 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useEntitlements } from '../../contexts/EntitlementContext';
+import { PremiumBanner, PaywallModal } from '../../components/paywalls';
 import { useToast } from '../../contexts/ToastContext';
 import { useRefresh } from '../../hooks/useRefresh';
 import { getFruitForWeek, getFruitLabel, getSizeForWeek } from '../../lib/pregnancy';
@@ -46,6 +48,11 @@ export default function PregnancyScreen() {
   const { t } = useTranslation();
   const { profiles, vault, refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
+  // Soft-gate premium : le graphe de poids détaillé est réservé au premium.
+  // isReady évite un flash de paywall chez un user premium/grandfathered.
+  const { isPremium, isReady: entitlementsReady } = useEntitlements();
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const weightChartLocked = entitlementsReady && !isPremium;
 
   // Scroll handler pour collapse du ScreenHeader
   const scrollY = useSharedValue(0);
@@ -219,11 +226,20 @@ export default function PregnancyScreen() {
           </View>
         )}
 
-        {/* Graphe poids */}
+        {/* Graphe poids (premium : suivi détaillé) */}
         {weightData.length >= 2 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('pregnancy.weightChart')}</Text>
-            <DotChart data={weightData} color={primary} formatValue={(v) => `${v.toFixed(1)} kg`} />
+            {weightChartLocked && (
+              <PremiumBanner
+                message="Le suivi détaillé du poids de grossesse est réservé à FamilyFlow à Vie."
+                ctaLabel="Découvrir"
+                onPress={() => setPaywallVisible(true)}
+              />
+            )}
+            <View pointerEvents={weightChartLocked ? 'none' : 'auto'} style={{ opacity: weightChartLocked ? 0.4 : 1 }}>
+              <DotChart data={weightData} color={primary} formatValue={(v) => `${v.toFixed(1)} kg`} />
+            </View>
           </View>
         )}
 
@@ -342,6 +358,12 @@ export default function PregnancyScreen() {
           </View>
         </SafeAreaView>
       </Modal>
+
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+        context="premium_feature"
+      />
     </SafeAreaView>
   );
 }
