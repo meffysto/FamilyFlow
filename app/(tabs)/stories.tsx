@@ -51,6 +51,8 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { PillTabSwitcher, type PillTab } from '../../components/ui/PillTabSwitcher';
 import { Sparkles, Library } from 'lucide-react-native';
+import { useEntitlements } from '../../contexts/EntitlementContext';
+import { PaywallModal } from '../../components/paywalls';
 
 // ─── Constantes animation ───────────────────────────────────────────────────
 
@@ -882,6 +884,11 @@ export default function StoriesScreen() {
   const {
     profiles, moods, quotes, memories, rdvs, healthRecords, tasks, stories, saveStory, deleteStory, updateProfile,
   } = useVault();
+  // Phase 54-04 — Cap dur free tier (D-10/SC-4) + décrément après succès (D-09).
+  // Le paywall n'est JAMAIS monté au lancement : uniquement sur setPaywallVisible
+  // au point de friction (tentative de générer une 4e histoire ce mois-ci).
+  const { canGenerateStory, decrementStoryQuota } = useEntitlements();
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   // Profils adultes — narrateurs disponibles
   const adultProfiles = React.useMemo(
@@ -1488,6 +1495,14 @@ export default function StoriesScreen() {
         );
         return;
       }
+      // Cap dur (D-10/SC-4, règle d'or SC-7) : au point de friction, avant tout
+      // appel API et avant de monter GenerationStep. LIFETIME/grandfathered → true
+      // (flux inchangé). 4e histoire gratuite/mois → paywall, jamais d'appel API.
+      if (!canGenerateStory()) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        setPaywallVisible(true);
+        return;
+      }
       setVoiceConfig(buildFinalVoiceConfig(currentLength));
       goTo({
         etape: 'generation',
@@ -1955,6 +1970,14 @@ export default function StoriesScreen() {
           gender: profile?.gender as 'garçon' | 'fille' | undefined,
         },
       };
+      // Cap dur défensif (T-54-11) : double barrière avant l'appel API coûteux.
+      // Le gate primaire est dans PersonnaliserStep.generate (avant le mount), mais
+      // on garantit ici qu'AUCUN appel API ne passe au-delà du cap (règle d'or SC-7).
+      if (!canGenerateStory()) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        setPaywallVisible(true);
+        return; // ne PAS appeler l'API (cap dur)
+      }
       const resp = await generateBedtimeStory(storyConfig ?? aiConfig, genParams);
 
       if (resp.error) {
@@ -2148,6 +2171,13 @@ export default function StoriesScreen() {
             profile,
             childRecentStories,
             async (rerollHint: string) => {
+              // Cap dur sur le re-roll qualité (T-54-11) : le re-roll est un 2e appel
+              // API réel. S'il dépasse le cap, on NE re-génère PAS — on throw pour que
+              // le pipeline retombe sur l'histoire originale (déjà valide). Pas de
+              // paywall ici : la génération courante a déjà passé le gate primaire.
+              if (!canGenerateStory()) {
+                throw new Error('re-roll: quota épuisé — conserve l\'histoire originale');
+              }
               const resp2 = await generateBedtimeStory(storyConfig ?? aiConfig, {
                 ...genParams,
                 extraSystemPrompt: rerollHint,
@@ -2199,6 +2229,15 @@ export default function StoriesScreen() {
       saveStory(finalStory).catch((e) => {
         if (__DEV__) console.warn('[stories] vault sync failed (story still in memory):', e);
       });
+
+      // Phase 54-04 — Décrément du quota APRÈS un succès de génération uniquement
+      // (D-09/Piège 6) : on arrive ici seulement si l'appel API a réussi ET que
+      // saveStory a été déclenché. Sur erreur API, le code a return plus haut → quota
+      // intact. La RELECTURE d'un MP3 en cache ne passe JAMAIS par ce chemin
+      // (generate() n'est appelé qu'à la génération, pas au replay) → relecture gratuite.
+      // LIFETIME : decrementStoryQuota est un no-op côté logique (exemption D-06).
+      // Non bloquant : n'empêche pas l'affichage de l'histoire.
+      decrementStoryQuota().catch(() => { /* non-critique */ });
 
       // Phase 52-03 — LLM-judge async fire-and-forget (EVAL-05). NE JAMAIS await.
       // Idempotent (G7) : evaluateStoryWithLlm skip si flag off OU si llm_judge déjà rempli.
@@ -2645,6 +2684,13 @@ export default function StoriesScreen() {
         )}
       </Animated.View>
 
+      {/* Paywall — monté au niveau écran, jamais au lancement (D-10/Piège 4).
+          Visible uniquement sur friction réelle (4e histoire/mois → setPaywallVisible). */}
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+        context="story_limit"
+      />
     </SafeAreaView>
   );
 }
