@@ -245,7 +245,7 @@ export interface VaultState {
   duplicateList: (id: string, newNom: string) => Promise<void>;
   archiveList: (id: string, archive: boolean) => Promise<void>;
   mergeCourseIngredientsToList: (listId: string, items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
-  setListParcours: (id: string, parcours: string[]) => Promise<void>;
+  setListParcours: (id: string, parcours: string[]) => Promise<boolean>;
   // Pricebook (prix manuels FAM-16)
   priceBook: import('../lib/courses-prices').PriceBookMap;
   setPrice: (label: string, price: number) => Promise<void>;

@@ -2,7 +2,7 @@
   "expo": {
     "name": "FamilyFlow",
     "slug": "family-vault",
-    "version": "1.2.4",
+    "version": "1.2.5",
     "scheme": "family-vault",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -46,7 +46,7 @@
           "com.familyvault.mascotte-rotate"
         ]
       },
-      "buildNumber": "27"
+      "buildNumber": "28"
     },
     "android": {
       "splash": {
