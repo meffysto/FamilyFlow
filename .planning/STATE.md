@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Export PDF imprimable des histoires
 status: executing
-stopped_at: 54-01 Task 2 (checkpoint human-action bloquant) — Task 1 committé aa26c8d0
-last_updated: "2026-06-24T08:00:09.341Z"
+stopped_at: Completed 54-04-PLAN.md
+last_updated: "2026-06-24T08:13:37.504Z"
 last_activity: 2026-06-24
 progress:
   total_phases: 4
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 54 (monetisation-hybride-paiement) — EXECUTING
-Plan: 2 of 4 — PAUSED at checkpoint (Task 2 human-action bloquant)
+Plan: 3 of 4 — PAUSED at checkpoint (Task 2 human-action bloquant)
 Status: Ready to execute
 Last activity: 2026-06-24
 
@@ -228,6 +228,7 @@ Last activity: 2026-06-24
 | Phase 47 P04 | 10min | 2 tasks | 3 files |
 | Phase 54 P02 | ~10min | 2 tasks | 6 files |
 | Phase 54 P03 | 25min | 2 tasks | 2 files |
+| Phase 54 P04 | ~20min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -435,6 +436,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 54-02]: decrementQuota épuise crédits Pack AVANT slots gratuits (D-07) ; LIFETIME ne décompte jamais (D-06) — règle d'or verrouillée par 26 tests
 - [Phase 54-01]: react-native-purchases@10.4.0 ne ship AUCUN config plugin Expo (pas de app.plugin.js) → autolinking pur, AUCUNE entrée plugins[] dans app.json (A1 résolu sans prebuild --clean, tranché en inspectant le package npm)
 - [Phase ?]: 54-03 : statut LIFETIME = source de vérité RevenueCat, jamais écrit dans le vault
+- [Phase ?]: [Phase 54-04]: Gate de friction au point d'entrée (PersonnaliserStep) + barrière défensive avant l'appel API — évite le flash de loading, garantit zéro appel API au-delà du cap
+- [Phase ?]: [Phase 54-04]: Re-roll qualité gardé par canGenerateStory() → throw si épuisé (fallback histoire originale), jamais de paywall mid-génération
 
 ### Todos
 
@@ -446,6 +449,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-24T07:59:59.574Z
-Stopped at: 54-01 Task 2 (checkpoint human-action bloquant) — Task 1 committé aa26c8d0
+Last session: 2026-06-24T08:13:37.498Z
+Stopped at: Completed 54-04-PLAN.md
 Next: Config externe RevenueCat/ASC + rebuild dev-client device, puis répondre « configuré » pour reprendre la phase (54-03, 54-04 restent)
