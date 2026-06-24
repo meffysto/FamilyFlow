@@ -29,6 +29,12 @@ export interface QuotaData {
 export interface EntitlementState {
   status: EntitlementStatus;
   isGrandfathered: boolean;
+  /**
+   * Dérivé : accès premium effectif. True ssi acheteur à vie OU grandfathered
+   * (utilisateurs existants — premium gratuit à vie, sauf IA = règle d'or).
+   * Source unique de vérité pour les feature gates premium.
+   */
+  isPremium: boolean;
   quota: QuotaData;
   /** Init async terminée (pattern AuthContext). */
   isReady: boolean;

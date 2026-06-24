@@ -27,6 +27,8 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Plus } from 'lucide-react-native';
 import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useEntitlements } from '../contexts/EntitlementContext';
+import { PaywallModal } from '../components/paywalls';
 import {
   parseManifeste,
   MANIFESTE_FILE,
@@ -42,9 +44,13 @@ export default function ImpressionsScreen() {
   const router = useRouter();
   const { vault, stories } = useVault();
   const { colors, primary } = useThemeColors();
+  // Soft-gate premium : la création de livres PDF est réservée au premium.
+  // Les livres déjà imprimés restent consultables gratuitement (aperçu).
+  const { isPremium, isReady: entitlementsReady } = useEntitlements();
   const [entries, setEntries] = useState<BookManifestEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   const loadManifeste = useCallback(async () => {
     if (!vault) return;
@@ -107,6 +113,17 @@ export default function ImpressionsScreen() {
     setModalOpen(true);
   }, []);
 
+  // Point de friction : un user non-premium qui tente de créer un livre tombe
+  // sur le paywall. isReady évite un faux blocage tant que l'init n'est pas finie.
+  const handleNewBook = useCallback(() => {
+    if (entitlementsReady && !isPremium) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setPaywallVisible(true);
+      return;
+    }
+    openModal();
+  }, [entitlementsReady, isPremium, openModal]);
+
   const closeModal = useCallback(() => setModalOpen(false), []);
 
   return (
@@ -139,7 +156,7 @@ export default function ImpressionsScreen() {
           </Text>
         </View>
         <Pressable
-          onPress={openModal}
+          onPress={handleNewBook}
           style={[styles.cta, { backgroundColor: primary }]}
           accessibilityRole="button"
         >
@@ -174,7 +191,7 @@ export default function ImpressionsScreen() {
               })}
             </Text>
             <Pressable
-              onPress={openModal}
+              onPress={handleNewBook}
               style={[
                 styles.cta,
                 { backgroundColor: primary, marginTop: Spacing['4xl'] },
@@ -209,6 +226,12 @@ export default function ImpressionsScreen() {
         visible={modalOpen}
         onClose={closeModal}
         onSuccess={handleSuccess}
+      />
+
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+        context="premium_feature"
       />
     </SafeAreaView>
   );

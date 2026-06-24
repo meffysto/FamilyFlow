@@ -37,6 +37,8 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useEntitlements } from '../../contexts/EntitlementContext';
+import { PremiumBanner, PaywallModal } from '../../components/paywalls';
 import {
   formatAmount,
   categoryDisplay,
@@ -99,6 +101,9 @@ export default function BudgetScreen() {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
   const { showToast } = useToast();
+  // Soft-gate premium : l'analyse multi-mois (onglet Évolution) est réservée au
+  // premium. isReady évite un flash de paywall chez un user premium/grandfathered.
+  const { isPremium, isReady: entitlementsReady } = useEntitlements();
   const {
     budgetEntries,
     budgetConfig,
@@ -139,6 +144,8 @@ export default function BudgetScreen() {
   const { refreshing, onRefresh } = useRefresh(refresh);
 
   const [tab, setTab] = useState<TabId>('resume');
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const evolutionLocked = entitlementsReady && !isPremium;
   const budgetHeaderRef = useRef<View>(null);
   const [addModalVisible, setAddModalVisible] = useState(false);
 
@@ -852,6 +859,19 @@ export default function BudgetScreen() {
       ) : (
         /* ─── Onglet Évolution ──────────────────────────────────────────── */
         <>
+          {evolutionLocked && (
+            <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.md }}>
+              <PremiumBanner
+                message="L'analyse des prix sur plusieurs mois est réservée à FamilyFlow à Vie"
+                ctaLabel="Découvrir"
+                onPress={() => setPaywallVisible(true)}
+              />
+            </View>
+          )}
+          <View
+            pointerEvents={evolutionLocked ? 'none' : 'auto'}
+            style={{ flex: 1, opacity: evolutionLocked ? 0.4 : 1 }}
+          >
           {/* Toggle période */}
           <View style={[styles.evoPeriodRow, { backgroundColor: colors.bg }]}>
             {([6, 12] as const).map((m) => {
@@ -906,6 +926,7 @@ export default function BudgetScreen() {
               renderItem={renderEvolutionItem}
             />
           )}
+          </View>
         </>
       )}
 
@@ -1169,6 +1190,12 @@ export default function BudgetScreen() {
         targets={[
           { ref: budgetHeaderRef, ...HELP_CONTENT.budget[0] },
         ]}
+      />
+
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+        context="premium_feature"
       />
     </SafeAreaView>
   );

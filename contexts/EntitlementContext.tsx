@@ -60,6 +60,14 @@ const PRODUCT_STORY_PACK = 'familyflow_story_pack_30';
 /** Crédits crédités au vault après achat du Pack Histoires (RevenueCat ne gère pas le solde — Piège 2). */
 const STORY_PACK_CREDITS = 30;
 
+/**
+ * DEV ONLY — interrupteur de test des gates premium.
+ * `true` force un statut FREE (non-premium) même sur un vault rempli/grandfathered,
+ * pour visualiser les soft-gates (Budget Évolution, Export PDF) sur un device de test.
+ * Sans effet en production (gardé par __DEV__). Remettre à `false` après les tests.
+ */
+const DEV_FORCE_FREE = false;
+
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
 /** Actions exposées par le contexte (en plus de EntitlementState). */
@@ -326,6 +334,7 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
     () => ({
       status,
       isGrandfathered,
+      isPremium: __DEV__ && DEV_FORCE_FREE ? false : status === 'LIFETIME' || isGrandfathered,
       quota,
       isReady,
       isLoadingPurchase,
