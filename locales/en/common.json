@@ -5029,8 +5029,7 @@
         "Find them in your family journal",
         "Share with grandparents in one tap"
       ],
-      "cta": "Enable camera →",
-      "skip": "Not now"
+      "cta": "Continue →"
     },
     "permCalendar": {
       "title": "Your birthdays,\nnever forgotten.",
@@ -5039,8 +5038,7 @@
         "Automatic reminders 3 days before",
         "Synced with your calendar"
       ],
-      "cta": "Access calendar →",
-      "skip": "Not now"
+      "cta": "Continue →"
     }
   },
   "museum": {

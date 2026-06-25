@@ -5096,8 +5096,7 @@
         "Retrouvez-les dans votre journal famille",
         "Partagez aux grands-parents en un geste"
       ],
-      "cta": "Activer la caméra →",
-      "skip": "Pas maintenant"
+      "cta": "Continuer →"
     },
     "permCalendar": {
       "title": "Vos anniversaires,\njamais oubliés.",
@@ -5106,8 +5105,7 @@
         "Rappels automatiques 3 jours avant",
         "Lié à votre agenda"
       ],
-      "cta": "Accéder au calendrier →",
-      "skip": "Pas maintenant"
+      "cta": "Continuer →"
     }
   },
   "museum": {

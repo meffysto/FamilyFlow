@@ -978,9 +978,6 @@ export default function OnboardingScreen() {
           >
             <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.permCamera.cta')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.ctaSecondary} onPress={goNext} activeOpacity={0.6}>
-            <Text style={[s.ctaSecondaryText, { color: colors.textMuted }]}>{t('onboarding.permCamera.skip')}</Text>
-          </TouchableOpacity>
         </Animated.View>
       </ScrollView>
     );
@@ -1019,9 +1016,6 @@ export default function OnboardingScreen() {
             activeOpacity={0.85}
           >
             <Text style={[s.ctaPrimaryText, { color: colors.onPrimary }]}>{t('onboarding.permCalendar.cta')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.ctaSecondary} onPress={finish} activeOpacity={0.6}>
-            <Text style={[s.ctaSecondaryText, { color: colors.textMuted }]}>{t('onboarding.permCalendar.skip')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
