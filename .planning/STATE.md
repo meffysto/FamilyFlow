@@ -28,7 +28,7 @@ See: .planning/PROJECT.md
 Phase: 54 (monetisation-hybride-paiement) — EXECUTING
 Plan: 3 of 4 — PAUSED at checkpoint (Task 2 human-action bloquant)
 Status: Ready to execute
-Last activity: 2026-06-24
+Last activity: 2026-06-30 - Completed quick task 260701-04i: FAM-49 conversion feuilles → cadeau €
 
 ### Quick Tasks Completed
 
@@ -88,6 +88,7 @@ Last activity: 2026-06-24
 | 260526-ht8 | FAM-31 Journal de Julie: phrase coupée dans les symptômes (retours à la ligne perdus) | 2026-05-26 | 30ec680a | [260526-ht8-fam-31-journal-de-julie-phrase-coup-e-da](./quick/260526-ht8-fam-31-journal-de-julie-phrase-coup-e-da/) |
 | 260608-nx8 | FAM-37 Cadence de production des bâtiments de la ferme toujours visible (ruche niveau max) | 2026-06-08 | 374fdbf0 | [260608-nx8-fam-37-afficher-la-cadence-de-production](./quick/260608-nx8-fam-37-afficher-la-cadence-de-production/) |
 | 260608-rze | FAM-34 Répartition par grade (ordinaire/beau/superbe/parfait) à côté de chaque récolte dans Atelier > Inventaire | 2026-06-08 | 9c48e1fa | [260608-rze-fam-34-r-partition-par-grade-c-t-de-chaq](./quick/260608-rze-fam-34-r-partition-par-grade-c-t-de-chaq/) |
+| 260701-04i | FAM-49 Conversion feuilles 🍃 → cadeau € configurable par famille (toggle + ratio, file d'attente parent, refus = remboursement) | 2026-06-30 | 92996bea | [260701-04i-fam-49-conversion-feuilles-en-cadeau-eur](./quick/260701-04i-fam-49-conversion-feuilles-en-cadeau-eur/) |
 
 ## Performance Metrics
 
