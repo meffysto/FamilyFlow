@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Alert, TextInput, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { serializeGamification } from '../../lib/parser';
+import { useGiftExchange } from '../../hooks/useGiftExchange';
+import type { GiftRequest } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { SectionHeader } from '../ui/SectionHeader';
@@ -28,9 +30,34 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
   const [config, setConfig] = useState<GamificationConfig>(DEFAULT_GAMI_CONFIG);
   const [dirty, setDirty] = useState(false);
 
+  // FAM-49 — file d'attente des demandes de cadeau
+  const { approveGift, rejectGift, loadAll } = useGiftExchange();
+  const [pending, setPending] = useState<GiftRequest[]>([]);
+
+  const reloadPending = useCallback(async () => {
+    const all = await loadAll();
+    setPending(all.filter(g => g.status === 'pending'));
+  }, [loadAll]);
+
   useEffect(() => {
     loadGamiConfig().then(setConfig);
   }, []);
+
+  useEffect(() => {
+    reloadPending();
+  }, [reloadPending]);
+
+  const handleApproveGift = useCallback(async (id: string) => {
+    await approveGift(id);
+    await reloadPending();
+    await refresh();
+  }, [approveGift, reloadPending, refresh]);
+
+  const handleRejectGift = useCallback(async (id: string) => {
+    await rejectGift(id);
+    await reloadPending();
+    await refresh();
+  }, [rejectGift, reloadPending, refresh]);
 
   const updateField = useCallback((updater: (c: GamificationConfig) => GamificationConfig) => {
     setConfig(prev => {
@@ -145,6 +172,63 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
         ))}
       </View>
 
+      {/* FAM-49 — Échange feuilles → cadeau € */}
+      <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>{t('settings.gamification.giftExchangeTitle')}</Text>
+
+        <View style={styles.row}>
+          <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.gamification.giftExchangeEnabled')}</Text>
+          <Switch
+            value={config.giftExchange.enabled}
+            onValueChange={v => updateField(c => ({ ...c, giftExchange: { ...c.giftExchange, enabled: v } }))}
+            trackColor={{ true: primary }}
+          />
+        </View>
+
+        <View style={styles.row}>
+          <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.gamification.giftExchangeLeaves')}</Text>
+          <TextInput
+            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBg }]}
+            value={String(config.giftExchange.leavesCost)}
+            onChangeText={txt => updateField(c => ({ ...c, giftExchange: { ...c.giftExchange, leavesCost: parseNum(txt, DEFAULT_GAMI_CONFIG.giftExchange.leavesCost) } }))}
+            keyboardType="number-pad"
+            selectTextOnFocus
+          />
+        </View>
+
+        <View style={styles.row}>
+          <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.gamification.giftExchangeEuro')}</Text>
+          <TextInput
+            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBg }]}
+            value={String(config.giftExchange.euroValue)}
+            onChangeText={txt => updateField(c => ({ ...c, giftExchange: { ...c.giftExchange, euroValue: parseNum(txt, DEFAULT_GAMI_CONFIG.giftExchange.euroValue) } }))}
+            keyboardType="number-pad"
+            selectTextOnFocus
+          />
+        </View>
+      </View>
+
+      {/* FAM-49 — Cadeaux en attente (validation parentale) */}
+      <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>{t('settings.gamification.pendingGiftsTitle')}</Text>
+
+        {pending.length === 0 ? (
+          <Text style={[styles.statText, { color: colors.textMuted }]}>{t('settings.gamification.pendingGiftsEmpty')}</Text>
+        ) : (
+          pending.map(gift => (
+            <View key={gift.id} style={styles.giftRow}>
+              <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
+                {t('settings.gamification.pendingGiftLabel', { name: gift.profileName, euro: gift.euroValue, leaves: gift.leavesCost })}
+              </Text>
+              <View style={styles.giftActions}>
+                <Button label={t('settings.gamification.approve')} onPress={() => handleApproveGift(gift.id)} variant="primary" size="sm" />
+                <Button label={t('settings.gamification.reject')} onPress={() => handleRejectGift(gift.id)} variant="danger" size="sm" />
+              </View>
+            </View>
+          ))
+        )}
+      </View>
+
       {/* Actions */}
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         {dirty && (
@@ -177,4 +261,6 @@ const styles = StyleSheet.create({
   input: { width: 64, textAlign: 'center', fontSize: FontSize.body, fontWeight: FontWeight.semibold, borderWidth: 1, borderRadius: Radius.md, paddingVertical: Spacing.xs, paddingHorizontal: Spacing.sm },
   stats: { gap: Spacing.xs },
   statText: { fontSize: FontSize.label },
+  giftRow: { gap: Spacing.sm },
+  giftActions: { flexDirection: 'row', gap: Spacing.sm, justifyContent: 'flex-end' },
 });
