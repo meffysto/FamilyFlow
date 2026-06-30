@@ -3300,7 +3300,7 @@ export default function TreeScreen() {
                 <Image source={ACTION_SPRITES.trophees} style={styles.chipCozySprite} />
                 <Text style={styles.chipCozyLabel}>{t('mascot.actions.trophees', 'Trophées')}</Text>
               </TouchableOpacity>
-              {giftConfig.giftExchange.enabled && (profile?.role === 'enfant' || profile?.role === 'ado') && (
+              {giftConfig.giftExchange.enabled && (
                 <TouchableOpacity style={styles.chipCozy} onPress={() => { Haptics.selectionAsync(); setShowGiftExchange(true); }} activeOpacity={0.7}>
                   <Text style={styles.chipCozyEmoji}>{'🎁'}</Text>
                   <Text style={styles.chipCozyLabel}>{t('mascot.actions.echanger', 'Échanger')}</Text>
