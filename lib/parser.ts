@@ -4102,7 +4102,9 @@ export function parsePendingGifts(content: string | undefined): GiftRequest[] {
   for (const rawLine of content.split('\n')) {
     const line = rawLine.trim();
     if (!line.startsWith('- ')) continue;
-    const cols = line.slice(2).split(' | ');
+    // Split sur `|` brut puis trim par cellule : robuste face au trailing space
+    // d'un resolvedAt vide (sinon `.trim()` de la ligne ferait sauter une colonne).
+    const cols = line.slice(2).split('|').map(c => c.trim());
     if (cols.length < 8) continue;
     const [id, profileId, profileName, leavesCost, euroValue, status, createdAt, resolvedAt] = cols;
     if (!id || !profileId) continue;
