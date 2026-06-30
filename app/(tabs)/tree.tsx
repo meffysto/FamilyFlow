@@ -63,6 +63,8 @@ import { GiftSenderSheet } from '../../components/mascot/GiftSenderSheet';
 import { GiftReceiptModal } from '../../components/mascot/GiftReceiptModal';
 import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
 import { PlotUpgradeSheet } from '../../components/mascot/PlotUpgradeSheet';
+import { GiftExchangeSheet } from '../../components/mascot/GiftExchangeSheet';
+import { useGiftExchange } from '../../hooks/useGiftExchange';
 import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
 import { AubergeSheet } from '../../components/mascot/AubergeSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
@@ -486,6 +488,10 @@ export default function TreeScreen() {
 
   // Est-ce qu'on regarde son propre arbre ? (autorise les modifications)
   const isOwnTree = !profileId || profileId === activeProfile?.id;
+
+  // FAM-49 — échange feuilles → cadeau €
+  const { config: giftConfig, requestExchange } = useGiftExchange();
+  const [showGiftExchange, setShowGiftExchange] = useState(false);
 
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false);
   const [selectedProfileForPicker, setSelectedProfileForPicker] = useState<Profile | null>(null);
@@ -3294,6 +3300,12 @@ export default function TreeScreen() {
                 <Image source={ACTION_SPRITES.trophees} style={styles.chipCozySprite} />
                 <Text style={styles.chipCozyLabel}>{t('mascot.actions.trophees', 'Trophées')}</Text>
               </TouchableOpacity>
+              {giftConfig.giftExchange.enabled && (profile?.role === 'enfant' || profile?.role === 'ado') && (
+                <TouchableOpacity style={styles.chipCozy} onPress={() => { Haptics.selectionAsync(); setShowGiftExchange(true); }} activeOpacity={0.7}>
+                  <Text style={styles.chipCozyEmoji}>{'🎁'}</Text>
+                  <Text style={styles.chipCozyLabel}>{t('mascot.actions.echanger', 'Échanger')}</Text>
+                </TouchableOpacity>
+              )}
               {companion && (
                 <TouchableOpacity
                   style={[styles.chipCozy, styles.chipCozyCompanion]}
@@ -3742,6 +3754,17 @@ export default function TreeScreen() {
           onMessage={(text, type) => showToast(text, type)}
         />
       )}
+
+      {/* Bottom sheet échange feuilles → cadeau € (FAM-49) */}
+      <GiftExchangeSheet
+        visible={showGiftExchange}
+        onClose={() => setShowGiftExchange(false)}
+        coins={profile?.coins ?? 0}
+        leavesCost={giftConfig.giftExchange.leavesCost}
+        euroValue={giftConfig.giftExchange.euroValue}
+        onConfirm={() => requestExchange(profile!.id)}
+        onMessage={(text, type) => showToast(text, type)}
+      />
 
       {/* Bottom sheet construction batiment */}
       <BuildingShopSheet
