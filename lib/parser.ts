@@ -55,6 +55,8 @@ import {
   ActiveExpedition,
   ExpeditionDifficulty,
   ExpeditionOutcome,
+  GiftRequest,
+  GiftRequestStatus,
 } from './types';
 import { VALID_THEMES, migrateThemeId } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
@@ -4080,6 +4082,63 @@ export function serializePriceBook(state: PriceBookState): string {
   for (const entry of state.entries) {
     const priceStr = entry.price.toFixed(2).replace('.', ',');
     lines.push(`- ${entry.label}: ${priceStr}`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+// ─── Cadeaux en attente — FAM-49 (échange feuilles → cadeau €) ──────────────────
+
+const PENDING_GIFT_STATUSES: GiftRequestStatus[] = ['pending', 'approved', 'rejected'];
+
+/**
+ * Parse le fichier `cadeaux-en-attente.md` (lignes pipe-délimitées).
+ * Defensive : retourne [] si vide/malformé (pattern `?? []` cf. parseCompanion).
+ * Format ligne : `- {id} | {profileId} | {profileName} | {leavesCost} | {euroValue} | {status} | {createdAt} | {resolvedAt}`
+ */
+export function parsePendingGifts(content: string | undefined): GiftRequest[] {
+  if (!content) return [];
+  const gifts: GiftRequest[] = [];
+  for (const rawLine of content.split('\n')) {
+    const line = rawLine.trim();
+    if (!line.startsWith('- ')) continue;
+    // Split sur `|` brut puis trim par cellule : robuste face au trailing space
+    // d'un resolvedAt vide (sinon `.trim()` de la ligne ferait sauter une colonne).
+    const cols = line.slice(2).split('|').map(c => c.trim());
+    if (cols.length < 8) continue;
+    const [id, profileId, profileName, leavesCost, euroValue, status, createdAt, resolvedAt] = cols;
+    if (!id || !profileId) continue;
+    const safeStatus = PENDING_GIFT_STATUSES.includes(status as GiftRequestStatus)
+      ? (status as GiftRequestStatus)
+      : 'pending';
+    gifts.push({
+      id,
+      profileId,
+      profileName,
+      leavesCost: parseInt(leavesCost, 10) || 0,
+      euroValue: parseInt(euroValue, 10) || 0,
+      status: safeStatus,
+      createdAt,
+      resolvedAt: resolvedAt && resolvedAt.length > 0 ? resolvedAt : undefined,
+    });
+  }
+  return gifts;
+}
+
+/** Sérialise les demandes de cadeau en markdown déterministe (round-trip stable). */
+export function serializePendingGifts(gifts: GiftRequest[]): string {
+  const lines: string[] = [];
+  lines.push('---');
+  lines.push('type: pending-gifts');
+  lines.push('---');
+  lines.push('');
+  lines.push('# Cadeaux en attente');
+  lines.push('');
+  for (const g of gifts) {
+    const name = (g.profileName ?? '').replace(/\|/g, '/');
+    lines.push(
+      `- ${g.id} | ${g.profileId} | ${name} | ${g.leavesCost} | ${g.euroValue} | ${g.status} | ${g.createdAt} | ${g.resolvedAt ?? ''}`
+    );
   }
   lines.push('');
   return lines.join('\n');

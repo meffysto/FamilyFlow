@@ -973,3 +973,20 @@ export interface StoryUniverse {
   couleurAccent: string;
   couleurGlow: string;
 }
+
+// ─── Échange feuilles → cadeau € (FAM-49) ──────────────────────────────────────
+
+/** Statut d'une demande de conversion feuilles → cadeau € */
+export type GiftRequestStatus = 'pending' | 'approved' | 'rejected';
+
+/** Demande enfant de convertir ses feuilles 🍃 en crédit cadeau € (file d'attente parentale) */
+export interface GiftRequest {
+  id: string;              // base36 déterministe depuis Date.now()
+  profileId: string;       // enfant demandeur
+  profileName: string;     // pour affichage parent sans lookup
+  leavesCost: number;      // feuilles déduites
+  euroValue: number;       // valeur du cadeau en €
+  status: GiftRequestStatus;
+  createdAt: string;       // ISO
+  resolvedAt?: string;     // ISO, set à l'approbation/refus
+}

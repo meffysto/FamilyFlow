@@ -26,12 +26,15 @@ export interface GamificationConfig {
   pointsPerTask: number;
   streakBonus: number;
   lootThreshold: { enfant: number; ado: number; adulte: number };
+  /** FAM-49 — conversion feuilles 🍃 → cadeau € (OFF par défaut) */
+  giftExchange: { enabled: boolean; leavesCost: number; euroValue: number };
 }
 
 export const DEFAULT_GAMI_CONFIG: GamificationConfig = {
   pointsPerTask: 10,
   streakBonus: 5,
   lootThreshold: { enfant: 50, ado: 75, adulte: 100 },
+  giftExchange: { enabled: false, leavesCost: 100, euroValue: 5 }, // OFF par défaut
 };
 
 let _cachedConfig: GamificationConfig | null = null;
