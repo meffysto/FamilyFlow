@@ -217,6 +217,16 @@ export interface VaultState {
    *  la Live Activity. Setté par un bridge component qui a accès à
    *  `useGamification`. Si null → fallback sur toggleTask seul (pas de XP). */
   liveActivityTaskCompleteRef: React.MutableRefObject<((task: Task) => Promise<void>) | null>;
+  /** Handler de crédit gamification (completeTask + refresh) pour les complétions
+   *  écrites par Daybard (app Mac) dans `daybard-completions.md`. La coche est DÉJÀ
+   *  dans le .md (Daybard réplique toggleTask) : on ne crédite que XP/plantes.
+   *  Setté par le même bridge que la Live Activity. */
+  daybardCreditRef: React.MutableRefObject<
+    ((profileId: string, taskText: string, meta: { sourceFile?: string; xpOverride?: number }) => Promise<void>) | null
+  >;
+  /** Consomme la file de complétions Daybard (claim-first). Appelé au boot, au
+   *  foreground, et par le bridge une fois monté. */
+  consumeDaybardCompletions: () => Promise<void>;
   /** Compteur de tâches complétées aujourd'hui (event-driven — inclut les récurrentes) */
   tasksCompletedToday: number;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
@@ -1246,6 +1256,100 @@ export function useVaultInternal(): VaultState {
     });
     return () => sub.remove();
   }, [consumeLiveActivityToggles]);
+
+  // ── Complétions Daybard (app Mac compagnon) ────────────────────────────────
+  // Daybard coche les tâches directement dans les .md (réplique exacte de
+  // toggleTask) et dépose UN événement par complétion dans `daybard-completions.md`
+  // (`- <ISO ms> | <profileId> | <⭐ ou -> | <fichier source> | <libellé>`).
+  // Ici on ne re-toggle PAS la tâche (déjà cochée sur disque) : on crédite
+  // seulement XP/plantes via le bridge gamification.
+  //
+  // Pattern claim-first (comme les pending toggles Live Activity) : la file est
+  // vidée AVANT de créditer — en cas de crash on perd au pire un crédit, jamais
+  // de double crédit. Traitement STRICTEMENT séquentiel : completeTask lit puis
+  // réécrit gami-<id>.md hors queue d'écriture, deux crédits concurrents du même
+  // profil se perdraient des points. Dédup par horodatage croissant (SecureStore)
+  // en ceinture-bretelles contre un conflit iCloud qui ressusciterait de vieilles
+  // entrées déjà traitées.
+  const daybardCreditRef = useRef<
+    ((profileId: string, taskText: string, meta: { sourceFile?: string; xpOverride?: number }) => Promise<void>) | null
+  >(null);
+  const daybardConsumingRef = useRef(false);
+
+  const consumeDaybardCompletions = useCallback(async () => {
+    const DAYBARD_QUEUE_FILE = 'daybard-completions.md';
+    const DAYBARD_QUEUE_HEADER =
+      '<!-- Daybard → FamilyFlow : complétions à créditer (XP/plantes). '
+      + 'Consommé puis vidé par FamilyFlow. Ne pas éditer. -->\n';
+    const DAYBARD_LAST_TS_KEY = 'daybard.lastProcessedTs';
+
+    const v = vaultRef.current;
+    if (!v) return;
+    // On ne CONSOMME (= vide la file) que si on peut créditer : bridge monté
+    // et profils chargés. Sinon on réessaie au prochain déclencheur.
+    if (!daybardCreditRef.current) return;
+    if (profilesRef.current.length === 0) return;
+    if (daybardConsumingRef.current) return;
+    daybardConsumingRef.current = true;
+    try {
+      // Lecture d'abord : ne réécrire (mtime) que si la file contient des entrées.
+      const raw = await v.readFile(DAYBARD_QUEUE_FILE).catch(() => '');
+      if (!raw.split('\n').some((l) => l.startsWith('- '))) return;
+
+      // Claim-first : vider la file. updateFile relit DANS la queue d'écriture,
+      // donc une entrée ajoutée par Daybard entre la lecture ci-dessus et le
+      // claim est capturée aussi (jamais perdue silencieusement).
+      let claimed: string[] = [];
+      await v.updateFile(DAYBARD_QUEUE_FILE, (current) => {
+        claimed = current.split('\n').filter((l) => l.startsWith('- '));
+        return DAYBARD_QUEUE_HEADER;
+      });
+      if (!claimed.length) return;
+
+      // Dédup : les horodatages Daybard sont croissants (ISO trié = chrono).
+      const lastTs = (await SecureStore.getItemAsync(DAYBARD_LAST_TS_KEY).catch(() => null)) ?? '';
+      let maxTs = lastTs;
+      for (const line of claimed) {
+        const parts = line.slice(2).split(' | ');
+        if (parts.length < 5) continue; // ligne inconnue → ignorer sans casser
+        const [ts, profileId, star, sourceRel] = parts;
+        const taskText = parts.slice(4).join(' | ');
+        if (!ts || ts <= lastTs) continue; // déjà traité (résurrection iCloud)
+        if (ts > maxTs) maxTs = ts;
+        try {
+          await daybardCreditRef.current(profileId, taskText, {
+            sourceFile: sourceRel,
+            xpOverride: star !== '-' ? parseInt(star, 10) : undefined,
+          });
+        } catch (e) {
+          // Entrée claimée = perdue en cas d'échec (choix assumé : sous-crédit
+          // plutôt que double crédit).
+          if (__DEV__) console.warn('[useVault] crédit Daybard échoué:', e);
+        }
+      }
+      if (maxTs !== lastTs) {
+        await SecureStore.setItemAsync(DAYBARD_LAST_TS_KEY, maxTs).catch(() => {});
+      }
+    } catch {
+      // silencieux — feature non critique
+    } finally {
+      daybardConsumingRef.current = false;
+    }
+  }, []);
+
+  // À chaque retour en foreground : consommer les complétions déposées par le Mac
+  // pendant que l'app était en background. (Le rattrapage au boot est déclenché
+  // par le bridge gamification une fois monté — cf. LiveActivityGamificationBridge.)
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
+        // Délai un peu plus long que la Live Activity : laisser le reload mtime
+        // (et donc profiles) se poser avant de créditer.
+        setTimeout(() => consumeDaybardCompletions(), 800);
+      }
+    });
+    return () => sub.remove();
+  }, [consumeDaybardCompletions]);
 
   // Programmer les notifications de révélation sur CE téléphone pour les love notes
   // reçues en attente (multi-device : le téléphone de l'expéditeur ne peut pas
@@ -2917,6 +3021,8 @@ export function useVaultInternal(): VaultState {
     subscribeTaskComplete: tasksHook.subscribeTaskComplete,
     subscribeTaskUncomplete: tasksHook.subscribeTaskUncomplete,
     liveActivityTaskCompleteRef,
+    daybardCreditRef,
+    consumeDaybardCompletions,
     tasksCompletedToday,
     addRDV,
     updateRDV,
