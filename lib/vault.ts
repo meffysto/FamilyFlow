@@ -136,6 +136,25 @@ export class VaultManager {
     return this.enqueueWrite(relativePath, () => this._writeFileDirect(relativePath, content));
   }
 
+  /**
+   * Lecture-modification-écriture atomique sur un fichier (FAM-46).
+   * Le `transform` reçoit le contenu frais (lu À L'INTÉRIEUR de la file
+   * d'écriture) et retourne le nouveau contenu. Comme read+write s'exécute dans
+   * la même file que writeFile, deux updateFile/writeFile concurrents sur le même
+   * path ne s'entrelacent jamais → pas de perte de mise à jour (ex: drop de
+   * graine rare écrasé par une récolte voisine partie d'une lecture périmée).
+   */
+  async updateFile(
+    relativePath: string,
+    transform: (current: string) => string | Promise<string>,
+  ): Promise<void> {
+    return this.enqueueWrite(relativePath, async () => {
+      const current = await this.readFile(relativePath).catch(() => '');
+      const next = await transform(current);
+      await this._writeFileDirect(relativePath, next);
+    });
+  }
+
   /** Implementation directe de l'ecriture (sans queue) — utiliser uniquement via enqueueWrite */
   private async _writeFileDirect(relativePath: string, content: string): Promise<void> {
     const uri = this.uri(relativePath);

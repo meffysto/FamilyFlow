@@ -266,6 +266,25 @@ export function useFarm(
     await vault.writeFile(file, serializeFarmProfile(profileName, farmData));
   }, [vault, profiles]);
 
+  /**
+   * Ajoute +1 graine rare au stock de façon atomique (FAM-46).
+   * L'incrément lit l'état FRAIS du fichier à l'intérieur de la file d'écriture
+   * du vault, donc deux récoltes concurrentes qui droppent chacune une graine ne
+   * s'écrasent plus mutuellement (le bug : drop affiché mais graine non reçue).
+   */
+  const persistRareSeedDrop = useCallback(async (profileId: string, seedId: string) => {
+    if (!vault) return;
+    const file = farmFile(profileId);
+    await vault.updateFile(file, (raw) => {
+      const farmData = parseFarmProfile(raw);
+      const seeds = { ...(farmData.farmRareSeeds ?? {}) };
+      seeds[seedId] = (seeds[seedId] ?? 0) + 1;
+      farmData.farmRareSeeds = seeds;
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      return serializeFarmProfile(profileName, farmData);
+    });
+  }, [vault, profiles]);
+
   /** Planter une culture sur une parcelle */
   const plant = useCallback(async (profileId: string, plotIndex: number, cropId: string) => {
     if (!vault) return;
@@ -482,7 +501,9 @@ export function useFarm(
         ...profile,
         farmCrops: serializeCrops(result.crops),
         harvestInventory: updatedHarvestInv,
-        ...(seedDrop ? { farmRareSeeds: { ...(profile.farmRareSeeds ?? {}), [seedDrop.seedId]: ((profile.farmRareSeeds ?? {})[seedDrop.seedId] ?? 0) + 1 } } : {}),
+        // FAM-46 — le drop de graine rare est persisté séparément via un
+        // updateFile atomique (voir persistRareSeedDrop ci-dessous), pour éviter
+        // qu'une récolte concurrente écrase la graine via un snapshot périmé.
         // Persister sporeeCount si drop harvest OU drop-back wager (les deux mettent profile.sporeeCount à jour)
         ...(sporeeDropped || wagerDropBack ? { sporeeCount: profile.sporeeCount } : {}),
         // Phase 41 (SPOR-10) — Persister compteur vanité marathon wins si incrémenté
@@ -490,6 +511,8 @@ export function useFarm(
       };
       const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
       await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, updatedProfile));
+      // FAM-46 — incrément atomique de la graine rare (après le snapshot, sur état frais)
+      if (seedDrop) await persistRareSeedDrop(profileId, seedDrop.seedId);
       await refreshFarm(profileId);
       // Phase B — plus de bonus coins immédiat (la valeur grade se matérialise à la vente/craft)
       if (sporeeRefused) {
@@ -512,13 +535,8 @@ export function useFarm(
       farm_harvest_inventory: serializeHarvestInventory(updatedHarvestInv),
     };
 
-    // Si drop de graine rare, ajouter au stock
-    if (seedDrop) {
-      const currentRareSeeds = profile.farmRareSeeds ?? {};
-      const updatedRareSeeds = { ...currentRareSeeds };
-      updatedRareSeeds[seedDrop.seedId] = (updatedRareSeeds[seedDrop.seedId] ?? 0) + 1;
-      fieldsToWrite.farm_rare_seeds = serializeRareSeeds(updatedRareSeeds);
-    }
+    // FAM-46 — graine rare persistée séparément via updateFile atomique
+    // (voir persistRareSeedDrop), pas dans ce snapshot calculé sur lecture périmée.
 
     // Phase 38 (SPOR-08) + Phase 40 (drop-back) — persister sporee_count si drop harvest OU drop-back wager
     if ((sporeeDropped || wagerDropBack) && typeof profile.sporeeCount === 'number') {
@@ -532,6 +550,8 @@ export function useFarm(
 
     // Ecrire tous les champs en une seule operation
     await writeProfileFields(profileId, fieldsToWrite);
+    // FAM-46 — incrément atomique de la graine rare (après le snapshot, sur état frais)
+    if (seedDrop) await persistRareSeedDrop(profileId, seedDrop.seedId);
     await refreshFarm(profileId);
     // Phase B — plus de bonus coins immédiat (la valeur grade se matérialise à la vente/craft)
     if (sporeeRefused) {
@@ -549,7 +569,7 @@ export function useFarm(
     // Phase 41 (SPOR-10) — signal premier obtention Sporée (tooltip one-shot)
     const sporeeFirstObtained = sporeeDropped || wagerDropBack;
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop, qty: finalQty, wager: wagerResult, sporeeFirstObtained, grade, gradeBonusCoins: 0 };
-  }, [vault, profiles, writeProfileFields, refreshFarm, addCoins, onQuestProgress, onContribution, showToast]);
+  }, [vault, profiles, writeProfileFields, persistRareSeedDrop, refreshFarm, addCoins, onQuestProgress, onContribution, showToast]);
 
   /** Vendre une recolte brute depuis l'inventaire (qty = nombre d'unités à vendre) */
   const sellHarvest = useCallback(async (profileId: string, cropId: string, qty: number = 1): Promise<number> => {
