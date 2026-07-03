@@ -194,17 +194,20 @@ export interface MascotInhabitant {
 
 /** Assets illustrés (remplacent les emojis quand disponibles) */
 export const ITEM_ILLUSTRATIONS: Record<string, number> = {
-  // Anciennes illustrations aquarelle (décorations existantes)
-  guirlandes: require('../../assets/items/guirlandes.png'),
-  cabane:     require('../../assets/items/cabane.png'),
-  balancoire: require('../../assets/items/balancoire.png'),
-  lanterne:   require('../../assets/items/lanterne.png'),
-  nid:        require('../../assets/items/nid.png'),
-  hamac:      require('../../assets/items/hamac.png'),
-  fontaine:   require('../../assets/items/fontaine.png'),
-  couronne:   require('../../assets/items/couronne.png'),
-  portail:    require('../../assets/items/portail.png'),
-  cristal:    require('../../assets/items/cristal.png'),
+  // Décorations pixel uniformisées (remplace les anciennes aquarelles)
+  guirlandes: require('../../assets/garden/decos/guirlandes.png'),
+  cabane:     require('../../assets/garden/decos/cabane.png'),
+  balancoire: require('../../assets/garden/decos/balancoire.png'),
+  lanterne:   require('../../assets/garden/decos/lanterne.png'),
+  nid:        require('../../assets/garden/decos/nid.png'),
+  hamac:      require('../../assets/garden/decos/hamac.png'),
+  fontaine:   require('../../assets/garden/decos/fontaine.png'),
+  couronne:   require('../../assets/garden/decos/couronne.png'),
+  portail:    require('../../assets/garden/decos/portail.png'),
+  cristal:    require('../../assets/garden/decos/cristal.png'),
+  // Saga exclusives — pixel uniformisé (remplace le rendu emoji brut)
+  lanterne_argent: require('../../assets/garden/decos/lanterne_argent.png'),
+  masque_ombre:    require('../../assets/garden/decos/masque_ombre.png'),
   // Nouvelles décorations pixel (Mana Seed)
   botte_foin:        require('../../assets/garden/decos/botte_foin.png'),
   etal_fruits:       require('../../assets/garden/decos/etal_fruits.png'),
@@ -235,6 +238,9 @@ export const ITEM_ILLUSTRATIONS: Record<string, number> = {
   tortue_ancienne: require('../../assets/garden/animals/tortue_ancienne/idle_1.png'),
   phenix_celeste:  require('../../assets/garden/animals/phenix_celeste/idle_1.png'),
   loup_etoile:     require('../../assets/garden/animals/loup_etoile/idle_1.png'),
+  // Saga exclusives — pixel (remplace le rendu emoji brut une fois placés)
+  esprit_eau:      require('../../assets/garden/animals/esprit_eau/idle_1.png'),
+  ancien_gardien:  require('../../assets/garden/animals/ancien_gardien/idle_1.png'),
 };
 
 /** Catalogue décorations MVP */

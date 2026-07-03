@@ -127,9 +127,9 @@ export const SEASON_WINDOWS: Record<FurnitureSeason, { startMonth: number; start
  */
 export const FURNITURE_CATALOG: FurnitureDefinition[] = [
   // Sol — les tapis couvrent une grande surface au sol
-  { id: 'tapis',           label: 'Tapis',             category: 'sol',       cost: 800,   scale: 1.7 },
+  { id: 'tapis',           label: 'Tapis',             category: 'sol',       cost: 800,   scale: 2.2 },
   { id: 'coussin',         label: 'Coussin',           category: 'sol',       cost: 1200,  scale: 0.9 },
-  { id: 'tapis_motif',     label: 'Tapis à motifs',    category: 'sol',       cost: 1000,  scale: 1.7 },
+  { id: 'tapis_motif',     label: 'Tapis à motifs',    category: 'sol',       cost: 1000,  scale: 2.2 },
   { id: 'pouf',            label: 'Pouf',              category: 'sol',       cost: 1500 },
   { id: 'panier_couchage', label: 'Panier couchage',   category: 'sol',       cost: 1800,  scale: 1.3 },
   { id: 'table_basse',     label: 'Table basse',       category: 'sol',       cost: 3500,  scale: 1.2 },
@@ -151,7 +151,7 @@ export const FURNITURE_CATALOG: FurnitureDefinition[] = [
   { id: 'bougies',         label: 'Bougies',           category: 'lumiere',   cost: 2500,  scale: 0.8 },
   { id: 'applique',        label: 'Applique',          category: 'lumiere',   cost: 4500,  scale: 0.85, surface: 'wall' },
   { id: 'lampadaire',      label: 'Lampadaire',        category: 'lumiere',   cost: 6000,  scale: 1.4 },
-  { id: 'cheminee',        label: 'Cheminée',          category: 'lumiere',   cost: 22000, scale: 1.5 },
+  { id: 'cheminee',        label: 'Cheminée',          category: 'lumiere',   cost: 22000, scale: 1.5,  surface: 'wall' },
   // Compagnon
   { id: 'jouet_balle',     label: 'Balle',             category: 'compagnon', cost: 800,   scale: 0.7 },
   { id: 'gamelle',         label: 'Gamelle',           category: 'compagnon', cost: 1000,  scale: 0.8 },
@@ -169,7 +169,7 @@ export const FURNITURE_CATALOG: FurnitureDefinition[] = [
   { id: 'fauteuil_lecture',label: 'Fauteuil lecture',  category: 'lecture',   cost: 9000,  scale: 1.3 },
   // Jeux
   { id: 'cubes',           label: 'Cubes',             category: 'jeux',      cost: 1500,  scale: 0.9 },
-  { id: 'tapis_jeu',       label: 'Tapis de jeu',      category: 'jeux',      cost: 3000,  scale: 1.7 },
+  { id: 'tapis_jeu',       label: 'Tapis de jeu',      category: 'jeux',      cost: 3000,  scale: 2.2 },
   { id: 'petite_console',  label: 'Petite console',    category: 'jeux',      cost: 6000 },
   // Fête & saisons
   { id: 'guirlande_lumineuse', label: 'Guirlande lumineuse', category: 'fete', cost: 6000, scale: 1.4, surface: 'wall' },
@@ -184,7 +184,7 @@ export const FURNITURE_CATALOG: FurnitureDefinition[] = [
   // Set transverse prêt à l'emploi : déposer assets/companion-house/<id>.png +
   // 1 ligne dans furniture-sprites.ts → l'onglet « Moderne » apparaît en boutique.
   // Tant que le sprite manque, l'item est filtré (invisible), donc zéro risque.
-  { id: 'tapis_moderne',       label: 'Tapis moderne',       category: 'sol',     cost: 1100, scale: 1.7, style: 'moderne' },
+  { id: 'tapis_moderne',       label: 'Tapis moderne',       category: 'sol',     cost: 1100, scale: 2.2, style: 'moderne' },
   { id: 'coussin_moderne',     label: 'Coussin moderne',     category: 'sol',     cost: 1300, scale: 0.9, style: 'moderne' },
   { id: 'table_basse_moderne', label: 'Table basse moderne', category: 'sol',     cost: 3800, scale: 1.2, style: 'moderne' },
   { id: 'fauteuil_moderne',    label: 'Fauteuil moderne',    category: 'meuble',  cost: 6500, scale: 1.25, style: 'moderne' },
@@ -194,7 +194,7 @@ export const FURNITURE_CATALOG: FurnitureDefinition[] = [
   { id: 'cadre_moderne',       label: 'Cadre moderne',       category: 'mur',     cost: 2200, scale: 0.85, surface: 'wall', style: 'moderne' },
 
   // ─── Pack STYLE « Ferme » (#10) ─────────────────────────────────────────────
-  { id: 'tapis_ferme',         label: 'Tapis ferme',         category: 'sol',     cost: 1100, scale: 1.7, style: 'ferme' },
+  { id: 'tapis_ferme',         label: 'Tapis ferme',         category: 'sol',     cost: 1100, scale: 2.2, style: 'ferme' },
   { id: 'pouf_ferme',          label: 'Pouf ferme',          category: 'sol',     cost: 1600, style: 'ferme' },
   { id: 'table_ferme',         label: 'Table de ferme',      category: 'sol',     cost: 3800, scale: 1.2, style: 'ferme' },
   { id: 'fauteuil_ferme',      label: 'Fauteuil ferme',      category: 'meuble',  cost: 6500, scale: 1.25, style: 'ferme' },

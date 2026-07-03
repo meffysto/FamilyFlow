@@ -45,6 +45,17 @@ export default function CompanionHouseRoute() {
   const [recoloring, setRecoloring] = useState<number | null>(null);  // index en cours de recoloration
   const [previewKey, setPreviewKey] = useState<string | null>(null);  // teinte prévisualisée (gratuite)
   const [roomSize, setRoomSize] = useState({ w: 0, h: 0 });
+  // WALL_BAND (fractions statiques) tombe sous la topbar sur la plupart des devices
+  // car `room` couvre tout l'écran (StyleSheet.absoluteFillObject) — on recalcule la
+  // bande murale visible en fonction de la vraie hauteur de la topbar + insets.
+  const wallBand = useMemo(() => {
+    if (roomSize.h <= 0) return WALL_BAND;
+    const topbarPx = insets.top + 60; // paddingTop (insets.top+12) + rangée (38) + paddingBottom (10)
+    const bandHeightPx = 110;
+    const min = Math.min(0.4, topbarPx / roomSize.h);
+    const max = Math.min(0.55, min + bandHeightPx / roomSize.h);
+    return { min, max };
+  }, [insets.top, roomSize.h]);
   const [activeCat, setActiveCat] = useState(FURNITURE_CATEGORIES[0].key);
   const [activeStyle, setActiveStyle] = useState<FurnitureStyle>('classique');
   // Styles dont au moins un meuble a un sprite chargé → onglet visible (sinon masqué).
@@ -210,9 +221,9 @@ export default function CompanionHouseRoute() {
     setBusy(true);
     try {
       Haptics.selectionAsync();
-      // Déco murale → posée dans la bande haute ; sinon centre-bas du sol.
+      // Déco murale → posée dans la bande haute (sous la topbar) ; sinon centre-bas du sol.
       const isWall = findFurniture(furnitureId)?.surface === 'wall';
-      const y = isWall ? (WALL_BAND.min + WALL_BAND.max) / 2 : 0.55;
+      const y = isWall ? (wallBand.min + wallBand.max) / 2 : 0.55;
       await buyAndPlaceFurniture(vault, profile, furnitureId, 0.5, y);
       await refreshGamification();
     } catch (e) {
@@ -220,7 +231,7 @@ export default function CompanionHouseRoute() {
     } finally {
       setBusy(false);
     }
-  }, [vault, profile, busy, refreshGamification, t]);
+  }, [vault, profile, busy, refreshGamification, t, wallBand]);
 
   // Gate hydratation vault
   if (isLoading) {
@@ -291,8 +302,8 @@ export default function CompanionHouseRoute() {
                 size={itemSize}
                 flipped={f.flipped ?? false}
                 tint={findTint(colorKey ?? undefined)}
-                minY={isWall ? WALL_BAND.min : 0}
-                maxY={isWall ? WALL_BAND.max : 1}
+                minY={isWall ? wallBand.min : 0}
+                maxY={isWall ? wallBand.max : 1}
                 selected={selected === i}
                 onSelect={() => setSelected(i)}
                 onMoveEnd={(x, y) => handleMoveEnd(i, x, y)}
