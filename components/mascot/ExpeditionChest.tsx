@@ -34,7 +34,7 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { useFarmTheme, type FarmPalette } from '../../constants/farm-theme';
 import type { ExpeditionOutcome } from '../../lib/types';
-import type { ExpeditionLoot } from '../../lib/mascot/expedition-engine';
+import { getExpeditionLootDetail, type ExpeditionLoot } from '../../lib/mascot/expedition-engine';
 
 // ── Constantes module ─────────────────────────────────────────────────────────
 
@@ -160,6 +160,7 @@ export function ExpeditionChest({ visible, outcome, loot, missionName, refundedC
 
   const outColor = outcomeColor(outcome, colors, farm);
   const isRare = outcome === 'rare_discovery';
+  const lootDetail = loot ? getExpeditionLootDetail(loot) : undefined;
 
   if (!visible) return null;
 
@@ -240,6 +241,11 @@ export function ExpeditionChest({ visible, outcome, loot, missionName, refundedC
                     <Text style={[styles.lootType, { color: colors.textMuted }]}>
                       {loot.type === 'inhabitant' ? 'Habitant' : loot.type === 'seed' ? 'Graine' : 'Boost'}
                     </Text>
+                    {lootDetail && (
+                      <Text style={[styles.lootDetail, { color: colors.textMuted }]}>
+                        {lootDetail}
+                      </Text>
+                    )}
                   </View>
                 </View>
               )}
@@ -385,6 +391,12 @@ const styles = StyleSheet.create({
   lootType: {
     fontSize: FontSize.label,
     marginTop: Spacing.xs,
+  },
+  lootDetail: {
+    fontSize: FontSize.caption,
+    lineHeight: 17,
+    marginTop: Spacing.sm,
+    maxWidth: 220,
   },
   closeBtn: {
     height: 44,

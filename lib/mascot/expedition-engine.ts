@@ -625,15 +625,22 @@ export function rollExpeditionResult(
  */
 export function rollExpeditionLoot(
   difficulty: ExpeditionDifficulty,
-  outcome: ExpeditionOutcome
+  outcome: ExpeditionOutcome,
+  ownedInhabitants: string[] = []
 ): ExpeditionLoot | undefined {
   if (outcome === 'failure' || outcome === 'partial') return undefined;
 
   const table = EXPEDITION_LOOT_TABLE[difficulty];
   if (!table || table.length === 0) return undefined;
 
-  const idx = Math.floor(Math.random() * table.length);
-  return table[idx];
+  // Les habitants d'expedition sont uniques dans l'inventaire mascotte.
+  const available = table.filter(
+    loot => loot.type !== 'inhabitant' || !ownedInhabitants.includes(loot.itemId)
+  );
+  if (available.length === 0) return undefined;
+
+  const idx = Math.floor(Math.random() * available.length);
+  return available[idx];
 }
 
 // ─── Pool quotidien déterministe ──────────────────────────────────────────────
@@ -689,12 +696,38 @@ export function filterExpeditionsByTreeStage(
  */
 export function getLootDisplay(
   itemId: string
-): { label: string; emoji: string } | null {
+): { label: string; emoji: string; detail?: string } | null {
   for (const difficulty of Object.keys(EXPEDITION_LOOT_TABLE) as ExpeditionDifficulty[]) {
     const found = EXPEDITION_LOOT_TABLE[difficulty].find(item => item.itemId === itemId);
-    if (found) return { label: found.label, emoji: found.emoji };
+    if (found) return { label: found.label, emoji: found.emoji, detail: getExpeditionLootDetail(found) };
   }
   return null;
+}
+
+/** Explique l'effet réel appliqué par une récompense d'expédition. */
+export function getExpeditionLootDetail(loot: ExpeditionLoot): string | undefined {
+  if (loot.itemId === 'boost_chance_doree') {
+    return 'Pendant 12h, chaque tâche accélère la croissance des cultures (+1 progression par stade).';
+  }
+  if (loot.itemId === 'boost_recolte_2x') {
+    return 'Pendant 12h, chaque tâche accélère la croissance des cultures (+1 progression par stade).';
+  }
+  if (loot.itemId === 'boost_mega_recolte_3x') {
+    return 'Pendant 24h, chaque tâche accélère la croissance des cultures (+1 progression par stade).';
+  }
+  if (loot.itemId === 'boost_production_2x') {
+    return 'Pendant 24h, les bâtiments produisent 2 fois plus vite, dans la limite de leur stock max.';
+  }
+  if (loot.itemId === 'boost_production_3x') {
+    return 'Pendant 48h, les bâtiments produisent 2 fois plus vite, dans la limite de leur stock max.';
+  }
+  if (loot.type === 'inhabitant') {
+    return 'Ajouté à ton inventaire mascotte.';
+  }
+  if (loot.type === 'seed') {
+    return 'Ajoutée à tes graines rares.';
+  }
+  return undefined;
 }
 
 // ─── Helpers coût ─────────────────────────────────────────────────────────────

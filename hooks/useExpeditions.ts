@@ -291,7 +291,8 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     }
 
     // Roll du loot
-    const loot = rollExpeditionLoot(exp.difficulty, outcome);
+    const ownedInhabitants = farm.mascotInhabitants ?? [];
+    const loot = rollExpeditionLoot(exp.difficulty, outcome, ownedInhabitants);
 
     // Remboursement partiel (50 % de la mise coins + récoltes)
     let refundedCoins = 0;
@@ -331,7 +332,9 @@ export function useExpeditions(treeStage: TreeStage = 'graine') {
     // Distribuer le loot
     if (loot) {
       if (loot.type === 'inhabitant') {
-        farm.mascotInhabitants = [...(farm.mascotInhabitants ?? []), loot.itemId];
+        farm.mascotInhabitants = ownedInhabitants.includes(loot.itemId)
+          ? ownedInhabitants
+          : [...ownedInhabitants, loot.itemId];
       } else if (loot.type === 'seed') {
         const seeds = { ...(farm.farmRareSeeds ?? {}) };
         seeds[loot.itemId] = (seeds[loot.itemId] ?? 0) + 1;

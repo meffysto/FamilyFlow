@@ -10,6 +10,8 @@ import {
   getDailyExpeditionPool,
   rollExpeditionResult,
   rollExpeditionLoot,
+  getExpeditionLootDetail,
+  getLootDisplay,
   isExpeditionComplete,
   getExpeditionRemainingMinutes,
   getExpeditionCostDescription,
@@ -143,6 +145,35 @@ describe('rollExpeditionLoot', () => {
       expect(result.itemId).toBeDefined();
       expect(result.type).toBeDefined();
     }
+  });
+
+  it('ne retourne pas un habitant deja possede', () => {
+    const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.2);
+    try {
+      const result = rollExpeditionLoot('hard', 'success', ['dragon_glace']);
+      expect(result?.itemId).not.toBe('dragon_glace');
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+});
+
+describe('getExpeditionLootDetail', () => {
+  it('detaille les boosts temporels visibles dans les récompenses', () => {
+    expect(getLootDisplay('boost_chance_doree')?.detail).toContain('Pendant 12h');
+    expect(getLootDisplay('boost_chance_doree')?.detail).toContain('croissance des cultures');
+
+    expect(getLootDisplay('boost_production_2x')?.detail).toContain('Pendant 24h');
+    expect(getLootDisplay('boost_production_2x')?.detail).toContain('bâtiments produisent 2 fois plus vite');
+  });
+
+  it('retourne undefined pour un booster inconnu', () => {
+    expect(getExpeditionLootDetail({
+      itemId: 'boost_inconnu',
+      type: 'booster',
+      label: 'Boost inconnu',
+      emoji: '✨',
+    })).toBeUndefined();
   });
 });
 

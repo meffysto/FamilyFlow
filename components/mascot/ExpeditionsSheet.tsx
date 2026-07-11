@@ -861,11 +861,18 @@ const ResultRow = React.memo(function ResultRow({
         </View>
         {/* Loot lisible : emoji + label */}
         {lootDisplay && (
-          <View style={[styles.resultLootChip, { backgroundColor: colors.catJeux + '22' }]}>
-            <Text style={styles.resultLootChipEmoji}>{lootDisplay.emoji}</Text>
-            <Text style={[styles.lootChipLabel, { color: colors.catJeux }]}>
-              {lootDisplay.label}
-            </Text>
+          <View style={styles.resultLootBlock}>
+            <View style={[styles.resultLootChip, { backgroundColor: colors.catJeux + '22' }]}>
+              <Text style={styles.resultLootChipEmoji}>{lootDisplay.emoji}</Text>
+              <Text style={[styles.lootChipLabel, { color: colors.catJeux }]}>
+                {lootDisplay.label}
+              </Text>
+            </View>
+            {lootDisplay.detail && (
+              <Text style={[styles.lootChipDetail, { color: farm.brownTextSub }]} numberOfLines={2}>
+                {lootDisplay.detail}
+              </Text>
+            )}
           </View>
         )}
         {/* Message explicite perte pour failure */}
@@ -1387,6 +1394,11 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
     marginTop: Spacing.xs,
   },
   // Loot lisible dans ResultRow
+  resultLootBlock: {
+    alignSelf: 'flex-start',
+    marginTop: Spacing.xs,
+    maxWidth: '100%',
+  },
   resultLootChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1403,6 +1415,12 @@ const makeStyles = (farm: FarmPalette) => StyleSheet.create({
   lootChipLabel: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
+  },
+  lootChipDetail: {
+    fontSize: FontSize.caption,
+    lineHeight: 16,
+    marginTop: Spacing.xs,
+    maxWidth: 250,
   },
   // Message perte explicite
   lootLossLabel: {
