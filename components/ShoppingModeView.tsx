@@ -42,6 +42,8 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing } from '../constants/spacing';
 import { FontFamily, FontWeight } from '../constants/typography';
 import type { CourseItem } from '../lib/types';
+import { computeObservedShoppingOrder } from '../lib/shopping-parcours';
+import { COURSES_DEFAULT_SECTION } from '../lib/courses-constants';
 
 interface PriceInfo {
   price: number;
@@ -190,14 +192,19 @@ export function ShoppingModeView({
     wasAllDoneRef.current = allDone;
   }, [allDone]);
 
-  // Track ordre de cochage : timestamp par item, pour dériver l'ordre
-  // observé des rayons à la fin de la session (Bilan post-courses).
-  const checkedAtRef = useRef<Map<string, number>>(new Map());
+  // Track ordre de cochage : timestamp + section par item, pour dériver l'ordre
+  // observé des rayons à la fin de la session (Bilan post-courses). On stocke
+  // aussi la section au moment du check, car l'item est supprimé de la liste
+  // avant l'affichage du bilan.
+  const checkedAtRef = useRef<Map<string, { checkedAt: number; section: string }>>(new Map());
   const handleToggle = (item: CourseItem) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     if (!item.completed) {
-      // on coche : enregistre le timestamp
-      checkedAtRef.current.set(item.id, Date.now());
+      // on coche : enregistre le timestamp + rayon d'origine
+      checkedAtRef.current.set(item.id, {
+        checkedAt: Date.now(),
+        section: item.section ?? COURSES_DEFAULT_SECTION,
+      });
     } else {
       // on décoche : retire le timestamp (annulation utilisateur)
       checkedAtRef.current.delete(item.id);
@@ -225,27 +232,12 @@ export function ShoppingModeView({
     completedFiredRef.current = true;
 
     const timer = setTimeout(() => {
-      // Déduit l'ordre observé des rayons à partir des checkedAt timestamps :
-      // pour chaque section, on prend le timestamp min de ses items, puis tri.
-      const currentSections = sectionsRef.current;
-      const currentItemsBySection = itemsBySectionRef.current;
-      const sectionFirstTime = new Map<string, number>();
-      for (const s of currentSections) {
-        const items = currentItemsBySection[s] ?? [];
-        let min = Infinity;
-        for (const it of items) {
-          const t = checkedAtRef.current.get(it.id);
-          if (t !== undefined && t < min) min = t;
-        }
-        if (min !== Infinity) sectionFirstTime.set(s, min);
-      }
-      const observed = [...sectionFirstTime.entries()]
-        .sort((a, b) => a[1] - b[1])
-        .map(([s]) => s);
-      // Sections sans timestamp (cochées avant le mode magasin) → en queue
-      const observedSet = new Set(observed);
-      const tail = currentSections.filter(s => !observedSet.has(s) && (currentItemsBySection[s] ?? []).length > 0);
-      onCompleteRef.current?.([...observed, ...tail]);
+      const observed = computeObservedShoppingOrder(
+        sectionsRef.current,
+        itemsBySectionRef.current,
+        checkedAtRef.current.values(),
+      );
+      onCompleteRef.current?.(observed);
     }, 700);
 
     return () => clearTimeout(timer);

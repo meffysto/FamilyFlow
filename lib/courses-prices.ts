@@ -314,6 +314,24 @@ export function getLastPriceFor(
 }
 
 /**
+ * Prix à mémoriser après achat.
+ *
+ * Le pricebook manuel a priorité dans l'affichage, mais il peut contenir une
+ * estimation saisie avant les courses. Pour corriger cette estimation une fois
+ * l'article réellement acheté, on relit volontairement le budget sans pricebook
+ * et on utilise le dernier prix observé côté dépenses.
+ */
+export function getPurchasedPriceForNextTime(
+  articleName: string,
+  entries: BudgetEntry[],
+): number | null {
+  const info = getLastPriceFor(articleName, entries);
+  if (!info) return null;
+  if (!Number.isFinite(info.price) || info.price < 0) return null;
+  return info.price;
+}
+
+/**
  * Total estimé pour les items non-cochés. Items sans prix connu : ignorés.
  */
 export function computeRemainingEstimate(
