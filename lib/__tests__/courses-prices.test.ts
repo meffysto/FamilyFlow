@@ -8,6 +8,7 @@ import {
   extractQuantityFromLabel,
   priceFromMatches,
   getLastPriceFor,
+  getPurchasedPriceForNextTime,
   formatTotalEstimate,
 } from '../courses-prices';
 import type { BudgetEntry } from '../types';
@@ -191,6 +192,28 @@ describe('getLastPriceFor', () => {
     expect(r).not.toBeNull();
     expect(r!.sampleSize).toBe(3);
     expect(r!.price).toBeCloseTo(0.8, 5); // médiane de {0.7, 0.8, 0.9}
+  });
+});
+
+// ─── getPurchasedPriceForNextTime ───────────────────────────────────────────
+
+describe('getPurchasedPriceForNextTime', () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  it('retourne le prix budget réel sans être masqué par le pricebook manuel approximatif', () => {
+    const entries: BudgetEntry[] = [
+      { date: today, category: '🛒 Courses', amount: 2.4, label: 'PAIN CAMPAGNE', lineIndex: 0 },
+    ];
+
+    expect(getPurchasedPriceForNextTime('pain', entries)).toBeCloseTo(2.4, 5);
+  });
+
+  it('retourne null si aucun prix budget ne matche', () => {
+    const entries: BudgetEntry[] = [
+      { date: today, category: '🎉 Loisirs', amount: 2.4, label: 'PAIN CAMPAGNE', lineIndex: 0 },
+    ];
+
+    expect(getPurchasedPriceForNextTime('pain', entries)).toBeNull();
   });
 });
 

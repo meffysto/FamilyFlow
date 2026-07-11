@@ -51,7 +51,7 @@ import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngr
 import { CourseItemEditor } from '../../components/CourseItemEditor';
 import { CourseListEditor } from '../../components/CourseListEditor';
 import { renderListIcon } from '../../lib/list-icons';
-import { getLastPriceFor, computeRemainingEstimate, formatPrice, formatTotalEstimate, parseCanonical, priceBookKey } from '../../lib/courses-prices';
+import { getLastPriceFor, computeRemainingEstimate, formatPrice, formatTotalEstimate, parseCanonical, priceBookKey, getPurchasedPriceForNextTime } from '../../lib/courses-prices';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, cleanCookContent, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -832,8 +832,13 @@ export default function MealsScreen() {
 
       const prevQty = incremented?.quantite ?? 0;
       const addQty = incremented?.qteAchat ?? 1;
+      const purchasedPrice = getPurchasedPriceForNextTime(item.text, priceLookupEntries);
 
       await removeCourseItem(item.lineIndex);
+
+      if (purchasedPrice !== null) {
+        setPrice(item.text, purchasedPrice).catch(() => {});
+      }
 
       if (incremented) {
         await updateStockQuantity(incremented.lineIndex, prevQty + addQty);
@@ -860,7 +865,7 @@ export default function MealsScreen() {
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [vault, stock, updateStockQuantity, addStockItem, removeCourseItem, addCourseItem, toggleCourseItem, showToast, t]);
+  }, [vault, stock, priceLookupEntries, setPrice, updateStockQuantity, addStockItem, removeCourseItem, addCourseItem, toggleCourseItem, showToast, t]);
 
   const handleCourseRemove = useCallback((item: CourseItem) => {
     Alert.alert(
