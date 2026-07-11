@@ -23,7 +23,7 @@ import {
   Linking,
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Animated, {
   useSharedValue,
@@ -73,6 +73,7 @@ type OccasionFilter = 'tous' | '🎂' | '🎄';
 export default function WishlistScreen() {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
+  const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
   const navPillLocalAtTop = useSharedValue(true);
   const onScrollHandler = useAnimatedScrollHandler((e) => {
@@ -270,6 +271,12 @@ export default function WishlistScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showToast(item.bought ? t('wishlist.toast.markedUnbought') : t('wishlist.toast.markedBought'));
   }, [activeProfile, toggleWishBought, showToast]);
+
+  const scrollEditorToEnd = useCallback(() => {
+    setTimeout(() => {
+      editorScrollRef.current?.scrollToEnd({ animated: true });
+    }, 250);
+  }, []);
 
   // Icône occasion : bg + emoji
   const getWishIconStyle = (occasion: WishOccasion) => {
@@ -510,7 +517,15 @@ export default function WishlistScreen() {
             rightDisabled={!editText.trim()}
           />
           <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={10}>
-          <ScrollView ref={editorScrollRef} style={{ flex: 1 }} contentContainerStyle={[styles.editorContent, { paddingBottom: 120 }]} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            ref={editorScrollRef}
+            style={{ flex: 1 }}
+            contentContainerStyle={[
+              styles.editorContent,
+              { paddingBottom: Spacing['6xl'] * 2 + insets.bottom },
+            ]}
+            keyboardShouldPersistTaps="handled"
+          >
             {/* Texte */}
             <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.wishLabel')}</Text>
             <TextInput
@@ -584,6 +599,7 @@ export default function WishlistScreen() {
               placeholderTextColor={colors.textFaint}
               multiline
               textAlignVertical="top"
+              onFocus={scrollEditorToEnd}
             />
 
           </ScrollView>
@@ -712,7 +728,7 @@ const styles = StyleSheet.create({
   },
   // Éditeur
   editorContent: {
-    flex: 1,
+    flexGrow: 1,
     padding: Spacing['2xl'],
     gap: Spacing.lg,
   },
