@@ -782,7 +782,9 @@ export default function JournalScreen() {
                   disabled={!canEdit}
                 >
                   <Text style={[styles.obsNumber, { color: primary }]}>{oi + 1}.</Text>
-                  <MarkdownText style={{ color: colors.textSub, flex: 1 }}>{obs.text}</MarkdownText>
+                  <View style={styles.obsMarkdownContent}>
+                    <MarkdownText style={{ color: colors.textSub }}>{obs.text}</MarkdownText>
+                  </View>
                   {canEdit && <Text style={styles.editHint}>✏️</Text>}
                 </TouchableOpacity>
               ))
@@ -878,7 +880,9 @@ export default function JournalScreen() {
                 disabled={!canEdit}
               >
                 <Text style={[styles.obsNumber, { color: primary }]}>{ii + 1}.</Text>
-                <MarkdownText style={{ color: colors.textSub, flex: 1 }}>{item.text}</MarkdownText>
+                <View style={styles.obsMarkdownContent}>
+                  <MarkdownText style={{ color: colors.textSub }}>{item.text}</MarkdownText>
+                </View>
                 {canEdit && <Text style={styles.editHint}>✏️</Text>}
               </TouchableOpacity>
             )) : (
@@ -1304,6 +1308,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, gap: 8,
   },
   obsNumber: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, width: 24 },
+  obsMarkdownContent: { flex: 1, minWidth: 0 },
   editHint: { fontSize: FontSize.caption, opacity: 0.3 },
 
   emptySection: { padding: 16, alignItems: 'center' },
