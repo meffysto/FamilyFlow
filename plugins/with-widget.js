@@ -93,31 +93,23 @@ module.exports = function withMaJourneeWidget(config) {
     addFileToTarget(proj, target, groupKey, 'Assets.xcassets', 'folder.assetcatalog', 'Resources');
 
     // 2f. Configurer les build settings du widget
-    const configs = proj.pbxXCBuildConfigurationSection();
-    for (const key in configs) {
-      const bc = configs[key];
-      if (typeof bc !== 'object' || !bc.buildSettings) continue;
-      const pn = bc.buildSettings.PRODUCT_NAME;
-      if (pn !== `"${WIDGET_NAME}"` && pn !== WIDGET_NAME) continue;
-
-      Object.assign(bc.buildSettings, {
-        PRODUCT_BUNDLE_IDENTIFIER: `"${bundleId}"`,
-        DEVELOPMENT_TEAM: `"${teamId}"`,
-        SWIFT_VERSION: '"5.0"',
-        TARGETED_DEVICE_FAMILY: '"1,2"',
-        IPHONEOS_DEPLOYMENT_TARGET: '"16.0"',
-        CODE_SIGN_ENTITLEMENTS: `"${WIDGET_NAME}/${WIDGET_NAME}.entitlements"`,
-        INFOPLIST_FILE: `"${WIDGET_NAME}/Info.plist"`,
-        CODE_SIGN_STYLE: '"Automatic"',
-        GENERATE_INFOPLIST_FILE: 'YES',
-        MARKETING_VERSION: `"${appVersion}"`,
-        CURRENT_PROJECT_VERSION: `"${buildNumber}"`,
-        SWIFT_EMIT_LOC_STRINGS: 'YES',
-        INFOPLIST_KEY_CFBundleDisplayName: '"Ma Journée"',
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '"AccentColor"',
-        ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '"WidgetBackground"',
-      });
-    }
+    applyBuildSettingsToTarget(proj, target.uuid, {
+      PRODUCT_BUNDLE_IDENTIFIER: `"${bundleId}"`,
+      DEVELOPMENT_TEAM: `"${teamId}"`,
+      SWIFT_VERSION: '"5.0"',
+      TARGETED_DEVICE_FAMILY: '"1,2"',
+      IPHONEOS_DEPLOYMENT_TARGET: '"16.0"',
+      CODE_SIGN_ENTITLEMENTS: `"${WIDGET_NAME}/${WIDGET_NAME}.entitlements"`,
+      INFOPLIST_FILE: `"${WIDGET_NAME}/Info.plist"`,
+      CODE_SIGN_STYLE: '"Automatic"',
+      GENERATE_INFOPLIST_FILE: 'YES',
+      MARKETING_VERSION: `"${appVersion}"`,
+      CURRENT_PROJECT_VERSION: `"${buildNumber}"`,
+      SWIFT_EMIT_LOC_STRINGS: 'YES',
+      INFOPLIST_KEY_CFBundleDisplayName: '"Ma Journée"',
+      ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '"AccentColor"',
+      ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '"WidgetBackground"',
+    });
 
     // 2g. Embed App Extensions build phase sur le main target
     addEmbedExtensionPhase(proj, target);
@@ -238,6 +230,20 @@ module.exports = function withMaJourneeWidget(config) {
 
 function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function applyBuildSettingsToTarget(proj, targetUuid, settings) {
+  const objects = proj.hash.project.objects;
+  const nativeTarget = objects.PBXNativeTarget[targetUuid];
+  const configListUuid = nativeTarget?.buildConfigurationList;
+  const configList = configListUuid && objects.XCConfigurationList?.[configListUuid];
+  const configs = objects.XCBuildConfiguration || {};
+
+  for (const item of configList?.buildConfigurations || []) {
+    const config = configs[item.value];
+    if (!config?.buildSettings) continue;
+    Object.assign(config.buildSettings, settings);
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
