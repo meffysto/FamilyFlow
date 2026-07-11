@@ -18,6 +18,7 @@ export {
   LEVEL_TIERS,
   getLevelTier,
   calculateStreak,
+  getRecentHistoryForProfile,
   calculateStreakBonus,
   getStreakMilestone,
   STREAK_MILESTONES,

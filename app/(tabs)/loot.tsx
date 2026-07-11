@@ -32,6 +32,7 @@ import { LootBoxOpener } from '../../components/LootBoxOpener';
 import {
   buildLeaderboard,
   processActiveRewards,
+  getRecentHistoryForProfile,
   getLevelTier,
   RARITY_COLORS,
   RARITY_EMOJIS,
@@ -153,8 +154,8 @@ export default function LootScreen() {
 
   // Recent history (last 10 task completions)
   const recentHistory = useMemo(
-    () => (gamiData?.history ?? []).slice(-10).reverse(),
-    [gamiData?.history],
+    () => getRecentHistoryForProfile(gamiData?.history ?? [], activeProfile?.id),
+    [activeProfile?.id, gamiData?.history],
   );
 
   // Loots physiques : entrées d'historique de type loot avec une récompense physique

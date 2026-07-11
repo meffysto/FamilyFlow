@@ -16,6 +16,7 @@ import {
   calculateStreakBonus,
   getStreakMilestone,
   processActiveRewards,
+  getRecentHistoryForProfile,
   buildLeaderboard,
   xpForLevel,
   pointsToNextLevel,
@@ -629,6 +630,56 @@ describe('processActiveRewards', () => {
     };
     const result = processActiveRewards([activeMultiplier]);
     expect(result).toHaveLength(1);
+  });
+});
+
+// ─── getRecentHistoryForProfile ─────────────────────────────────────────────
+
+describe('getRecentHistoryForProfile', () => {
+  const entries: GamificationEntry[] = [
+    {
+      profileId: 'maxence',
+      action: '+25',
+      points: 25,
+      note: 'Tâche: Craft fougasse',
+      timestamp: '2026-07-11T08:00:00.000Z',
+    },
+    {
+      profileId: 'julie',
+      action: '+15',
+      points: 15,
+      note: 'Tâche: Ranger la cuisine',
+      timestamp: '2026-07-11T09:00:00.000Z',
+    },
+    {
+      profileId: 'maxence',
+      action: '+200',
+      points: 200,
+      note: 'Cadeau: grand_festin',
+      timestamp: '2026-07-11T10:00:00.000Z',
+    },
+    {
+      profileId: 'julie',
+      action: '+38',
+      points: 38,
+      note: 'Objectif village atteint',
+      timestamp: '2026-07-11T11:00:00.000Z',
+    },
+  ];
+
+  test('filtre l’historique récent sur le profil actif', () => {
+    const result = getRecentHistoryForProfile(entries, 'julie');
+
+    expect(result).toHaveLength(2);
+    expect(result.map((entry) => entry.profileId)).toEqual(['julie', 'julie']);
+    expect(result.map((entry) => entry.note)).toEqual([
+      'Objectif village atteint',
+      'Tâche: Ranger la cuisine',
+    ]);
+  });
+
+  test('retourne une liste vide sans profil actif', () => {
+    expect(getRecentHistoryForProfile(entries, undefined)).toEqual([]);
   });
 });
 

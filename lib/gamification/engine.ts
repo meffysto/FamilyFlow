@@ -631,6 +631,19 @@ export function processActiveRewards(activeRewards: ActiveReward[]): ActiveRewar
   });
 }
 
+/** Recent history for the currently selected profile, newest first. */
+export function getRecentHistoryForProfile(
+  history: GamificationEntry[],
+  profileId: string | undefined,
+  limit = 10,
+): GamificationEntry[] {
+  if (!profileId || limit <= 0) return [];
+  return history
+    .filter((entry) => entry.profileId === profileId)
+    .slice(-limit)
+    .reverse();
+}
+
 /** Apply family bonus: add points to all profiles in data */
 export function applyFamilyBonus(
   data: GamificationData,
